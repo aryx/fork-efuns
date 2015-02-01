@@ -1,0 +1,17 @@
+*.opt
+*.byte
+efuns.opt.gz
+ocaml_mode.ml
+tex_mode.ml
+c_mode.ml
+lisp_mode.ml
+html_mode.ml
+efuns.byte
+efuns
+efuns.opt
+efuns_server
+efuns_filebrowser
+efuns_texbrowser
+*.cfg
+*.ps
+*.idx

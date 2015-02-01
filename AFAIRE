@@ -1,0 +1,31 @@
+Améliorations pour Efuns
+========================
+
+* Ajouter les fonctions d'impression: print-buffer
+* Simplifier l'utilisation des variables locales:
+  * Ajouter des variables locales aux modes:
+    Recherche: buffer, minor modes, major mode, location
+  * Ajouter des fonctions de modifications/affichage des variables
+set-local-variable: modifie/definit pour une variable locale au buffer
+set-<minor-mode>-variable: 
+         modifie/definit une variable locale a un mode mineur (tous buffers)
+set-major-variable: modifie/definit une variable du mode majeur (tous buffers)
+set-global-variable: modifie/definit une variable globale (tous buffers)
+  * Ajouter des fonctions de modifications automatiques des variables:
+    * Recherche de regexps dans le buffer:
+       EFUNS_START
+set-local  variable  value
+add-local  variable  value
+       EFUNS_END
+    * Chargement automatique de fichiers dans l'arborescence:
+.efuns_vars (dans le repertoire courant ou les parents jusqu'a un niveau
+specifie par load-file-depth)
+
+* Ajouter plus d'options dans les menus
+
+Bugs connus:
+============
+* Un deuxième curseur peut apparaître après make dans la frame présente sur la
+  même fenêtre.
+* Certaines recherches d'erreurs ouvrent un fichier vide apres une
+  erreur de depassement de bornes de tableau.
