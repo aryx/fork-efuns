@@ -1,0 +1,10 @@
+All files marked "Copyright INRIA" in the following directories and
+their sub-directories are distributed under the terms of the GNU
+Library General Public License (see license.txt):
+
+    common, concur, dynlink, ocamlsrc, toolkit, toplevel, xlib
+
+All files marked "Copyright INRIA" in the other directories and their
+sub-directories are distributed under the terms of the Q Public
+License version 1.0 (see license.txt).
+

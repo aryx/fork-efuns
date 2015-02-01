@@ -1,0 +1,210 @@
+Programming Guide for Efuns
+===========================
+
+Fabrice LE FESSANT (Fabrice.Le_Fessant@inria.fr)
+January 25th 1999
+
+1. directories
+======================
+
+efuns: main compilation directory
+efuns/efuns: editor files
+efuns/concur: a library to hide threads (in the case there is none).
+efuns/xlib: X11 library files
+efuns/dynlink: dynlink library for native code
+efuns/common: some useful files for both Efuns and Gwml
+efuns/demo: demos for the Xlib library
+efuns/efuns: the Efuns editor
+efuns/gwml: the Gwml window-manager
+
+2. Xlib
+======================
+
+ Efuns uses the Xterm (efuns/xlib/xterm.ml) widget of the Xlib library to
+create its windows. The Xlib library can be compiled with bytecode threads,
+native threads or no threads.
+
+Interface:
+xlib/xtypes.ml: Types and constants
+xlib/x.ml: Standard functions of the C Xlib
+xlib/xsync.ml: 
+  Like x.ml, but functions are synchronous, ie each call waits for a reply
+ or an error (a XGetInputFocus is issued after each asynchronous request).
+xlib/xasync.ml:
+  Like x.ml, but functions are all asynchronous, ie each call returns a token 
+ which can be used later either to get the reply or to get an error.
+xlib/zpixmap.ml: Functions to manipulate XImage in Zpixmap format.
+xlib/icccm.ml: Functions implementing the ICCCM convention.
+xlib/xlib.ml: Useful functions (Event management)
+xlib/xutils.ml: Useful functions (DefaultRoot, etc ...)
+xlib/xterm.ml: A simple terminal widget 
+xlib/xA.ml: Atoms
+xlib/xC.ml: Cursors
+xlib/xK.ml: Keysyms
+xlib/jeton.ml: Token returned by asynchronous functions
+xlib/shade.ml: The Xshade extension
+xlib/xrm.mll: Ressource management
+xlib/xpm.mll: Xpm and bitmap files
+
+Internals:
+xlib/xproto.ml: The X protocol requests
+xlib/display.ml: Communication with the display
+xlib/ll_trans.ml: Transport layer
+xlib/xauth.ml: functions to read the .Xauthority file
+xlib/xbuffer.ml: Marshalling/Unmarshalling functions
+xlib/keyBind.ml: Key binding management
+xlib/conv_event.ml: Conversion between raw messages an ML XEvent structures
+xlib/equeue.ml: A structure to keep Events and Requests
+xlib/fifo.ml: FIFO structure
+
+3. Dynlink 
+======================
+
+ The Dynlink library is used to dynamically load .cmo files into the editor.
+This library implements a dynamic linker and an interpreter for Ocaml
+bytecode. Its speed is half the speed of the C interpreter. Bytecode closures 
+are encapsulated in native closures to improve integration of bytecode modules
+in the native program. Exceptions should also behave correctly when
+bytecode and native calls are interleaved.
+
+ Lots of hacks have been introduced to get beautiful assembler code.
+A big structured type with 249 block constructors is used to speed up 
+the SWITCH instruction. The interpreter starts with "let stack = stack in ..."
+to keep most useful values in registers (PC,SP,ACCU,STACK,CODE,etc...).
+The Obj module has been redefined with a record type for Obj.t to prevent
+accesses to Obj.t arrays from testing for a float array. It is compiled
+with -unsafe to avoid bound checks in array accesses (maybe this should be
+suppress ?). CLOSURE and CLOSUREREC test for a GRAB instruction starting the 
+closure and generate closures with exact arity for such cases. 
+The "let exit = ExitInterp" avoids the allocation of a new exception at each
+RETURN instruction (quite often so ...).
+
+Interface:
+dynlink/dynlink.ml: 
+  Implements the same interface as the distribution Dynlink module.
+
+Internals:
+dynlink/interp.ml: The interpreter in Caml
+dynlink/linker.ml: The linker for .cmo files
+dynlink/instruct.ml: The interpreter instruction set
+dynlink/test.ml: 
+  A simple example: load all .cmo files specified in a file "cmos". 
+dynlink/getglobal.c: 
+  C functions to access native modules from the interpreter.
+dynlink/bytecompat.c: 
+  C functions from the bytecode runtime which lack from the native runtime.
+
+4. Common
+=====================
+
+4. Efuns
+======================
+
+4.1 Files
+----------------------
+
+Internals:
+text.ml: The GAP buffer (self-contained)
+efuns.ml: Types and basic values
+main.ml: The main() function ...
+buffer.ml: Functions to handle buffer structures internals
+frame.ml: Functions to handle frame structures internals
+keymap.ml: Functions to handle keyboard mappings
+window.ml: Handling of simulated text windows
+top_window.ml: Communication with the Xterm widget
+minibuffer.ml: Minibuffer functions
+misc.ml: Useful functions
+str2.ml: Addons to the Str module (replace_matched)
+
+Functions:
+simple.ml: Basic functions (insertion, etc ...)
+complex.ml: More complex functions (with minibuffer)
+abbrevs.ml: Static and Dynamic abbrevs
+system.ml:  Functions to handle external processes
+interactive.ml: Interactive functions handling (M-x)
+parsers.mly: Various useful parsers (/etc/passwd)
+lexers.mll: Various useful lexers (/etc/passwd, filenames)
+compile.ml: Functions for error search after compilation
+search.ml: Searchs and replacements
+time.ml: Time functions
+select.ml: Useful functions to ask the user in the minibuffer
+eval.ml: Dynamic load of external modules (Dynlink)
+multi_frames.ml: Handling of multiple text windows in one Xterm widget
+
+Major modes:
+ocaml_mode.mll: The Ocaml mode
+  ocamlc.ml:  Functions to read .cmi data from the Ocaml compiler
+  printtyp.ml: The type pretty printer from the Ocaml compiler
+tex_mode.mll: The TeX mode
+c_mode.mll: The C mode
+lisp_mode.ml: The Lisp mode (is this really useful ? yes, I use GWM as
+  window-manager :)
+html_mode.mll: The HTML mode
+makefile_mode.ml: The Makefile mode (Tabulation)
+
+Minor modes:
+accents_mode.ml: Accents for QWERTY keyboards (e' => é, e'' => e', ...)
+
+Config:
+std_efunsrc.ml: Standard bindings (except those defined in other modules)
+
+
+4.2 Architecture:
+--------------------
+
+  All the editor information is organised inside one structure: the location.
+The location grants access to all other structures inside the editor. This
+is done to easily save the editor state after a session (or to move it
+from one editor to another).
+
+location
+  --> windows (top_window type)
+  --> buffers (buffer type)
+  --> files   (buffer type)
+
+The top_window structure corresponds to an Xterm widget (one X window).
+From the top_window structure, you have access to text windows (window type)
+displayed inside the Xterm widget. Windows are organized as a binary tree,
+where branchs are either horizontal or vertical combinaisons, and leaves are
+frames (frame window). A frame is a text window with a buffer inside.
+
+The buffer corresponds either to a file (thus to a filename) either to
+a virtual file (for example, compilation messages). The file text itself
+is stored in the Text.t type.
+
+The Text.t type implements a gap-buffer. A gap-buffer is a buffer with
+a big hole inside. Why ? To insert one char inside a buffer, you need to move
+all the end of the buffer by one char before inserting. This is too expensive
+for very large buffers. Instead, gap-buffers have a hole. To insert one char
+in the buffer, you only need to move the hole to your position, and to insert
+the char at the first position of the hole. Then, to insert a second char
+just after the first one (the most used operation in an editor), you only
+need to put it at the new first position of the hole.
+
+                       v
+aaaaaaaaaaa-------aaaaaaaaaaaaaaaaaa
+
+=> move the hole
+                       v
+aaaaaaaaaaaaaaaaaaaaaaa-------aaaaaa
+
+=> insert your char
+                       v
+aaaaaaaaaaaaaaaaaaaaaaab------aaaaaa
+
+=> move the cursor
+                        v
+aaaaaaaaaaaaaaaaaaaaaaab------aaaaaa
+
+=> insert the second char without moving any chars :)
+
+                        v
+aaaaaaaaaaaaaaaaaaaaaaabc-----aaaaaa
+
+Inside the Text.t structure, cursors are represented by Text.point structures.
+Indeed, when the gap (the hole) moves inside the buffer, all cursors must
+be updated with the new offset of the gap. This might be expensive, however,
+thanks to Ocaml modules, other Text implementations could be tested without
+breaking the editor.
+
+and more later ....

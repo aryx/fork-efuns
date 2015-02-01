@@ -1,0 +1,25 @@
+Date 12 Jun 1999.
+
+   Efuns Users Help
+  -------------------
+
+If you are reading this file, you are probably looking for key-bindings.
+
+Most key-bindings are defined in efuns/efuns/std_efunsrc.ml. Look at this
+file to find general bindings, and modify it if you want. You can also
+use a efunsrc.cmo file for this, placed in $HOME/.efuns/. Other keybindings
+can be found at the end of efuns/efuns/{simple.ml, abbrevs.ml, complex.ml}.
+
+ For mode specific bindings, take a look at the end of each mode file. For
+Ocaml mode, the toplevel version (toplevel/ocaml_mode.mll) contains more
+bindings than the dynlink one, and is more up-to-date. Why ? because I use
+the toplevel version.
+
+ Currently, menus can be configured through the {file_menu, edit_menu, 
+help_menu, buffers_menu) cells. These are defined and used in the
+efuns/efuns/top_window.ml module. Other menus can be added by
+top_window.top_appli#add_menu or #add_button.
+
+
+
+

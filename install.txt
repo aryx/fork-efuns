@@ -1,0 +1,300 @@
+(***********************************************************************)
+(*                                                                     *)
+(*                             EFUNS PACKAGE                           *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+|-----------------|
+|  RELEASE NOTES  |
+|-----------------|
+
+I'm pleased to release the new version 017 of the Efuns package. 
+
+The Efuns package contains:
+ - The Xlib library for Ocaml (complete emulation of the C Xlib library)
+ - The Dynlink library for native code (allow you to dynamically load
+      cmo files in native programs).
+ - The Toplevel library (allow you to evaluate ocaml expressions inside
+      any program as in the toplevel).
+ - The Gwml Generic Window-Manager (a wm configurable in Ocaml).
+ - The Efuns Emacs clone editor (an editor configurable in Ocaml).
+ - The wXtoolkit (a toolkit of widgets based on Xlib)
+
+ Changes: 
+
+ The BIG change in this new release is the almost complete configurability
+of efuns and gwml using a .efunsrc and .gwmlrc file with very simple syntax
+to define many options (colors, fonts, key bindings, gwml decorations, efuns
+abbreviations, etc ... ) Each file is created the first time the
+corresponding program is run, and options can be modified and saved from the
+program.
+
+ In GwML, you can now use images, load themes from WindowMaker or Afterstep, and
+add funny decorations to your windows (try the /usr/local/share/GwML/... decos).
+
+The package is available on:
+
+  http://pauillac.inria.fr/para/cdrom/prog/unix/efuns
+
+Mailing-lists:
+
+  efuns-talk@talbot.inria.fr
+  gwml-talk@talbot.inria.fr
+
+Note: I use Efuns for editing my Ocaml files every day, and Gwml as my
+current window-manager. These programs can be improved a lot. Just try
+it. I'm available to help everyone wanting to use or improve these
+libraries and programs.
+
+|----------------|
+|  REQUIREMENTS  |
+|----------------|
+
+You need Objective-Caml installed, at least version 2.01.
+This package was released for Objective-Caml 2.04. For later versions,
+you may check at the URL specified in the RELEASE NOTES.
+
+To compile GwML with image support, you need to have Imlib installed. 
+This is normally done on Linux systems where Gnome is installed, but you can also
+download it from ftp.gnome.org.
+
+|----------------|
+|  INSTALLATION  |
+|----------------|
+
+1. Execute the ./configure script. Default options values for this script are
+in .cache.default . When an option has been set once, other calls to
+configure will keep this option, unless you specify a new value or remove
+the .cache file.
+
+-srcdir: Where the sources of Ocaml are. This is only required if you want to
+ compile the Toplevel library. This automatically forces Efuns and GwML to
+ use the toplevel library.
+-help: all options.
+-prefix: set the directory prefix (/usr,/usr/local,~/local, etc ...)
+  for the installation.
+-libdir: directory where Ocaml is installed, and where some libraries
+ will be installed. This directory is found automatically using "ocamlc -v".
+-bindir: directory where "efuns" and "gwml" executables will be installed.
+  (def: /usr/local/bin)
+-efunsdir: directory where Efuns files will be installed
+  (def: /usr/local/lib/efuns)
+-gwmldir: directory where Gwml files will be installed
+  (def: /usr/local/lib/gwml)
+-byte_threads: should the bytecode version use threads (safe is not).
+-opt_threads: should the native code version usr threads (safe is not).
+-efunsdyn: Which library should be used to build Efuns (dynlink or toplevel).
+-gwmldyn: Which library should be used to build Gwml (dynlink or toplevel).
+
+ The configure script will verify your version of Ocaml, and create some
+links in some directories. 
+
+2. Build dependencies: "make depend" (done automatically by the
+  configure script).
+3. Compile in bytecode: "make byte"
+4. Compile in native code: "make opt" (or "make all" for byte and opt)
+5. Install the bytecode version: "make install"
+6. Install the native version: "make installopt"
+7. cd gwml; make install-themes
+
+|-----------------|
+|  CONFIGURATION  |
+|-----------------|
+
+ Normally, sources are installed in the $PREFIX/lib/gwml and
+$PREFIX/lib/efuns directories, so that you can modify these files, and
+compile them again (using "gwml -c" or "efuns -c" to avoid clashes between
+the versions of ocaml currently installed and the one used to compile the
+package.
+
+ GwML is configured by modifying the gwmlrc.ml file, and recompiling it
+(in your own .gwml-$(VERSION)) directory (.gwml-16+1 for example). You can
+also modify the ~/.gwmlrc.ml file (without recompiling), but you cannot
+change a lot of things that way.
+ Efuns is configured by modifying the efunsrc.ml file, and recompiling it.
+
+ GwML can also be configured by modifying the .Xdefaults (see doc/gwml.tex)
+or the ~/.gwmlrc created the first time it is started.
+
+|-----------------|
+|  DOCUMENTATION  |
+|-----------------|
+
+ For now, few documentation is provided in the doc/ directory. The best way
+(for now) to learn how to use them is to look at the sources. In particular,
+efuns/xlib/examples and efuns/toolkit/examples contain several demos of Xlib
+and WXlib applications. You can also send e-mails to:
+
+efuns-talk@talbot.inria.fr
+gwml-talk@talbot.inria.fr
+
+ You can also subscribe to these mailing-lists by sending a mail to:
+
+mailing-list@talbot.inria.fr
+
+ with the names of the list to which you want to subscribe or unsubscribe.
+These lists are not moderated, thus, if you notice some spams, send a mail to
+the previous address and the list will become moderated.
+
+ In the doc/ directory, you can find documentation for:
+- Efuns: ProGuide.txt et efuns-users-help.txt
+- Gwml: gwml.tex (use "make gwml.ps" to create the postscript version).
+- wXlib: wxlib.tex (use "make wxlib.ps" to create the postscript version).
+- xlib: encoding.txt et proto.txt (for the X protocol).
+ 
+  Here is a small documentation for all libraries and programs:
+
+ * Xlib:
+ =======
+ This library is an implementation of the C Xlib in Objective-Caml.
+This library doesn't use any C code. It performs all the operations
+in Objective-Caml (TCP connection with the server, translation of 
+requests into X protocol packets, translation of reply/events packets 
+to Ocaml events). All useful types are in the Xtypes module. 
+X protocol requests are in the X module, while other useful functions
+are in the Xlib module. Other modules are more specialized (Icccm for ICCCM
+compliance, XA for atoms, XC for cursors, XK for keysyms, Shape for the
+shape extension, Xpm for pixmaps, Xrm for ressources, Zpixmap for
+Zpixmap images, Xtext for text functions, KeyBind for Key functions).
+
+  In extension, it contains a Graphics module providing the same interface
+as the Graphics module of the standard library. Thus, programs designed
+for this library are allowed to use all X powerful functions.
+
+ All useful types are in xlib/xtypes.ml. Useful constants are in
+xlib/xtypes.ml, xlib/xA.ml (atoms), xlib/xK.ml (keysyms) and xC.ml
+(cursors).. The X protocol is implemented in three modules: X (calls with
+replies are synchronous, calls with no reply are asynchronous), Xsync (all
+calls are synchronous, and errors are raised immediately), and Xasync (all
+calls are asynchronous, and tokens(Jeton.t) are given to retrieve results and
+errors later).
+
+ Functions names are quite similar to the C functions. For example,
+XCreateWindow -> X.createWindow (or Xsync or Xasync). Parameters may appear
+in different orders (have a look at xlib/x.mli for their exact types, or
+xlib/x.ml for their meanings).
+
+ Other useful functions are implemented in other modules, such as Xlib
+(openDisplay, nextEvent, ...), Xutils (raiseWindow, textExtents, ...), Xrm
+(ressources management), Xpm (pixmaps and bitmaps), Shape (shape extension),
+XA (atoms), XC (Cursors) and XK (keysyms), KeyBind (lookupString,
+keycodeToKeysym, ...) and Icccm (ICCCM protocol).
+ 
+ * AsmDynlink:
+ =============
+ This library provide the same functionnalities as
+  the bytecode version (ie to load bytecode modules in executables), 
+  and has the same interface. The library contains an interpreter for
+  Ocaml bytecode and a linker. It is about 3/4 times slower than the
+  C interpreter.
+
+ * Efuns:
+ ========
+ A clone of Emacs with lot of key bindings (C-h K) and several
+editing modes (tex_mode, ocaml_mode, makefile_mode, etc ...). Try it by
+editing efuns/simple.ml for example.
+
+ Usage: efuns -help
+
+ Efuns always tries to load "efunsrc.cmo" at startup. This file is searched
+in the following path $HOME:$HOME/.efuns/:$CAMLDIR:$EFUNSPATH where CAMLDIR
+is an envirronment variable for the Objective Caml installation directory and
+EFUNSPATH an envirronment variable for a path to find Efuns files.
+
+ * Gwml:
+ =======
+ Gwml is a window-manager, inspired from GWM, the Generic Window Manager. It
+is configurable in Ocaml Have a look at gwml/config/gwmlrc.ml for my config
+(based on the Std*.ml default config). You can even do a "make" in
+gwml/config to install this config in ~/.gwml-???. GwML starts by loading the
+gwmlrc.cmo file in ~/.gwml-??? where ??? is the version (016 for example).
+
+ * Toplevel:
+ ===========
+ A library to evaluate ocaml strings in a program (even native).
+Look at toplevel/dyneval.mli for its interface. (Note that the dynlink
+library is included in the toplevel library). To try it, build Gwml with
+GWML_DYNLINK=toplevel and try "gwml -talk".
+
+|--------------|
+|  KNOWN BUGS  |
+|--------------|
+
+* Xlib
+  1. Shape extension not tested yet.
+
+* Efuns
+  1. Bad indentation of function call parameters in Ocaml mode.
+  2. A second cursor can appear on a frame (use M-x to remove it).
+  3. Selection by mouse is difficult when scrolling is used or for
+     multiple lines line.
+
+* Gwml
+  1. Wobs borderwidths are not taken into account.
+  2. Shaped windows are not well decorated.
+  3. If a menu is present when a new window is created, it stays on screen
+    (click on it with a button to destroy it)
+  4. Imlib uses a different connection to the X server. This means that,
+     if the server is grabbed, any call to Imlib will be blocked.
+
+* WXlib
+  1. Not multithreaded
+
+* Dynlink:
+  1. C functions must be added through the 
+    Linker.Prims.insert_one: string -> ('a -> 'b) -> unit
+    function, which doesn't exist on the bytecode version.
+    (we should ask ocamlopt to generate the same table as ocamlc).
+
+* Toplevel:
+  1. Segfault when running ocamlc (modules of ocamlc are loaded
+    dynamically) on big files (> 100Kb).
+
+|-------------|
+|  TODO LIST  |
+|-------------|
+
+* Efuns:
+  1. Add "print-buffer" function, and maybe a dialog box for configuration ?
+  2. Add minor mode "flyspell"
+  3.  Simplify the use of local variables:
+    3.1 Add local variables to modes:
+      Search sort: buffer, minor modes, major mode, location
+    3.2 Add new functions to modify or print variable values:
+set-local-variable (current buffer)
+set-<minor-mode>-variable (minor modes, all buffers)
+set-major-variable (major modes, all buffers)
+set-global-variable (all buffers)
+    3.3 Set local variables from buffer comments when buffer is loaded.
+       EFUNS_START
+set-local  variable  value;
+add-local  variable  value;
+       EFUNS_END
+    3.4 Set local variable from files in the filesystem tree:
+.efuns_vars (in local directory or parents with depth load-vars-depth)
+
+* Gwml
+  1. Use WXlib widgets instead of proprietary widgets
+
+|-------------------------------|
+|  PROBLEMS/ COMMENTS/ CONTACT  |
+|-------------------------------|
+
+See the DOCUMENTATION section for mailing-lists. You can also directly send
+a mail to:
+
+Fabrice LE FESSANT
+Moscova/Para/Sor Projects
+INRIA Rocquencourt, FRANCE
+
+Email: fabrice.le_fessant@inria.fr
+
+http://pauillac.inria.fr/~lefessan
+http://pauillac.inria.fr/efuns
+http://pauillac.inria.fr/gwml
+http://pauillac.inria.fr/~lefessan/src
