@@ -94,9 +94,6 @@ dynlink/getglobal.c:
 dynlink/bytecompat.c: 
   C functions from the bytecode runtime which lack from the native runtime.
 
-4. Common
-=====================
-
 4. Efuns
 ======================
 
