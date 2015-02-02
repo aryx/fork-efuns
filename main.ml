@@ -1,3 +1,4 @@
+(*s: main.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -15,6 +16,7 @@ open Obj
 open Text
 open Efuns
   
+(*s: constant Main.location *)
 let location = {
     loc_map = Keymap.create ();
     loc_windows = [];
@@ -38,8 +40,12 @@ let location = {
     
     loc_mutex = Concur.Mutex.create ()
 } 
+(*e: constant Main.location *)
 
+(*s: exception Main.SigInt *)
 exception SigInt
+(*e: exception Main.SigInt *)
+(*s: toplevel Main._1 *)
 let _ =
   Utils.register_exn (fun e ->
       match e with
@@ -56,10 +62,14 @@ let _ =
         (* Should auto-save all buffers, and then exit ... *)
         raise SigInt));
   Utils.set_signal Sys.sighup (Sys.Signal_handle (fun _ ->  raise SigInt))
+(*e: toplevel Main._1 *)
 
+(*s: constant Main.highlight_color *)
 let highlight_color = define_option ["highlight_color"] ""
     color_option "cyan"
+(*e: constant Main.highlight_color *)
   
+(*s: toplevel Main._2 *)
 let _ =
 (* color 0 is foreground *)
   let _ = Window.get_color location !!foreground in
@@ -69,17 +79,29 @@ let _ =
   let _ = Window.get_color location !!highlight_color in
 (* font 0 is initial font *)
   Window.get_font location !!font
+(*e: toplevel Main._2 *)
 
+(*s: toplevel Main._3 *)
 let _ =
   Efuns.init location (* launch first hooks *)
+(*e: toplevel Main._3 *)
   
   
+(*s: constant Main.dpy_oo *)
 let dpy_oo = new WX_display.t !displayname
+(*e: constant Main.dpy_oo *)
+(*s: constant Main.root_oo *)
 let root_oo = new WX_root.t dpy_oo 0
+(*e: constant Main.root_oo *)
+(*s: constant Main.display *)
 let display = WX_xterm.create_display root_oo
   location.loc_colors_names location.loc_fonts_names 
+(*e: constant Main.display *)
+(*s: constant Main.top_window *)
 let top_window = Top_window.create location display
+(*e: constant Main.top_window *)
   
+(*s: toplevel Main._4 *)
 let _ =
   WX_xterm.setHighlight display 2;
   Dyneval.init true;
@@ -113,9 +135,11 @@ let _ =
       SigInt -> loop ()
   in
   loop ()
+(*e: toplevel Main._4 *)
 
   
 
 
 
   
+(*e: main.ml *)

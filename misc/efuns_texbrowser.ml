@@ -1,3 +1,4 @@
+(*s: misc/efuns_texbrowser.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                             ____                                    *)
@@ -16,24 +17,43 @@ open WX_types
 open WX_tree
 
 
+(*s: constant Efuns_texbrowser.display *)
 let display = new WX_display.t ""
+(*e: constant Efuns_texbrowser.display *)
+(*s: constant Efuns_texbrowser.root *)
 let root = new WX_root.t display 0
+(*e: constant Efuns_texbrowser.root *)
+(*s: constant Efuns_texbrowser.top *)
 let top = new WX_appli.t root [MinWidth 10; MinHeight 10]
+(*e: constant Efuns_texbrowser.top *)
+(*s: constant Efuns_texbrowser.tree *)
 let tree = new WX_tree.t top#container []
+(*e: constant Efuns_texbrowser.tree *)
 
+(*s: constant Efuns_texbrowser.regexp *)
 let regexp = Str.regexp "\(\\input\|\\section\|\\subsection\|\\subsubsection\|\\chapter\)[*]?{\([^}]+\)}"
+(*e: constant Efuns_texbrowser.regexp *)
 
+(*s: function Efuns_texbrowser.load *)
 let load filename pos all =
   let _ = Sys.command(Printf.sprintf "efuns_server %s -pos %d -str \"%s\" &" filename pos all)
   in ()
+(*e: function Efuns_texbrowser.load *)
 
+(*s: constant Efuns_texbrowser.filename *)
 let filename = ref (if Array.length Sys.argv = 2 then
       Sys.argv.(1) else 
       failwith "Usage: efuns_texbrowser filename")
+(*e: constant Efuns_texbrowser.filename *)
   
+(*s: constant Efuns_texbrowser.dirname *)
 let dirname = ref (Filename.dirname !filename)
+(*e: constant Efuns_texbrowser.dirname *)
+(*s: constant Efuns_texbrowser.path *)
 let path = ref [ !dirname ]
+(*e: constant Efuns_texbrowser.path *)
   
+(*s: function Efuns_texbrowser.iter_load *)
 let rec iter_load closed filename container =
   let label = new WX_button.with_label container filename [] in
   try
@@ -83,10 +103,13 @@ let rec iter_load closed filename container =
   with
     _ -> 
       leaf 0 label#contained
+(*e: function Efuns_texbrowser.iter_load *)
 
 open WX_filesel
   
+(*s: constant Efuns_texbrowser.file_menu *)
 let file_menu = [|
+(*e: constant Efuns_texbrowser.file_menu *)
     "Open", (fun _ -> 
         let info = {
             filter = Filename.concat !dirname  "*.tex";
@@ -106,6 +129,7 @@ let file_menu = [|
     "Quit", (fun _ -> exit 0);
   |]
 
+(*s: toplevel Efuns_texbrowser._1 *)
 let _ =
   tree#set_desc [iter_load false Sys.argv.(1) tree#container];
   top#setWM_NAME (Printf.sprintf "LaTeX Browser: %s" !filename);
@@ -118,3 +142,5 @@ let _ =
   top#add_separator;
   top#show;
   loop ()
+(*e: toplevel Efuns_texbrowser._1 *)
+(*e: misc/efuns_texbrowser.ml *)

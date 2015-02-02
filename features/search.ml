@@ -1,3 +1,4 @@
+(*s: features/search.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -16,9 +17,14 @@ open Frame
 open Simple
 open Select
     
+(*s: toplevel Search._1 *)
 let _ = Time.init ()
+(*e: toplevel Search._1 *)
 
+(*s: constant Search.case_fold *)
 let case_fold = ref false
+(*e: constant Search.case_fold *)
+(*s: function Search.to_regexp *)
 let to_regexp flag str =
   match flag with
     Regexp ->
@@ -31,9 +37,13 @@ let to_regexp flag str =
           Str.regexp_string_case_fold
         else
           Str.regexp_string) str
+(*e: function Search.to_regexp *)
 
+(*s: type Search.query *)
 type query = NoQuery | Query of frame * string
+(*e: type Search.query *)
 
+(*s: function Search.replace *)
 let replace flag frame query str repl =
   let top_window = Window.top frame.frm_window in
   let buf = frame.frm_buffer in
@@ -137,24 +147,36 @@ let replace flag frame query str repl =
         ("Replace "^(string_of_int !n)^" occurences")
   | _ ->
       commit_session text session
+(*e: function Search.replace *)
 
 
+(*s: function Search.no_query *)
 let no_query f = f true
+(*e: function Search.no_query *)
+(*s: function Search.query *)
 let query frame request f =
   let top_window = Window.top frame.frm_window in
   top_window.top_second_cursor <- Some frame;
   let _ = select_yes_or_no frame request f in ()
+(*e: function Search.query *)
 
+(*s: constant Search.string_history *)
 let string_history = ref []
+(*e: constant Search.string_history *)
+(*s: function Search.select_replace *)
 let select_replace frame request action =
   select_string frame request string_history "" action 
+(*e: function Search.select_replace *)
 
+(*s: function Search.replace_string *)
 let replace_string frame =
   select_replace frame "Replace string: " 
     (fun str ->
       select_replace frame "with string: " 
         (replace RegexpString frame NoQuery str))
+(*e: function Search.replace_string *)
 
+(*s: function Search.query_replace_string *)
 let query_replace_string frame =
   select_replace frame "Replace string: " 
     (fun str ->
@@ -163,13 +185,17 @@ let query_replace_string frame =
           (Query ( frame, "Replace string ? (y/n)"))
         str)
   )
+(*e: function Search.query_replace_string *)
 
+(*s: function Search.replace_regexp *)
 let replace_regexp frame =
   select_replace frame "Replace Regexp: " 
     (fun str ->
       select_replace frame "with string: " 
         (replace Regexp frame NoQuery str))
+(*e: function Search.replace_regexp *)
 
+(*s: function Search.query_replace_regexp *)
 let query_replace_regexp frame =
   select_replace frame "Replace regexp: " 
     (fun str ->
@@ -177,19 +203,29 @@ let query_replace_regexp frame =
         (replace Regexp frame 
           (Query (frame, "Replace regexp ? (y/n)"))
         str))
+(*e: function Search.query_replace_regexp *)
 
+(*s: constant Search.library_regexp *)
 let library_regexp = Str.regexp ".*\.cm[oa]"
+(*e: constant Search.library_regexp *)
+(*s: function Search.library_file *)
 let library_file str =
   Str.string_match library_regexp str 0
+(*e: function Search.library_file *)
 
+(*s: function Search.select_lib_filename *)
 let select_lib_filename frame request action =
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
   select frame request file_hist (current_dir frame)
   (complete_filename frame library_file)
   Filename.basename action
+(*e: function Search.select_lib_filename *)
 
+(*s: constant Search.last_search *)
 let last_search = ref ""
+(*e: constant Search.last_search *)
+(*s: function Search.isearch *)
 let isearch to_regexp sens frame =
   let top_window = Window.top frame.frm_window in
   let buf = frame.frm_buffer in
@@ -298,12 +334,22 @@ let isearch to_regexp sens frame =
     (kill_and beginning_of_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'e'] 
     (kill_and end_of_line)
+(*e: function Search.isearch *)
 
 
 
 
+(*s: constant Search.isearch_forward_regexp *)
 let isearch_forward_regexp = isearch Regexp Forward
+(*e: constant Search.isearch_forward_regexp *)
+(*s: constant Search.isearch_forward *)
 let isearch_forward = isearch RegexpString Forward
+(*e: constant Search.isearch_forward *)
+(*s: constant Search.isearch_backward *)
 let isearch_backward = isearch RegexpString Backward
+(*e: constant Search.isearch_backward *)
+(*s: constant Search.isearch_backward_regexp *)
 let isearch_backward_regexp = isearch Regexp Backward 
+(*e: constant Search.isearch_backward_regexp *)
   
+(*e: features/search.ml *)

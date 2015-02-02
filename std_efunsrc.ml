@@ -1,3 +1,4 @@
+(*s: std_efunsrc.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -28,12 +29,19 @@ open Multi_frames
 open Top_window
   
 
+(*s: constant Std_efunsrc.grep_hist *)
 let grep_hist = ref ["grep -n "]
+(*e: constant Std_efunsrc.grep_hist *)
 
+(*s: function Std_efunsrc.save_options *)
 let save_options frame = Options.save ()
+(*e: function Std_efunsrc.save_options *)
+(*s: function Std_efunsrc.fondamental_mode *)
 let fondamental_mode frame =
   Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
+(*e: function Std_efunsrc.fondamental_mode *)
   
+(*s: toplevel Std_efunsrc._1 *)
 let _ =
   define_action "fill_paragraph" fill_paragraph;
   define_action "save_options" save_options;
@@ -139,21 +147,35 @@ let _ =
   define_action "next_hole" next_hole;
   
   ()
+(*e: toplevel Std_efunsrc._1 *)
   
   
+(*s: constant Std_efunsrc.global_map *)
 let global_map = define_option ["global_map"] "" 
     (list_option binding_option) 
   []
+(*e: constant Std_efunsrc.global_map *)
 
+(*s: constant Std_efunsrc.interactives_map *)
 let interactives_map = define_option ["interactives_map"] ""
     (list_option string2_option) 
   []
+(*e: constant Std_efunsrc.interactives_map *)
 
+(*s: constant Std_efunsrc.c_h *)
 let c_h = (ControlMap, Char.code 'h')
+(*e: constant Std_efunsrc.c_h *)
+(*s: constant Std_efunsrc.c_x *)
 let c_x = (ControlMap, Char.code 'x') 
+(*e: constant Std_efunsrc.c_x *)
+(*s: constant Std_efunsrc.c_c *)
 let c_c = (ControlMap, Char.code 'c') 
+(*e: constant Std_efunsrc.c_c *)
+(*s: constant Std_efunsrc.n_5 *)
 let n_5 = (NormalMap, Char.code '5') 
+(*e: constant Std_efunsrc.n_5 *)
 
+(*s: toplevel Std_efunsrc._2 *)
 let _ = 
   if !!global_map = [] then begin
       global_map =:= [
@@ -271,7 +293,9 @@ let _ =
         "overwrite_mode", "overwrite_mode";
       ]
     end    
+(*e: toplevel Std_efunsrc._2 *)
     
+(*s: function Std_efunsrc.init_global_map *)
 let init_global_map location = 
   
   List.iter (fun (keys, action) ->
@@ -326,9 +350,11 @@ let	xk_dead_belowdot				= 0xFE60
   add_global_key location [NormalMap, XK.xk_Pointer_Button3]
   "mouse_save_then_kill" mouse_save_then_kill;
   ()
+(*e: function Std_efunsrc.init_global_map *)
   
 open WX_filesel
 
+(*s: function Std_efunsrc.select_open_file *)
 let select_open_file frame =
   let window = frame.frm_window in
   let top_window = Window.top window in
@@ -352,16 +378,22 @@ let select_open_file frame =
           query#destroy;
       ) ());        
   query#show
+(*e: function Std_efunsrc.select_open_file *)
 
+(*s: function Std_efunsrc.compile *)
 let compile frame =
   exec_interactive (buf_interactives frame.frm_buffer) frame "compile"
+(*e: function Std_efunsrc.compile *)
 
+(*s: toplevel Std_efunsrc._3 *)
 let _ =
   define_action "select_open_file" select_open_file;
   define_action "compile" compile;
   define_action "v_cut_frame" v_cut_frame;
   ()
+(*e: toplevel Std_efunsrc._3 *)
   
+(*s: toplevel Std_efunsrc._4 *)
 let _ =
   if !!file_menu = [] then begin
       file_menu =:=    [
@@ -418,9 +450,13 @@ let _ =
       let (x,y) = button#root_coordinates in
       menu#popup_once x (y + button#height) (Some !WX_types.button_event)
       )
+(*e: toplevel Std_efunsrc._4 *)
   
+(*s: toplevel Std_efunsrc._5 *)
 let _ =
   Efuns.add_start_hook (fun location ->
       add_option_parameter location compile_find_makefile;
       add_option_parameter location Text.add_amount;
       init_global_map location)
+(*e: toplevel Std_efunsrc._5 *)
+(*e: std_efunsrc.ml *)

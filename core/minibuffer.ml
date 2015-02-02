@@ -1,3 +1,4 @@
+(*s: core/minibuffer.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -17,10 +18,15 @@ open Top_window
 open Simple
 
 
+(*s: constant Minibuffer.charreprs *)
 let charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i))
+(*e: constant Minibuffer.charreprs *)
+(*s: toplevel Minibuffer._1 *)
 let _ =
+(*e: toplevel Minibuffer._1 *)
   charreprs.(9) <- String.make !tab_size ' '
 
+(*s: function Minibuffer.buf_create *)
 let buf_create location text local_map =
   let buf =
     { 
@@ -46,8 +52,10 @@ let buf_create location text local_map =
       buf_location = location;
     } in
   buf
+(*e: function Minibuffer.buf_create *)
 
 
+(*s: function Minibuffer.kill *)
 let kill mini_frame old_frame =
   let window = mini_frame.frm_window in
   let top_window = Window.top window in
@@ -58,12 +66,16 @@ let kill mini_frame old_frame =
     Frame.unkill window old_frame;
   top_window.top_active_frame <- old_frame;
   Frame.kill mini_frame
+(*e: function Minibuffer.kill *)
 
+(*s: function Minibuffer.return *)
 let return action old_frame mini_frame =
   let repstr = Text.to_string mini_frame.frm_buffer.buf_text in
   kill mini_frame old_frame;
   action old_frame repstr
+(*e: function Minibuffer.return *)
 
+(*s: function Minibuffer.create *)
 let create frame local_map request =
   let window = frame.frm_window in
   let top_window = Window.top window in
@@ -85,14 +97,18 @@ let create frame local_map request =
     (fun mini_frame -> 
       kill mini_frame frame);
   mini_frame
+(*e: function Minibuffer.create *)
 
+(*s: function Minibuffer.create_return *)
 let create_return frame local_map request default action =
   let mini_frame = create frame local_map request in
   insert_string mini_frame default;
   Keymap.add_binding local_map [NormalMap, XK.xk_Return] 
     (return action frame);
   mini_frame
+(*e: function Minibuffer.create_return *)
 
+(*s: function Minibuffer.update_request *)
 let update_request frame request =
   let qlen = String.length request in
   let window = frame.frm_window in
@@ -105,4 +121,6 @@ let update_request frame request =
   frame.frm_xpos <- qlen;
   frame.frm_mini_buffer <- Some request;
   frame.frm_redraw <- true
+(*e: function Minibuffer.update_request *)
   
+(*e: core/minibuffer.ml *)

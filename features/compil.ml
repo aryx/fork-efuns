@@ -1,3 +1,4 @@
+(*s: features/compil.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -17,8 +18,11 @@ open Simple
 open Select
 open Multi_frames  
 
+(*s: constant Compil.compilation_frame *)
 let compilation_frame = ref None
+(*e: constant Compil.compilation_frame *)
 
+(*s: type Compil.error *)
 type error = {
 (* error location *)    
     err_filename : string;
@@ -28,10 +32,14 @@ type error = {
 (* error message *)
     err_msg : int;
   }
+(*e: type Compil.error *)
 
+(*s: constant Compil.c_error_regexp *)
 let c_error_regexp = define_option ["compil"; "error_regexp"] "" regexp_option
   (string_to_regex "^\\([^:\n]+\\):\\([0-9]+\\):.*$")
+(*e: constant Compil.c_error_regexp *)
 
+(*s: function Compil.c_find_error *)
 let c_find_error text error_point =
   let groups = 
     Text.search_forward_groups text (snd !!c_error_regexp)
@@ -46,10 +54,16 @@ let c_find_error text error_point =
     } in
   Text.fmove text error_point 1;
   error
+(*e: function Compil.c_find_error *)
 
+(*s: constant Compil.find_error *)
 let find_error = Local.create_abstr "find_error"
+(*e: constant Compil.find_error *)
+(*s: constant Compil.default_error *)
 let default_error = ref c_find_error
+(*e: constant Compil.default_error *)
   
+(*s: function Compil.next_error *)
 let next_error top_frame =
   let top_window = Window.top top_frame.frm_window in
   let location = top_window.top_location in
@@ -94,14 +108,22 @@ let next_error top_frame =
       with
         Not_found ->
           Top_window.message top_window "No more errors"
+(*e: function Compil.next_error *)
 
+(*s: constant Compil.compile_find_makefile *)
 let compile_find_makefile = define_option ["compil";"find_makefile"] ""
     bool_option true
+(*e: constant Compil.compile_find_makefile *)
   
+(*s: constant Compil.make_command *)
 let make_command = define_option ["compil";"make_command"] ""
     string_option "make -k"
+(*e: constant Compil.make_command *)
   
+(*s: constant Compil.make_hist *)
 let make_hist = ref [!!make_command]
+(*e: constant Compil.make_hist *)
+(*s: function Compil.compile *)
 let compile find_error_fun frame =
   let default = List.hd !make_hist in
   select_string frame ("Compile command: (default :"^ default^") " )
@@ -150,7 +172,9 @@ let compile find_error_fun frame =
       compilation_frame := Some (comp_frame, error_point, cdir);
       set_local buf find_error find_error_fun
   )
+(*e: function Compil.compile *)
 
+(*s: function Compil.set_compilation_buffer *)
 let set_compilation_buffer frame comp_buf cdir =
   let error_point = add_point comp_buf.buf_text in
   let window =
@@ -166,11 +190,17 @@ let set_compilation_buffer frame comp_buf cdir =
   let error_point = add_point comp_buf.buf_text in
   let comp_frame = Frame.create window None comp_buf in
   compilation_frame := Some (comp_frame, error_point, cdir)
+(*e: function Compil.set_compilation_buffer *)
   
+(*s: constant Compil.grep_command *)
 let grep_command = define_option ["compil"; "grep_command"] "" string_option
     "grep -n"
+(*e: constant Compil.grep_command *)
   
+(*s: constant Compil.grep_hist *)
 let grep_hist = ref [""]
+(*e: constant Compil.grep_hist *)
+(*s: function Compil.grep *)
 let grep frame =
   let default = List.hd !grep_hist in
   select_string frame (Printf.sprintf "Grep command: %s (default: %s) " !!grep_command default)
@@ -198,3 +228,5 @@ let grep frame =
       compilation_frame := Some (comp_frame, error_point, cdir);
       set_local buf find_error c_find_error
   )
+(*e: function Compil.grep *)
+(*e: features/compil.ml *)

@@ -1,3 +1,4 @@
+(*s: features/abbrevs.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -25,6 +26,7 @@ open Frame
 open Simple
 open Interactive
 
+(*s: function Abbrevs.escaped *)
 let escaped s =
   let n = ref 0 in
   let len = String.length s in
@@ -48,8 +50,12 @@ let escaped s =
     incr p    
   done;
   ss
+(*e: function Abbrevs.escaped *)
   
+(*s: constant Abbrevs.dabbrev_buf *)
 let dabbrev_buf = ref None
+(*e: constant Abbrevs.dabbrev_buf *)
+(*s: function Abbrevs.dabbrev_expand *)
 let dabbrev_expand frame = 
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
@@ -125,7 +131,9 @@ let dabbrev_expand frame =
         raise Not_found
   in
   iter buf pos; ()
+(*e: function Abbrevs.dabbrev_expand *)
 
+(*s: constant Abbrevs.abbrev_table *)
 let abbrev_table = Local.create "abbrev_table" 
     (fun table ->
       let s = ref "" in 
@@ -135,7 +143,9 @@ let abbrev_table = Local.create "abbrev_table"
       !s
   )
   Local.no_input
+(*e: constant Abbrevs.abbrev_table *)
   
+(*s: function Abbrevs.expand_sabbrev *)
 let expand_sabbrev frame =
   try
     let point = frame.frm_point in
@@ -156,10 +166,14 @@ let expand_sabbrev frame =
       Not_found -> fmove text point len; ()
   with
     _ -> ()
+(*e: function Abbrevs.expand_sabbrev *)
 
+(*s: toplevel Abbrevs._1 *)
 let _ =
   define_action "char_expand_abbrev" (fun frame ->
       expand_sabbrev frame; self_insert_command frame);
   define_action "dabbrev_expand" dabbrev_expand;
   ()
+(*e: toplevel Abbrevs._1 *)
   
+(*e: features/abbrevs.ml *)

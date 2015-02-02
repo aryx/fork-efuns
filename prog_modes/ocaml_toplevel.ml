@@ -1,3 +1,4 @@
+(*s: prog_modes/ocaml_toplevel.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                             Efuns                                   *)
@@ -29,6 +30,7 @@ open Compat_comp
 open Type
 open Ocaml_env
   
+(*s: function Ocaml_toplevel.type_buffer *)
 let type_buffer buf =
   let text = buf.buf_text in
   let start_point = Text.add_point text in
@@ -44,9 +46,13 @@ let type_buffer buf =
       remove_point text start_point;
       remove_point text end_point;
       raise x
+(*e: function Ocaml_toplevel.type_buffer *)
 
+(*s: constant Ocaml_toplevel.compiled_idents *)
 let compiled_idents = Local.create_abstr "compiled_idents"
+(*e: constant Ocaml_toplevel.compiled_idents *)
 
+(*s: function Ocaml_toplevel.all_idents *)
 let all_idents buf =
   try
     let (ids, version) = Local.get buf.buf_vars compiled_idents in
@@ -57,7 +63,9 @@ let all_idents buf =
       let ids = Type.iter_structure str [] GlobalDefined in
       set_local buf compiled_idents (ids, Text.version buf.buf_text);
       ids      
+(*e: function Ocaml_toplevel.all_idents *)
 
+(*s: function Ocaml_toplevel.find_value_type *)
 let find_value_type sign names =
   let rec solv sign names =
     match names with
@@ -79,7 +87,9 @@ let find_value_type sign names =
         find sign
   in
   solv sign names
+(*e: function Ocaml_toplevel.find_value_type *)
     
+(*s: function Ocaml_toplevel.print_type *)
 let print_type frame = 
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
@@ -152,9 +162,13 @@ let print_type frame =
               Not_found -> iter env
       in
       iter (find_env buf point)
+(*e: function Ocaml_toplevel.print_type *)
 
+(*s: constant Ocaml_toplevel.back_list *)
 let back_list = ref []
+(*e: constant Ocaml_toplevel.back_list *)
           
+(*s: function Ocaml_toplevel.find_implementation *)
 let find_implementation frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -212,7 +226,9 @@ let find_implementation frame =
         | Some filename -> filename
       in
       back_list := (filename,Text.get_position text point) :: !back_list
+(*e: function Ocaml_toplevel.find_implementation *)
 
+(*s: function Ocaml_toplevel.backward_implementation *)
 let rec backward_implementation frame =
   match !back_list with
     [] -> failwith "No more buffers in history"
@@ -222,17 +238,25 @@ let rec backward_implementation frame =
       let buf = Ebuffer.read location filename (Keymap.create ()) in
       let frame = Frame.create frame.frm_window None buf in
       Frame.active frame
+(*e: function Ocaml_toplevel.backward_implementation *)
       
+(*s: function Ocaml_toplevel.mouse_find_implementation *)
 let mouse_find_implementation frame =
   let frame = Top_window.mouse_set_active (Window.top frame.frm_window) in
   find_implementation frame
+(*e: function Ocaml_toplevel.mouse_find_implementation *)
   
   
 
+(*s: constant Ocaml_toplevel.mode *)
 let mode = Ebuffer.new_minor_mode "compiler" []
+(*e: constant Ocaml_toplevel.mode *)
 
+(*s: constant Ocaml_toplevel.local_map *)
 let local_map = define_option ["ocaml_compiler_mode"; "local_map"] ""
     (list_option binding_option) []
+(*e: constant Ocaml_toplevel.local_map *)
+(*s: toplevel Ocaml_toplevel._1 *)
 let _ = 
   if !!local_map = [] then 
     local_map =:= [
@@ -242,7 +266,9 @@ let _ =
     ];
   Keymap.add_binding mode.min_map [ControlMap, XK.xk_Pointer_Button1]
     mouse_find_implementation
+(*e: toplevel Ocaml_toplevel._1 *)
 
+(*s: toplevel Ocaml_toplevel._2 *)
 let _ = 
   define_buffer_action "ocaml_compiler_mode" 
     (fun buf -> 
@@ -253,6 +279,8 @@ let _ =
   define_action "ocaml_compiler_mode.find_implementation" find_implementation;
   define_action "ocaml_compiler_mode.backward_implementation" backward_implementation;
   define_action "ocaml_compiler_mode.print_type" print_type;
+(*e: toplevel Ocaml_toplevel._2 *)
 
     
     
+(*e: prog_modes/ocaml_toplevel.ml *)

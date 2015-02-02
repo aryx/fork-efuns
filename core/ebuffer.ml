@@ -1,3 +1,4 @@
+(*s: core/ebuffer.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -13,9 +14,14 @@ open Utils
 open Efuns
 open Text
 
+(*s: constant Ebuffer.create_buf_hook *)
 let create_buf_hook = Local.create_abstr "create_buf_hook"
+(*e: constant Ebuffer.create_buf_hook *)
+(*s: constant Ebuffer.modes_alist *)
 let modes_alist = Local.create_abstr "modes_alist"
+(*e: constant Ebuffer.modes_alist *)
 
+(*s: function Ebuffer.create_syntax_table *)
 let create_syntax_table ()  =
   let table = Array.create 256 false 
   in  
@@ -29,9 +35,13 @@ let create_syntax_table ()  =
     table.(i) <- true;
   done;
   table
+(*e: function Ebuffer.create_syntax_table *)
 
+(*s: constant Ebuffer.default_syntax_table *)
 let default_syntax_table = create_syntax_table ()
+(*e: constant Ebuffer.default_syntax_table *)
 
+(*s: function Ebuffer.get_name *)
 let get_name location filename =
   let basename = Filename.basename filename in
   let name = 
@@ -53,33 +63,45 @@ let get_name location filename =
   with
     Not_found -> 
       compute_name ()
+(*e: function Ebuffer.get_name *)
 
       
+(*s: function Ebuffer.new_minor_mode *)
 let new_minor_mode name = {
     min_name = name;
     min_map = Keymap.create ();
     min_hooks = [];
     min_vars = Local.vars ()
   }
+(*e: function Ebuffer.new_minor_mode *)
       
+(*s: function Ebuffer.new_minor_mode (core/ebuffer.ml) *)
 let new_minor_mode name hooks  = {
     min_name = name;
     min_map = Keymap.create ();
     min_hooks = hooks;
     min_vars = Local.vars ()
   }
+(*e: function Ebuffer.new_minor_mode (core/ebuffer.ml) *)
 
+(*s: function Ebuffer.new_major_mode *)
 let new_major_mode name hooks = {
     maj_name = name;
     maj_map = Keymap.create ();
     maj_hooks = hooks;
     maj_vars = Local.vars ();
   }
+(*e: function Ebuffer.new_major_mode *)
 
+(*s: constant Ebuffer.fondamental_mode *)
 let fondamental_mode = new_major_mode "Fondamental" []
+(*e: constant Ebuffer.fondamental_mode *)
   
+(*s: constant Ebuffer.tab_size *)
 let tab_size = ref 9
+(*e: constant Ebuffer.tab_size *)
 
+(*s: function Ebuffer.create *)
 let create location name filename text local_map =
   let name = get_name location name in
   let buf =
@@ -118,7 +140,9 @@ let create location name filename text local_map =
   in
   exec_hooks hooks buf;
   buf
+(*e: function Ebuffer.create *)
 
+(*s: function Ebuffer.kill *)
 let kill location buf =
   Hashtbl.remove location.loc_buffers buf.buf_name;
   begin
@@ -130,31 +154,41 @@ let kill location buf =
   List.iter (fun f -> f () ) buf.buf_finalizers;
   Gc.compact ();
   buf.buf_shared <- -1
+(*e: function Ebuffer.kill *)
 
 open Options
   
+(*s: constant Ebuffer.save_buffer_hooks *)
 let save_buffer_hooks = define_option ["save_buffer_hooks"] "" 
     (list_option string_option)
   [ ]
+(*e: constant Ebuffer.save_buffer_hooks *)
   
+(*s: constant Ebuffer.saved_buffer_hooks *)
 let saved_buffer_hooks = define_option ["saved_buffer_hooks"] "" 
     (list_option string_option)
   ["update_time" ]
+(*e: constant Ebuffer.saved_buffer_hooks *)
 
+(*s: function Ebuffer.exec_named_buf_hooks *)
 let rec exec_named_buf_hooks hooks frame =
   match hooks with
     [] -> ()
   | action :: hooks ->
       exec_named_buf_hooks hooks frame;
       try execute_buffer_action action frame with _ -> ()
+(*e: function Ebuffer.exec_named_buf_hooks *)
 
+(*s: function Ebuffer.exec_named_buf_hooks_with_abort *)
 let rec exec_named_buf_hooks_with_abort hooks frame =
   match hooks with
     [] -> ()
   | action :: hooks ->
       exec_named_buf_hooks_with_abort hooks frame;
       execute_buffer_action action frame
+(*e: function Ebuffer.exec_named_buf_hooks_with_abort *)
       
+(*s: function Ebuffer.save *)
 let save buf =
   exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
   let filename =
@@ -167,11 +201,15 @@ let save buf =
   close_out outc;
   buf.buf_last_saved <- version buf.buf_text;
   exec_named_buf_hooks !!saved_buffer_hooks buf
+(*e: function Ebuffer.save *)
 
 
+(*s: exception Ebuffer.Found *)
 exception Found of buffer
+(*e: exception Ebuffer.Found *)
 
   
+(*s: function Ebuffer.read *)
 let read location filename local_map =
   try
     let filename = Utils.normal_name location.loc_dirname filename in
@@ -193,7 +231,9 @@ let read location filename local_map =
         buf
   with
     Found buf -> buf
+(*e: function Ebuffer.read *)
 
+(*s: function Ebuffer.default *)
 let default location name =
   try
     Hashtbl.find location.loc_buffers name
@@ -219,13 +259,19 @@ See changes in "^ Version.efuns_lib ^"/Changes
         else ""
       in
       create location name None (Text.create str) (Keymap.create ())
+(*e: function Ebuffer.default *)
       
 
+(*s: function Ebuffer.compute_representation *)
 let compute_representation buf n =
   Text.compute_representation buf.buf_text buf.buf_charreprs n
+(*e: function Ebuffer.compute_representation *)
 
+(*s: exception Ebuffer.BufferAlreadyOpened *)
 exception BufferAlreadyOpened
+(*e: exception Ebuffer.BufferAlreadyOpened *)
 
+(*s: function Ebuffer.change_name *)
 let change_name location buf filename =
   Hashtbl.remove location.loc_buffers buf.buf_name;
   (match buf.buf_filename with
@@ -246,8 +292,10 @@ let change_name location buf filename =
   Hashtbl.add location.loc_files filename buf;
   buf.buf_filename <- Some filename;
   buf.buf_name <- name
+(*e: function Ebuffer.change_name *)
   
   
+(*s: function Ebuffer.set_mark *)
 let set_mark buf point =
   let text = buf.buf_text in
   buf.buf_modified <- buf.buf_modified + 1;
@@ -257,14 +305,18 @@ let set_mark buf point =
       buf.buf_mark <- Some mark
   | Some mark ->
       goto_point text mark point
+(*e: function Ebuffer.set_mark *)
 
+(*s: function Ebuffer.get_mark *)
 let rec get_mark buf point =
   match buf.buf_mark with
     None -> 
       set_mark buf point;
       get_mark buf point
   | Some mark -> mark
+(*e: function Ebuffer.get_mark *)
 
+(*s: function Ebuffer.remove_mark *)
 let remove_mark buf =
   match buf.buf_mark with
     None -> ()
@@ -272,22 +324,32 @@ let remove_mark buf =
       buf.buf_mark <- None;
       remove_point buf.buf_text mark;
       buf.buf_modified <- buf.buf_modified + 1
+(*e: function Ebuffer.remove_mark *)
 
+(*s: constant Ebuffer.modes_old *)
 let modes_old = ref []
+(*e: constant Ebuffer.modes_old *)
+(*s: constant Ebuffer.regexp_alist *)
 let regexp_alist = ref []
+(*e: constant Ebuffer.regexp_alist *)
 
+(*s: function Ebuffer.set_major_mode *)
 let set_major_mode buf mode =
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
   List.iter (fun f -> 
       try f buf with _ -> ()) mode.maj_hooks
+(*e: function Ebuffer.set_major_mode *)
 
+(*s: function Ebuffer.set_minor_mode *)
 let set_minor_mode buf mode =
   buf.buf_minor_modes <- mode :: buf.buf_minor_modes;
   buf.buf_modified <- buf.buf_modified + 1;
   List.iter (fun f -> 
       try f buf with _ -> ()) mode.min_hooks
+(*e: function Ebuffer.set_minor_mode *)
 
+(*s: function Ebuffer.del_minor_mode *)
 let del_minor_mode buf minor =
   buf.buf_minor_modes <- 
     List.fold_right 
@@ -298,12 +360,18 @@ let del_minor_mode buf minor =
           list
         end
       else (mode :: list)) buf.buf_minor_modes []
+(*e: function Ebuffer.del_minor_mode *)
   
+(*s: function Ebuffer.modep *)
 let modep buf minor =
   List.memq minor buf.buf_minor_modes
+(*e: function Ebuffer.modep *)
 
+(*s: constant Ebuffer.suffix_reg *)
 let suffix_reg = Str.regexp "\(.*\)<[0-9]+>$"
+(*e: constant Ebuffer.suffix_reg *)
   
+(*s: function Ebuffer.set_buffer_mode *)
 let set_buffer_mode buf =
   let buf_name = 
     match buf.buf_filename with
@@ -335,7 +403,9 @@ let set_buffer_mode buf =
     ) !regexp_alist
   with
     Exit -> ()
+(*e: function Ebuffer.set_buffer_mode *)
       
+(*s: function Ebuffer.get_binding *)
 let get_binding buf keylist =
   let binding = ref Unbound in
   try
@@ -365,7 +435,9 @@ let get_binding buf keylist =
     !binding
   with
     Exit -> !binding
+(*e: function Ebuffer.get_binding *)
 
+(*s: function Ebuffer.message *)
 let message buf m =
   let location = buf.buf_location in
   let name = "*Messages*" in
@@ -377,7 +449,9 @@ let message buf m =
       let buf = create location name None (Text.create (m^"\n")) (
           Keymap.create ())
       in ()
+(*e: function Ebuffer.message *)
 
+(*s: function Ebuffer.catch *)
 let catch format buf f =
   try
     f ()
@@ -393,11 +467,15 @@ let catch format buf f =
           let buf = create location name None (Text.create (m^"\n")) (
               Keymap.create ())
           in ()
+(*e: function Ebuffer.catch *)
           
       
+(*s: toplevel Ebuffer._1 *)
 let _ =
   Efuns.add_start_hook 
     (fun location ->
       set_global location create_buf_hook [set_buffer_mode];
       set_global location modes_alist []
       )
+(*e: toplevel Ebuffer._1 *)
+(*e: core/ebuffer.ml *)

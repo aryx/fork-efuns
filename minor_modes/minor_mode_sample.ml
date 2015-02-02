@@ -1,3 +1,4 @@
+(*s: minor_modes/minor_mode_sample.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -14,14 +15,23 @@ open Simple
 open Efuns
 open Top_window
           
+(*s: constant Minor_mode_sample.minor_mode_name *)
 let minor_mode_name = "my_minor_mode"
+(*e: constant Minor_mode_sample.minor_mode_name *)
 
+(*s: function Minor_mode_sample.install *)
 let install buf = ()
+(*e: function Minor_mode_sample.install *)
 
+(*s: function Minor_mode_sample.minor_mode_fun *)
 let minor_mode_fun frame = ()
+(*e: function Minor_mode_sample.minor_mode_fun *)
   
+(*s: constant Minor_mode_sample.mode *)
 let mode = Ebuffer.new_minor_mode  minor_mode_name [install]
+(*e: constant Minor_mode_sample.mode *)
 
+(*s: toplevel Minor_mode_sample._1 *)
 let _ = 
   List.iter
     (fun key -> 
@@ -29,7 +39,9 @@ let _ =
       minor_mode_fun
   )
   [ ]
+(*e: toplevel Minor_mode_sample._1 *)
 
+(*s: toplevel Minor_mode_sample._2 *)
 let _ = 
   define_action (minor_mode_name ^ "_mode")
     (fun frame -> 
@@ -38,5 +50,7 @@ let _ =
           Ebuffer.del_minor_mode buf mode
         end else
         Ebuffer.set_minor_mode buf mode)
+(*e: toplevel Minor_mode_sample._2 *)
     
     
+(*e: minor_modes/minor_mode_sample.ml *)

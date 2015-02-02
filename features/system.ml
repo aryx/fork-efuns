@@ -1,3 +1,4 @@
+(*s: features/system.ml *)
 open Efuns
 open Unix
 open Concur
@@ -7,6 +8,7 @@ open Simple
 open Top_window
 open Multi_frames
 
+(*s: function System.open_process *)
 let open_process cmd =
   let (in_read, in_write) = pipe() in
   let (out_read, out_write) = pipe() in
@@ -27,7 +29,9 @@ let open_process cmd =
       Unix.close out_read;
       Unix.close in_write;
       (pid,inchan, outchan)
+(*e: function System.open_process *)
 
+(*s: function System.system *)
 let system buf_name location cmd end_action =
   let (pid,inc,outc) = open_process cmd in
   let text = Text.create "" in
@@ -94,16 +98,24 @@ let system buf_name location cmd end_action =
       Concur.Thread.remove_reader ins)
   :: buf.buf_finalizers;
   buf
+(*e: function System.system *)
 
+(*s: function System.start_command *)
 let start_command buf_name window cmd =
   let top_window = Window.top window in
   let location = top_window.top_location in
   let buf = system buf_name location cmd (fun buf status -> ()) in
   let frame = Frame.create window None buf in
   frame
+(*e: function System.start_command *)
 
+(*s: constant System.shell_hist *)
 let shell_hist = ref []
+(*e: constant System.shell_hist *)
+(*s: function System.shell_command *)
 let shell_command frame =
   select_string frame "Run command:" shell_hist ""
     (fun cmd -> let _ = start_command "*Command*" (cut_frame frame) cmd in ())
+(*e: function System.shell_command *)
   
+(*e: features/system.ml *)

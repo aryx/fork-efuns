@@ -1,3 +1,4 @@
+(*s: minor_modes/accents_mode.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -15,6 +16,7 @@ open Efuns
 open Top_window
   
   (* franc;ais strict *)
+(*s: function Accents_mode.accent *)
 let accent frame =
   let key = !keypressed in
   let c = previous_char frame in
@@ -175,8 +177,10 @@ let accent frame =
       with
         Not_found ->
           insert_char frame (Char.chr key)
+(*e: function Accents_mode.accent *)
           
           
+(*s: function Accents_mode.install *)
 let install buf =
   List.iter (fun key ->
       buf.buf_syntax_table.(key) <- true)
@@ -194,9 +198,13 @@ let install buf =
     XK.xk_Odiaeresis; XK.xk_Udiaeresis;
     XK.xk_ntilde; XK.xk_atilde; XK.xk_otilde;
     XK.xk_Atilde; XK.xk_Ntilde; XK.xk_Otilde; ]
+(*e: function Accents_mode.install *)
   
+(*s: constant Accents_mode.mode *)
 let mode = Ebuffer.new_minor_mode  "accents" [install]
+(*e: constant Accents_mode.mode *)
 
+(*s: toplevel Accents_mode._1 *)
 let _ = 
   List.iter
     (fun key -> 
@@ -204,7 +212,9 @@ let _ =
   )
   [ XK.xk_apostrophe; XK.xk_grave; XK.xk_semicolon; XK.xk_asciicircum;
     XK.xk_quotedbl; XK.xk_asciitilde]
+(*e: toplevel Accents_mode._1 *)
 
+(*s: toplevel Accents_mode._2 *)
 let _ = 
   define_buffer_action "accents_mode" 
     (fun buf -> 
@@ -212,5 +222,7 @@ let _ =
           Ebuffer.del_minor_mode buf mode
         end else
         Ebuffer.set_minor_mode buf mode)
+(*e: toplevel Accents_mode._2 *)
     
     
+(*e: minor_modes/accents_mode.ml *)
