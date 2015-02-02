@@ -1,17 +1,40 @@
+# ocaml object files
+
+*.o
+*.cm*
+*.annot
+.depend
+*.so
+*.a
+
 *.opt
 *.byte
-efuns.opt.gz
+
+
+# pfff and tools
+/TAGS
+
+# lex and yacc
 ocaml_mode.ml
 tex_mode.ml
 c_mode.ml
 lisp_mode.ml
 html_mode.ml
+
+# syncweb
+.md5sum_*
+
+# binaries
 efuns.byte
 efuns
 efuns.opt
 efuns_server
 efuns_filebrowser
 efuns_texbrowser
+
+#MISC
+efuns.opt.gz
+
 *.cfg
 *.ps
 *.idx
