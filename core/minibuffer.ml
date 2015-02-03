@@ -23,8 +23,8 @@ let charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i))
 (*e: constant Minibuffer.charreprs *)
 (*s: toplevel Minibuffer._1 *)
 let _ =
-(*e: toplevel Minibuffer._1 *)
   charreprs.(9) <- String.make !tab_size ' '
+(*e: toplevel Minibuffer._1 *)
 
 (*s: function Minibuffer.buf_create *)
 let buf_create location text local_map =

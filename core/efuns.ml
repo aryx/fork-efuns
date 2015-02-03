@@ -28,6 +28,7 @@ exception UnboundKey
 type map =
   { char_map : binding array;
     mutable complex_bindings : (key * binding) list;
+
     mutable interactives : (string * (action * prefix option)) list;
   } 
 (*e: type Efuns.map *)
@@ -65,11 +66,12 @@ and binding =
 | Unbound
 (*e: type Efuns.binding *)
 
-(* a buffer containing a file in Text.t *)
 (*s: type Efuns.buffer *)
+(* a buffer containing a file in Text.t *)
 and buffer =
   { 
     mutable buf_text : Text.t;
+
     mutable buf_modified : int;
     
     mutable buf_name : string;
@@ -89,11 +91,15 @@ and buffer =
     mutable buf_point : Text.point;
     mutable buf_start : Text.point;
     mutable buf_shared : int; (* number of frames for that buffer *)
+
     mutable buf_minor_modes : minor_mode list;
     mutable buf_major_mode : major_mode;
+
     mutable buf_finalizers : (unit -> unit) list;
-    
+
+    (*: see also Loc.vars *)    
     mutable buf_vars : vars;
+
     buf_location : location;
   } 
 (*e: type Efuns.buffer *)
@@ -102,6 +108,7 @@ and buffer =
 and major_mode = {
     maj_name : string;
     maj_map : map;
+
     mutable maj_hooks : (buffer -> unit) list;
     mutable maj_vars : vars;
   }
@@ -111,18 +118,20 @@ and major_mode = {
 and minor_mode = {
     min_name : string;
     min_map : map;
+
     mutable min_hooks : (buffer -> unit) list;
     mutable min_vars : vars;
   }
 (*e: type Efuns.minor_mode *)
   
-(* a frame: a view of a buffer for a window *)
 (*s: type Efuns.frame *)
+(* a frame: a view of a buffer for a window *)
 and frame  =
   {
     mutable frm_buffer : buffer;
     mutable frm_location : location;
     mutable frm_window : window;
+
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
     
@@ -131,10 +140,14 @@ and frame  =
     mutable frm_repeat_action : int;
     mutable frm_last_action : action;
     
-    mutable frm_start : Text.point;(* first point of the first buffer-line on screen *)
-    mutable frm_end : Text.point; (* last point on screen, -1 if modified *)
-    mutable frm_y_offset : int; (* offset(+/-) of screen-lines after frm_start *)
-    mutable frm_point : Text.point; (* insert point *)
+    (* first point of the first buffer-line on screen *)
+    mutable frm_start : Text.point;
+    (* last point on screen, -1 if modified *)
+    mutable frm_end : Text.point; 
+    (* offset(+/-) of screen-lines after frm_start *)
+    mutable frm_y_offset : int; 
+    (* insert point *)
+    mutable frm_point : Text.point; 
     
     mutable frm_cursor_x : int;
     mutable frm_cursor_y : int;
@@ -148,8 +161,10 @@ and frame  =
     mutable frm_x_offset : int;
     mutable frm_cutline : int; (* max_int for no, else length *)
     
-    mutable frm_has_scrollbar : int;(* 0 for no scrollbar, 2 for scrollbar *)
-    mutable frm_has_status_line : int;(* 0 for minibuffer, 1 for normal frame *)
+    (* 0 for no scrollbar, 2 for scrollbar *)
+    mutable frm_has_scrollbar : int;
+    (* 0 for minibuffer, 1 for normal frame *)
+    mutable frm_has_status_line : int;
     mutable frm_status : status;    
     
     mutable frm_xpos : int;
@@ -202,24 +217,28 @@ and line_repr =
   } 
 (*e: type Efuns.line_repr *)
 
-(* an xterm: a window containing some frames *)
 (*s: type Efuns.top_window *)
+(* an xterm: a window containing some frames *)
 and top_window = 
   { mutable top_location : location;
-    mutable top_display : WX_xterm.xterm_display option;
-    mutable top_xterm : WX_xterm.xterm_window option;
-    mutable top_term : WX_xterm.t;
-    top_attrs : WX_xterm.xterm_gc option array;
+
     mutable top_windows : window;
+
     mutable top_mini_buffers : frame list;
+
     mutable top_width : int;
     mutable top_height : int;
     mutable top_name : string;
     mutable top_active_frame : frame;
     mutable top_second_cursor : frame option;
+
     mutable top_root : WX_root.t;
     mutable top_appli : WX_appli.t;
     mutable top_scrollbar : WX_adjust.t;
+    mutable top_display : WX_xterm.xterm_display option;
+    mutable top_xterm : WX_xterm.xterm_window option;
+    mutable top_term : WX_xterm.t;
+    top_attrs : WX_xterm.xterm_gc option array;
   } 
 (*e: type Efuns.top_window *)
 
@@ -230,8 +249,10 @@ and window =
     mutable win_ypos : int;
     mutable win_width : int;
     mutable win_height : int;
+
     mutable win_down : window_down;
     mutable win_up : window_up;
+
     mutable win_mini : bool;
   } 
 (*e: type Efuns.window *)
@@ -254,23 +275,27 @@ and window_down =
 and location =
   { 
     loc_map : map;
+
     mutable loc_windows : top_window list;
+
     mutable loc_buffers : (string, buffer) Hashtbl.t;
     mutable loc_files : (string, buffer) Hashtbl.t;
+
     mutable loc_dirname : string;
+
     mutable loc_width : int;
     mutable loc_height : int;
     mutable loc_fg : string;
     mutable loc_bg : string;
     mutable loc_font : string;
+
     loc_vars : vars;
     mutable loc_counter : int;
-(*    
-    loc_vars_table : (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t;
-  *)  
+
     loc_fonts : (string,int) Hashtbl.t;
     loc_fonts_names : string array;
     mutable loc_fonts_n : int;
+
     loc_colors : (string,int) Hashtbl.t;
     loc_colors_names : string array;
     mutable loc_colors_n : int;
@@ -296,7 +321,6 @@ type to_regexp =
 
 (*s: constant Efuns.start_hooks *)
 (* Les hooks de lancement apres le chargement d'un module *)
-
 let start_hooks = ref []
 (*e: constant Efuns.start_hooks *)
 (*s: function Efuns.add_start_hook *)
@@ -422,9 +446,8 @@ let height = ref 27
 let no_init = ref false
 (*e: constant Efuns.no_init *)
   
-(*s: constant Efuns.xdefaults *)
 (*--------------------    Ressources *)
-
+(*s: constant Efuns.xdefaults *)
 let xdefaults = try Sys.getenv "XUSERFILESEARCHPATH" with
     Not_found -> Filename.concat Utils.homedir ".Xdefaults"
 (*e: constant Efuns.xdefaults *)
@@ -463,9 +486,8 @@ let t = x_res
   print_newline () 
 *)
   
-(*s: constant Efuns.width_opt *)
 (*--------------------    Arguments *)
-
+(*s: constant Efuns.width_opt *)
 let width_opt = ref None
 (*e: constant Efuns.width_opt *)
 (*s: constant Efuns.height_opt *)
@@ -489,26 +511,29 @@ let check = ref false
   Arg.parse [
     "-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
     "--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
+
     "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
     "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
+
     "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
-    "-check", Arg.Set check, ": only for testing";
     "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
     "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+
+    "-check", Arg.Set check, ": only for testing";
+
     "-q", Arg.Set no_init,": Don't load init files";
     "-I",Arg.String (fun s -> load_path =:= 
         (string_to_path s) @ !!load_path), "<path>: Load Path";
     "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";
+
     "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
   ] (fun name -> init_files := name :: !init_files) 
   "A small editor entirely written in Objective Caml 
-(*e: toplevel Efuns._3 *)
-by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
-  http ://pauillac.inria.fr/efuns
-
-Options :
+   by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
+   http ://pauillac.inria.fr/efuns
+   Options :
   " 
-  
+(*e: toplevel Efuns._3 *)
 (*s: toplevel Efuns._4 *)
 let _ =
   Options.filename := 
@@ -543,8 +568,10 @@ let _ =
   (match !width_opt with None -> () | Some color -> width =:= color);
   (match !height_opt with None -> () | Some color -> height =:= color)  
 (*e: toplevel Efuns._5 *)
-    
+
+(*s: global Efuns.actions *)
 let (actions : (string, generic_action) Hashtbl.t) = Hashtbl.create 63
+(*e: global Efuns.actions *)
 
 (*s: function Efuns.define_action *)
 let define_action action_name action_fun =

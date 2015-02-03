@@ -66,8 +66,8 @@ let keysym_to_value k =
   Value (List.assoc k XK.keysym_to_name)
 (*e: function Simple.keysym_to_value *)
   
-  (* form: SC-Button1 *)
 (*s: function Simple.value_to_key *)
+(* form: SC-Button1 *)
 let value_to_key v =
   match v with 
     Value s -> 
@@ -281,8 +281,8 @@ let last_insert = ref None
 let kill_string str =
   Array.blit kill_ring 0 kill_ring 1 (kill_max - 1);
   incr kill_size;
-(*e: function Simple.kill_string *)
   kill_ring.(0) <- str
+(*e: function Simple.kill_string *)
 
 
 (*s: function Simple.kill_text *)
@@ -830,13 +830,13 @@ let highlight_paren frame =
 (*e: function Simple.highlight_paren *)
   
   
-  (* C'est tout simple. On arrive dans cette fonction quand on est en train
-  de bouger la souris avec le bouton appuyer. La frame courante est donc 
-  correcte. On peut utiliser la position de la souris pour trouver la 
-  nouvelle position du curseur dans la frame. Si on en sort, on peut
-  ou prendre la derniere position, ou la premiere.
-  *)
 (*s: function Simple.mouse_drag_region *)
+(* C'est tout simple. On arrive dans cette fonction quand on est en train
+de bouger la souris avec le bouton appuyer. La frame courante est donc 
+correcte. On peut utiliser la position de la souris pour trouver la 
+nouvelle position du curseur dans la frame. Si on en sort, on peut
+ou prendre la derniere position, ou la premiere.
+*)
 let mouse_drag_region frame =
   let top_window = Window.top frame.frm_window in
   let point = frame.frm_point in
@@ -1259,18 +1259,6 @@ let add_parameter location (name : string) (input : string -> 'a)
     (try get_global location parameters_var with _ -> []))
 (*e: function Simple.add_parameter *)
 
-  (*
-external id : 'a -> 'a = "%identity"
-let add_string_parameter location name param = 
-  add_parameter location name id id param
-let add_int_parameter location name param = 
-  add_parameter location name int_of_string string_of_int param
-let add_float_parameter location name param = 
-  add_parameter location name float_of_string string_of_float param
-let add_bool_parameter location name param = 
-  add_parameter location name bool_of_string string_of_bool param
-    *)
-
 (*s: function Simple.add_option_parameter *)
 let add_option_parameter location option =
   add_parameter location (shortname option)
@@ -1345,6 +1333,5 @@ let _ =
       set_global location line_comment ""
   )
 (*e: toplevel Simple._1 *)
-
   
 (*e: features/simple.ml *)

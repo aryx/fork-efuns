@@ -30,9 +30,11 @@ type vars = Obj.t ref Vars.t ref
 let vars () = ref Vars.empty
 (*e: function Local.vars *)
 
+(*s: global Local.vars_table *)
 let (vars_table :
     (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t)
   = Hashtbl.create 203
+(*e: global Local.vars_table *)
 
 (*s: function Local.create *)
 let create name print input =

@@ -103,12 +103,13 @@ type text = {
     mutable text_clean : bool;
     
     mutable text_readonly : bool;
+
     mutable text_history : action list;
   } 
 (*e: type Text.text *)
   
 (*s: type Text.action *)
-and  action =
+and action =
   Insertion of int * int * int
 | Deletion of int * string * int
 | Session of action list
@@ -132,8 +133,7 @@ type t = tree tree_desc
 (*e: type Text.t *)
 
 external id: t -> tree tree_desc = "%identity"
-  
-(*s: function Text.version *)
+
 (*
 let print msg text =
   let s = text.text_string in
@@ -153,6 +153,8 @@ let print_newlines text =
   print_newline ()
 *)
 
+  
+(*s: function Text.version *)
 let version tree = 
     let text = tree.tree_text in    
   text.text_modified
@@ -1041,6 +1043,7 @@ let repr_string = ref ""
 let repr_size = ref 0
 (*e: constant Text.repr_size *)
 
+(*s: constant Text.dummy_line *)
 let (dummy_line : line) = 
   {
     position = max_int;
@@ -1051,11 +1054,10 @@ let (dummy_line : line) =
     line_hlt = 0;
     items = [||];
   } 
-
+(*e: constant Text.dummy_line *)
   
 (*s: constant Text.tabreprs *)
 let tabreprs = [|
-(*e: constant Text.tabreprs *)
     "         ";
     "        ";
     "       ";
@@ -1067,6 +1069,7 @@ let tabreprs = [|
     " ";
     ""
   |]
+(*e: constant Text.tabreprs *)
       
 (*s: function Text.compute_representation *)
 (* On devrait reprendre la representation la ou elle est ... *)

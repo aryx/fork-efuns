@@ -10,8 +10,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-
-
 open Options
 open Utils
 open Interactive
@@ -43,63 +41,70 @@ let fondamental_mode frame =
   
 (*s: toplevel Std_efunsrc._1 *)
 let _ =
-  define_action "fill_paragraph" fill_paragraph;
-  define_action "save_options" save_options;
-  define_action "fondamental_mode" fondamental_mode;
-  define_action "replace_string" replace_string;
-  define_action "replace_regexp" replace_regexp;
-  define_action "query_replace_string" query_replace_string;
-  define_action "query_replace_regexp" query_replace_regexp;
-  define_action "load_library" load_library;
-  define_action "get_position" get_pos;
-  define_action "open_display" open_display;
-(*  define_action "compile" (compile c_find_error); *)
-  define_action "grep" grep;
-  define_action "goto_line" goto_line;
-  define_action "goto_char" goto_char;
-  define_action "unset_attr" unset_attr;
-  define_action "eval" Complex.eval;  
-  define_action "start_server" Server.start;  
-  define_action "delete_before_point"  
-    delete_backspace_char;
-  define_action "insert_return"  insert_return;
-  define_action "forward_line"  forward_line;  
+  (*s: actions definitions *)
+  (* ----------------------------------------------------------------------- *)
+  (* Navigating *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: navigating actions *)
+  define_action "move_backward"  (fun frame -> ignore (move_backward frame 1));
+  define_action "move_forward"   (fun frame -> ignore (move_forward frame 1));
+
+  define_action "backward_word"  (to_frame backward_word);
+  define_action "forward_word"  (to_frame forward_word);  
+
+  define_action "beginning_of_line"  beginning_of_line;
+  define_action "end_of_line"  end_of_line;
+
   define_action "backward-line"  backward_line;
+  define_action "forward_line"  forward_line;  
+
+  define_action "backward_paragraph"  (to_frame backward_paragraph);
+  define_action "forward_paragraph"  (to_frame forward_paragraph);  
+
   define_action "backward_screen"  backward_screen;
   define_action "forward_screen"  forward_screen;
-  
-  define_action "backward_paragraph"  (to_frame backward_paragraph);
-  define_action "kill_region"  kill_region;
-  define_action "forward_paragraph"  (to_frame forward_paragraph);  
-  define_action "beginning_of_line"  beginning_of_line;
-  define_action "delete_at_point"  delete_char;
-  define_action "move_backward"  (fun frame -> ignore (move_backward frame 1));
-  define_action "move_forward"  
-    (fun frame -> ignore (move_forward frame 1));
-  define_action "end_of_line"  end_of_line;
-  define_action "kill_end_of_line"  kill_end_of_line;
-  define_action "isearch_forward"  isearch_forward    ;
-  define_action "isearch_backward"  isearch_backward    ;
-  define_action "undo"  undo;
-  define_action "forward_word"  (to_frame forward_word);  
-  define_action "backward_word"  (to_frame backward_word);
-  define_action "end_of_file"  end_of_file;
-  define_action "begin_of_file"  begin_of_file;
-  define_action "insert_killed"  insert_killed;
-  define_action "mark_at_point"  mark_at_point;
-  define_action "recenter"  recenter;
-  define_action "transpose_chars"  (to_frame transpose_chars);
-  define_action "hungry_electric_delete"  hungry_electric_delete;
 
-  define_action "isearch_forward_regexp"  isearch_forward_regexp;
-  define_action "isearch_backward_regexp"  isearch_backward_regexp;
+  define_action "begin_of_file"  begin_of_file;
+  define_action "end_of_file"  end_of_file;
+
+  define_action "goto_char" goto_char;
+  define_action "goto_line" goto_line;
+  (*e: navigating actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Inserting *)
+  (* ----------------------------------------------------------------------- *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Deleting *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: deleting actions *)
+  define_action "delete_before_point"  delete_backspace_char;
+  define_action "delete_at_point"  delete_char;
+
   define_action "delete_forward_word"  (to_frame delete_forward_word);
   define_action "delete_backward_word"  (to_frame delete_backward_word);
-  define_action "call_interactive"  call_interactive;
-  define_action "shell_command"  shell_command;
+
+  define_action "kill_end_of_line"  kill_end_of_line;
+  (*e: deleting actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Moving (Cut, copy, paste) *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: moving actions *)
+  define_action "mark_at_point"  mark_at_point;
+  define_action "kill_region"  kill_region;
+  define_action "insert_killed"  insert_killed;
   define_action "insert_next_killed"  insert_next_killed;
-  define_action "transpose_words"  
-  (to_frame transpose_words);
+  (*e: moving actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Transforming *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: transforming actions *)
+  define_action "transpose_chars"  (to_frame transpose_chars);
+
+  define_action "transpose_words"  (to_frame transpose_words);
   define_action "lowercase_word" 
     (fun frame ->
       let buf = frame.frm_buffer in
@@ -110,42 +115,161 @@ let _ =
       let buf = frame.frm_buffer in
       let point = frame.frm_point in
       on_word buf point String.uppercase);
+
+  define_action "fill_paragraph" fill_paragraph;
+  (*e: transforming actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Replacing *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: replacing actions *)
+  define_action "replace_string" replace_string;
+  define_action "replace_regexp" replace_regexp;
+  define_action "query_replace_string" query_replace_string;
+  define_action "query_replace_regexp" query_replace_regexp;
+  (*e: replacing actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Searching *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: searching actions *)
+  define_action "isearch_forward"  isearch_forward;
+  define_action "isearch_backward"  isearch_backward;
+  define_action "isearch_forward_regexp"  isearch_forward_regexp;
+  define_action "isearch_backward_regexp"  isearch_backward_regexp;
+  (*e: searching actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Undoing *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: undoing actions *)
+  define_action "undo"  undo;
+  (*e: undoing actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* External commands *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: external command actions *)
+  define_action "shell_command"  shell_command;
+  (*x: external command actions *)
+  define_action "grep" grep;
+  (*  define_action "compile" (compile c_find_error); *)
+  (*e: external command actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Buffers/windows/frames *)
+  (* ----------------------------------------------------------------------- *)
+
+  (*s: buffer navigating actions *)
+  (* C-M map *)
+  define_action "left_buffer"  left_buffer;
+  (* C-M map *)
+  define_action "right_buffer"  right_buffer;
+  (* C-M map *)
+  define_action "down_buffer"  down_buffer;
+  (* C-M map *)
+  define_action "up_buffer"  up_buffer;
+  (*e: buffer navigating actions *)
+
+  (*s: window managment actions *)
+  (* C-x 5 map *)
+  define_action "window_load_buffer"  window_load_buffer;
+  (* C-x 5 map *)
+  define_action "window_change_buffer"  window_change_buffer;
+  (* C-x 5 map *)
+  define_action "delete_window"  Top_window.delete_window;
+  (*e: window managment actions *)
+
+  (*s: frame managment actions *)
+  (* C-x map *)
+  define_action "vertical_cut_frame"  v_cut_frame;    
+  (* C-x map *)
+  define_action "horizontal_cut_frame"  h_cut_frame;    
+  (* C-x map *)
+  define_action "one_frame"  one_frame;
+  (* C-x map *)
+  define_action "delete_frame"  delete_frame;
+  (*e: frame managment actions *)
+
+  (*s: buffer managment actions *)
+  (* C-x map *)
+  define_action "kill_buffer"  kill_buffer;
+  (*e: buffer managment actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Meta *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: meta actions *)
+  define_action "call_interactive"  call_interactive;
+  define_action "eval" Complex.eval;  
+  (*e: meta actions *)
+
+  (* ----------------------------------------------------------------------- *)
+  (* Loading *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: loading actions *)
+  (* C-x map *)
+  define_action "load_buffer"  load_buffer;
+  (* C-x map *)
+  define_action "insert_file"  insert_file;
+  (*e: loading actions *)
+  define_action "load_library" load_library;
+
+  (* ----------------------------------------------------------------------- *)
+  (* Saving *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: saving actions *)
+  (* C-x map *)
+  define_action "save_buffer"  save_buffer; 
+  (* C-x map *)
+  define_action "save_some_buffers"  save_some_buffers;
+
+  (* C-x map *)
+  define_action "write_file"  write_buffer; 
+  (*e: saving actions *)
+
+  define_action "save_options" save_options;
+
+  (* ----------------------------------------------------------------------- *)
+  (* Misc *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: misc actions *)
+  define_action "fondamental_mode" fondamental_mode;
+  define_action "get_position" get_pos;
+  define_action "open_display" open_display;
+  define_action "unset_attr" unset_attr;
+  define_action "start_server" Server.start;  
+  define_action "insert_return"  insert_return;
+  define_action "recenter"  recenter;
+  define_action "hungry_electric_delete"  hungry_electric_delete;
   define_action "revert_buffer" reload;
   define_action "check_file" check_file;
-  define_buffer_action "update_time" update_time;
-(* C-x map *)
-  define_action "load_buffer"  load_buffer;
-  define_action "insert_file"  insert_file;
-  define_action "exit"  exit_efuns; 
-  define_action "change_buffer"  change_buffer;
-  define_action "change_font"  change_font;
-  define_action "vertical_cut_frame"  v_cut_frame;    
-  define_action "horizontal_cut_frame"  h_cut_frame;    
-  define_action "one_frame"  one_frame;
-  define_action "delete_frame"  delete_frame;
-  define_action "next_frame"  next_frame;
-  define_action "kill_buffer"  kill_buffer;
-  define_action "save_buffer"  save_buffer; 
-  define_action "next_error"  next_error;
-  define_action "write_file"  write_buffer; 
-  define_action "save_some_buffers"  save_some_buffers;
-  define_action "point_at_mark"  point_at_mark;
-  
-(* C-x 5 map *)
-  define_action "window_load_buffer"  window_load_buffer;
-  define_action "window_change_buffer"  window_change_buffer;
-  define_action "delete_window"  Top_window.delete_window;
 
-(* C-h map *)
+  define_buffer_action "update_time" update_time;
+
+  (* C-x map *)
+  define_action "change_buffer"  change_buffer;
+  (* C-x map *)
+  define_action "change_font"  change_font;
+
+  (* C-x map *)
+  define_action "next_frame"  next_frame;
+
+  (* C-x map *)
+  define_action "next_error"  next_error;
+  (* C-x map *)
+  define_action "point_at_mark"  point_at_mark;
+
+  (* C-x map *)
+  define_action "exit"  exit_efuns; 
+
+  (* C-h map *)
   define_action "help_bindings"  Frame.bindings_help;
 
-    (* C-M map *)
-  define_action "left_buffer"  left_buffer;
-  define_action "right_buffer"  right_buffer;
-  define_action "down_buffer"  down_buffer;
-  define_action "up_buffer"  up_buffer;
+  (* C-M map *)
   define_action "next_hole" next_hole;
-  
+  (*e: misc actions *)
+  (*e: actions definitions *)
   ()
 (*e: toplevel Std_efunsrc._1 *)
   
