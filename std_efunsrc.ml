@@ -46,11 +46,11 @@ let compile frame =
 
 (*s: function Std_efunsrc.select_open_file *)
 let select_open_file frame =
-  failwith "TODO"
-(*
   let window = frame.frm_window in
   let top_window = Window.top window in
   let cdir = Frame.current_dir frame in
+  failwith "TODO"
+(*
   let info = {
       filter = Filename.concat cdir "*";
       current_selection = cdir;

@@ -79,14 +79,11 @@ and buffer =
     mutable buf_text : Text.t;
     mutable buf_name : string;
     mutable buf_filename : string option;
+
     (*s: [[Efuns.buffer]] other fields *)
     mutable buf_modified : int;
     
     mutable buf_last_saved : int;
-
-    mutable buf_history : (int * Text.action) list;
-
-
 
     mutable buf_sync : bool;
     mutable buf_mark : Text.point option;
@@ -94,15 +91,11 @@ and buffer =
     mutable buf_start : Text.point;
     mutable buf_shared : int; (* number of frames for that buffer *)
 
-    mutable buf_major_mode : major_mode;
-    mutable buf_minor_modes : minor_mode list;
-
     mutable buf_finalizers : (unit -> unit) list;
-
-
-    buf_location : location;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_charreprs : string array; (* 256 array *)
+    (*x: [[Efuns.buffer]] other fields *)
+    buf_location : location;
     (*x: [[Efuns.buffer]] other fields *)
     buf_map : map;
     (*x: [[Efuns.buffer]] other fields *)
@@ -112,6 +105,12 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     (*: see also Loc.vars *)    
     mutable buf_vars : vars;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_history : (int * Text.action) list;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_major_mode : major_mode;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_minor_modes : minor_mode list;
     (*e: [[Efuns.buffer]] other fields *)
   } 
 (*e: type Efuns.buffer *)
@@ -144,8 +143,6 @@ and frame  =
     mutable frm_window : window;
 
     (*s: [[Efuns.frame]] other fields *)
-    mutable frm_location : location;
-
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
 
@@ -190,6 +187,8 @@ and frame  =
     mutable frm_killed : bool;
     mutable frm_mini_buffer : string option;
     mutable frm_redraw : bool;    
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_location : location;
     (*e: [[Efuns.frame]] other fields *)
   } 
 (*e: type Efuns.frame *)
@@ -235,19 +234,19 @@ and line_repr =
 (*s: type Efuns.top_window *)
 (* an xterm: a window containing some frames *)
 and top_window = 
-  { mutable top_location : location;
-
-    mutable top_windows : window;
-
-    mutable top_mini_buffers : frame list;
-
+  { 
     mutable top_width : int;
     mutable top_height : int;
 
+    mutable top_windows : window;
+
+    (*s: [[Efuns.top_window]] other fields *)
     mutable top_name : string;
     mutable top_active_frame : frame;
     mutable top_second_cursor : frame option;
-(*:
+
+    mutable top_mini_buffers : frame list;
+    (*
     mutable top_root : WX_root.t;
     mutable top_appli : WX_appli.t;
     mutable top_scrollbar : WX_adjust.t;
@@ -255,7 +254,10 @@ and top_window =
     mutable top_xterm : WX_xterm.xterm_window option;
     mutable top_term : WX_xterm.t;
     top_attrs : WX_xterm.xterm_gc option array;
-*)
+    *)
+    (*x: [[Efuns.top_window]] other fields *)
+    mutable top_location : location;
+    (*e: [[Efuns.top_window]] other fields *)
   } 
 (*e: type Efuns.top_window *)
 
@@ -552,12 +554,14 @@ let _ =
   "-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
   "--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
 
-  "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
-  "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
+   (*s: [[main()]] command line options *)
+   "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
+   "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
 
-  "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
-  "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
-  "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+   "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
+   "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
+   "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+   (*e: [[main()]] command line options *)
 
   "-check", Arg.Set check, ": only for testing";
 

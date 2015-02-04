@@ -395,8 +395,7 @@ let menus = define_option ["menus"] ""
   []
 (*e: constant Top_window.menus *)
 (*s: constant Top_window.file_menu *)
-let file_menu = define_option ["file_menu"] ""
-    (list_option string2_option) []
+let file_menu = define_option ["file_menu"] "" (list_option string2_option) []
 (*e: constant Top_window.file_menu *)
 (*s: constant Top_window.edit_menu *)
 let edit_menu = define_option ["edit_menu"] ""

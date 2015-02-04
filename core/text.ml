@@ -123,7 +123,7 @@ type text = {
     mutable text_clean : bool;
 
     mutable text_readonly : bool;
-
+    (*x: [[Text.text]] other fields *)
     mutable text_history : action list;
     (*e: [[Text.text]] other fields *)
   } 

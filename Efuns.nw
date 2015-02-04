@@ -199,8 +199,8 @@ License.
 
 %emacs:
 % extensible => open source, external commands
-% customizable => meta, configuration file
-% self-documenting => not really yet?
+% customizable => configuration file
+% self-documenting => not really yet? M-x a bit
 
 % interactive!
 
@@ -255,9 +255,8 @@ mutable text_modified : int;
 mutable text_clean : bool;
 
 mutable text_readonly : bool;
-
-mutable text_history : action list;
 @
+
 
 <<type Text.point>>=
 and point = {
@@ -405,11 +404,12 @@ and buffer =
     mutable buf_text : Text.t;
     mutable buf_name : string;
     mutable buf_filename : string option;
+
     <<[[Efuns.buffer]] other fields>>
   } 
 @
-% note that major mode is a property of the buffer! not the frame.
-
+% string option because have some buffers like *Messages*
+% that are not connected to a file
 
 
 <<[[Efuns.buffer]] other fields>>=
@@ -417,24 +417,15 @@ mutable buf_modified : int;
     
 mutable buf_last_saved : int;
 
-mutable buf_history : (int * Text.action) list;
-
-
-
 mutable buf_sync : bool;
 mutable buf_mark : Text.point option;
 mutable buf_point : Text.point;
 mutable buf_start : Text.point;
 mutable buf_shared : int; (* number of frames for that buffer *)
 
-mutable buf_major_mode : major_mode;
-mutable buf_minor_modes : minor_mode list;
-
 mutable buf_finalizers : (unit -> unit) list;
-
-
-buf_location : location;
 @
+
 
 <<function Ebuffer.create>>=
 let create location name filename text local_map =
@@ -561,29 +552,34 @@ let create_at_top xpos ypos width height =
 <<type Efuns.top_window>>=
 (* an xterm: a window containing some frames *)
 and top_window = 
-  { mutable top_location : location;
-
-    mutable top_windows : window;
-
-    mutable top_mini_buffers : frame list;
-
+  { 
     mutable top_width : int;
     mutable top_height : int;
 
-    mutable top_name : string;
-    mutable top_active_frame : frame;
-    mutable top_second_cursor : frame option;
-(*:
-    mutable top_root : WX_root.t;
-    mutable top_appli : WX_appli.t;
-    mutable top_scrollbar : WX_adjust.t;
-    mutable top_display : WX_xterm.xterm_display option;
-    mutable top_xterm : WX_xterm.xterm_window option;
-    mutable top_term : WX_xterm.t;
-    top_attrs : WX_xterm.xterm_gc option array;
-*)
+    mutable top_windows : window;
+
+    <<[[Efuns.top_window]] other fields>>
   } 
 @
+
+%XXX
+<<[[Efuns.top_window]] other fields>>=
+mutable top_name : string;
+mutable top_active_frame : frame;
+mutable top_second_cursor : frame option;
+
+mutable top_mini_buffers : frame list;
+(*
+mutable top_root : WX_root.t;
+mutable top_appli : WX_appli.t;
+mutable top_scrollbar : WX_adjust.t;
+mutable top_display : WX_xterm.xterm_display option;
+mutable top_xterm : WX_xterm.xterm_window option;
+mutable top_term : WX_xterm.t;
+top_attrs : WX_xterm.xterm_gc option array;
+*)
+@
+
 
 
 
@@ -612,8 +608,6 @@ and frame  =
 
 %XXX
 <<[[Efuns.frame]] other fields>>=
-mutable frm_location : location;
-
 mutable frm_last_text_updated : int;
 mutable frm_last_buf_updated : int;
 
@@ -756,6 +750,23 @@ and location =
 %    loc_vars_table : (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t;
 %  *)  
 
+
+
+
+<<[[Efuns.buffer]] other fields>>=
+buf_location : location;
+@
+
+<<[[Efuns.top_window]] other fields>>=
+mutable top_location : location;
+@
+
+% so can access the global world info from a frame
+%todo: but what if location was global, then even easier
+% to access global info
+<<[[Efuns.frame]] other fields>>=
+mutable frm_location : location;
+@
 
 
 
@@ -1489,12 +1500,7 @@ let _ =
   "-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
   "--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
 
-  "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
-  "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
-
-  "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
-  "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
-  "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+   <<[[main()]] command line options>>
 
   "-check", Arg.Set check, ": only for testing";
 
@@ -1541,6 +1547,15 @@ let fg_opt = ref None
 let bg_opt = ref None
 @
 
+<<[[main()]] command line options>>=
+"-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
+"-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
+
+"-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
+"-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
+"-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+@
+
 <<toplevel Efuns._5>>=
 let _ =
   (match !fg_opt with None -> () | Some color -> foreground =:= color);
@@ -1560,6 +1575,7 @@ let no_init = ref false
 <<constant Efuns.init_files>>=
 let init_files = ref []
 @
+% dead?
 
 <<toplevel Efuns._4>>=
 let _ =
@@ -1598,7 +1614,7 @@ let init (location : location) =
 @
 
 
-\chapter{Main Frame}
+\chapter{Main Window}
 
 % menu
 % windows/frames with buffers
@@ -1617,8 +1633,7 @@ let _ =
 \subsection{File menu}
 
 <<constant Top_window.file_menu>>=
-let file_menu = define_option ["file_menu"] ""
-    (list_option string2_option) []
+let file_menu = define_option ["file_menu"] "" (list_option string2_option) []
 @
 
 <<[[Std_efunsrc]] file menu setup>>=
@@ -1634,7 +1649,7 @@ if !!file_menu = [] then begin
     ]
   end;
 @
-
+% cool, everything is configurable :)
 
 \subsubsection{Opening a file}
 
@@ -1644,11 +1659,11 @@ define_action "select_open_file" select_open_file;
 
 <<function Std_efunsrc.select_open_file>>=
 let select_open_file frame =
-  failwith "TODO"
-(*
   let window = frame.frm_window in
   let top_window = Window.top window in
   let cdir = Frame.current_dir frame in
+  failwith "TODO"
+(*
   let info = {
       filter = Filename.concat cdir "*";
       current_selection = cdir;
@@ -1678,7 +1693,6 @@ let select_open_file frame =
 <<saving keys>>=
 [c_x; ControlMap, Char.code 's'], "save_buffer"; 
 @
-
 <<saving actions>>=
 (* C-x map *)
 define_action "save_buffer"  save_buffer; 
@@ -1698,7 +1712,6 @@ let save_buffer frame =
 <<buffer managment keys>>=
 [c_x; NormalMap, Char.code 'k'], "kill_buffer";
 @
-
 <<buffer managment actions>>=
 (* C-x map *)
 define_action "kill_buffer"  kill_buffer;
@@ -1712,7 +1725,8 @@ let kill_buffer frame =
   let buf = frame.frm_buffer in
   let new_buf = next_buffer location buf in
   let new_frame = Frame.create window None new_buf in
-  if buf.buf_shared = 0 then Ebuffer.kill location buf
+  if buf.buf_shared = 0 
+  then Ebuffer.kill location buf
 @
 
 \subsubsection{Exit}
@@ -3947,6 +3961,14 @@ let undo frame =
   Text.fmove text point len; ()
 @
 
+<<[[Text.text]] other fields>>=
+mutable text_history : action list;
+@
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_history : (int * Text.action) list;
+@
+
 \subsection{Helpers}
 
 
@@ -3999,6 +4021,12 @@ let undo tree =
 
 
 \chapter{Major Modes}
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_major_mode : major_mode;
+@
+% note that major mode is a property of the buffer! not the frame.
+
 
 <<type Efuns.major_mode>>=
 and major_mode = {
@@ -4123,6 +4151,10 @@ Local.get buf.buf_major_mode.maj_vars var
 @
 
 \chapter{Minor Modes}
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_minor_modes : minor_mode list;
+@
 
 <<type Efuns.minor_mode>>=
 and minor_mode = {
