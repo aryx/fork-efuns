@@ -33,8 +33,9 @@ type map =
   } 
 (*e: type Efuns.map *)
 
+and keySym = int
 (*s: type Efuns.key *)
-and key = mod_ident * Xtypes.keySym
+and key = mod_ident * (*Xtypes.*)keySym
 (*e: type Efuns.key *)
 
 (*s: type Efuns.action *)
@@ -231,7 +232,7 @@ and top_window =
     mutable top_name : string;
     mutable top_active_frame : frame;
     mutable top_second_cursor : frame option;
-
+(*:
     mutable top_root : WX_root.t;
     mutable top_appli : WX_appli.t;
     mutable top_scrollbar : WX_adjust.t;
@@ -239,6 +240,7 @@ and top_window =
     mutable top_xterm : WX_xterm.xterm_window option;
     mutable top_term : WX_xterm.t;
     top_attrs : WX_xterm.xterm_gc option array;
+*)
   } 
 (*e: type Efuns.top_window *)
 
@@ -300,7 +302,7 @@ and location =
     loc_colors_names : string array;
     mutable loc_colors_n : int;
     
-    loc_mutex : Concur.Mutex.t;
+(*    loc_mutex : Concur.Mutex.t; *)
   } 
 (*e: type Efuns.location *)
 
@@ -413,15 +415,18 @@ let load_path = define_option ["efuns_path"]
 (*e: constant Efuns.load_path *)
 
 (*s: constant Efuns.path *)
-let path = Dyneval.load_path
+let path = (*Dyneval.load_path*) ref []
 (*e: constant Efuns.path *)
   
 (*s: constant Efuns.efuns_path *)
 let efuns_path = [ 
       (Filename.concat homedir ".efuns") ;
-      Version.efuns_lib ; 
+(*:
+      Version.efuns_lib; 
       Version.installdir; 
-      Version.ocamllib]
+      Version.ocamllib
+*)
+  ]
 (*e: constant Efuns.efuns_path *)
   
 (*s: toplevel Efuns._1 *)
@@ -457,9 +462,10 @@ let resname = ["Efuns";"efuns"]
 (*e: constant Efuns.resname *)
 
 (*s: constant Efuns.x_res *)
-let x_res = Xrm.create ()
+(*let x_res = Xrm.create ()*)
 (*e: constant Efuns.x_res *)
 (*s: toplevel Efuns._2 *)
+(*
 let _ =
   begin    
     try
@@ -476,10 +482,11 @@ let _ =
     with _ -> ()
   end;
   Xrm.safe_load x_res xdefaults
+*)
 (*e: toplevel Efuns._2 *)
   
 (*s: constant Efuns.t *)
-let t = x_res
+(*let t = x_res*)
 (*e: constant Efuns.t *)
   (*
   let _ = Printf.printf "%d %d %s %s %s" !width !height !font !fg !bg; 
@@ -524,7 +531,7 @@ let check = ref false
     "-q", Arg.Set no_init,": Don't load init files";
     "-I",Arg.String (fun s -> load_path =:= 
         (string_to_path s) @ !!load_path), "<path>: Load Path";
-    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";
+(*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
 
     "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
   ] (fun name -> init_files := name :: !init_files) 

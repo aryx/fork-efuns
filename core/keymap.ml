@@ -34,6 +34,9 @@ let create () =
   } 
 (*e: function Keymap.create *)
 
+
+let keysym_to_name = []
+
 (*s: function Keymap.print_key *)
 let print_key (map,keysym) =
   let prefix =
@@ -45,7 +48,7 @@ let print_key (map,keysym) =
   in
   let kname =
     try
-      List.assoc keysym XK.keysym_to_name
+      List.assoc keysym (*XK.*)keysym_to_name
     with
       Not_found -> "?"
   in

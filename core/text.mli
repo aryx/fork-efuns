@@ -11,6 +11,19 @@
 
 exception ReadOnlyBuffer
 
+(* from WX *)
+type font = string
+type color = string
+type item =
+  String of item_attr list * int
+| RealString of item_attr list * string
+
+and item_attr =
+  Font of font
+| Foreground of color
+| Background of color
+
+
 type position = int
 type delta = int
 
@@ -38,7 +51,7 @@ type line =
     mutable repr_len : int;
     mutable repr_string : string;
     mutable line_hlt : int;
-    mutable items : WX_text.item array;
+    mutable items : (*WX_text.*)item array;
   }
 
 
@@ -124,6 +137,7 @@ val toggle_readonly : t -> unit
 val add_amount : int Options.option_record
 val compare : t -> point -> point -> int
 
+(*:
 module TextTree :
   sig
     type 'a tree_desc
@@ -200,3 +214,4 @@ module TextTree :
   end
 
 external id: t -> TextTree.tree TextTree.tree_desc = "%identity"
+*)

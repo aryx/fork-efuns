@@ -38,7 +38,7 @@ let location = {
     loc_colors_names = Array.create 256 "";
     loc_colors_n = 0;
     
-    loc_mutex = Concur.Mutex.create ()
+(*    loc_mutex = Concur.Mutex.create ()*)
 } 
 (*e: constant Main.location *)
 
@@ -88,27 +88,28 @@ let _ =
   
   
 (*s: constant Main.dpy_oo *)
-let dpy_oo = new WX_display.t !displayname
+(*let dpy_oo = new WX_display.t !displayname*)
 (*e: constant Main.dpy_oo *)
 (*s: constant Main.root_oo *)
-let root_oo = new WX_root.t dpy_oo 0
+(*let root_oo = new WX_root.t dpy_oo 0*)
 (*e: constant Main.root_oo *)
 (*s: constant Main.display *)
-let display = WX_xterm.create_display root_oo
+(*let display = WX_xterm.create_display root_oo
   location.loc_colors_names location.loc_fonts_names 
+*)
 (*e: constant Main.display *)
 (*s: constant Main.top_window *)
-let top_window = Top_window.create location display
+(*let top_window = Top_window.create location display*)
 (*e: constant Main.top_window *)
   
 (*s: toplevel Main._4 *)
+(*
 let _ =
   WX_xterm.setHighlight display 2;
   Dyneval.init true;
   Eval.load top_window "Efunsrc";
   Efuns.init location; (* launch second hooks *)
   let _ = Interactive.create_bindings location in
-
 (* open the fisrt buffers *)
   List.iter (fun name ->
     let _ = Frame.load_file top_window.top_windows name in ()) 
@@ -135,5 +136,6 @@ let _ =
       SigInt -> loop ()
   in
   loop ()
+*)
 (*e: toplevel Main._4 *)
 (*e: main.ml *)

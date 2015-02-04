@@ -7,6 +7,30 @@
 ##############################################################################
 TOP=$(shell pwd)
 
+CMIS=\
+ commons2/utils.cmi\
+ commons2/options.cmi\
+ core/text.cmi\
+ misc/local.cmi\
+
+SRC=\
+ commons2/utils.ml\
+ commons2/log.ml\
+ commons2/str2.ml\
+ commons2/options.ml\
+ core/text.ml\
+ misc/local.ml\
+ core/efuns.ml\
+ core/keymap.ml\
+ core/window.ml\
+ main.ml
+
+TARGET=efuns
+
+SYSLIBS=unix.cma str.cma
+
+INCLUDEDIRS=commons2 core misc
+
 ##############################################################################
 # Generic variables
 ##############################################################################
@@ -15,6 +39,22 @@ TOP=$(shell pwd)
 ##############################################################################
 # Top rules
 ##############################################################################
+.PHONY:: all all.opt opt top clean distclean
+
+all:: $(CMIS)
+	$(MAKE) $(TARGET) 
+
+opt:
+	$(MAKE) $(TARGET).opt
+
+$(TARGET): $(LIBS) $(OBJS)
+	$(OCAMLC) $(BYTECODE_STATIC) -o $@ $(SYSLIBS) $^
+
+$(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS) 
+	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa)  $^
+
+clean::
+	rm -f $(CMIS) $(OBJS)
 
 ##############################################################################
 # Developer rules
