@@ -87,8 +87,6 @@ and buffer =
     mutable buf_history : (int * Text.action) list;
 
 
-    mutable buf_map_partial : bool;
-    buf_map : map;
 
     mutable buf_sync : bool;
     mutable buf_mark : Text.point option;
@@ -105,6 +103,10 @@ and buffer =
     buf_location : location;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_charreprs : string array; (* 256 array *)
+    (*x: [[Efuns.buffer]] other fields *)
+    buf_map : map;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_map_partial : bool;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_syntax_table : bool array;
     (*x: [[Efuns.buffer]] other fields *)
@@ -292,15 +294,17 @@ and window_down =
 (*s: type Efuns.location *)
 and location =
   { 
-    loc_map : map;
-
-    mutable loc_windows : top_window list;
-
+    (* key is buffer name *)
     mutable loc_buffers : (string, buffer) Hashtbl.t;
+    (* key is filename *)
     mutable loc_files : (string, buffer) Hashtbl.t;
+
+    (* list??*)
+    mutable loc_windows : top_window list;
 
     mutable loc_dirname : string;
 
+    (* general look, configurable via -xxx command line options or .efunsrc *)
     mutable loc_width : int;
     mutable loc_height : int;
 
@@ -319,7 +323,9 @@ and location =
     loc_colors_names : string array;
     mutable loc_colors_n : int;
 
-    (*    loc_mutex : Concur.Mutex.t; *)
+    (* loc_mutex : Concur.Mutex.t; *)
+    (*x: [[Efuns.location]] other fields *)
+    loc_map : map;
     (*x: [[Efuns.location]] other fields *)
     loc_vars : vars;
     (*e: [[Efuns.location]] other fields *)

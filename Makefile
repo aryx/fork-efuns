@@ -91,7 +91,7 @@ clean::
 	rm -f $(CMIS) $(OBJS)
 
 depend::
-	$(OCAMLDEP) */*.mli */*.ml > .depend
+	$(OCAMLDEP) */*.mli */*.ml >> .depend
 
 
 ##############################################################################

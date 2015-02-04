@@ -411,6 +411,7 @@ and buffer =
 % note that major mode is a property of the buffer! not the frame.
 
 
+
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_modified : int;
     
@@ -419,8 +420,6 @@ mutable buf_last_saved : int;
 mutable buf_history : (int * Text.action) list;
 
 
-mutable buf_map_partial : bool;
-buf_map : map;
 
 mutable buf_sync : bool;
 mutable buf_mark : Text.point option;
@@ -724,6 +723,89 @@ let create_without_top location window mini buf =
 @
 
 
+\section{Full state}
+
+% called location in lefessant's terminology
+
+%(* the world *)
+<<type Efuns.location>>=
+and location =
+  { 
+    (* key is buffer name *)
+    mutable loc_buffers : (string, buffer) Hashtbl.t;
+    (* key is filename *)
+    mutable loc_files : (string, buffer) Hashtbl.t;
+
+    (* list??*)
+    mutable loc_windows : top_window list;
+
+    mutable loc_dirname : string;
+
+    (* general look, configurable via -xxx command line options or .efunsrc *)
+    mutable loc_width : int;
+    mutable loc_height : int;
+
+    mutable loc_fg : string;
+    mutable loc_bg : string;
+    mutable loc_font : string;
+
+    <<[[Efuns.location]] other fields>>
+  } 
+@
+%(*    
+%    loc_vars_table : (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t;
+%  *)  
+
+
+
+
+<<[[Efuns.location]] other fields>>=
+mutable loc_counter : int;
+
+loc_fonts : (string,int) Hashtbl.t;
+loc_fonts_names : string array;
+mutable loc_fonts_n : int;
+
+loc_colors : (string,int) Hashtbl.t;
+loc_colors_names : string array;
+mutable loc_colors_n : int;
+
+(* loc_mutex : Concur.Mutex.t; *)
+@
+
+
+<<constant Main.location>>=
+let location = {
+    loc_map = Keymap.create ();
+    loc_windows = [];
+    loc_buffers = Hashtbl.create 13;
+    loc_files = Hashtbl.create 13;
+    loc_dirname = Sys.getcwd ();
+
+    loc_width = !!width;
+    loc_height = !!height;
+
+    loc_fg = !!foreground;
+    loc_bg = !!background;
+    loc_font = !!font;
+
+    loc_vars = Local.vars ();
+    loc_counter = 0;
+    
+    loc_fonts = Hashtbl.create 37;
+    loc_fonts_names = Array.create 256 "";
+    loc_fonts_n = 0;
+
+    loc_colors = Hashtbl.create 37;
+    loc_colors_names = Array.create 256 "";
+    loc_colors_n = 0;
+    
+(*    loc_mutex = Concur.Mutex.create ()*)
+} 
+@
+
+
+
 \section{Actions}
 
 <<type Efuns.action>>=
@@ -911,7 +993,7 @@ define_action "change_font"  change_font;
 
 
 
-\section{Keyboard map}
+\section{Keyboard maps}
 % mv later?
 
 % like for variables, different maps:
@@ -962,6 +1044,15 @@ let create () =
 @
 
 
+<<[[Efuns.buffer]] other fields>>=
+buf_map : map;
+@
+
+<<[[Efuns.location]] other fields>>=
+loc_map : map;
+@
+
+
 <<function Ebuffer.get_binding>>=
 let get_binding buf keylist =
   let binding = ref Unbound in
@@ -978,6 +1069,23 @@ let get_binding buf keylist =
   with
     Exit -> !binding
 @
+
+%\section{Partial maps}
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_map_partial : bool;
+@
+% but always true no?
+
+<<[[Ebuffer.get_binding()]] if partial map>>=
+if buf.buf_map_partial then
+  (let b = Keymap.get_binding buf.buf_location.loc_map keylist in
+    match b with
+      Prefix map -> binding := b;
+    | Function f -> binding := b; raise Exit
+    | Unbound -> ());
+@
+
 
 
 <<constant Std_efunsrc.global_map>>=
@@ -1240,86 +1348,6 @@ let create_syntax_table ()  =
 <<constant Ebuffer.default_syntax_table>>=
 let default_syntax_table = create_syntax_table ()
 @
-
-\section{Full state}
-
-% called location in lefessant's terminology
-
-%(* the world *)
-<<type Efuns.location>>=
-and location =
-  { 
-    loc_map : map;
-
-    mutable loc_windows : top_window list;
-
-    mutable loc_buffers : (string, buffer) Hashtbl.t;
-    mutable loc_files : (string, buffer) Hashtbl.t;
-
-    mutable loc_dirname : string;
-
-    mutable loc_width : int;
-    mutable loc_height : int;
-
-    mutable loc_fg : string;
-    mutable loc_bg : string;
-    mutable loc_font : string;
-
-    <<[[Efuns.location]] other fields>>
-  } 
-@
-%(*    
-%    loc_vars_table : (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t;
-%  *)  
-
-
-
-<<[[Efuns.location]] other fields>>=
-mutable loc_counter : int;
-
-loc_fonts : (string,int) Hashtbl.t;
-loc_fonts_names : string array;
-mutable loc_fonts_n : int;
-
-loc_colors : (string,int) Hashtbl.t;
-loc_colors_names : string array;
-mutable loc_colors_n : int;
-
-(*    loc_mutex : Concur.Mutex.t; *)
-@
-
-
-<<constant Main.location>>=
-let location = {
-    loc_map = Keymap.create ();
-    loc_windows = [];
-    loc_buffers = Hashtbl.create 13;
-    loc_files = Hashtbl.create 13;
-    loc_dirname = Sys.getcwd ();
-
-    loc_width = !!width;
-    loc_height = !!height;
-
-    loc_fg = !!foreground;
-    loc_bg = !!background;
-    loc_font = !!font;
-
-    loc_vars = Local.vars ();
-    loc_counter = 0;
-    
-    loc_fonts = Hashtbl.create 37;
-    loc_fonts_names = Array.create 256 "";
-    loc_fonts_n = 0;
-
-    loc_colors = Hashtbl.create 37;
-    loc_colors_names = Array.create 256 "";
-    loc_colors_n = 0;
-    
-(*    loc_mutex = Concur.Mutex.create ()*)
-} 
-@
-
-
 
 \section{Variables}
 % actually have polymorphic variables!
@@ -2839,16 +2867,6 @@ let add_global_key location = interactive location.loc_map
 let add_local_key buf = interactive buf.buf_map 
 @
 
-\section{Partial maps}
-
-<<[[Ebuffer.get_binding()]] if partial map>>=
-if buf.buf_map_partial then
-  (let b = Keymap.get_binding buf.buf_location.loc_map keylist in
-    match b with
-      Prefix map -> binding := b;
-    | Function f -> binding := b; raise Exit
-    | Unbound -> ());
-@
 
 \chapter{Mouse}
 
