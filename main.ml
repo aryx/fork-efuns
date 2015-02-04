@@ -23,17 +23,21 @@ let location = {
     loc_buffers = Hashtbl.create 13;
     loc_files = Hashtbl.create 13;
     loc_dirname = Sys.getcwd ();
+
     loc_width = !!width;
     loc_height = !!height;
+
     loc_fg = !!foreground;
     loc_bg = !!background;
     loc_font = !!font;
+
     loc_vars = Local.vars ();
     loc_counter = 0;
     
     loc_fonts = Hashtbl.create 37;
     loc_fonts_names = Array.create 256 "";
     loc_fonts_n = 0;
+
     loc_colors = Hashtbl.create 37;
     loc_colors_names = Array.create 256 "";
     loc_colors_n = 0;

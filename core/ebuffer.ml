@@ -106,10 +106,11 @@ let create location name filename text local_map =
   let name = get_name location name in
   let buf =
     { 
-      buf_modified = 0;
       buf_text = text;
       buf_name = name;
       buf_filename = filename;
+
+      buf_modified = 0;
       buf_last_saved = version text;
       buf_history = [];
       buf_charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i));
@@ -128,12 +129,14 @@ let create location name filename text local_map =
       buf_major_mode = fondamental_mode;
     } in
   Hashtbl.add location.loc_buffers name buf;
+
   for i=0 to 25 do
     let s = String.make 2 '^' in
     s.[1] <- Char.chr (97+i);    
     buf.buf_charreprs.(i) <- s
   done;
   buf.buf_charreprs.(9) <- String.make !tab_size ' ';
+
   let hooks =  try
       get_global location create_buf_hook
     with Not_found -> []
@@ -412,6 +415,7 @@ let set_buffer_mode buf =
 let get_binding buf keylist =
   let binding = ref Unbound in
   try
+    (*s: [[Ebuffer.get_binding()]] minor mode key search *)
     List.iter (fun minor ->
         let b = Keymap.get_binding minor.min_map keylist in
         match b with
@@ -419,22 +423,27 @@ let get_binding buf keylist =
         | Function f -> binding := b; raise Exit
         | Unbound -> ()
     ) buf.buf_minor_modes; 
+    (*e: [[Ebuffer.get_binding()]] minor mode key search *)
+    (*s: [[Ebuffer.get_binding()]] major mode key search *)
     (let b = Keymap.get_binding buf.buf_major_mode.maj_map keylist in
       match b with
         Prefix map -> binding := b
       | Function f -> binding := b; raise Exit
       | Unbound -> ());
+    (*e: [[Ebuffer.get_binding()]] major mode key search *)
     (let b = Keymap.get_binding buf.buf_map keylist in
       match b with
         Prefix map -> binding := b;
       | Function f -> binding := b; raise Exit
       | Unbound -> ());
+    (*s: [[Ebuffer.get_binding()]] if partial map *)
     if buf.buf_map_partial then
       (let b = Keymap.get_binding buf.buf_location.loc_map keylist in
         match b with
           Prefix map -> binding := b;
         | Function f -> binding := b; raise Exit
         | Unbound -> ());
+    (*e: [[Ebuffer.get_binding()]] if partial map *)
     !binding
   with
     Exit -> !binding

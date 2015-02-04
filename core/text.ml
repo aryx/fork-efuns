@@ -104,24 +104,28 @@ and repr =
 (*s: type Text.text *)
 type text = {
     mutable text_string : string;
+    mutable text_size : int; (* String.length text.text_string *)
+    (*s: [[Text.text]] other fields *)
     mutable text_attrs : int array;
-    mutable text_size : int;
-    
+
     mutable text_points : point list;
-    
+
+    (* g ?? *)
     mutable text_gpoint : int;
     mutable text_gline : int;
     mutable text_gsize : int;
-    
+
     mutable text_newlines : line array;
-    mutable text_nlines : int;
-    
+    mutable text_nlines : int; (* Array.length text.text_newlines *)
+
+    (* version *)    
     mutable text_modified : int;
     mutable text_clean : bool;
-    
+
     mutable text_readonly : bool;
 
     mutable text_history : action list;
+    (*e: [[Text.text]] other fields *)
   } 
 (*e: type Text.text *)
   
@@ -156,7 +160,9 @@ type tree_desc =
         mutable tree_modified: bool;
         mutable line_height: int;
         mutable line_width: int;
-        mutable tree_text: text }
+
+        mutable tree_text: text 
+}
 let make_text _tree _array =
   failwith "TODO"
 type t = tree_desc
@@ -189,19 +195,19 @@ let print_newlines text =
   
 (*s: function Text.version *)
 let version tree = 
-    let text = tree.tree_text in    
+  let text = tree.tree_text in
   text.text_modified
 (*e: function Text.version *)
   
 (*s: function Text.nbre_lines *)
 let nbre_lines tree = 
-  let text = tree.tree_text in    
+  let text = tree.tree_text in
   text.text_nlines - 2
 (*e: function Text.nbre_lines *)
   
 (*s: function Text.size *)
 let size tree = 
-  let text = tree.tree_text in    
+  let text = tree.tree_text in
   text.text_size - text.text_gsize
 (*e: function Text.size *)
   
@@ -573,11 +579,12 @@ let create str =
   let newlines = compute_newlines str in
   let nlines = Array.length newlines in
   let attrs = (Array.create (String.length str) direct_attr) in
-  let rec text =
+  let text =
     {
       text_string = str;
-      text_attrs = attrs;
       text_size = String.length str;
+
+      text_attrs = attrs;
       
       text_points = [];
       

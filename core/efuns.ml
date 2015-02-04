@@ -26,10 +26,15 @@ exception UnboundKey
 
 (*s: type Efuns.map *)
 type map =
-  { char_map : binding array;
+  { 
+    (* 256 array, one character simple key = one action *)
+    char_map : binding array;
+    (* complex key, possible sub maps *)
     mutable complex_bindings : (key * binding) list;
 
+    (*s: [[Efuns.map]] other fields *)
     mutable interactives : (string * (action * prefix option)) list;
+    (*e: [[Efuns.map]] other fields *)
   } 
 (*e: type Efuns.map *)
 
@@ -72,36 +77,40 @@ and binding =
 and buffer =
   { 
     mutable buf_text : Text.t;
-
-    mutable buf_modified : int;
-    
     mutable buf_name : string;
     mutable buf_filename : string option;
+    (*s: [[Efuns.buffer]] other fields *)
+    mutable buf_modified : int;
+    
     mutable buf_last_saved : int;
-    
+
     mutable buf_history : (int * Text.action) list;
-    
-    mutable buf_charreprs : string array;
-    mutable buf_syntax_table : bool array;
-    
+
+
     mutable buf_map_partial : bool;
     buf_map : map;
-    
+
     mutable buf_sync : bool;
     mutable buf_mark : Text.point option;
     mutable buf_point : Text.point;
     mutable buf_start : Text.point;
     mutable buf_shared : int; (* number of frames for that buffer *)
 
-    mutable buf_minor_modes : minor_mode list;
     mutable buf_major_mode : major_mode;
+    mutable buf_minor_modes : minor_mode list;
 
     mutable buf_finalizers : (unit -> unit) list;
 
-    (*: see also Loc.vars *)    
-    mutable buf_vars : vars;
 
     buf_location : location;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_charreprs : string array; (* 256 array *)
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_syntax_table : bool array;
+    (*x: [[Efuns.buffer]] other fields *)
+    (*: see also Loc.vars *)    
+    mutable buf_vars : vars;
+    (*e: [[Efuns.buffer]] other fields *)
   } 
 (*e: type Efuns.buffer *)
 
@@ -130,17 +139,19 @@ and minor_mode = {
 and frame  =
   {
     mutable frm_buffer : buffer;
-    mutable frm_location : location;
     mutable frm_window : window;
+
+    (*s: [[Efuns.frame]] other fields *)
+    mutable frm_location : location;
 
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
-    
+
     mutable frm_prefix : key list;
-    
+
     mutable frm_repeat_action : int;
     mutable frm_last_action : action;
-    
+
     (* first point of the first buffer-line on screen *)
     mutable frm_start : Text.point;
     (* last point on screen, -1 if modified *)
@@ -149,34 +160,35 @@ and frame  =
     mutable frm_y_offset : int; 
     (* insert point *)
     mutable frm_point : Text.point; 
-    
+
     mutable frm_cursor_x : int;
     mutable frm_cursor_y : int;
     mutable frm_cursor : string;
     mutable frm_cursor_attr : Text.attribute;
-    
+
     mutable frm_force_point : bool;
     mutable frm_force_start : bool;
     mutable frm_force_cursor : bool;
-    
+
     mutable frm_x_offset : int;
     mutable frm_cutline : int; (* max_int for no, else length *)
-    
+
     (* 0 for no scrollbar, 2 for scrollbar *)
     mutable frm_has_scrollbar : int;
     (* 0 for minibuffer, 1 for normal frame *)
     mutable frm_has_status_line : int;
     mutable frm_status : status;    
-    
+
     mutable frm_xpos : int;
     mutable frm_ypos : int;
     mutable frm_width : int;
     mutable frm_height : int;
-    
+
     mutable frm_table : line_repr array;
     mutable frm_killed : bool;
     mutable frm_mini_buffer : string option;
     mutable frm_redraw : bool;    
+    (*e: [[Efuns.frame]] other fields *)
   } 
 (*e: type Efuns.frame *)
 
@@ -229,6 +241,7 @@ and top_window =
 
     mutable top_width : int;
     mutable top_height : int;
+
     mutable top_name : string;
     mutable top_active_frame : frame;
     mutable top_second_cursor : frame option;
@@ -249,13 +262,16 @@ and window =
   { 
     mutable win_xpos : int;
     mutable win_ypos : int;
+
     mutable win_width : int;
     mutable win_height : int;
 
+    (*s: [[Efuns.window]] other fields *)
     mutable win_down : window_down;
     mutable win_up : window_up;
 
     mutable win_mini : bool;
+    (*e: [[Efuns.window]] other fields *)
   } 
 (*e: type Efuns.window *)
 
@@ -287,11 +303,12 @@ and location =
 
     mutable loc_width : int;
     mutable loc_height : int;
+
     mutable loc_fg : string;
     mutable loc_bg : string;
     mutable loc_font : string;
 
-    loc_vars : vars;
+    (*s: [[Efuns.location]] other fields *)
     mutable loc_counter : int;
 
     loc_fonts : (string,int) Hashtbl.t;
@@ -301,8 +318,11 @@ and location =
     loc_colors : (string,int) Hashtbl.t;
     loc_colors_names : string array;
     mutable loc_colors_n : int;
-    
-(*    loc_mutex : Concur.Mutex.t; *)
+
+    (*    loc_mutex : Concur.Mutex.t; *)
+    (*x: [[Efuns.location]] other fields *)
+    loc_vars : vars;
+    (*e: [[Efuns.location]] other fields *)
   } 
 (*e: type Efuns.location *)
 
@@ -326,7 +346,8 @@ type to_regexp =
 let start_hooks = ref []
 (*e: constant Efuns.start_hooks *)
 (*s: function Efuns.add_start_hook *)
-let add_start_hook hook = start_hooks := hook :: !start_hooks
+let add_start_hook hook = 
+  start_hooks := hook :: !start_hooks
 (*e: function Efuns.add_start_hook *)
 
 (*s: function Efuns.init *)
@@ -353,19 +374,27 @@ let set_local buf var value = Local.set buf.buf_vars var value
 (*e: function Efuns.set_local *)
 (*s: function Efuns.get_var *)
 let get_var buf var = 
-  try Local.get buf.buf_vars var with Not_found ->
-      try
-        Local.get buf.buf_major_mode.maj_vars var with
-        Not_found ->
-          let rec iter list =
-            match list with
-              [] -> Local.get buf.buf_location.loc_vars var
-            | min :: list -> 
-                try
-                  Local.get min.min_vars var
-                with _ -> iter list
-          in
-          iter buf.buf_minor_modes
+  try Local.get buf.buf_vars var 
+  with Not_found ->
+    try 
+      (*s: [[Efuns.get_var()]] try with major mode variables *)
+      Local.get buf.buf_major_mode.maj_vars var
+      (*e: [[Efuns.get_var()]] try with major mode variables *)
+    with Not_found ->
+      try 
+        (*s: [[Efuns.get_var()]] try with minor mode variables *)
+        let rec iter list =
+          match list with
+            [] -> raise Not_found
+          | min :: list -> 
+              try
+                Local.get min.min_vars var
+              with _ -> iter list
+        in
+        iter buf.buf_minor_modes
+        (*e: [[Efuns.get_var()]] try with minor mode variables *)
+      with Not_found ->
+          Local.get buf.buf_location.loc_vars var
 (*e: function Efuns.get_var *)
           
 (*s: function Efuns.get_global *)
@@ -393,9 +422,7 @@ let rec exec_hooks hooks arg =
 
 (*s: function Efuns.add_hook *)
 let add_hook location hook_var hook =
-  let tail = try
-      get_global location hook_var
-    with _ -> [] in
+  let tail = try get_global location hook_var with _ -> [] in
   set_global location hook_var (hook :: tail)
 (*e: function Efuns.add_hook *)
   
@@ -514,27 +541,28 @@ let check = ref false
 (*e: constant Efuns.check *)
   
 (*s: toplevel Efuns._3 *)
-  let _ =
-  Arg.parse [
-    "-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
-    "--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
+let _ =
+ Arg.parse [
+  "-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
+  "--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
 
-    "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
-    "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
+  "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
+  "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
 
-    "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
-    "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
-    "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+  "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
+  "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
+  "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
 
-    "-check", Arg.Set check, ": only for testing";
+  "-check", Arg.Set check, ": only for testing";
 
-    "-q", Arg.Set no_init,": Don't load init files";
-    "-I",Arg.String (fun s -> load_path =:= 
-        (string_to_path s) @ !!load_path), "<path>: Load Path";
-(*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
+  "-q", Arg.Set no_init,": Don't load init files";
+  "-I",Arg.String (fun s -> load_path =:= 
+      (string_to_path s) @ !!load_path), "<path>: Load Path";
+ (*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
 
-    "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
-  ] (fun name -> init_files := name :: !init_files) 
+  "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
+ ] 
+ (fun name -> init_files := name :: !init_files) 
   "A small editor entirely written in Objective Caml 
    by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
    http ://pauillac.inria.fr/efuns
@@ -544,8 +572,8 @@ let check = ref false
 (*s: toplevel Efuns._4 *)
 let _ =
   Options.filename := 
-  (try Utils.find_in_path (Utils.homedir :: !!load_path) ".efunsrc" with
-      _ -> Filename.concat Utils.homedir ".efunsrc");
+   (try Utils.find_in_path (Utils.homedir :: !!load_path) ".efunsrc" 
+    with _ -> Filename.concat Utils.homedir ".efunsrc");
   (try Options.init () with _ -> ())
 (*e: toplevel Efuns._4 *)
 
@@ -582,19 +610,23 @@ let (actions : (string, generic_action) Hashtbl.t) = Hashtbl.create 63
 
 (*s: function Efuns.define_action *)
 let define_action action_name action_fun =
+  (*s: sanity check action defined twice *)
   (try ignore (Hashtbl.find actions action_name);
       Printf.printf "Warning: action \"%s\" defined twice" action_name;
       print_newline ();
     with _ -> ());
+  (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (FrameAction action_fun)
 (*e: function Efuns.define_action *)
 
 (*s: function Efuns.define_buffer_action *)
 let define_buffer_action action_name action_fun =
+  (*s: sanity check action defined twice *)
   (try ignore (Hashtbl.find actions action_name);
       Printf.printf "Warning: action \"%s\" defined twice" action_name;
       print_newline ();
     with _ -> ());
+  (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (BufferAction action_fun)
 (*e: function Efuns.define_buffer_action *)
 

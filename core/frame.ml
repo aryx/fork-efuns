@@ -182,6 +182,7 @@ let create_without_top location window mini buf =
   let point = Text.dup_point buf.buf_text buf.buf_point in
   buf.buf_shared <- buf.buf_shared + 1;
 
+  (*s: [[Frame.create_without_top()]] let status *)
   let status = {
       status_string = String.make 256 '-';
       status_modified = true;
@@ -194,12 +195,15 @@ let create_without_top location window mini buf =
       stat_modes = [];
       stat_mode = dummy_mode;
     } in
-
   String.blit editname 0 status.status_string 5 (String.length editname);
-  let rec frame =
+  (*e: [[Frame.create_without_top()]] let status *)
+
+  let frame =
     { frm_buffer = buf;
-      frm_location = location;
       frm_window = window;
+
+      frm_location = location;
+
       frm_last_text_updated = 0;
       frm_last_buf_updated = 0;
       
@@ -238,8 +242,11 @@ let create_without_top location window mini buf =
       frm_redraw = true;
     } 
   in
+  (*s: [[Frame.create_without_top()]] adjust status of frame *)
   status_name frame buf.buf_name;
   status_major_mode frame;
+  (*e: [[Frame.create_without_top()]] adjust status of frame *)
+
   install window frame;
   frame
 (*e: function Frame.create_without_top *)

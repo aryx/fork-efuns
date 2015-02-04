@@ -323,9 +323,7 @@ let _ =
   
   
 (*s: constant Std_efunsrc.global_map *)
-let global_map = define_option ["global_map"] "" 
-    (list_option binding_option) 
-  []
+let global_map = define_option ["global_map"] "" (list_option binding_option) []
 (*e: constant Std_efunsrc.global_map *)
 
 (*s: constant Std_efunsrc.interactives_map *)
@@ -521,8 +519,6 @@ let _ =
         (* Misc *)
         (* ----------------------------------------------------------------------- *)
         (*s: misc keys *)
-        [c_h; NormalMap, Char.code 'K'], "help_bindings";
-        (*x: misc keys *)
         [NormalMap, XK.xk_Insert], "overwrite_mode";
         [ControlMap, Char.code 'l'], "recenter";
 
@@ -530,6 +526,8 @@ let _ =
         [c_x; NormalMap, Char.code 'F'], "change_font";
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
+        (*x: misc keys *)
+        [c_h; NormalMap, Char.code 'K'], "help_bindings";
         (*x: misc keys *)
         [c_x; ControlMap, Char.code 'c'], "exit"; 
         (*x: misc keys *)

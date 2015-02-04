@@ -31,8 +31,10 @@ let create mini up_window xpos ypos width height =
   {
   win_xpos = xpos;
   win_ypos = ypos;
+
   win_width = width;
   win_height = height;
+
   win_down = NoFrame (); 
   win_up = up_window;
   win_mini = mini;
