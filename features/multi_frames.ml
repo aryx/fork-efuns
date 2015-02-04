@@ -47,13 +47,15 @@ let remove_frame frame =
 
 (*s: function Multi_frames.v_cut_frame *)
 let v_cut_frame frame =
-  if frame.frm_mini_buffer = None then
+  if frame.frm_mini_buffer = None 
+  then
     let _ = Frame.create (cut_frame frame) None frame.frm_buffer in ()
 (*e: function Multi_frames.v_cut_frame *)
 
 (*s: function Multi_frames.h_cut_frame *)
 let h_cut_frame frame =
-  if frame.frm_mini_buffer = None then
+  if frame.frm_mini_buffer = None 
+  then
     let window = frame.frm_window in
     if window.win_width > 10 then
       let wi = window.win_width / 2 in
@@ -70,7 +72,8 @@ let h_cut_frame frame =
 
 (*s: function Multi_frames.delete_frame *)
 let delete_frame frame =
-  if frame.frm_mini_buffer = None then
+  if frame.frm_mini_buffer = None 
+  then
     let window = frame.frm_window in
     match window.win_up with
       TopWindow _ -> ()
@@ -81,7 +84,8 @@ let delete_frame frame =
 
 (*s: function Multi_frames.one_frame *)
 let one_frame frame =
-  if frame.frm_mini_buffer = None then
+  if frame.frm_mini_buffer = None 
+  then
     let window = frame.frm_window in
     let top_window = Window.top window in
     if not (top_window.top_windows == window) then

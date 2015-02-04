@@ -963,7 +963,7 @@ let kill_buffer frame =
   let location = top_window.top_location in
   let buf = frame.frm_buffer in
   let new_buf = next_buffer location buf in
-  let new_frame = Frame.create window None new_buf in
+  let _new_frame = Frame.create window None new_buf in
   if buf.buf_shared = 0 
   then Ebuffer.kill location buf
 (*e: function Simple.kill_buffer *)

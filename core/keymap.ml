@@ -94,7 +94,7 @@ let rec get_binding map keylist =
       end
   | key :: tail ->
       match
-        match key with
+        (match key with
           (NormalMap,key) when key >= 0 && key < 256 -> 
             map.char_map.(key)
         | _ -> 
@@ -102,6 +102,7 @@ let rec get_binding map keylist =
               List.assoc key map.complex_bindings
             with
               Not_found -> Unbound
+        )
       with
         Prefix map -> get_binding map tail
       | _ -> Unbound
@@ -186,10 +187,12 @@ let add_interactive map name f =
 (*e: function Keymap.add_interactive *)
 
 (*s: function Keymap.add_global_key *)
-let add_global_key location = interactive location.loc_map 
+let add_global_key location = 
+  interactive location.loc_map 
 (*e: function Keymap.add_global_key *)
 (*s: function Keymap.add_local_key *)
-let add_local_key buf = interactive buf.buf_map 
+let add_local_key buf = 
+  interactive buf.buf_map 
 (*e: function Keymap.add_local_key *)
 (*s: function Keymap.add_minor_key *)
 let add_minor_key minor = interactive minor.min_map 

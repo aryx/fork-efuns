@@ -2040,9 +2040,6 @@ let resize frame =
   install window frame
 @
 
-<<constant Frame.editname>>=
-let editname = "Efuns:"
-@
 
 <<constant Frame.dummy_mode>>=
 let dummy_mode = Ebuffer.new_major_mode "" []
@@ -2281,120 +2278,6 @@ let update_table top_window frame =
   iter_line (- frame.frm_y_offset) !current_n !current_line
 @
 
-<<function Frame.update>>=
-let update top_window frame =
-  failwith "TODO"
-(*
-  let buf =  frame.frm_buffer in
-  let text = buf.buf_text in
-  let start = frame.frm_start in
-  let point = frame.frm_point in
-  let width = frame.frm_width - frame.frm_has_scrollbar in
-  let height = frame.frm_height - frame.frm_has_status_line in
-  if  buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated then
-    Text.set_position text point (Text.size text); 
-  if
-    (frame.frm_end < point)  || 
-    (start > point) ||
-    (version text <> frame.frm_last_text_updated) ||
-    (buf.buf_modified <> frame.frm_last_buf_updated) ||
-    frame.frm_redraw
-  then
-    begin
-      let start_c = point_to_cursor buf start in
-      if start_c > 0 then
-        begin
-          frame.frm_y_offset <- 
-            frame.frm_y_offset - start_c / frame.frm_cutline;
-          let _ = Text.bmove text start start_c in
-          ()
-        end;
-      let point_c = point_to_cursor buf point in
-      if point_c < frame.frm_x_offset then
-        begin
-          frame.frm_x_offset <- max (point_c - width / 2) 0;
-          frame.frm_redraw <- true;
-        end
-      else
-      if frame.frm_cutline = max_int && (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  then
-        begin
-          frame.frm_x_offset <- point_c - (width / 2);
-          frame.frm_redraw <- true;
-        end;
-      update_table top_window frame;
-      begin
-        if (frame.frm_end < point)  || (start > point)
-        then
-          begin
-            if frame.frm_force_start then
-              let x,y = 
-                cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
-              in
-              goto_line text frame.frm_point y;
-              let _ = Text.fmove text frame.frm_point x in
-              ()
-            else
-              begin
-                goto_point text start point;
-                frame.frm_y_offset <- - height / 2;
-                let start_c = point_to_cursor buf start in
-                if start_c > 0 then
-                  begin
-                    frame.frm_y_offset <- 
-                      frame.frm_y_offset - start_c / frame.frm_cutline;
-                    let _ = Text.bmove text start start_c in
-                    ()
-                  end;
-                update_table top_window frame;
-              end;
-          end
-      end;
-      if frame == top_window.top_active_frame then
-        begin
-          frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
-          let pos_start = get_position text frame.frm_start in
-          let pos_end = get_position text frame.frm_end in
-          top_window.top_scrollbar#set_params pos_start (pos_end - pos_start)
-          (size text);
-        end;
-      frame.frm_last_text_updated <- version text;
-      frame.frm_last_buf_updated <- buf.buf_modified;
-      frame.frm_force_start <- false;
-      for y = 0 to height - 1 do
-        let line = frame.frm_table.(y) in
-        if not ((line.repr_prev_reprs == line.repr_reprs) &&
-            (line.repr_prev_offset == line.repr_offset)) 
-          || frame.frm_redraw
-        then
-          begin
-            line.repr_prev_reprs <- line.repr_reprs;
-            line.repr_prev_offset <- line.repr_offset;
-            update_line top_window frame line.repr_line.repr_string y;
-          end;
-      done;
-      frame.frm_redraw <- false
-    end;
-  let xterm = match top_window.top_xterm with
-      None -> raise Not_found
-    | Some xterm -> xterm 
-  in
-  match frame.frm_mini_buffer with
-    None -> 
-      let status = frame.frm_status in
-      status_line frame (point_line text frame.frm_point);
-      status_col frame (point_col text frame.frm_point);
-      status_modified frame (version text <> buf.buf_last_saved);
-      status_name frame buf.buf_name;
-      status_major_mode frame;
-      if status.status_modified then
-        WX_xterm.draw_string xterm frame.frm_xpos
-          (frame.frm_ypos + frame.frm_height - 1) 
-        status.status_string 0 width Text.inverse_attr
-  | Some request ->
-      WX_xterm.draw_string xterm 0 (top_window.top_height-1) 
-      request 0 (String.length request) Text.direct_attr
-*)
-@
 
 <<exception Frame.BufferKilled>>=
 exception BufferKilled
@@ -5044,18 +4927,7 @@ let create_bindings location =
   Ebuffer.create location "*bindings*" None text (Keymap.create ())
 @
 
-<<constant Interactive.meta_hist>>=
-let meta_hist = ref []
-@
 
-<<function Interactive.buf_interactives>>=
-let buf_interactives buf =
-  let interactives = 
-    buf.buf_major_mode.maj_map.interactives @
-      buf.buf_location.loc_map.interactives in
-  List.fold_left (fun list minor ->
-      minor.min_map.interactives @ list) interactives buf.buf_minor_modes 
-@
 
 <<function Interactive.exec_interactive>>=
 let exec_interactive interactives frame name =
@@ -5194,11 +5066,6 @@ let remove_frame frame =
 
 
 
-<<function Multi_frames.next_frame>>=
-let next_frame frame =
-  let window = frame.frm_window in
-  Window.next Frame.active window
-@
 
 
 %-------------------------------------------------------------

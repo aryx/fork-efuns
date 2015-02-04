@@ -40,7 +40,8 @@ let meta_hist = ref []
 let buf_interactives buf =
   let interactives = 
     buf.buf_major_mode.maj_map.interactives @
-      buf.buf_location.loc_map.interactives in
+    buf.buf_location.loc_map.interactives 
+  in
   List.fold_left (fun list minor ->
       minor.min_map.interactives @ list) interactives buf.buf_minor_modes 
 (*e: function Interactive.buf_interactives *)
@@ -71,8 +72,9 @@ let exec_interactive interactives frame name =
 let call_interactive frame =
   let buf = frame.frm_buffer in
   let interactives = buf_interactives buf in
-  select frame "M-x " meta_hist ""
+  select frame "M-x " meta_hist "" 
     (fun _ -> List.map fst interactives)
-  (fun s -> s) (exec_interactive interactives frame)
+    (fun s -> s) 
+    (exec_interactive interactives frame)
 (*e: function Interactive.call_interactive *)
 (*e: features/interactive.ml *)

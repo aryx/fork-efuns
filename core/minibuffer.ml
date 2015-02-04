@@ -30,10 +30,15 @@ let _ =
 let buf_create location text local_map =
   let buf =
     { 
-      buf_modified = 0;
       buf_text = text;
       buf_name = "*Minibuffer*";
-      buf_filename = None;
+      buf_filename = None; (* no connected file! *)
+
+      buf_major_mode = fondamental_mode;
+      buf_minor_modes = [];
+      buf_syntax_table = Ebuffer.default_syntax_table;
+
+      buf_modified = 0;
       buf_last_saved = version text;
       buf_history = [];
       buf_charreprs = charreprs;
@@ -44,10 +49,8 @@ let buf_create location text local_map =
       buf_mark = None;
       buf_start = Text.add_point text;
       buf_shared = 0;
-      buf_syntax_table = Ebuffer.default_syntax_table;
       buf_finalizers = [];
-      buf_major_mode = fondamental_mode;
-      buf_minor_modes = [];
+
       buf_vars = Local.vars ();
       buf_location = location;
     } in
@@ -80,6 +83,7 @@ let create frame local_map request =
   let window = frame.frm_window in
   let top_window = Window.top window in
   let location = top_window.top_location in
+
   let mini_text = Text.create "" in
   let qlen = String.length request in
   let request = if qlen < 50 then request else
@@ -93,9 +97,9 @@ let create frame local_map request =
   mini_frame.frm_cutline <- max_int;
   mini_frame.frm_has_status_line <- 0;
   top_window.top_mini_buffers <- mini_frame :: top_window.top_mini_buffers;
+
   Keymap.add_binding local_map [ControlMap, Char.code 'g']
-    (fun mini_frame -> 
-      kill mini_frame frame);
+    (fun mini_frame -> kill mini_frame frame);
   mini_frame
 (*e: function Minibuffer.create *)
 

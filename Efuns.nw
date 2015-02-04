@@ -514,6 +514,19 @@ and window_down =
 | WFrame of frame
 @
 
+<<function Window.top>>=
+let top window = 
+  let rec iter window =
+    match window.win_up with
+      TopWindow top_window -> top_window
+    | Window window -> iter window
+  in
+  iter window
+@
+% often used then to access the location, but
+% not sure why you need that since the location
+% is also accessible in the frame and buffer
+
 <<function Window.create>>=
 let create mini up_window xpos ypos width height =
   {
@@ -608,6 +621,20 @@ and frame  =
 
 %XXX
 <<[[Efuns.frame]] other fields>>=
+
+mutable frm_width : int;
+mutable frm_height : int;
+
+mutable frm_xpos : int;
+mutable frm_ypos : int;
+
+(* 0 for no scrollbar, 2 for scrollbar *)
+mutable frm_has_scrollbar : int;
+(* 0 for minibuffer, 1 for normal frame *)
+mutable frm_has_status_line : int;
+
+
+
 mutable frm_last_text_updated : int;
 mutable frm_last_buf_updated : int;
 
@@ -637,16 +664,9 @@ mutable frm_force_cursor : bool;
 mutable frm_x_offset : int;
 mutable frm_cutline : int; (* max_int for no, else length *)
 
-(* 0 for no scrollbar, 2 for scrollbar *)
-mutable frm_has_scrollbar : int;
-(* 0 for minibuffer, 1 for normal frame *)
-mutable frm_has_status_line : int;
+
 mutable frm_status : status;    
 
-mutable frm_xpos : int;
-mutable frm_ypos : int;
-mutable frm_width : int;
-mutable frm_height : int;
 
 mutable frm_table : line_repr array;
 mutable frm_killed : bool;
@@ -1081,6 +1101,17 @@ let get_binding buf keylist =
     Exit -> !binding
 @
 
+
+
+<<function Keymap.add_global_key>>=
+let add_global_key location = 
+  interactive location.loc_map 
+@
+<<function Keymap.add_local_key>>=
+let add_local_key buf = 
+  interactive buf.buf_map 
+@
+
 %\section{Partial maps}
 
 <<[[Efuns.buffer]] other fields>>=
@@ -1433,25 +1464,6 @@ let add_hook location hook_var hook =
 @
 
 
-\section{Regexps}
-% mv later?
-
-<<type Efuns.to_regexp>>=
-type to_regexp =
-  Regexp
-| RegexpString
-@
-
-<<function Efuns.string_to_regex>>=
-let string_to_regex s = s, Str.regexp s
-@
-
-<<constant Efuns.regexp_option>>=
-let regexp_option = define_option_class "Regexp" 
-    (fun v -> match v with
-        Value s ->  string_to_regex s | _ -> raise Not_found)
-  (fun (s,r) -> Value s)
-@
 
 
 
@@ -1523,6 +1535,11 @@ let _ =
 let init_frames = ref []
 @
 
+<<constant Efuns.init_files>>=
+let init_files = ref []
+@
+% dead?
+
 
 
 \section{Arguments processing}
@@ -1569,11 +1586,6 @@ let _ =
 
 <<constant Efuns.no_init>>=
 let no_init = ref false
-@
-% dead?
-
-<<constant Efuns.init_files>>=
-let init_files = ref []
 @
 % dead?
 
@@ -1641,9 +1653,7 @@ if !!file_menu = [] then begin
     file_menu =:=    [
       "Open File", "select_open_file";
       "Save Buffer", "save_buffer";
-      "Kill Buffer", "kill_buffer";
-
-      "Compile", "compile";
+      <<file menu entries>>
       "", "";
       "Quit", "exit";
     ]
@@ -1653,6 +1663,9 @@ if !!file_menu = [] then begin
 
 \subsubsection{Opening a file}
 
+%less: optional I think, this use the toolkit to offer a file
+% browser, but could redirect instead to "load_buffer" which
+% use the minibuffer to open a file
 <<loading actions>>=
 define_action "select_open_file" select_open_file;
 @
@@ -1688,6 +1701,62 @@ let select_open_file frame =
 *)
 @
 
+% what about C-x C-f?
+
+<<loading keys>>=
+[c_x; ControlMap, Char.code 'f'], "load_buffer";
+@
+<<loading actions>>=
+(* C-x map *)
+define_action "load_buffer"  load_buffer;
+@
+
+
+
+<<function Complex.load_buffer>>=
+let load_buffer frame = 
+  set_previous_frame frame;
+  select_filename frame "Find file: " (fun str -> 
+      let _ = Frame.load_file frame.frm_window str in ())
+@
+
+%\subsection{Helpers}
+
+<<function Frame.load_file>>=
+let load_file window filename =
+  let top_window = Window.top window in
+  let location = top_window.top_location in
+
+  let buf = Ebuffer.read location filename (Keymap.create ()) in
+  let frame = create window None buf in
+  exec_named_hooks !!change_buffer_hooks frame;
+  status_name frame buf.buf_name;
+  frame
+@
+
+
+
+
+
+<<loading keys>>=
+[c_x; NormalMap, Char.code 'i'], "insert_file";
+@
+<<loading actions>>=
+(* C-x map *)
+define_action "insert_file"  insert_file;
+@
+
+<<function Complex.insert_file>>=
+let insert_file frame =
+  select_filename frame "Insert file: " (fun str ->
+      let inc = open_in str in
+      insert_string frame (Utils.read_string inc);
+      close_in inc
+  )
+@
+
+
+
 \subsubsection{Saving the buffer}
 
 <<saving keys>>=
@@ -1707,27 +1776,62 @@ let save_buffer frame =
 @
 
 
-\subsubsection{Killing the buffer}
-
-<<buffer managment keys>>=
-[c_x; NormalMap, Char.code 'k'], "kill_buffer";
+<<function Ebuffer.save>>=
+let save buf =
+  exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
+  let filename =
+    match buf.buf_filename with
+      None -> raise Not_found
+    | Some name -> name
+  in
+  let outc = open_out filename in
+  Text.save buf.buf_text outc;
+  close_out outc;
+  buf.buf_last_saved <- version buf.buf_text;
+  exec_named_buf_hooks !!saved_buffer_hooks buf
 @
-<<buffer managment actions>>=
+
+
+
+<<saving keys>>=
+[c_x; NormalMap, Char.code 's'], "save_some_buffers";
+[c_x;ControlMap, Char.code 'w'], "write_file"; 
+@
+<<saving actions>>=
 (* C-x map *)
-define_action "kill_buffer"  kill_buffer;
+define_action "save_some_buffers"  save_some_buffers;
+(* C-x map *)
+define_action "write_file"  write_buffer; 
 @
 
-<<function Simple.kill_buffer>>=
-let kill_buffer frame =
-  let window = frame.frm_window in
-  let top_window = Window.top window in
+
+<<function Complex.save_some_buffers>>=
+let save_some_buffers frame =
+  let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
-  let buf = frame.frm_buffer in
-  let new_buf = next_buffer location buf in
-  let new_frame = Frame.create window None new_buf in
-  if buf.buf_shared = 0 
-  then Ebuffer.kill location buf
+  let buffers = list_of_hash location.loc_buffers in
+  save_buffers_and_action frame buffers (fun _ -> ())
 @
+
+
+<<function Complex.write_buffer>>=
+let write_buffer frame = 
+  let buf = frame.frm_buffer in
+  select_filename frame "Save file as: " 
+    (fun str -> 
+      let top_window = Window.top frame.frm_window in
+      Ebuffer.change_name top_window.top_location buf str;
+      Ebuffer.save buf)
+@
+
+%\subsection{Helpers}
+
+<<function Frame.save_buffer>>=
+let save_buffer frame =
+  Ebuffer.save frame.frm_buffer
+@
+% dead?
+
 
 \subsubsection{Exit}
 
@@ -1744,9 +1848,11 @@ define_action "exit"  exit_efuns;
 let exit_efuns frame =
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
-  let buffers = list_of_hash location.loc_buffers in
+  let buffers = Utils.list_of_hash location.loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> exit 0)
 @
+
+%todo: save_buffers_and_action?
 
 \subsection{Edit menu}
 
@@ -1758,9 +1864,10 @@ let edit_menu = define_option ["edit_menu"] ""
 <<[[Std_efunsrc]] edit menu setup>>=
 if !!edit_menu = [] then begin
     edit_menu =:= [ 
-      "Cut", "kill_region";
+      "Cut",    "kill_region";
       "Paste",  "insert_killed";
-      "Undo", "undo";
+
+      "Undo",    "undo";
       "", "";
       <<[[edit_menu]] entries>>
     ];
@@ -1768,16 +1875,24 @@ if !!edit_menu = [] then begin
 @
 % will see later
 
+\subsection{Buffers menu}
+
+% will see later
+
 \subsection{Help menu}
 
 <<constant Top_window.help_menu>>=
 let help_menu = ref ([| |]: (string * (frame -> unit)) array)
 @
+% this one is not configurable apparently
 
 <<[[Std_efunsrc]] help menu setup>>=
 help_menu := [|
   "Key Bindings", (fun frame ->
       Frame.change_buffer frame.frm_window "*bindings*"
+  );
+  "About Efuns", (fun frame ->
+    Frame.change_buffer frame.frm_window "*help*"
   );
   "Changes", (fun frame ->
     (*
@@ -1787,9 +1902,6 @@ help_menu := [|
     failwith "TODO"
   );
 
-  "About Efuns", (fun frame ->
-    Frame.change_buffer frame.frm_window "*help*"
-  );
 |];
 @
 
@@ -1803,135 +1915,9 @@ help_menu := [|
 
 
 
-\subsection{Buffers menu}
 
-<<[[Std_efunsrc]] buffers menu setup>>=
-buffers_menu := (fun top_window button () ->
-    let buffers = ref [] in
-    let location = top_window.top_location in
-    Hashtbl.iter (fun name buf -> buffers:=name :: !buffers) 
-    location.loc_buffers;
-    let desc = Array.map (fun name -> 
-          (name, wrap top_window (fun top_window ->
-                let frame = top_window.top_active_frame in
-                let window = frame.frm_window in
-                Frame.change_buffer window name
-            )))
-      (Array.of_list !buffers) in
+\section{Sub-windows/Frames}
 
-    (* X11 *)
-    (*
-    let menu = new WX_popup.t top_window.top_root desc in
-    let (x,y) = button#root_coordinates in
-    menu#popup_once x (y + button#height) (Some !WX_types.button_event)
-    *)
-    failwith "TODO"
-    )
-@
-
-
-\section{Windows/Frames}
-
-<<[[edit_menu]] entries>>=
-"Cut Frame", "v_cut_frame";
-"One Frame", "one_frame";
-"Delete Frame", "delete_frame";
-@
-%bug? not sure v_cut_frame will work!
-
-
-<<frame managment keys>>=
-[c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
-[c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
-[c_x; NormalMap, Char.code '1'], "one_frame";
-[c_x; NormalMap, Char.code '0'], "delete_frame";
-@
-
-<<frame navigation keys>>=
-[c_x; NormalMap, Char.code 'o'], "next_frame";
-@
-
-
-<<frame managment actions>>=
-(* C-x map *)
-define_action "vertical_cut_frame"  v_cut_frame;    
-(* C-x map *)
-define_action "horizontal_cut_frame"  h_cut_frame;    
-(* C-x map *)
-define_action "one_frame"  one_frame;
-(* C-x map *)
-define_action "delete_frame"  delete_frame;
-@
-
-<<frame navigation actions>>=
-(* C-x map *)
-define_action "next_frame"  next_frame;
-@
-
-<<function Multi_frames.v_cut_frame>>=
-let v_cut_frame frame =
-  if frame.frm_mini_buffer = None then
-    let _ = Frame.create (cut_frame frame) None frame.frm_buffer in ()
-@
-
-<<function Multi_frames.h_cut_frame>>=
-let h_cut_frame frame =
-  if frame.frm_mini_buffer = None then
-    let window = frame.frm_window in
-    if window.win_width > 10 then
-      let wi = window.win_width / 2 in
-      let w1 = Window.create false
-          (Window window) window.win_xpos window.win_ypos
-          wi window.win_height in
-      let w2 = Window.create false (Window window) (window.win_xpos + wi) 
-        window.win_ypos
-          (window.win_width - wi) window.win_height in
-      window.win_down <- HComb (w1,w2);
-      Frame.install w1 frame;
-      let _ = Frame.create w2 None frame.frm_buffer in ()
-@
-
-<<function Multi_frames.one_frame>>=
-let one_frame frame =
-  if frame.frm_mini_buffer = None then
-    let window = frame.frm_window in
-    let top_window = Window.top window in
-    if not (top_window.top_windows == window) then
-      begin
-        Frame.install top_window.top_windows frame;
-        Frame.active frame
-      end
-@
-
-<<function Multi_frames.delete_frame>>=
-let delete_frame frame =
-  if frame.frm_mini_buffer = None then
-    let window = frame.frm_window in
-    match window.win_up with
-      TopWindow _ -> ()
-    | Window upwin ->
-        Frame.install upwin frame;
-        Frame.active frame
-@
-
-
-%XXX
-<<function Frame.kill>>=
-let kill frame = 
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  frame.frm_killed <- true;
-  buf.buf_shared <- buf.buf_shared - 1;
-  Text.remove_point text buf.buf_point;
-  Text.remove_point text buf.buf_start;
-  buf.buf_point <- frame.frm_point;
-  buf.buf_start <- frame.frm_start
-@
-
-<<function Frame.kill_all>>=
-let kill_all window =
-  Window.iter kill window
-@
 
 \section{Status Line}
 
@@ -1944,6 +1930,7 @@ and status_info =
 | StatFile
 | StatMode
 @
+% also clock, load, etc
 
 <<constant Frame.status_format>>=
 let status_format = ref [
@@ -1955,20 +1942,29 @@ let status_format = ref [
     StatFile, (35,15);
   ]
 @
+% meaning?
 
 <<type Efuns.status>>=
 and status =
-  { mutable status_string : string;
-    mutable status_modified : bool;
+  { 
+    (* the string! --- ... --- *)
+    mutable status_string : string;
     mutable status_format : (status_info * (int * int)) list;
-    mutable stat_col : int;
+
+    mutable status_modified : bool;
+    mutable stat_modified : bool;
+
     mutable stat_name : string;
     mutable stat_file : string;
     mutable stat_line : int;
-    mutable stat_modified : bool;
-    mutable stat_modes : minor_mode list;
-    mutable stat_mode : major_mode;
+    mutable stat_col : int;
+
+    <<[[Efuns.status]] other fields>>
   }
+@
+
+<<constant Frame.editname>>=
+let editname = "Efuns:"
 @
 
 
@@ -1988,11 +1984,24 @@ let status = {
 String.blit editname 0 status.status_string 5 (String.length editname);
 @
 
+
 <<[[Frame.create_without_top()]] adjust status of frame>>=
 status_name frame buf.buf_name;
-status_major_mode frame;
 @
 
+
+
+<<function Frame.status_name>>=
+let status_name frame name =
+  let status = frame.frm_status in
+  if status.stat_name <> name then
+    begin
+      status.stat_name <- name;
+      status_print status name StatName
+    end
+@
+
+% status_name | ... -> <>
 <<function Frame.status_print>>=
 let status_print status str stat_type =
   status.status_modified <- true;
@@ -2005,6 +2014,10 @@ let status_print status str stat_type =
     Not_found -> ()
 @
 
+
+
+
+% ?? -> <>
 <<function Frame.status_modified>>=
 let status_modified frame modified =
   let status = frame.frm_status in
@@ -2015,6 +2028,7 @@ let status_modified frame modified =
     end
 @
 
+% ?? -> <>
 <<function Frame.status_col>>=
 let status_col frame col =
   let status = frame.frm_status in
@@ -2025,25 +2039,7 @@ let status_col frame col =
     end
 @
 
-
-<<function Frame.status_major_mode>>=
-let status_major_mode frame  =
-  let buf = frame.frm_buffer in
-  let status = frame.frm_status in
-  if not (status.stat_modes == buf.buf_minor_modes &&
-      status.stat_mode == buf.buf_major_mode
-    ) then
-    begin
-      status.stat_modes <- buf.buf_minor_modes;
-      status.stat_mode <- buf.buf_major_mode;
-      status_print status (Printf.sprintf "(%s)" 
-          (print_list
-            (buf.buf_major_mode.maj_name ::
-            (List.map (fun m -> m.min_name) status.stat_modes))))
-      StatMode;
-    end
-@
-
+% Frame.update -> <>
 <<function Frame.status_line>>=
 let status_line frame line =
   let status = frame.frm_status in
@@ -2054,16 +2050,7 @@ let status_line frame line =
     end
 @
 
-<<function Frame.status_name>>=
-let status_name frame name =
-  let status = frame.frm_status in
-  if status.stat_name <> name then
-    begin
-      status.stat_name <- name;
-      status_print status name StatName
-    end
-@
-
+% ?? -> <>
 <<function Frame.status_file>>=
 let status_file frame name =
   let status = frame.frm_status in
@@ -2073,26 +2060,25 @@ let status_file frame name =
       status_print status name StatFile
     end
 @
+% dead?
+
+
 
 \section{Minibuffer}
-
-<<constant Minibuffer.charreprs>>=
-let charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i))
-@
-
-<<toplevel Minibuffer._1>>=
-let _ =
-  charreprs.(9) <- String.make !tab_size ' '
-@
 
 <<function Minibuffer.buf_create>>=
 let buf_create location text local_map =
   let buf =
     { 
-      buf_modified = 0;
       buf_text = text;
       buf_name = "*Minibuffer*";
-      buf_filename = None;
+      buf_filename = None; (* no connected file! *)
+
+      buf_major_mode = fondamental_mode;
+      buf_minor_modes = [];
+      buf_syntax_table = Ebuffer.default_syntax_table;
+
+      buf_modified = 0;
       buf_last_saved = version text;
       buf_history = [];
       buf_charreprs = charreprs;
@@ -2103,21 +2089,31 @@ let buf_create location text local_map =
       buf_mark = None;
       buf_start = Text.add_point text;
       buf_shared = 0;
-      buf_syntax_table = Ebuffer.default_syntax_table;
       buf_finalizers = [];
-      buf_major_mode = fondamental_mode;
-      buf_minor_modes = [];
+
       buf_vars = Local.vars ();
       buf_location = location;
     } in
   buf
 @
 
+<<constant Minibuffer.charreprs>>=
+let charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i))
+@
+<<toplevel Minibuffer._1>>=
+let _ =
+  charreprs.(9) <- String.make !tab_size ' '
+@
+
+
+
+% ?? -> <>
 <<function Minibuffer.create>>=
 let create frame local_map request =
   let window = frame.frm_window in
   let top_window = Window.top window in
   let location = top_window.top_location in
+
   let mini_text = Text.create "" in
   let qlen = String.length request in
   let request = if qlen < 50 then request else
@@ -2131,15 +2127,51 @@ let create frame local_map request =
   mini_frame.frm_cutline <- max_int;
   mini_frame.frm_has_status_line <- 0;
   top_window.top_mini_buffers <- mini_frame :: top_window.top_mini_buffers;
+
   Keymap.add_binding local_map [ControlMap, Char.code 'g']
-    (fun mini_frame -> 
-      kill mini_frame frame);
+    (fun mini_frame -> kill mini_frame frame);
   mini_frame
 @
 
 
 \subsection{M-x}
 
+<<meta keys>>=
+[MetaMap, Char.code 'x'], "call_interactive";
+@
+<<meta actions>>=
+define_action "call_interactive"  call_interactive;
+@
+
+
+<<constant Interactive.meta_hist>>=
+let meta_hist = ref []
+@
+
+<<function Interactive.call_interactive>>=
+let call_interactive frame =
+  let buf = frame.frm_buffer in
+  let interactives = buf_interactives buf in
+  select frame "M-x " meta_hist "" 
+    (fun _ -> List.map fst interactives)
+    (fun s -> s) 
+    (exec_interactive interactives frame)
+@
+
+<<function Interactive.buf_interactives>>=
+let buf_interactives buf =
+  let interactives = 
+    buf.buf_major_mode.maj_map.interactives @
+    buf.buf_location.loc_map.interactives 
+  in
+  List.fold_left (fun list minor ->
+      minor.min_map.interactives @ list) interactives buf.buf_minor_modes 
+@
+
+
+
+
+% -> <>?
 <<function Keymap.interactive>>=
 let interactive map keylist name f =
   map.interactives <- (name, (f, Some keylist)) :: map.interactives;
@@ -2152,55 +2184,7 @@ let add_interactive map name f =
 @
 
 
-
-<<meta keys>>=
-[MetaMap, Char.code 'x'], "call_interactive";
-@
-
-
-<<meta actions>>=
-define_action "call_interactive"  call_interactive;
-@
-
-<<function Interactive.call_interactive>>=
-let call_interactive frame =
-  let buf = frame.frm_buffer in
-  let interactives = buf_interactives buf in
-  select frame "M-x " meta_hist ""
-    (fun _ -> List.map fst interactives)
-  (fun s -> s) (exec_interactive interactives frame)
-@
-
-
 <<[[interactives_map]] initial entries>>=
-"goto_line";
-"goto_char";
-
-"replace_string";
-"replace_regexp";
-"query_replace_string";
-"query_replace_regexp";
-
-"eval";  
-
-"compile";
-"grep";
-
-"fondamental_mode";
-"makefile_mode";
-"ocaml_mode";
-"tex_mode";
-"c_mode";
-
-"accents_mode";
-"paren_mode";
-"abbrevs_mode";
-"ocaml_minor_mode";
-"fill_mode";
-"ocaml_compiler_mode";
-"tab_mode";
-"overwrite_mode";
-
 "save_options";
 "load_library";
 "get_position";
@@ -2215,6 +2199,9 @@ let call_interactive frame =
 
 <<meta actions>>=
 define_action "eval" Complex.eval;  
+@
+<<[[interactives_map]] initial entries>>=
+"eval";  
 @
 
 <<constant Complex.eval_history>>=
@@ -2235,6 +2222,173 @@ let eval frame =
         *)(failwith "TODO")
     )
 @
+
+
+\section{Text Display}
+
+% the redisplay function!!!
+
+<<function Frame.update>>=
+let update top_window frame =
+  let buf =  frame.frm_buffer in
+  let text = buf.buf_text in
+
+  let start = frame.frm_start in
+  let point = frame.frm_point in
+  let width = frame.frm_width - frame.frm_has_scrollbar in
+  let height = frame.frm_height - frame.frm_has_status_line in
+
+  if  buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated then
+    Text.set_position text point (Text.size text); 
+  if
+    (frame.frm_end < point)  || 
+    (start > point) ||
+    (version text <> frame.frm_last_text_updated) ||
+    (buf.buf_modified <> frame.frm_last_buf_updated) ||
+    frame.frm_redraw
+  then
+    begin
+      let start_c = point_to_cursor buf start in
+      if start_c > 0 then
+        begin
+          frame.frm_y_offset <- 
+            frame.frm_y_offset - start_c / frame.frm_cutline;
+          let _ = Text.bmove text start start_c in
+          ()
+        end;
+      let point_c = point_to_cursor buf point in
+      if point_c < frame.frm_x_offset then
+        begin
+          frame.frm_x_offset <- max (point_c - width / 2) 0;
+          frame.frm_redraw <- true;
+        end
+      else
+      if frame.frm_cutline = max_int && 
+        (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
+      then
+        begin
+          frame.frm_x_offset <- point_c - (width / 2);
+          frame.frm_redraw <- true;
+        end;
+      update_table top_window frame;
+      begin
+        if (frame.frm_end < point)  || (start > point)
+        then
+          begin
+            if frame.frm_force_start then
+              let x,y = 
+                cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
+              in
+              goto_line text frame.frm_point y;
+              let _ = Text.fmove text frame.frm_point x in
+              ()
+            else
+              begin
+                goto_point text start point;
+                frame.frm_y_offset <- - height / 2;
+                let start_c = point_to_cursor buf start in
+                if start_c > 0 then
+                  begin
+                    frame.frm_y_offset <- 
+                      frame.frm_y_offset - start_c / frame.frm_cutline;
+                    let _ = Text.bmove text start start_c in
+                    ()
+                  end;
+                update_table top_window frame;
+              end;
+          end
+      end;
+      if frame == top_window.top_active_frame then
+        begin
+          frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
+          let pos_start = get_position text frame.frm_start in
+          let pos_end = get_position text frame.frm_end in
+
+          failwith "TODO";
+          (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
+
+             (size text);
+          *)
+        end;
+      frame.frm_last_text_updated <- version text;
+      frame.frm_last_buf_updated <- buf.buf_modified;
+      frame.frm_force_start <- false;
+      for y = 0 to height - 1 do
+        let line = frame.frm_table.(y) in
+        if not ((line.repr_prev_reprs == line.repr_reprs) &&
+            (line.repr_prev_offset == line.repr_offset)) 
+          || frame.frm_redraw
+        then
+          begin
+            line.repr_prev_reprs <- line.repr_reprs;
+            line.repr_prev_offset <- line.repr_offset;
+            update_line top_window frame line.repr_line.repr_string y;
+          end;
+      done;
+      frame.frm_redraw <- false
+    end;
+(*
+  let xterm = match top_window.top_xterm with
+      None -> raise Not_found
+    | Some xterm -> xterm 
+  in
+*)
+  match frame.frm_mini_buffer with
+    None -> 
+      let status = frame.frm_status in
+      status_line frame (point_line text frame.frm_point);
+      status_col frame (point_col text frame.frm_point);
+      status_modified frame (version text <> buf.buf_last_saved);
+      status_name frame buf.buf_name;
+      status_major_mode frame;
+      if status.status_modified then
+
+        (* WX_xterm.draw_string xterm frame.frm_xpos
+          (frame.frm_ypos + frame.frm_height - 1)  
+        status.status_string 0 width Text.inverse_attr
+        *)
+        failwith "TODO"
+  | Some request ->
+        failwith "TODO";
+      (* WX_xterm.draw_string xterm 0 (top_window.top_height-1)  
+      request 0 (String.length request) Text.direct_attr
+      *)
+@
+
+
+
+\section{Hooks}
+
+<<constant Ebuffer.save_buffer_hooks>>=
+let save_buffer_hooks = define_option ["save_buffer_hooks"] "" 
+    (list_option string_option)
+  [ ]
+@
+
+<<constant Ebuffer.saved_buffer_hooks>>=
+let saved_buffer_hooks = define_option ["saved_buffer_hooks"] "" 
+    (list_option string_option)
+  ["update_time" ]
+@
+
+<<function Ebuffer.exec_named_buf_hooks>>=
+let rec exec_named_buf_hooks hooks frame =
+  match hooks with
+    [] -> ()
+  | action :: hooks ->
+      exec_named_buf_hooks hooks frame;
+      try execute_buffer_action action frame with _ -> ()
+@
+
+<<function Ebuffer.exec_named_buf_hooks_with_abort>>=
+let rec exec_named_buf_hooks_with_abort hooks frame =
+  match hooks with
+    [] -> ()
+  | action :: hooks ->
+      exec_named_buf_hooks_with_abort hooks frame;
+      execute_buffer_action action frame
+@
+
 
 \chapter{Text Managment}
 
@@ -2375,438 +2529,12 @@ let set_char_attr tree point attr =
       attrs.(point) <- attr)
 @
 
-\chapter{Text Display}
 
-% the redisplay function!!!
+\chapter{Input Managment}
 
-\chapter{Buffer Managment}
+\section{Keyboard}
 
-\section{Loading a file}
-
-<<loading keys>>=
-[c_x; ControlMap, Char.code 'f'], "load_buffer";
-[c_x; NormalMap, Char.code 'i'], "insert_file";
-@
-
-<<loading actions>>=
-(* C-x map *)
-define_action "load_buffer"  load_buffer;
-(* C-x map *)
-define_action "insert_file"  insert_file;
-@
-
-
-<<function Complex.load_buffer>>=
-let load_buffer frame = 
-  set_previous_frame frame;
-  select_filename frame "Find file: " 
-    (fun str -> 
-      let _ = Frame.load_file frame.frm_window str in ())
-@
-
-<<function Complex.insert_file>>=
-let insert_file frame =
-  select_filename frame "Insert file: "
-    (fun str ->
-      let inc = open_in str in
-      insert_string frame (Utils.read_string inc);
-      close_in inc
-  )
-@
-
-\subsection{Helpers}
-
-<<function Frame.load_file>>=
-let load_file window filename =
-  let top_window = Window.top window in
-  let location = top_window.top_location in
-  let buf = Ebuffer.read location filename (Keymap.create ()) in
-  let frame = create window None buf 
-  in
-  exec_named_hooks !!change_buffer_hooks frame;
-  status_name frame buf.buf_name;
-  frame
-@
-
-\section{CRUD}
-
-<<function Ebuffer.kill>>=
-let kill location buf =
-  Hashtbl.remove location.loc_buffers buf.buf_name;
-  begin
-    match buf.buf_filename with
-      None -> ()
-    | Some filename ->
-        Hashtbl.remove location.loc_files filename
-  end;
-  List.iter (fun f -> f () ) buf.buf_finalizers;
-  Gc.compact ();
-  buf.buf_shared <- -1
-@
-
-<<function Ebuffer.save>>=
-let save buf =
-  exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
-  let filename =
-    match buf.buf_filename with
-      None -> raise Not_found
-    | Some name -> name
-  in
-  let outc = open_out filename in
-  Text.save buf.buf_text outc;
-  close_out outc;
-  buf.buf_last_saved <- version buf.buf_text;
-  exec_named_buf_hooks !!saved_buffer_hooks buf
-@
-
-\section{Navigation}
-
-<<function Ebuffer.get_name>>=
-let get_name location filename =
-  let basename = Filename.basename filename in
-  let name = 
-    if basename = "" then
-      (Filename.basename (Filename.dirname filename)) ^ "/"
-    else
-      basename
-  in
-  let i = ref 0 in
-  let compute_name () =
-    if !i = 0 then name else
-      Printf.sprintf "%s<%d>" name !i
-  in
-  try
-    while true do
-      let _ = Hashtbl.find location.loc_buffers (compute_name ()) in 
-      incr i
-    done; assert false
-  with
-    Not_found -> 
-      compute_name ()
-@
-
-\section{Saving a file}
-
-<<saving keys>>=
-[c_x; NormalMap, Char.code 's'], "save_some_buffers";
-[c_x;ControlMap, Char.code 'w'], "write_file"; 
-@
-
-<<saving actions>>=
-(* C-x map *)
-define_action "save_some_buffers"  save_some_buffers;
-
-(* C-x map *)
-define_action "write_file"  write_buffer; 
-@
-
-
-<<function Complex.save_some_buffers>>=
-let save_some_buffers frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buffers = list_of_hash location.loc_buffers in
-  save_buffers_and_action frame buffers (fun _ -> ())
-@
-
-<<function Complex.write_buffer>>=
-let write_buffer frame = 
-  let buf = frame.frm_buffer in
-  select_filename frame "Save file as: " 
-    (fun str -> 
-      let top_window = Window.top frame.frm_window in
-      Ebuffer.change_name top_window.top_location buf str;
-      Ebuffer.save buf)
-@
-
-\subsection{Helpers}
-
-<<function Frame.save_buffer>>=
-let save_buffer frame =
-  Ebuffer.save frame.frm_buffer
-@
-
-\section{Changing buffer}
-% of frame?
-
-
-<<function Frame.change_buffer>>=
-let change_buffer window name = 
-  let top_window = Window.top window in
-  let location = top_window.top_location in
-  try
-    let buf = Hashtbl.find location.loc_buffers name in
-    let frame = create window None  buf 
-    in
-    exec_named_hooks !!change_buffer_hooks frame;
-    status_name frame buf.buf_name
-  with
-    Not_found -> ()
-@
-
-<<buffer navigating keys>>=
-[ControlMetaMap, XK.xk_Left], "left_buffer";
-[ControlMetaMap, XK.xk_Right], "right_buffer";
-[ControlMetaMap, XK.xk_Down], "down_buffer";
-[ControlMetaMap, XK.xk_Up], "up_buffer";
-@
-
-<<buffer navigating actions>>=
-(* C-M map *)
-define_action "left_buffer"  left_buffer;
-(* C-M map *)
-define_action "right_buffer"  right_buffer;
-(* C-M map *)
-define_action "down_buffer"  down_buffer;
-(* C-M map *)
-define_action "up_buffer"  up_buffer;
-@
-
-<<function Complex.left_buffer>>=
-let left_buffer frame =
-  set_previous_frame frame;
-  Frame.change_buffer frame.frm_window (
-    match !prev_buffers with
-      name :: buffer :: tail ->
-        prev_buffers := tail @ [name]; 
-        buffer
-    | _ -> raise Not_found)
-@
-
-<<function Complex.right_buffer>>=
-let right_buffer frame =
-  set_previous_frame frame;
-  Frame.change_buffer frame.frm_window (match !prev_buffers with
-      name :: tail ->
-        begin
-          match List.rev tail with
-            buffer :: tail ->
-              prev_buffers := name :: (List.rev tail);
-              buffer
-          | _ -> raise Not_found
-        end
-    | _ -> raise Not_found)
-@
-
-
-<<constant Complex.up_buffer>>=
-let up_buffer = ref ""
-@
-
-<<function Complex.down_buffer>>=
-let down_buffer frame = up_buffer := frame.frm_buffer.buf_name
-@
-
-<<function Complex.up_buffer>>=
-let up_buffer frame =
-  if !up_buffer = "" then raise Not_found;
-  set_previous_frame frame;
-  Frame.change_buffer frame.frm_window !up_buffer
-@
-
-
-
-\section{Managing buffers}
-
-<<buffer managment keys>>=
-[c_x; NormalMap, Char.code 'b'], "change_buffer";
-@
-
-
-<<buffer managment actions>>=
-(* C-x map *)
-define_action "change_buffer"  change_buffer;
-@
-
-
-<<function Complex.change_buffer>>=
-let change_buffer frame =
-  let default = get_previous_frame () in
-  set_previous_frame frame;
-  select_buffer frame " Switch to buffer: " default (fun str ->
-      let window = frame.frm_window in
-      change_buffer window str)
-@
-
-
-\section{Points}
-
-\section{Hooks}
-
-<<constant Ebuffer.save_buffer_hooks>>=
-let save_buffer_hooks = define_option ["save_buffer_hooks"] "" 
-    (list_option string_option)
-  [ ]
-@
-
-<<constant Ebuffer.saved_buffer_hooks>>=
-let saved_buffer_hooks = define_option ["saved_buffer_hooks"] "" 
-    (list_option string_option)
-  ["update_time" ]
-@
-
-<<function Ebuffer.exec_named_buf_hooks>>=
-let rec exec_named_buf_hooks hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_buf_hooks hooks frame;
-      try execute_buffer_action action frame with _ -> ()
-@
-
-<<function Ebuffer.exec_named_buf_hooks_with_abort>>=
-let rec exec_named_buf_hooks_with_abort hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_buf_hooks_with_abort hooks frame;
-      execute_buffer_action action frame
-@
-
-
-\chapter{Window Managment}
-
-<<window managment keys>>=
-[c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
-[c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
-[c_x; n_5; NormalMap, Char.code '0'], "delete_window";
-@
-
-<<window managment actions>>=
-(* C-x 5 map *)
-define_action "window_load_buffer"  window_load_buffer;
-(* C-x 5 map *)
-define_action "window_change_buffer"  window_change_buffer;
-(* C-x 5 map *)
-define_action "delete_window"  Top_window.delete_window;
-@
-
-
-<<function Complex.window_load_buffer>>=
-let window_load_buffer frame = 
-  select_filename frame "Find file: " 
-    (fun str -> 
-      let top_window = Window.top frame.frm_window in
-      let top_window = Top_window.create top_window.top_location
-          (Window.display top_window)
-      in
-      let _ = Frame.load_file top_window.top_windows str in ())
-@
-
-<<function Complex.window_change_buffer>>=
-let window_change_buffer frame =
-  select_buffer frame "Switch to buffer in new frame: " 
-    (get_previous_frame ())
-  (fun name ->
-      let top_window = Window.top frame.frm_window in
-      let top_window = Top_window.create 
-          top_window.top_location (Window.display top_window) in
-      Frame.change_buffer top_window.top_windows name
-  )
-@
-
-<<function Top_window.delete_window>>=
-let delete_window frame =
-  failwith "TODO"
-(*
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  if List.length location.loc_windows > 1 then
-    let xterm = Window.xterm top_window in
-    top_window.top_appli#destroy;
-    WX_xterm.destroy_window xterm;
-    Frame.kill_all top_window.top_windows;
-    location.loc_windows <- Utils.list_remove location.loc_windows
-      top_window
-*)
-@
-
-\section{Navigation}
-
-<<function Window.top>>=
-let top window = 
-  let rec iter window =
-    match window.win_up with
-      TopWindow top_window -> top_window
-    | Window window -> iter window
-  in
-  iter window
-@
-
-<<function Window.iter>>=
-let iter f window = 
-  let rec iter1 window =
-    match window.win_down with
-    | HComb (w1,w2) -> iter1 w1; iter1 w2       
-    | VComb (w1,w2) -> iter1 w1; iter1 w2
-    | WFrame frame -> f frame
-    | NoFrame _ -> ()
-  in
-    iter1 window
-@
-
-<<function Window.first>>=
-let rec first f window =
-  match window.win_down with
-    WFrame frame -> f frame
-  | HComb (w1,w2) -> first f w1
-  | VComb (w1,w2) -> first f w1
-  | NoFrame _ -> ()
-@
-
-<<function Window.last>>=
-let rec last f window =
-  match window.win_down with
-    WFrame frame -> f frame
-  | HComb (w1,w2) -> last f w2
-  | VComb (w1,w2) -> last f w2
-  | NoFrame _ -> ()
-@
-
-<<function Window.next>>=
-let rec next f window =
-  match window.win_up with
-    TopWindow top_window -> first f top_window.top_windows
-  | Window win ->
-      match win.win_down with
-        HComb (w1,w2) ->
-          if w2 == window then
-            next f win
-          else
-            first f w2
-      | VComb (w1,w2) ->
-          if w2 == window then
-            next f win
-          else
-            first f w2
-      | _ -> ()
-@
-
-<<function Window.prev>>=
-let rec prev f window =
-  match window.win_up with
-    TopWindow top_window -> 
-      if window == top_window.top_windows then ()
-      else 
-        last f top_window.top_windows
-  | Window win ->
-      match win.win_down with
-        HComb (w1,w2) ->
-          if w1 == window then
-            prev f win
-          else
-            last f w1
-      | VComb (w1,w2) ->
-          if w1 == window then
-            prev f win
-          else
-            last f w1
-      | _ -> ()
-@
-
-
-\chapter{Keyboard Managment}
-
+% Ebuffer.get_binding -> <>
 <<function Keymap.get_binding>>=
 let rec get_binding map keylist =
   match keylist with
@@ -2824,7 +2552,7 @@ let rec get_binding map keylist =
       end
   | key :: tail ->
       match
-        match key with
+        (match key with
           (NormalMap,key) when key >= 0 && key < 256 -> 
             map.char_map.(key)
         | _ -> 
@@ -2832,11 +2560,12 @@ let rec get_binding map keylist =
               List.assoc key map.complex_bindings
             with
               Not_found -> Unbound
+        )
       with
         Prefix map -> get_binding map tail
       | _ -> Unbound
 @
-
+% lookup
 
 <<function Keymap.set_binding>>=
 let set_binding map key binding =
@@ -2873,16 +2602,9 @@ let rec add_binding map key_list binding =
 @
 
 
-<<function Keymap.add_global_key>>=
-let add_global_key location = interactive location.loc_map 
-@
-
-<<function Keymap.add_local_key>>=
-let add_local_key buf = interactive buf.buf_map 
-@
 
 
-\chapter{Mouse}
+\section{Mouse}
 
 <<[[Std_efunsrc.init_global_map()]] mouse keys setup>>=
 add_global_key location [NormalMap, XK.xk_Pointer_Button1]
@@ -3011,6 +2733,11 @@ define_action "end_of_file"  end_of_file;
 (* M-x *)
 define_action "goto_char" goto_char;
 define_action "goto_line" goto_line;
+@
+
+<<[[interactives_map]] initial entries>>=
+"goto_char";
+"goto_line";
 @
 
 \subsection{Characters}
@@ -3397,118 +3124,6 @@ let hungry_electric_delete frame =
 
 
 
-\section{Moving}
-
-<<moving keys>>=
-[ControlMap, Char.code ' '], "mark_at_point";
-[ControlMap, Char.code 'w'], "kill_region";
-[ControlMap, Char.code 'y'], "insert_killed";
-[MetaMap, Char.code 'y'], "insert_next_killed";
-@
-
-<<moving actions>>=
-define_action "mark_at_point"  mark_at_point;
-define_action "kill_region"  kill_region;
-define_action "insert_killed"  insert_killed;
-define_action "insert_next_killed"  insert_next_killed;
-@
-
-\subsection{Mark}
-
-<<function Complex.mark_at_point>>=
-let mark_at_point frame =
-  let top_window = Window.top frame.frm_window in
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  Ebuffer.set_mark buf point;
-  Top_window.message top_window "Mark set";
-  ()
-@
-
-
-<<function Ebuffer.set_mark>>=
-let set_mark buf point =
-  let text = buf.buf_text in
-  buf.buf_modified <- buf.buf_modified + 1;
-  match buf.buf_mark with
-    None ->
-      let mark = dup_point text point in
-      buf.buf_mark <- Some mark
-  | Some mark ->
-      goto_point text mark point
-@
-
-<<function Ebuffer.get_mark>>=
-let rec get_mark buf point =
-  match buf.buf_mark with
-    None -> 
-      set_mark buf point;
-      get_mark buf point
-  | Some mark -> mark
-@
-
-<<function Ebuffer.remove_mark>>=
-let remove_mark buf =
-  match buf.buf_mark with
-    None -> ()
-  | Some mark ->
-      buf.buf_mark <- None;
-      remove_point buf.buf_text mark;
-      buf.buf_modified <- buf.buf_modified + 1
-@
-
-
-\subsection{Cut}
-
-<<function Simple.kill_region>>=
-let kill_region frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let mark =
-    match buf.buf_mark with
-      None -> failwith "No mark set"
-    | Some mark -> mark
-  in
-  let (start,term) = 
-    if mark > point then (point,mark) else (mark,point)
-  in
-  let _,region = Text.delete_res text start (distance text start term) in
-  kill_string region
-@
-
-\subsection{Copy}
-% M-w?
-
-\subsection{Paste}
-
-<<function Simple.insert_killed>>=
-let insert_killed frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let pos, len =  Text.insert_res text point kill_ring.(0) in
-  fmove text point len; 
-  last_insert := Some(frame,pos,0,len)
-@
-
-<<function Simple.insert_next_killed>>=
-let insert_next_killed frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  match !last_insert with
-  |  Some (oldframe,oldpoint,n,len) when 
-    oldframe == frame && oldpoint + len = get_position text point ->
-      let n = if n = (min !kill_size kill_max) - 1 then 0 else n+1 in
-      bmove text point len;
-      let _ = Text.delete text point len in
-      let pos, len =  Text.insert_res text point kill_ring.(n) in
-      fmove text point len;
-      last_insert := Some(frame,pos,n,len)
-  | _ -> ()
-@
-
 \section{Transforming}
 
 <<transforming keys>>=
@@ -3637,6 +3252,118 @@ let fill_paragraph frame =
   commit_session text session
 @
 
+\section{Moving}
+
+<<moving keys>>=
+[ControlMap, Char.code ' '], "mark_at_point";
+[ControlMap, Char.code 'w'], "kill_region";
+[ControlMap, Char.code 'y'], "insert_killed";
+[MetaMap, Char.code 'y'], "insert_next_killed";
+@
+
+<<moving actions>>=
+define_action "mark_at_point"  mark_at_point;
+define_action "kill_region"  kill_region;
+define_action "insert_killed"  insert_killed;
+define_action "insert_next_killed"  insert_next_killed;
+@
+
+\subsection{Mark}
+
+<<function Complex.mark_at_point>>=
+let mark_at_point frame =
+  let top_window = Window.top frame.frm_window in
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  Ebuffer.set_mark buf point;
+  Top_window.message top_window "Mark set";
+  ()
+@
+
+
+<<function Ebuffer.set_mark>>=
+let set_mark buf point =
+  let text = buf.buf_text in
+  buf.buf_modified <- buf.buf_modified + 1;
+  match buf.buf_mark with
+    None ->
+      let mark = dup_point text point in
+      buf.buf_mark <- Some mark
+  | Some mark ->
+      goto_point text mark point
+@
+
+<<function Ebuffer.get_mark>>=
+let rec get_mark buf point =
+  match buf.buf_mark with
+    None -> 
+      set_mark buf point;
+      get_mark buf point
+  | Some mark -> mark
+@
+
+<<function Ebuffer.remove_mark>>=
+let remove_mark buf =
+  match buf.buf_mark with
+    None -> ()
+  | Some mark ->
+      buf.buf_mark <- None;
+      remove_point buf.buf_text mark;
+      buf.buf_modified <- buf.buf_modified + 1
+@
+
+
+\subsection{Cut}
+
+<<function Simple.kill_region>>=
+let kill_region frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let mark =
+    match buf.buf_mark with
+      None -> failwith "No mark set"
+    | Some mark -> mark
+  in
+  let (start,term) = 
+    if mark > point then (point,mark) else (mark,point)
+  in
+  let _,region = Text.delete_res text start (distance text start term) in
+  kill_string region
+@
+
+\subsection{Copy}
+% M-w?
+
+\subsection{Paste}
+
+<<function Simple.insert_killed>>=
+let insert_killed frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let pos, len =  Text.insert_res text point kill_ring.(0) in
+  fmove text point len; 
+  last_insert := Some(frame,pos,0,len)
+@
+
+<<function Simple.insert_next_killed>>=
+let insert_next_killed frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  match !last_insert with
+  |  Some (oldframe,oldpoint,n,len) when 
+    oldframe == frame && oldpoint + len = get_position text point ->
+      let n = if n = (min !kill_size kill_max) - 1 then 0 else n+1 in
+      bmove text point len;
+      let _ = Text.delete text point len in
+      let pos, len =  Text.insert_res text point kill_ring.(n) in
+      fmove text point len;
+      last_insert := Some(frame,pos,n,len)
+  | _ -> ()
+@
+
 \section{Replacing}
 
 <<replacing keys>>=
@@ -3649,6 +3376,36 @@ define_action "replace_regexp" replace_regexp;
 define_action "query_replace_string" query_replace_string;
 define_action "query_replace_regexp" query_replace_regexp;
 @
+
+<<[[interactives_map]] initial entries>>=
+"replace_string";
+"replace_regexp";
+"query_replace_string";
+"query_replace_regexp";
+@
+
+
+%\section{Regexps}
+% mv later?
+
+<<type Efuns.to_regexp>>=
+type to_regexp =
+  Regexp
+| RegexpString
+@
+
+<<function Efuns.string_to_regex>>=
+let string_to_regex s = s, Str.regexp s
+@
+
+
+<<constant Efuns.regexp_option>>=
+let regexp_option = define_option_class "Regexp" 
+    (fun v -> match v with
+        Value s ->  string_to_regex s | _ -> raise Not_found)
+  (fun (s,r) -> Value s)
+@
+% where need that? for c_error_regexp config file
 
 \subsection{Strings}
 
@@ -3969,7 +3726,7 @@ mutable text_history : action list;
 mutable buf_history : (int * Text.action) list;
 @
 
-\subsection{Helpers}
+%\subsection{Helpers}
 
 
 <<type Text.action>>=
@@ -4020,12 +3777,490 @@ let undo tree =
 @
 
 
+\chapter{Multi-Buffers}
+
+% will present 4 different ways to switch buffers:
+%  - menu
+%  - C-x b interactive
+%  - C-x k to kill the current buffer (which in effect switch to next one)
+%  - cycling
+\section{Buffer names}
+
+% can have ambiguity?
+
+% Ebuffer.create -> <>
+<<function Ebuffer.get_name>>=
+let get_name location filename =
+  let basename = Filename.basename filename in
+  let name = 
+    if basename = "" then
+      (Filename.basename (Filename.dirname filename)) ^ "/"
+    else
+      basename
+  in
+  let i = ref 0 in
+  let compute_name () =
+    if !i = 0 
+    then name 
+    else Printf.sprintf "%s<%d>" name !i
+  in
+  try
+    while true do
+      let _ = Hashtbl.find location.loc_buffers (compute_name ()) in 
+      incr i
+    done; assert false
+  with
+    Not_found -> 
+      compute_name ()
+@
+
+
+\section{Buffers menu}
+
+<<[[Std_efunsrc]] buffers menu setup>>=
+buffers_menu := (fun top_window button () ->
+    let buffers = ref [] in
+    let loc = top_window.top_location in
+    Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
+    let desc = Array.map (fun name -> 
+          (name, wrap top_window (fun top_window ->
+                let frame = top_window.top_active_frame in
+                let window = frame.frm_window in
+                Frame.change_buffer window name
+            )))
+      (Array.of_list !buffers) in
+
+    (* X11 *)
+    (*
+    let menu = new WX_popup.t top_window.top_root desc in
+    let (x,y) = button#root_coordinates in
+    menu#popup_once x (y + button#height) (Some !WX_types.button_event)
+    *)
+    failwith "TODO"
+    )
+@
+
+\section{Changing the buffer}
+
+%\section{Navigation}
+
+<<buffer managment keys>>=
+[c_x; NormalMap, Char.code 'b'], "change_buffer";
+@
+<<buffer managment actions>>=
+(* C-x map *)
+define_action "change_buffer"  change_buffer;
+@
+
+
+<<function Complex.change_buffer>>=
+let change_buffer frame =
+  let default = get_previous_frame () in
+  set_previous_frame frame;
+  select_buffer frame " Switch to buffer: " default (fun str ->
+      let window = frame.frm_window in
+      Frame.change_buffer window str
+  )
+@
+
+<<function Frame.change_buffer>>=
+let change_buffer window name = 
+  let top_window = Window.top window in
+  let location = top_window.top_location in
+  try
+    let buf = Hashtbl.find location.loc_buffers name in
+    let frame = create window None  buf 
+    in
+    exec_named_hooks !!change_buffer_hooks frame;
+    status_name frame buf.buf_name
+  with
+    Not_found -> ()
+@
+
+
+\section{Killing the buffer}
+
+<<file menu entries>>=
+"Kill Buffer", "kill_buffer";
+@
+
+<<buffer managment keys>>=
+[c_x; NormalMap, Char.code 'k'], "kill_buffer";
+@
+<<buffer managment actions>>=
+(* C-x map *)
+define_action "kill_buffer"  kill_buffer;
+@
+
+<<function Simple.kill_buffer>>=
+let kill_buffer frame =
+  let window = frame.frm_window in
+  let top_window = Window.top window in
+  let location = top_window.top_location in
+  let buf = frame.frm_buffer in
+  let new_buf = next_buffer location buf in
+  let _new_frame = Frame.create window None new_buf in
+  if buf.buf_shared = 0 
+  then Ebuffer.kill location buf
+@
+
+
+<<function Ebuffer.kill>>=
+let kill location buf =
+  Hashtbl.remove location.loc_buffers buf.buf_name;
+  begin
+    match buf.buf_filename with
+      None -> ()
+    | Some filename ->
+        Hashtbl.remove location.loc_files filename
+  end;
+  List.iter (fun f -> f () ) buf.buf_finalizers;
+  Gc.compact ();
+  buf.buf_shared <- -1
+@
+
+
+
+\section{Cycling buffers}
+% of frame?
+
+<<buffer navigating keys>>=
+[ControlMetaMap, XK.xk_Left], "left_buffer";
+[ControlMetaMap, XK.xk_Right], "right_buffer";
+[ControlMetaMap, XK.xk_Down], "down_buffer";
+[ControlMetaMap, XK.xk_Up], "up_buffer";
+@
+
+<<buffer navigating actions>>=
+(* C-M map *)
+define_action "left_buffer"  left_buffer;
+(* C-M map *)
+define_action "right_buffer"  right_buffer;
+(* C-M map *)
+define_action "down_buffer"  down_buffer;
+(* C-M map *)
+define_action "up_buffer"  up_buffer;
+@
+
+<<function Complex.left_buffer>>=
+let left_buffer frame =
+  set_previous_frame frame;
+  Frame.change_buffer frame.frm_window (
+    match !prev_buffers with
+      name :: buffer :: tail ->
+        prev_buffers := tail @ [name]; 
+        buffer
+    | _ -> raise Not_found)
+@
+
+<<function Complex.right_buffer>>=
+let right_buffer frame =
+  set_previous_frame frame;
+  Frame.change_buffer frame.frm_window (match !prev_buffers with
+      name :: tail ->
+        begin
+          match List.rev tail with
+            buffer :: tail ->
+              prev_buffers := name :: (List.rev tail);
+              buffer
+          | _ -> raise Not_found
+        end
+    | _ -> raise Not_found)
+@
+
+
+<<constant Complex.up_buffer>>=
+let up_buffer = ref ""
+@
+
+<<function Complex.down_buffer>>=
+let down_buffer frame = up_buffer := frame.frm_buffer.buf_name
+@
+
+<<function Complex.up_buffer>>=
+let up_buffer frame =
+  if !up_buffer = "" then raise Not_found;
+  set_previous_frame frame;
+  Frame.change_buffer frame.frm_window !up_buffer
+@
+
+\chapter{Multi-Windows/Frames}
+
+\section{Creating sub windows}
+
+<<[[edit_menu]] entries>>=
+"Cut Frame", "v_cut_frame";
+@
+
+<<frame managment keys>>=
+[c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
+[c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
+@
+
+<<frame managment actions>>=
+(* C-x map *)
+define_action "vertical_cut_frame"  v_cut_frame;    
+(* C-x map *)
+define_action "horizontal_cut_frame"  h_cut_frame;    
+@
+
+<<function Multi_frames.v_cut_frame>>=
+let v_cut_frame frame =
+  if frame.frm_mini_buffer = None 
+  then
+    let _ = Frame.create (cut_frame frame) None frame.frm_buffer in ()
+@
+
+<<function Multi_frames.h_cut_frame>>=
+let h_cut_frame frame =
+  if frame.frm_mini_buffer = None 
+  then
+    let window = frame.frm_window in
+    if window.win_width > 10 then
+      let wi = window.win_width / 2 in
+      let w1 = Window.create false
+          (Window window) window.win_xpos window.win_ypos
+          wi window.win_height in
+      let w2 = Window.create false (Window window) (window.win_xpos + wi) 
+        window.win_ypos
+          (window.win_width - wi) window.win_height in
+      window.win_down <- HComb (w1,w2);
+      Frame.install w1 frame;
+      let _ = Frame.create w2 None frame.frm_buffer in ()
+@
+
+
+\section{Deleting sub windows}
+
+<<[[edit_menu]] entries>>=
+"One Frame", "one_frame";
+"Delete Frame", "delete_frame";
+@
+%bug? not sure v_cut_frame will work!
+
+
+<<frame managment keys>>=
+[c_x; NormalMap, Char.code '1'], "one_frame";
+[c_x; NormalMap, Char.code '0'], "delete_frame";
+@
+
+<<frame managment actions>>=
+(* C-x map *)
+define_action "one_frame"  one_frame;
+(* C-x map *)
+define_action "delete_frame"  delete_frame;
+@
+
+<<function Multi_frames.one_frame>>=
+let one_frame frame =
+  if frame.frm_mini_buffer = None 
+  then
+    let window = frame.frm_window in
+    let top_window = Window.top window in
+    if not (top_window.top_windows == window) then
+      begin
+        Frame.install top_window.top_windows frame;
+        Frame.active frame
+      end
+@
+
+<<function Multi_frames.delete_frame>>=
+let delete_frame frame =
+  if frame.frm_mini_buffer = None 
+  then
+    let window = frame.frm_window in
+    match window.win_up with
+      TopWindow _ -> ()
+    | Window upwin ->
+        Frame.install upwin frame;
+        Frame.active frame
+@
+
+\section{Navigating windows}
+
+<<frame navigation keys>>=
+[c_x; NormalMap, Char.code 'o'], "next_frame";
+@
+<<frame navigation actions>>=
+(* C-x map *)
+define_action "next_frame"  next_frame;
+@
+
+<<function Multi_frames.next_frame>>=
+let next_frame frame =
+  let window = frame.frm_window in
+  Window.next Frame.active window
+@
+
+
+
+<<function Window.next>>=
+let rec next f window =
+  match window.win_up with
+    TopWindow top_window -> first f top_window.top_windows
+  | Window win ->
+      match win.win_down with
+        HComb (w1,w2) ->
+          if w2 == window then
+            next f win
+          else
+            first f w2
+      | VComb (w1,w2) ->
+          if w2 == window then
+            next f win
+          else
+            first f w2
+      | _ -> ()
+@
+
+
+%\section{Navigation}
+
+% ?? -> <>
+<<function Window.iter>>=
+let iter f window = 
+  let rec iter1 window =
+    match window.win_down with
+    | HComb (w1,w2) -> iter1 w1; iter1 w2       
+    | VComb (w1,w2) -> iter1 w1; iter1 w2
+    | WFrame frame -> f frame
+    | NoFrame _ -> ()
+  in
+    iter1 window
+@
+
+% ?? -> <>
+<<function Window.first>>=
+let rec first f window =
+  match window.win_down with
+    WFrame frame -> f frame
+  | HComb (w1,w2) -> first f w1
+  | VComb (w1,w2) -> first f w1
+  | NoFrame _ -> ()
+@
+
+% ?? -> <>
+<<function Window.last>>=
+let rec last f window =
+  match window.win_down with
+    WFrame frame -> f frame
+  | HComb (w1,w2) -> last f w2
+  | VComb (w1,w2) -> last f w2
+  | NoFrame _ -> ()
+@
+
+
+% ?? -> <>
+<<function Window.prev>>=
+let rec prev f window =
+  match window.win_up with
+    TopWindow top_window -> 
+      if window == top_window.top_windows then ()
+      else 
+        last f top_window.top_windows
+  | Window win ->
+      match win.win_down with
+        HComb (w1,w2) ->
+          if w1 == window then
+            prev f win
+          else
+            last f w1
+      | VComb (w1,w2) ->
+          if w1 == window then
+            prev f win
+          else
+            last f w1
+      | _ -> ()
+@
+
+
+
+\section{Windows windows XXX}
+<<window managment keys>>=
+[c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
+[c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
+[c_x; n_5; NormalMap, Char.code '0'], "delete_window";
+@
+
+<<window managment actions>>=
+(* C-x 5 map *)
+define_action "window_load_buffer"  window_load_buffer;
+(* C-x 5 map *)
+define_action "window_change_buffer"  window_change_buffer;
+(* C-x 5 map *)
+define_action "delete_window"  Top_window.delete_window;
+@
+
+
+<<function Complex.window_load_buffer>>=
+let window_load_buffer frame = 
+  select_filename frame "Find file: " 
+    (fun str -> 
+      let top_window = Window.top frame.frm_window in
+      let top_window = Top_window.create top_window.top_location
+          (Window.display top_window)
+      in
+      let _ = Frame.load_file top_window.top_windows str in ())
+@
+
+<<function Complex.window_change_buffer>>=
+let window_change_buffer frame =
+  select_buffer frame "Switch to buffer in new frame: " 
+    (get_previous_frame ())
+  (fun name ->
+      let top_window = Window.top frame.frm_window in
+      let top_window = Top_window.create 
+          top_window.top_location (Window.display top_window) in
+      Frame.change_buffer top_window.top_windows name
+  )
+@
+
+<<function Top_window.delete_window>>=
+let delete_window frame =
+  failwith "TODO"
+(*
+  let top_window = Window.top frame.frm_window in
+  let location = top_window.top_location in
+  if List.length location.loc_windows > 1 then
+    let xterm = Window.xterm top_window in
+    top_window.top_appli#destroy;
+    WX_xterm.destroy_window xterm;
+    Frame.kill_all top_window.top_windows;
+    location.loc_windows <- Utils.list_remove location.loc_windows
+      top_window
+*)
+@
+
+<<function Frame.kill_all>>=
+let kill_all window =
+  Window.iter kill window
+@
+
+%XXX
+<<function Frame.kill>>=
+let kill frame = 
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  frame.frm_killed <- true;
+  buf.buf_shared <- buf.buf_shared - 1;
+  Text.remove_point text buf.buf_point;
+  Text.remove_point text buf.buf_start;
+  buf.buf_point <- frame.frm_point;
+  buf.buf_start <- frame.frm_start
+@
+
+
 \chapter{Major Modes}
+
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_major_mode : major_mode;
 @
 % note that major mode is a property of the buffer! not the frame.
+
+<<[[Efuns.status]] other fields>>=
+mutable stat_mode : major_mode;
+@
 
 
 <<type Efuns.major_mode>>=
@@ -4038,11 +4273,6 @@ and major_mode = {
   }
 @
 
-<<function Efuns.set_major_var>>=
-let set_major_var maj var value = Local.set maj.maj_vars var value
-@
-
-
 <<function Ebuffer.new_major_mode>>=
 let new_major_mode name hooks = {
     maj_name = name;
@@ -4053,6 +4283,7 @@ let new_major_mode name hooks = {
 @
 
 
+
 <<function Ebuffer.set_major_mode>>=
 let set_major_mode buf mode =
   buf.buf_modified <- buf.buf_modified + 1;
@@ -4061,7 +4292,13 @@ let set_major_mode buf mode =
       try f buf with _ -> ()) mode.maj_hooks
 @
 
+
+
 \section{Fundamental mode}
+
+<<[[interactives_map]] initial entries>>=
+"fondamental_mode";
+@
 
 <<major mode actions>>=
 define_action "fondamental_mode" fondamental_mode;
@@ -4131,7 +4368,36 @@ let set_buffer_mode buf =
     Exit -> ()
 @
 
-\section{XXX}
+
+\section{Status line}
+
+<<[[Frame.create_without_top()]] adjust status of frame>>=
+status_major_mode frame;
+@
+
+<<function Frame.status_major_mode>>=
+let status_major_mode frame  =
+  let buf = frame.frm_buffer in
+  let status = frame.frm_status in
+  if not (status.stat_modes == buf.buf_minor_modes &&
+          status.stat_mode == buf.buf_major_mode
+    ) then
+    begin
+      status.stat_modes <- buf.buf_minor_modes;
+      status.stat_mode <- buf.buf_major_mode;
+      status_print status (Printf.sprintf "(%s)" 
+          (print_list
+            (buf.buf_major_mode.maj_name ::
+            (List.map (fun m -> m.min_name) status.stat_modes))))
+      StatMode;
+    end
+@
+
+\section{Major mode variables and keys}
+
+<<function Efuns.set_major_var>>=
+let set_major_var maj var value = Local.set maj.maj_vars var value
+@
 
 <<function Keymap.add_major_key>>=
 let add_major_key major = interactive major.maj_map 
@@ -4156,6 +4422,10 @@ Local.get buf.buf_major_mode.maj_vars var
 mutable buf_minor_modes : minor_mode list;
 @
 
+<<[[Efuns.status]] other fields>>=
+mutable stat_modes : minor_mode list;
+@
+
 <<type Efuns.minor_mode>>=
 and minor_mode = {
     min_name : string;
@@ -4165,11 +4435,6 @@ and minor_mode = {
     mutable min_vars : vars;
   }
 @
-
-<<function Efuns.set_minor_var>>=
-let set_minor_var min var value = Local.set min.min_vars var value
-@
-
 
 <<function Ebuffer.new_minor_mode>>=
 let new_minor_mode name = {
@@ -4189,6 +4454,7 @@ let new_minor_mode name hooks  = {
     min_vars = Local.vars ()
   }
 @
+
 
 <<function Ebuffer.set_minor_mode>>=
 let set_minor_mode buf mode =
@@ -4212,33 +4478,6 @@ let del_minor_mode buf minor =
 @
 
 
-<<function Keymap.add_minor_key>>=
-let add_minor_key minor = interactive minor.min_map 
-@
-
-
-
-<<[[Ebuffer.get_binding()]] minor mode key search>>=
-List.iter (fun minor ->
-    let b = Keymap.get_binding minor.min_map keylist in
-    match b with
-      Prefix map -> binding := b
-    | Function f -> binding := b; raise Exit
-    | Unbound -> ()
-) buf.buf_minor_modes; 
-@
-
-<<[[Efuns.get_var()]] try with minor mode variables>>=
-let rec iter list =
-  match list with
-    [] -> raise Not_found
-  | min :: list -> 
-      try
-        Local.get min.min_vars var
-      with _ -> iter list
-in
-iter buf.buf_minor_modes
-@
 
 \section{Example}
 
@@ -4273,13 +4512,46 @@ let _ =
   define_action (minor_mode_name ^ "_mode")
     (fun frame -> 
       let buf = frame.frm_buffer in
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode)
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+    )
 @
 
 
+\section{Minor mode variables and keys}
+
+<<function Efuns.set_minor_var>>=
+let set_minor_var min var value = Local.set min.min_vars var value
+@
+
+<<function Keymap.add_minor_key>>=
+let add_minor_key minor = interactive minor.min_map 
+@
+
+
+
+<<[[Ebuffer.get_binding()]] minor mode key search>>=
+List.iter (fun minor ->
+    let b = Keymap.get_binding minor.min_map keylist in
+    match b with
+      Prefix map -> binding := b
+    | Function f -> binding := b; raise Exit
+    | Unbound -> ()
+) buf.buf_minor_modes; 
+@
+
+<<[[Efuns.get_var()]] try with minor mode variables>>=
+let rec iter list =
+  match list with
+    [] -> raise Not_found
+  | min :: list -> 
+      try
+        Local.get min.min_vars var
+      with _ -> iter list
+in
+iter buf.buf_minor_modes
+@
 
 
 \chapter{Other Features}
@@ -4303,6 +4575,10 @@ let shell_command frame =
 
 \section{Compilation and grep mode}
 
+<<file menu entries>>=
+"Compile", "compile";
+@
+
 <<misc keys>>=
 [c_x;NormalMap, Char.code '`' ], "next_error";
 @
@@ -4315,6 +4591,11 @@ define_action "next_error"  next_error;
 <<external command actions>>=
 define_action "grep" grep;
 (*  define_action "compile" (compile c_find_error); *)
+@
+
+<<[[interactives_map]] initial entries>>=
+"compile";
+"grep";
 @
 
 \subsection{[[M-x grep]]}
@@ -4744,11 +5025,29 @@ exception UnboundKey
 %  - ocaml
 %  - tex
 
+<<[[interactives_map]] initial entries>>=
+"makefile_mode";
+"ocaml_mode";
+"tex_mode";
+"c_mode";
+@
+
 \section{Dired}
 
 \section{Lisp mode}
 
 \chapter{Minor mode examples}
+
+<<[[interactives_map]] initial entries>>=
+"accents_mode";
+"paren_mode";
+"abbrevs_mode";
+"ocaml_minor_mode";
+"fill_mode";
+"ocaml_compiler_mode";
+"tab_mode";
+"overwrite_mode";
+@
 
 \section{Abbrevs}
 

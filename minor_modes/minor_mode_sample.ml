@@ -46,10 +46,10 @@ let _ =
   define_action (minor_mode_name ^ "_mode")
     (fun frame -> 
       let buf = frame.frm_buffer in
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode)
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+    )
 (*e: toplevel Minor_mode_sample._2 *)
     
     

@@ -127,7 +127,7 @@ let check_file frame =
 let exit_efuns frame =
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
-  let buffers = list_of_hash location.loc_buffers in
+  let buffers = Utils.list_of_hash location.loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> exit 0)
 (*e: function Complex.exit_efuns *)
 
@@ -142,15 +142,13 @@ let save_some_buffers frame =
 (*s: function Complex.load_buffer *)
 let load_buffer frame = 
   set_previous_frame frame;
-  select_filename frame "Find file: " 
-    (fun str -> 
+  select_filename frame "Find file: " (fun str -> 
       let _ = Frame.load_file frame.frm_window str in ())
 (*e: function Complex.load_buffer *)
 
 (*s: function Complex.insert_file *)
 let insert_file frame =
-  select_filename frame "Insert file: "
-    (fun str ->
+  select_filename frame "Insert file: " (fun str ->
       let inc = open_in str in
       insert_string frame (Utils.read_string inc);
       close_in inc
@@ -192,7 +190,8 @@ let change_buffer frame =
   set_previous_frame frame;
   select_buffer frame " Switch to buffer: " default (fun str ->
       let window = frame.frm_window in
-      change_buffer window str)
+      Frame.change_buffer window str
+  )
 (*e: function Complex.change_buffer *)
 
 (*s: function Complex.window_change_buffer *)

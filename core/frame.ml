@@ -73,7 +73,7 @@ let status_major_mode frame  =
   let buf = frame.frm_buffer in
   let status = frame.frm_status in
   if not (status.stat_modes == buf.buf_minor_modes &&
-      status.stat_mode == buf.buf_major_mode
+          status.stat_mode == buf.buf_major_mode
     ) then
     begin
       status.stat_modes <- buf.buf_minor_modes;
@@ -244,6 +244,7 @@ let create_without_top location window mini buf =
   in
   (*s: [[Frame.create_without_top()]] adjust status of frame *)
   status_name frame buf.buf_name;
+  (*x: [[Frame.create_without_top()]] adjust status of frame *)
   status_major_mode frame;
   (*e: [[Frame.create_without_top()]] adjust status of frame *)
 
@@ -489,14 +490,14 @@ let update_table top_window frame =
 
 (*s: function Frame.update *)
 let update top_window frame =
-  failwith "TODO"
-(*
   let buf =  frame.frm_buffer in
   let text = buf.buf_text in
+
   let start = frame.frm_start in
   let point = frame.frm_point in
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
+
   if  buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated then
     Text.set_position text point (Text.size text); 
   if
@@ -522,7 +523,9 @@ let update top_window frame =
           frame.frm_redraw <- true;
         end
       else
-      if frame.frm_cutline = max_int && (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  then
+      if frame.frm_cutline = max_int && 
+        (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
+      then
         begin
           frame.frm_x_offset <- point_c - (width / 2);
           frame.frm_redraw <- true;
@@ -560,8 +563,12 @@ let update top_window frame =
           frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
           let pos_start = get_position text frame.frm_start in
           let pos_end = get_position text frame.frm_end in
-          top_window.top_scrollbar#set_params pos_start (pos_end - pos_start)
-          (size text);
+
+          failwith "TODO";
+          (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
+
+             (size text);
+          *)
         end;
       frame.frm_last_text_updated <- version text;
       frame.frm_last_buf_updated <- buf.buf_modified;
@@ -580,10 +587,12 @@ let update top_window frame =
       done;
       frame.frm_redraw <- false
     end;
+(*
   let xterm = match top_window.top_xterm with
       None -> raise Not_found
     | Some xterm -> xterm 
   in
+*)
   match frame.frm_mini_buffer with
     None -> 
       let status = frame.frm_status in
@@ -593,13 +602,17 @@ let update top_window frame =
       status_name frame buf.buf_name;
       status_major_mode frame;
       if status.status_modified then
-        WX_xterm.draw_string xterm frame.frm_xpos
-          (frame.frm_ypos + frame.frm_height - 1) 
+
+        (* WX_xterm.draw_string xterm frame.frm_xpos
+          (frame.frm_ypos + frame.frm_height - 1)  
         status.status_string 0 width Text.inverse_attr
+        *)
+        failwith "TODO"
   | Some request ->
-      WX_xterm.draw_string xterm 0 (top_window.top_height-1) 
+        failwith "TODO";
+      (* WX_xterm.draw_string xterm 0 (top_window.top_height-1)  
       request 0 (String.length request) Text.direct_attr
-*)
+      *)
 (*e: function Frame.update *)
 
 (*s: exception Frame.BufferKilled *)
@@ -683,9 +696,9 @@ let rec exec_named_hooks_with_abort hooks frame =
 let load_file window filename =
   let top_window = Window.top window in
   let location = top_window.top_location in
+
   let buf = Ebuffer.read location filename (Keymap.create ()) in
-  let frame = create window None buf 
-  in
+  let frame = create window None buf in
   exec_named_hooks !!change_buffer_hooks frame;
   status_name frame buf.buf_name;
   frame

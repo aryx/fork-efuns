@@ -87,6 +87,7 @@ let _ =
   (*x: loading actions *)
   (* C-x map *)
   define_action "load_buffer"  load_buffer;
+  (*x: loading actions *)
   (* C-x map *)
   define_action "insert_file"  insert_file;
   (*e: loading actions *)
@@ -214,10 +215,10 @@ let _ =
   (* ----------------------------------------------------------------------- *)
   (*s: buffer managment actions *)
   (* C-x map *)
-  define_action "kill_buffer"  kill_buffer;
+  define_action "change_buffer"  change_buffer;
   (*x: buffer managment actions *)
   (* C-x map *)
-  define_action "change_buffer"  change_buffer;
+  define_action "kill_buffer"  kill_buffer;
   (*e: buffer managment actions *)
   (*s: buffer navigating actions *)
   (* C-M map *)
@@ -234,6 +235,7 @@ let _ =
   define_action "vertical_cut_frame"  v_cut_frame;    
   (* C-x map *)
   define_action "horizontal_cut_frame"  h_cut_frame;    
+  (*x: frame managment actions *)
   (* C-x map *)
   define_action "one_frame"  one_frame;
   (* C-x map *)
@@ -271,7 +273,6 @@ let _ =
   (*x: saving actions *)
   (* C-x map *)
   define_action "save_some_buffers"  save_some_buffers;
-
   (* C-x map *)
   define_action "write_file"  write_buffer; 
   (*e: saving actions *)
@@ -355,6 +356,7 @@ let _ =
         (* ----------------------------------------------------------------------- *)
         (*s: loading keys *)
         [c_x; ControlMap, Char.code 'f'], "load_buffer";
+        (*x: loading keys *)
         [c_x; NormalMap, Char.code 'i'], "insert_file";
         (*e: loading keys *)
 
@@ -472,9 +474,9 @@ let _ =
         (* Buffers/windows/frames *)
         (* ----------------------------------------------------------------------- *)
         (*s: buffer managment keys *)
-        [c_x; NormalMap, Char.code 'k'], "kill_buffer";
-        (*x: buffer managment keys *)
         [c_x; NormalMap, Char.code 'b'], "change_buffer";
+        (*x: buffer managment keys *)
+        [c_x; NormalMap, Char.code 'k'], "kill_buffer";
         (*e: buffer managment keys *)
         (*s: buffer navigating keys *)
         [ControlMetaMap, XK.xk_Left], "left_buffer";
@@ -485,6 +487,7 @@ let _ =
         (*s: frame managment keys *)
         [c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
         [c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
+        (*x: frame managment keys *)
         [c_x; NormalMap, Char.code '1'], "one_frame";
         [c_x; NormalMap, Char.code '0'], "delete_frame";
         (*e: frame managment keys *)
@@ -542,25 +545,33 @@ let _ =
   if !!interactives_map = [] then begin
       interactives_map =:= List.map (fun x -> x, x ) [
         (*s: [[interactives_map]] initial entries *)
-        "goto_line";
+        "save_options";
+        "load_library";
+        "get_position";
+        "open_display";
+        "unset_attr";
+        "start_server";
+        (*x: [[interactives_map]] initial entries *)
+        "eval";  
+        (*x: [[interactives_map]] initial entries *)
         "goto_char";
-
+        "goto_line";
+        (*x: [[interactives_map]] initial entries *)
         "replace_string";
         "replace_regexp";
         "query_replace_string";
         "query_replace_regexp";
-
-        "eval";  
-
+        (*x: [[interactives_map]] initial entries *)
+        "fondamental_mode";
+        (*x: [[interactives_map]] initial entries *)
         "compile";
         "grep";
-
-        "fondamental_mode";
+        (*x: [[interactives_map]] initial entries *)
         "makefile_mode";
         "ocaml_mode";
         "tex_mode";
         "c_mode";
-
+        (*x: [[interactives_map]] initial entries *)
         "accents_mode";
         "paren_mode";
         "abbrevs_mode";
@@ -569,13 +580,6 @@ let _ =
         "ocaml_compiler_mode";
         "tab_mode";
         "overwrite_mode";
-
-        "save_options";
-        "load_library";
-        "get_position";
-        "open_display";
-        "unset_attr";
-        "start_server";
         (*e: [[interactives_map]] initial entries *)
       ]
     end    
@@ -632,9 +636,11 @@ let _ =
       file_menu =:=    [
         "Open File", "select_open_file";
         "Save Buffer", "save_buffer";
+        (*s: file menu entries *)
         "Kill Buffer", "kill_buffer";
-
+        (*x: file menu entries *)
         "Compile", "compile";
+        (*e: file menu entries *)
         "", "";
         "Quit", "exit";
       ]
@@ -643,12 +649,14 @@ let _ =
   (*s: [[Std_efunsrc]] edit menu setup *)
   if !!edit_menu = [] then begin
       edit_menu =:= [ 
-        "Cut", "kill_region";
+        "Cut",    "kill_region";
         "Paste",  "insert_killed";
-        "Undo", "undo";
+
+        "Undo",    "undo";
         "", "";
         (*s: [[edit_menu]] entries *)
         "Cut Frame", "v_cut_frame";
+        (*x: [[edit_menu]] entries *)
         "One Frame", "one_frame";
         "Delete Frame", "delete_frame";
         (*e: [[edit_menu]] entries *)
@@ -660,6 +668,9 @@ let _ =
     "Key Bindings", (fun frame ->
         Frame.change_buffer frame.frm_window "*bindings*"
     );
+    "About Efuns", (fun frame ->
+      Frame.change_buffer frame.frm_window "*help*"
+    );
     "Changes", (fun frame ->
       (*
         let _ = Frame.load_file frame.frm_window (
@@ -668,17 +679,13 @@ let _ =
       failwith "TODO"
     );
 
-    "About Efuns", (fun frame ->
-      Frame.change_buffer frame.frm_window "*help*"
-    );
   |];
   (*e: [[Std_efunsrc]] help menu setup *)
   (*s: [[Std_efunsrc]] buffers menu setup *)
   buffers_menu := (fun top_window button () ->
       let buffers = ref [] in
-      let location = top_window.top_location in
-      Hashtbl.iter (fun name buf -> buffers:=name :: !buffers) 
-      location.loc_buffers;
+      let loc = top_window.top_location in
+      Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
       let desc = Array.map (fun name -> 
             (name, wrap top_window (fun top_window ->
                   let frame = top_window.top_active_frame in

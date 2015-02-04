@@ -143,6 +143,20 @@ and frame  =
     mutable frm_window : window;
 
     (*s: [[Efuns.frame]] other fields *)
+
+    mutable frm_width : int;
+    mutable frm_height : int;
+
+    mutable frm_xpos : int;
+    mutable frm_ypos : int;
+
+    (* 0 for no scrollbar, 2 for scrollbar *)
+    mutable frm_has_scrollbar : int;
+    (* 0 for minibuffer, 1 for normal frame *)
+    mutable frm_has_status_line : int;
+
+
+
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
 
@@ -172,16 +186,9 @@ and frame  =
     mutable frm_x_offset : int;
     mutable frm_cutline : int; (* max_int for no, else length *)
 
-    (* 0 for no scrollbar, 2 for scrollbar *)
-    mutable frm_has_scrollbar : int;
-    (* 0 for minibuffer, 1 for normal frame *)
-    mutable frm_has_status_line : int;
+
     mutable frm_status : status;    
 
-    mutable frm_xpos : int;
-    mutable frm_ypos : int;
-    mutable frm_width : int;
-    mutable frm_height : int;
 
     mutable frm_table : line_repr array;
     mutable frm_killed : bool;
@@ -205,16 +212,24 @@ and status_info =
 
 (*s: type Efuns.status *)
 and status =
-  { mutable status_string : string;
-    mutable status_modified : bool;
+  { 
+    (* the string! --- ... --- *)
+    mutable status_string : string;
     mutable status_format : (status_info * (int * int)) list;
-    mutable stat_col : int;
+
+    mutable status_modified : bool;
+    mutable stat_modified : bool;
+
     mutable stat_name : string;
     mutable stat_file : string;
     mutable stat_line : int;
-    mutable stat_modified : bool;
-    mutable stat_modes : minor_mode list;
+    mutable stat_col : int;
+
+    (*s: [[Efuns.status]] other fields *)
     mutable stat_mode : major_mode;
+    (*x: [[Efuns.status]] other fields *)
+    mutable stat_modes : minor_mode list;
+    (*e: [[Efuns.status]] other fields *)
   }
 (*e: type Efuns.status *)
 
