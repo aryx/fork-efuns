@@ -38,10 +38,57 @@ let save_options frame = Options.save ()
 let fondamental_mode frame =
   Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
 (*e: function Std_efunsrc.fondamental_mode *)
+
+(*s: function Std_efunsrc.compile *)
+let compile frame =
+  exec_interactive (buf_interactives frame.frm_buffer) frame "compile"
+(*e: function Std_efunsrc.compile *)
+
+(*s: function Std_efunsrc.select_open_file *)
+let select_open_file frame =
+  let window = frame.frm_window in
+  let top_window = Window.top window in
+  let cdir = Frame.current_dir frame in
+  let info = {
+      filter = Filename.concat cdir "*";
+      current_selection = cdir;
+      predicat = (fun _ -> true);
+      action = (fun _ -> ());
+      cancel = (fun _ -> ());
+    } in
+
+  (* X11 *)
+  let query = new WX_filesel.t top_window.top_root info [] in
+  query#setWM_TRANSIENT_FOR (top_window.top_appli#top :> WX_types.container);
+  info.action <- (fun name ->
+      wrap top_window (fun top_window ->
+          query#destroy;
+          let _ = Frame.load_file window name in ()
+      ) ());
+  info.cancel <- (fun () ->
+      wrap top_window (fun top_window ->
+          query#destroy;
+      ) ());        
+  query#show
+(*e: function Std_efunsrc.select_open_file *)
+
   
 (*s: toplevel Std_efunsrc._1 *)
 let _ =
   (*s: actions definitions *)
+  (* ----------------------------------------------------------------------- *)
+  (* Loading *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: loading actions *)
+  define_action "select_open_file" select_open_file;
+  (*x: loading actions *)
+  (* C-x map *)
+  define_action "load_buffer"  load_buffer;
+  (* C-x map *)
+  define_action "insert_file"  insert_file;
+  (*e: loading actions *)
+  define_action "load_library" load_library;
+
   (* ----------------------------------------------------------------------- *)
   (* Navigating *)
   (* ----------------------------------------------------------------------- *)
@@ -72,12 +119,20 @@ let _ =
   (*e: navigating actions *)
 
   (* ----------------------------------------------------------------------- *)
-  (* Inserting *)
+  (* Editing *)
   (* ----------------------------------------------------------------------- *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ------------- *)
+  (* Inserting *)
+  (* ------------- *)
+
+  (*s: inserting actions *)
+  define_action "insert_return"  insert_return;
+  (*e: inserting actions *)
+
+  (* ------------- *)
   (* Deleting *)
-  (* ----------------------------------------------------------------------- *)
+  (* ------------- *)
   (*s: deleting actions *)
   define_action "delete_before_point"  delete_backspace_char;
   define_action "delete_at_point"  delete_char;
@@ -88,9 +143,9 @@ let _ =
   define_action "kill_end_of_line"  kill_end_of_line;
   (*e: deleting actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ------------------------------ *)
   (* Moving (Cut, copy, paste) *)
-  (* ----------------------------------------------------------------------- *)
+  (* ------------------------------ *)
   (*s: moving actions *)
   define_action "mark_at_point"  mark_at_point;
   define_action "kill_region"  kill_region;
@@ -98,9 +153,9 @@ let _ =
   define_action "insert_next_killed"  insert_next_killed;
   (*e: moving actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ---------------------- *)
   (* Transforming *)
-  (* ----------------------------------------------------------------------- *)
+  (* ---------------------- *)
   (*s: transforming actions *)
   define_action "transpose_chars"  (to_frame transpose_chars);
 
@@ -171,6 +226,14 @@ let _ =
   define_action "up_buffer"  up_buffer;
   (*e: buffer navigating actions *)
 
+  (*s: buffer managment actions *)
+  (* C-x map *)
+  define_action "kill_buffer"  kill_buffer;
+  (*x: buffer managment actions *)
+  (* C-x map *)
+  define_action "change_buffer"  change_buffer;
+  (*e: buffer managment actions *)
+
   (*s: window managment actions *)
   (* C-x 5 map *)
   define_action "window_load_buffer"  window_load_buffer;
@@ -191,11 +254,6 @@ let _ =
   define_action "delete_frame"  delete_frame;
   (*e: frame managment actions *)
 
-  (*s: buffer managment actions *)
-  (* C-x map *)
-  define_action "kill_buffer"  kill_buffer;
-  (*e: buffer managment actions *)
-
   (* ----------------------------------------------------------------------- *)
   (* Meta *)
   (* ----------------------------------------------------------------------- *)
@@ -204,16 +262,6 @@ let _ =
   define_action "eval" Complex.eval;  
   (*e: meta actions *)
 
-  (* ----------------------------------------------------------------------- *)
-  (* Loading *)
-  (* ----------------------------------------------------------------------- *)
-  (*s: loading actions *)
-  (* C-x map *)
-  define_action "load_buffer"  load_buffer;
-  (* C-x map *)
-  define_action "insert_file"  insert_file;
-  (*e: loading actions *)
-  define_action "load_library" load_library;
 
   (* ----------------------------------------------------------------------- *)
   (* Saving *)
@@ -221,6 +269,7 @@ let _ =
   (*s: saving actions *)
   (* C-x map *)
   define_action "save_buffer"  save_buffer; 
+  (*x: saving actions *)
   (* C-x map *)
   define_action "save_some_buffers"  save_some_buffers;
 
@@ -231,15 +280,18 @@ let _ =
   define_action "save_options" save_options;
 
   (* ----------------------------------------------------------------------- *)
+  (* Major mode *)
+  (* ----------------------------------------------------------------------- *)
+  (*s: major mode actions *)
+  define_action "fondamental_mode" fondamental_mode;
+  (*e: major mode actions *)
+
+  (* ----------------------------------------------------------------------- *)
   (* Misc *)
   (* ----------------------------------------------------------------------- *)
   (*s: misc actions *)
-  define_action "fondamental_mode" fondamental_mode;
   define_action "get_position" get_pos;
-  define_action "open_display" open_display;
   define_action "unset_attr" unset_attr;
-  define_action "start_server" Server.start;  
-  define_action "insert_return"  insert_return;
   define_action "recenter"  recenter;
   define_action "hungry_electric_delete"  hungry_electric_delete;
   define_action "revert_buffer" reload;
@@ -248,26 +300,25 @@ let _ =
   define_buffer_action "update_time" update_time;
 
   (* C-x map *)
-  define_action "change_buffer"  change_buffer;
-  (* C-x map *)
-  define_action "change_font"  change_font;
-
-  (* C-x map *)
   define_action "next_frame"  next_frame;
-
   (* C-x map *)
   define_action "next_error"  next_error;
   (* C-x map *)
   define_action "point_at_mark"  point_at_mark;
-
-  (* C-x map *)
-  define_action "exit"  exit_efuns; 
-
-  (* C-h map *)
-  define_action "help_bindings"  Frame.bindings_help;
-
   (* C-M map *)
   define_action "next_hole" next_hole;
+
+  define_action "start_server" Server.start;  
+
+  define_action "open_display" open_display;
+  (* C-x map *)
+  define_action "change_font"  change_font;
+  (*x: misc actions *)
+  (* C-h map *)
+  define_action "help_bindings"  Frame.bindings_help;
+  (*x: misc actions *)
+  (* C-x map *)
+  define_action "exit"  exit_efuns; 
   (*e: misc actions *)
   (*e: actions definitions *)
   ()
@@ -303,46 +354,61 @@ let n_5 = (NormalMap, Char.code '5')
 let _ = 
   if !!global_map = [] then begin
       global_map =:= [
+        (*s: [[global_map]] initial entries *)
         [MetaMap, XK.xk_q], "fill_paragraph";
+
         [NormalMap, XK.xk_BackSpace], "delete_before_point"; 
         [NormalMap, XK.xk_Delete], "delete_at_point"; 
         [NormalMap, XK.xk_Return], "insert_return"; 
+
         [NormalMap, XK.xk_Left], "move_backward"; 
         [NormalMap, XK.xk_Right], "move_forward"; 
         [NormalMap, XK.xk_Down], "forward_line"; 
         [NormalMap, XK.xk_Up], "backward-line"; 
         [NormalMap, XK.xk_Prior], "backward_screen"; 
         [NormalMap, XK.xk_Next], "forward_screen";
+
         [NormalMap, Char.code ' '], "char_expand_abbrev";
         [NormalMap, XK.xk_Insert], "overwrite_mode";
 
-        [ControlMap, XK.xk_Up], "backward_paragraph";
         [ControlMap, Char.code 'w'], "kill_region";
-        [ControlMap, XK.xk_Down], "forward_paragraph";  
-        [ControlMap, Char.code 'a'], "beginning_of_line";
-        [ControlMap, Char.code 'd'], "delete_at_point";
-        [ControlMap, Char.code 'b'], "move_backward";
-        [ControlMap, Char.code 'f'], "move_forward";
-        [ControlMap, Char.code 'e'], "end_of_line";
-        [ControlMap, Char.code 'k'], "kill_end_of_line";
-        [ControlMap, Char.code 's'], "isearch_forward";
-        [ControlMap, Char.code 'r'], "isearch_backward";
-        [ControlMap, Char.code '_'], "undo";
+
         [ControlMap, XK.xk_Right ], "forward_word";  
         [ControlMap, XK.xk_Left ], "backward_word";
+
+        [ControlMap, XK.xk_Up], "backward_paragraph";
+        [ControlMap, XK.xk_Down], "forward_paragraph";  
+
+        [ControlMap, Char.code 'a'], "beginning_of_line";
+        [ControlMap, Char.code 'e'], "end_of_line";
+        [ControlMap, Char.code 'b'], "move_backward";
+        [ControlMap, Char.code 'f'], "move_forward";
+
+        [MetaMap, XK.xk_Right ], "forward_word";
+        [MetaMap, XK.xk_Left ], "backward_word";
+
+        [ControlMap, Char.code 'd'], "delete_at_point";
+
+        [ControlMap, Char.code 'k'], "kill_end_of_line";
+
+        [ControlMap, Char.code 's'], "isearch_forward";
+        [ControlMap, Char.code 'r'], "isearch_backward";
+
         [ControlMap, XK.xk_Next], "end_of_file";
         [ControlMap, XK.xk_Prior], "begin_of_file";
+
+        [ControlMap, Char.code '_'], "undo";
         [ControlMap, Char.code 'y'], "insert_killed";
         [ControlMap, Char.code ' '], "mark_at_point";
         [ControlMap, Char.code 'l'], "recenter";
         [ControlMap, Char.code 't'], "transpose_chars";
         [ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
 
-        
+
         [MetaMap, Char.code 's'], "isearch_forward_regexp";
         [MetaMap, Char.code 'r'], "isearch_backward_regexp";
-        [MetaMap, XK.xk_Right ], "forward_word";
-        [MetaMap, XK.xk_Left ], "backward_word";
+
+
         [MetaMap, Char.code 'd' ], "delete_forward_word";
         [MetaMap, XK.xk_BackSpace ], "delete_backward_word";
         [MetaMap, Char.code 'x'], "call_interactive";
@@ -353,7 +419,7 @@ let _ =
         [MetaMap, Char.code 'l'], "lowercase_word";
         [MetaMap, Char.code 'u'], "uppercase_word";
         [MetaMap, Char.code '/'], "dabbrev_expand";
-        
+
         [c_x; ControlMap, Char.code 'f'], "load_buffer";
         [c_x; NormalMap, Char.code 'i'], "insert_file";
         [c_x; ControlMap, Char.code 'c'], "exit"; 
@@ -373,48 +439,56 @@ let _ =
         [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
         [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
         [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
-        
+
         [c_h; NormalMap, Char.code 'K'], "help_bindings";
 
         [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
-        
+
         [ControlMetaMap, XK.xk_Left], "left_buffer";
         [ControlMetaMap, XK.xk_Right], "right_buffer";
         [ControlMetaMap, XK.xk_Down], "down_buffer";
         [ControlMetaMap, XK.xk_Up], "up_buffer";
-      
+        (*e: [[global_map]] initial entries *)
       ]
     end;
   if !!interactives_map = [] then begin
-      interactives_map =:= [
-        "fondamental_mode", "fondamental_mode";
-        "save_options", "save_options";
-        "replace_string", "replace_string";
-        "replace_regexp", "replace_regexp";
-        "query_replace_string", "query_replace_string";
-        "query_replace_regexp", "query_replace_regexp";
-        "load_library", "load_library";
-        "get_position", "get_position";
-        "open_display", "open_display";
-        "compile", "compile";
-        "grep", "grep";
-        "goto_line", "goto_line";
-        "goto_char", "goto_char";
-        "unset_attr", "unset_attr";
-        "eval", "eval";  
-        "start_server", "start_server";
-        "makefile_mode", "makefile_mode";
-        "ocaml_mode", "ocaml_mode";
-        "tex_mode", "tex_mode";
-        "c_mode", "c_mode";
-        "accents_mode", "accents_mode";
-        "paren_mode", "paren_mode";
-        "abbrevs_mode", "abbrevs_mode";
-        "ocaml_minor_mode", "ocaml_minor_mode";
-        "fill_mode", "fill_mode";
-        "ocaml_compiler_mode", "ocaml_compiler_mode";
-        "tab_mode", "tab_mode";
-        "overwrite_mode", "overwrite_mode";
+      interactives_map =:= List.map (fun x -> x, x ) [
+        (*s: [[interactives_map]] initial entries *)
+        "goto_line";
+        "goto_char";
+
+        "replace_string";
+        "replace_regexp";
+        "query_replace_string";
+        "query_replace_regexp";
+
+        "eval";  
+
+        "compile";
+        "grep";
+
+        "fondamental_mode";
+        "makefile_mode";
+        "ocaml_mode";
+        "tex_mode";
+        "c_mode";
+
+        "accents_mode";
+        "paren_mode";
+        "abbrevs_mode";
+        "ocaml_minor_mode";
+        "fill_mode";
+        "ocaml_compiler_mode";
+        "tab_mode";
+        "overwrite_mode";
+
+        "save_options";
+        "load_library";
+        "get_position";
+        "open_display";
+        "unset_attr";
+        "start_server";
+        (*e: [[interactives_map]] initial entries *)
       ]
     end    
 (*e: toplevel Std_efunsrc._2 *)
@@ -430,30 +504,6 @@ let init_global_map location =
           Log.exn "%s\n" e;
   ) !!global_map;
   
-  Keymap.add_global_key location [NormalMap, XK.xk_dead_circumflex]
-    "circumflex" (char_insert_command '^');
-
-        (* These keys depend on the next key pressed. In my case, I don't use
-  the accents, so I prefer them to immediatly enter the good key.
-let	xk_dead_grave					= 0xFE50
-let	xk_dead_acute					= 0xFE51
-let	xk_dead_circumflex				= 0xFE52
-let	xk_dead_tilde					= 0xFE53
-let	xk_dead_macron					= 0xFE54
-let	xk_dead_breve					= 0xFE55
-let	xk_dead_abovedot				= 0xFE56
-let	xk_dead_diaeresis				= 0xFE57
-let	xk_dead_abovering				= 0xFE58
-let	xk_dead_doubleacute				= 0xFE59
-let	xk_dead_caron					= 0xFE5A
-let	xk_dead_cedilla					= 0xFE5B
-let	xk_dead_ogonek					= 0xFE5C
-let	xk_dead_iota					= 0xFE5D
-let	xk_dead_voiced_sound				= 0xFE5E
-let	xk_dead_semivoiced_sound			= 0xFE5F
-let	xk_dead_belowdot				= 0xFE60
-*)
-  
   List.iter (fun (name, action) ->
       try
       add_interactive location.loc_map name (execute_action action)
@@ -462,56 +512,26 @@ let	xk_dead_belowdot				= 0xFE60
           Log.exn "%s\n" e;
   ) !!interactives_map;
     
-  let gmap = location.loc_map in
 
-(* standard keys *)
+  (* standard keys *)
 
-(* Mouse *)
+  (* Mouse *)
+  (*s: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   add_global_key location [NormalMap, XK.xk_Pointer_Button1]
     "set_active_frame" mouse_set_frame;
   add_global_key location [NormalMap, XK.xk_Pointer_Button2]
     "insert_at_point" mouse_yank_at_click;
   add_global_key location [NormalMap, XK.xk_Pointer_Button3]
   "mouse_save_then_kill" mouse_save_then_kill;
+  (*e: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   ()
 (*e: function Std_efunsrc.init_global_map *)
   
 open WX_filesel
 
-(*s: function Std_efunsrc.select_open_file *)
-let select_open_file frame =
-  let window = frame.frm_window in
-  let top_window = Window.top window in
-  let cdir = Frame.current_dir frame in
-  let info = {
-      filter = Filename.concat cdir "*";
-      current_selection = cdir;
-      predicat = (fun _ -> true);
-      action = (fun _ -> ());
-      cancel = (fun _ -> ());
-    } in
-  let query = new WX_filesel.t top_window.top_root info [] in
-  query#setWM_TRANSIENT_FOR (top_window.top_appli#top :> WX_types.container);
-  info.action <- (fun name ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-          let _ = Frame.load_file window name in ()
-      ) ());
-  info.cancel <- (fun () ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-      ) ());        
-  query#show
-(*e: function Std_efunsrc.select_open_file *)
-
-(*s: function Std_efunsrc.compile *)
-let compile frame =
-  exec_interactive (buf_interactives frame.frm_buffer) frame "compile"
-(*e: function Std_efunsrc.compile *)
 
 (*s: toplevel Std_efunsrc._3 *)
 let _ =
-  define_action "select_open_file" select_open_file;
   define_action "compile" compile;
   define_action "v_cut_frame" v_cut_frame;
   ()
@@ -519,27 +539,35 @@ let _ =
   
 (*s: toplevel Std_efunsrc._4 *)
 let _ =
+  (*s: [[Std_efunsrc]] file menu setup *)
   if !!file_menu = [] then begin
       file_menu =:=    [
         "Open File", "select_open_file";
         "Save Buffer", "save_buffer";
         "Kill Buffer", "kill_buffer";
+
         "Compile", "compile";
         "", "";
         "Quit", "exit";
       ]
     end;
+  (*e: [[Std_efunsrc]] file menu setup *)
+  (*s: [[Std_efunsrc]] edit menu setup *)
   if !!edit_menu = [] then begin
       edit_menu =:= [ 
         "Cut", "kill_region";
         "Paste",  "insert_killed";
         "Undo", "undo";
         "", "";
+        (*s: [[edit_menu]] entries *)
         "Cut Frame", "v_cut_frame";
         "One Frame", "one_frame";
         "Delete Frame", "delete_frame";
+        (*e: [[edit_menu]] entries *)
       ];
     end;
+  (*e: [[Std_efunsrc]] edit menu setup *)
+  (*s: [[Std_efunsrc]] help menu setup *)
   help_menu := [|
     "Key Bindings", (fun frame ->
         Frame.change_buffer frame.frm_window "*bindings*"
@@ -547,17 +575,13 @@ let _ =
     "Changes", (fun frame ->
         let _ = Frame.load_file frame.frm_window (
             Version.efuns_lib ^"/Changes") in ());
+
     "About Efuns", (fun frame ->
-(*
-        let top_window = Window.top frame.frm_window in        
-        let dialog = new WX_dialog.t top_window.top_root 
-            "Efuns,\nVersion 015\nFabrice Le Fessant\nFabrice.Le_Fessant@inria.fr" [] in
-        dialog#add_button "OK" (fun _ -> dialog#destroy);
-        dialog#show;
-    *)
-        Frame.change_buffer frame.frm_window "*help*"
+      Frame.change_buffer frame.frm_window "*help*"
     );
   |];
+  (*e: [[Std_efunsrc]] help menu setup *)
+  (*s: [[Std_efunsrc]] buffers menu setup *)
   buffers_menu := (fun top_window button () ->
       let buffers = ref [] in
       let location = top_window.top_location in
@@ -570,10 +594,13 @@ let _ =
                   Frame.change_buffer window name
               )))
         (Array.of_list !buffers) in
+
+      (* X11 *)
       let menu = new WX_popup.t top_window.top_root desc in
       let (x,y) = button#root_coordinates in
       menu#popup_once x (y + button#height) (Some !WX_types.button_event)
       )
+  (*e: [[Std_efunsrc]] buffers menu setup *)
 (*e: toplevel Std_efunsrc._4 *)
   
 (*s: toplevel Std_efunsrc._5 *)

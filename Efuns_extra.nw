@@ -2,16 +2,11 @@
 
 \subsection*{[[core/efuns.ml]]}
 
-<<type Efuns.prefix>>=
-and prefix = key list
-@
-
 
 <<constant Efuns.resname>>=
 let resname = ["Efuns";"efuns"]
 @
 %dead?
-
 
 %-------------------------------------------------------------
 
@@ -306,39 +301,6 @@ let tree_insert tree t gline nbr = ()
 @
 
 <<function Text.low_insert>>=
-(*
-  let rec iter tree lines =
-    match tree with
-      Parts text ->
-        if lines = text.tree_nlines || lines = -1 then
-          (* Insert in the last part *)
-          iter text.tree_parts.(Array.length text.tree_parts - 1) (-1)
-        else
-        let rec iter2 lines i =
-          let tlines = match text.tree_parts.(i) with
-              Parts t -> t.tree_nlines
-            | Lines t -> t.tree_nlines 
-          in
-          if tlines > lines then
-            iter text.tree_parts.(i) lines
-          else
-            iter2 (lines - tlines) (i+1)
-        in
-        iter2 lines 0;
-        text.tree_modified <- true;
-        text.tree_nlines <- text.tree_nlines + nbr
-    | Lines text ->
-        let newtext = Array.create text.tree_nlines text.tree_parts.(0) in
-        Array.blit text.tree_parts 0 newtext 0 lines;
-        Array.blit t.text_newlines gline newtext lines nbr;
-        Array.blit text.tree_parts lines newtext (lines+nbr) (
-          text.tree_nlines - lines);
-        text.tree_modified <- true;        
-        text.tree_nlines <- text.tree_nlines + nbr
-  in
-  iter (Parts tree) gline
-*)
-
 let low_insert tree point str =
   let text = tree.tree_text in
   if text.text_readonly then failwith "Buffer is read-only";
@@ -1249,6 +1211,40 @@ let print_newlines text =
 <<exception Text.ReadOnlyBuffer>>
 
 <<function Text.tree_insert>>
+
+(*
+  let rec iter tree lines =
+    match tree with
+      Parts text ->
+        if lines = text.tree_nlines || lines = -1 then
+          (* Insert in the last part *)
+          iter text.tree_parts.(Array.length text.tree_parts - 1) (-1)
+        else
+        let rec iter2 lines i =
+          let tlines = match text.tree_parts.(i) with
+              Parts t -> t.tree_nlines
+            | Lines t -> t.tree_nlines 
+          in
+          if tlines > lines then
+            iter text.tree_parts.(i) lines
+          else
+            iter2 (lines - tlines) (i+1)
+        in
+        iter2 lines 0;
+        text.tree_modified <- true;
+        text.tree_nlines <- text.tree_nlines + nbr
+    | Lines text ->
+        let newtext = Array.create text.tree_nlines text.tree_parts.(0) in
+        Array.blit text.tree_parts 0 newtext 0 lines;
+        Array.blit t.text_newlines gline newtext lines nbr;
+        Array.blit text.tree_parts lines newtext (lines+nbr) (
+          text.tree_nlines - lines);
+        text.tree_modified <- true;        
+        text.tree_nlines <- text.tree_nlines + nbr
+  in
+  iter (Parts tree) gline
+*)
+
 <<function Text.low_insert>>
 
 <<function Text.low_delete>>
@@ -2425,11 +2421,6 @@ let rec exec_named_hooks_with_abort hooks frame =
 
 
 
-<<function Frame.bindings_help>>=
-let bindings_help frame =
-  let window = frame.frm_window in
-  change_buffer window "*bindings*"
-@
 
 
 %-------------------------------------------------------------
@@ -2618,13 +2609,7 @@ let value_to_key v =
 let key_to_value k = Value (Keymap.print_key k)
 @
 
-<<constant Simple.key_option>>=
-let key_option = define_option_class "Key" value_to_key key_to_value
-@
 
-<<constant Simple.binding_option>>=
-let binding_option = tuple2_option (smalllist_option key_option, string_option)
-@
 
 <<function Simple.insert_string>>=
 let insert_string frame str =
@@ -2638,19 +2623,7 @@ let insert_string frame str =
 let single_char = String.make 1 ' '
 @
 
-<<function Simple.insert_char>>=
-let insert_char frame char =
-  let text = frame.frm_buffer.buf_text in
-  let point = frame.frm_point in
-  single_char.[0] <- char;
-  let _ = Text.insert text point single_char in
-  let _ = Text.fmove text point 1 in () 
-@
 
-<<function Simple.insert_return>>=
-let insert_return frame =
-  insert_char frame '\n'
-@
 
 <<function Simple.previous_char>>=
 let previous_char frame =
@@ -2969,17 +2942,6 @@ let recenter frame =
 
 
 
-<<function Simple.mouse_set_frame>>=
-let mouse_set_frame frame =
-  let top_window = Window.top frame.frm_window in
-  let frame = mouse_set_active top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let mark = Ebuffer.get_mark buf point in
-  goto_point text mark point;
-  ()
-@
 
 <<constant Simple.highlighted>>=
 (* hightlighting of regions *)  
@@ -3207,48 +3169,7 @@ let mouse_drag_region frame =
   ) !Eloop.event_time
 @
 
-<<function Simple.mouse_yank_at_click>>=
-let  mouse_yank_at_click frame =
-  let top_window = Window.top frame.frm_window in
-  let frame = mouse_set_active top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let xterm = Window.xterm top_window in
-  let str = WX_xterm.get_cutbuffer xterm in
-  let _ = Text.insert text point str in
-  Text.fmove text point (String.length str)
-@
 
-<<function Simple.mouse_save_then_kill>>=
-let mouse_save_then_kill frame =
-  let top_window = Window.top frame.frm_window in
-  let frame = Top_window.find_selected_frame top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let mark = Ebuffer.get_mark buf point in
-  let new_point = add_point text in
-  Frame.move_point frame new_point !mouse_x !mouse_y;
-  if point = new_point then
-    begin
-      remove_point text new_point;
-      let (start,term) =
-        if point < mark then (point,mark) else (mark,point) 
-      in
-      let _ = Text.delete text start (Text.distance text start term) in
-      ()
-    end
-  else
-  let xterm = Window.xterm top_window in
-  goto_point text mark point;
-  goto_point text point new_point;
-  remove_point text new_point;
-  let str = Text.region text mark point in
-  kill_string str;
-  WX_xterm.set_cutbuffer xterm str;
-  highlight frame
-@
 
 <<function Simple.next_buffer>>=
 let next_buffer location buf =
@@ -3897,27 +3818,12 @@ let check_file frame =
   with _ -> ()
 @
 
-<<function Complex.exit_efuns>>=
-let exit_efuns frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buffers = list_of_hash location.loc_buffers in
-  save_buffers_and_action frame buffers (fun _ -> exit 0)
-@
 
 
 
 
 
 
-<<function Complex.change_buffer>>=
-let change_buffer frame =
-  let default = get_previous_frame () in
-  set_previous_frame frame;
-  select_buffer frame " Switch to buffer: " default (fun str ->
-      let window = frame.frm_window in
-      change_buffer window str)
-@
 
 
 <<function Complex.change_font>>=
@@ -6337,19 +6243,6 @@ let menus = define_option ["menus"] ""
   []
 @
 
-<<constant Top_window.file_menu>>=
-let file_menu = define_option ["file_menu"] ""
-    (list_option string2_option) []
-@
-
-<<constant Top_window.edit_menu>>=
-let edit_menu = define_option ["edit_menu"] ""
-    (list_option string2_option) []
-@
-
-<<constant Top_window.help_menu>>=
-let help_menu = ref [| |]
-@
 
 <<function Top_window.create>>=
 let create location display =
@@ -6562,32 +6455,6 @@ let save_options frame = Options.save ()
 let n_5 = (NormalMap, Char.code '5') 
 @
 
-<<function Std_efunsrc.select_open_file>>=
-let select_open_file frame =
-  let window = frame.frm_window in
-  let top_window = Window.top window in
-  let cdir = Frame.current_dir frame in
-  let info = {
-      filter = Filename.concat cdir "*";
-      current_selection = cdir;
-      predicat = (fun _ -> true);
-      action = (fun _ -> ());
-      cancel = (fun _ -> ());
-    } in
-  let query = new WX_filesel.t top_window.top_root info [] in
-  query#setWM_TRANSIENT_FOR (top_window.top_appli#top :> WX_types.container);
-  info.action <- (fun name ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-          let _ = Frame.load_file window name in ()
-      ) ());
-  info.cancel <- (fun () ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-      ) ());        
-  query#show
-@
-
 <<function Std_efunsrc.compile>>=
 let compile frame =
   exec_interactive (buf_interactives frame.frm_buffer) frame "compile"
@@ -6595,7 +6462,6 @@ let compile frame =
 
 <<toplevel Std_efunsrc._3>>=
 let _ =
-  define_action "select_open_file" select_open_file;
   define_action "compile" compile;
   define_action "v_cut_frame" v_cut_frame;
   ()
@@ -6645,6 +6511,11 @@ open Top_window
 
 <<function Std_efunsrc.save_options>>
 <<function Std_efunsrc.fondamental_mode>>
+
+<<function Std_efunsrc.compile>>
+
+<<function Std_efunsrc.select_open_file>>
+
   
 <<toplevel Std_efunsrc._1>>
   
@@ -6664,9 +6535,6 @@ open Top_window
   
 open WX_filesel
 
-<<function Std_efunsrc.select_open_file>>
-
-<<function Std_efunsrc.compile>>
 
 <<toplevel Std_efunsrc._3>>
   

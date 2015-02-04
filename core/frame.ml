@@ -181,6 +181,7 @@ let create_without_top location window mini buf =
   let frm_end = Text.dup_point buf.buf_text buf.buf_start in
   let point = Text.dup_point buf.buf_text buf.buf_point in
   buf.buf_shared <- buf.buf_shared + 1;
+
   let status = {
       status_string = String.make 256 '-';
       status_modified = true;
@@ -193,6 +194,7 @@ let create_without_top location window mini buf =
       stat_modes = [];
       stat_mode = dummy_mode;
     } in
+
   String.blit editname 0 status.status_string 5 (String.length editname);
   let rec frame =
     { frm_buffer = buf;

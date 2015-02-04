@@ -296,7 +296,7 @@ exception ReadOnlyBuffer
 (*s: function Text.tree_insert *)
 let tree_insert tree t gline nbr = ()
 (*e: function Text.tree_insert *)
-(*s: function Text.low_insert *)
+
 (*
   let rec iter tree lines =
     match tree with
@@ -330,6 +330,7 @@ let tree_insert tree t gline nbr = ()
   iter (Parts tree) gline
 *)
 
+(*s: function Text.low_insert *)
 let low_insert tree point str =
   let text = tree.tree_text in
   if text.text_readonly then failwith "Buffer is read-only";
