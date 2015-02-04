@@ -87,10 +87,9 @@ let _ =
   (* C-x map *)
   define_action "insert_file"  insert_file;
   (*e: loading actions *)
-  define_action "load_library" load_library;
 
   (* ----------------------------------------------------------------------- *)
-  (* Navigating *)
+  (* Navigating (in the file) *)
   (* ----------------------------------------------------------------------- *)
   (*s: navigating actions *)
   define_action "move_backward"  (fun frame -> ignore (move_backward frame 1));
@@ -114,6 +113,7 @@ let _ =
   define_action "begin_of_file"  begin_of_file;
   define_action "end_of_file"  end_of_file;
 
+  (* M-x *)
   define_action "goto_char" goto_char;
   define_action "goto_line" goto_line;
   (*e: navigating actions *)
@@ -121,18 +121,15 @@ let _ =
   (* ----------------------------------------------------------------------- *)
   (* Editing *)
   (* ----------------------------------------------------------------------- *)
-
-  (* ------------- *)
+  (* ------------------------- *)
   (* Inserting *)
-  (* ------------- *)
-
+  (* ------------------------- *)
   (*s: inserting actions *)
   define_action "insert_return"  insert_return;
   (*e: inserting actions *)
-
-  (* ------------- *)
+  (* ------------------------- *)
   (* Deleting *)
-  (* ------------- *)
+  (* ------------------------- *)
   (*s: deleting actions *)
   define_action "delete_before_point"  delete_backspace_char;
   define_action "delete_at_point"  delete_char;
@@ -140,22 +137,21 @@ let _ =
   define_action "delete_forward_word"  (to_frame delete_forward_word);
   define_action "delete_backward_word"  (to_frame delete_backward_word);
 
+  define_action "hungry_electric_delete"  hungry_electric_delete;
   define_action "kill_end_of_line"  kill_end_of_line;
   (*e: deleting actions *)
-
-  (* ------------------------------ *)
+  (* ------------------------- *)
   (* Moving (Cut, copy, paste) *)
-  (* ------------------------------ *)
+  (* ------------------------- *)
   (*s: moving actions *)
   define_action "mark_at_point"  mark_at_point;
   define_action "kill_region"  kill_region;
   define_action "insert_killed"  insert_killed;
   define_action "insert_next_killed"  insert_next_killed;
   (*e: moving actions *)
-
-  (* ---------------------- *)
+  (* ------------------------- *)
   (* Transforming *)
-  (* ---------------------- *)
+  (* ------------------------- *)
   (*s: transforming actions *)
   define_action "transpose_chars"  (to_frame transpose_chars);
 
@@ -173,10 +169,9 @@ let _ =
 
   define_action "fill_paragraph" fill_paragraph;
   (*e: transforming actions *)
-
-  (* ----------------------------------------------------------------------- *)
+  (* ------------------------- *)
   (* Replacing *)
-  (* ----------------------------------------------------------------------- *)
+  (* ------------------------- *)
   (*s: replacing actions *)
   define_action "replace_string" replace_string;
   define_action "replace_regexp" replace_regexp;
@@ -214,7 +209,13 @@ let _ =
   (* ----------------------------------------------------------------------- *)
   (* Buffers/windows/frames *)
   (* ----------------------------------------------------------------------- *)
-
+  (*s: buffer managment actions *)
+  (* C-x map *)
+  define_action "kill_buffer"  kill_buffer;
+  (*x: buffer managment actions *)
+  (* C-x map *)
+  define_action "change_buffer"  change_buffer;
+  (*e: buffer managment actions *)
   (*s: buffer navigating actions *)
   (* C-M map *)
   define_action "left_buffer"  left_buffer;
@@ -225,24 +226,6 @@ let _ =
   (* C-M map *)
   define_action "up_buffer"  up_buffer;
   (*e: buffer navigating actions *)
-
-  (*s: buffer managment actions *)
-  (* C-x map *)
-  define_action "kill_buffer"  kill_buffer;
-  (*x: buffer managment actions *)
-  (* C-x map *)
-  define_action "change_buffer"  change_buffer;
-  (*e: buffer managment actions *)
-
-  (*s: window managment actions *)
-  (* C-x 5 map *)
-  define_action "window_load_buffer"  window_load_buffer;
-  (* C-x 5 map *)
-  define_action "window_change_buffer"  window_change_buffer;
-  (* C-x 5 map *)
-  define_action "delete_window"  Top_window.delete_window;
-  (*e: window managment actions *)
-
   (*s: frame managment actions *)
   (* C-x map *)
   define_action "vertical_cut_frame"  v_cut_frame;    
@@ -253,15 +236,28 @@ let _ =
   (* C-x map *)
   define_action "delete_frame"  delete_frame;
   (*e: frame managment actions *)
+  (*s: frame navigation actions *)
+  (* C-x map *)
+  define_action "next_frame"  next_frame;
+  (*e: frame navigation actions *)
+
+  (*s: window managment actions *)
+  (* C-x 5 map *)
+  define_action "window_load_buffer"  window_load_buffer;
+  (* C-x 5 map *)
+  define_action "window_change_buffer"  window_change_buffer;
+  (* C-x 5 map *)
+  define_action "delete_window"  Top_window.delete_window;
+  (*e: window managment actions *)
 
   (* ----------------------------------------------------------------------- *)
   (* Meta *)
   (* ----------------------------------------------------------------------- *)
   (*s: meta actions *)
   define_action "call_interactive"  call_interactive;
+  (*x: meta actions *)
   define_action "eval" Complex.eval;  
   (*e: meta actions *)
-
 
   (* ----------------------------------------------------------------------- *)
   (* Saving *)
@@ -277,8 +273,6 @@ let _ =
   define_action "write_file"  write_buffer; 
   (*e: saving actions *)
 
-  define_action "save_options" save_options;
-
   (* ----------------------------------------------------------------------- *)
   (* Major mode *)
   (* ----------------------------------------------------------------------- *)
@@ -290,19 +284,16 @@ let _ =
   (* Misc *)
   (* ----------------------------------------------------------------------- *)
   (*s: misc actions *)
+  define_action "load_library" load_library;
+  define_action "save_options" save_options;
   define_action "get_position" get_pos;
   define_action "unset_attr" unset_attr;
   define_action "recenter"  recenter;
-  define_action "hungry_electric_delete"  hungry_electric_delete;
   define_action "revert_buffer" reload;
   define_action "check_file" check_file;
 
   define_buffer_action "update_time" update_time;
 
-  (* C-x map *)
-  define_action "next_frame"  next_frame;
-  (* C-x map *)
-  define_action "next_error"  next_error;
   (* C-x map *)
   define_action "point_at_mark"  point_at_mark;
   (* C-M map *)
@@ -319,6 +310,9 @@ let _ =
   (*x: misc actions *)
   (* C-x map *)
   define_action "exit"  exit_efuns; 
+  (*x: misc actions *)
+  (* C-x map *)
+  define_action "next_error"  next_error;
   (*e: misc actions *)
   (*e: actions definitions *)
   ()
@@ -355,99 +349,192 @@ let _ =
   if !!global_map = [] then begin
       global_map =:= [
         (*s: [[global_map]] initial entries *)
-        [MetaMap, XK.xk_q], "fill_paragraph";
+        (* ----------------------------------------------------------------------- *)
+        (* Loading *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: loading keys *)
+        [c_x; ControlMap, Char.code 'f'], "load_buffer";
+        [c_x; NormalMap, Char.code 'i'], "insert_file";
+        (*e: loading keys *)
 
-        [NormalMap, XK.xk_BackSpace], "delete_before_point"; 
-        [NormalMap, XK.xk_Delete], "delete_at_point"; 
-        [NormalMap, XK.xk_Return], "insert_return"; 
-
+        (* ----------------------------------------------------------------------- *)
+        (* Navigating (in the file) *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: navigating keys *)
         [NormalMap, XK.xk_Left], "move_backward"; 
         [NormalMap, XK.xk_Right], "move_forward"; 
-        [NormalMap, XK.xk_Down], "forward_line"; 
-        [NormalMap, XK.xk_Up], "backward-line"; 
-        [NormalMap, XK.xk_Prior], "backward_screen"; 
-        [NormalMap, XK.xk_Next], "forward_screen";
+        [ControlMap, Char.code 'b'], "move_backward";
+        [ControlMap, Char.code 'f'], "move_forward";
 
-        [NormalMap, Char.code ' '], "char_expand_abbrev";
-        [NormalMap, XK.xk_Insert], "overwrite_mode";
-
-        [ControlMap, Char.code 'w'], "kill_region";
-
-        [ControlMap, XK.xk_Right ], "forward_word";  
         [ControlMap, XK.xk_Left ], "backward_word";
+        [ControlMap, XK.xk_Right ], "forward_word";  
+        [MetaMap, XK.xk_Left ], "backward_word";
+        [MetaMap, XK.xk_Right ], "forward_word";
+
+        [ControlMap, Char.code 'a'], "beginning_of_line";
+        [ControlMap, Char.code 'e'], "end_of_line";
+
+        [NormalMap, XK.xk_Up], "backward-line"; 
+        [NormalMap, XK.xk_Down], "forward_line"; 
 
         [ControlMap, XK.xk_Up], "backward_paragraph";
         [ControlMap, XK.xk_Down], "forward_paragraph";  
 
-        [ControlMap, Char.code 'a'], "beginning_of_line";
-        [ControlMap, Char.code 'e'], "end_of_line";
-        [ControlMap, Char.code 'b'], "move_backward";
-        [ControlMap, Char.code 'f'], "move_forward";
-
-        [MetaMap, XK.xk_Right ], "forward_word";
-        [MetaMap, XK.xk_Left ], "backward_word";
-
-        [ControlMap, Char.code 'd'], "delete_at_point";
-
-        [ControlMap, Char.code 'k'], "kill_end_of_line";
-
-        [ControlMap, Char.code 's'], "isearch_forward";
-        [ControlMap, Char.code 'r'], "isearch_backward";
+        [NormalMap, XK.xk_Prior], "backward_screen"; 
+        [NormalMap, XK.xk_Next], "forward_screen";
 
         [ControlMap, XK.xk_Next], "end_of_file";
         [ControlMap, XK.xk_Prior], "begin_of_file";
 
-        [ControlMap, Char.code '_'], "undo";
-        [ControlMap, Char.code 'y'], "insert_killed";
-        [ControlMap, Char.code ' '], "mark_at_point";
-        [ControlMap, Char.code 'l'], "recenter";
-        [ControlMap, Char.code 't'], "transpose_chars";
-        [ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
+        (*e: navigating keys *)
 
+        (* ----------------------------------------------------------------------- *)
+        (* Editing *)
+        (* ----------------------------------------------------------------------- *)
+        (* ------------- *)
+        (* Inserting *)
+        (* ------------- *)
+        (*s: inserting keys *)
+        [NormalMap, XK.xk_Return], "insert_return"; 
+        (*e: inserting keys *)
 
-        [MetaMap, Char.code 's'], "isearch_forward_regexp";
-        [MetaMap, Char.code 'r'], "isearch_backward_regexp";
-
+        (* ------------- *)
+        (* Deleting *)
+        (* ------------- *)
+        (*s: deleting keys *)
+        [NormalMap, XK.xk_BackSpace], "delete_before_point"; 
+        [ControlMap, Char.code 'd'], "delete_at_point";
+        [NormalMap, XK.xk_Delete], "delete_at_point"; 
 
         [MetaMap, Char.code 'd' ], "delete_forward_word";
         [MetaMap, XK.xk_BackSpace ], "delete_backward_word";
-        [MetaMap, Char.code 'x'], "call_interactive";
-        [MetaMap, Char.code '%'], "query_replace_string";
-        [MetaMap, Char.code '!'], "shell_command";
+
+        [ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
+        [ControlMap, Char.code 'k'], "kill_end_of_line";
+        (*e: deleting keys *)
+
+        (* ------------------------------ *)
+        (* Moving (Cut, copy, paste) *)
+        (* ------------------------------ *)
+        (*s: moving keys *)
+        [ControlMap, Char.code ' '], "mark_at_point";
+        [ControlMap, Char.code 'w'], "kill_region";
+        [ControlMap, Char.code 'y'], "insert_killed";
         [MetaMap, Char.code 'y'], "insert_next_killed";
+        (*e: moving keys *)
+
+        (* ---------------------- *)
+        (* Transforming *)
+        (* ---------------------- *)
+        (*s: transforming keys *)
+        [ControlMap, Char.code 't'], "transpose_chars";
+
         [MetaMap, Char.code 't'], "transpose_words";
         [MetaMap, Char.code 'l'], "lowercase_word";
         [MetaMap, Char.code 'u'], "uppercase_word";
-        [MetaMap, Char.code '/'], "dabbrev_expand";
 
-        [c_x; ControlMap, Char.code 'f'], "load_buffer";
-        [c_x; NormalMap, Char.code 'i'], "insert_file";
-        [c_x; ControlMap, Char.code 'c'], "exit"; 
-        [c_x; NormalMap, Char.code 'b'], "change_buffer";
-        [c_x; NormalMap, Char.code 'F'], "change_font";
-        [c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
-        [c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
-        [c_x; NormalMap, Char.code '1'], "one_frame";
-        [c_x; NormalMap, Char.code '0'], "delete_frame";
-        [c_x; NormalMap, Char.code 'o'], "next_frame";
+        [MetaMap, XK.xk_q], "fill_paragraph";
+        (*e: transforming keys *)
+
+        (* ----------------------------------------------------------------------- *)
+        (* Replacing *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: replacing keys *)
+        [MetaMap, Char.code '%'], "query_replace_string";
+        (*e: replacing keys *)
+
+        (* ----------------------------------------------------------------------- *)
+        (* Searching *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: searching keys *)
+        [ControlMap, Char.code 's'], "isearch_forward";
+        [ControlMap, Char.code 'r'], "isearch_backward";
+        [MetaMap, Char.code 's'], "isearch_forward_regexp";
+        [MetaMap, Char.code 'r'], "isearch_backward_regexp";
+        (*e: searching keys *)
+
+        (* ----------------------------------------------------------------------- *)
+        (* Undoing *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: undoing keys *)
+        [ControlMap, Char.code '_'], "undo";
+        (*e: undoing keys *)
+
+        (* ----------------------------------------------------------------------- *)
+        (* External commands *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: external commands keys *)
+        [MetaMap, Char.code '!'], "shell_command";
+        (*e: external commands keys *)
+
+        (* ----------------------------------------------------------------------- *)
+        (* Buffers/windows/frames *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: buffer managment keys *)
         [c_x; NormalMap, Char.code 'k'], "kill_buffer";
-        [c_x; ControlMap, Char.code 's'], "save_buffer"; 
-        [c_x;NormalMap, Char.code '`' ], "next_error";
-        [c_x;ControlMap, Char.code 'w'], "write_file"; 
-        [c_x; NormalMap, Char.code 's'], "save_some_buffers";
-        [c_x; ControlMap, Char.code 'x'], "point_at_mark";
-        [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
-        [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
-        [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
-
-        [c_h; NormalMap, Char.code 'K'], "help_bindings";
-
-        [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
-
+        (*x: buffer managment keys *)
+        [c_x; NormalMap, Char.code 'b'], "change_buffer";
+        (*e: buffer managment keys *)
+        (*s: buffer navigating keys *)
         [ControlMetaMap, XK.xk_Left], "left_buffer";
         [ControlMetaMap, XK.xk_Right], "right_buffer";
         [ControlMetaMap, XK.xk_Down], "down_buffer";
         [ControlMetaMap, XK.xk_Up], "up_buffer";
+        (*e: buffer navigating keys *)
+        (*s: frame managment keys *)
+        [c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
+        [c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
+        [c_x; NormalMap, Char.code '1'], "one_frame";
+        [c_x; NormalMap, Char.code '0'], "delete_frame";
+        (*e: frame managment keys *)
+        (*s: frame navigation keys *)
+        [c_x; NormalMap, Char.code 'o'], "next_frame";
+        (*e: frame navigation keys *)
+
+        (*s: window managment keys *)
+        [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
+        [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
+        [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
+        (*e: window managment keys *)
+
+        (* ----------------------------------------------------------------------- *)
+        (* Meta *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: meta keys *)
+        [MetaMap, Char.code 'x'], "call_interactive";
+        (*e: meta keys *)
+
+        (* ----------------------------------------------------------------------- *)
+        (* Saving *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: saving keys *)
+        [c_x; ControlMap, Char.code 's'], "save_buffer"; 
+        (*x: saving keys *)
+        [c_x; NormalMap, Char.code 's'], "save_some_buffers";
+        [c_x;ControlMap, Char.code 'w'], "write_file"; 
+        (*e: saving keys *)
+
+        (* ----------------------------------------------------------------------- *)
+        (* Misc *)
+        (* ----------------------------------------------------------------------- *)
+        (*s: misc keys *)
+        [c_h; NormalMap, Char.code 'K'], "help_bindings";
+        (*x: misc keys *)
+        [NormalMap, XK.xk_Insert], "overwrite_mode";
+        [ControlMap, Char.code 'l'], "recenter";
+
+
+        [c_x; NormalMap, Char.code 'F'], "change_font";
+        [c_x; ControlMap, Char.code 'x'], "point_at_mark";
+        [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
+        (*x: misc keys *)
+        [c_x; ControlMap, Char.code 'c'], "exit"; 
+        (*x: misc keys *)
+        [c_x;NormalMap, Char.code '`' ], "next_error";
+        (*x: misc keys *)
+        [NormalMap, Char.code ' '], "char_expand_abbrev";
+        [MetaMap, Char.code '/'], "dabbrev_expand";
+        (*e: misc keys *)
         (*e: [[global_map]] initial entries *)
       ]
     end;

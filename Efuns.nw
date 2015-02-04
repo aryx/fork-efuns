@@ -161,6 +161,7 @@ Here are other candidates that were considered but ultimately discarded:
 \item qemacs
 \end{itemize}
 
+% see Editor.nw for more choices
 
 \section{Getting started}
 
@@ -186,7 +187,7 @@ License.
 % "Emacs is the extensible, customizable, self-documenting real-time
 % display editor."
 
-% navigating (fast)
+% navigating (fast, different granularities)
 % editing (inserting/deleting/moving/cut-copy-paste/transposing)
 % searching, replacing
 
@@ -764,41 +765,34 @@ let _ =
 (* Loading *)
 (* ----------------------------------------------------------------------- *)
 <<loading actions>>
-define_action "load_library" load_library;
 
 (* ----------------------------------------------------------------------- *)
-(* Navigating *)
+(* Navigating (in the file) *)
 (* ----------------------------------------------------------------------- *)
 <<navigating actions>>
 
 (* ----------------------------------------------------------------------- *)
 (* Editing *)
 (* ----------------------------------------------------------------------- *)
-
-(* ------------- *)
+(* ------------------------- *)
 (* Inserting *)
-(* ------------- *)
-
+(* ------------------------- *)
 <<inserting actions>>
-
-(* ------------- *)
+(* ------------------------- *)
 (* Deleting *)
-(* ------------- *)
+(* ------------------------- *)
 <<deleting actions>>
-
-(* ------------------------------ *)
+(* ------------------------- *)
 (* Moving (Cut, copy, paste) *)
-(* ------------------------------ *)
+(* ------------------------- *)
 <<moving actions>>
-
-(* ---------------------- *)
+(* ------------------------- *)
 (* Transforming *)
-(* ---------------------- *)
+(* ------------------------- *)
 <<transforming actions>>
-
-(* ----------------------------------------------------------------------- *)
+(* ------------------------- *)
 (* Replacing *)
-(* ----------------------------------------------------------------------- *)
+(* ------------------------- *)
 <<replacing actions>>
 
 (* ----------------------------------------------------------------------- *)
@@ -819,27 +813,22 @@ define_action "load_library" load_library;
 (* ----------------------------------------------------------------------- *)
 (* Buffers/windows/frames *)
 (* ----------------------------------------------------------------------- *)
-
-<<buffer navigating actions>>
-
 <<buffer managment actions>>
+<<buffer navigating actions>>
+<<frame managment actions>>
+<<frame navigation actions>>
 
 <<window managment actions>>
-
-<<frame managment actions>>
 
 (* ----------------------------------------------------------------------- *)
 (* Meta *)
 (* ----------------------------------------------------------------------- *)
 <<meta actions>>
 
-
 (* ----------------------------------------------------------------------- *)
 (* Saving *)
 (* ----------------------------------------------------------------------- *)
 <<saving actions>>
-
-define_action "save_options" save_options;
 
 (* ----------------------------------------------------------------------- *)
 (* Major mode *)
@@ -854,19 +843,16 @@ define_action "save_options" save_options;
 
 %XXX
 <<misc actions>>=
+define_action "load_library" load_library;
+define_action "save_options" save_options;
 define_action "get_position" get_pos;
 define_action "unset_attr" unset_attr;
 define_action "recenter"  recenter;
-define_action "hungry_electric_delete"  hungry_electric_delete;
 define_action "revert_buffer" reload;
 define_action "check_file" check_file;
 
 define_buffer_action "update_time" update_time;
 
-(* C-x map *)
-define_action "next_frame"  next_frame;
-(* C-x map *)
-define_action "next_error"  next_error;
 (* C-x map *)
 define_action "point_at_mark"  point_at_mark;
 (* C-M map *)
@@ -878,6 +864,7 @@ define_action "open_display" open_display;
 (* C-x map *)
 define_action "change_font"  change_font;
 @  
+
 
 
 \section{Keyboard map}
@@ -1032,8 +1019,7 @@ let init_global_map location =
 
 %dead:  let gmap = location.loc_map in 
 
-
-%        (* These keys depend on the next key pressed. In my case, I don't use
+% (* These keys depend on the next key pressed. In my case, I don't use
 %  the accents, so I prefer them to immediatly enter the good key.
 %let	xk_dead_grave					= 0xFE50
 %let	xk_dead_acute					= 0xFE51
@@ -1052,9 +1038,12 @@ let init_global_map location =
 %let	xk_dead_voiced_sound				= 0xFE5E
 %let	xk_dead_semivoiced_sound			= 0xFE5F
 %let	xk_dead_belowdot				= 0xFE60
-%*)
+% *)
   
 
+<<misc keys>>=
+[c_h; NormalMap, Char.code 'K'], "help_bindings";
+@
 
 <<misc actions>>=
 (* C-h map *)
@@ -1094,99 +1083,94 @@ let c_c = (ControlMap, Char.code 'c')
 
 
 <<[[global_map]] initial entries>>=
-[MetaMap, XK.xk_q], "fill_paragraph";
+(* ----------------------------------------------------------------------- *)
+(* Loading *)
+(* ----------------------------------------------------------------------- *)
+<<loading keys>>
 
-[NormalMap, XK.xk_BackSpace], "delete_before_point"; 
-[NormalMap, XK.xk_Delete], "delete_at_point"; 
-[NormalMap, XK.xk_Return], "insert_return"; 
+(* ----------------------------------------------------------------------- *)
+(* Navigating (in the file) *)
+(* ----------------------------------------------------------------------- *)
+<<navigating keys>>
 
-[NormalMap, XK.xk_Left], "move_backward"; 
-[NormalMap, XK.xk_Right], "move_forward"; 
-[NormalMap, XK.xk_Down], "forward_line"; 
-[NormalMap, XK.xk_Up], "backward-line"; 
-[NormalMap, XK.xk_Prior], "backward_screen"; 
-[NormalMap, XK.xk_Next], "forward_screen";
+(* ----------------------------------------------------------------------- *)
+(* Editing *)
+(* ----------------------------------------------------------------------- *)
+(* ------------- *)
+(* Inserting *)
+(* ------------- *)
+<<inserting keys>>
 
-[NormalMap, Char.code ' '], "char_expand_abbrev";
+(* ------------- *)
+(* Deleting *)
+(* ------------- *)
+<<deleting keys>>
+
+(* ------------------------------ *)
+(* Moving (Cut, copy, paste) *)
+(* ------------------------------ *)
+<<moving keys>>
+
+(* ---------------------- *)
+(* Transforming *)
+(* ---------------------- *)
+<<transforming keys>>
+
+(* ----------------------------------------------------------------------- *)
+(* Replacing *)
+(* ----------------------------------------------------------------------- *)
+<<replacing keys>>
+
+(* ----------------------------------------------------------------------- *)
+(* Searching *)
+(* ----------------------------------------------------------------------- *)
+<<searching keys>>
+
+(* ----------------------------------------------------------------------- *)
+(* Undoing *)
+(* ----------------------------------------------------------------------- *)
+<<undoing keys>>
+
+(* ----------------------------------------------------------------------- *)
+(* External commands *)
+(* ----------------------------------------------------------------------- *)
+<<external commands keys>>
+
+(* ----------------------------------------------------------------------- *)
+(* Buffers/windows/frames *)
+(* ----------------------------------------------------------------------- *)
+<<buffer managment keys>>
+<<buffer navigating keys>>
+<<frame managment keys>>
+<<frame navigation keys>>
+
+<<window managment keys>>
+
+(* ----------------------------------------------------------------------- *)
+(* Meta *)
+(* ----------------------------------------------------------------------- *)
+<<meta keys>>
+
+(* ----------------------------------------------------------------------- *)
+(* Saving *)
+(* ----------------------------------------------------------------------- *)
+<<saving keys>>
+
+(* ----------------------------------------------------------------------- *)
+(* Misc *)
+(* ----------------------------------------------------------------------- *)
+<<misc keys>>
+@
+
+%XXX
+<<misc keys>>=
 [NormalMap, XK.xk_Insert], "overwrite_mode";
-
-[ControlMap, Char.code 'w'], "kill_region";
-
-[ControlMap, XK.xk_Right ], "forward_word";  
-[ControlMap, XK.xk_Left ], "backward_word";
-
-[ControlMap, XK.xk_Up], "backward_paragraph";
-[ControlMap, XK.xk_Down], "forward_paragraph";  
-
-[ControlMap, Char.code 'a'], "beginning_of_line";
-[ControlMap, Char.code 'e'], "end_of_line";
-[ControlMap, Char.code 'b'], "move_backward";
-[ControlMap, Char.code 'f'], "move_forward";
-
-[MetaMap, XK.xk_Right ], "forward_word";
-[MetaMap, XK.xk_Left ], "backward_word";
-
-[ControlMap, Char.code 'd'], "delete_at_point";
-
-[ControlMap, Char.code 'k'], "kill_end_of_line";
-
-[ControlMap, Char.code 's'], "isearch_forward";
-[ControlMap, Char.code 'r'], "isearch_backward";
-
-[ControlMap, XK.xk_Next], "end_of_file";
-[ControlMap, XK.xk_Prior], "begin_of_file";
-
-[ControlMap, Char.code '_'], "undo";
-[ControlMap, Char.code 'y'], "insert_killed";
-[ControlMap, Char.code ' '], "mark_at_point";
 [ControlMap, Char.code 'l'], "recenter";
-[ControlMap, Char.code 't'], "transpose_chars";
-[ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
 
 
-[MetaMap, Char.code 's'], "isearch_forward_regexp";
-[MetaMap, Char.code 'r'], "isearch_backward_regexp";
-
-
-[MetaMap, Char.code 'd' ], "delete_forward_word";
-[MetaMap, XK.xk_BackSpace ], "delete_backward_word";
-[MetaMap, Char.code 'x'], "call_interactive";
-[MetaMap, Char.code '%'], "query_replace_string";
-[MetaMap, Char.code '!'], "shell_command";
-[MetaMap, Char.code 'y'], "insert_next_killed";
-[MetaMap, Char.code 't'], "transpose_words";
-[MetaMap, Char.code 'l'], "lowercase_word";
-[MetaMap, Char.code 'u'], "uppercase_word";
-[MetaMap, Char.code '/'], "dabbrev_expand";
-
-[c_x; ControlMap, Char.code 'f'], "load_buffer";
-[c_x; NormalMap, Char.code 'i'], "insert_file";
-[c_x; ControlMap, Char.code 'c'], "exit"; 
-[c_x; NormalMap, Char.code 'b'], "change_buffer";
 [c_x; NormalMap, Char.code 'F'], "change_font";
-[c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
-[c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
-[c_x; NormalMap, Char.code '1'], "one_frame";
-[c_x; NormalMap, Char.code '0'], "delete_frame";
-[c_x; NormalMap, Char.code 'o'], "next_frame";
-[c_x; NormalMap, Char.code 'k'], "kill_buffer";
-[c_x; ControlMap, Char.code 's'], "save_buffer"; 
-[c_x;NormalMap, Char.code '`' ], "next_error";
-[c_x;ControlMap, Char.code 'w'], "write_file"; 
-[c_x; NormalMap, Char.code 's'], "save_some_buffers";
 [c_x; ControlMap, Char.code 'x'], "point_at_mark";
-[c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
-[c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
-[c_x; n_5; NormalMap, Char.code '0'], "delete_window";
-
-[c_h; NormalMap, Char.code 'K'], "help_bindings";
-
 [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
-
-[ControlMetaMap, XK.xk_Left], "left_buffer";
-[ControlMetaMap, XK.xk_Right], "right_buffer";
-[ControlMetaMap, XK.xk_Down], "down_buffer";
-[ControlMetaMap, XK.xk_Up], "up_buffer";
 @
 
 
@@ -1588,6 +1572,10 @@ let select_open_file frame =
 
 \subsubsection{Saving the buffer}
 
+<<saving keys>>=
+[c_x; ControlMap, Char.code 's'], "save_buffer"; 
+@
+
 <<saving actions>>=
 (* C-x map *)
 define_action "save_buffer"  save_buffer; 
@@ -1603,6 +1591,10 @@ let save_buffer frame =
 
 
 \subsubsection{Killing the buffer}
+
+<<buffer managment keys>>=
+[c_x; NormalMap, Char.code 'k'], "kill_buffer";
+@
 
 <<buffer managment actions>>=
 (* C-x map *)
@@ -1621,6 +1613,10 @@ let kill_buffer frame =
 @
 
 \subsubsection{Exit}
+
+<<misc keys>>=
+[c_x; ControlMap, Char.code 'c'], "exit"; 
+@
 
 <<misc actions>>=
 (* C-x map *)
@@ -1719,6 +1715,19 @@ buffers_menu := (fun top_window button () ->
 @
 %bug? not sure v_cut_frame will work!
 
+
+<<frame managment keys>>=
+[c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
+[c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
+[c_x; NormalMap, Char.code '1'], "one_frame";
+[c_x; NormalMap, Char.code '0'], "delete_frame";
+@
+
+<<frame navigation keys>>=
+[c_x; NormalMap, Char.code 'o'], "next_frame";
+@
+
+
 <<frame managment actions>>=
 (* C-x map *)
 define_action "vertical_cut_frame"  v_cut_frame;    
@@ -1728,6 +1737,11 @@ define_action "horizontal_cut_frame"  h_cut_frame;
 define_action "one_frame"  one_frame;
 (* C-x map *)
 define_action "delete_frame"  delete_frame;
+@
+
+<<frame navigation actions>>=
+(* C-x map *)
+define_action "next_frame"  next_frame;
 @
 
 <<function Multi_frames.v_cut_frame>>=
@@ -1993,6 +2007,25 @@ let add_interactive map name f =
 
 
 
+<<meta keys>>=
+[MetaMap, Char.code 'x'], "call_interactive";
+@
+
+
+<<meta actions>>=
+define_action "call_interactive"  call_interactive;
+@
+
+<<function Interactive.call_interactive>>=
+let call_interactive frame =
+  let buf = frame.frm_buffer in
+  let interactives = buf_interactives buf in
+  select frame "M-x " meta_hist ""
+    (fun _ -> List.map fst interactives)
+  (fun s -> s) (exec_interactive interactives frame)
+@
+
+
 <<[[interactives_map]] initial entries>>=
 "goto_line";
 "goto_char";
@@ -2030,20 +2063,12 @@ let add_interactive map name f =
 "start_server";
 @      
 
-\subsection{Meta actions}
+
+
+\subsection{M-x eval}
 
 <<meta actions>>=
-define_action "call_interactive"  call_interactive;
 define_action "eval" Complex.eval;  
-@
-
-<<function Interactive.call_interactive>>=
-let call_interactive frame =
-  let buf = frame.frm_buffer in
-  let interactives = buf_interactives buf in
-  select frame "M-x " meta_hist ""
-    (fun _ -> List.map fst interactives)
-  (fun s -> s) (exec_interactive interactives frame)
 @
 
 <<constant Complex.eval_history>>=
@@ -2207,6 +2232,53 @@ let set_char_attr tree point attr =
 
 \chapter{Buffer Managment}
 
+\section{Loading a file}
+
+<<loading keys>>=
+[c_x; ControlMap, Char.code 'f'], "load_buffer";
+[c_x; NormalMap, Char.code 'i'], "insert_file";
+@
+
+<<loading actions>>=
+(* C-x map *)
+define_action "load_buffer"  load_buffer;
+(* C-x map *)
+define_action "insert_file"  insert_file;
+@
+
+
+<<function Complex.load_buffer>>=
+let load_buffer frame = 
+  set_previous_frame frame;
+  select_filename frame "Find file: " 
+    (fun str -> 
+      let _ = Frame.load_file frame.frm_window str in ())
+@
+
+<<function Complex.insert_file>>=
+let insert_file frame =
+  select_filename frame "Insert file: "
+    (fun str ->
+      let inc = open_in str in
+      insert_string frame (Utils.read_string inc);
+      close_in inc
+  )
+@
+
+\subsection{Helpers}
+
+<<function Frame.load_file>>=
+let load_file window filename =
+  let top_window = Window.top window in
+  let location = top_window.top_location in
+  let buf = Ebuffer.read location filename (Keymap.create ()) in
+  let frame = create window None buf 
+  in
+  exec_named_hooks !!change_buffer_hooks frame;
+  status_name frame buf.buf_name;
+  frame
+@
+
 \section{CRUD}
 
 <<function Ebuffer.kill>>=
@@ -2264,50 +2336,12 @@ let get_name location filename =
       compute_name ()
 @
 
-\section{Loading a file}
-
-<<loading actions>>=
-(* C-x map *)
-define_action "load_buffer"  load_buffer;
-(* C-x map *)
-define_action "insert_file"  insert_file;
-@
-
-
-<<function Complex.load_buffer>>=
-let load_buffer frame = 
-  set_previous_frame frame;
-  select_filename frame "Find file: " 
-    (fun str -> 
-      let _ = Frame.load_file frame.frm_window str in ())
-@
-
-<<function Complex.insert_file>>=
-let insert_file frame =
-  select_filename frame "Insert file: "
-    (fun str ->
-      let inc = open_in str in
-      insert_string frame (Utils.read_string inc);
-      close_in inc
-  )
-@
-
-\subsection{Helpers}
-
-<<function Frame.load_file>>=
-let load_file window filename =
-  let top_window = Window.top window in
-  let location = top_window.top_location in
-  let buf = Ebuffer.read location filename (Keymap.create ()) in
-  let frame = create window None buf 
-  in
-  exec_named_hooks !!change_buffer_hooks frame;
-  status_name frame buf.buf_name;
-  frame
-@
-
 \section{Saving a file}
 
+<<saving keys>>=
+[c_x; NormalMap, Char.code 's'], "save_some_buffers";
+[c_x;ControlMap, Char.code 'w'], "write_file"; 
+@
 
 <<saving actions>>=
 (* C-x map *)
@@ -2344,6 +2378,7 @@ let save_buffer frame =
 @
 
 \section{Changing buffer}
+% of frame?
 
 
 <<function Frame.change_buffer>>=
@@ -2360,6 +2395,12 @@ let change_buffer window name =
     Not_found -> ()
 @
 
+<<buffer navigating keys>>=
+[ControlMetaMap, XK.xk_Left], "left_buffer";
+[ControlMetaMap, XK.xk_Right], "right_buffer";
+[ControlMetaMap, XK.xk_Down], "down_buffer";
+[ControlMetaMap, XK.xk_Up], "up_buffer";
+@
 
 <<buffer navigating actions>>=
 (* C-M map *)
@@ -2418,6 +2459,11 @@ let up_buffer frame =
 
 \section{Managing buffers}
 
+<<buffer managment keys>>=
+[c_x; NormalMap, Char.code 'b'], "change_buffer";
+@
+
+
 <<buffer managment actions>>=
 (* C-x map *)
 define_action "change_buffer"  change_buffer;
@@ -2469,6 +2515,12 @@ let rec exec_named_buf_hooks_with_abort hooks frame =
 
 
 \chapter{Window Managment}
+
+<<window managment keys>>=
+[c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
+[c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
+[c_x; n_5; NormalMap, Char.code '0'], "delete_window";
+@
 
 <<window managment actions>>=
 (* C-x 5 map *)
@@ -2747,6 +2799,34 @@ let mouse_save_then_kill frame =
 
 \section{Navigating}
 
+<<navigating keys>>=
+[NormalMap, XK.xk_Left], "move_backward"; 
+[NormalMap, XK.xk_Right], "move_forward"; 
+[ControlMap, Char.code 'b'], "move_backward";
+[ControlMap, Char.code 'f'], "move_forward";
+
+[ControlMap, XK.xk_Left ], "backward_word";
+[ControlMap, XK.xk_Right ], "forward_word";  
+[MetaMap, XK.xk_Left ], "backward_word";
+[MetaMap, XK.xk_Right ], "forward_word";
+
+[ControlMap, Char.code 'a'], "beginning_of_line";
+[ControlMap, Char.code 'e'], "end_of_line";
+
+[NormalMap, XK.xk_Up], "backward-line"; 
+[NormalMap, XK.xk_Down], "forward_line"; 
+
+[ControlMap, XK.xk_Up], "backward_paragraph";
+[ControlMap, XK.xk_Down], "forward_paragraph";  
+
+[NormalMap, XK.xk_Prior], "backward_screen"; 
+[NormalMap, XK.xk_Next], "forward_screen";
+
+[ControlMap, XK.xk_Next], "end_of_file";
+[ControlMap, XK.xk_Prior], "begin_of_file";
+
+@
+
 <<navigating actions>>=
 define_action "move_backward"  (fun frame -> ignore (move_backward frame 1));
 define_action "move_forward"   (fun frame -> ignore (move_forward frame 1));
@@ -2769,6 +2849,7 @@ define_action "forward_screen"  forward_screen;
 define_action "begin_of_file"  begin_of_file;
 define_action "end_of_file"  end_of_file;
 
+(* M-x *)
 define_action "goto_char" goto_char;
 define_action "goto_line" goto_line;
 @
@@ -3022,6 +3103,9 @@ let goto_line tree point y =
 
 \section{Inserting}
 
+<<inserting keys>>=
+[NormalMap, XK.xk_Return], "insert_return"; 
+@
 <<inserting actions>>=
 define_action "insert_return"  insert_return;
 @
@@ -3043,6 +3127,18 @@ let insert_char frame char =
 
 \section{Deleting}
 
+<<deleting keys>>=
+[NormalMap, XK.xk_BackSpace], "delete_before_point"; 
+[ControlMap, Char.code 'd'], "delete_at_point";
+[NormalMap, XK.xk_Delete], "delete_at_point"; 
+
+[MetaMap, Char.code 'd' ], "delete_forward_word";
+[MetaMap, XK.xk_BackSpace ], "delete_backward_word";
+
+[ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
+[ControlMap, Char.code 'k'], "kill_end_of_line";
+@
+
 <<deleting actions>>=
 define_action "delete_before_point"  delete_backspace_char;
 define_action "delete_at_point"  delete_char;
@@ -3050,6 +3146,7 @@ define_action "delete_at_point"  delete_char;
 define_action "delete_forward_word"  (to_frame delete_forward_word);
 define_action "delete_backward_word"  (to_frame delete_backward_word);
 
+define_action "hungry_electric_delete"  hungry_electric_delete;
 define_action "kill_end_of_line"  kill_end_of_line;
 @
 
@@ -3107,7 +3204,48 @@ let kill_end_of_line frame =
   kill_text text frame.frm_point len
 @
 
+\subsection{XXX}
+
+<<function Simple.hungry_char>>=
+let hungry_char c = 
+  c = ' ' || c = '\n' || c = '\t'
+@
+
+<<function Simple.hungry_electric_delete>>=
+let hungry_electric_delete frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let session = start_session text in
+  let c1 = previous_char frame in
+  delete_backspace_char frame;
+  let c2 = previous_char frame in
+  begin
+    if hungry_char c1 && hungry_char c2 then
+      try
+        delete_backspace_char frame;
+        while 
+          let c = previous_char frame in
+          hungry_char c        
+        do
+          delete_backspace_char frame
+        done;
+        insert_char frame ' '
+      with
+        Not_found -> ()
+  end;
+  commit_session text session
+@
+
+
+
 \section{Moving}
+
+<<moving keys>>=
+[ControlMap, Char.code ' '], "mark_at_point";
+[ControlMap, Char.code 'w'], "kill_region";
+[ControlMap, Char.code 'y'], "insert_killed";
+[MetaMap, Char.code 'y'], "insert_next_killed";
+@
 
 <<moving actions>>=
 define_action "mark_at_point"  mark_at_point;
@@ -3213,6 +3351,16 @@ let insert_next_killed frame =
 @
 
 \section{Transforming}
+
+<<transforming keys>>=
+[ControlMap, Char.code 't'], "transpose_chars";
+
+[MetaMap, Char.code 't'], "transpose_words";
+[MetaMap, Char.code 'l'], "lowercase_word";
+[MetaMap, Char.code 'u'], "uppercase_word";
+
+[MetaMap, XK.xk_q], "fill_paragraph";
+@
 
 <<transforming actions>>=
 define_action "transpose_chars"  (to_frame transpose_chars);
@@ -3332,6 +3480,10 @@ let fill_paragraph frame =
 
 \section{Replacing}
 
+<<replacing keys>>=
+[MetaMap, Char.code '%'], "query_replace_string";
+@
+
 <<replacing actions>>=
 define_action "replace_string" replace_string;
 define_action "replace_regexp" replace_regexp;
@@ -3391,6 +3543,13 @@ let replace_matched tree repl =
 
 
 \section{Searching}
+
+<<searching keys>>=
+[ControlMap, Char.code 's'], "isearch_forward";
+[ControlMap, Char.code 'r'], "isearch_backward";
+[MetaMap, Char.code 's'], "isearch_forward_regexp";
+[MetaMap, Char.code 'r'], "isearch_backward_regexp";
+@
 
 <<searching actions>>=
 define_action "isearch_forward"  isearch_forward;
@@ -3622,6 +3781,10 @@ let search_backward_groups tree regexp point groups =
 
 
 \section{Undo}
+
+<<undoing keys>>=
+[ControlMap, Char.code '_'], "undo";
+@
 
 <<undoing actions>>=
 define_action "undo"  undo;
@@ -3908,6 +4071,10 @@ let _ =
 
 \section{External commands}
 
+<<external commands keys>>=
+[MetaMap, Char.code '!'], "shell_command";
+@
+
 <<external command actions>>=
 define_action "shell_command"  shell_command;
 @
@@ -3920,6 +4087,15 @@ let shell_command frame =
 
 
 \section{Compilation and grep mode}
+
+<<misc keys>>=
+[c_x;NormalMap, Char.code '`' ], "next_error";
+@
+
+<<misc actions>>=
+(* C-x map *)
+define_action "next_error"  next_error;
+@
 
 <<external command actions>>=
 define_action "grep" grep;
@@ -4012,9 +4188,223 @@ let compile find_error_fun frame =
 @
 
 
+<<function Compil.next_error>>=
+let next_error top_frame =
+  let top_window = Window.top top_frame.frm_window in
+  let location = top_window.top_location in
+  match !compilation_frame with
+    None -> Top_window.message top_window "No compilation started"
+  | Some (frame, error_point, cdir) ->      
+      if frame.frm_killed then unkill (cut_frame top_frame) frame;
+      let buf = frame.frm_buffer in
+      let find_error = try
+          get_local buf find_error
+        with Failure _ -> !default_error
+      in
+      let text = buf.buf_text in
+      let point = frame.frm_point in
+      try
+        let error = find_error text error_point in
+        Text.set_position text frame.frm_start error.err_msg;
+        Text.set_position text point error.err_msg;
+        frame.frm_force_start <- true;
+        frame.frm_redraw <- true;
+        if error.err_filename <> "" then
+          let filename = Filename.concat cdir error.err_filename in
+          let buf = Ebuffer.read location filename (Keymap.create ()) in
+(* new frame for error buffer *)
+          let frame = 
+            try find_buffer_frame location buf with Not_found ->
+                if frame == top_frame then
+                  let display = Window.display top_window in
+                  let new_window = 
+                    Top_window.create top_window.top_location 
+                      display 
+                  in
+                  Frame.create new_window.top_windows None buf
+                else
+                  Frame.create top_frame.frm_window None buf
+          in
+          let text = buf.buf_text in
+          let point = frame.frm_point in
+          Text.point_to_line text point error.err_line;
+          Text.fmove text point error.err_begin;
+          Frame.active frame
+      with
+        Not_found ->
+          Top_window.message top_window "No more errors"
+@
+
 \section{Completion}
 
-\section{Read-only}
+%Expansion des abbreviations: 
+%deux fonctions principales: 
+%- "dabbrev_expand": expansion des mots a partir de mots trouves dans les
+%     buffers (binding normap "M-/").
+%- "expand_sabbrev": expansion des mots a partir d'abbreviations trouvees
+%    dans des tables associees au buffer (variable "abbrev_table") 
+%    (binding normal: un caractere de fin de mot (espace,newline,..))
+
+<<misc keys>>=
+[NormalMap, Char.code ' '], "char_expand_abbrev";
+[MetaMap, Char.code '/'], "dabbrev_expand";
+@
+
+<<toplevel Abbrevs._1>>=
+let _ =
+  define_action "char_expand_abbrev" (fun frame ->
+      expand_sabbrev frame; self_insert_command frame);
+  define_action "dabbrev_expand" dabbrev_expand;
+  ()
+@
+
+<<function Abbrevs.expand_sabbrev>>=
+let expand_sabbrev frame =
+  try
+    let point = frame.frm_point in
+    let buf = frame.frm_buffer in
+    let text = buf.buf_text in
+    let abbrevs = get_local buf abbrev_table in
+    let mark = dup_point text point in
+    to_begin_of_word text point buf.buf_syntax_table;
+    let str = Text.region text point mark in
+    Text.remove_point text mark;
+    let len = String.length str in
+    try
+      let repl = Hashtbl.find abbrevs str in
+      Text.delete text point len;
+      Text.insert text point repl;
+      fmove text point (String.length repl); ()
+    with
+      Not_found -> fmove text point len; ()
+  with
+    _ -> ()
+@
+
+<<function Abbrevs.dabbrev_expand>>=
+let dabbrev_expand frame = 
+  let top_window = Window.top frame.frm_window in
+  let location = top_window.top_location in
+  let buf = frame.frm_buffer in
+  let syntax = buf.buf_syntax_table in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let loop = ref false in
+  let s, buf, pos, history =
+    match !dabbrev_buf with
+      Some (s, for_frame, for_position, for_len,buf, pos, history) 
+      when frame == for_frame && for_position = get_position text point ->
+        bmove text point for_len;
+        Text.delete text point for_len;
+        s, buf, pos, history
+    | _ -> 
+        let str = beginning_of_word buf point in
+        str , buf, 
+        get_position text point - String.length str, []
+  in
+  let truelen = String.length s in
+  let s = escaped s in
+  bmove text point truelen;
+  let regexp = Str.regexp s in
+  let rec iter curr_buf pos =
+    let curr_text = curr_buf.buf_text in
+    let mark = add_point curr_text in
+    set_position curr_text mark pos;
+    try
+      let rec restart () =
+        let len = Text.search_backward curr_text regexp mark in
+        if curr_text == text && mark = point then
+          raise Exit
+        else
+          if bmove_res curr_text mark 1 <> 0 then
+            if syntax.(Char.code (get_char curr_text mark)) then
+              (fmove curr_text mark 1; restart ())
+            else
+              (fmove curr_text mark 1; ())
+          else
+            ()
+      in
+      let rec first () =
+        restart ();
+        fmove curr_text mark truelen;
+        let m = end_of_word curr_buf mark in
+        if List.mem m history then
+          (bmove curr_text mark truelen; first ())
+        else
+          begin
+            fmove text point truelen;
+            let _,len = Text.insert_res text point m in
+            fmove text point len;
+            dabbrev_buf := Some (s, frame, get_position text point, len, 
+              curr_buf, get_position curr_text mark, m :: history);
+            remove_point curr_text mark
+          end
+      in
+      first ()
+    with
+      Not_found ->
+        remove_point curr_text mark;
+        let curr_buf = next_buffer location curr_buf in
+        if curr_buf == buf then
+          if !loop then raise Not_found
+          else
+            loop := true; (* to avoid infinite loop *)
+        iter curr_buf (Text.size curr_buf.buf_text) 
+    | Exit ->
+        remove_point curr_text mark;
+        fmove text point truelen;
+        dabbrev_buf := None;
+        raise Not_found
+  in
+  iter buf pos; ()
+@
+
+
+<<constant Abbrevs.dabbrev_buf>>=
+let dabbrev_buf = ref None
+@
+
+<<constant Abbrevs.abbrev_table>>=
+let abbrev_table = Local.create "abbrev_table" 
+    (fun table ->
+      let s = ref "" in 
+      Hashtbl.iter (fun s1 s2 ->
+          s := Printf.sprintf "%s%s --> %s\n" !s s1 s2
+      ) table;
+      !s
+  )
+  Local.no_input
+@
+
+<<function Abbrevs.escaped>>=
+let escaped s =
+  let n = ref 0 in
+  let len = String.length s in
+  for i = 0 to len - 1 do
+    let c = String.unsafe_get s i in
+    match c with
+      '\\' | '[' | ']' | '^' -> incr n
+    | _ -> ()
+  done;
+  if !n = 0 then s else
+  let ss = String.create (len + !n) in
+  let p = ref 0 in
+  for i = 0 to len - 1 do
+    let c = String.unsafe_get s i in
+    (match c with
+        '\\' | '[' | ']' | '^' -> 
+          String.unsafe_set ss !p '\\';
+          incr p
+      | _ -> ());
+    String.unsafe_set ss !p c;
+    incr p    
+  done;
+  ss
+@
+
+\section{Misc}
+
+\subsection{Read-only}
 
 <<function Text.readonly>>=
 let readonly tree = 
@@ -4027,8 +4417,6 @@ let toggle_readonly tree =
   let text = tree.tree_text in    
   text.text_readonly <- not text.text_readonly
 @
-
-\section{Abbrevs}
 
 \chapter{Advanced Topics}
 
