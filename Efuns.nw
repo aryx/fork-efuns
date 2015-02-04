@@ -509,7 +509,7 @@ and top_window =
     mutable top_name : string;
     mutable top_active_frame : frame;
     mutable top_second_cursor : frame option;
-
+(*:
     mutable top_root : WX_root.t;
     mutable top_appli : WX_appli.t;
     mutable top_scrollbar : WX_adjust.t;
@@ -517,6 +517,7 @@ and top_window =
     mutable top_xterm : WX_xterm.xterm_window option;
     mutable top_term : WX_xterm.t;
     top_attrs : WX_xterm.xterm_gc option array;
+*)
   } 
 @
 
@@ -843,7 +844,7 @@ let _ =
 
 %XXX
 <<misc actions>>=
-define_action "load_library" load_library;
+(*  define_action "load_library" load_library;*)
 define_action "save_options" save_options;
 define_action "get_position" get_pos;
 define_action "unset_attr" unset_attr;
@@ -858,7 +859,7 @@ define_action "point_at_mark"  point_at_mark;
 (* C-M map *)
 define_action "next_hole" next_hole;
 
-define_action "start_server" Server.start;  
+(*  define_action "start_server" Server.start;  *)
 
 define_action "open_display" open_display;
 (* C-x map *)
@@ -885,7 +886,7 @@ type map =
 @
 
 <<type Efuns.key>>=
-and key = mod_ident * Xtypes.keySym
+and key = mod_ident * (*Xtypes.*)keySym
 @
 
 <<type Efuns.mod_ident>>=
@@ -1231,7 +1232,7 @@ and location =
     loc_colors_names : string array;
     mutable loc_colors_n : int;
     
-    loc_mutex : Concur.Mutex.t;
+(*    loc_mutex : Concur.Mutex.t; *)
   } 
 @
 %(*    
@@ -1262,7 +1263,7 @@ let location = {
     loc_colors_names = Array.create 256 "";
     loc_colors_n = 0;
     
-    loc_mutex = Concur.Mutex.create ()
+(*    loc_mutex = Concur.Mutex.create ()*)
 } 
 @
 
@@ -1408,7 +1409,7 @@ let check = ref false
     "-q", Arg.Set no_init,": Don't load init files";
     "-I",Arg.String (fun s -> load_path =:= 
         (string_to_path s) @ !!load_path), "<path>: Load Path";
-    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";
+(*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
 
     "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
   ] (fun name -> init_files := name :: !init_files) 
@@ -1544,6 +1545,8 @@ define_action "select_open_file" select_open_file;
 
 <<function Std_efunsrc.select_open_file>>=
 let select_open_file frame =
+  failwith "TODO"
+(*
   let window = frame.frm_window in
   let top_window = Window.top window in
   let cdir = Frame.current_dir frame in
@@ -1568,6 +1571,7 @@ let select_open_file frame =
           query#destroy;
       ) ());        
   query#show
+*)
 @
 
 \subsubsection{Saving the buffer}
@@ -1654,7 +1658,7 @@ if !!edit_menu = [] then begin
 \subsection{Help menu}
 
 <<constant Top_window.help_menu>>=
-let help_menu = ref [| |]
+let help_menu = ref ([| |]: (string * (frame -> unit)) array)
 @
 
 <<[[Std_efunsrc]] help menu setup>>=
@@ -1663,8 +1667,12 @@ help_menu := [|
       Frame.change_buffer frame.frm_window "*bindings*"
   );
   "Changes", (fun frame ->
+    (*
       let _ = Frame.load_file frame.frm_window (
-          Version.efuns_lib ^"/Changes") in ());
+          Version.efuns_lib ^"/Changes") in ()
+    *)
+    failwith "TODO"
+  );
 
   "About Efuns", (fun frame ->
     Frame.change_buffer frame.frm_window "*help*"
@@ -1699,9 +1707,12 @@ buffers_menu := (fun top_window button () ->
       (Array.of_list !buffers) in
 
     (* X11 *)
+    (*
     let menu = new WX_popup.t top_window.top_root desc in
     let (x,y) = button#root_coordinates in
     menu#popup_once x (y + button#height) (Some !WX_types.button_event)
+    *)
+    failwith "TODO"
     )
 @
 
@@ -2081,10 +2092,13 @@ let eval frame =
     (fun str ->
       let top_window = Window.top frame.frm_window in
       (* This is not enough: the paths also may have changed. *)
-      Top_window.message top_window (Dyneval.eval 
+      Top_window.message top_window 
+        (*(Dyneval.eval 
           (let len = String.length str in
           if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
-          str ^ " ;;")))
+          str ^ " ;;"))
+        *)(failwith "TODO")
+    )
 @
 
 \chapter{Text Managment}
@@ -2557,6 +2571,8 @@ let window_change_buffer frame =
 
 <<function Top_window.delete_window>>=
 let delete_window frame =
+  failwith "TODO"
+(*
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
   if List.length location.loc_windows > 1 then
@@ -2566,6 +2582,7 @@ let delete_window frame =
     Frame.kill_all top_window.top_windows;
     location.loc_windows <- Utils.list_remove location.loc_windows
       top_window
+*)
 @
 
 \section{Navigation}
@@ -2754,6 +2771,8 @@ let mouse_set_frame frame =
 
 <<function Simple.mouse_yank_at_click>>=
 let  mouse_yank_at_click frame =
+failwith "TODO"
+(*
   let top_window = Window.top frame.frm_window in
   let frame = mouse_set_active top_window in
   let buf = frame.frm_buffer in
@@ -2763,10 +2782,13 @@ let  mouse_yank_at_click frame =
   let str = WX_xterm.get_cutbuffer xterm in
   let _ = Text.insert text point str in
   Text.fmove text point (String.length str)
+*)
 @
 
 <<function Simple.mouse_save_then_kill>>=
 let mouse_save_then_kill frame =
+  failwith "TODO"
+(*
   let top_window = Window.top frame.frm_window in
   let frame = Top_window.find_selected_frame top_window in
   let buf = frame.frm_buffer in
@@ -2793,6 +2815,7 @@ let mouse_save_then_kill frame =
   kill_string str;
   WX_xterm.set_cutbuffer xterm str;
   highlight frame
+*)
 @
 
 \chapter{Basic Features}
@@ -4429,15 +4452,18 @@ let load_path = define_option ["efuns_path"]
 @
 
 <<constant Efuns.path>>=
-let path = Dyneval.load_path
+let path = (*Dyneval.load_path*) ref []
 @
 
 <<constant Efuns.efuns_path>>=
 let efuns_path = [ 
       (Filename.concat homedir ".efuns") ;
-      Version.efuns_lib ; 
+(*:
+      Version.efuns_lib; 
       Version.installdir; 
-      Version.ocamllib]
+      Version.ocamllib
+*)
+  ]
 @
 
 <<toplevel Efuns._1>>=
@@ -4454,6 +4480,7 @@ let xdefaults = try Sys.getenv "XUSERFILESEARCHPATH" with
 @
 
 <<toplevel Efuns._2>>=
+(*
 let _ =
   begin    
     try
@@ -4470,14 +4497,15 @@ let _ =
     with _ -> ()
   end;
   Xrm.safe_load x_res xdefaults
+*)
 @
 
 <<constant Efuns.x_res>>=
-let x_res = Xrm.create ()
+(*let x_res = Xrm.create ()*)
 @
 
 <<constant Efuns.t>>=
-let t = x_res
+(*let t = x_res*)
 @
 
 \chapter{Conclusion}

@@ -708,6 +708,8 @@ let highlighted_chars = ref []
 
 (*s: function Simple.unhightlight *)
 let unhightlight location =
+    failwith "TODO"
+(*
   List.iter (fun (buf,curseur,attr) ->
       let text = buf.buf_text in
       set_char_attr text curseur attr;
@@ -735,6 +737,7 @@ let unhightlight location =
           kill_string str;
           WX_xterm.set_cutbuffer xterm str;
           unhightlight_region buf debut fin
+          *)
 (*e: function Simple.unhightlight *)
   
 (*s: function Simple.highlight *)
@@ -838,6 +841,8 @@ nouvelle position du curseur dans la frame. Si on en sort, on peut
 ou prendre la derniere position, ou la premiere.
 *)
 let mouse_drag_region frame =
+  failwith "TODO"
+(*
   let top_window = Window.top frame.frm_window in
   let point = frame.frm_point in
   begin
@@ -881,10 +886,13 @@ let mouse_drag_region frame =
             1, str
       else raise Not_found
   ) !Eloop.event_time
+*)
 (*e: function Simple.mouse_drag_region *)
 
 (*s: function Simple.mouse_yank_at_click *)
 let  mouse_yank_at_click frame =
+failwith "TODO"
+(*
   let top_window = Window.top frame.frm_window in
   let frame = mouse_set_active top_window in
   let buf = frame.frm_buffer in
@@ -894,11 +902,14 @@ let  mouse_yank_at_click frame =
   let str = WX_xterm.get_cutbuffer xterm in
   let _ = Text.insert text point str in
   Text.fmove text point (String.length str)
+*)
 (*e: function Simple.mouse_yank_at_click *)
 
 
 (*s: function Simple.mouse_save_then_kill *)
 let mouse_save_then_kill frame =
+  failwith "TODO"
+(*
   let top_window = Window.top frame.frm_window in
   let frame = Top_window.find_selected_frame top_window in
   let buf = frame.frm_buffer in
@@ -925,6 +936,7 @@ let mouse_save_then_kill frame =
   kill_string str;
   WX_xterm.set_cutbuffer xterm str;
   highlight frame
+*)
 (*e: function Simple.mouse_save_then_kill *)
 
 (*s: function Simple.next_buffer *)

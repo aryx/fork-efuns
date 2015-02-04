@@ -12,13 +12,15 @@
 
 open Options
 open Xtypes
-open WX_types
+(*open WX_types*)
 open Efuns
 open Window
 
   
 (*s: function Top_window.message *)
 let message top_window msg =
+  failwith "TODO"
+(*
   let xterm = Window.xterm top_window  in
   let len = String.length msg in
   WX_xterm.draw_string xterm 0 (top_window.top_height - 1)
@@ -34,16 +36,20 @@ let message top_window msg =
           WX_xterm.update_displays ();
           let _ = Unix.select [] [] [] 0.2 in
           mini_buffer.frm_redraw <- true
+*)
 (*e: function Top_window.message *)
 
 (*s: function Top_window.clear_message *)
 let clear_message top_window =
+  failwith "TODO"
+(*
   match top_window.top_mini_buffers with
     [] -> 
       let xterm = Window.xterm top_window in
       WX_xterm.clear_eol xterm 0 
         (top_window.top_height - 1) top_window.top_width; 
   | _ -> ()
+*)
 (*e: function Top_window.clear_message *)
 
 
@@ -74,6 +80,8 @@ let try_map frame key =
 
 (*s: function Top_window.set_cursor_on *)
 let set_cursor_on top_window frame = 
+  failwith "TODO"
+(*
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
     let xterm = xterm top_window in
@@ -81,20 +89,27 @@ let set_cursor_on top_window frame =
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset) 
     (frame.frm_ypos + frame.frm_cursor_y) 
     frame.frm_cursor 0 1 Text.inverse_attr
+*)
 (*e: function Top_window.set_cursor_on *)
 
 (*s: function Top_window.set_cursor_off *)
 let set_cursor_off top_window frame =
+  failwith "TODO"
+(*
   if frame.frm_cursor.[0] <> '\000' then
     let xterm = xterm top_window in
     WX_xterm.draw_string xterm 
       (frame.frm_xpos + frame.frm_cursor_x) 
     (frame.frm_ypos + frame.frm_cursor_y) 
     frame.frm_cursor 0 1 frame.frm_cursor_attr
+*)
 (*e: function Top_window.set_cursor_off *)
 
 (*s: function Top_window.cursor_on *)
 let cursor_on top_window =
+  failwith "TODO"
+
+(*
   let frame = top_window.top_active_frame in
   let name = frame.frm_buffer.buf_name in
   if not (name == top_window.top_name) then
@@ -106,6 +121,7 @@ let cursor_on top_window =
   match top_window.top_second_cursor with
     None -> ()
   | Some frame -> set_cursor_on top_window frame
+*)
 (*e: function Top_window.cursor_on *)
 
 (*s: function Top_window.cursor_off *)
@@ -264,6 +280,8 @@ let handle_key top_window modifiers keysym =
   
 (*s: function Top_window.wrap *)
 let wrap top_window f () = 
+  failwith "TODO"
+(*
   let location = top_window.top_location in
   Concur.Mutex.lock location.loc_mutex;  
   clean_display location;    
@@ -281,6 +299,7 @@ let wrap top_window f () =
   update_display top_window.top_location;
   WX_xterm.update_displays ();
   Concur.Mutex.unlock top_window.top_location.loc_mutex
+*)
 (*e: function Top_window.wrap *)
 
 (*s: function Top_window.wrap_item *)
@@ -290,6 +309,8 @@ let wrap_item top_window (n,f) =
         
 (*s: function Top_window.handler *)
 let handler top_window xterm event =
+  failwith "TODO"
+(*
   let location = top_window.top_location in
   Concur.Mutex.lock location.loc_mutex;
   try
@@ -329,16 +350,20 @@ let handler top_window xterm event =
     e ->   
       Concur.Mutex.unlock top_window.top_location.loc_mutex;
       raise e
+*)
 (*e: function Top_window.handler *)
 
 
 (*s: constant Top_window.buffers_menu *)
-let buffers_menu = ref (fun (top_window : top_window) (button : WX_button.t) ()
-      -> ())
+let buffers_menu = ref 
+  (fun (top_window : top_window) (button : (*WX_button.t*) unit) ()
+  -> ())
 (*e: constant Top_window.buffers_menu *)
 
 (*s: function Top_window.scroll_to_frame *)
 let scroll_to_frame ady top_window =
+  failwith "TODO"
+(*
   let frame = top_window.top_active_frame in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -353,6 +378,7 @@ let scroll_to_frame ady top_window =
       frame.frm_redraw <- true;
       Text.set_position text frame.frm_start y
     end
+*)
 (*e: function Top_window.scroll_to_frame *)
 (*s: constant Top_window.menus *)
 (*
@@ -377,13 +403,15 @@ let edit_menu = define_option ["edit_menu"] ""
     (list_option string2_option) []
 (*e: constant Top_window.edit_menu *)
 (*s: constant Top_window.help_menu *)
-let help_menu = ref [| |]
+let help_menu = ref ([| |]: (string * (frame -> unit)) array)
 (*e: constant Top_window.help_menu *)
 
   
   
 (*s: function Top_window.create *)
 let create location display =
+  failwith "TODO"
+(*
   let buf = Ebuffer.default location "*help*" in
   let top = new WX_appli.t display.WX_xterm.root_oo [] in
   top#setWM_NAME "new_frame";
@@ -448,10 +476,13 @@ let create location display =
           WX_xterm.update_displays ()
     )]];
   top_window
+*)
 (*e: function Top_window.create *)
 
 (*s: function Top_window.delete_window *)
 let delete_window frame =
+  failwith "TODO"
+(*
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
   if List.length location.loc_windows > 1 then
@@ -461,6 +492,7 @@ let delete_window frame =
     Frame.kill_all top_window.top_windows;
     location.loc_windows <- Utils.list_remove location.loc_windows
       top_window
+*)
 (*e: function Top_window.delete_window *)
     
     
@@ -479,11 +511,14 @@ let check_abort_delay = ref 100
   
 (*s: function Top_window.check_abort *)
 let check_abort frame =
+  failwith "TODO"
+(*
   incr check_abort; 
   if !check_abort mod !check_abort_delay = 0 then
     let top_window = Window.top frame.frm_window in
     let xterm = top_window.top_term in
     xterm#check_abort
   else false
+*)
 (*e: function Top_window.check_abort *)
 (*e: graphics/top_window.ml *)

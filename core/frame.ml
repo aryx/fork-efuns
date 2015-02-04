@@ -314,6 +314,8 @@ let cursor_to_point frame x y =
 
 (*s: function Frame.update_line *)
 let update_line top_window frame repr_string y = 
+  failwith "TODO"
+(*
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let line_repr = frame.frm_table.(y) in
@@ -342,6 +344,7 @@ let update_line top_window frame repr_string y =
       "/" 0 1 Text.direct_attr
   in
   iter 0 (line_repr.repr_offset+frame.frm_x_offset) line_repr.repr_reprs
+*)
 (*e: function Frame.update_line *)
 
 (*s: function Frame.set_cursor *)
@@ -479,6 +482,8 @@ let update_table top_window frame =
 
 (*s: function Frame.update *)
 let update top_window frame =
+  failwith "TODO"
+(*
   let buf =  frame.frm_buffer in
   let text = buf.buf_text in
   let start = frame.frm_start in
@@ -587,6 +592,7 @@ let update top_window frame =
   | Some request ->
       WX_xterm.draw_string xterm 0 (top_window.top_height-1) 
       request 0 (String.length request) Text.direct_attr
+*)
 (*e: function Frame.update *)
 
 (*s: exception Frame.BufferKilled *)

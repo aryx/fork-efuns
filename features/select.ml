@@ -242,9 +242,9 @@ let is_userdir string =
 
 (*s: function Select.complete_filename *)
 let complete_filename frame good_file filename =
-  if is_userdir filename then Parse_file.users
+  if is_userdir filename then (* Parse_file.users *) failwith "TODO"
   else
-  let filename = Parse_file.string_to_filename filename in
+  let filename = (*Parse_file.string_to_filename filename *) failwith "TODO" in
   let dirname = dirname frame filename in
   let file_list = Utils.file_list dirname in
   match file_list with
@@ -287,7 +287,7 @@ let select_file frame request history start action =
           let len = String.length s in
           if len>0 && s.[len - 1] <> '/' then
             try
-              let filename = Parse_file.string_to_filename s in
+              let filename = (*Parse_file.string_to_filename s*)failwith"TODO" in
               let dirname = dirname frame filename in
               let basename = Filename.basename filename in
               let stat = Unix.stat (Filename.concat dirname basename) in
@@ -319,7 +319,7 @@ let select_file frame request history start action =
   (fun old_frame str -> 
       history := str :: !history;
       remove_completions frame;
-      let str = Parse_file.string_to_filename str in
+      let str = (*Parse_file.string_to_filename str*)failwith"TODO" in
       action str
   ) in
   Keymap.add_binding map [NormalMap, XK.xk_Prior]

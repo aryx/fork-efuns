@@ -215,7 +215,8 @@ let change_font frame =
       let window = frame.frm_window in
       let top_window = Window.top window in
       let xterm = Window.xterm top_window in
-      WX_xterm.change_font xterm name
+      (*WX_xterm.change_font xterm name*)
+      failwith "TODO"
   ) in ()
 (*e: function Complex.change_font *)
 
@@ -251,10 +252,12 @@ let color buf regexp strict attr =
 (*e: function Complex.color *)
 
 (*s: constant Complex.display_hist *)
-let display_hist = ref []
+(*let display_hist = ref []*)
 (*e: constant Complex.display_hist *)
 (*s: function Complex.open_display *)
 let open_display frame =
+failwith "TODO"
+(*
   select frame "open_display :" display_hist ""
     (fun _ -> [])
   (fun s -> s)
@@ -268,6 +271,7 @@ let open_display frame =
         in
       let _ = Top_window.create location display in
       ())
+*)
 (*e: function Complex.open_display *)
 
 (*s: function Complex.goto_line *)
@@ -340,10 +344,13 @@ let eval frame =
     (fun str ->
       let top_window = Window.top frame.frm_window in
       (* This is not enough: the paths also may have changed. *)
-      Top_window.message top_window (Dyneval.eval 
+      Top_window.message top_window 
+        (*(Dyneval.eval 
           (let len = String.length str in
           if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
-          str ^ " ;;")))
+          str ^ " ;;"))
+        *)(failwith "TODO")
+    )
 (*e: function Complex.eval *)
 
 (*s: constant Complex.variable_hist *)

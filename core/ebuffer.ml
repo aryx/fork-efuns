@@ -235,6 +235,8 @@ let read location filename local_map =
 
 (*s: function Ebuffer.default *)
 let default location name =
+  failwith "TODO"
+(*
   try
     Hashtbl.find location.loc_buffers name
   with
@@ -259,6 +261,7 @@ See changes in "^ Version.efuns_lib ^"/Changes
         else ""
       in
       create location name None (Text.create str) (Keymap.create ())
+*)
 (*e: function Ebuffer.default *)
       
 

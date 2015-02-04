@@ -18,7 +18,7 @@ open Keymap
 open Simple
 open Select
 open Search
-open Eval
+(*open Eval*)
 open Compil
 open Abbrevs
 open Complex
@@ -46,6 +46,8 @@ let compile frame =
 
 (*s: function Std_efunsrc.select_open_file *)
 let select_open_file frame =
+  failwith "TODO"
+(*
   let window = frame.frm_window in
   let top_window = Window.top window in
   let cdir = Frame.current_dir frame in
@@ -70,6 +72,7 @@ let select_open_file frame =
           query#destroy;
       ) ());        
   query#show
+*)
 (*e: function Std_efunsrc.select_open_file *)
 
   
@@ -284,7 +287,7 @@ let _ =
   (* Misc *)
   (* ----------------------------------------------------------------------- *)
   (*s: misc actions *)
-  define_action "load_library" load_library;
+  (*  define_action "load_library" load_library;*)
   define_action "save_options" save_options;
   define_action "get_position" get_pos;
   define_action "unset_attr" unset_attr;
@@ -299,7 +302,7 @@ let _ =
   (* C-M map *)
   define_action "next_hole" next_hole;
 
-  define_action "start_server" Server.start;  
+  (*  define_action "start_server" Server.start;  *)
 
   define_action "open_display" open_display;
   (* C-x map *)
@@ -614,7 +617,7 @@ let init_global_map location =
   ()
 (*e: function Std_efunsrc.init_global_map *)
   
-open WX_filesel
+(*open WX_filesel*)
 
 
 (*s: toplevel Std_efunsrc._3 *)
@@ -660,8 +663,12 @@ let _ =
         Frame.change_buffer frame.frm_window "*bindings*"
     );
     "Changes", (fun frame ->
+      (*
         let _ = Frame.load_file frame.frm_window (
-            Version.efuns_lib ^"/Changes") in ());
+            Version.efuns_lib ^"/Changes") in ()
+      *)
+      failwith "TODO"
+    );
 
     "About Efuns", (fun frame ->
       Frame.change_buffer frame.frm_window "*help*"
@@ -683,9 +690,12 @@ let _ =
         (Array.of_list !buffers) in
 
       (* X11 *)
+      (*
       let menu = new WX_popup.t top_window.top_root desc in
       let (x,y) = button#root_coordinates in
       menu#popup_once x (y + button#height) (Some !WX_types.button_event)
+      *)
+      failwith "TODO"
       )
   (*e: [[Std_efunsrc]] buffers menu setup *)
 (*e: toplevel Std_efunsrc._4 *)

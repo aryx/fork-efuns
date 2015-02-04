@@ -15,7 +15,7 @@ open Keymap
 open Efuns
 open Simple
 open Compil
-open Complex
+(*open Complex*)
 open Window
 
 (*s: function Dired.update *)
@@ -142,12 +142,15 @@ let open_view frame =
   
 (*s: function Dired.mkdir *)
 let mkdir frame =
+  failwith "TODO"
+(*
   Select.select_filename frame "Make directory: "
     (fun str -> 
       let file_perm = try get_var frame.frm_buffer file_perm with _ -> 
             0x1ff land (lnot umask) in
       Unix.mkdir str file_perm;
       update frame.frm_buffer)
+*)
 (*e: function Dired.mkdir *)
           
 (*s: function Dired.install *)

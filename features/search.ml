@@ -18,7 +18,7 @@ open Simple
 open Select
     
 (*s: toplevel Search._1 *)
-let _ = Time.init ()
+(*let _ = Time.init ()*)
 (*e: toplevel Search._1 *)
 
 (*s: constant Search.case_fold *)

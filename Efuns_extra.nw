@@ -36,6 +36,7 @@ open Local
 
 <<type Efuns.map>>
 
+and keySym = int
 <<type Efuns.key>>
 
 <<type Efuns.action>>
@@ -158,7 +159,7 @@ open Options
   
 <<toplevel Efuns._5>>
 
-<<global Efuns.actions>>    
+<<global Efuns.actions>>
 
 <<function Efuns.define_action>>
 
@@ -181,7 +182,7 @@ open Options
 \subsection*{[[core/text.ml]]}
 
 <<type Text.t>>=
-type t = tree tree_desc  
+(*: type t = tree tree_desc   *)
 @
 % tree? tree_desc? in Wx_text?
 
@@ -1131,8 +1132,25 @@ ici.
 
 open Options
 open Utils
+(*:
 open WX_types
 open WX_text
+*)
+(* from WX_types *)
+type font = string
+type color = string
+(* from WX_text *)
+type item =
+  String of item_attr list * int
+| RealString of item_attr list * string
+(*:| Widget of contained array*)
+
+and item_attr =
+  Font of font
+| Foreground of color
+| Background of color
+
+
   
 <<type Text.attribute>>
 <<type Text.delta>>
@@ -1160,13 +1178,29 @@ module Text = struct
     let representation tree line = line.repr_string, line.position
     let items tree line = line.items
   end
-      
+
+(*:      
 module TextTree = WX_text.Make(Text)
 open TextTree
+*)
+type tree_desc =
+      { mutable tree_nlines: int;
+        mutable tree_width: int;
+        mutable tree_height: int;
+(*        mutable tree_parts: 'a array; *)
+(*        mutable tree_up: tree tree_desc; *)
+        mutable tree_pos: int;
+        mutable tree_modified: bool;
+        mutable line_height: int;
+        mutable line_width: int;
+        mutable tree_text: text }
+let make_text _tree _array =
+  failwith "TODO"
+type t = tree_desc
   
 <<type Text.t>>
 
-external id: t -> tree tree_desc = "%identity"
+(*: external id: t -> tree tree_desc = "%identity" *)
 
 (*
 let print msg text =
@@ -1434,6 +1468,8 @@ let read location filename local_map =
 
 <<function Ebuffer.default>>=
 let default location name =
+  failwith "TODO"
+(*
   try
     Hashtbl.find location.loc_buffers name
   with
@@ -1458,6 +1494,7 @@ See changes in "^ Version.efuns_lib ^"/Changes
         else ""
       in
       create location name None (Text.create str) (Keymap.create ())
+*)
 @
 
 <<function Ebuffer.compute_representation>>=
@@ -1648,7 +1685,7 @@ let print_key (map,keysym) =
   in
   let kname =
     try
-      List.assoc keysym XK.keysym_to_name
+      List.assoc keysym (*XK.*)keysym_to_name
     with
       Not_found -> "?"
   in
@@ -1730,6 +1767,9 @@ open Efuns
 <<function Keymap.unbound_key>>
 
 <<function Keymap.create>>
+
+
+let keysym_to_name = []
 
 <<function Keymap.print_key>>
             
@@ -1859,16 +1899,22 @@ open Simple
 
 <<function Window.xterm>>=
 let xterm top_window =
+  failwith "TODO"
+(*
   match top_window.top_xterm with
     None -> raise Not_found
   | Some xterm -> xterm 
+*)
 @
 
 <<function Window.display>>=
 let display top_window =
+  failwith "TODO"
+(*
   match top_window.top_display with
     None -> raise Not_found
   | Some display -> display
+*)
 @
 
 <<function Window.get_font>>=
@@ -2068,6 +2114,8 @@ let cursor_to_point frame x y =
 
 <<function Frame.update_line>>=
 let update_line top_window frame repr_string y = 
+  failwith "TODO"
+(*
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let line_repr = frame.frm_table.(y) in
@@ -2096,6 +2144,7 @@ let update_line top_window frame repr_string y =
       "/" 0 1 Text.direct_attr
   in
   iter 0 (line_repr.repr_offset+frame.frm_x_offset) line_repr.repr_reprs
+*)
 @
 
 <<function Frame.set_cursor>>=
@@ -2232,6 +2281,8 @@ let update_table top_window frame =
 
 <<function Frame.update>>=
 let update top_window frame =
+  failwith "TODO"
+(*
   let buf =  frame.frm_buffer in
   let text = buf.buf_text in
   let start = frame.frm_start in
@@ -2340,6 +2391,7 @@ let update top_window frame =
   | Some request ->
       WX_xterm.draw_string xterm 0 (top_window.top_height-1) 
       request 0 (String.length request) Text.direct_attr
+*)
 @
 
 <<exception Frame.BufferKilled>>=
@@ -2964,6 +3016,8 @@ let highlighted_chars = ref []
 
 <<function Simple.unhightlight>>=
 let unhightlight location =
+    failwith "TODO"
+(*
   List.iter (fun (buf,curseur,attr) ->
       let text = buf.buf_text in
       set_char_attr text curseur attr;
@@ -2991,6 +3045,7 @@ let unhightlight location =
           kill_string str;
           WX_xterm.set_cutbuffer xterm str;
           unhightlight_region buf debut fin
+          *)
 @
 
 <<function Simple.highlight>>=
@@ -3094,6 +3149,8 @@ nouvelle position du curseur dans la frame. Si on en sort, on peut
 ou prendre la derniere position, ou la premiere.
 *)
 let mouse_drag_region frame =
+  failwith "TODO"
+(*
   let top_window = Window.top frame.frm_window in
   let point = frame.frm_point in
   begin
@@ -3137,6 +3194,7 @@ let mouse_drag_region frame =
             1, str
       else raise Not_found
   ) !Eloop.event_time
+*)
 @
 
 
@@ -3804,7 +3862,8 @@ let change_font frame =
       let window = frame.frm_window in
       let top_window = Window.top window in
       let xterm = Window.xterm top_window in
-      WX_xterm.change_font xterm name
+      (*WX_xterm.change_font xterm name*)
+      failwith "TODO"
   ) in ()
 @
 
@@ -3840,11 +3899,13 @@ let color buf regexp strict attr =
 @
 
 <<constant Complex.display_hist>>=
-let display_hist = ref []
+(*let display_hist = ref []*)
 @
 
 <<function Complex.open_display>>=
 let open_display frame =
+failwith "TODO"
+(*
   select frame "open_display :" display_hist ""
     (fun _ -> [])
   (fun s -> s)
@@ -3858,6 +3919,7 @@ let open_display frame =
         in
       let _ = Top_window.create location display in
       ())
+*)
 @
 
 
@@ -4138,6 +4200,7 @@ let system buf_name location cmd end_action =
   let ins = Unix.descr_of_in_channel inc in
   let tampon = String.create 1000 in
   let active = ref true in
+(*
   Thread.add_reader ins
     (function () ->
         let pos,str = Text.delete_res text curseur
@@ -4172,6 +4235,8 @@ let system buf_name location cmd end_action =
         WX_xterm.update_displays ();
         Mutex.unlock location.loc_mutex
   );
+*)
+  failwith "TODO";
   let lmap = buf.buf_map in
   Keymap.add_binding lmap [NormalMap, XK.xk_Return]
     (fun frame ->
@@ -4192,7 +4257,8 @@ let system buf_name location cmd end_action =
           Unix.kill pid Sys.sigkill;
           let _,_ = waitpid [] pid in ()
         with _ -> ());
-      Concur.Thread.remove_reader ins)
+      (*Concur.Thread.remove_reader ins*) failwith "TODO"
+    )
   :: buf.buf_finalizers;
   buf
 @
@@ -4217,8 +4283,8 @@ let shell_hist = ref []
 <<features/system.ml>>=
 open Efuns
 open Unix
-open Concur
-open ThreadUnix
+(*open Concur*)
+(*open ThreadUnix*)
 open Select
 open Simple
 open Top_window
@@ -4456,9 +4522,9 @@ let is_userdir string =
 
 <<function Select.complete_filename>>=
 let complete_filename frame good_file filename =
-  if is_userdir filename then Parse_file.users
+  if is_userdir filename then (* Parse_file.users *) failwith "TODO"
   else
-  let filename = Parse_file.string_to_filename filename in
+  let filename = (*Parse_file.string_to_filename filename *) failwith "TODO" in
   let dirname = dirname frame filename in
   let file_list = Utils.file_list dirname in
   match file_list with
@@ -4501,7 +4567,7 @@ let select_file frame request history start action =
           let len = String.length s in
           if len>0 && s.[len - 1] <> '/' then
             try
-              let filename = Parse_file.string_to_filename s in
+              let filename = (*Parse_file.string_to_filename s*)failwith"TODO" in
               let dirname = dirname frame filename in
               let basename = Filename.basename filename in
               let stat = Unix.stat (Filename.concat dirname basename) in
@@ -4533,7 +4599,7 @@ let select_file frame request history start action =
   (fun old_frame str -> 
       history := str :: !history;
       remove_completions frame;
-      let str = Parse_file.string_to_filename str in
+      let str = (*Parse_file.string_to_filename str*)failwith"TODO" in
       action str
   ) in
   Keymap.add_binding map [NormalMap, XK.xk_Prior]
@@ -4723,7 +4789,7 @@ open Utils
 \subsection*{[[features/search.ml]]}
 
 <<toplevel Search._1>>=
-let _ = Time.init ()
+(*let _ = Time.init ()*)
 @
 
 <<constant Search.case_fold>>=
@@ -5671,6 +5737,8 @@ open Dyneval
 
 <<function Top_window.message>>=
 let message top_window msg =
+  failwith "TODO"
+(*
   let xterm = Window.xterm top_window  in
   let len = String.length msg in
   WX_xterm.draw_string xterm 0 (top_window.top_height - 1)
@@ -5686,16 +5754,20 @@ let message top_window msg =
           WX_xterm.update_displays ();
           let _ = Unix.select [] [] [] 0.2 in
           mini_buffer.frm_redraw <- true
+*)
 @
 
 <<function Top_window.clear_message>>=
 let clear_message top_window =
+  failwith "TODO"
+(*
   match top_window.top_mini_buffers with
     [] -> 
       let xterm = Window.xterm top_window in
       WX_xterm.clear_eol xterm 0 
         (top_window.top_height - 1) top_window.top_width; 
   | _ -> ()
+*)
 @
 
 <<function Top_window.dummy_action>>=
@@ -5724,6 +5796,8 @@ let try_map frame key =
 
 <<function Top_window.set_cursor_on>>=
 let set_cursor_on top_window frame = 
+  failwith "TODO"
+(*
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
     let xterm = xterm top_window in
@@ -5731,20 +5805,27 @@ let set_cursor_on top_window frame =
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset) 
     (frame.frm_ypos + frame.frm_cursor_y) 
     frame.frm_cursor 0 1 Text.inverse_attr
+*)
 @
 
 <<function Top_window.set_cursor_off>>=
 let set_cursor_off top_window frame =
+  failwith "TODO"
+(*
   if frame.frm_cursor.[0] <> '\000' then
     let xterm = xterm top_window in
     WX_xterm.draw_string xterm 
       (frame.frm_xpos + frame.frm_cursor_x) 
     (frame.frm_ypos + frame.frm_cursor_y) 
     frame.frm_cursor 0 1 frame.frm_cursor_attr
+*)
 @
 
 <<function Top_window.cursor_on>>=
 let cursor_on top_window =
+  failwith "TODO"
+
+(*
   let frame = top_window.top_active_frame in
   let name = frame.frm_buffer.buf_name in
   if not (name == top_window.top_name) then
@@ -5756,6 +5837,7 @@ let cursor_on top_window =
   match top_window.top_second_cursor with
     None -> ()
   | Some frame -> set_cursor_on top_window frame
+*)
 @
 
 <<function Top_window.cursor_off>>=
@@ -5910,6 +5992,8 @@ let handle_key top_window modifiers keysym =
 
 <<function Top_window.wrap>>=
 let wrap top_window f () = 
+  failwith "TODO"
+(*
   let location = top_window.top_location in
   Concur.Mutex.lock location.loc_mutex;  
   clean_display location;    
@@ -5927,6 +6011,7 @@ let wrap top_window f () =
   update_display top_window.top_location;
   WX_xterm.update_displays ();
   Concur.Mutex.unlock top_window.top_location.loc_mutex
+*)
 @
 
 <<function Top_window.wrap_item>>=
@@ -5936,6 +6021,8 @@ let wrap_item top_window (n,f) =
 
 <<function Top_window.handler>>=
 let handler top_window xterm event =
+  failwith "TODO"
+(*
   let location = top_window.top_location in
   Concur.Mutex.lock location.loc_mutex;
   try
@@ -5975,15 +6062,19 @@ let handler top_window xterm event =
     e ->   
       Concur.Mutex.unlock top_window.top_location.loc_mutex;
       raise e
+*)
 @
 
 <<constant Top_window.buffers_menu>>=
-let buffers_menu = ref (fun (top_window : top_window) (button : WX_button.t) ()
-      -> ())
+let buffers_menu = ref 
+  (fun (top_window : top_window) (button : (*WX_button.t*) unit) ()
+  -> ())
 @
 
 <<function Top_window.scroll_to_frame>>=
 let scroll_to_frame ady top_window =
+  failwith "TODO"
+(*
   let frame = top_window.top_active_frame in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -5998,6 +6089,7 @@ let scroll_to_frame ady top_window =
       frame.frm_redraw <- true;
       Text.set_position text frame.frm_start y
     end
+*)
 @
 
 <<constant Top_window.menus>>=
@@ -6018,6 +6110,8 @@ let menus = define_option ["menus"] ""
 
 <<function Top_window.create>>=
 let create location display =
+  failwith "TODO"
+(*
   let buf = Ebuffer.default location "*help*" in
   let top = new WX_appli.t display.WX_xterm.root_oo [] in
   top#setWM_NAME "new_frame";
@@ -6082,6 +6176,7 @@ let create location display =
           WX_xterm.update_displays ()
     )]];
   top_window
+*)
 @
 
 
@@ -6095,12 +6190,15 @@ let check_abort_delay = ref 100
 
 <<function Top_window.check_abort>>=
 let check_abort frame =
+  failwith "TODO"
+(*
   incr check_abort; 
   if !check_abort mod !check_abort_delay = 0 then
     let top_window = Window.top frame.frm_window in
     let xterm = top_window.top_term in
     xterm#check_abort
   else false
+*)
 @
 
 
@@ -6120,7 +6218,7 @@ let check_abort frame =
 
 open Options
 open Xtypes
-open WX_types
+(*open WX_types*)
 open Efuns
 open Window
 
@@ -6270,7 +6368,7 @@ open Keymap
 open Simple
 open Select
 open Search
-open Eval
+(*open Eval*)
 open Compil
 open Abbrevs
 open Complex
@@ -6305,7 +6403,7 @@ open Top_window
     
 <<function Std_efunsrc.init_global_map>>
   
-open WX_filesel
+(*open WX_filesel*)
 
 
 <<toplevel Std_efunsrc._3>>
@@ -6364,30 +6462,31 @@ let _ =
 @
 
 <<constant Main.dpy_oo>>=
-let dpy_oo = new WX_display.t !displayname
+(*let dpy_oo = new WX_display.t !displayname*)
 @
 
 <<constant Main.root_oo>>=
-let root_oo = new WX_root.t dpy_oo 0
+(*let root_oo = new WX_root.t dpy_oo 0*)
 @
 
 <<constant Main.display>>=
-let display = WX_xterm.create_display root_oo
+(*let display = WX_xterm.create_display root_oo
   location.loc_colors_names location.loc_fonts_names 
+*)
 @
 
 <<constant Main.top_window>>=
-let top_window = Top_window.create location display
+(*let top_window = Top_window.create location display*)
 @
 
 <<toplevel Main._4>>=
+(*
 let _ =
   WX_xterm.setHighlight display 2;
   Dyneval.init true;
   Eval.load top_window "Efunsrc";
   Efuns.init location; (* launch second hooks *)
   let _ = Interactive.create_bindings location in
-
 (* open the fisrt buffers *)
   List.iter (fun name ->
     let _ = Frame.load_file top_window.top_windows name in ()) 
@@ -6414,6 +6513,7 @@ let _ =
       SigInt -> loop ()
   in
   loop ()
+*)
 @
 
 
@@ -6589,12 +6689,15 @@ let open_view frame =
 
 <<function Dired.mkdir>>=
 let mkdir frame =
+  failwith "TODO"
+(*
   Select.select_filename frame "Make directory: "
     (fun str -> 
       let file_perm = try get_var frame.frm_buffer file_perm with _ -> 
             0x1ff land (lnot umask) in
       Unix.mkdir str file_perm;
       update frame.frm_buffer)
+*)
 @
 
 <<function Dired.install>>=
@@ -6688,7 +6791,7 @@ open Keymap
 open Efuns
 open Simple
 open Compil
-open Complex
+(*open Complex*)
 open Window
 
 <<function Dired.update>>

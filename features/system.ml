@@ -1,8 +1,8 @@
 (*s: features/system.ml *)
 open Efuns
 open Unix
-open Concur
-open ThreadUnix
+(*open Concur*)
+(*open ThreadUnix*)
 open Select
 open Simple
 open Top_window
@@ -41,6 +41,7 @@ let system buf_name location cmd end_action =
   let ins = Unix.descr_of_in_channel inc in
   let tampon = String.create 1000 in
   let active = ref true in
+(*
   Thread.add_reader ins
     (function () ->
         let pos,str = Text.delete_res text curseur
@@ -75,6 +76,8 @@ let system buf_name location cmd end_action =
         WX_xterm.update_displays ();
         Mutex.unlock location.loc_mutex
   );
+*)
+  failwith "TODO";
   let lmap = buf.buf_map in
   Keymap.add_binding lmap [NormalMap, XK.xk_Return]
     (fun frame ->
@@ -95,7 +98,8 @@ let system buf_name location cmd end_action =
           Unix.kill pid Sys.sigkill;
           let _,_ = waitpid [] pid in ()
         with _ -> ());
-      Concur.Thread.remove_reader ins)
+      (*Concur.Thread.remove_reader ins*) failwith "TODO"
+    )
   :: buf.buf_finalizers;
   buf
 (*e: function System.system *)
