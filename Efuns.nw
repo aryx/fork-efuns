@@ -3364,99 +3364,88 @@ let insert_next_killed frame =
   | _ -> ()
 @
 
-\section{Replacing}
+\section{Undo}
 
-<<replacing keys>>=
-[MetaMap, Char.code '%'], "query_replace_string";
+<<undoing keys>>=
+[ControlMap, Char.code '_'], "undo";
 @
 
-<<replacing actions>>=
-define_action "replace_string" replace_string;
-define_action "replace_regexp" replace_regexp;
-define_action "query_replace_string" query_replace_string;
-define_action "query_replace_regexp" query_replace_regexp;
-@
-
-<<[[interactives_map]] initial entries>>=
-"replace_string";
-"replace_regexp";
-"query_replace_string";
-"query_replace_regexp";
+<<undoing actions>>=
+define_action "undo"  undo;
 @
 
 
-%\section{Regexps}
-% mv later?
-
-<<type Efuns.to_regexp>>=
-type to_regexp =
-  Regexp
-| RegexpString
+<<function Simple.undo>>=
+let undo frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in  
+  let point = frame.frm_point in
+  let action, at_point, len = Text.undo text in
+  frame.frm_last_text_updated <- version text - 1;
+  Text.set_position text point at_point;
+  Text.fmove text point len; ()
 @
 
-<<function Efuns.string_to_regex>>=
-let string_to_regex s = s, Str.regexp s
+<<[[Text.text]] other fields>>=
+mutable text_history : action list;
+@
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_history : (int * Text.action) list;
+@
+
+%\subsection{Helpers}
+
+
+<<type Text.action>>=
+and action =
+  Insertion of int * int * int
+| Deletion of int * string * int
+| Session of action list
+@
+% for undo?
+
+
+<<function Text.undo>>=
+let undo tree =
+  let text = tree.tree_text in  
+  let rec undo action =
+    let gpoint = text.text_gpoint in
+    let gsize = text.text_gsize in
+    match action with
+      Insertion(point_pos, len, modified) ->
+        let point = if gpoint < point_pos then point_pos + gsize else point_pos in
+        let (pos,str,modif) = low_delete tree point len in
+        text.text_modified <- modified;
+        Deletion(pos,str,modif), point_pos, 0
+    | Deletion (point_pos, str, modified) ->
+        let point = if gpoint < point_pos then point_pos + gsize else point_pos in
+        let (pos,len,modif) = low_insert tree point str in
+        text.text_modified <- modified;
+        Insertion(pos,len,modif), point_pos, String.length str
+    | Session actions ->
+        let last_point = ref 0 in
+        let last_len = ref 0 in
+        let rev_actions =
+          List.fold_left (fun undos action -> 
+              let (rev_action,point,len) = undo action in
+              last_point := point;
+              last_len := len;
+              rev_action :: undos
+          ) [] actions
+        in
+        Session rev_actions, !last_point, !last_len
+  in
+  match text.text_history with
+    [] -> raise Not_found
+  | action :: tail -> 
+      let rev_action = undo action in
+      text.text_history <- tail;
+      rev_action
 @
 
 
-<<constant Efuns.regexp_option>>=
-let regexp_option = define_option_class "Regexp" 
-    (fun v -> match v with
-        Value s ->  string_to_regex s | _ -> raise Not_found)
-  (fun (s,r) -> Value s)
-@
-% where need that? for c_error_regexp config file
-
-\subsection{Strings}
-
-<<function Search.replace_string>>=
-let replace_string frame =
-  select_replace frame "Replace string: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace RegexpString frame NoQuery str))
-@
-
-<<function Search.query_replace_string>>=
-let query_replace_string frame =
-  select_replace frame "Replace string: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace RegexpString frame 
-          (Query ( frame, "Replace string ? (y/n)"))
-        str)
-  )
-@
-
-\subsection{Regexps}
-
-<<function Search.replace_regexp>>=
-let replace_regexp frame =
-  select_replace frame "Replace Regexp: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace Regexp frame NoQuery str))
-@
-
-<<function Search.query_replace_regexp>>=
-let query_replace_regexp frame =
-  select_replace frame "Replace regexp: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace Regexp frame 
-          (Query (frame, "Replace regexp ? (y/n)"))
-        str))
-@
-
-\subsection{Helpers}
-
-<<function Text.replace_matched>>=
-let replace_matched tree repl =
-  let text = tree.tree_text in    
-  Str2.replace_matched repl text.text_string
-@
-
-
+\chapter{Search and Replace}
 
 \section{Searching}
 
@@ -3696,85 +3685,98 @@ let search_backward_groups tree regexp point groups =
 
 
 
-\section{Undo}
+\section{Replacing}
 
-<<undoing keys>>=
-[ControlMap, Char.code '_'], "undo";
+<<replacing keys>>=
+[MetaMap, Char.code '%'], "query_replace_string";
 @
 
-<<undoing actions>>=
-define_action "undo"  undo;
+<<replacing actions>>=
+define_action "replace_string" replace_string;
+define_action "replace_regexp" replace_regexp;
+define_action "query_replace_string" query_replace_string;
+define_action "query_replace_regexp" query_replace_regexp;
+@
+
+<<[[interactives_map]] initial entries>>=
+"replace_string";
+"replace_regexp";
+"query_replace_string";
+"query_replace_regexp";
 @
 
 
-<<function Simple.undo>>=
-let undo frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in  
-  let point = frame.frm_point in
-  let action, at_point, len = Text.undo text in
-  frame.frm_last_text_updated <- version text - 1;
-  Text.set_position text point at_point;
-  Text.fmove text point len; ()
+%\section{Regexps}
+% mv later?
+
+<<type Efuns.to_regexp>>=
+type to_regexp =
+  Regexp
+| RegexpString
 @
 
-<<[[Text.text]] other fields>>=
-mutable text_history : action list;
+<<function Efuns.string_to_regex>>=
+let string_to_regex s = s, Str.regexp s
 @
 
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_history : (int * Text.action) list;
+
+<<constant Efuns.regexp_option>>=
+let regexp_option = define_option_class "Regexp" 
+    (fun v -> match v with
+        Value s ->  string_to_regex s | _ -> raise Not_found)
+  (fun (s,r) -> Value s)
+@
+% where need that? for c_error_regexp config file
+
+\subsection{Strings}
+
+<<function Search.replace_string>>=
+let replace_string frame =
+  select_replace frame "Replace string: " 
+    (fun str ->
+      select_replace frame "with string: " 
+        (replace RegexpString frame NoQuery str))
 @
 
-%\subsection{Helpers}
-
-
-<<type Text.action>>=
-and action =
-  Insertion of int * int * int
-| Deletion of int * string * int
-| Session of action list
+<<function Search.query_replace_string>>=
+let query_replace_string frame =
+  select_replace frame "Replace string: " 
+    (fun str ->
+      select_replace frame "with string: " 
+        (replace RegexpString frame 
+          (Query ( frame, "Replace string ? (y/n)"))
+        str)
+  )
 @
-% for undo?
 
+\subsection{Regexps}
 
-<<function Text.undo>>=
-let undo tree =
-  let text = tree.tree_text in  
-  let rec undo action =
-    let gpoint = text.text_gpoint in
-    let gsize = text.text_gsize in
-    match action with
-      Insertion(point_pos, len, modified) ->
-        let point = if gpoint < point_pos then point_pos + gsize else point_pos in
-        let (pos,str,modif) = low_delete tree point len in
-        text.text_modified <- modified;
-        Deletion(pos,str,modif), point_pos, 0
-    | Deletion (point_pos, str, modified) ->
-        let point = if gpoint < point_pos then point_pos + gsize else point_pos in
-        let (pos,len,modif) = low_insert tree point str in
-        text.text_modified <- modified;
-        Insertion(pos,len,modif), point_pos, String.length str
-    | Session actions ->
-        let last_point = ref 0 in
-        let last_len = ref 0 in
-        let rev_actions =
-          List.fold_left (fun undos action -> 
-              let (rev_action,point,len) = undo action in
-              last_point := point;
-              last_len := len;
-              rev_action :: undos
-          ) [] actions
-        in
-        Session rev_actions, !last_point, !last_len
-  in
-  match text.text_history with
-    [] -> raise Not_found
-  | action :: tail -> 
-      let rev_action = undo action in
-      text.text_history <- tail;
-      rev_action
+<<function Search.replace_regexp>>=
+let replace_regexp frame =
+  select_replace frame "Replace Regexp: " 
+    (fun str ->
+      select_replace frame "with string: " 
+        (replace Regexp frame NoQuery str))
 @
+
+<<function Search.query_replace_regexp>>=
+let query_replace_regexp frame =
+  select_replace frame "Replace regexp: " 
+    (fun str ->
+      select_replace frame "with string: " 
+        (replace Regexp frame 
+          (Query (frame, "Replace regexp ? (y/n)"))
+        str))
+@
+
+\subsection{Helpers}
+
+<<function Text.replace_matched>>=
+let replace_matched tree repl =
+  let text = tree.tree_text in    
+  Str2.replace_matched repl text.text_string
+@
+
 
 
 \chapter{Multi-Buffers}
