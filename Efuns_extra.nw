@@ -182,7 +182,7 @@ open Options
 \subsection*{[[core/text.ml]]}
 
 <<type Text.t>>=
-(*: type t = tree tree_desc   *)
+(* type t = tree tree_desc   *)
 @
 % tree? tree_desc? in Wx_text?
 
@@ -1132,7 +1132,7 @@ ici.
 
 open Options
 open Utils
-(*:
+(*
 open WX_types
 open WX_text
 *)
@@ -1143,7 +1143,7 @@ type color = string
 type item =
   String of item_attr list * int
 | RealString of item_attr list * string
-(*:| Widget of contained array*)
+(*| Widget of contained array*)
 
 and item_attr =
   Font of font
@@ -1179,7 +1179,7 @@ module Text = struct
     let items tree line = line.items
   end
 
-(*:      
+(*      
 module TextTree = WX_text.Make(Text)
 open TextTree
 *)
@@ -1202,7 +1202,7 @@ type t = tree_desc
   
 <<type Text.t>>
 
-(*: external id: t -> tree tree_desc = "%identity" *)
+(* external id: t -> tree tree_desc = "%identity" *)
 
 (*
 let print msg text =
@@ -1431,9 +1431,6 @@ let print_newlines text =
 
 \subsection*{[[core/ebuffer.ml]]}
 
-<<constant Ebuffer.create_buf_hook>>=
-let create_buf_hook = Local.create_abstr "create_buf_hook"
-@
 
 <<constant Ebuffer.tab_size>>=
 let tab_size = ref 9
@@ -4976,9 +4973,8 @@ open Keymap
 <<function Interactive.create_bindings>>
 
 <<constant Interactive.meta_hist>>
-<<function Interactive.buf_interactives>>
-  
 
+<<function Interactive.buf_interactives>>
   
 <<function Interactive.exec_interactive>>
       

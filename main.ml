@@ -18,11 +18,10 @@ open Efuns
   
 (*s: constant Main.location *)
 let location = {
-    loc_map = Keymap.create ();
-    loc_windows = [];
     loc_buffers = Hashtbl.create 13;
     loc_files = Hashtbl.create 13;
-    loc_dirname = Sys.getcwd ();
+
+    loc_windows = [];
 
     loc_width = !!width;
     loc_height = !!height;
@@ -30,6 +29,9 @@ let location = {
     loc_fg = !!foreground;
     loc_bg = !!background;
     loc_font = !!font;
+
+    loc_map = Keymap.create ();
+    loc_dirname = Sys.getcwd ();
 
     loc_vars = Local.vars ();
     loc_counter = 0;

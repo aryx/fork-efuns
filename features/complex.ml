@@ -158,11 +158,11 @@ let insert_file frame =
 (*s: function Complex.write_buffer *)
 let write_buffer frame = 
   let buf = frame.frm_buffer in
-  select_filename frame "Save file as: " 
-    (fun str -> 
+  select_filename frame "Save file as: " (fun str -> 
       let top_window = Window.top frame.frm_window in
       Ebuffer.change_name top_window.top_location buf str;
-      Ebuffer.save buf)
+      Ebuffer.save buf
+  )
 (*e: function Complex.write_buffer *)
 
 (*s: function Complex.save_buffer *)

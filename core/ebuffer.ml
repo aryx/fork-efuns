@@ -114,35 +114,40 @@ let create location name filename text local_map =
       buf_modified = 0;
       buf_last_saved = version text;
       buf_history = [];
+
       buf_charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i));
       buf_map_partial = true;
       buf_map = local_map;
+
       buf_sync = false;
       buf_mark = None;
       buf_point = Text.add_point text;
       buf_start = Text.add_point text;
       buf_shared = 0;
+
       buf_syntax_table = default_syntax_table;
       buf_finalizers = [];
       buf_vars = Local.vars ();
+
       buf_location = location;
+
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
     } in
   Hashtbl.add location.loc_buffers name buf;
 
+  (*s: [[Ebuffer.create()]] adjust charreprs *)
   for i=0 to 25 do
     let s = String.make 2 '^' in
     s.[1] <- Char.chr (97+i);    
     buf.buf_charreprs.(i) <- s
   done;
   buf.buf_charreprs.(9) <- String.make !tab_size ' ';
-
-  let hooks =  try
-      get_global location create_buf_hook
-    with Not_found -> []
-  in
+  (*e: [[Ebuffer.create()]] adjust charreprs *)
+  (*s: [[Ebuffer.create()]] run hooks *)
+  let hooks = try get_global location create_buf_hook with Not_found -> [] in
   exec_hooks hooks buf;
+  (*e: [[Ebuffer.create()]] run hooks *)
   buf
 (*e: function Ebuffer.create *)
 

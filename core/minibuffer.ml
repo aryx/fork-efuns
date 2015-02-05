@@ -88,7 +88,9 @@ let create frame local_map request =
   let qlen = String.length request in
   let request = if qlen < 50 then request else
       (String.sub request 0 47 ^ "...") in
+
   let mini_buf = buf_create location mini_text local_map in
+
   let mini_window = Window.create true (TopWindow top_window) 
     qlen (top_window.top_height - 1)
     (top_window.top_width - qlen) 1 in

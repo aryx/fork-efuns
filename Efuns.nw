@@ -190,6 +190,9 @@ License.
 % editing (inserting/deleting/moving/cut-copy-paste/transposing)
 % searching, replacing
 
+% efficient keyboard! combination of keys, macros! M-x, C-x o
+% everything with keyboard!
+
 % undo!
 % multi files/buffers, opening/saving/killing switching
 % multi windows (a kind of window manager!)
@@ -227,7 +230,6 @@ License.
 
 \section{Text}
 
-
 <<type Text.text>>=
 type text = {
     mutable text_string : string;
@@ -244,6 +246,7 @@ mutable text_points : point list;
 
 (* g ?? *)
 mutable text_gpoint : int;
+
 mutable text_gline : int;
 mutable text_gsize : int;
 
@@ -419,12 +422,13 @@ mutable buf_last_saved : int;
 
 mutable buf_sync : bool;
 mutable buf_mark : Text.point option;
+
 mutable buf_point : Text.point;
 mutable buf_start : Text.point;
-mutable buf_shared : int; (* number of frames for that buffer *)
 
 mutable buf_finalizers : (unit -> unit) list;
 @
+
 
 
 <<function Ebuffer.create>>=
@@ -439,40 +443,44 @@ let create location name filename text local_map =
       buf_modified = 0;
       buf_last_saved = version text;
       buf_history = [];
+
       buf_charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i));
       buf_map_partial = true;
       buf_map = local_map;
+
       buf_sync = false;
       buf_mark = None;
       buf_point = Text.add_point text;
       buf_start = Text.add_point text;
       buf_shared = 0;
+
       buf_syntax_table = default_syntax_table;
       buf_finalizers = [];
       buf_vars = Local.vars ();
+
       buf_location = location;
+
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
     } in
   Hashtbl.add location.loc_buffers name buf;
 
-  for i=0 to 25 do
-    let s = String.make 2 '^' in
-    s.[1] <- Char.chr (97+i);    
-    buf.buf_charreprs.(i) <- s
-  done;
-  buf.buf_charreprs.(9) <- String.make !tab_size ' ';
-
-  let hooks =  try
-      get_global location create_buf_hook
-    with Not_found -> []
-  in
-  exec_hooks hooks buf;
+  <<[[Ebuffer.create()]] adjust charreprs>>
+  <<[[Ebuffer.create()]] run hooks>>
   buf
 @
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_charreprs : string array; (* 256 array *)
+@
+
+<<[[Ebuffer.create()]] adjust charreprs>>=
+for i=0 to 25 do
+  let s = String.make 2 '^' in
+  s.[1] <- Char.chr (97+i);    
+  buf.buf_charreprs.(i) <- s
+done;
+buf.buf_charreprs.(9) <- String.make !tab_size ' ';
 @
 
 
@@ -614,8 +622,21 @@ and frame  =
     mutable frm_buffer : buffer;
     mutable frm_window : window;
 
+
     <<[[Efuns.frame]] other fields>>
   } 
+@
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_status : status;    
+mutable frm_mini_buffer : string option;
+@
+
+<<[[Efuns.frame]] other fields>>=
+(* 0 for no scrollbar, 2 for scrollbar *)
+mutable frm_has_scrollbar : int;
+(* 0 for minibuffer, 1 for normal frame *)
+mutable frm_has_status_line : int;
 @
 
 
@@ -627,13 +648,6 @@ mutable frm_height : int;
 
 mutable frm_xpos : int;
 mutable frm_ypos : int;
-
-(* 0 for no scrollbar, 2 for scrollbar *)
-mutable frm_has_scrollbar : int;
-(* 0 for minibuffer, 1 for normal frame *)
-mutable frm_has_status_line : int;
-
-
 
 mutable frm_last_text_updated : int;
 mutable frm_last_buf_updated : int;
@@ -664,24 +678,25 @@ mutable frm_force_cursor : bool;
 mutable frm_x_offset : int;
 mutable frm_cutline : int; (* max_int for no, else length *)
 
-
-mutable frm_status : status;    
-
-
 mutable frm_table : line_repr array;
 mutable frm_killed : bool;
-mutable frm_mini_buffer : string option;
 mutable frm_redraw : bool;    
 @
 
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_shared : int; (* number of frames for that buffer *)
+@
 
 <<function Frame.create_without_top>>=
 let create_without_top location window mini buf =
   let width = window.win_width in
   let height = window.win_height in
+
   let frm_start = Text.dup_point buf.buf_text buf.buf_start in
   let frm_end = Text.dup_point buf.buf_text buf.buf_start in
   let point = Text.dup_point buf.buf_text buf.buf_point in
+
   buf.buf_shared <- buf.buf_shared + 1;
 
   <<[[Frame.create_without_top()]] let status>>
@@ -704,6 +719,7 @@ let create_without_top location window mini buf =
       frm_end = frm_end;
       frm_y_offset = 0;
       frm_point = point;
+
       frm_cursor_x = 0;
       frm_cursor_y = 0;
       frm_cursor = String.make 1 ' ';
@@ -724,6 +740,7 @@ let create_without_top location window mini buf =
       frm_ypos = window.win_ypos;
       frm_width = width;
       frm_height = height;
+
       frm_table = [||];
       frm_killed = false;
       frm_mini_buffer = mini;
@@ -772,13 +789,8 @@ and location =
 
 
 
-
 <<[[Efuns.buffer]] other fields>>=
 buf_location : location;
-@
-
-<<[[Efuns.top_window]] other fields>>=
-mutable top_location : location;
 @
 
 % so can access the global world info from a frame
@@ -787,6 +799,11 @@ mutable top_location : location;
 <<[[Efuns.frame]] other fields>>=
 mutable frm_location : location;
 @
+
+<<[[Efuns.top_window]] other fields>>=
+mutable top_location : location;
+@
+
 
 
 
@@ -807,11 +824,10 @@ mutable loc_colors_n : int;
 
 <<constant Main.location>>=
 let location = {
-    loc_map = Keymap.create ();
-    loc_windows = [];
     loc_buffers = Hashtbl.create 13;
     loc_files = Hashtbl.create 13;
-    loc_dirname = Sys.getcwd ();
+
+    loc_windows = [];
 
     loc_width = !!width;
     loc_height = !!height;
@@ -819,6 +835,9 @@ let location = {
     loc_fg = !!foreground;
     loc_bg = !!background;
     loc_font = !!font;
+
+    loc_map = Keymap.create ();
+    loc_dirname = Sys.getcwd ();
 
     loc_vars = Local.vars ();
     loc_counter = 0;
@@ -837,7 +856,7 @@ let location = {
 
 
 
-\section{Actions}
+\section{Actions, and [[actions]]}
 
 <<type Efuns.action>>=
 and action = frame -> unit
@@ -850,9 +869,11 @@ and generic_action =
 @
 
 <<global Efuns.actions>>=
-let (actions : (string, generic_action) Hashtbl.t) = Hashtbl.create 63
+let (actions : (string, generic_action) Hashtbl.t) = 
+  Hashtbl.create 63
 @
-% M-x! and also so can use string in keybinding or mouse
+% global!!
+% for M-x! and also so can use string in keybinding or mouse
 % (but could maybe use dirrectly the ocaml action code)
 
 
@@ -998,6 +1019,7 @@ let _ =
 <<misc actions>>
 @
 
+
 %XXX
 <<misc actions>>=
 (*  define_action "load_library" load_library;*)
@@ -1007,16 +1029,11 @@ define_action "unset_attr" unset_attr;
 define_action "recenter"  recenter;
 define_action "revert_buffer" reload;
 define_action "check_file" check_file;
-
-define_buffer_action "update_time" update_time;
-
 (* C-x map *)
 define_action "point_at_mark"  point_at_mark;
 (* C-M map *)
 define_action "next_hole" next_hole;
-
 (*  define_action "start_server" Server.start;  *)
-
 define_action "open_display" open_display;
 (* C-x map *)
 define_action "change_font"  change_font;
@@ -1025,13 +1042,18 @@ define_action "change_font"  change_font;
 
 
 \section{Keyboard maps}
-% mv later?
+% keyboard handling is important for an editor!
+% emacs spirit: prefix map
+% vi spirit: modes
+% sam spirit: the mouse ...
+
+% mv stuff in Keyboard section? what is necessary to see before?
 
 % like for variables, different maps:
 % - global
 % - major mode
 % - minor mode
-% - ??
+% - buffer itself (useful for dynamic setting of keys e.g. C-g in minibuffer)
 
 <<type Efuns.map>>=
 type map =
@@ -1100,7 +1122,7 @@ let get_binding buf keylist =
   with
     Exit -> !binding
 @
-
+% see Keymap.get_binding later *)
 
 
 <<function Keymap.add_global_key>>=
@@ -1111,6 +1133,19 @@ let add_global_key location =
 let add_local_key buf = 
   interactive buf.buf_map 
 @
+
+% add_local_key | add_global_key | ...-> <>?
+<<function Keymap.interactive>>=
+let interactive map   keylist name f =
+  <<[[Keymap.interactive()]] add keylist and name to interactives list>>
+  add_binding map keylist f
+@
+%less: rename? add_key_binding_and_interactive_name?
+% see Keymap.add_binding later *)
+
+
+
+
 
 %\section{Partial maps}
 
@@ -1142,22 +1177,6 @@ let key_option = define_option_class "Key" value_to_key key_to_value
 @
 
 
-
-
-<<[[Efuns.map]] other fields>>=
-mutable interactives : (string * (action * prefix option)) list;
-@
-<<type Efuns.prefix>>=
-and prefix = key list
-@
-
-<<constant Std_efunsrc.interactives_map>>=
-let interactives_map = define_option ["interactives_map"] ""
-    (list_option string2_option) 
-  []
-@
-
-
 <<toplevel Std_efunsrc._2>>=
 let _ = 
   if !!global_map = [] then begin
@@ -1165,17 +1184,12 @@ let _ =
         <<[[global_map]] initial entries>>
       ]
     end;
-  if !!interactives_map = [] then begin
-      interactives_map =:= List.map (fun x -> x, x ) [
-        <<[[interactives_map]] initial entries>>
-      ]
-    end    
+  <<[[Std_efunsrc.toplevel]] set interactives_map>>
 @
 
 % ?? -> <>
 <<function Std_efunsrc.init_global_map>>=
 let init_global_map location = 
-  
   List.iter (fun (keys, action) ->
       try
         Keymap.add_global_key location keys action (execute_action action)
@@ -1183,16 +1197,9 @@ let init_global_map location =
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
   ) !!global_map;
-  
-  List.iter (fun (name, action) ->
-      try
-      add_interactive location.loc_map name (execute_action action)
-      with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;
-  ) !!interactives_map;
-    
 
+  <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>  
+    
   (* standard keys *)
 
   (* Mouse *)
@@ -1203,6 +1210,7 @@ let init_global_map location =
 %  Keymap.add_global_key location [NormalMap, XK.xk_dead_circumflex]
 %    "circumflex" (char_insert_command '^');
 %dead:  let gmap = location.loc_map in 
+%
 % (* These keys depend on the next key pressed. In my case, I don't use
 %  the accents, so I prefer them to immediatly enter the good key.
 %let	xk_dead_grave					= 0xFE50
@@ -1270,17 +1278,14 @@ let c_c = (ControlMap, Char.code 'c')
 (* Inserting *)
 (* ------------- *)
 <<inserting keys>>
-
 (* ------------- *)
 (* Deleting *)
 (* ------------- *)
 <<deleting keys>>
-
 (* ------------------------------ *)
 (* Moving (Cut, copy, paste) *)
 (* ------------------------------ *)
 <<moving keys>>
-
 (* ---------------------- *)
 (* Transforming *)
 (* ---------------------- *)
@@ -1350,7 +1355,6 @@ let c_c = (ControlMap, Char.code 'c')
 <<misc keys>>=
 [c_h; NormalMap, Char.code 'K'], "help_bindings";
 @
-
 <<misc actions>>=
 (* C-h map *)
 define_action "help_bindings"  Frame.bindings_help;
@@ -1362,41 +1366,12 @@ let bindings_help frame =
   change_buffer window "*bindings*"
 @
 
-
-\section{Syntax table}
-% mv later?
-
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_syntax_table : bool array;
-@
-
-
-<<function Ebuffer.create_syntax_table>>=
-let create_syntax_table ()  =
-  let table = Array.create 256 false 
-  in  
-  for i = Char.code 'a' to Char.code 'z' do
-    table.(i) <- true;
-  done;
-  for i = Char.code 'A' to Char.code 'Z' do
-    table.(i) <- true;
-  done;
-  for i = Char.code '0' to Char.code '9' do
-    table.(i) <- true;
-  done;
-  table
-@
-
-<<constant Ebuffer.default_syntax_table>>=
-let default_syntax_table = create_syntax_table ()
-@
-
 \section{Variables}
 % actually have polymorphic variables!
 % trick using phantom types?
 
 <<[[Efuns.buffer]] other fields>>=
-(*: see also Loc.vars *)    
+(* see also Loc.vars *)    
 mutable buf_vars : vars;
 @
 % vars defined in ? local.mli?
@@ -1466,9 +1441,17 @@ let add_hook location hook_var hook =
 
 
 
+<<constant Ebuffer.create_buf_hook>>=
+let create_buf_hook = Local.create_abstr "create_buf_hook"
+@
+
+<<[[Ebuffer.create()]] run hooks>>=
+let hooks = try get_global location create_buf_hook with Not_found -> [] in
+exec_hooks hooks buf;
+@
+
 
 \chapter{[[main()]]}
-
 
 
 <<constant Efuns.width>>=
@@ -1624,7 +1607,7 @@ let init (location : location) =
   start_hooks := [];
   iter hooks
 @
-
+% why not using exec_hooks?
 
 \chapter{Main Window}
 
@@ -1719,6 +1702,7 @@ let load_buffer frame =
   select_filename frame "Find file: " (fun str -> 
       let _ = Frame.load_file frame.frm_window str in ())
 @
+%later: has completion?
 
 %\subsection{Helpers}
 
@@ -1812,20 +1796,19 @@ let save_some_buffers frame =
   let buffers = list_of_hash location.loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> ())
 @
-
+%less: save_buffers_and_action here?
 
 <<function Complex.write_buffer>>=
 let write_buffer frame = 
   let buf = frame.frm_buffer in
-  select_filename frame "Save file as: " 
-    (fun str -> 
+  select_filename frame "Save file as: " (fun str -> 
       let top_window = Window.top frame.frm_window in
       Ebuffer.change_name top_window.top_location buf str;
-      Ebuffer.save buf)
+      Ebuffer.save buf
+  )
 @
 
 %\subsection{Helpers}
-
 <<function Frame.save_buffer>>=
 let save_buffer frame =
   Ebuffer.save frame.frm_buffer
@@ -1904,6 +1887,7 @@ help_menu := [|
 
 |];
 @
+% see Frame.change_buffer later
 
 %   (*
 %        let top_window = Window.top frame.frm_window in        
@@ -1918,6 +1902,7 @@ help_menu := [|
 
 \section{Sub-windows/Frames}
 
+% see later
 
 \section{Status Line}
 
@@ -2066,6 +2051,37 @@ let status_file frame name =
 
 \section{Minibuffer}
 
+% ?? -> <>
+<<function Minibuffer.create>>=
+let create frame local_map request =
+  let window = frame.frm_window in
+  let top_window = Window.top window in
+  let location = top_window.top_location in
+
+  let mini_text = Text.create "" in
+  let qlen = String.length request in
+  let request = if qlen < 50 then request else
+      (String.sub request 0 47 ^ "...") in
+
+  let mini_buf = buf_create location mini_text local_map in
+
+  let mini_window = Window.create true (TopWindow top_window) 
+    qlen (top_window.top_height - 1)
+    (top_window.top_width - qlen) 1 in
+  let mini_frame = Frame.create mini_window (Some request) mini_buf
+  in    
+  mini_frame.frm_cutline <- max_int;
+  mini_frame.frm_has_status_line <- 0;
+  top_window.top_mini_buffers <- mini_frame :: top_window.top_mini_buffers;
+
+  Keymap.add_binding local_map [ControlMap, Char.code 'g']
+    (fun mini_frame -> kill mini_frame frame);
+  mini_frame
+@
+
+
+
+% ?? -> <>
 <<function Minibuffer.buf_create>>=
 let buf_create location text local_map =
   let buf =
@@ -2107,34 +2123,11 @@ let _ =
 
 
 
-% ?? -> <>
-<<function Minibuffer.create>>=
-let create frame local_map request =
-  let window = frame.frm_window in
-  let top_window = Window.top window in
-  let location = top_window.top_location in
-
-  let mini_text = Text.create "" in
-  let qlen = String.length request in
-  let request = if qlen < 50 then request else
-      (String.sub request 0 47 ^ "...") in
-  let mini_buf = buf_create location mini_text local_map in
-  let mini_window = Window.create true (TopWindow top_window) 
-    qlen (top_window.top_height - 1)
-    (top_window.top_width - qlen) 1 in
-  let mini_frame = Frame.create mini_window (Some request) mini_buf
-  in    
-  mini_frame.frm_cutline <- max_int;
-  mini_frame.frm_has_status_line <- 0;
-  top_window.top_mini_buffers <- mini_frame :: top_window.top_mini_buffers;
-
-  Keymap.add_binding local_map [ControlMap, Char.code 'g']
-    (fun mini_frame -> kill mini_frame frame);
-  mini_frame
-@
 
 
 \subsection{M-x}
+
+\subsubsection{[[call_interactive()]]}
 
 <<meta keys>>=
 [MetaMap, Char.code 'x'], "call_interactive";
@@ -2164,25 +2157,40 @@ let buf_interactives buf =
     buf.buf_major_mode.maj_map.interactives @
     buf.buf_location.loc_map.interactives 
   in
-  List.fold_left (fun list minor ->
-      minor.min_map.interactives @ list) interactives buf.buf_minor_modes 
+  List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
+   interactives buf.buf_minor_modes 
 @
 
 
+\subsubsection{[[Map.interactives]] field}
 
+% in addition to char_map and complex_binding
 
-% -> <>?
-<<function Keymap.interactive>>=
-let interactive map keylist name f =
-  map.interactives <- (name, (f, Some keylist)) :: map.interactives;
-  add_binding map keylist f
+<<[[Efuns.map]] other fields>>=
+mutable interactives : (string * (action * prefix option)) list;
+@
+% record key so useful so can display the list of bindings?
+
+<<type Efuns.prefix>>=
+and prefix = key list
 @
 
-<<function Keymap.add_interactive>>=
-let add_interactive map name f =
-    map.interactives <- (name, (f, None)) :: map.interactives
+
+\subsubsection{[[interactives_map]] global}
+
+<<constant Std_efunsrc.interactives_map>>=
+let interactives_map = define_option ["interactives_map"] ""
+    (list_option string2_option) 
+  []
 @
 
+<<[[Std_efunsrc.toplevel]] set interactives_map>>=
+if !!interactives_map = [] then begin
+    interactives_map =:= List.map (fun x -> x, x ) [
+      <<[[interactives_map]] initial entries>>
+    ]
+  end    
+@
 
 <<[[interactives_map]] initial entries>>=
 "save_options";
@@ -2192,6 +2200,29 @@ let add_interactive map name f =
 "unset_attr";
 "start_server";
 @      
+
+
+<<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
+List.iter (fun (name, action) ->
+    try
+      add_interactive location.loc_map name (execute_action action)
+    with e ->
+        Log.printf "Error for action %s" action;
+        Log.exn "%s\n" e;
+) !!interactives_map;
+@
+
+<<function Keymap.add_interactive>>=
+let add_interactive map name f =
+    map.interactives <- (name, (f, None)) :: map.interactives
+@
+
+% so each global key and their associated func is accessible!
+<<[[Keymap.interactive()]] add keylist and name to interactives list>>=
+map.interactives <- (name, (f, Some keylist)) :: map.interactives;
+@
+
+
 
 
 
@@ -2371,6 +2402,13 @@ let saved_buffer_hooks = define_option ["saved_buffer_hooks"] ""
   ["update_time" ]
 @
 
+<<misc actions>>=
+define_buffer_action "update_time" update_time;
+@
+
+
+
+% ?? -> <>
 <<function Ebuffer.exec_named_buf_hooks>>=
 let rec exec_named_buf_hooks hooks frame =
   match hooks with
@@ -2380,6 +2418,7 @@ let rec exec_named_buf_hooks hooks frame =
       try execute_buffer_action action frame with _ -> ()
 @
 
+% ?? -> <>
 <<function Ebuffer.exec_named_buf_hooks_with_abort>>=
 let rec exec_named_buf_hooks_with_abort hooks frame =
   match hooks with
@@ -2540,8 +2579,7 @@ let rec get_binding map keylist =
   match keylist with
     [] -> Unbound
   | [key] ->
-      begin
-        match key with
+        (match key with
           (NormalMap,key) when key >= 0 && key < 256 -> 
             map.char_map.(key)
         | _ -> 
@@ -2549,7 +2587,7 @@ let rec get_binding map keylist =
               List.assoc key map.complex_bindings
             with
               Not_found -> Unbound
-      end
+         )
   | key :: tail ->
       match
         (match key with
@@ -2566,15 +2604,6 @@ let rec get_binding map keylist =
       | _ -> Unbound
 @
 % lookup
-
-<<function Keymap.set_binding>>=
-let set_binding map key binding =
-  match key with
-    (NormalMap,key) when key >= 0 && key < 256 -> 
-      map.char_map.(key) <- binding
-  | _ -> 
-      map.complex_bindings <- (key,binding) :: map.complex_bindings
-@
 
 <<function Keymap.add_binding>>=
 let rec add_binding map key_list binding =
@@ -2600,6 +2629,17 @@ let rec add_binding map key_list binding =
       | e -> 
           failwith "ERROR add_complex_binding: Unable to add prefix"
 @
+
+
+<<function Keymap.set_binding>>=
+let set_binding map key binding =
+  match key with
+    (NormalMap,key) when key >= 0 && key < 256 -> 
+      map.char_map.(key) <- binding
+  | _ -> 
+      map.complex_bindings <- (key,binding) :: map.complex_bindings
+@
+
 
 
 
@@ -2754,7 +2794,7 @@ let move_forward frame delta =
   Text.fmove text frame.frm_point delta
 @
 
-\subsection{Words}
+\subsection{Words and the syntax table}
 
 <<function Simple.backward_word>>=
 let backward_word buf point =
@@ -2771,6 +2811,36 @@ let forward_word buf point =
   in_next_word text point syntax;
   to_end_of_word text point syntax
 @
+
+%\section{Syntax table}
+% was in core DS but better here I think
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_syntax_table : bool array;
+@
+
+
+<<function Ebuffer.create_syntax_table>>=
+let create_syntax_table ()  =
+  let table = Array.create 256 false 
+  in  
+  for i = Char.code 'a' to Char.code 'z' do
+    table.(i) <- true;
+  done;
+  for i = Char.code 'A' to Char.code 'Z' do
+    table.(i) <- true;
+  done;
+  for i = Char.code '0' to Char.code '9' do
+    table.(i) <- true;
+  done;
+  table
+@
+
+<<constant Ebuffer.default_syntax_table>>=
+let default_syntax_table = create_syntax_table ()
+@
+
+
 
 \subsection{Lines}
 
@@ -4933,7 +5003,7 @@ let path = (*Dyneval.load_path*) ref []
 <<constant Efuns.efuns_path>>=
 let efuns_path = [ 
       (Filename.concat homedir ".efuns") ;
-(*:
+(*
       Version.efuns_lib; 
       Version.installdir; 
       Version.ocamllib

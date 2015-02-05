@@ -295,16 +295,11 @@ let _ =
   define_action "recenter"  recenter;
   define_action "revert_buffer" reload;
   define_action "check_file" check_file;
-
-  define_buffer_action "update_time" update_time;
-
   (* C-x map *)
   define_action "point_at_mark"  point_at_mark;
   (* C-M map *)
   define_action "next_hole" next_hole;
-
   (*  define_action "start_server" Server.start;  *)
-
   define_action "open_display" open_display;
   (* C-x map *)
   define_action "change_font"  change_font;
@@ -314,6 +309,8 @@ let _ =
   (*x: misc actions *)
   (* C-x map *)
   define_action "exit"  exit_efuns; 
+  (*x: misc actions *)
+  define_buffer_action "update_time" update_time;
   (*x: misc actions *)
   (* C-x map *)
   define_action "next_error"  next_error;
@@ -400,7 +397,6 @@ let _ =
         (*s: inserting keys *)
         [NormalMap, XK.xk_Return], "insert_return"; 
         (*e: inserting keys *)
-
         (* ------------- *)
         (* Deleting *)
         (* ------------- *)
@@ -415,7 +411,6 @@ let _ =
         [ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
         [ControlMap, Char.code 'k'], "kill_end_of_line";
         (*e: deleting keys *)
-
         (* ------------------------------ *)
         (* Moving (Cut, copy, paste) *)
         (* ------------------------------ *)
@@ -425,7 +420,6 @@ let _ =
         [ControlMap, Char.code 'y'], "insert_killed";
         [MetaMap, Char.code 'y'], "insert_next_killed";
         (*e: moving keys *)
-
         (* ---------------------- *)
         (* Transforming *)
         (* ---------------------- *)
@@ -542,6 +536,7 @@ let _ =
         (*e: [[global_map]] initial entries *)
       ]
     end;
+  (*s: [[Std_efunsrc.toplevel]] set interactives_map *)
   if !!interactives_map = [] then begin
       interactives_map =:= List.map (fun x -> x, x ) [
         (*s: [[interactives_map]] initial entries *)
@@ -583,11 +578,11 @@ let _ =
         (*e: [[interactives_map]] initial entries *)
       ]
     end    
+  (*e: [[Std_efunsrc.toplevel]] set interactives_map *)
 (*e: toplevel Std_efunsrc._2 *)
     
 (*s: function Std_efunsrc.init_global_map *)
 let init_global_map location = 
-  
   List.iter (fun (keys, action) ->
       try
         Keymap.add_global_key location keys action (execute_action action)
@@ -595,16 +590,17 @@ let init_global_map location =
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
   ) !!global_map;
-  
+
+  (*s: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
   List.iter (fun (name, action) ->
       try
-      add_interactive location.loc_map name (execute_action action)
+        add_interactive location.loc_map name (execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
   ) !!interactives_map;
+  (*e: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
     
-
   (* standard keys *)
 
   (* Mouse *)

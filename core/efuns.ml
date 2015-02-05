@@ -87,13 +87,15 @@ and buffer =
 
     mutable buf_sync : bool;
     mutable buf_mark : Text.point option;
+
     mutable buf_point : Text.point;
     mutable buf_start : Text.point;
-    mutable buf_shared : int; (* number of frames for that buffer *)
 
     mutable buf_finalizers : (unit -> unit) list;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_charreprs : string array; (* 256 array *)
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_shared : int; (* number of frames for that buffer *)
     (*x: [[Efuns.buffer]] other fields *)
     buf_location : location;
     (*x: [[Efuns.buffer]] other fields *)
@@ -101,10 +103,10 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_map_partial : bool;
     (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_syntax_table : bool array;
-    (*x: [[Efuns.buffer]] other fields *)
-    (*: see also Loc.vars *)    
+    (* see also Loc.vars *)    
     mutable buf_vars : vars;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_syntax_table : bool array;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_history : (int * Text.action) list;
     (*x: [[Efuns.buffer]] other fields *)
@@ -142,20 +144,22 @@ and frame  =
     mutable frm_buffer : buffer;
     mutable frm_window : window;
 
+
     (*s: [[Efuns.frame]] other fields *)
+    mutable frm_status : status;    
+    mutable frm_mini_buffer : string option;
+    (*x: [[Efuns.frame]] other fields *)
+    (* 0 for no scrollbar, 2 for scrollbar *)
+    mutable frm_has_scrollbar : int;
+    (* 0 for minibuffer, 1 for normal frame *)
+    mutable frm_has_status_line : int;
+    (*x: [[Efuns.frame]] other fields *)
 
     mutable frm_width : int;
     mutable frm_height : int;
 
     mutable frm_xpos : int;
     mutable frm_ypos : int;
-
-    (* 0 for no scrollbar, 2 for scrollbar *)
-    mutable frm_has_scrollbar : int;
-    (* 0 for minibuffer, 1 for normal frame *)
-    mutable frm_has_status_line : int;
-
-
 
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
@@ -186,13 +190,8 @@ and frame  =
     mutable frm_x_offset : int;
     mutable frm_cutline : int; (* max_int for no, else length *)
 
-
-    mutable frm_status : status;    
-
-
     mutable frm_table : line_repr array;
     mutable frm_killed : bool;
-    mutable frm_mini_buffer : string option;
     mutable frm_redraw : bool;    
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_location : location;
@@ -471,7 +470,7 @@ let path = (*Dyneval.load_path*) ref []
 (*s: constant Efuns.efuns_path *)
 let efuns_path = [ 
       (Filename.concat homedir ".efuns") ;
-(*:
+(*
       Version.efuns_lib; 
       Version.installdir; 
       Version.ocamllib
@@ -630,7 +629,8 @@ let _ =
 (*e: toplevel Efuns._5 *)
 
 (*s: global Efuns.actions *)
-let (actions : (string, generic_action) Hashtbl.t) = Hashtbl.create 63
+let (actions : (string, generic_action) Hashtbl.t) = 
+  Hashtbl.create 63
 (*e: global Efuns.actions *)
 
 (*s: function Efuns.define_action *)

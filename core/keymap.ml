@@ -82,8 +82,7 @@ let rec get_binding map keylist =
   match keylist with
     [] -> Unbound
   | [key] ->
-      begin
-        match key with
+        (match key with
           (NormalMap,key) when key >= 0 && key < 256 -> 
             map.char_map.(key)
         | _ -> 
@@ -91,7 +90,7 @@ let rec get_binding map keylist =
               List.assoc key map.complex_bindings
             with
               Not_found -> Unbound
-      end
+         )
   | key :: tail ->
       match
         (match key with
@@ -176,8 +175,10 @@ let all_bindings location =
 (*e: function Keymap.all_bindings *)
   
 (*s: function Keymap.interactive *)
-let interactive map keylist name f =
+let interactive map   keylist name f =
+  (*s: [[Keymap.interactive()]] add keylist and name to interactives list *)
   map.interactives <- (name, (f, Some keylist)) :: map.interactives;
+  (*e: [[Keymap.interactive()]] add keylist and name to interactives list *)
   add_binding map keylist f
 (*e: function Keymap.interactive *)
 

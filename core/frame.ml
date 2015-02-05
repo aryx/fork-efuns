@@ -177,9 +177,11 @@ let dummy_mode = Ebuffer.new_major_mode "" []
 let create_without_top location window mini buf =
   let width = window.win_width in
   let height = window.win_height in
+
   let frm_start = Text.dup_point buf.buf_text buf.buf_start in
   let frm_end = Text.dup_point buf.buf_text buf.buf_start in
   let point = Text.dup_point buf.buf_text buf.buf_point in
+
   buf.buf_shared <- buf.buf_shared + 1;
 
   (*s: [[Frame.create_without_top()]] let status *)
@@ -216,6 +218,7 @@ let create_without_top location window mini buf =
       frm_end = frm_end;
       frm_y_offset = 0;
       frm_point = point;
+
       frm_cursor_x = 0;
       frm_cursor_y = 0;
       frm_cursor = String.make 1 ' ';
@@ -236,6 +239,7 @@ let create_without_top location window mini buf =
       frm_ypos = window.win_ypos;
       frm_width = width;
       frm_height = height;
+
       frm_table = [||];
       frm_killed = false;
       frm_mini_buffer = mini;

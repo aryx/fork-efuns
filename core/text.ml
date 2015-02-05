@@ -27,7 +27,7 @@ ici.
 
 open Options
 open Utils
-(*:
+(*
 open WX_types
 open WX_text
 *)
@@ -38,7 +38,7 @@ type color = string
 type item =
   String of item_attr list * int
 | RealString of item_attr list * string
-(*:| Widget of contained array*)
+(*| Widget of contained array*)
 
 and item_attr =
   Font of font
@@ -112,6 +112,7 @@ type text = {
 
     (* g ?? *)
     mutable text_gpoint : int;
+
     mutable text_gline : int;
     mutable text_gsize : int;
 
@@ -146,7 +147,7 @@ module Text = struct
     let items tree line = line.items
   end
 
-(*:      
+(*      
 module TextTree = WX_text.Make(Text)
 open TextTree
 *)
@@ -168,10 +169,10 @@ let make_text _tree _array =
 type t = tree_desc
   
 (*s: type Text.t *)
-(*: type t = tree tree_desc   *)
+(* type t = tree tree_desc   *)
 (*e: type Text.t *)
 
-(*: external id: t -> tree tree_desc = "%identity" *)
+(* external id: t -> tree tree_desc = "%identity" *)
 
 (*
 let print msg text =

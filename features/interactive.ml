@@ -36,17 +36,16 @@ let create_bindings location =
 (*s: constant Interactive.meta_hist *)
 let meta_hist = ref []
 (*e: constant Interactive.meta_hist *)
+
 (*s: function Interactive.buf_interactives *)
 let buf_interactives buf =
   let interactives = 
     buf.buf_major_mode.maj_map.interactives @
     buf.buf_location.loc_map.interactives 
   in
-  List.fold_left (fun list minor ->
-      minor.min_map.interactives @ list) interactives buf.buf_minor_modes 
+  List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
+   interactives buf.buf_minor_modes 
 (*e: function Interactive.buf_interactives *)
-  
-
   
 (*s: function Interactive.exec_interactive *)
 let exec_interactive interactives frame name =
