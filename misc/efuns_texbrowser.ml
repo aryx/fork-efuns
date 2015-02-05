@@ -10,8 +10,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-
-
 open Xtypes
 open WX_types
 open WX_tree
@@ -109,7 +107,6 @@ open WX_filesel
   
 (*s: constant Efuns_texbrowser.file_menu *)
 let file_menu = [|
-(*e: constant Efuns_texbrowser.file_menu *)
     "Open", (fun _ -> 
         let info = {
             filter = Filename.concat !dirname  "*.tex";
@@ -128,6 +125,7 @@ let file_menu = [|
         );
     "Quit", (fun _ -> exit 0);
   |]
+(*e: constant Efuns_texbrowser.file_menu *)
 
 (*s: toplevel Efuns_texbrowser._1 *)
 let _ =

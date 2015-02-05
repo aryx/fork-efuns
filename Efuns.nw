@@ -1370,6 +1370,9 @@ let bindings_help frame =
 % actually have polymorphic variables!
 % trick using phantom types?
 
+% put more of local.ml here?
+% why need variables anyway in emacs?
+
 <<[[Efuns.buffer]] other fields>>=
 (* see also Loc.vars *)    
 mutable buf_vars : vars;
@@ -1379,7 +1382,6 @@ mutable buf_vars : vars;
 <<[[Efuns.location]] other fields>>=
 loc_vars : vars;
 @
-
 
 % different scopes:
 % - global
@@ -2051,6 +2053,8 @@ let status_file frame name =
 
 \section{Minibuffer}
 
+\subsection{Minubuffer creation}
+
 % ?? -> <>
 <<function Minibuffer.create>>=
 let create frame local_map request =
@@ -2125,9 +2129,7 @@ let _ =
 
 
 
-\subsection{M-x}
-
-\subsubsection{[[call_interactive()]]}
+\subsection{[[M-x]], [[call_interactive()]]}
 
 <<meta keys>>=
 [MetaMap, Char.code 'x'], "call_interactive";
@@ -2162,7 +2164,7 @@ let buf_interactives buf =
 @
 
 
-\subsubsection{[[Map.interactives]] field}
+\subsection{[[Map.interactives]] field}
 
 % in addition to char_map and complex_binding
 
@@ -2176,7 +2178,7 @@ and prefix = key list
 @
 
 
-\subsubsection{[[interactives_map]] global}
+\subsection{[[interactives_map]] global}
 
 <<constant Std_efunsrc.interactives_map>>=
 let interactives_map = define_option ["interactives_map"] ""
@@ -2225,34 +2227,6 @@ map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 
 
 
-
-\subsection{M-x eval}
-
-<<meta actions>>=
-define_action "eval" Complex.eval;  
-@
-<<[[interactives_map]] initial entries>>=
-"eval";  
-@
-
-<<constant Complex.eval_history>>=
-let eval_history = ref []
-@
-
-<<function Complex.eval>>=
-let eval frame =
-  select_string frame "Eval:" eval_history "" 
-    (fun str ->
-      let top_window = Window.top frame.frm_window in
-      (* This is not enough: the paths also may have changed. *)
-      Top_window.message top_window 
-        (*(Dyneval.eval 
-          (let len = String.length str in
-          if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
-          str ^ " ;;"))
-        *)(failwith "TODO")
-    )
-@
 
 
 \section{Text Display}
@@ -2431,54 +2405,22 @@ let rec exec_named_buf_hooks_with_abort hooks frame =
 
 \chapter{Text Managment}
 
-\section{Points}
+%Text.representation text line --> string (buffer or copy) * int (position)
+%Text.items line -> item array
 
-<<function Text.add_point>>=
-let add_point tree =
-  let text = tree.tree_text in      
-  let point = {
-      point = 0;
-      point_y = 0;
-    } in    
-  text.text_points <- point :: text.text_points;
-  point
-@
+%module Text = struct
+%    type t = text
+%    type text = t
+%    type l = line
+%    type line = l
+%      
+%    let representation tree line = line.repr_string, line.position
+%    let items tree line = line.items
+%  end
 
-<<function Text.dup_point>>=
-let dup_point tree point =
-  let text = tree.tree_text in      
-  let p = {
-      point = point.point;
-      point_y = point.point_y
-    } in
-  text.text_points <- p :: text.text_points;
-  p
-@
+\section{Text representation}
 
-<<function Text.goto_point>>=
-let goto_point text p1 p2 =
-  p1.point <- p2.point;
-  p1.point_y <- p2.point_y
-@
-
-<<function Text.move_point_to>>=
-let move_point_to tree point p =
-  let text = tree.tree_text in    
-  let gpoint = text.text_gpoint in
-  let gline = text.text_gline in
-  let x,y = find_xy tree gpoint gline p in
-  point.point <- p;
-  point.point_y <- y
-@
-
-<<function Text.remove_point>>=
-let remove_point tree p =
-  let text = tree.tree_text in      
-  text.text_points <- 
-    (List.fold_left (fun points point ->
-        if point == p then points else point :: points) 
-    [] text.text_points)
-@
+% do we need something fancy? naive brute force too slow?
 
 \section{Text attributes}
 
@@ -2569,6 +2511,55 @@ let set_char_attr tree point attr =
 @
 
 
+\section{Points}
+
+<<function Text.add_point>>=
+let add_point tree =
+  let text = tree.tree_text in      
+  let point = {
+      point = 0;
+      point_y = 0;
+    } in    
+  text.text_points <- point :: text.text_points;
+  point
+@
+
+<<function Text.dup_point>>=
+let dup_point tree point =
+  let text = tree.tree_text in      
+  let p = {
+      point = point.point;
+      point_y = point.point_y
+    } in
+  text.text_points <- p :: text.text_points;
+  p
+@
+
+<<function Text.goto_point>>=
+let goto_point text p1 p2 =
+  p1.point <- p2.point;
+  p1.point_y <- p2.point_y
+@
+
+<<function Text.move_point_to>>=
+let move_point_to tree point p =
+  let text = tree.tree_text in    
+  let gpoint = text.text_gpoint in
+  let gline = text.text_gline in
+  let x,y = find_xy tree gpoint gline p in
+  point.point <- p;
+  point.point_y <- y
+@
+
+<<function Text.remove_point>>=
+let remove_point tree p =
+  let text = tree.tree_text in      
+  text.text_points <- 
+    (List.fold_left (fun points point ->
+        if point == p then points else point :: points) 
+    [] text.text_points)
+@
+
 \chapter{Input Managment}
 
 \section{Keyboard}
@@ -2640,6 +2631,66 @@ let set_binding map key binding =
       map.complex_bindings <- (key,binding) :: map.complex_bindings
 @
 
+
+\subsection{Bindings display}
+
+<<function Keymap.all_bindings>>=
+let all_bindings location =
+  let s = ref "Default bindings:" in
+  List.iter (fun (name,(_,binding)) ->
+      match binding with
+        None -> ()
+      | Some key_list ->
+          s := Printf.sprintf "%s\n%s : %s" !s 
+            (print_key_list (List.rev key_list)) name
+  ) location.loc_map.interactives;
+  !s
+@
+
+
+<<function Keymap.print_key>>=
+let print_key (map,keysym) =
+  let prefix =
+    match map with
+      NormalMap -> ""
+    | ControlMap -> "C-"
+    | MetaMap -> "M-"
+    | ControlMetaMap -> "CM-"
+  in
+  let kname =
+    try
+      List.assoc keysym (*XK.*)keysym_to_name
+    with
+      Not_found -> "?"
+  in
+  prefix^kname
+@
+
+<<function Keymap.print_key_list>>=
+let rec print_key_list key_list =
+  match key_list with
+    key :: tail ->
+      Printf.sprintf "%s %s" (print_key key) (print_key_list tail)
+  | _ -> ""
+@
+
+
+
+
+% ?? -> <>
+<<function Keymap.print>>=
+let print map =
+  Printf.printf "MAP:\n";
+  List.iter (fun (key, binding) ->
+    (match binding with
+      Prefix _ -> print_string "Prefix "; 
+    | Function _ -> print_string "Function"
+    | Unbound -> print_string "Unbound"
+          );
+    print_string (print_key key);
+    print_newline ()
+      ) map.complex_bindings
+@
 
 
 
@@ -2715,6 +2766,13 @@ let mouse_save_then_kill frame =
   highlight frame
 *)
 @
+
+\section{Cursor}
+% not really input, more an output, but strongly related
+% to input devices (input device feedback essentially)
+
+\section{Select}
+% here?
 
 \chapter{Basic Features}
 
@@ -3382,6 +3440,7 @@ let remove_mark buf =
       buf.buf_modified <- buf.buf_modified + 1
 @
 
+\subsection{Highlight}
 
 \subsection{Cut}
 
@@ -4248,6 +4307,11 @@ let rec prev f window =
 
 
 \section{Windows windows XXX}
+
+<<constant Keymap.n_5>>=
+let n_5 = (NormalMap, Char.code '5')
+@
+
 <<window managment keys>>=
 [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
 [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
@@ -4672,6 +4736,10 @@ define_action "grep" grep;
 
 \subsection{[[M-x grep]]}
 
+<<constant Std_efunsrc.grep_hist>>=
+let grep_hist = ref ["grep -n "]
+@
+
 <<function Compil.grep>>=
 let grep frame =
   let default = List.hd !grep_hist in
@@ -4703,6 +4771,15 @@ let grep frame =
 @
 
 \subsection{[[M-x compile]]}
+
+<<function Std_efunsrc.compile>>=
+let compile frame =
+  exec_interactive (buf_interactives frame.frm_buffer) frame "compile"
+@
+
+<<misc actions>>=
+define_action "compile" compile;
+@
 
 <<function Compil.compile>>=
 let compile find_error_fun frame =
@@ -4802,6 +4879,40 @@ let next_error top_frame =
         Not_found ->
           Top_window.message top_window "No more errors"
 @
+
+\section{Efuns server and client}
+% dual of previous chapter in some sense since this time
+% it's external command that call in efuns instead of efuns
+% calling external commands
+
+\section{[[M-x eval]]}
+
+<<meta actions>>=
+define_action "eval" Complex.eval;  
+@
+<<[[interactives_map]] initial entries>>=
+"eval";  
+@
+
+<<constant Complex.eval_history>>=
+let eval_history = ref []
+@
+
+<<function Complex.eval>>=
+let eval frame =
+  select_string frame "Eval:" eval_history "" 
+    (fun str ->
+      let top_window = Window.top frame.frm_window in
+      (* This is not enough: the paths also may have changed. *)
+      Top_window.message top_window 
+        (*(Dyneval.eval 
+          (let len = String.length str in
+          if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
+          str ^ " ;;"))
+        *)(failwith "TODO")
+    )
+@
+
 
 \section{Completion}
 
@@ -5121,15 +5232,16 @@ exception UnboundKey
 "overwrite_mode";
 @
 
+%\section{Accents}
+
 \section{Abbrevs}
 
-\section{Accents}
-
-\section{Fill}
-
 \section{Paren}
+% useful! edwin power!
 
 \section{Tab}
+
+\section{Fill}
 
 \chapter{Extra Code}
 

@@ -40,6 +40,4 @@ let _ =
         end else
         Ebuffer.set_minor_mode buf mode)
 (*e: toplevel Paren_mode._2 *)
-    
-    
 (*e: minor_modes/paren_mode.ml *)

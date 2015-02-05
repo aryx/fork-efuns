@@ -281,5 +281,4 @@ let _ =
   define_action "ocaml_compiler_mode.print_type" print_type;
 (*e: toplevel Ocaml_toplevel._2 *)
 
-    
 (*e: prog_modes/ocaml_toplevel.ml *)

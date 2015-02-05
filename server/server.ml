@@ -68,7 +68,6 @@ let module_accept s frame =
   Unix.set_close_on_exec fd;
   Concur.Thread.add_reader fd (fun _ -> read_command fd frame)
 (*e: function Server.module_accept *)
-
   
 (*s: function Server.start *)
 let start frame =

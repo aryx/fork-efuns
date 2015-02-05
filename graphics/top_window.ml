@@ -52,8 +52,6 @@ let clear_message top_window =
 *)
 (*e: function Top_window.clear_message *)
 
-
-
 (*s: function Top_window.dummy_action *)
 let dummy_action frame = ()
 (*e: function Top_window.dummy_action *)

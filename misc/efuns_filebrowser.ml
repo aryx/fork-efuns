@@ -10,8 +10,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-
-
 open Xtypes
 open WX_types
 open WX_tree
@@ -129,7 +127,6 @@ open WX_filesel
   
 (*s: constant Efuns_filebrowser.file_menu *)
 let file_menu = [|
-(*e: constant Efuns_filebrowser.file_menu *)
     "Open", (fun _ -> 
         let info = {
             filter = Filename.concat !dirname  "*";
@@ -148,8 +145,7 @@ let file_menu = [|
         );
     "Quit", (fun _ -> exit 0);
   |]
-  
-  
+(*e: constant Efuns_filebrowser.file_menu *)
   
 (*s: toplevel Efuns_filebrowser._1 *)
 let _ =

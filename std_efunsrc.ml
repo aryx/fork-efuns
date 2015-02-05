@@ -314,6 +314,8 @@ let _ =
   (*x: misc actions *)
   (* C-x map *)
   define_action "next_error"  next_error;
+  (*x: misc actions *)
+  define_action "compile" compile;
   (*e: misc actions *)
   (*e: actions definitions *)
   ()
@@ -547,8 +549,6 @@ let _ =
         "unset_attr";
         "start_server";
         (*x: [[interactives_map]] initial entries *)
-        "eval";  
-        (*x: [[interactives_map]] initial entries *)
         "goto_char";
         "goto_line";
         (*x: [[interactives_map]] initial entries *)
@@ -561,6 +561,8 @@ let _ =
         (*x: [[interactives_map]] initial entries *)
         "compile";
         "grep";
+        (*x: [[interactives_map]] initial entries *)
+        "eval";  
         (*x: [[interactives_map]] initial entries *)
         "makefile_mode";
         "ocaml_mode";
@@ -616,15 +618,7 @@ let init_global_map location =
 (*e: function Std_efunsrc.init_global_map *)
   
 (*open WX_filesel*)
-
-
-(*s: toplevel Std_efunsrc._3 *)
-let _ =
-  define_action "compile" compile;
-  define_action "v_cut_frame" v_cut_frame;
-  ()
-(*e: toplevel Std_efunsrc._3 *)
-  
+ 
 (*s: toplevel Std_efunsrc._4 *)
 let _ =
   (*s: [[Std_efunsrc]] file menu setup *)
@@ -706,6 +700,7 @@ let _ =
   Efuns.add_start_hook (fun location ->
       add_option_parameter location compile_find_makefile;
       add_option_parameter location Text.add_amount;
-      init_global_map location)
+      init_global_map location
+  )
 (*e: toplevel Std_efunsrc._5 *)
 (*e: std_efunsrc.ml *)

@@ -71,8 +71,7 @@ let _ =
 (*e: toplevel Main._1 *)
 
 (*s: constant Main.highlight_color *)
-let highlight_color = define_option ["highlight_color"] ""
-    color_option "cyan"
+let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 (*e: constant Main.highlight_color *)
   
 (*s: toplevel Main._2 *)

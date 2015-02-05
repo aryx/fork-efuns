@@ -38,6 +38,4 @@ let _ =
         Ebuffer.set_minor_mode buf mode);
   define_action "insert_tab" insert_tab
 (*e: toplevel Tab_mode._2 *)
-    
-    
 (*e: minor_modes/tab_mode.ml *)

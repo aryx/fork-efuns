@@ -2,7 +2,6 @@
 
 \subsection*{[[core/efuns.ml]]}
 
-
 <<constant Efuns.resname>>=
 let resname = ["Efuns";"efuns"]
 @
@@ -1673,69 +1672,9 @@ let unbound_key buffer _ = raise UnboundKey
 @
 
 
-<<function Keymap.print_key>>=
-let print_key (map,keysym) =
-  let prefix =
-    match map with
-      NormalMap -> ""
-    | ControlMap -> "C-"
-    | MetaMap -> "M-"
-    | ControlMetaMap -> "CM-"
-  in
-  let kname =
-    try
-      List.assoc keysym (*XK.*)keysym_to_name
-    with
-      Not_found -> "?"
-  in
-  prefix^kname
-@
-
-<<function Keymap.print_key_list>>=
-let rec print_key_list key_list =
-  match key_list with
-    key :: tail ->
-      Printf.sprintf "%s %s" (print_key key) (print_key_list tail)
-  | _ -> ""
-@
-
-<<function Keymap.print>>=
-let print map =
-  Printf.printf "MAP:\n";
-  List.iter (fun (key, binding) ->
-    (match binding with
-      Prefix _ -> print_string "Prefix "; 
-    | Function _ -> print_string "Function"
-    | Unbound -> print_string "Unbound"
-          );
-    print_string (print_key key);
-    print_newline ()
-      ) map.complex_bindings
-@
-
-
-
 <<function Keymap.define_char_binding>>=
 let define_char_binding map char (f : frame -> 'a) =
   add_binding map [NormalMap,Char.code char] f
-@
-
-
-<<constant Keymap.n_5>>=
-let n_5 = (NormalMap, Char.code '5')
-@
-
-<<function Keymap.all_bindings>>=
-let all_bindings location =
-  let s = ref "Default bindings:" in
-  List.iter (fun (name,(_,binding)) ->
-      match binding with
-        None -> ()
-      | Some key_list ->
-          s := Printf.sprintf "%s\n%s : %s" !s 
-            (print_key_list (List.rev key_list)) name
-  ) location.loc_map.interactives;
-  !s
 @
 
 
@@ -2352,8 +2291,6 @@ let rec exec_named_hooks_with_abort hooks frame =
       exec_named_hooks_with_abort hooks frame;
       execute_action action frame
 @
-
-
 
 
 
@@ -5059,11 +4996,6 @@ let remove_frame frame =
 @
 
 
-
-
-
-
-
 %-------------------------------------------------------------
 
 <<features/multi_frames.ml>>=
@@ -5327,7 +5259,7 @@ let start frame =
         PropModeReplace atom XA.xa_string 1 socket_name;
   )  
 @
-
+% todo: no M-x server-start?
 
 %-------------------------------------------------------------
 
@@ -5359,7 +5291,6 @@ open Top_window
 <<function Server.read_command>>
   
 <<function Server.module_accept>>
-
   
 <<function Server.start>>
   
@@ -6092,8 +6023,6 @@ open Window
 
 <<function Top_window.clear_message>>
 
-
-
 <<function Top_window.dummy_action>>
 
 <<function Top_window.try_map>>
@@ -6177,10 +6106,6 @@ open Window
 
 \subsection*{[[std_efunsrc.ml]]}
 
-<<constant Std_efunsrc.grep_hist>>=
-let grep_hist = ref ["grep -n "]
-@
-
 <<function Std_efunsrc.save_options>>=
 let save_options frame = Options.save ()
 @
@@ -6190,24 +6115,13 @@ let save_options frame = Options.save ()
 let n_5 = (NormalMap, Char.code '5') 
 @
 
-<<function Std_efunsrc.compile>>=
-let compile frame =
-  exec_interactive (buf_interactives frame.frm_buffer) frame "compile"
-@
-
-<<toplevel Std_efunsrc._3>>=
-let _ =
-  define_action "compile" compile;
-  define_action "v_cut_frame" v_cut_frame;
-  ()
-@
-
 <<toplevel Std_efunsrc._5>>=
 let _ =
   Efuns.add_start_hook (fun location ->
       add_option_parameter location compile_find_makefile;
       add_option_parameter location Text.add_amount;
-      init_global_map location)
+      init_global_map location
+  )
 @
 
 
@@ -6269,10 +6183,7 @@ open Top_window
 <<function Std_efunsrc.init_global_map>>
   
 (*open WX_filesel*)
-
-
-<<toplevel Std_efunsrc._3>>
-  
+ 
 <<toplevel Std_efunsrc._4>>
   
 <<toplevel Std_efunsrc._5>>
@@ -6305,8 +6216,7 @@ let _ =
 @
 
 <<constant Main.highlight_color>>=
-let highlight_color = define_option ["highlight_color"] ""
-    color_option "cyan"
+let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 @
 
 <<toplevel Main._2>>=
@@ -6825,7 +6735,6 @@ open Simple
 open Efuns
 open Top_window
 
-  
 <<constant Abbrevs_mode.abbreviations>>
   
 <<constant Abbrevs_mode.abbrevs>>
@@ -7227,8 +7136,6 @@ open Top_window
 <<toplevel Paren_mode._1>>
 
 <<toplevel Paren_mode._2>>
-    
-    
 @
 
 
@@ -7258,7 +7165,6 @@ let _ =
   define_action "insert_tab" insert_tab
 @
 
-
 %-------------------------------------------------------------
 
 <<minor_modes/tab_mode.ml>>=
@@ -7285,8 +7191,6 @@ open Top_window
 <<toplevel Tab_mode._1>>
 
 <<toplevel Tab_mode._2>>
-    
-    
 @
 
 
@@ -7413,6 +7317,24 @@ let rec iter_load closed dirname basename container =
 
 <<constant Efuns_filebrowser.file_menu>>=
 let file_menu = [|
+    "Open", (fun _ -> 
+        let info = {
+            filter = Filename.concat !dirname  "*";
+            current_selection= !dirname;
+            predicat = (fun _ -> true);
+            action = (fun s -> 
+                tree#destroy_desc;
+                dirname := s;
+                tree#set_desc (
+                  iter_load false (Filename.dirname s) (Filename.basename s)
+                  tree#container));
+            cancel = (fun _ -> ());
+          }    in
+        let filesel = new WX_filesel.t root info [] in
+        filesel#show
+        );
+    "Quit", (fun _ -> exit 0);
+  |]
 @
 
 <<toplevel Efuns_filebrowser._1>>=
@@ -7444,8 +7366,6 @@ let _ =
 (*                                                                     *)
 (***********************************************************************)
 
-
-
 open Xtypes
 open WX_types
 open WX_tree
@@ -7473,26 +7393,6 @@ open Unix
 open WX_filesel
   
 <<constant Efuns_filebrowser.file_menu>>
-    "Open", (fun _ -> 
-        let info = {
-            filter = Filename.concat !dirname  "*";
-            current_selection= !dirname;
-            predicat = (fun _ -> true);
-            action = (fun s -> 
-                tree#destroy_desc;
-                dirname := s;
-                tree#set_desc (
-                  iter_load false (Filename.dirname s) (Filename.basename s)
-                  tree#container));
-            cancel = (fun _ -> ());
-          }    in
-        let filesel = new WX_filesel.t root info [] in
-        filesel#show
-        );
-    "Quit", (fun _ -> exit 0);
-  |]
-  
-  
   
 <<toplevel Efuns_filebrowser._1>>
 @
@@ -7594,6 +7494,24 @@ let rec iter_load closed filename container =
 
 <<constant Efuns_texbrowser.file_menu>>=
 let file_menu = [|
+    "Open", (fun _ -> 
+        let info = {
+            filter = Filename.concat !dirname  "*.tex";
+            current_selection= !dirname;
+            predicat = (fun _ -> true);
+            action = (fun s -> 
+                tree#destroy_desc;
+                filename := s;
+                dirname := Filename.dirname s;
+                top#setWM_NAME (Printf.sprintf "LaTeX Browser: %s" !filename);
+                tree#set_desc [iter_load false s tree#container]);
+            cancel = (fun _ -> ());
+          }    in
+        let filesel = new WX_filesel.t root info [] in
+        filesel#show              
+        );
+    "Quit", (fun _ -> exit 0);
+  |]
 @
 
 <<toplevel Efuns_texbrowser._1>>=
@@ -7626,8 +7544,6 @@ let _ =
 (*                                                                     *)
 (***********************************************************************)
 
-
-
 open Xtypes
 open WX_types
 open WX_tree
@@ -7652,24 +7568,6 @@ open WX_tree
 open WX_filesel
   
 <<constant Efuns_texbrowser.file_menu>>
-    "Open", (fun _ -> 
-        let info = {
-            filter = Filename.concat !dirname  "*.tex";
-            current_selection= !dirname;
-            predicat = (fun _ -> true);
-            action = (fun s -> 
-                tree#destroy_desc;
-                filename := s;
-                dirname := Filename.dirname s;
-                top#setWM_NAME (Printf.sprintf "LaTeX Browser: %s" !filename);
-                tree#set_desc [iter_load false s tree#container]);
-            cancel = (fun _ -> ());
-          }    in
-        let filesel = new WX_filesel.t root info [] in
-        filesel#show              
-        );
-    "Quit", (fun _ -> exit 0);
-  |]
 
 <<toplevel Efuns_texbrowser._1>>
 @
@@ -7680,6 +7578,7 @@ open WX_filesel
 <<type Local.var>>=
 type 'a var = string
 @
+% phantom type!
 
 <<global Local.vars_table>>=
 let (vars_table :
@@ -7714,6 +7613,7 @@ let no_print _ = "<abstr>"
 let no_input (s : string) = failwith "This variable can not be set"
 @
 
+
 <<function Local.create_abstr>>=
 let create_abstr name = create name no_print no_input
 @
@@ -7729,6 +7629,8 @@ let create_int name = create name string_of_int int_of_string
 <<function Local.create_float>>=
 let create_float name = create name string_of_float float_of_string
 @
+
+
 
 <<function Local.get>>=
 let get vars var =  Obj.magic !(Vars.find var !vars)
@@ -8340,7 +8242,4 @@ open Ocaml_env
 
 <<toplevel Ocaml_toplevel._2>>
 
-    
 @
-
-
