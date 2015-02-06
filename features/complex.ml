@@ -128,7 +128,11 @@ let exit_efuns frame =
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
   let buffers = Utils.list_of_hash location.loc_buffers in
-  save_buffers_and_action frame buffers (fun _ -> exit 0)
+  save_buffers_and_action frame buffers (fun _ -> 
+    (* todo: have some exit hooks? *)
+    Graphics.close_graph ();
+    exit 0
+  )
 (*e: function Complex.exit_efuns *)
 
 (*s: function Complex.save_some_buffers *)
