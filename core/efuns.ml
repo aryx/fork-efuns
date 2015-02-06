@@ -259,12 +259,14 @@ and top_window =
     mutable top_second_cursor : frame option;
 
     mutable top_mini_buffers : frame list;
+
+    mutable top_display : string option (*WX_xterm.xterm_display option*);
+    mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
+
     (*
     mutable top_root : WX_root.t;
     mutable top_appli : WX_appli.t;
     mutable top_scrollbar : WX_adjust.t;
-    mutable top_display : WX_xterm.xterm_display option;
-    mutable top_xterm : WX_xterm.xterm_window option;
     mutable top_term : WX_xterm.t;
     top_attrs : WX_xterm.xterm_gc option array;
     *)

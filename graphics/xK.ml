@@ -7,6 +7,7 @@ let xk_Pointer_Button5 = 0
 
 let xk_Pointer_Drag1 = 1
 
+let xk_Menu = 1
 
 let xk_Up = 0
 let xk_Down = 0

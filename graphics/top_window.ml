@@ -11,17 +11,17 @@
 (***********************************************************************)
 
 open Options
+
 open Xtypes
 (*open WX_types*)
+
 open Efuns
 open Window
 
   
 (*s: function Top_window.message *)
 let message top_window msg =
-  failwith "Top_window.message: TODO"
-(*
-  let xterm = Window.xterm top_window  in
+  let xterm = Window.xterm top_window in
   let len = String.length msg in
   WX_xterm.draw_string xterm 0 (top_window.top_height - 1)
     msg 0 len Text.direct_attr;
@@ -36,21 +36,16 @@ let message top_window msg =
           WX_xterm.update_displays ();
           let _ = Unix.select [] [] [] 0.2 in
           mini_buffer.frm_redraw <- true
-*)
 (*e: function Top_window.message *)
 
 (*s: function Top_window.clear_message *)
 let clear_message top_window =
-
-  failwith "Top_window.clear_message: TODO"
-(*
   match top_window.top_mini_buffers with
     [] -> 
       let xterm = Window.xterm top_window in
       WX_xterm.clear_eol xterm 0 
         (top_window.top_height - 1) top_window.top_width; 
   | _ -> ()
-*)
 (*e: function Top_window.clear_message *)
 
 (*s: function Top_window.dummy_action *)
@@ -81,27 +76,21 @@ let try_map frame key =
 let set_cursor_on top_window frame = 
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
-    Common.pr2_once "WX_xterm.draw_string set_cursor_on"
-(*
     let xterm = xterm top_window in
-    WX_xterm.draw_string xterm 
-      (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset) 
+    WX_xterm.draw_string xterm
+      (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
     (frame.frm_ypos + frame.frm_cursor_y) 
     frame.frm_cursor 0 1 Text.inverse_attr
-*)
 (*e: function Top_window.set_cursor_on *)
 
 (*s: function Top_window.set_cursor_off *)
 let set_cursor_off top_window frame =
-  failwith "Top_window.set_cursor_off: TODO"
-(*
   if frame.frm_cursor.[0] <> '\000' then
     let xterm = xterm top_window in
-    WX_xterm.draw_string xterm 
+    WX_xterm.draw_string xterm
       (frame.frm_xpos + frame.frm_cursor_x) 
     (frame.frm_ypos + frame.frm_cursor_y) 
     frame.frm_cursor 0 1 frame.frm_cursor_attr
-*)
 (*e: function Top_window.set_cursor_off *)
 
 (*s: function Top_window.cursor_on *)
@@ -276,10 +265,8 @@ let handle_key top_window modifiers keysym =
   
 (*s: function Top_window.wrap *)
 let wrap top_window f () = 
-  failwith "Top_window.wrap: TODO"
-(*
   let location = top_window.top_location in
-  Concur.Mutex.lock location.loc_mutex;  
+  Mutex.lock location.loc_mutex;  
   clean_display location;    
   clear_message top_window;
   keypressed := XK.xk_Menu;
@@ -294,8 +281,7 @@ let wrap top_window f () =
     (try get_global location handle_key_end_hook with _ -> []) location;    
   update_display top_window.top_location;
   WX_xterm.update_displays ();
-  Concur.Mutex.unlock top_window.top_location.loc_mutex
-*)
+  Mutex.unlock top_window.top_location.loc_mutex
 (*e: function Top_window.wrap *)
 
 (*s: function Top_window.wrap_item *)
@@ -421,6 +407,7 @@ let create location display =
   let scrollbar = new WX_scrollbar.v hbar#container ady [] in
   hbar#container_add_s [xterm#contained; scrollbar#contained];
   *)
+  let xterm = () in
 
   let window = Window.create_at_top  0 0 
     location.loc_width 
@@ -436,10 +423,10 @@ let create location display =
       top_name = "window";
       top_active_frame = frame;
       top_second_cursor = None;
+      top_display = Some display;
+      top_xterm = Some xterm;
 
 (*
-      top_display = Some display;
-      top_xterm = None;
       top_term = xterm;
       top_attrs = Array.create 256 None;
       top_root=  display.WX_xterm.root_oo;

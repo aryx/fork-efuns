@@ -8,7 +8,9 @@ let init location displayname =
   Graphics.open_graph (spf " ");
   Graphics.set_window_title displayname;
 
-  (* compute font_size and adjust size of window *)
+  (* compute font_size and adjust size of window, or reverse
+   * by setting size of font depending on size of window ?
+   *)
 (*
   let (h, w) = Graphics.textsize "aqd" in
   h := 
@@ -57,8 +59,15 @@ let init location displayname =
     with
       SigInt -> loop ()
 *)
-    while true do
-      ()
-    done
+    Graphics.loop_at_exit [
+      Graphics.Button_down;
+      Graphics.Key_pressed;
+    ] (fun status ->
+      if status.Graphics.keypressed
+      then 
+        let key = status.Graphics.key in
+        pr2 (spf "key: %c" key)
+
+    )
   in
   loop ()
