@@ -53,7 +53,7 @@ SRC=\
  major_modes/dired.ml\
  prog_modes/makefile_mode.ml\
  std_efunsrc.ml\
- graphics_graphics.ml \
+ graphics/graphicsX11.ml \
  main.ml \
 
 # minor_modes/accents_mode.ml\

@@ -91,6 +91,6 @@ let _ =
 (*e: toplevel Main._3 *)
   
 let _ =
-  Graphics_graphics.init location !displayname
+  GraphicsX11.init location !displayname
 
 (*e: main.ml *)

@@ -1320,6 +1320,7 @@ let _ =
       Array.iter (fun (key, char) ->
           Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
       ) [| 
+(*
         (XK.xk_eacute, 'é');
         (XK.xk_egrave, 'è');
         (XK.xk_ccedilla, 'ç');
@@ -1329,6 +1330,7 @@ let _ =
         (XK.xk_sterling, '£');
         (XK.xk_section, '§');
         (XK.xk_degree,  '°');
+*)
         |];
       let c_q = (ControlMap, Char.code 'q') in
       (* Keymap.add_prefix gmap [c_q]; *)
