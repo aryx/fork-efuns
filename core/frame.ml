@@ -9,6 +9,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
+open Common
 
 open Options
 open Text
@@ -338,30 +339,21 @@ let update_line top_window frame repr_string y =
   let rec iter x offset reprs =
     if frame.frm_width > x then
       match reprs with
-        [] -> Common.pr2_once "WX_xterm.clear_eol"
-(*
-          WX_xterm.clear_eol xterm 
+        [] -> 
+          WX_xterm.clear_eol
             (x+frame.frm_xpos) (y+frame.frm_ypos)
-          (frame.frm_width - x)
-*)
+            (frame.frm_width - x)
       | repr :: tail ->
-          let len = min (frame.frm_width-x) (repr.repr_size - offset)
-          in
-          Common.pr2_once "WX_xterm.draw_string";
-(*
-          WX_xterm.draw_string xterm
+          let len = min (frame.frm_width-x) (repr.repr_size - offset) in
+          WX_xterm.draw_string 
             (x+frame.frm_xpos) (y+frame.frm_ypos)
-          repr_string (repr.repr_pos+offset) len
+            repr_string (repr.repr_pos+offset) len
             repr.repr_attr;
-*)
           iter (x+len) 0 tail
     else
-          Common.pr2_once "WX_xterm.draw_string bis"
-(*
-      WX_xterm.draw_string xterm
-        (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
-      "/" 0 1 Text.direct_attr
-*)
+        WX_xterm.draw_string
+           (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
+           "/" 0 1 Text.direct_attr
   in
   iter 0 (line_repr.repr_offset+frame.frm_x_offset) line_repr.repr_reprs
 (*e: function Frame.update_line *)

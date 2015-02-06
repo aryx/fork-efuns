@@ -26,6 +26,7 @@ SRC=\
  commons2/str2.ml\
  commons2/options.ml\
  misc/local.ml\
+ graphics/wX_xterm.ml\
  core/text.ml\
  core/efuns.ml\
  core/keymap.ml\
@@ -53,7 +54,7 @@ SRC=\
  major_modes/dired.ml\
  prog_modes/makefile_mode.ml\
  std_efunsrc.ml\
- graphics/graphicsX11.ml \
+ graphics/graphics_X11.ml \
  main.ml \
 
 # minor_modes/accents_mode.ml\

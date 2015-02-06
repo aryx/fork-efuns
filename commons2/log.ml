@@ -62,5 +62,3 @@ let catch format f =
       
 let watch format f =
   try f () with e -> exn format e; raise e
-    
-  

@@ -17,7 +17,6 @@
 (*************************************************************************)
 
 open Utils
-open Obj
 open Local
   
 (*s: exception Efuns.UnboundKey *)

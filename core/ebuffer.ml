@@ -250,7 +250,12 @@ let default location name =
     Not_found ->
       let str = 
         if name = "*help*" then
-          "Welcome to Efuns, a small demo editor written in Ocaml."
+          "Welcome to Efuns, a small demo editor written in Ocaml.
+
+Fabrice Le Fessant
+PARA/SOR Project
+INRIA Rocquencourt
+"
 (*
 "
 Version is " ^ Version.efuns_version ^"

@@ -3,12 +3,16 @@ open Common
 open Efuns
 
 
+
 let init location displayname =
   Graphics.open_graph (spf " ");
   Graphics.set_window_title displayname;
 
   (* compute font_size and adjust size of window *)
-
+(*
+  let (h, w) = Graphics.textsize "aqd" in
+  h := 
+*)
 
   let display = "" in
   let top_window = Top_window.create location display in

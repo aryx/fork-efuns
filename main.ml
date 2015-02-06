@@ -9,9 +9,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
 open Options
-
 open Efuns
   
 (*s: constant Main.location *)
@@ -91,6 +89,6 @@ let _ =
 (*e: toplevel Main._3 *)
   
 let _ =
-  GraphicsX11.init location !displayname
+  Graphics_X11.init location !displayname
 
 (*e: main.ml *)
