@@ -68,7 +68,14 @@ let init location displayname =
         let charkey = status.Graphics.key in
         let code = Char.code charkey in
         pr2 (spf "key: %c, %d" charkey code);
-        let evt = WX_xterm.XTKeyPress (0, "", code) in
+        let modifiers, code = 
+          match code with
+          | 8 | 9 | 13  -> 0, code
+          | _ when code >= 1 && code <= 26 -> 
+            Xtypes.controlMask, code - 1 + Char.code 'a'
+          | _ -> 0, code
+        in
+        let evt = WX_xterm.XTKeyPress (modifiers, spf "%c" charkey, code) in
         Top_window.handler top_window () evt
 
     )

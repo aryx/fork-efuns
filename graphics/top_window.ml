@@ -34,7 +34,7 @@ let message top_window msg =
         None -> ()
       | Some display ->
           WX_xterm.update_displays ();
-          let _ = Unix.select [] [] [] 0.2 in
+          (* let _ = Unix.select [] [] [] 0.2 in *)
           mini_buffer.frm_redraw <- true
 (*e: function Top_window.message *)
 
@@ -238,9 +238,12 @@ let handle_key top_window modifiers keysym =
     let mods = 
       let mask = Xtypes.controlMask lor !meta in
       let diff = modifiers land mask in
-      if diff = Xtypes.controlMask then ControlMap else
-      if diff = !meta then MetaMap else
-      if diff = 0 then NormalMap else ControlMetaMap in
+      match () with
+      | _ when diff = Xtypes.controlMask -> ControlMap
+      | _ when diff = !meta -> MetaMap
+      | _ when diff = 0 -> NormalMap 
+      | _ -> ControlMetaMap
+    in
     let key = (mods, keysym) in
     try
       try_map frame key

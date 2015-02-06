@@ -22,11 +22,11 @@ let xk_Right = 0
 let xk_Prior = 0
 let xk_Next = 0
 
-let xk_Return = 0
-let xk_Tab = 0
+let xk_Return = 13
+let xk_Tab = 9
 
+let xk_BackSpace = 8
 let xk_Insert = 0
-let xk_BackSpace = 0
 let xk_Delete = 0
 
 let xk_q = 0
