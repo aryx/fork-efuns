@@ -1582,6 +1582,7 @@ let fg_opt = ref None
 let bg_opt = ref None
 @
 
+% actually it's in Efun._3
 <<[[main()]] command line options>>=
 "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
 "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
@@ -2700,7 +2701,7 @@ let update top_window frame =
           let pos_start = get_position text frame.frm_start in
           let pos_end = get_position text frame.frm_end in
 
-          failwith "Frame.update: TODO scrollbar";
+          Common.pr2_once "Frame.update: TODO scrollbar";
           (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
 
              (size text);
@@ -2739,13 +2740,13 @@ let update top_window frame =
       status_major_mode frame;
       if status.status_modified then
 
+        Common.pr2_once "WX_xterm.draw_string status_string"
         (* WX_xterm.draw_string xterm frame.frm_xpos
           (frame.frm_ypos + frame.frm_height - 1)  
         status.status_string 0 width Text.inverse_attr
         *)
-        failwith "Frame.update: TODO status_string"
   | Some request ->
-        failwith "Frame.update: TODO status_string again ";
+        Common.pr2_once "WX_xterm.draw_string status_string again"
       (* WX_xterm.draw_string xterm 0 (top_window.top_height-1)  
       request 0 (String.length request) Text.direct_attr
       *)

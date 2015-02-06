@@ -164,8 +164,36 @@ type tree_desc =
 
         mutable tree_text: text 
 }
-let make_text _tree _array =
-  failwith "Text.make_text: TODO"
+
+let make_text text lines =
+  let nlines = Array.length lines in
+  let rec tree = {
+      tree_nlines = nlines;
+      tree_width = 0;
+      tree_height = 0;
+(*
+      tree_parts = [| Lines {
+          tree_nlines = nlines;
+          tree_width = 0;
+          tree_height = 0;
+          tree_parts = lines;
+          tree_up = tree;
+          tree_pos = 0;
+          tree_modified = true;
+          line_height = 0;
+          line_width = 0;
+          tree_text = text;      
+        }|];
+      tree_up = tree;
+*)
+      tree_pos = 0;
+      tree_modified = true;
+      line_height = 0;
+      line_width = 0;
+      tree_text = text;
+    }
+  in tree
+
 type t = tree_desc
   
 (*s: type Text.t *)

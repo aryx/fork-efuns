@@ -1195,8 +1195,36 @@ type tree_desc =
 
         mutable tree_text: text 
 }
-let make_text _tree _array =
-  failwith "Text.make_text: TODO"
+
+let make_text text lines =
+  let nlines = Array.length lines in
+  let rec tree = {
+      tree_nlines = nlines;
+      tree_width = 0;
+      tree_height = 0;
+(*
+      tree_parts = [| Lines {
+          tree_nlines = nlines;
+          tree_width = 0;
+          tree_height = 0;
+          tree_parts = lines;
+          tree_up = tree;
+          tree_pos = 0;
+          tree_modified = true;
+          line_height = 0;
+          line_width = 0;
+          tree_text = text;      
+        }|];
+      tree_up = tree;
+*)
+      tree_pos = 0;
+      tree_modified = true;
+      line_height = 0;
+      line_width = 0;
+      tree_text = text;
+    }
+  in tree
+
 type t = tree_desc
   
 <<type Text.t>>
@@ -1466,16 +1494,15 @@ let read location filename local_map =
 
 <<function Ebuffer.default>>=
 let default location name =
-  failwith "Ebuffer.default: TODO"
-(*
   try
     Hashtbl.find location.loc_buffers name
   with
     Not_found ->
       let str = 
         if name = "*help*" then
-          "Welcome to Efuns, a small demo editor written in Ocaml.
-
+          "Welcome to Efuns, a small demo editor written in Ocaml."
+(*
+"
 Version is " ^ Version.efuns_version ^"
 built by "^ Version.builder ^ " " ^ Version.date ^ " 
 with
@@ -1489,10 +1516,10 @@ INRIA Rocquencourt
 Help for Key Bindings: C-h K
 See changes in "^ Version.efuns_lib ^"/Changes
 "
+*)
         else ""
       in
       create location name None (Text.create str) (Keymap.create ())
-*)
 @
 
 <<function Ebuffer.compute_representation>>=
@@ -2019,37 +2046,44 @@ let cursor_to_point frame x y =
 
 <<function Frame.update_line>>=
 let update_line top_window frame repr_string y = 
-  failwith "Frame.update_line: TODO"
-(*
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let line_repr = frame.frm_table.(y) in
+(*
   let xterm = match top_window.top_xterm with
       None -> raise Not_found
     | Some xterm -> xterm 
   in
+*)
   let rec iter x offset reprs =
     if frame.frm_width > x then
       match reprs with
-        [] -> 
+        [] -> Common.pr2_once "WX_xterm.clear_eol"
+(*
           WX_xterm.clear_eol xterm 
             (x+frame.frm_xpos) (y+frame.frm_ypos)
           (frame.frm_width - x)
+*)
       | repr :: tail ->
           let len = min (frame.frm_width-x) (repr.repr_size - offset)
           in
+          Common.pr2_once "WX_xterm.draw_string";
+(*
           WX_xterm.draw_string xterm
             (x+frame.frm_xpos) (y+frame.frm_ypos)
           repr_string (repr.repr_pos+offset) len
             repr.repr_attr;
+*)
           iter (x+len) 0 tail
     else
+          Common.pr2_once "WX_xterm.draw_string bis"
+(*
       WX_xterm.draw_string xterm
         (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
       "/" 0 1 Text.direct_attr
+*)
   in
   iter 0 (line_repr.repr_offset+frame.frm_x_offset) line_repr.repr_reprs
-*)
 @
 
 <<function Frame.set_cursor>>=
@@ -5570,10 +5604,10 @@ let try_map frame key =
 
 <<function Top_window.set_cursor_on>>=
 let set_cursor_on top_window frame = 
-  failwith "Top_window.set_curson_on: TODO"
-(*
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
+    Common.pr2_once "WX_xterm.draw_string set_cursor_on"
+(*
     let xterm = xterm top_window in
     WX_xterm.draw_string xterm 
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset) 
@@ -5597,21 +5631,18 @@ let set_cursor_off top_window frame =
 
 <<function Top_window.cursor_on>>=
 let cursor_on top_window =
-  failwith "Top_window.curson_on: TODO"
-
-(*
   let frame = top_window.top_active_frame in
   let name = frame.frm_buffer.buf_name in
   if not (name == top_window.top_name) then
     begin
-      top_window.top_appli#setWM_NAME name;
+      Common.pr2_once "Top_window.top_apply#setWM_NAME";
+      (* top_window.top_appli#setWM_NAME name; *)
       top_window.top_name <- name
     end;
   set_cursor_on top_window frame;
   match top_window.top_second_cursor with
     None -> ()
   | Some frame -> set_cursor_on top_window frame
-*)
 @
 
 <<function Top_window.cursor_off>>=
@@ -5884,9 +5915,9 @@ let menus = define_option ["menus"] ""
 
 <<function Top_window.create>>=
 let create location display =
-  failwith "Top_window.create: TODO"
-(*
   let buf = Ebuffer.default location "*help*" in
+
+(*
   let top = new WX_appli.t display.WX_xterm.root_oo [] in
   top#setWM_NAME "new_frame";
   top#setWM_CLASS "Efuns" "efuns";
@@ -5899,14 +5930,15 @@ let create location display =
   let ady = new WX_adjust.t () in
   let scrollbar = new WX_scrollbar.v hbar#container ady [] in
   hbar#container_add_s [xterm#contained; scrollbar#contained];
-  let window = Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
+  *)
+
+  let window = Window.create_at_top  0 0 
+    location.loc_width 
+    (location.loc_height - 1) 
+  in
   let frame = Frame.create_without_top location window None buf  in
   let top_window =
     { top_location = location;
-      top_display = Some display;
-      top_xterm = None;
-      top_term = xterm;
-      top_attrs = Array.create 256 None;
       top_windows = window;
       top_mini_buffers = [];
       top_width = location.loc_width;
@@ -5914,17 +5946,29 @@ let create location display =
       top_name = "window";
       top_active_frame = frame;
       top_second_cursor = None;
+
+(*
+      top_display = Some display;
+      top_xterm = None;
+      top_term = xterm;
+      top_attrs = Array.create 256 None;
       top_root=  display.WX_xterm.root_oo;
       top_appli = top;
       top_scrollbar = ady;
+*)
     } 
   in
+(*
   ady#add_subject (fun () ->
       let frame = top_window.top_active_frame in
       if not frame.frm_force_start then
         wrap top_window (scroll_to_frame ady) ()); 
+*)
+
   frame.frm_window.win_up <- TopWindow top_window;
   location.loc_windows <- top_window :: location.loc_windows;
+
+(*
   top#add_button "Buffers" (!buffers_menu top_window);
   top#add_menu "File" (Array.map (fun (name,action) ->
         wrap_item top_window (name, execute_action action)
@@ -5949,8 +5993,9 @@ let create location display =
               !WX_types.modifiers_event, !key_string, !key_sym));
           WX_xterm.update_displays ()
     )]];
-  top_window
 *)
+
+  top_window
 @
 
 

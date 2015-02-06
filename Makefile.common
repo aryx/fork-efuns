@@ -27,8 +27,11 @@ OPTOBJS?= $(SRC:.ml=.cmx)
 # Generic ocaml variables
 ##############################################################################
 
+# -w A
+WARNING_FLAGS= -w -21
+
 #dont use -custom, it makes the bytecode unportable.
-OCAMLCFLAGS?=-g -dtypes -bin-annot -thread # -w A
+OCAMLCFLAGS?=-g -dtypes -bin-annot -thread $(WARNING_FLAGS)
 
 # This flag is also used in subdirectories so don't change its name here.
 OPTFLAGS?=-thread

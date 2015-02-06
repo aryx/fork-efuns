@@ -79,10 +79,10 @@ let try_map frame key =
 
 (*s: function Top_window.set_cursor_on *)
 let set_cursor_on top_window frame = 
-  failwith "Top_window.set_curson_on: TODO"
-(*
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
+    Common.pr2_once "WX_xterm.draw_string set_cursor_on"
+(*
     let xterm = xterm top_window in
     WX_xterm.draw_string xterm 
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset) 
@@ -106,21 +106,18 @@ let set_cursor_off top_window frame =
 
 (*s: function Top_window.cursor_on *)
 let cursor_on top_window =
-  failwith "Top_window.curson_on: TODO"
-
-(*
   let frame = top_window.top_active_frame in
   let name = frame.frm_buffer.buf_name in
   if not (name == top_window.top_name) then
     begin
-      top_window.top_appli#setWM_NAME name;
+      Common.pr2_once "Top_window.top_apply#setWM_NAME";
+      (* top_window.top_appli#setWM_NAME name; *)
       top_window.top_name <- name
     end;
   set_cursor_on top_window frame;
   match top_window.top_second_cursor with
     None -> ()
   | Some frame -> set_cursor_on top_window frame
-*)
 (*e: function Top_window.cursor_on *)
 
 (*s: function Top_window.cursor_off *)
@@ -408,9 +405,9 @@ let help_menu = ref ([| |]: (string * (frame -> unit)) array)
   
 (*s: function Top_window.create *)
 let create location display =
-  failwith "Top_window.create: TODO"
-(*
   let buf = Ebuffer.default location "*help*" in
+
+(*
   let top = new WX_appli.t display.WX_xterm.root_oo [] in
   top#setWM_NAME "new_frame";
   top#setWM_CLASS "Efuns" "efuns";
@@ -423,14 +420,15 @@ let create location display =
   let ady = new WX_adjust.t () in
   let scrollbar = new WX_scrollbar.v hbar#container ady [] in
   hbar#container_add_s [xterm#contained; scrollbar#contained];
-  let window = Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
+  *)
+
+  let window = Window.create_at_top  0 0 
+    location.loc_width 
+    (location.loc_height - 1) 
+  in
   let frame = Frame.create_without_top location window None buf  in
   let top_window =
     { top_location = location;
-      top_display = Some display;
-      top_xterm = None;
-      top_term = xterm;
-      top_attrs = Array.create 256 None;
       top_windows = window;
       top_mini_buffers = [];
       top_width = location.loc_width;
@@ -438,17 +436,29 @@ let create location display =
       top_name = "window";
       top_active_frame = frame;
       top_second_cursor = None;
+
+(*
+      top_display = Some display;
+      top_xterm = None;
+      top_term = xterm;
+      top_attrs = Array.create 256 None;
       top_root=  display.WX_xterm.root_oo;
       top_appli = top;
       top_scrollbar = ady;
+*)
     } 
   in
+(*
   ady#add_subject (fun () ->
       let frame = top_window.top_active_frame in
       if not frame.frm_force_start then
         wrap top_window (scroll_to_frame ady) ()); 
+*)
+
   frame.frm_window.win_up <- TopWindow top_window;
   location.loc_windows <- top_window :: location.loc_windows;
+
+(*
   top#add_button "Buffers" (!buffers_menu top_window);
   top#add_menu "File" (Array.map (fun (name,action) ->
         wrap_item top_window (name, execute_action action)
@@ -473,8 +483,9 @@ let create location display =
               !WX_types.modifiers_event, !key_string, !key_sym));
           WX_xterm.update_displays ()
     )]];
-  top_window
 *)
+
+  top_window
 (*e: function Top_window.create *)
 
 (*s: function Top_window.delete_window *)

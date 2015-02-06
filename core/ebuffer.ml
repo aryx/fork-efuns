@@ -244,16 +244,15 @@ let read location filename local_map =
 
 (*s: function Ebuffer.default *)
 let default location name =
-  failwith "Ebuffer.default: TODO"
-(*
   try
     Hashtbl.find location.loc_buffers name
   with
     Not_found ->
       let str = 
         if name = "*help*" then
-          "Welcome to Efuns, a small demo editor written in Ocaml.
-
+          "Welcome to Efuns, a small demo editor written in Ocaml."
+(*
+"
 Version is " ^ Version.efuns_version ^"
 built by "^ Version.builder ^ " " ^ Version.date ^ " 
 with
@@ -267,10 +266,10 @@ INRIA Rocquencourt
 Help for Key Bindings: C-h K
 See changes in "^ Version.efuns_lib ^"/Changes
 "
+*)
         else ""
       in
       create location name None (Text.create str) (Keymap.create ())
-*)
 (*e: function Ebuffer.default *)
       
 

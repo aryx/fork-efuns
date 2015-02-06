@@ -326,37 +326,44 @@ let cursor_to_point frame x y =
 
 (*s: function Frame.update_line *)
 let update_line top_window frame repr_string y = 
-  failwith "Frame.update_line: TODO"
-(*
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let line_repr = frame.frm_table.(y) in
+(*
   let xterm = match top_window.top_xterm with
       None -> raise Not_found
     | Some xterm -> xterm 
   in
+*)
   let rec iter x offset reprs =
     if frame.frm_width > x then
       match reprs with
-        [] -> 
+        [] -> Common.pr2_once "WX_xterm.clear_eol"
+(*
           WX_xterm.clear_eol xterm 
             (x+frame.frm_xpos) (y+frame.frm_ypos)
           (frame.frm_width - x)
+*)
       | repr :: tail ->
           let len = min (frame.frm_width-x) (repr.repr_size - offset)
           in
+          Common.pr2_once "WX_xterm.draw_string";
+(*
           WX_xterm.draw_string xterm
             (x+frame.frm_xpos) (y+frame.frm_ypos)
           repr_string (repr.repr_pos+offset) len
             repr.repr_attr;
+*)
           iter (x+len) 0 tail
     else
+          Common.pr2_once "WX_xterm.draw_string bis"
+(*
       WX_xterm.draw_string xterm
         (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
       "/" 0 1 Text.direct_attr
+*)
   in
   iter 0 (line_repr.repr_offset+frame.frm_x_offset) line_repr.repr_reprs
-*)
 (*e: function Frame.update_line *)
 
 (*s: function Frame.set_cursor *)
@@ -568,7 +575,7 @@ let update top_window frame =
           let pos_start = get_position text frame.frm_start in
           let pos_end = get_position text frame.frm_end in
 
-          failwith "Frame.update: TODO scrollbar";
+          Common.pr2_once "Frame.update: TODO scrollbar";
           (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
 
              (size text);
@@ -607,13 +614,13 @@ let update top_window frame =
       status_major_mode frame;
       if status.status_modified then
 
+        Common.pr2_once "WX_xterm.draw_string status_string"
         (* WX_xterm.draw_string xterm frame.frm_xpos
           (frame.frm_ypos + frame.frm_height - 1)  
         status.status_string 0 width Text.inverse_attr
         *)
-        failwith "Frame.update: TODO status_string"
   | Some request ->
-        failwith "Frame.update: TODO status_string again ";
+        Common.pr2_once "WX_xterm.draw_string status_string again"
       (* WX_xterm.draw_string xterm 0 (top_window.top_height-1)  
       request 0 (String.length request) Text.direct_attr
       *)
