@@ -13,7 +13,7 @@
 open Options
 
 open Xtypes
-(*open WX_types*)
+open WX_types
 
 open Efuns
 open Window

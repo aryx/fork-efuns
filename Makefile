@@ -27,6 +27,7 @@ SRC=\
  commons2/options.ml\
  misc/local.ml\
  graphics/xtypes.ml\
+ graphics/wX_types.ml\
  graphics/wX_xterm.ml\
  core/text.ml\
  core/efuns.ml\

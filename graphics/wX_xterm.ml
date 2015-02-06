@@ -2,11 +2,11 @@ open Common
 
 type xterm_event =
   XTKeyPress of Xtypes.modifiers * string * Xtypes.keySym
-| XTResize of int * int
 | XTButtonPress of Xtypes.modifiers * int * int * int
 | XTMouseMotion of Xtypes.modifiers * int * int * int
+| XTResize of int * int
 
-
+(* helper *)
 let move_to col line =
   let (w,h) = Graphics.text_size "d" in
   let size_y = Graphics.size_y () in
