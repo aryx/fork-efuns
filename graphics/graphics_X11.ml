@@ -65,8 +65,11 @@ let init location displayname =
     ] (fun status ->
       if status.Graphics.keypressed
       then 
-        let key = status.Graphics.key in
-        pr2 (spf "key: %c" key)
+        let charkey = status.Graphics.key in
+        let code = Char.code charkey in
+        pr2 (spf "key: %c, %d" charkey code);
+        let evt = WX_xterm.XTKeyPress (0, "", code) in
+        Top_window.handler top_window () evt
 
     )
   in

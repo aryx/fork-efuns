@@ -26,6 +26,7 @@ SRC=\
  commons2/str2.ml\
  commons2/options.ml\
  misc/local.ml\
+ graphics/xtypes.ml\
  graphics/wX_xterm.ml\
  core/text.ml\
  core/efuns.ml\
@@ -33,7 +34,6 @@ SRC=\
  core/window.ml\
  core/ebuffer.ml\
  core/frame.ml\
- graphics/xtypes.ml\
  graphics/xK.ml\
  graphics/top_window.ml\
  features/simple.ml\

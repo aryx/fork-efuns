@@ -1,3 +1,7 @@
+
+type keySym = int
+type modifiers = int
+
 let controlMask = 1
 let mod1Mask = 1
 let shiftMask = 1

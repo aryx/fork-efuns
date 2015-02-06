@@ -291,16 +291,16 @@ let wrap_item top_window (n,f) =
         
 (*s: function Top_window.handler *)
 let handler top_window xterm event =
-  failwith "Top_window.handler: TODO"
-(*
   let location = top_window.top_location in
-  Concur.Mutex.lock location.loc_mutex;
+  Mutex.lock location.loc_mutex;
   try
     begin
       match event with
         WX_xterm.XTKeyPress (modifiers, s, keysym) ->
+(*
           if (keysym < XK.xk_Shift_L || keysym > XK.xk_Hyper_R)
           then 
+*)
             handle_key top_window modifiers keysym
       
       | WX_xterm.XTButtonPress (modifiers,button,x,y) -> 
@@ -327,12 +327,11 @@ let handler top_window xterm event =
           update_display top_window.top_location
           
     end;
-    Concur.Mutex.unlock top_window.top_location.loc_mutex;
+    Mutex.unlock top_window.top_location.loc_mutex;
   with
     e ->   
-      Concur.Mutex.unlock top_window.top_location.loc_mutex;
+      Mutex.unlock top_window.top_location.loc_mutex;
       raise e
-*)
 (*e: function Top_window.handler *)
 
 
@@ -344,15 +343,16 @@ let buffers_menu = ref
 
 (*s: function Top_window.scroll_to_frame *)
 let scroll_to_frame ady top_window =
-  failwith "Top_window.scroll_to_frame: TODO"
-(*
   let frame = top_window.top_active_frame in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let pos_start = Text.get_position text frame.frm_start in
   let pos_end = Text.get_position text frame.frm_end in
   let size = Text.size text in
-  let y = ady#get_pos size in
+  Common.pr2 "ady#get_pos size";
+  let y = 1
+(*    ady#get_pos size  *)
+  in
   if abs (y - pos_start) > 80 then
   (* the position has changed *)
     begin
@@ -360,7 +360,6 @@ let scroll_to_frame ady top_window =
       frame.frm_redraw <- true;
       Text.set_position text frame.frm_start y
     end
-*)
 (*e: function Top_window.scroll_to_frame *)
 (*s: constant Top_window.menus *)
 (*
@@ -424,8 +423,7 @@ let create location display =
       top_active_frame = frame;
       top_second_cursor = None;
       top_display = Some display;
-      top_xterm = Some xterm;
-
+      top_xterm = Some ();
 (*
       top_term = xterm;
       top_attrs = Array.create 256 None;
@@ -435,12 +433,12 @@ let create location display =
 *)
     } 
   in
-(*
-  ady#add_subject (fun () ->
+(* ady#add_subject (fun () -> *) (
+      let ady = () in
       let frame = top_window.top_active_frame in
       if not frame.frm_force_start then
-        wrap top_window (scroll_to_frame ady) ()); 
-*)
+        wrap top_window (scroll_to_frame ady) ()
+  );
 
   frame.frm_window.win_up <- TopWindow top_window;
   location.loc_windows <- top_window :: location.loc_windows;
@@ -462,8 +460,13 @@ let create location display =
   top#add_separator;
   top#add_menu "Help" (Array.map (wrap_item top_window) !help_menu);
   top#show;
-  let xterm = xterm#xterm in
+*)
+
+(*  let xterm = xterm#xterm in *)
+  let xterm = () in
   top_window.top_xterm <- Some xterm;
+
+(*
   WX_xterm.install_handler display xterm (handler top_window xterm);
   top#configure [Bindings [Key (anyKey, anyModifier), (fun _ ->
           handler top_window xterm (WX_xterm.XTKeyPress (

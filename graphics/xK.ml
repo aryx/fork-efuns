@@ -6,8 +6,13 @@ let xk_Pointer_Button4 = 0
 let xk_Pointer_Button5 = 0
 
 let xk_Pointer_Drag1 = 1
+let xk_Pointer_Button_Dflt = 0
+let xk_Pointer_Drag_Dflt = 0
 
 let xk_Menu = 1
+
+let xk_Shift_L = 1
+let xk_Hyper_R = 1
 
 let xk_Up = 0
 let xk_Down = 0
