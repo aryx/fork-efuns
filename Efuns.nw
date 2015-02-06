@@ -816,7 +816,8 @@ let create_without_top location window mini buf =
 @
 
 
-\section{Full state}
+\section{The world}
+% full state
 
 % called location in lefessant's terminology
 
@@ -875,52 +876,15 @@ mutable top_location : location;
 
 
 
+
 <<[[Efuns.location]] other fields>>=
 mutable loc_counter : int;
 
-loc_fonts : (string,int) Hashtbl.t;
-loc_fonts_names : string array;
-mutable loc_fonts_n : int;
 
-loc_colors : (string,int) Hashtbl.t;
-loc_colors_names : string array;
-mutable loc_colors_n : int;
 
-(* loc_mutex : Concur.Mutex.t; *)
+loc_mutex : Mutex.t;
 @
 
-
-<<constant Main.location>>=
-let location = {
-    loc_buffers = Hashtbl.create 13;
-    loc_files = Hashtbl.create 13;
-
-    loc_windows = [];
-
-    loc_width = !!width;
-    loc_height = !!height;
-
-    loc_fg = !!foreground;
-    loc_bg = !!background;
-    loc_font = !!font;
-
-    loc_map = Keymap.create ();
-    loc_dirname = Sys.getcwd ();
-
-    loc_vars = Local.vars ();
-    loc_counter = 0;
-    
-    loc_fonts = Hashtbl.create 37;
-    loc_fonts_names = Array.create 256 "";
-    loc_fonts_n = 0;
-
-    loc_colors = Hashtbl.create 37;
-    loc_colors_names = Array.create 256 "";
-    loc_colors_n = 0;
-    
-(*    loc_mutex = Concur.Mutex.create ()*)
-} 
-@
 
 
 
@@ -1266,7 +1230,7 @@ let init_global_map location =
           Log.exn "%s\n" e;
   ) !!global_map;
 
-  <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>  
+  <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>
     
   (* standard keys *)
 
@@ -1536,10 +1500,6 @@ let height = define_option ["height"] "" int_option 25
 let height = ref 27
 @
 
-<<constant Efuns.font>>=
-let font = define_option ["font"] "" string_option "fixed"
-@
-
 <<constant Efuns.foreground>>=
 let foreground = define_option ["foreground"] "" string_option "white"
 @
@@ -1547,6 +1507,11 @@ let foreground = define_option ["foreground"] "" string_option "white"
 <<constant Efuns.background>>=
 let background = define_option ["background"] "" string_option "black"
 @
+
+<<constant Efuns.font>>=
+let font = define_option ["font"] "" string_option "fixed"
+@
+
 
 
 <<constant Efuns.check>>=
@@ -1657,13 +1622,19 @@ let _ =
 (* Les hooks de lancement apres le chargement d'un module *)
 let start_hooks = ref []
 @
+% private? rename _start_hooks?
 
 <<function Efuns.add_start_hook>>=
 let add_start_hook hook = 
   start_hooks := hook :: !start_hooks
 @
 
-% ??? -> <>
+<<toplevel Main._3>>=
+let _ =
+  Efuns.init location (* launch first hooks *)
+@
+
+% main.ml -> <>
 <<function Efuns.init>>=
 let init (location : location) =
   let rec iter hooks =
@@ -1679,12 +1650,50 @@ let init (location : location) =
 @
 % why not using exec_hooks?
 
+\section{The default world}
+
+<<constant Main.location>>=
+let location = {
+    loc_buffers = Hashtbl.create 13;
+    loc_files = Hashtbl.create 13;
+
+    loc_windows = [];
+
+    loc_width = !!width;
+    loc_height = !!height;
+
+    loc_fg = !!foreground;
+    loc_bg = !!background;
+    loc_font = !!font;
+
+    loc_map = Keymap.create ();
+    loc_dirname = Sys.getcwd ();
+
+    loc_vars = Local.vars ();
+    loc_counter = 0;
+    
+    loc_fonts = Hashtbl.create 37;
+    loc_fonts_names = Array.create 256 "";
+    loc_fonts_n = 0;
+
+    loc_colors = Hashtbl.create 37;
+    loc_colors_names = Array.create 256 "";
+    loc_colors_n = 0;
+    
+    loc_mutex = Mutex.create ()
+} 
+@
+
+
 \chapter{Main Window}
 
 % menu
 % windows/frames with buffers
 % status line
 % minibuffer
+
+
+% see graphics_graphics.ml
 
 \section{Menus}
 
@@ -1728,7 +1737,7 @@ let select_open_file frame =
   let window = frame.frm_window in
   let top_window = Window.top window in
   let cdir = Frame.current_dir frame in
-  failwith "TODO"
+  failwith "Std_efunsrc.select_open_file: TODO"
 (*
   let info = {
       filter = Filename.concat cdir "*";
@@ -1952,7 +1961,7 @@ help_menu := [|
       let _ = Frame.load_file frame.frm_window (
           Version.efuns_lib ^"/Changes") in ()
     *)
-    failwith "TODO"
+    failwith "Std_xxx.menu changes: TODO"
   );
 
 |];
@@ -2297,138 +2306,6 @@ map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 
 
 
-\section{Text Display}
-
-% the redisplay function!!!
-
-<<function Frame.update>>=
-let update top_window frame =
-  let buf =  frame.frm_buffer in
-  let text = buf.buf_text in
-
-  let start = frame.frm_start in
-  let point = frame.frm_point in
-  let width = frame.frm_width - frame.frm_has_scrollbar in
-  let height = frame.frm_height - frame.frm_has_status_line in
-
-  if  buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated then
-    Text.set_position text point (Text.size text); 
-  if
-    (frame.frm_end < point)  || 
-    (start > point) ||
-    (version text <> frame.frm_last_text_updated) ||
-    (buf.buf_modified <> frame.frm_last_buf_updated) ||
-    frame.frm_redraw
-  then
-    begin
-      let start_c = point_to_cursor buf start in
-      if start_c > 0 then
-        begin
-          frame.frm_y_offset <- 
-            frame.frm_y_offset - start_c / frame.frm_cutline;
-          let _ = Text.bmove text start start_c in
-          ()
-        end;
-      let point_c = point_to_cursor buf point in
-      if point_c < frame.frm_x_offset then
-        begin
-          frame.frm_x_offset <- max (point_c - width / 2) 0;
-          frame.frm_redraw <- true;
-        end
-      else
-      if frame.frm_cutline = max_int && 
-        (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
-      then
-        begin
-          frame.frm_x_offset <- point_c - (width / 2);
-          frame.frm_redraw <- true;
-        end;
-      update_table top_window frame;
-      begin
-        if (frame.frm_end < point)  || (start > point)
-        then
-          begin
-            if frame.frm_force_start then
-              let x,y = 
-                cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
-              in
-              goto_line text frame.frm_point y;
-              let _ = Text.fmove text frame.frm_point x in
-              ()
-            else
-              begin
-                goto_point text start point;
-                frame.frm_y_offset <- - height / 2;
-                let start_c = point_to_cursor buf start in
-                if start_c > 0 then
-                  begin
-                    frame.frm_y_offset <- 
-                      frame.frm_y_offset - start_c / frame.frm_cutline;
-                    let _ = Text.bmove text start start_c in
-                    ()
-                  end;
-                update_table top_window frame;
-              end;
-          end
-      end;
-      if frame == top_window.top_active_frame then
-        begin
-          frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
-          let pos_start = get_position text frame.frm_start in
-          let pos_end = get_position text frame.frm_end in
-
-          failwith "TODO";
-          (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
-
-             (size text);
-          *)
-        end;
-      frame.frm_last_text_updated <- version text;
-      frame.frm_last_buf_updated <- buf.buf_modified;
-      frame.frm_force_start <- false;
-      for y = 0 to height - 1 do
-        let line = frame.frm_table.(y) in
-        if not ((line.repr_prev_reprs == line.repr_reprs) &&
-            (line.repr_prev_offset == line.repr_offset)) 
-          || frame.frm_redraw
-        then
-          begin
-            line.repr_prev_reprs <- line.repr_reprs;
-            line.repr_prev_offset <- line.repr_offset;
-            update_line top_window frame line.repr_line.repr_string y;
-          end;
-      done;
-      frame.frm_redraw <- false
-    end;
-(*
-  let xterm = match top_window.top_xterm with
-      None -> raise Not_found
-    | Some xterm -> xterm 
-  in
-*)
-  match frame.frm_mini_buffer with
-    None -> 
-      let status = frame.frm_status in
-      status_line frame (point_line text frame.frm_point);
-      status_col frame (point_col text frame.frm_point);
-      status_modified frame (version text <> buf.buf_last_saved);
-      status_name frame buf.buf_name;
-      status_major_mode frame;
-      if status.status_modified then
-
-        (* WX_xterm.draw_string xterm frame.frm_xpos
-          (frame.frm_ypos + frame.frm_height - 1)  
-        status.status_string 0 width Text.inverse_attr
-        *)
-        failwith "TODO"
-  | Some request ->
-        failwith "TODO";
-      (* WX_xterm.draw_string xterm 0 (top_window.top_height-1)  
-      request 0 (String.length request) Text.direct_attr
-      *)
-@
-
-
 
 \section{Hooks}
 
@@ -2624,6 +2501,76 @@ let set_char_attr tree point attr =
 @
 
 
+\section{Colors}
+
+<<[[Efuns.location]] other fields>>=
+loc_colors : (string,int) Hashtbl.t;
+loc_colors_names : string array;
+mutable loc_colors_n : int;
+@
+
+
+<<function Window.get_color>>=
+let get_color location color_name =
+  try
+    Hashtbl.find location.loc_colors color_name
+  with
+    Not_found ->
+      if location.loc_colors_n = 256 then
+        raise Not_found
+      else
+        let n = location.loc_colors_n in
+        location.loc_colors_n <- n + 1;
+        location.loc_colors_names.(n) <- color_name;
+        Hashtbl.add location.loc_colors color_name n;
+        n
+@
+
+
+<<constant Main.highlight_color>>=
+let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
+@
+
+<<toplevel Main._2>>=
+let _ =
+(* color 0 is foreground *)
+  let _ = Window.get_color location !!foreground in
+(* color 1 is background *)
+  let _ = Window.get_color location !!background in
+(* color 2 is highlight *)
+  let _ = Window.get_color location !!highlight_color in
+@
+
+
+\section{Font}
+
+<<[[Efuns.location]] other fields>>=
+loc_fonts : (string,int) Hashtbl.t;
+loc_fonts_names : string array;
+mutable loc_fonts_n : int;
+@
+
+<<function Window.get_font>>=
+let get_font location font_name =
+  try
+    Hashtbl.find location.loc_fonts font_name
+  with
+    Not_found ->
+      if location.loc_fonts_n = 256 then
+        raise Not_found
+      else
+        let n = location.loc_fonts_n in
+        location.loc_fonts_n <- n + 1;
+        location.loc_fonts_names.(n) <- font_name;
+        Hashtbl.add location.loc_fonts font_name n;
+        n
+@
+
+<<toplevel Main._2>>=
+(* font 0 is initial font *)
+  Window.get_font location !!font
+@
+
 \section{Points}
 
 <<function Text.add_point>>=
@@ -2672,6 +2619,139 @@ let remove_point tree p =
         if point == p then points else point :: points) 
     [] text.text_points)
 @
+
+\section{Text Display}
+
+% the redisplay function!!!
+
+<<function Frame.update>>=
+let update top_window frame =
+  let buf =  frame.frm_buffer in
+  let text = buf.buf_text in
+
+  let start = frame.frm_start in
+  let point = frame.frm_point in
+  let width = frame.frm_width - frame.frm_has_scrollbar in
+  let height = frame.frm_height - frame.frm_has_status_line in
+
+  if  buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated then
+    Text.set_position text point (Text.size text); 
+  if
+    (frame.frm_end < point)  || 
+    (start > point) ||
+    (version text <> frame.frm_last_text_updated) ||
+    (buf.buf_modified <> frame.frm_last_buf_updated) ||
+    frame.frm_redraw
+  then
+    begin
+      let start_c = point_to_cursor buf start in
+      if start_c > 0 then
+        begin
+          frame.frm_y_offset <- 
+            frame.frm_y_offset - start_c / frame.frm_cutline;
+          let _ = Text.bmove text start start_c in
+          ()
+        end;
+      let point_c = point_to_cursor buf point in
+      if point_c < frame.frm_x_offset then
+        begin
+          frame.frm_x_offset <- max (point_c - width / 2) 0;
+          frame.frm_redraw <- true;
+        end
+      else
+      if frame.frm_cutline = max_int && 
+        (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
+      then
+        begin
+          frame.frm_x_offset <- point_c - (width / 2);
+          frame.frm_redraw <- true;
+        end;
+      update_table top_window frame;
+      begin
+        if (frame.frm_end < point)  || (start > point)
+        then
+          begin
+            if frame.frm_force_start then
+              let x,y = 
+                cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
+              in
+              goto_line text frame.frm_point y;
+              let _ = Text.fmove text frame.frm_point x in
+              ()
+            else
+              begin
+                goto_point text start point;
+                frame.frm_y_offset <- - height / 2;
+                let start_c = point_to_cursor buf start in
+                if start_c > 0 then
+                  begin
+                    frame.frm_y_offset <- 
+                      frame.frm_y_offset - start_c / frame.frm_cutline;
+                    let _ = Text.bmove text start start_c in
+                    ()
+                  end;
+                update_table top_window frame;
+              end;
+          end
+      end;
+      if frame == top_window.top_active_frame then
+        begin
+          frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
+          let pos_start = get_position text frame.frm_start in
+          let pos_end = get_position text frame.frm_end in
+
+          failwith "Frame.update: TODO scrollbar";
+          (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
+
+             (size text);
+          *)
+        end;
+      frame.frm_last_text_updated <- version text;
+      frame.frm_last_buf_updated <- buf.buf_modified;
+      frame.frm_force_start <- false;
+      for y = 0 to height - 1 do
+        let line = frame.frm_table.(y) in
+        if not ((line.repr_prev_reprs == line.repr_reprs) &&
+            (line.repr_prev_offset == line.repr_offset)) 
+          || frame.frm_redraw
+        then
+          begin
+            line.repr_prev_reprs <- line.repr_reprs;
+            line.repr_prev_offset <- line.repr_offset;
+            update_line top_window frame line.repr_line.repr_string y;
+          end;
+      done;
+      frame.frm_redraw <- false
+    end;
+(*
+  let xterm = match top_window.top_xterm with
+      None -> raise Not_found
+    | Some xterm -> xterm 
+  in
+*)
+  match frame.frm_mini_buffer with
+    None -> 
+      let status = frame.frm_status in
+      status_line frame (point_line text frame.frm_point);
+      status_col frame (point_col text frame.frm_point);
+      status_modified frame (version text <> buf.buf_last_saved);
+      status_name frame buf.buf_name;
+      status_major_mode frame;
+      if status.status_modified then
+
+        (* WX_xterm.draw_string xterm frame.frm_xpos
+          (frame.frm_ypos + frame.frm_height - 1)  
+        status.status_string 0 width Text.inverse_attr
+        *)
+        failwith "Frame.update: TODO status_string"
+  | Some request ->
+        failwith "Frame.update: TODO status_string again ";
+      (* WX_xterm.draw_string xterm 0 (top_window.top_height-1)  
+      request 0 (String.length request) Text.direct_attr
+      *)
+@
+
+
 
 \chapter{Input Managment}
 
@@ -2833,7 +2913,7 @@ let mouse_set_frame frame =
 
 <<function Simple.mouse_yank_at_click>>=
 let  mouse_yank_at_click frame =
-failwith "TODO"
+failwith "Simple.mouse_yank_at_click: TODO"
 (*
   let top_window = Window.top frame.frm_window in
   let frame = mouse_set_active top_window in
@@ -2849,7 +2929,7 @@ failwith "TODO"
 
 <<function Simple.mouse_save_then_kill>>=
 let mouse_save_then_kill frame =
-  failwith "TODO"
+  failwith "Simple.mouse_save_then_kill: TODO"
 (*
   let top_window = Window.top frame.frm_window in
   let frame = Top_window.find_selected_frame top_window in
@@ -4080,7 +4160,7 @@ buffers_menu := (fun top_window button () ->
     let (x,y) = button#root_coordinates in
     menu#popup_once x (y + button#height) (Some !WX_types.button_event)
     *)
-    failwith "TODO"
+    failwith "Std_menu: show menus TODO"
     )
 @
 
@@ -4466,7 +4546,7 @@ let window_change_buffer frame =
 
 <<function Top_window.delete_window>>=
 let delete_window frame =
-  failwith "TODO"
+  failwith "Top_window:delete_window: TODO"
 (*
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
@@ -5022,7 +5102,7 @@ let eval frame =
           (let len = String.length str in
           if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
           str ^ " ;;"))
-        *)(failwith "TODO")
+        *)(failwith "Complex.eval: TODO")
     )
 @
 
@@ -5211,6 +5291,31 @@ let toggle_readonly tree =
 @
 
 \chapter{Advanced Topics}
+
+\section{Signals}
+
+<<exception Main.SigInt>>=
+exception SigInt
+@
+
+<<toplevel Main._1>>=
+let _ =
+  Utils.register_exn (fun e ->
+      match e with
+        Unix.Unix_error (error,f,arg) ->
+          Printf.sprintf "Unix error %s: %s %s" 
+            f (Unix.error_message error) arg
+      | _ -> raise e);
+
+  Utils.set_signal Sys.sigint (Sys.Signal_handle (fun _ ->  
+        (* Should auto-save all buffers, and then exit ... *)
+        exit 1)); 
+  Utils.set_signal Sys.sigterm (Sys.Signal_handle 
+      (fun _ ->  
+        (* Should auto-save all buffers, and then exit ... *)
+        raise SigInt));
+  Utils.set_signal Sys.sighup (Sys.Signal_handle (fun _ ->  raise SigInt))
+@
 
 \section{Dynamic linking}
 

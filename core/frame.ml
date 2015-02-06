@@ -326,7 +326,7 @@ let cursor_to_point frame x y =
 
 (*s: function Frame.update_line *)
 let update_line top_window frame repr_string y = 
-  failwith "TODO"
+  failwith "Frame.update_line: TODO"
 (*
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -568,7 +568,7 @@ let update top_window frame =
           let pos_start = get_position text frame.frm_start in
           let pos_end = get_position text frame.frm_end in
 
-          failwith "TODO";
+          failwith "Frame.update: TODO scrollbar";
           (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
 
              (size text);
@@ -611,9 +611,9 @@ let update top_window frame =
           (frame.frm_ypos + frame.frm_height - 1)  
         status.status_string 0 width Text.inverse_attr
         *)
-        failwith "TODO"
+        failwith "Frame.update: TODO status_string"
   | Some request ->
-        failwith "TODO";
+        failwith "Frame.update: TODO status_string again ";
       (* WX_xterm.draw_string xterm 0 (top_window.top_height-1)  
       request 0 (String.length request) Text.direct_attr
       *)

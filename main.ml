@@ -11,9 +11,7 @@
 (***********************************************************************)
 
 open Options
-open Obj
 
-open Text
 open Efuns
   
 (*s: constant Main.location *)
@@ -44,7 +42,7 @@ let location = {
     loc_colors_names = Array.create 256 "";
     loc_colors_n = 0;
     
-(*    loc_mutex = Concur.Mutex.create ()*)
+    loc_mutex = Mutex.create ()
 } 
 (*e: constant Main.location *)
 
@@ -82,6 +80,7 @@ let _ =
   let _ = Window.get_color location !!background in
 (* color 2 is highlight *)
   let _ = Window.get_color location !!highlight_color in
+(*x: toplevel Main._2 *)
 (* font 0 is initial font *)
   Window.get_font location !!font
 (*e: toplevel Main._2 *)
@@ -91,56 +90,7 @@ let _ =
   Efuns.init location (* launch first hooks *)
 (*e: toplevel Main._3 *)
   
-  
-(*s: constant Main.dpy_oo *)
-(*let dpy_oo = new WX_display.t !displayname*)
-(*e: constant Main.dpy_oo *)
-(*s: constant Main.root_oo *)
-(*let root_oo = new WX_root.t dpy_oo 0*)
-(*e: constant Main.root_oo *)
-(*s: constant Main.display *)
-(*let display = WX_xterm.create_display root_oo
-  location.loc_colors_names location.loc_fonts_names 
-*)
-(*e: constant Main.display *)
-(*s: constant Main.top_window *)
-(*let top_window = Top_window.create location display*)
-(*e: constant Main.top_window *)
-  
-(*s: toplevel Main._4 *)
-(*
 let _ =
-  WX_xterm.setHighlight display 2;
-  Dyneval.init true;
-  Eval.load top_window "Efunsrc";
-  Efuns.init location; (* launch second hooks *)
-  let _ = Interactive.create_bindings location in
-(* open the fisrt buffers *)
-  List.iter (fun name ->
-    let _ = Frame.load_file top_window.top_windows name in ()) 
-  !init_files;
-  List.iter 
-    (fun str -> let top_window = Top_window.create top_window.top_location
-          (Window.display top_window) in
-      let _ = Frame.load_file top_window.top_windows str in ()) !init_frames;
-  Top_window.update_display location;
+  Graphics_graphics.init location !displayname
 
-  
-  if not (Sys.file_exists (Filename.concat Utils.homedir ".efunsrc")) then
-    begin
-      Printf.printf "Saving .efunsrc after install"; print_newline ();
-      Options.save ();
-    end;
-
-  if !check then exit 0;  
-  (* Main loop *)
-  let rec loop () =
-    try
-      WX_types.loop ()
-    with
-      SigInt -> loop ()
-  in
-  loop ()
-*)
-(*e: toplevel Main._4 *)
 (*e: main.ml *)

@@ -182,7 +182,7 @@ let append filename =
       
 *)
 let init () = 
-  failwith "TODO"
+  failwith "Options.init: TODO"
 (*  load () *)
 
 let (!!) o = o.option_value

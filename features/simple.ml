@@ -708,7 +708,7 @@ let highlighted_chars = ref []
 
 (*s: function Simple.unhightlight *)
 let unhightlight location =
-    failwith "TODO"
+    failwith "Simple.unhighlight: TODO"
 (*
   List.iter (fun (buf,curseur,attr) ->
       let text = buf.buf_text in
@@ -841,7 +841,7 @@ nouvelle position du curseur dans la frame. Si on en sort, on peut
 ou prendre la derniere position, ou la premiere.
 *)
 let mouse_drag_region frame =
-  failwith "TODO"
+  failwith "Simple.mouse_drag_region: TODO"
 (*
   let top_window = Window.top frame.frm_window in
   let point = frame.frm_point in
@@ -891,7 +891,7 @@ let mouse_drag_region frame =
 
 (*s: function Simple.mouse_yank_at_click *)
 let  mouse_yank_at_click frame =
-failwith "TODO"
+failwith "Simple.mouse_yank_at_click: TODO"
 (*
   let top_window = Window.top frame.frm_window in
   let frame = mouse_set_active top_window in
@@ -908,7 +908,7 @@ failwith "TODO"
 
 (*s: function Simple.mouse_save_then_kill *)
 let mouse_save_then_kill frame =
-  failwith "TODO"
+  failwith "Simple.mouse_save_then_kill: TODO"
 (*
   let top_window = Window.top frame.frm_window in
   let frame = Top_window.find_selected_frame top_window in

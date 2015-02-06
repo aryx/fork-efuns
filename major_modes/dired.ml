@@ -142,7 +142,7 @@ let open_view frame =
   
 (*s: function Dired.mkdir *)
 let mkdir frame =
-  failwith "TODO"
+  failwith "Dired.mkdir: TODO"
 (*
   Select.select_filename frame "Make directory: "
     (fun str -> 

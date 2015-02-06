@@ -19,7 +19,7 @@ open Window
   
 (*s: function Top_window.message *)
 let message top_window msg =
-  failwith "TODO"
+  failwith "Top_window.message: TODO"
 (*
   let xterm = Window.xterm top_window  in
   let len = String.length msg in
@@ -41,7 +41,8 @@ let message top_window msg =
 
 (*s: function Top_window.clear_message *)
 let clear_message top_window =
-  failwith "TODO"
+
+  failwith "Top_window.clear_message: TODO"
 (*
   match top_window.top_mini_buffers with
     [] -> 
@@ -78,7 +79,7 @@ let try_map frame key =
 
 (*s: function Top_window.set_cursor_on *)
 let set_cursor_on top_window frame = 
-  failwith "TODO"
+  failwith "Top_window.set_curson_on: TODO"
 (*
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
@@ -92,7 +93,7 @@ let set_cursor_on top_window frame =
 
 (*s: function Top_window.set_cursor_off *)
 let set_cursor_off top_window frame =
-  failwith "TODO"
+  failwith "Top_window.set_cursor_off: TODO"
 (*
   if frame.frm_cursor.[0] <> '\000' then
     let xterm = xterm top_window in
@@ -105,7 +106,7 @@ let set_cursor_off top_window frame =
 
 (*s: function Top_window.cursor_on *)
 let cursor_on top_window =
-  failwith "TODO"
+  failwith "Top_window.curson_on: TODO"
 
 (*
   let frame = top_window.top_active_frame in
@@ -278,7 +279,7 @@ let handle_key top_window modifiers keysym =
   
 (*s: function Top_window.wrap *)
 let wrap top_window f () = 
-  failwith "TODO"
+  failwith "Top_window.wrap: TODO"
 (*
   let location = top_window.top_location in
   Concur.Mutex.lock location.loc_mutex;  
@@ -307,7 +308,7 @@ let wrap_item top_window (n,f) =
         
 (*s: function Top_window.handler *)
 let handler top_window xterm event =
-  failwith "TODO"
+  failwith "Top_window.handler: TODO"
 (*
   let location = top_window.top_location in
   Concur.Mutex.lock location.loc_mutex;
@@ -360,7 +361,7 @@ let buffers_menu = ref
 
 (*s: function Top_window.scroll_to_frame *)
 let scroll_to_frame ady top_window =
-  failwith "TODO"
+  failwith "Top_window.scroll_to_frame: TODO"
 (*
   let frame = top_window.top_active_frame in
   let buf = frame.frm_buffer in
@@ -407,7 +408,7 @@ let help_menu = ref ([| |]: (string * (frame -> unit)) array)
   
 (*s: function Top_window.create *)
 let create location display =
-  failwith "TODO"
+  failwith "Top_window.create: TODO"
 (*
   let buf = Ebuffer.default location "*help*" in
   let top = new WX_appli.t display.WX_xterm.root_oo [] in
@@ -478,7 +479,7 @@ let create location display =
 
 (*s: function Top_window.delete_window *)
 let delete_window frame =
-  failwith "TODO"
+  failwith "Top_window:delete_window: TODO"
 (*
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
@@ -508,7 +509,7 @@ let check_abort_delay = ref 100
   
 (*s: function Top_window.check_abort *)
 let check_abort frame =
-  failwith "TODO"
+  failwith "Top_window.check_abort: TODO"
 (*
   incr check_abort; 
   if !check_abort mod !check_abort_delay = 0 then

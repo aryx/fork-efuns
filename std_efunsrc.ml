@@ -49,7 +49,7 @@ let select_open_file frame =
   let window = frame.frm_window in
   let top_window = Window.top window in
   let cdir = Frame.current_dir frame in
-  failwith "TODO"
+  failwith "Std_efunsrc.select_open_file: TODO"
 (*
   let info = {
       filter = Filename.concat cdir "*";
@@ -666,7 +666,7 @@ let _ =
         let _ = Frame.load_file frame.frm_window (
             Version.efuns_lib ^"/Changes") in ()
       *)
-      failwith "TODO"
+      failwith "Std_xxx.menu changes: TODO"
     );
 
   |];
@@ -690,7 +690,7 @@ let _ =
       let (x,y) = button#root_coordinates in
       menu#popup_once x (y + button#height) (Some !WX_types.button_event)
       *)
-      failwith "TODO"
+      failwith "Std_menu: show menus TODO"
       )
   (*e: [[Std_efunsrc]] buffers menu setup *)
 (*e: toplevel Std_efunsrc._4 *)

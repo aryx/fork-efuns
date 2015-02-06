@@ -215,7 +215,7 @@ let change_font frame =
       let top_window = Window.top window in
       let xterm = Window.xterm top_window in
       (*WX_xterm.change_font xterm name*)
-      failwith "TODO"
+      failwith "Complex.change_font: TODO"
   ) in ()
 (*e: function Complex.change_font *)
 
@@ -255,7 +255,7 @@ let color buf regexp strict attr =
 (*e: constant Complex.display_hist *)
 (*s: function Complex.open_display *)
 let open_display frame =
-failwith "TODO"
+failwith "Complex.open_display: TODO"
 (*
   select frame "open_display :" display_hist ""
     (fun _ -> [])
@@ -348,7 +348,7 @@ let eval frame =
           (let len = String.length str in
           if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
           str ^ " ;;"))
-        *)(failwith "TODO")
+        *)(failwith "Complex.eval: TODO")
     )
 (*e: function Complex.eval *)
 

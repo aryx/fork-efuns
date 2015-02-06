@@ -77,7 +77,7 @@ let system buf_name location cmd end_action =
         Mutex.unlock location.loc_mutex
   );
 *)
-  failwith "TODO";
+  failwith "System.system: TODO";
   let lmap = buf.buf_map in
   Keymap.add_binding lmap [NormalMap, XK.xk_Return]
     (fun frame ->
@@ -98,7 +98,7 @@ let system buf_name location cmd end_action =
           Unix.kill pid Sys.sigkill;
           let _,_ = waitpid [] pid in ()
         with _ -> ());
-      (*Concur.Thread.remove_reader ins*) failwith "TODO"
+      (*Concur.Thread.remove_reader ins*) failwith "System.system: TODO 2"
     )
   :: buf.buf_finalizers;
   buf

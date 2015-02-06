@@ -165,7 +165,7 @@ type tree_desc =
         mutable tree_text: text 
 }
 let make_text _tree _array =
-  failwith "TODO"
+  failwith "Text.make_text: TODO"
 type t = tree_desc
   
 (*s: type Text.t *)

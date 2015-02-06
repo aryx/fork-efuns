@@ -331,19 +331,21 @@ and location =
     (*s: [[Efuns.location]] other fields *)
     mutable loc_counter : int;
 
-    loc_fonts : (string,int) Hashtbl.t;
-    loc_fonts_names : string array;
-    mutable loc_fonts_n : int;
 
-    loc_colors : (string,int) Hashtbl.t;
-    loc_colors_names : string array;
-    mutable loc_colors_n : int;
 
-    (* loc_mutex : Concur.Mutex.t; *)
+    loc_mutex : Mutex.t;
     (*x: [[Efuns.location]] other fields *)
     loc_map : map;
     (*x: [[Efuns.location]] other fields *)
     loc_vars : vars;
+    (*x: [[Efuns.location]] other fields *)
+    loc_colors : (string,int) Hashtbl.t;
+    loc_colors_names : string array;
+    mutable loc_colors_n : int;
+    (*x: [[Efuns.location]] other fields *)
+    loc_fonts : (string,int) Hashtbl.t;
+    loc_fonts_names : string array;
+    mutable loc_fonts_n : int;
     (*e: [[Efuns.location]] other fields *)
   } 
 (*e: type Efuns.location *)

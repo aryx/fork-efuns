@@ -124,7 +124,7 @@ let rec prev f window =
 
 (*s: function Window.xterm *)
 let xterm top_window =
-  failwith "TODO"
+  failwith "Window.xterm: TODO"
 (*
   match top_window.top_xterm with
     None -> raise Not_found
@@ -134,7 +134,7 @@ let xterm top_window =
 
 (*s: function Window.display *)
 let display top_window =
-  failwith "TODO"
+  failwith "Window.display: TODO"
 (*
   match top_window.top_display with
     None -> raise Not_found

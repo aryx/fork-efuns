@@ -13,7 +13,7 @@
 
 (*external replacement_text: string -> string -> string = "str_replacement_text"*)
 let replace_matched repl matched =
-  failwith "TODO"
+  failwith "Str2.replace_matched:TODO"
 (*  replacement_text repl matched*)
   
 

@@ -8,6 +8,7 @@
 TOP=$(shell pwd)
 
 CMIS=\
+ commons/common.cmi\
  commons2/utils.cmi\
  commons2/options.cmi\
  misc/local.cmi\
@@ -19,6 +20,7 @@ CMIS=\
  features/search.cmi\
 
 SRC=\
+ commons/common.ml\
  commons2/utils.ml\
  commons2/log.ml\
  commons2/str2.ml\
@@ -51,7 +53,8 @@ SRC=\
  major_modes/dired.ml\
  prog_modes/makefile_mode.ml\
  std_efunsrc.ml\
- main.ml
+ graphics_graphics.ml \
+ main.ml \
 
 # minor_modes/accents_mode.ml\
 # client/efuns_client.ml server/server.ml
@@ -61,9 +64,9 @@ SRC=\
 
 TARGET=efuns
 
-SYSLIBS=unix.cma str.cma
+SYSLIBS=unix.cma str.cma threads.cma graphics.cma
 
-INCLUDEDIRS=commons2 core misc graphics features
+INCLUDEDIRS=commons commons2 core misc graphics features
 
 ##############################################################################
 # Generic variables
@@ -82,7 +85,7 @@ opt:
 	$(MAKE) $(TARGET).opt
 
 $(TARGET): $(LIBS) $(OBJS)
-	$(OCAMLC) $(BYTECODE_STATIC) -o $@ $(SYSLIBS) $^
+	$(OCAMLC) -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ $(SYSLIBS) $^
 
 $(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS) 
 	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa)  $^

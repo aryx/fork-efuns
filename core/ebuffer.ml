@@ -244,7 +244,7 @@ let read location filename local_map =
 
 (*s: function Ebuffer.default *)
 let default location name =
-  failwith "TODO"
+  failwith "Ebuffer.default: TODO"
 (*
   try
     Hashtbl.find location.loc_buffers name
