@@ -47,11 +47,11 @@ type line =
   { 
     mutable position : direct;
     mutable representation : repr list;
-    mutable modified : int; (* first modified position *)
     mutable repr_len : int;
     mutable repr_string : string;
-    mutable line_hlt : int;
     mutable items : (*WX_text.*)item array;
+    mutable modified : int; (* first modified position *)
+    mutable line_hlt : int;
   }
 
 

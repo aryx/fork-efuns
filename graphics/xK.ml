@@ -69,3 +69,24 @@ let xk_Uacute = 0
 *)
 
 
+ (* These keys depend on the next key pressed. In my case, I don't use
+  the accents, so I prefer them to immediatly enter the good key.
+let	xk_dead_grave					= 0xFE50
+let	xk_dead_acute					= 0xFE51
+let	xk_dead_circumflex				= 0xFE52
+let	xk_dead_tilde					= 0xFE53
+let	xk_dead_macron					= 0xFE54
+let	xk_dead_breve					= 0xFE55
+let	xk_dead_abovedot				= 0xFE56
+let	xk_dead_diaeresis				= 0xFE57
+let	xk_dead_abovering				= 0xFE58
+let	xk_dead_doubleacute				= 0xFE59
+let	xk_dead_caron					= 0xFE5A
+let	xk_dead_cedilla					= 0xFE5B
+let	xk_dead_ogonek					= 0xFE5C
+let	xk_dead_iota					= 0xFE5D
+let	xk_dead_voiced_sound				= 0xFE5E
+let	xk_dead_semivoiced_sound			= 0xFE5F
+let	xk_dead_belowdot				= 0xFE60
+ *)
+  

@@ -76,20 +76,21 @@ and binding =
 and buffer =
   { 
     mutable buf_text : Text.t;
+
     mutable buf_name : string;
     mutable buf_filename : string option;
 
     (*s: [[Efuns.buffer]] other fields *)
     mutable buf_modified : int;
-    
+    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_last_saved : int;
-
+    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_sync : bool;
     mutable buf_mark : Text.point option;
 
     mutable buf_point : Text.point;
     mutable buf_start : Text.point;
-
+    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_finalizers : (unit -> unit) list;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_charreprs : string array; (* 256 array *)
@@ -143,7 +144,6 @@ and frame  =
     mutable frm_buffer : buffer;
     mutable frm_window : window;
 
-
     (*s: [[Efuns.frame]] other fields *)
     mutable frm_status : status;    
     mutable frm_mini_buffer : string option;
@@ -153,21 +153,25 @@ and frame  =
     (* 0 for minibuffer, 1 for normal frame *)
     mutable frm_has_status_line : int;
     (*x: [[Efuns.frame]] other fields *)
-
-    mutable frm_width : int;
-    mutable frm_height : int;
-
     mutable frm_xpos : int;
     mutable frm_ypos : int;
 
-    mutable frm_last_text_updated : int;
-    mutable frm_last_buf_updated : int;
-
+    mutable frm_width : int;
+    mutable frm_height : int;
+    (*x: [[Efuns.frame]] other fields *)
     mutable frm_prefix : key list;
 
     mutable frm_repeat_action : int;
     mutable frm_last_action : action;
-
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_cursor_x : int;
+    mutable frm_cursor_y : int;
+    mutable frm_cursor : string;
+    mutable frm_cursor_attr : Text.attribute;
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_last_text_updated : int;
+    mutable frm_last_buf_updated : int;
+    (*x: [[Efuns.frame]] other fields *)
     (* first point of the first buffer-line on screen *)
     mutable frm_start : Text.point;
     (* last point on screen, -1 if modified *)
@@ -176,19 +180,14 @@ and frame  =
     mutable frm_y_offset : int; 
     (* insert point *)
     mutable frm_point : Text.point; 
-
-    mutable frm_cursor_x : int;
-    mutable frm_cursor_y : int;
-    mutable frm_cursor : string;
-    mutable frm_cursor_attr : Text.attribute;
-
+    (*x: [[Efuns.frame]] other fields *)
     mutable frm_force_point : bool;
     mutable frm_force_start : bool;
     mutable frm_force_cursor : bool;
-
+    (*x: [[Efuns.frame]] other fields *)
     mutable frm_x_offset : int;
     mutable frm_cutline : int; (* max_int for no, else length *)
-
+    (*x: [[Efuns.frame]] other fields *)
     mutable frm_table : line_repr array;
     mutable frm_killed : bool;
     mutable frm_redraw : bool;    
@@ -237,6 +236,7 @@ and line_repr =
     mutable repr_line : Text.line;
     mutable repr_y : int;
     mutable repr_x : int;
+
     mutable repr_prev_offset : int;
     mutable repr_prev_reprs : Text.repr list;
     mutable repr_offset : int;
@@ -255,14 +255,13 @@ and top_window =
 
     (*s: [[Efuns.top_window]] other fields *)
     mutable top_name : string;
+    mutable top_display : string option (*WX_xterm.xterm_display option*);
+
     mutable top_active_frame : frame;
     mutable top_second_cursor : frame option;
-
     mutable top_mini_buffers : frame list;
 
-    mutable top_display : string option (*WX_xterm.xterm_display option*);
     mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
-
     (*
     mutable top_root : WX_root.t;
     mutable top_appli : WX_appli.t;
@@ -302,10 +301,11 @@ and window_up =
 
 (*s: type Efuns.window_down *)
 and window_down =
+| WFrame of frame
+| NoFrame of unit
+
 | HComb of window * window 
 | VComb of window * window
-| NoFrame of unit
-| WFrame of frame
 (*e: type Efuns.window_down *)
 
 (*s: type Efuns.location *)
@@ -331,9 +331,7 @@ and location =
 
     (*s: [[Efuns.location]] other fields *)
     mutable loc_counter : int;
-
-
-
+    (*x: [[Efuns.location]] other fields *)
     loc_mutex : Mutex.t;
     (*x: [[Efuns.location]] other fields *)
     loc_map : map;
@@ -496,9 +494,6 @@ let init_frames = ref []
 (*s: constant Efuns.displayname *)
 let displayname = ref ""
 (*e: constant Efuns.displayname *)
-(*s: constant Efuns.height *)
-let height = ref 27
-(*e: constant Efuns.height *)
 (*s: constant Efuns.no_init *)
 let no_init = ref false
 (*e: constant Efuns.no_init *)

@@ -522,7 +522,6 @@ let _ =
         [NormalMap, XK.xk_Insert], "overwrite_mode";
         [ControlMap, Char.code 'l'], "recenter";
 
-
         [c_x; NormalMap, Char.code 'F'], "change_font";
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";

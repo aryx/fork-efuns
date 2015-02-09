@@ -119,7 +119,6 @@ open Options
 <<constant Efuns.init_files>>
 <<constant Efuns.init_frames>>
 <<constant Efuns.displayname>>
-<<constant Efuns.height>>
 <<constant Efuns.no_init>>
   
 (*--------------------    Ressources *)
@@ -6261,10 +6260,8 @@ open Efuns
 <<toplevel Main._2>>
 
 <<toplevel Main._3>>
-  
-let _ =
-  Graphics_X11.init location !displayname
 
+<<toplevel Main._4>>
 @
 
 

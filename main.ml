@@ -21,7 +21,6 @@ let location = {
 
     loc_width = !!width;
     loc_height = !!height;
-
     loc_fg = !!foreground;
     loc_bg = !!background;
     loc_font = !!font;
@@ -87,8 +86,9 @@ let _ =
 let _ =
   Efuns.init location (* launch first hooks *)
 (*e: toplevel Main._3 *)
-  
+
+(*s: toplevel Main._4 *)
 let _ =
   Graphics_X11.init location !displayname
-
+(*e: toplevel Main._4 *)
 (*e: main.ml *)

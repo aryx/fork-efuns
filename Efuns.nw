@@ -178,6 +178,8 @@ License.
 
 \section{Acknowledgments}
 
+% Fabrice Lefessant of course
+
 
 \chapter{Overview}
 
@@ -186,24 +188,24 @@ License.
 % "Emacs is the extensible, customizable, self-documenting real-time
 % display editor."
 
-% navigating (fast, different granularities)
+% navigating in file (fast, different granularities), random access!
 % editing (inserting/deleting/moving/cut-copy-paste/transposing)
 % searching, replacing
 
 % efficient keyboard! combination of keys, macros! M-x, C-x o
 % everything with keyboard!
 
-% undo!
+% undo! multi steps undo! redo! sessions so macro-level undo
 % multi files/buffers, opening/saving/killing switching
 % multi windows (a kind of window manager!)
 
-% specialised modes: indentation, color, navigating
-%todo: semantic modes!
+% specialised "major" modes: color, font, indentation, navigating
+%todo: semantic editing/visualizing!
 
 %emacs:
 % extensible => open source, external commands
 % customizable => configuration file
-% self-documenting => not really yet? M-x a bit
+% self-documenting => not really yet? M-x a bit. Have Efuns.nw though :)
 
 % interactive!
 
@@ -267,10 +269,19 @@ License.
 
 \section{Software architecture}
 
+% the world, location that then encapsulate
+%  windows/frames, with buffers, with Text inside
+% then event loop with keyboard dispatch to the right action and
+% right focused frame, taking itself the frame in parameter
+
 \section{Loading a file}
 % scenario
 
 \section{Trace of a key press}
+% keyboard dispatch
+% action (e.g. RETURN)
+% rerendering!
+
 
 %###############################################################################
 
@@ -282,14 +293,22 @@ License.
 type text = {
     mutable text_string : string;
     mutable text_size : int; (* String.length text.text_string *)
+
+    mutable text_newlines : line array;
+    mutable text_nlines : int; (* Array.length text.text_newlines *)
+    
+    mutable text_attrs : int array;
     <<[[Text.text]] other fields>>
   } 
 @
 
+<<[[Text.text]] other fields>>=
+(* version *)    
+mutable text_modified : int;
+@
+
 %XXX
 <<[[Text.text]] other fields>>=
-mutable text_attrs : int array;
-
 mutable text_points : point list;
 
 (* g ?? *)
@@ -297,14 +316,10 @@ mutable text_gpoint : int;
 
 mutable text_gline : int;
 mutable text_gsize : int;
+@
 
-mutable text_newlines : line array;
-mutable text_nlines : int; (* Array.length text.text_newlines *)
-
-(* version *)    
-mutable text_modified : int;
+<<[[Text.text]] other fields>>=
 mutable text_clean : bool;
-
 mutable text_readonly : bool;
 @
 
@@ -321,17 +336,26 @@ and point = {
 <<type Text.line>>=
 and line = {
     mutable position : direct;
+
     mutable representation : repr list;
-    mutable modified : int; (* first modified position *)
     mutable repr_len : int;
     mutable repr_string : string;
-    mutable line_hlt : int;
+
     (* hightlighting on the line:
     0 => no hightlighting
     n => chars are hightlighted from the beginning of the line until pos n
     *)
     mutable items : item array;
+
+    <<[[Text.line]] other fields>>
   } 
+@
+% item type?
+
+%XXX
+<<[[Text.line]] other fields>>=
+mutable modified : int; (* first modified position *)
+mutable line_hlt : int;
 @
 
 %XXX?
@@ -349,8 +373,13 @@ and repr =
   } 
 @
 
+% Line.position type
+<<type Text.direct>>=
+type direct = int
+@
 
-% why not use this type in Text.text.attrs?
+
+% why not use this type in Text.text.attrs? int array -> attribute array?
 <<type Text.attribute>>=
 type attribute = int
 @
@@ -362,14 +391,13 @@ type delta = int
 <<type Text.position>>=
 type position = int
 @
+% used?
 
-<<type Text.direct>>=
-type direct = int
-@
 
 <<type Text.session>>=
 type session = int
 @
+% used?
 
 
 
@@ -381,13 +409,14 @@ and line_repr =
     mutable repr_line : Text.line;
     mutable repr_y : int;
     mutable repr_x : int;
+
     mutable repr_prev_offset : int;
     mutable repr_prev_reprs : Text.repr list;
     mutable repr_offset : int;
     mutable repr_reprs : Text.repr list;
   } 
 @
-
+% Frame.frm_table??
 
 
 
@@ -458,6 +487,7 @@ let create str =
 and buffer =
   { 
     mutable buf_text : Text.t;
+
     mutable buf_name : string;
     mutable buf_filename : string option;
 
@@ -470,15 +500,23 @@ and buffer =
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_modified : int;
-    
-mutable buf_last_saved : int;
+@
 
+%XXX    
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_last_saved : int;
+@
+
+
+<<[[Efuns.buffer]] other fields>>=
 mutable buf_sync : bool;
 mutable buf_mark : Text.point option;
 
 mutable buf_point : Text.point;
 mutable buf_start : Text.point;
+@
 
+<<[[Efuns.buffer]] other fields>>=
 mutable buf_finalizers : (unit -> unit) list;
 @
 
@@ -527,6 +565,7 @@ let create location name filename text local_map =
 mutable buf_charreprs : string array; (* 256 array *)
 @
 
+% 26 letters of the alphabet?
 <<[[Ebuffer.create()]] adjust charreprs>>=
 for i=0 to 25 do
   let s = String.make 2 '^' in
@@ -569,11 +608,13 @@ and window_up =
 
 <<type Efuns.window_down>>=
 and window_down =
+| WFrame of frame
+| NoFrame of unit
+
 | HComb of window * window 
 | VComb of window * window
-| NoFrame of unit
-| WFrame of frame
 @
+%less: why of unit?
 
 <<function Window.top>>=
 let top window = 
@@ -642,18 +683,19 @@ and top_window =
     <<[[Efuns.top_window]] other fields>>
   } 
 @
+% less: a bit weird to have top_windows with an 's'
+% diff with window? no xpos, ypos here
 
 %XXX
 <<[[Efuns.top_window]] other fields>>=
 mutable top_name : string;
+mutable top_display : string option (*WX_xterm.xterm_display option*);
+
 mutable top_active_frame : frame;
 mutable top_second_cursor : frame option;
-
 mutable top_mini_buffers : frame list;
 
-mutable top_display : string option (*WX_xterm.xterm_display option*);
 mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
-
 (*
 mutable top_root : WX_root.t;
 mutable top_appli : WX_appli.t;
@@ -686,10 +728,10 @@ and frame  =
     mutable frm_buffer : buffer;
     mutable frm_window : window;
 
-
     <<[[Efuns.frame]] other fields>>
   } 
 @
+%TODO: different sections for the frame (cursor, position, etc)
 
 <<[[Efuns.frame]] other fields>>=
 mutable frm_status : status;    
@@ -706,21 +748,40 @@ mutable frm_has_status_line : int;
 
 %XXX
 <<[[Efuns.frame]] other fields>>=
-
-mutable frm_width : int;
-mutable frm_height : int;
-
 mutable frm_xpos : int;
 mutable frm_ypos : int;
 
-mutable frm_last_text_updated : int;
-mutable frm_last_buf_updated : int;
+mutable frm_width : int;
+mutable frm_height : int;
+@
+% redundant with frm.frm__window info no?
 
+
+<<[[Efuns.frame]] other fields>>=
 mutable frm_prefix : key list;
 
 mutable frm_repeat_action : int;
 mutable frm_last_action : action;
+@
+% for undo?
 
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_cursor_x : int;
+mutable frm_cursor_y : int;
+mutable frm_cursor : string;
+mutable frm_cursor_attr : Text.attribute;
+@
+% a frame has a cursor!
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_last_text_updated : int;
+mutable frm_last_buf_updated : int;
+@
+% diff?
+
+
+<<[[Efuns.frame]] other fields>>=
 (* first point of the first buffer-line on screen *)
 mutable frm_start : Text.point;
 (* last point on screen, -1 if modified *)
@@ -729,19 +790,20 @@ mutable frm_end : Text.point;
 mutable frm_y_offset : int; 
 (* insert point *)
 mutable frm_point : Text.point; 
+@
 
-mutable frm_cursor_x : int;
-mutable frm_cursor_y : int;
-mutable frm_cursor : string;
-mutable frm_cursor_attr : Text.attribute;
-
+<<[[Efuns.frame]] other fields>>=
 mutable frm_force_point : bool;
 mutable frm_force_start : bool;
 mutable frm_force_cursor : bool;
+@
 
+<<[[Efuns.frame]] other fields>>=
 mutable frm_x_offset : int;
 mutable frm_cutline : int; (* max_int for no, else length *)
+@
 
+<<[[Efuns.frame]] other fields>>=
 mutable frm_table : line_repr array;
 mutable frm_killed : bool;
 mutable frm_redraw : bool;    
@@ -881,12 +943,12 @@ mutable top_location : location;
 
 <<[[Efuns.location]] other fields>>=
 mutable loc_counter : int;
-
-
-
-loc_mutex : Mutex.t;
 @
 
+<<[[Efuns.location]] other fields>>=
+loc_mutex : Mutex.t;
+@
+% have multiple threads? need mutual exclusion?
 
 
 
@@ -916,7 +978,6 @@ let define_action action_name action_fun =
   <<sanity check action defined twice>>
   Hashtbl.add actions action_name (FrameAction action_fun)
 @
-
 
 <<function Efuns.define_buffer_action>>=
 let define_buffer_action action_name action_fun =
@@ -1083,11 +1144,13 @@ define_action "change_font"  change_font;
 
 % mv stuff in Keyboard section? what is necessary to see before?
 
-% like for variables, different maps:
+% like for variables, have different maps for different "scopes":
 % - global
 % - major mode
 % - minor mode
 % - buffer itself (useful for dynamic setting of keys e.g. C-g in minibuffer)
+% good so that each mode can redefine bindings! specialized mode!
+% specialized keys!
 
 <<type Efuns.map>>=
 type map =
@@ -1120,7 +1183,7 @@ and binding =
 | Prefix of map
 | Unbound
 @
-
+% mutually recursive type! find map again
 
 <<function Keymap.create>>=
 let create () =
@@ -1148,8 +1211,8 @@ let get_binding buf keylist =
     <<[[Ebuffer.get_binding()]] major mode key search>>
     (let b = Keymap.get_binding buf.buf_map keylist in
       match b with
-        Prefix map -> binding := b;
-      | Function f -> binding := b; raise Exit
+        Prefix _map -> binding := b;
+      | Function _f -> binding := b; raise Exit
       | Unbound -> ());
     <<[[Ebuffer.get_binding()]] if partial map>>
     !binding
@@ -1221,53 +1284,6 @@ let _ =
   <<[[Std_efunsrc.toplevel]] set interactives_map>>
 @
 
-% ?? -> <>
-<<function Std_efunsrc.init_global_map>>=
-let init_global_map location = 
-  List.iter (fun (keys, action) ->
-      try
-        Keymap.add_global_key location keys action (execute_action action)
-      with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;
-  ) !!global_map;
-
-  <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>
-    
-  (* standard keys *)
-
-  (* Mouse *)
-  <<[[Std_efunsrc.init_global_map()]] mouse keys setup>>
-  ()
-@
-
-%  Keymap.add_global_key location [NormalMap, XK.xk_dead_circumflex]
-%    "circumflex" (char_insert_command '^');
-%dead:  let gmap = location.loc_map in 
-%
-% (* These keys depend on the next key pressed. In my case, I don't use
-%  the accents, so I prefer them to immediatly enter the good key.
-%let	xk_dead_grave					= 0xFE50
-%let	xk_dead_acute					= 0xFE51
-%let	xk_dead_circumflex				= 0xFE52
-%let	xk_dead_tilde					= 0xFE53
-%let	xk_dead_macron					= 0xFE54
-%let	xk_dead_breve					= 0xFE55
-%let	xk_dead_abovedot				= 0xFE56
-%let	xk_dead_diaeresis				= 0xFE57
-%let	xk_dead_abovering				= 0xFE58
-%let	xk_dead_doubleacute				= 0xFE59
-%let	xk_dead_caron					= 0xFE5A
-%let	xk_dead_cedilla					= 0xFE5B
-%let	xk_dead_ogonek					= 0xFE5C
-%let	xk_dead_iota					= 0xFE5D
-%let	xk_dead_voiced_sound				= 0xFE5E
-%let	xk_dead_semivoiced_sound			= 0xFE5F
-%let	xk_dead_belowdot				= 0xFE60
-% *)
-  
-
-
 % a few shortcuts
 
 %\section{[[C-h]]}
@@ -1288,7 +1304,6 @@ let c_x = (ControlMap, Char.code 'x')
 <<constant Keymap.c_c>>=
 let c_c = (ControlMap, Char.code 'c')
 @
-
 <<constant Std_efunsrc.c_c>>=
 let c_c = (ControlMap, Char.code 'c') 
 @
@@ -1376,7 +1391,6 @@ let c_c = (ControlMap, Char.code 'c')
 [NormalMap, XK.xk_Insert], "overwrite_mode";
 [ControlMap, Char.code 'l'], "recenter";
 
-
 [c_x; NormalMap, Char.code 'F'], "change_font";
 [c_x; ControlMap, Char.code 'x'], "point_at_mark";
 [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
@@ -1399,6 +1413,34 @@ let bindings_help frame =
   let window = frame.frm_window in
   change_buffer window "*bindings*"
 @
+
+
+
+
+% ?? -> <>
+<<function Std_efunsrc.init_global_map>>=
+let init_global_map location = 
+  List.iter (fun (keys, action) ->
+      try
+        Keymap.add_global_key location keys action (execute_action action)
+      with e ->
+          Log.printf "Error for action %s" action;
+          Log.exn "%s\n" e;
+  ) !!global_map;
+
+  <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>
+    
+  (* standard keys *)
+
+  (* Mouse *)
+  <<[[Std_efunsrc.init_global_map()]] mouse keys setup>>
+  ()
+@
+
+%  Keymap.add_global_key location [NormalMap, XK.xk_dead_circumflex]
+%    "circumflex" (char_insert_command '^');
+%dead:  let gmap = location.loc_map in 
+
 
 \section{Variables}
 % actually have polymorphic variables!
@@ -1476,6 +1518,7 @@ let add_hook location hook_var hook =
 
 
 
+% example:
 
 <<constant Ebuffer.create_buf_hook>>=
 let create_buf_hook = Local.create_abstr "create_buf_hook"
@@ -1498,9 +1541,10 @@ let width = define_option ["width"] "" int_option 80
 let height = define_option ["height"] "" int_option 25
 @
 
-<<constant Efuns.height>>=
-let height = ref 27
-@
+%<<constant Efuns.height>>=
+%let height = ref 27
+%@
+%redundant?
 
 <<constant Efuns.foreground>>=
 let foreground = define_option ["foreground"] "" string_option "white"
@@ -1664,7 +1708,6 @@ let location = {
 
     loc_width = !!width;
     loc_height = !!height;
-
     loc_fg = !!foreground;
     loc_bg = !!background;
     loc_font = !!font;
@@ -1686,7 +1729,14 @@ let location = {
     loc_mutex = Mutex.create ()
 } 
 @
+%less: need those loc_fonts_xxx and loc_colors_xxx?
 
+\section{The graphical window}
+
+<<toplevel Main._4>>=
+let _ =
+  Graphics_X11.init location !displayname
+@
 
 \chapter{Main Window}
 
@@ -2139,6 +2189,8 @@ let status_file frame name =
 
 \subsection{Minubuffer creation}
 
+% when it's created? each type enter M-x?
+
 % ?? -> <>
 <<function Minibuffer.create>>=
 let create frame local_map request =
@@ -2316,6 +2368,8 @@ map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 
 \section{Hooks}
 
+% see also create_buf_hook in core DS chapter
+
 <<constant Ebuffer.save_buffer_hooks>>=
 let save_buffer_hooks = define_option ["save_buffer_hooks"] "" 
     (list_option string_option)
@@ -2419,6 +2473,8 @@ let rec exec_named_buf_hooks_with_abort hooks frame =
 
 % do we need something fancy? naive brute force too slow?
 
+
+
 \section{Text attributes}
 
 <<function Text.make_attr>>=
@@ -2428,6 +2484,8 @@ let make_attr fg bg font highlighted =
   in
   attr
 @
+% 8 bits fg, 8 bigs bg, 8 bits font, 1 bit highlight
+% color map = 0 -> black, 1 -> white?
 
 <<constant Text.direct_attr>>=
 let direct_attr =  make_attr 0 1 0 false
@@ -2437,6 +2495,7 @@ let direct_attr =  make_attr 0 1 0 false
 let inverse_attr =  make_attr 1 0 0 false
 @
 
+% let no_attr = 0?
 
 <<function Text.unset_attr>>=
 let unset_attr text =
@@ -2475,17 +2534,14 @@ let set_attr tree point len attr = (* should not exceed one line *)
 
 <<function Text.get_attr>>=
 let get_attr tree point =
-  let text = tree.tree_text in    
-  let point = point.point in
-  let gpoint = text.text_gpoint in
-  let gsize = text.text_gsize in
-  let size = text.text_size in
-  let attrs = text.text_attrs in
+  let text = tree.tree_text in
   let point = 
-    if point = gpoint then point + gsize else point
+    if point.point = text.text_gpoint 
+    then point.point + text.text_gsize 
+    else point.point
   in
-  if point < size then
-    attrs.(point)
+  if point < text.text_size then
+    text.text_attrs.(point)
   else
     direct_attr
 @
@@ -2493,18 +2549,16 @@ let get_attr tree point =
 <<function Text.set_char_attr>>=
 let set_char_attr tree point attr =
   let text = tree.tree_text in    
-  let line = point.point_y in
-  let point = point.point in
-  let gpoint = text.text_gpoint in
-  let gsize = text.text_gsize in
-  let size = text.text_size in
-  let attrs = text.text_attrs in
+  let y = point.point_y in
   let point = 
-    if point = gpoint then point + gsize else point
+    if point.point = text.text_gpoint 
+    then point.point + text.text_gsize 
+    else point.point
   in
-  if point < size then
-    (cancel_repr text point line;
-      attrs.(point) <- attr)
+  if point < text.text_size then begin
+    cancel_repr text point y;
+    text.text_attrs.(point) <- attr
+  end
 @
 
 
@@ -2515,8 +2569,9 @@ loc_colors : (string,int) Hashtbl.t;
 loc_colors_names : string array;
 mutable loc_colors_n : int;
 @
+% 0 1 are used!
 
-
+% have side effect of setting the color if it's not there before!
 <<function Window.get_color>>=
 let get_color location color_name =
   try
@@ -2557,6 +2612,7 @@ loc_fonts_names : string array;
 mutable loc_fonts_n : int;
 @
 
+% similar to get_color, have the side effect of "allocating" a new font
 <<function Window.get_font>>=
 let get_font location font_name =
   try
@@ -2577,6 +2633,8 @@ let get_font location font_name =
 (* font 0 is initial font *)
   Window.get_font location !!font
 @
+
+
 
 \section{Points}
 

@@ -443,8 +443,8 @@ let get_binding buf keylist =
     (*e: [[Ebuffer.get_binding()]] major mode key search *)
     (let b = Keymap.get_binding buf.buf_map keylist in
       match b with
-        Prefix map -> binding := b;
-      | Function f -> binding := b; raise Exit
+        Prefix _map -> binding := b;
+      | Function _f -> binding := b; raise Exit
       | Unbound -> ());
     (*s: [[Ebuffer.get_binding()]] if partial map *)
     if buf.buf_map_partial then
