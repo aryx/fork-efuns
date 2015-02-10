@@ -180,23 +180,24 @@ let create_without_top location window mini buf =
   let height = window.win_height in
 
   let frm_start = Text.dup_point buf.buf_text buf.buf_start in
-  let frm_end = Text.dup_point buf.buf_text buf.buf_start in
-  let point = Text.dup_point buf.buf_text buf.buf_point in
+  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in
+  let point     = Text.dup_point buf.buf_text buf.buf_point in
 
   buf.buf_shared <- buf.buf_shared + 1;
 
   (*s: [[Frame.create_without_top()]] let status *)
   let status = {
-      status_string = String.make 256 '-';
-      status_modified = true;
-      status_format = !status_format;
-      stat_col = -1;
       stat_name = "";
       stat_file = "";
+      stat_col = -1;
       stat_line = -1;
+      status_modified = true;
       stat_modified = (buf.buf_last_saved = version buf.buf_text);
       stat_modes = [];
       stat_mode = dummy_mode;
+
+      status_format = !status_format;
+      status_string = String.make 256 '-';
     } in
   String.blit editname 0 status.status_string 5 (String.length editname);
   (*e: [[Frame.create_without_top()]] let status *)
@@ -225,9 +226,7 @@ let create_without_top location window mini buf =
       frm_cursor = String.make 1 ' ';
       frm_cursor_attr = Text.direct_attr;
       
-      frm_force_point = true;
       frm_force_start = false;
-      frm_force_cursor = false;
       
       frm_x_offset = 0;
       frm_cutline = width - 1;

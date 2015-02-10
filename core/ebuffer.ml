@@ -111,31 +111,31 @@ let create location name filename text local_map =
       buf_name = name;
       buf_filename = filename;
 
-      buf_modified = 0;
       buf_last_saved = version text;
-      buf_history = [];
 
-      buf_charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i));
-      buf_map_partial = true;
-      buf_map = local_map;
-
-      buf_sync = false;
-      buf_mark = None;
       buf_point = Text.add_point text;
       buf_start = Text.add_point text;
-      buf_shared = 0;
 
+      buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
+      buf_map_partial = true;
+      buf_map = local_map;
       buf_syntax_table = default_syntax_table;
-      buf_finalizers = [];
       buf_vars = Local.vars ();
-
-      buf_location = location;
-
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
-    } in
-  Hashtbl.add location.loc_buffers name buf;
 
+      buf_modified = 0;
+      buf_history = [];
+      buf_sync = false;
+      buf_mark = None;
+      buf_shared = 0;
+      buf_finalizers = [];
+
+      buf_location = location;
+    } in
+  (*s: [[Ebuffer.create()]] adjust location global fields *)
+  Hashtbl.add location.loc_buffers name buf;
+  (*e: [[Ebuffer.create()]] adjust location global fields *)
   (*s: [[Ebuffer.create()]] adjust charreprs *)
   for i=0 to 25 do
     let s = String.make 2 '^' in
@@ -452,7 +452,8 @@ let get_binding buf keylist =
         match b with
           Prefix map -> binding := b;
         | Function f -> binding := b; raise Exit
-        | Unbound -> ());
+        | Unbound -> ()
+      );
     (*e: [[Ebuffer.get_binding()]] if partial map *)
     !binding
   with

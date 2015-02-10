@@ -29,7 +29,6 @@ let location = {
     loc_dirname = Sys.getcwd ();
 
     loc_vars = Local.vars ();
-    loc_counter = 0;
     
     loc_fonts = Hashtbl.create 37;
     loc_fonts_names = Array.create 256 "";

@@ -301,7 +301,7 @@ let tree_insert tree t gline nbr = ()
 <<function Text.low_insert>>=
 let low_insert tree point str =
   let text = tree.tree_text in
-  if text.text_readonly then failwith "Buffer is read-only";
+  <<[[Text.low_insert()]] fail if readonly buffer>>
   move_gpoint_to text point;
   let gpoint = text.text_gpoint in
   let gsize = text.text_gsize in
@@ -371,7 +371,7 @@ let low_insert tree point str =
 <<function Text.low_delete>>=
 let low_delete tree point len =
   let text = tree.tree_text in      
-  if text.text_readonly then failwith "Buffer is read-only";
+  <<[[Text.low_insert()]] fail if readonly buffer>>
   move_gpoint_to text point;
   let gsize = text.text_gsize in
   let size = text.text_size in
@@ -693,6 +693,10 @@ let to_string tree =
   str
 @
 
+<<[[Text.text]] other fields>>=
+mutable text_clean : bool;
+@
+
 <<function Text.clean_text>>=
 let clean_text text =
   if not text.text_clean then
@@ -782,6 +786,22 @@ let (dummy_line : line) =
     items = [||];
   } 
 @
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_charreprs : string array; (* 256 array *)
+@
+
+% 26 letters of the alphabet?
+<<[[Ebuffer.create()]] adjust charreprs>>=
+for i=0 to 25 do
+  let s = String.make 2 '^' in
+  s.[1] <- Char.chr (97+i);    
+  buf.buf_charreprs.(i) <- s
+done;
+buf.buf_charreprs.(9) <- String.make !tab_size ' ';
+@
+
+
 
 <<function Text.compute_representation>>=
 (* On devrait reprendre la representation la ou elle est ... *)
@@ -1136,16 +1156,8 @@ open WX_text
 (* from WX_types *)
 type font = string
 type color = string
-(* from WX_text *)
-type item =
-  String of item_attr list * int
-| RealString of item_attr list * string
-(*| Widget of contained array*)
-
-and item_attr =
-  Font of font
-| Foreground of color
-| Background of color
+<<type Text.item>>
+<<type Text.item_attr>>
 
 
   
@@ -1937,6 +1949,7 @@ let rec print_list list =
 @
 
 
+% Frame.create_without_top -> <>
 <<function Frame.install>>=
 let install window frame =
   if window.win_mini = (frame.frm_mini_buffer = None) then
@@ -2071,6 +2084,16 @@ let update_line top_window frame repr_string y =
   in
   iter 0 (line_repr.repr_offset+frame.frm_x_offset) line_repr.repr_reprs
 @
+
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_cursor_x : int;
+mutable frm_cursor_y : int;
+mutable frm_cursor : string;
+mutable frm_cursor_attr : Text.attribute;
+@
+% a frame has a cursor!
+
 
 <<function Frame.set_cursor>>=
 let set_cursor frame =
@@ -4002,6 +4025,10 @@ let open_process cmd =
       (pid,inchan, outchan)
 @
 
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_sync : bool;
+@
+
 <<function System.system>>=
 let system buf_name location cmd end_action =
   let (pid,inc,outc) = open_process cmd in
@@ -4115,6 +4142,10 @@ open Multi_frames
 
 
 \subsection*{[[features/select.ml]]}
+
+<<[[Efuns.top_window]] other fields>>=
+mutable top_second_cursor : frame option;
+@
 
 <<function Select.select_yes_or_no>>=
 let select_yes_or_no frame request action =
@@ -5559,6 +5590,13 @@ let clear_message top_window =
 <<function Top_window.dummy_action>>=
 let dummy_action frame = ()
 @
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_prefix : key list;
+mutable frm_repeat_action : int;
+mutable frm_last_action : action;
+@
+% for undo?
 
 <<function Top_window.try_map>>=
 let try_map frame key =

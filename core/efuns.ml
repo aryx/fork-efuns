@@ -81,19 +81,8 @@ and buffer =
     mutable buf_filename : string option;
 
     (*s: [[Efuns.buffer]] other fields *)
-    mutable buf_modified : int;
-    (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_last_saved : int;
-    (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_sync : bool;
-    mutable buf_mark : Text.point option;
-
     mutable buf_point : Text.point;
     mutable buf_start : Text.point;
-    (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_finalizers : (unit -> unit) list;
-    (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_charreprs : string array; (* 256 array *)
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_shared : int; (* number of frames for that buffer *)
     (*x: [[Efuns.buffer]] other fields *)
@@ -106,13 +95,25 @@ and buffer =
     (* see also Loc.vars *)    
     mutable buf_vars : vars;
     (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_last_saved : int;
+    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_syntax_table : bool array;
     (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_modified : int;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_mark : Text.point option;
+    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_history : (int * Text.action) list;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_finalizers : (unit -> unit) list;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_major_mode : major_mode;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_minor_modes : minor_mode list;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_charreprs : string array; (* 256 array *)
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_sync : bool;
     (*e: [[Efuns.buffer]] other fields *)
   } 
 (*e: type Efuns.buffer *)
@@ -142,32 +143,25 @@ and minor_mode = {
 and frame  =
   {
     mutable frm_buffer : buffer;
-    mutable frm_window : window;
-
     (*s: [[Efuns.frame]] other fields *)
-    mutable frm_status : status;    
-    mutable frm_mini_buffer : string option;
-    (*x: [[Efuns.frame]] other fields *)
-    (* 0 for no scrollbar, 2 for scrollbar *)
-    mutable frm_has_scrollbar : int;
-    (* 0 for minibuffer, 1 for normal frame *)
-    mutable frm_has_status_line : int;
-    (*x: [[Efuns.frame]] other fields *)
     mutable frm_xpos : int;
     mutable frm_ypos : int;
 
     mutable frm_width : int;
     mutable frm_height : int;
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_prefix : key list;
-
-    mutable frm_repeat_action : int;
-    mutable frm_last_action : action;
+    mutable frm_window : window;
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_cursor_x : int;
-    mutable frm_cursor_y : int;
-    mutable frm_cursor : string;
-    mutable frm_cursor_attr : Text.attribute;
+    mutable frm_location : location;
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_status : status;    
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_mini_buffer : string option;
+    (*x: [[Efuns.frame]] other fields *)
+    (* 0 for no scrollbar, 2 for scrollbar *)
+    mutable frm_has_scrollbar : int;
+    (* 0 for minibuffer, 1 for normal frame *)
+    mutable frm_has_status_line : int;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
@@ -181,48 +175,52 @@ and frame  =
     (* insert point *)
     mutable frm_point : Text.point; 
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_force_point : bool;
     mutable frm_force_start : bool;
-    mutable frm_force_cursor : bool;
-    (*x: [[Efuns.frame]] other fields *)
     mutable frm_x_offset : int;
     mutable frm_cutline : int; (* max_int for no, else length *)
-    (*x: [[Efuns.frame]] other fields *)
     mutable frm_table : line_repr array;
-    mutable frm_killed : bool;
     mutable frm_redraw : bool;    
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_location : location;
+    mutable frm_killed : bool;
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_cursor_x : int;
+    mutable frm_cursor_y : int;
+    mutable frm_cursor : string;
+    mutable frm_cursor_attr : Text.attribute;
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_prefix : key list;
+    mutable frm_repeat_action : int;
+    mutable frm_last_action : action;
     (*e: [[Efuns.frame]] other fields *)
   } 
 (*e: type Efuns.frame *)
 
 (*s: type Efuns.status_info *)
 and status_info =
-  StatModified
 | StatName
+| StatFile
 | StatLine
 | StatCol
-| StatFile
+| StatModified
 | StatMode
 (*e: type Efuns.status_info *)
 
 (*s: type Efuns.status *)
 and status =
   { 
-    (* the string! --- ... --- *)
-    mutable status_string : string;
-    mutable status_format : (status_info * (int * int)) list;
-
-    mutable status_modified : bool;
-    mutable stat_modified : bool;
-
     mutable stat_name : string;
     mutable stat_file : string;
     mutable stat_line : int;
     mutable stat_col : int;
 
+    mutable status_modified : bool;
+    mutable stat_modified : bool;
     (*s: [[Efuns.status]] other fields *)
+    mutable status_format : (status_info * (int * int)) list;
+    (*x: [[Efuns.status]] other fields *)
+    (* the string! --- ... --- *)
+    mutable status_string : string;
+    (*x: [[Efuns.status]] other fields *)
     mutable stat_mode : major_mode;
     (*x: [[Efuns.status]] other fields *)
     mutable stat_modes : minor_mode list;
@@ -256,21 +254,15 @@ and top_window =
     (*s: [[Efuns.top_window]] other fields *)
     mutable top_name : string;
     mutable top_display : string option (*WX_xterm.xterm_display option*);
-
-    mutable top_active_frame : frame;
-    mutable top_second_cursor : frame option;
-    mutable top_mini_buffers : frame list;
-
     mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
-    (*
-    mutable top_root : WX_root.t;
-    mutable top_appli : WX_appli.t;
-    mutable top_scrollbar : WX_adjust.t;
-    mutable top_term : WX_xterm.t;
-    top_attrs : WX_xterm.xterm_gc option array;
-    *)
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_location : location;
+    (*x: [[Efuns.top_window]] other fields *)
+    mutable top_mini_buffers : frame list;
+    (*x: [[Efuns.top_window]] other fields *)
+    mutable top_active_frame : frame;
+    (*x: [[Efuns.top_window]] other fields *)
+    mutable top_second_cursor : frame option;
     (*e: [[Efuns.top_window]] other fields *)
   } 
 (*e: type Efuns.top_window *)
@@ -287,7 +279,7 @@ and window =
     (*s: [[Efuns.window]] other fields *)
     mutable win_down : window_down;
     mutable win_up : window_up;
-
+    (*x: [[Efuns.window]] other fields *)
     mutable win_mini : bool;
     (*e: [[Efuns.window]] other fields *)
   } 
@@ -319,6 +311,7 @@ and location =
     (* list??*)
     mutable loc_windows : top_window list;
 
+    (* pwd of efuns when started *)
     mutable loc_dirname : string;
 
     (* general look, configurable via -xxx command line options or .efunsrc *)
@@ -330,8 +323,6 @@ and location =
     mutable loc_font : string;
 
     (*s: [[Efuns.location]] other fields *)
-    mutable loc_counter : int;
-    (*x: [[Efuns.location]] other fields *)
     loc_mutex : Mutex.t;
     (*x: [[Efuns.location]] other fields *)
     loc_map : map;

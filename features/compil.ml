@@ -70,7 +70,8 @@ let next_error top_frame =
   match !compilation_frame with
     None -> Top_window.message top_window "No compilation started"
   | Some (frame, error_point, cdir) ->      
-      if frame.frm_killed then unkill (cut_frame top_frame) frame;
+      if frame.frm_killed 
+      then unkill (cut_frame top_frame) frame;
       let buf = frame.frm_buffer in
       let find_error = try
           get_local buf find_error
@@ -161,7 +162,8 @@ let compile find_error_fun frame =
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill location new_frame.frm_buffer;
-            if new_frame.frm_killed then cut_frame frame
+            if new_frame.frm_killed 
+            then cut_frame frame
             else new_frame.frm_window 
       in
       Unix.chdir cdir;
@@ -217,7 +219,8 @@ let grep frame =
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill location new_frame.frm_buffer;
-            if new_frame.frm_killed then cut_frame frame
+            if new_frame.frm_killed 
+            then cut_frame frame
             else new_frame.frm_window 
       in
       Unix.chdir cdir;

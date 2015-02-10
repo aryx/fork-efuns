@@ -19,8 +19,10 @@ let create_at_top xpos ypos width height =
     win_ypos = ypos;
     win_width = width;
     win_height = height;
+
     win_down = NoFrame (); 
     win_up = Window window;
+
     win_mini = false;
   } in
   window
@@ -37,6 +39,7 @@ let create mini up_window xpos ypos width height =
 
   win_down = NoFrame (); 
   win_up = up_window;
+
   win_mini = mini;
   }
 (*e: function Window.create *)

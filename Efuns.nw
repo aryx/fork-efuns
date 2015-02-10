@@ -13,6 +13,7 @@
 %------------------------------------------------------------------------------
 
 %thx to LP, changed for the better a few things:
+% - removed deadcode (frm_force_point, frm_force_cursor, loc_counter)
 
 %thx to codemap/codegraph/scheck:
 % - TODO use cg to reduce backward deps, introduce globals.c, utils.c,
@@ -36,9 +37,9 @@
 %    * TODO [[xxx]] other fields, [[xxx]] extra fields
 % - read Extra section, identify concepts, first TOC
 % - distribute parts of the Extra section in the main file
-% - TODO understand main(), LP split main, improve TOC
-% - TODO understand main functions, LP split, cluster, improve TOC
-% - TODO LP split the structures, use datalog for flow to field info
+% - SEMI understand main(), LP split main, improve TOC
+% - SEMI understand main functions, LP split, cluster, improve TOC
+% - SEMI LP split the structures, use datalog for flow to field info
 % - TODO aspecify advanced features! remove useless features
 % - TODO add figures
 % - TODO add explanations
@@ -287,7 +288,12 @@ License.
 
 \chapter{Core Data Structures}
 
+% text -> buffer -> frame -> window -> top_window
+
 \section{Text}
+
+% text -> line -> repr | item
+% with attrs at each level (text_attr, attr, item_attr)
 
 <<type Text.text>>=
 type text = {
@@ -296,148 +302,35 @@ type text = {
 
     mutable text_newlines : line array;
     mutable text_nlines : int; (* Array.length text.text_newlines *)
-    
-    mutable text_attrs : int array;
     <<[[Text.text]] other fields>>
   } 
 @
+% will see line later
+
+
+
 
 <<[[Text.text]] other fields>>=
 (* version *)    
 mutable text_modified : int;
 @
-
-%XXX
-<<[[Text.text]] other fields>>=
-mutable text_points : point list;
-
-(* g ?? *)
-mutable text_gpoint : int;
-
-mutable text_gline : int;
-mutable text_gsize : int;
-@
-
-<<[[Text.text]] other fields>>=
-mutable text_clean : bool;
-mutable text_readonly : bool;
-@
-
-
-<<type Text.point>>=
-and point = {
-    mutable point : int;
-    mutable point_y : int;
-  }
-@
-% not point_x ?
-
-%XXX?
-<<type Text.line>>=
-and line = {
-    mutable position : direct;
-
-    mutable representation : repr list;
-    mutable repr_len : int;
-    mutable repr_string : string;
-
-    (* hightlighting on the line:
-    0 => no hightlighting
-    n => chars are hightlighted from the beginning of the line until pos n
-    *)
-    mutable items : item array;
-
-    <<[[Text.line]] other fields>>
-  } 
-@
-% item type?
-
-%XXX
-<<[[Text.line]] other fields>>=
-mutable modified : int; (* first modified position *)
-mutable line_hlt : int;
-@
-
-%XXX?
-<<type Text.repr>>=
-and repr = 
-  { 
-    repr_line_pos : int;   (* pos of repr in Text.t string *)
-    repr_line_len : int;   (* len of repr in Text.t string *)
-    
-    mutable repr_attr : int;    (* common attribute *)
-    repr_charsize : int; (* common size *)
-    
-    repr_size : int;
-    repr_pos : int;  (* pos of repr in representation string *)
-  } 
-@
-
-% Line.position type
-<<type Text.direct>>=
-type direct = int
-@
-
-
-% why not use this type in Text.text.attrs? int array -> attribute array?
-<<type Text.attribute>>=
-type attribute = int
-@
-
-<<type Text.delta>>=
-type delta = int
-@
-
-<<type Text.position>>=
-type position = int
-@
-% used?
-
-
-<<type Text.session>>=
-type session = int
-@
-% used?
-
-
-
-
-%XXX?
-<<type Efuns.line_repr>>=
-and line_repr =
-  { 
-    mutable repr_line : Text.line;
-    mutable repr_y : int;
-    mutable repr_x : int;
-
-    mutable repr_prev_offset : int;
-    mutable repr_prev_reprs : Text.repr list;
-    mutable repr_offset : int;
-    mutable repr_reprs : Text.repr list;
-  } 
-@
-% Frame.frm_table??
-
-
+%less: type version = int; ?
 
 <<function Text.version>>=
 let version tree = 
   let text = tree.tree_text in
   text.text_modified
 @
+% tree? because of wx_text stuff
+
 
 <<function Text.nbre_lines>>=
 let nbre_lines tree = 
   let text = tree.tree_text in
   text.text_nlines - 2
 @
-% - 2? why?
+% - 2? why? because has some empty sentinels?
 
-<<function Text.size>>=
-let size tree = 
-  let text = tree.tree_text in
-  text.text_size - text.text_gsize
-@
 
 
 %ctor
@@ -450,19 +343,15 @@ let create str =
     {
       text_string = str;
       text_size = String.length str;
-
+      text_newlines = newlines;
+      text_nlines = nlines;
       text_attrs = attrs;
+      text_modified = 0;
       
       text_points = [];
-      
       text_gpoint = 0;
       text_gline = 0;
       text_gsize = 0;
-      
-      text_newlines = newlines;
-      text_nlines = nlines;
-      
-      text_modified = 0;
       text_clean = false;
       text_history = [];
       text_readonly = false;
@@ -482,6 +371,7 @@ let create str =
 %is stored in the Text.t type."
 
 
+
 <<type Efuns.buffer>>=
 (* a buffer containing a file in Text.t *)
 and buffer =
@@ -497,28 +387,30 @@ and buffer =
 % string option because have some buffers like *Messages*
 % that are not connected to a file
 
+% diff with Text? 
+% - have a name, Text is really just the content.
+%    here it's connected to a file. 
+% - it has also a buf_point (and later a frame will have a cursor),
+%   see below
+% - it has a major mode, minor modes, a keymap, local variables
+%   see in next chapters
 
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_modified : int;
+
+% point is an important notion? y?
+<<type Text.point>>=
+and point = {
+    mutable point : int;
+    mutable point_y : int;
+  }
 @
-
-%XXX    
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_last_saved : int;
-@
-
+% not point_x ?
 
 <<[[Efuns.buffer]] other fields>>=
-mutable buf_sync : bool;
-mutable buf_mark : Text.point option;
-
 mutable buf_point : Text.point;
 mutable buf_start : Text.point;
 @
+% which will be the save value of frm_point
 
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_finalizers : (unit -> unit) list;
-@
 
 
 
@@ -531,54 +423,141 @@ let create location name filename text local_map =
       buf_name = name;
       buf_filename = filename;
 
-      buf_modified = 0;
       buf_last_saved = version text;
-      buf_history = [];
 
-      buf_charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i));
-      buf_map_partial = true;
-      buf_map = local_map;
-
-      buf_sync = false;
-      buf_mark = None;
       buf_point = Text.add_point text;
       buf_start = Text.add_point text;
-      buf_shared = 0;
 
+      buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
+      buf_map_partial = true;
+      buf_map = local_map;
       buf_syntax_table = default_syntax_table;
-      buf_finalizers = [];
       buf_vars = Local.vars ();
-
-      buf_location = location;
-
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
-    } in
-  Hashtbl.add location.loc_buffers name buf;
 
+      buf_modified = 0;
+      buf_history = [];
+      buf_sync = false;
+      buf_mark = None;
+      buf_shared = 0;
+      buf_finalizers = [];
+
+      buf_location = location;
+    } in
+  <<[[Ebuffer.create()]] adjust location global fields>>
   <<[[Ebuffer.create()]] adjust charreprs>>
   <<[[Ebuffer.create()]] run hooks>>
   buf
 @
 
+
+
+\section{Frames}
+% It's not frame in emacs terminology.
+% It's really a window, but with not just
+%  the geometric info, it packs together geometric info (window type)
+%  and buffer info (buffer type)
+% The cursor is here! not in the buffer.
+
+% can have different windows/frames over a single buffer.
+% convenient so can view different parts of the file at once.
+
+% "A frame is a text window with a buffer inside."
+
+<<type Efuns.frame>>=
+(* a frame: a view of a buffer for a window *)
+and frame  =
+  {
+    mutable frm_buffer : buffer;
+    <<[[Efuns.frame]] other fields>>
+  } 
+@
+%less: different sections for the frame (cursor, position, etc)
+%dead: mutable frm_force_point : bool;
+%dead: mutable frm_force_cursor : bool;
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_xpos : int;
+mutable frm_ypos : int;
+
+mutable frm_width : int;
+mutable frm_height : int;
+@
+% seems redundant with frm.frm__window info no?
+
 <<[[Efuns.buffer]] other fields>>=
-mutable buf_charreprs : string array; (* 256 array *)
+mutable buf_shared : int; (* number of frames for that buffer *)
 @
 
-% 26 letters of the alphabet?
-<<[[Ebuffer.create()]] adjust charreprs>>=
-for i=0 to 25 do
-  let s = String.make 2 '^' in
-  s.[1] <- Char.chr (97+i);    
-  buf.buf_charreprs.(i) <- s
-done;
-buf.buf_charreprs.(9) <- String.make !tab_size ' ';
+<<function Frame.create_without_top>>=
+let create_without_top location window mini buf =
+  let width = window.win_width in
+  let height = window.win_height in
+
+  let frm_start = Text.dup_point buf.buf_text buf.buf_start in
+  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in
+  let point     = Text.dup_point buf.buf_text buf.buf_point in
+
+  buf.buf_shared <- buf.buf_shared + 1;
+
+  <<[[Frame.create_without_top()]] let status>>
+
+  let frame =
+    { frm_buffer = buf;
+      frm_window = window;
+
+      frm_location = location;
+
+      frm_last_text_updated = 0;
+      frm_last_buf_updated = 0;
+      
+      frm_prefix = [];
+      
+      frm_repeat_action = 0;
+      frm_last_action = Keymap.dummy_action;
+      
+      frm_start = frm_start;
+      frm_end = frm_end;
+      frm_y_offset = 0;
+      frm_point = point;
+
+      frm_cursor_x = 0;
+      frm_cursor_y = 0;
+      frm_cursor = String.make 1 ' ';
+      frm_cursor_attr = Text.direct_attr;
+      
+      frm_force_start = false;
+      
+      frm_x_offset = 0;
+      frm_cutline = width - 1;
+      
+      frm_has_scrollbar = 0;
+      frm_has_status_line = 1;
+      frm_status = status;
+      
+      frm_xpos = window.win_xpos;
+      frm_ypos = window.win_ypos;
+      frm_width = width;
+      frm_height = height;
+
+      frm_table = [||];
+      frm_killed = false;
+      frm_mini_buffer = mini;
+      frm_redraw = true;
+    } 
+  in
+  <<[[Frame.create_without_top()]] adjust status of frame>>
+
+  install window frame;
+  frame
 @
 
 
 \section{Windows}
 % It's a window in emacs terminology. And it's really
 % just the geometry part.
+
 
 <<type Efuns.window>>=
 and window =
@@ -593,18 +572,16 @@ and window =
   } 
 @
 
+<<[[Efuns.frame]] other fields>>=
+mutable frm_window : window;
+@
+
+
 <<[[Efuns.window]] other fields>>=
 mutable win_down : window_down;
 mutable win_up : window_up;
-
-mutable win_mini : bool;
 @
 
-<<type Efuns.window_up>>=
-and window_up =
-  Window of window
-| TopWindow of top_window
-@
 
 <<type Efuns.window_down>>=
 and window_down =
@@ -615,6 +592,13 @@ and window_down =
 | VComb of window * window
 @
 %less: why of unit?
+
+<<type Efuns.window_up>>=
+and window_up =
+  Window of window
+| TopWindow of top_window
+@
+
 
 <<function Window.top>>=
 let top window = 
@@ -640,6 +624,7 @@ let create mini up_window xpos ypos width height =
 
   win_down = NoFrame (); 
   win_up = up_window;
+
   win_mini = mini;
   }
 @
@@ -653,8 +638,10 @@ let create_at_top xpos ypos width height =
     win_ypos = ypos;
     win_width = width;
     win_height = height;
+
     win_down = NoFrame (); 
     win_up = Window window;
+
     win_mini = false;
   } in
   window
@@ -686,204 +673,26 @@ and top_window =
 % less: a bit weird to have top_windows with an 's'
 % diff with window? no xpos, ypos here
 
-%XXX
 <<[[Efuns.top_window]] other fields>>=
 mutable top_name : string;
 mutable top_display : string option (*WX_xterm.xterm_display option*);
-
-mutable top_active_frame : frame;
-mutable top_second_cursor : frame option;
-mutable top_mini_buffers : frame list;
-
 mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
-(*
-mutable top_root : WX_root.t;
-mutable top_appli : WX_appli.t;
-mutable top_scrollbar : WX_adjust.t;
-mutable top_term : WX_xterm.t;
-top_attrs : WX_xterm.xterm_gc option array;
-*)
 @
 
+%(*
+%mutable top_root : WX_root.t;
+%mutable top_appli : WX_appli.t;
+%mutable top_scrollbar : WX_adjust.t;
+%mutable top_term : WX_xterm.t;
+%top_attrs : WX_xterm.xterm_gc option array;
+%*)
 
-
-
-
-\section{Frames}
-% It's not frame in emacs terminology.
-% It's really a window, but with not just
-%  the geometric info, it packs together geometric info (window type)
-%  and buffer info (buffer type)
-% The cursor is here! not in the buffer.
-
-% can have different windows/frames over a single buffer.
-% convenient so can view different parts of the file at once.
-
-% "A frame is a text window with a buffer inside."
-
-<<type Efuns.frame>>=
-(* a frame: a view of a buffer for a window *)
-and frame  =
-  {
-    mutable frm_buffer : buffer;
-    mutable frm_window : window;
-
-    <<[[Efuns.frame]] other fields>>
-  } 
-@
-%TODO: different sections for the frame (cursor, position, etc)
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_status : status;    
-mutable frm_mini_buffer : string option;
-@
-
-<<[[Efuns.frame]] other fields>>=
-(* 0 for no scrollbar, 2 for scrollbar *)
-mutable frm_has_scrollbar : int;
-(* 0 for minibuffer, 1 for normal frame *)
-mutable frm_has_status_line : int;
-@
-
-
-%XXX
-<<[[Efuns.frame]] other fields>>=
-mutable frm_xpos : int;
-mutable frm_ypos : int;
-
-mutable frm_width : int;
-mutable frm_height : int;
-@
-% redundant with frm.frm__window info no?
-
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_prefix : key list;
-
-mutable frm_repeat_action : int;
-mutable frm_last_action : action;
-@
-% for undo?
-
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_cursor_x : int;
-mutable frm_cursor_y : int;
-mutable frm_cursor : string;
-mutable frm_cursor_attr : Text.attribute;
-@
-% a frame has a cursor!
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_last_text_updated : int;
-mutable frm_last_buf_updated : int;
-@
-% diff?
-
-
-<<[[Efuns.frame]] other fields>>=
-(* first point of the first buffer-line on screen *)
-mutable frm_start : Text.point;
-(* last point on screen, -1 if modified *)
-mutable frm_end : Text.point; 
-(* offset(+/-) of screen-lines after frm_start *)
-mutable frm_y_offset : int; 
-(* insert point *)
-mutable frm_point : Text.point; 
-@
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_force_point : bool;
-mutable frm_force_start : bool;
-mutable frm_force_cursor : bool;
-@
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_x_offset : int;
-mutable frm_cutline : int; (* max_int for no, else length *)
-@
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_table : line_repr array;
-mutable frm_killed : bool;
-mutable frm_redraw : bool;    
-@
-
-
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_shared : int; (* number of frames for that buffer *)
-@
-
-<<function Frame.create_without_top>>=
-let create_without_top location window mini buf =
-  let width = window.win_width in
-  let height = window.win_height in
-
-  let frm_start = Text.dup_point buf.buf_text buf.buf_start in
-  let frm_end = Text.dup_point buf.buf_text buf.buf_start in
-  let point = Text.dup_point buf.buf_text buf.buf_point in
-
-  buf.buf_shared <- buf.buf_shared + 1;
-
-  <<[[Frame.create_without_top()]] let status>>
-
-  let frame =
-    { frm_buffer = buf;
-      frm_window = window;
-
-      frm_location = location;
-
-      frm_last_text_updated = 0;
-      frm_last_buf_updated = 0;
-      
-      frm_prefix = [];
-      
-      frm_repeat_action = 0;
-      frm_last_action = Keymap.dummy_action;
-      
-      frm_start = frm_start;
-      frm_end = frm_end;
-      frm_y_offset = 0;
-      frm_point = point;
-
-      frm_cursor_x = 0;
-      frm_cursor_y = 0;
-      frm_cursor = String.make 1 ' ';
-      frm_cursor_attr = Text.direct_attr;
-      
-      frm_force_point = true;
-      frm_force_start = false;
-      frm_force_cursor = false;
-      
-      frm_x_offset = 0;
-      frm_cutline = width - 1;
-      
-      frm_has_scrollbar = 0;
-      frm_has_status_line = 1;
-      frm_status = status;
-      
-      frm_xpos = window.win_xpos;
-      frm_ypos = window.win_ypos;
-      frm_width = width;
-      frm_height = height;
-
-      frm_table = [||];
-      frm_killed = false;
-      frm_mini_buffer = mini;
-      frm_redraw = true;
-    } 
-  in
-  <<[[Frame.create_without_top()]] adjust status of frame>>
-
-  install window frame;
-  frame
-@
 
 
 \section{The world}
 % full state
 
-% called location in lefessant's terminology
+% called location in Lefessant's terminology
 
 %"All the editor information is organised inside one structure: the location.
 %The location grants access to all other structures inside the editor. This
@@ -903,6 +712,7 @@ and location =
     (* list??*)
     mutable loc_windows : top_window list;
 
+    (* pwd of efuns when started *)
     mutable loc_dirname : string;
 
     (* general look, configurable via -xxx command line options or .efunsrc *)
@@ -919,31 +729,29 @@ and location =
 %(*    
 %    loc_vars_table : (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t;
 %  *)  
+%dead: mutable loc_counter : int;
+
+
+<<[[Ebuffer.create()]] adjust location global fields>>=
+Hashtbl.add location.loc_buffers name buf;
+@
 
 
 
 <<[[Efuns.buffer]] other fields>>=
 buf_location : location;
 @
-
-% so can access the global world info from a frame
-%todo: but what if location was global, then even easier
-% to access global info
 <<[[Efuns.frame]] other fields>>=
 mutable frm_location : location;
 @
-
 <<[[Efuns.top_window]] other fields>>=
 mutable top_location : location;
 @
 
+%so can access the global world info from a frame
+%todo: but what if location was global, then even easier
+% to access global info
 
-
-
-
-<<[[Efuns.location]] other fields>>=
-mutable loc_counter : int;
-@
 
 <<[[Efuns.location]] other fields>>=
 loc_mutex : Mutex.t;
@@ -1222,6 +1030,25 @@ let get_binding buf keylist =
 % see Keymap.get_binding later *)
 
 
+%\section{Partial maps}
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_map_partial : bool;
+@
+% but always true no?
+<<[[Ebuffer.get_binding()]] if partial map>>=
+if buf.buf_map_partial then
+  (let b = Keymap.get_binding buf.buf_location.loc_map keylist in
+    match b with
+      Prefix map -> binding := b;
+    | Function f -> binding := b; raise Exit
+    | Unbound -> ()
+  );
+@
+
+
+
+
+
 <<function Keymap.add_global_key>>=
 let add_global_key location = 
   interactive location.loc_map 
@@ -1230,6 +1057,8 @@ let add_global_key location =
 let add_local_key buf = 
   interactive buf.buf_map 
 @
+% each major mode can then use those primitives to offer
+% a specialized experience!
 
 % add_local_key | add_global_key | ...-> <>?
 <<function Keymap.interactive>>=
@@ -1244,21 +1073,6 @@ let interactive map   keylist name f =
 
 
 
-%\section{Partial maps}
-
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_map_partial : bool;
-@
-% but always true no?
-
-<<[[Ebuffer.get_binding()]] if partial map>>=
-if buf.buf_map_partial then
-  (let b = Keymap.get_binding buf.buf_location.loc_map keylist in
-    match b with
-      Prefix map -> binding := b;
-    | Function f -> binding := b; raise Exit
-    | Unbound -> ());
-@
 
 
 
@@ -1417,7 +1231,7 @@ let bindings_help frame =
 
 
 
-% ?? -> <>
+% start_hook -> (Std_efunsrc._5 -> add_start_hook(<>) )
 <<function Std_efunsrc.init_global_map>>=
 let init_global_map location = 
   List.iter (fun (keys, action) ->
@@ -1663,6 +1477,7 @@ let _ =
 @
 
 \section{Startup hooks}
+% hooks on location creation, hence they they a location in parameter
 
 % init -> List.iter run <>
 <<constant Efuns.start_hooks>>=
@@ -1716,7 +1531,6 @@ let location = {
     loc_dirname = Sys.getcwd ();
 
     loc_vars = Local.vars ();
-    loc_counter = 0;
     
     loc_fonts = Hashtbl.create 37;
     loc_fonts_names = Array.create 256 "";
@@ -1892,6 +1706,10 @@ let save_buffer frame =
 @
 
 
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_last_saved : int;
+@
+
 <<function Ebuffer.save>>=
 let save buf =
   exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
@@ -2042,13 +1860,36 @@ help_menu := [|
 
 \section{Status Line}
 
+<<[[Efuns.frame]] other fields>>=
+mutable frm_status : status;    
+@
+
+<<type Efuns.status>>=
+and status =
+  { 
+    mutable stat_name : string;
+    mutable stat_file : string;
+    mutable stat_line : int;
+    mutable stat_col : int;
+
+    mutable status_modified : bool;
+    mutable stat_modified : bool;
+    <<[[Efuns.status]] other fields>>
+  }
+@
+
+
+<<[[Efuns.status]] other fields>>=
+mutable status_format : (status_info * (int * int)) list;
+@
+
 <<type Efuns.status_info>>=
 and status_info =
-  StatModified
 | StatName
+| StatFile
 | StatLine
 | StatCol
-| StatFile
+| StatModified
 | StatMode
 @
 % also clock, load, etc
@@ -2065,51 +1906,30 @@ let status_format = ref [
 @
 % meaning?
 
-<<type Efuns.status>>=
-and status =
-  { 
-    (* the string! --- ... --- *)
-    mutable status_string : string;
-    mutable status_format : (status_info * (int * int)) list;
+<<[[Frame.create_without_top()]] let status>>=
+let status = {
+    stat_name = "";
+    stat_file = "";
+    stat_col = -1;
+    stat_line = -1;
+    status_modified = true;
+    stat_modified = (buf.buf_last_saved = version buf.buf_text);
+    stat_modes = [];
+    stat_mode = dummy_mode;
 
-    mutable status_modified : bool;
-    mutable stat_modified : bool;
-
-    mutable stat_name : string;
-    mutable stat_file : string;
-    mutable stat_line : int;
-    mutable stat_col : int;
-
-    <<[[Efuns.status]] other fields>>
-  }
+    status_format = !status_format;
+    status_string = String.make 256 '-';
+  } in
+String.blit editname 0 status.status_string 5 (String.length editname);
 @
 
 <<constant Frame.editname>>=
 let editname = "Efuns:"
 @
 
-
-<<[[Frame.create_without_top()]] let status>>=
-let status = {
-    status_string = String.make 256 '-';
-    status_modified = true;
-    status_format = !status_format;
-    stat_col = -1;
-    stat_name = "";
-    stat_file = "";
-    stat_line = -1;
-    stat_modified = (buf.buf_last_saved = version buf.buf_text);
-    stat_modes = [];
-    stat_mode = dummy_mode;
-  } in
-String.blit editname 0 status.status_string 5 (String.length editname);
-@
-
-
 <<[[Frame.create_without_top()]] adjust status of frame>>=
 status_name frame buf.buf_name;
 @
-
 
 
 <<function Frame.status_name>>=
@@ -2122,7 +1942,9 @@ let status_name frame name =
     end
 @
 
-% status_name | ... -> <>
+
+
+% status_name | status_modified | ... -> <>
 <<function Frame.status_print>>=
 let status_print status str stat_type =
   status.status_modified <- true;
@@ -2135,7 +1957,11 @@ let status_print status str stat_type =
     Not_found -> ()
 @
 
-
+<<[[Efuns.status]] other fields>>=
+(* the string! --- ... --- *)
+mutable status_string : string;
+@
+% this will then be the only thing used in the rendering
 
 
 % ?? -> <>
@@ -2191,6 +2017,11 @@ let status_file frame name =
 
 % when it's created? each type enter M-x?
 
+<<[[Efuns.top_window]] other fields>>=
+mutable top_mini_buffers : frame list;
+@
+
+
 % ?? -> <>
 <<function Minibuffer.create>>=
 let create frame local_map request =
@@ -2205,7 +2036,7 @@ let create frame local_map request =
 
   let mini_buf = buf_create location mini_text local_map in
 
-  let mini_window = Window.create true (TopWindow top_window) 
+  let mini_window = Window.create true (*mini*) (TopWindow top_window) 
     qlen (top_window.top_height - 1)
     (top_window.top_width - qlen) 1 in
   let mini_frame = Frame.create mini_window (Some request) mini_buf
@@ -2219,6 +2050,11 @@ let create frame local_map request =
   mini_frame
 @
 
+
+
+<<[[Efuns.window]] other fields>>=
+mutable win_mini : bool;
+@
 
 
 % ?? -> <>
@@ -2475,7 +2311,199 @@ let rec exec_named_buf_hooks_with_abort hooks frame =
 
 
 
+<<type Text.line>>=
+and line = {
+    mutable position : direct;
+
+    mutable representation : repr list;
+    mutable repr_len : int;
+    mutable repr_string : string;
+
+    (* hightlighting on the line:
+    0 => no hightlighting
+    n => chars are hightlighted from the beginning of the line until pos n
+    *)
+    mutable items : item array;
+
+    <<[[Text.line]] other fields>>
+  } 
+@
+
+%XXX
+<<[[Text.line]] other fields>>=
+mutable modified : int; (* first modified position *)
+mutable line_hlt : int;
+@
+
+
+
+
+%(* from WX_text *)
+<<type Text.item>>=
+type item =
+  String     of item_attr list * int
+| RealString of item_attr list * string
+@
+%(*| Widget of contained array*)
+
+<<type Text.item_attr>>=
+and item_attr =
+  Font of font
+| Foreground of color
+| Background of color
+@
+
+
+
+
+%XXX?
+<<type Text.repr>>=
+and repr = 
+  { 
+    repr_line_pos : int;   (* pos of repr in Text.t string *)
+    repr_line_len : int;   (* len of repr in Text.t string *)
+    
+    mutable repr_attr : int;    (* common attribute *)
+    repr_charsize : int; (* common size *)
+    
+    repr_size : int;
+    repr_pos : int;  (* pos of repr in representation string *)
+  } 
+@
+
+% Line.position type
+<<type Text.direct>>=
+type direct = int
+@
+
+
+% why not use this type in Text.text.attrs? int array -> attribute array?
+<<type Text.attribute>>=
+type attribute = int
+@
+
+<<type Text.delta>>=
+type delta = int
+@
+
+<<type Text.position>>=
+type position = int
+@
+% used?
+
+
+<<type Text.session>>=
+type session = int
+@
+% used?
+
+
+
+
+%XXX?
+<<type Efuns.line_repr>>=
+and line_repr =
+  { 
+    mutable repr_line : Text.line;
+    mutable repr_y : int;
+    mutable repr_x : int;
+
+    mutable repr_prev_offset : int;
+    mutable repr_prev_reprs : Text.repr list;
+    mutable repr_offset : int;
+    mutable repr_reprs : Text.repr list;
+  } 
+@
+% Frame.frm_table??
+
+
+
+
+
+\section{Points}
+
+<<[[Text.text]] other fields>>=
+mutable text_points : point list;
+@
+
+<<function Text.add_point>>=
+let add_point tree =
+  let text = tree.tree_text in      
+  let point = {
+      point = 0;
+      point_y = 0;
+    } in    
+  text.text_points <- point :: text.text_points;
+  point
+@
+
+<<function Text.dup_point>>=
+let dup_point tree point =
+  let text = tree.tree_text in      
+  let p = {
+      point = point.point;
+      point_y = point.point_y
+    } in
+  text.text_points <- p :: text.text_points;
+  p
+@
+
+<<function Text.remove_point>>=
+let remove_point tree p =
+  let text = tree.tree_text in      
+  text.text_points <- 
+    (List.fold_left (fun points point ->
+        if point == p then points else point :: points) 
+    [] text.text_points)
+@
+
+
+
+
+
+
+<<function Text.goto_point>>=
+let goto_point text p1 p2 =
+  p1.point <- p2.point;
+  p1.point_y <- p2.point_y
+@
+
+
+
+%    let gap_end = gpoint + text.text_gsize in
+
+<<[[Text.text]] other fields>>=
+(* g for gap *)
+mutable text_gpoint : int;
+mutable text_gline : int;
+mutable text_gsize : int;
+@
+
+<<function Text.size>>=
+let size tree = 
+  let text = tree.tree_text in
+  text.text_size - text.text_gsize
+@
+
+
+<<function Text.move_point_to>>=
+let move_point_to tree point p =
+  let text = tree.tree_text in    
+  let _x,y = find_xy tree text.text_gpoint text.text_gline p in
+  point.point <- p;
+  point.point_y <- y
+@
+
+
 \section{Text attributes}
+
+<<[[Text.text]] other fields>>=
+mutable text_attrs : int array;
+@
+% int, because need to be efficient!
+% attribute is an encoded int, direct_attr = black fg, white bg, no highlight
+% regular font. Want efficient representation here because each
+% character will have this attribute?
 
 <<function Text.make_attr>>=
 let make_attr fg bg font highlighted =
@@ -2636,58 +2664,50 @@ let get_font location font_name =
 
 
 
-\section{Points}
-
-<<function Text.add_point>>=
-let add_point tree =
-  let text = tree.tree_text in      
-  let point = {
-      point = 0;
-      point_y = 0;
-    } in    
-  text.text_points <- point :: text.text_points;
-  point
-@
-
-<<function Text.dup_point>>=
-let dup_point tree point =
-  let text = tree.tree_text in      
-  let p = {
-      point = point.point;
-      point_y = point.point_y
-    } in
-  text.text_points <- p :: text.text_points;
-  p
-@
-
-<<function Text.goto_point>>=
-let goto_point text p1 p2 =
-  p1.point <- p2.point;
-  p1.point_y <- p2.point_y
-@
-
-<<function Text.move_point_to>>=
-let move_point_to tree point p =
-  let text = tree.tree_text in    
-  let gpoint = text.text_gpoint in
-  let gline = text.text_gline in
-  let x,y = find_xy tree gpoint gline p in
-  point.point <- p;
-  point.point_y <- y
-@
-
-<<function Text.remove_point>>=
-let remove_point tree p =
-  let text = tree.tree_text in      
-  text.text_points <- 
-    (List.fold_left (fun points point ->
-        if point == p then points else point :: points) 
-    [] text.text_points)
-@
-
 \section{Text Display}
 
 % the redisplay function!!!
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_mini_buffer : string option;
+@
+
+<<[[Efuns.frame]] other fields>>=
+(* 0 for no scrollbar, 2 for scrollbar *)
+mutable frm_has_scrollbar : int;
+(* 0 for minibuffer, 1 for normal frame *)
+mutable frm_has_status_line : int;
+@
+
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_last_text_updated : int;
+mutable frm_last_buf_updated : int;
+@
+% diff?
+
+<<[[Efuns.frame]] other fields>>=
+(* first point of the first buffer-line on screen *)
+mutable frm_start : Text.point;
+(* last point on screen, -1 if modified *)
+mutable frm_end : Text.point; 
+(* offset(+/-) of screen-lines after frm_start *)
+mutable frm_y_offset : int; 
+(* insert point *)
+mutable frm_point : Text.point; 
+@
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_force_start : bool;
+mutable frm_x_offset : int;
+mutable frm_cutline : int; (* max_int for no, else length *)
+mutable frm_table : line_repr array;
+mutable frm_redraw : bool;    
+@
+
+<<[[Efuns.top_window]] other fields>>=
+mutable top_active_frame : frame;
+@
 
 <<function Frame.update>>=
 let update top_window frame =
@@ -2812,6 +2832,7 @@ let update top_window frame =
          request 0 (String.length request) Text.direct_attr
 @
 
+\section{Cursor}
 
 
 \chapter{Input Managment}
@@ -3663,6 +3684,16 @@ let mark_at_point frame =
 @
 
 
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_modified : int;
+@
+% diff with text_modified? seems to be about modification of the
+% frame property itself, not the underlying buffer
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_mark : Text.point option;
+@
+
 <<function Ebuffer.set_mark>>=
 let set_mark buf point =
   let text = buf.buf_text in
@@ -4304,6 +4335,10 @@ let kill location buf =
   buf.buf_shared <- -1
 @
 
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_finalizers : (unit -> unit) list;
+@
+
 
 
 \section{Cycling buffers}
@@ -4624,6 +4659,10 @@ let delete_window frame =
 <<function Frame.kill_all>>=
 let kill_all window =
   Window.iter kill window
+@
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_killed : bool;
 @
 
 %XXX
@@ -5011,7 +5050,8 @@ let grep frame =
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill location new_frame.frm_buffer;
-            if new_frame.frm_killed then cut_frame frame
+            if new_frame.frm_killed 
+            then cut_frame frame
             else new_frame.frm_window 
       in
       Unix.chdir cdir;
@@ -5073,7 +5113,8 @@ let compile find_error_fun frame =
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill location new_frame.frm_buffer;
-            if new_frame.frm_killed then cut_frame frame
+            if new_frame.frm_killed 
+            then cut_frame frame
             else new_frame.frm_window 
       in
       Unix.chdir cdir;
@@ -5094,7 +5135,8 @@ let next_error top_frame =
   match !compilation_frame with
     None -> Top_window.message top_window "No compilation started"
   | Some (frame, error_point, cdir) ->      
-      if frame.frm_killed then unkill (cut_frame top_frame) frame;
+      if frame.frm_killed 
+      then unkill (cut_frame top_frame) frame;
       let buf = frame.frm_buffer in
       let find_error = try
           get_local buf find_error
@@ -5339,6 +5381,10 @@ let escaped s =
 
 \subsection{Read-only}
 
+<<[[Text.text]] other fields>>=
+mutable text_readonly : bool;
+@
+
 <<function Text.readonly>>=
 let readonly tree = 
   let text = tree.tree_text in    
@@ -5349,6 +5395,11 @@ let readonly tree =
 let toggle_readonly tree = 
   let text = tree.tree_text in    
   text.text_readonly <- not text.text_readonly
+@
+
+<<[[Text.low_insert()]] fail if readonly buffer>>=
+if text.text_readonly 
+then failwith "Buffer is read-only";
 @
 
 \chapter{Advanced Topics}

@@ -34,16 +34,17 @@ open WX_text
 (* from WX_types *)
 type font = string
 type color = string
-(* from WX_text *)
+(*s: type Text.item *)
 type item =
-  String of item_attr list * int
+  String     of item_attr list * int
 | RealString of item_attr list * string
-(*| Widget of contained array*)
-
+(*e: type Text.item *)
+(*s: type Text.item_attr *)
 and item_attr =
   Font of font
 | Foreground of color
 | Background of color
+(*e: type Text.item_attr *)
 
 
   
@@ -113,24 +114,24 @@ type text = {
 
     mutable text_newlines : line array;
     mutable text_nlines : int; (* Array.length text.text_newlines *)
-    
-    mutable text_attrs : int array;
     (*s: [[Text.text]] other fields *)
     (* version *)    
     mutable text_modified : int;
     (*x: [[Text.text]] other fields *)
     mutable text_points : point list;
-
-    (* g ?? *)
+    (*x: [[Text.text]] other fields *)
+    (* g for gap *)
     mutable text_gpoint : int;
-
     mutable text_gline : int;
     mutable text_gsize : int;
     (*x: [[Text.text]] other fields *)
-    mutable text_clean : bool;
-    mutable text_readonly : bool;
+    mutable text_attrs : int array;
     (*x: [[Text.text]] other fields *)
     mutable text_history : action list;
+    (*x: [[Text.text]] other fields *)
+    mutable text_readonly : bool;
+    (*x: [[Text.text]] other fields *)
+    mutable text_clean : bool;
     (*e: [[Text.text]] other fields *)
   } 
 (*e: type Text.text *)
@@ -406,7 +407,10 @@ let tree_insert tree t gline nbr = ()
 (*s: function Text.low_insert *)
 let low_insert tree point str =
   let text = tree.tree_text in
-  if text.text_readonly then failwith "Buffer is read-only";
+  (*s: [[Text.low_insert()]] fail if readonly buffer *)
+  if text.text_readonly 
+  then failwith "Buffer is read-only";
+  (*e: [[Text.low_insert()]] fail if readonly buffer *)
   move_gpoint_to text point;
   let gpoint = text.text_gpoint in
   let gsize = text.text_gsize in
@@ -476,7 +480,10 @@ let low_insert tree point str =
 (*s: function Text.low_delete *)
 let low_delete tree point len =
   let text = tree.tree_text in      
-  if text.text_readonly then failwith "Buffer is read-only";
+  (*s: [[Text.low_insert()]] fail if readonly buffer *)
+  if text.text_readonly 
+  then failwith "Buffer is read-only";
+  (*e: [[Text.low_insert()]] fail if readonly buffer *)
   move_gpoint_to text point;
   let gsize = text.text_gsize in
   let size = text.text_size in
@@ -617,19 +624,15 @@ let create str =
     {
       text_string = str;
       text_size = String.length str;
-
+      text_newlines = newlines;
+      text_nlines = nlines;
       text_attrs = attrs;
+      text_modified = 0;
       
       text_points = [];
-      
       text_gpoint = 0;
       text_gline = 0;
       text_gsize = 0;
-      
-      text_newlines = newlines;
-      text_nlines = nlines;
-      
-      text_modified = 0;
       text_clean = false;
       text_history = [];
       text_readonly = false;
@@ -718,9 +721,7 @@ let goto_point text p1 p2 =
 (*s: function Text.move_point_to *)
 let move_point_to tree point p =
   let text = tree.tree_text in    
-  let gpoint = text.text_gpoint in
-  let gline = text.text_gline in
-  let x,y = find_xy tree gpoint gline p in
+  let _x,y = find_xy tree text.text_gpoint text.text_gline p in
   point.point <- p;
   point.point_y <- y
 (*e: function Text.move_point_to *)
