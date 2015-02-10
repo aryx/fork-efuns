@@ -180,7 +180,7 @@ let create_without_top location window mini buf =
   let height = window.win_height in
 
   let frm_start = Text.dup_point buf.buf_text buf.buf_start in
-  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in
+  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in (* ?? *)
   let point     = Text.dup_point buf.buf_text buf.buf_point in
 
   buf.buf_shared <- buf.buf_shared + 1;
@@ -206,44 +206,42 @@ let create_without_top location window mini buf =
     { frm_buffer = buf;
       frm_window = window;
 
-      frm_location = location;
-
-      frm_last_text_updated = 0;
-      frm_last_buf_updated = 0;
-      
-      frm_prefix = [];
-      
-      frm_repeat_action = 0;
-      frm_last_action = Keymap.dummy_action;
-      
-      frm_start = frm_start;
-      frm_end = frm_end;
-      frm_y_offset = 0;
-      frm_point = point;
-
-      frm_cursor_x = 0;
-      frm_cursor_y = 0;
-      frm_cursor = String.make 1 ' ';
-      frm_cursor_attr = Text.direct_attr;
-      
-      frm_force_start = false;
-      
-      frm_x_offset = 0;
-      frm_cutline = width - 1;
-      
-      frm_has_scrollbar = 0;
-      frm_has_status_line = 1;
-      frm_status = status;
-      
       frm_xpos = window.win_xpos;
       frm_ypos = window.win_ypos;
       frm_width = width;
       frm_height = height;
 
+      frm_start = frm_start;
+      frm_end = frm_end;
+      frm_point = point;
+      frm_x_offset = 0;
+      frm_y_offset = 0;
+
+      frm_cursor_x = 0;
+      frm_cursor_y = 0;
+      frm_cursor = String.make 1 ' ';
+      frm_cursor_attr = Text.direct_attr;
+
+      frm_last_text_updated = 0;
+      frm_last_buf_updated = 0;
+
+      frm_has_scrollbar = 0;
+      frm_has_status_line = 1;
+      frm_status = status;
+      frm_mini_buffer = mini;
+      
+      frm_prefix = [];
+      
+      frm_repeat_action = 0;
+      frm_last_action = Keymap.dummy_action;
+    
+      frm_force_start = false;
+      frm_cutline = width - 1;
       frm_table = [||];
       frm_killed = false;
-      frm_mini_buffer = mini;
       frm_redraw = true;
+
+      frm_location = location;
     } 
   in
   (*s: [[Frame.create_without_top()]] adjust status of frame *)
@@ -495,6 +493,7 @@ let update top_window frame =
 
   let start = frame.frm_start in
   let point = frame.frm_point in
+
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
@@ -597,7 +596,7 @@ let update top_window frame =
     None -> 
       let status = frame.frm_status in
       status_line frame (point_line text frame.frm_point);
-      status_col frame (point_col text frame.frm_point);
+      status_col frame  (point_col text frame.frm_point);
       status_modified frame (version text <> buf.buf_last_saved);
       status_name frame buf.buf_name;
       status_major_mode frame;

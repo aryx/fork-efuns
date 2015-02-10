@@ -2,10 +2,6 @@
 
 \subsection*{[[core/efuns.ml]]}
 
-<<constant Efuns.resname>>=
-let resname = ["Efuns";"efuns"]
-@
-%dead?
 
 %-------------------------------------------------------------
 
@@ -33,8 +29,7 @@ open Local
 <<exception Efuns.UnboundKey>>
 
 <<type Efuns.map>>
-
-and keySym = int
+<<type Efuns.keySym>>
 <<type Efuns.key>>
 
 <<type Efuns.action>>
@@ -102,11 +97,9 @@ and keySym = int
 (*************************************************************************)
                (*      Initialization      *)
 (*************************************************************************)
-
   
 (* Les variables importantes dans le reste du programme. *)
 open Options
-  
   
 <<constant Efuns.load_path>>
 
@@ -123,8 +116,6 @@ open Options
   
 (*--------------------    Ressources *)
 <<constant Efuns.xdefaults>>
-
-<<constant Efuns.resname>>
 
 <<constant Efuns.x_res>>
 <<toplevel Efuns._2>>
@@ -162,13 +153,11 @@ open Options
 
 <<function Efuns.define_buffer_action>>
 
-<<constant Efuns.no_action>>
 <<function Efuns.get_action>>
 
 <<function Efuns.execute_action>>
 
 <<function Efuns.execute_buffer_action>>
-      
       
 <<function Efuns.string_to_regex>>
     
@@ -177,13 +166,6 @@ open Options
 
 
 \subsection*{[[core/text.ml]]}
-
-<<type Text.t>>=
-(* type t = tree tree_desc   *)
-@
-% tree? tree_desc? in Wx_text?
-
-
 
 <<function Text.point_col>>=
 let point_col tree point = 
@@ -1237,7 +1219,7 @@ let make_text text lines =
 
 type t = tree_desc
   
-<<type Text.t>>
+(* type t = tree tree_desc   *)
 
 (* external id: t -> tree tree_desc = "%identity" *)
 
@@ -1949,7 +1931,7 @@ let rec print_list list =
 @
 
 
-% Frame.create_without_top -> <>
+% Frame.create_without_top | one_frame | v_cut | ... -> <>
 <<function Frame.install>>=
 let install window frame =
   if window.win_mini = (frame.frm_mini_buffer = None) then

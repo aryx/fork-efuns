@@ -2,8 +2,6 @@ open Common
 
 open Efuns
 
-
-
 let init location displayname =
   Graphics.open_graph (spf " ");
   Graphics.set_window_title displayname;
@@ -28,7 +26,7 @@ let init location displayname =
 
   let _ = Interactive.create_bindings location in
 
-  (* open the fisrt buffers *)
+  (* open the first buffers *)
   !init_files +> List.iter (fun name ->
     let _ = Frame.load_file top_window.top_windows name in ()
   );
@@ -77,7 +75,6 @@ let init location displayname =
         in
         let evt = WX_xterm.XTKeyPress (modifiers, spf "%c" charkey, code) in
         Top_window.handler top_window () evt
-
     )
   in
   loop ()

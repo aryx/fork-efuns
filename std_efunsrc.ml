@@ -295,7 +295,6 @@ let _ =
   define_action "unset_attr" unset_attr;
   define_action "recenter"  recenter;
   define_action "revert_buffer" reload;
-  define_action "check_file" check_file;
   (* C-x map *)
   define_action "point_at_mark"  point_at_mark;
   (* C-M map *)
@@ -307,6 +306,8 @@ let _ =
   (*x: misc actions *)
   (* C-h map *)
   define_action "help_bindings"  Frame.bindings_help;
+  (*x: misc actions *)
+  define_action "check_file" check_file;
   (*x: misc actions *)
   (* C-x map *)
   define_action "exit"  exit_efuns; 

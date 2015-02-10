@@ -36,10 +36,11 @@ type map =
     (*e: [[Efuns.map]] other fields *)
   } 
 (*e: type Efuns.map *)
-
+(*s: type Efuns.keySym *)
 and keySym = int
+(*e: type Efuns.keySym *)
 (*s: type Efuns.key *)
-and key = mod_ident * (*Xtypes.*)keySym
+and key = mod_ident * keySym
 (*e: type Efuns.key *)
 
 (*s: type Efuns.action *)
@@ -84,6 +85,8 @@ and buffer =
     mutable buf_point : Text.point;
     mutable buf_start : Text.point;
     (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_modified : int;
+    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_shared : int; (* number of frames for that buffer *)
     (*x: [[Efuns.buffer]] other fields *)
     buf_location : location;
@@ -100,8 +103,6 @@ and buffer =
     mutable buf_syntax_table : bool array;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_mark : Text.point option;
-    (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_modified : int;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_history : (int * Text.action) list;
     (*x: [[Efuns.buffer]] other fields *)
@@ -150,11 +151,21 @@ and frame  =
     mutable frm_width : int;
     mutable frm_height : int;
     (*x: [[Efuns.frame]] other fields *)
+    (* insert point *)
+    mutable frm_point : Text.point; 
+    (*x: [[Efuns.frame]] other fields *)
     mutable frm_window : window;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_location : location;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_status : status;    
+    (*x: [[Efuns.frame]] other fields *)
+    (* first point of the first buffer-line on screen *)
+    mutable frm_start : Text.point;
+    (* last point on screen, -1 if modified *)
+    mutable frm_end : Text.point;
+    (* offset(+/-) of screen-lines after frm_start *)
+    mutable frm_y_offset : int;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_mini_buffer : string option;
     (*x: [[Efuns.frame]] other fields *)
@@ -165,15 +176,6 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
-    (*x: [[Efuns.frame]] other fields *)
-    (* first point of the first buffer-line on screen *)
-    mutable frm_start : Text.point;
-    (* last point on screen, -1 if modified *)
-    mutable frm_end : Text.point; 
-    (* offset(+/-) of screen-lines after frm_start *)
-    mutable frm_y_offset : int; 
-    (* insert point *)
-    mutable frm_point : Text.point; 
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_force_start : bool;
     mutable frm_x_offset : int;
@@ -444,11 +446,9 @@ let add_hook location hook_var hook =
 (*************************************************************************)
                (*      Initialization      *)
 (*************************************************************************)
-
   
 (* Les variables importantes dans le reste du programme. *)
 open Options
-  
   
 (*s: constant Efuns.load_path *)
 let load_path = define_option ["efuns_path"] 
@@ -495,10 +495,6 @@ let no_init = ref false
 let xdefaults = try Sys.getenv "XUSERFILESEARCHPATH" with
     Not_found -> Filename.concat Utils.homedir ".Xdefaults"
 (*e: constant Efuns.xdefaults *)
-
-(*s: constant Efuns.resname *)
-let resname = ["Efuns";"efuns"]
-(*e: constant Efuns.resname *)
 
 (*s: constant Efuns.x_res *)
 (*let x_res = Xrm.create ()*)
@@ -556,15 +552,12 @@ let check = ref false
 let _ =
  Arg.parse [
    (*s: [[main()]] command line options *)
-   "-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
-   "--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
+   "-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+   "--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
    (*x: [[main()]] command line options *)
    "-check", Arg.Set check, ": only for testing";
    (*x: [[main()]] command line options *)
      "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
-   (*x: [[main()]] command line options *)
-     "-I",Arg.String (fun s -> load_path =:= 
-         (string_to_path s) @ !!load_path), "<path>: Load Path";
    (*x: [[main()]] command line options *)
    "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
    "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
@@ -574,14 +567,17 @@ let _ =
    "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
    (*x: [[main()]] command line options *)
      "-q", Arg.Set no_init,": Don't load init files";
+   (*x: [[main()]] command line options *)
+     "-I",Arg.String (fun s -> load_path =:= 
+         (string_to_path s) @ !!load_path), "<path>: Load Path";
    (*e: [[main()]] command line options *)
  ] 
  (fun name -> init_files := name :: !init_files) 
-  "A small editor entirely written in Objective Caml 
-   by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
-   http ://pauillac.inria.fr/efuns
-   Options :
-  " 
+ "A small editor entirely written in Objective Caml 
+  by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
+  http ://pauillac.inria.fr/efuns
+  Options :
+ " 
 (*e: toplevel Efuns._3 *)
 (*s: toplevel Efuns._4 *)
 let _ =
@@ -645,12 +641,10 @@ let define_buffer_action action_name action_fun =
   Hashtbl.add actions action_name (BufferAction action_fun)
 (*e: function Efuns.define_buffer_action *)
 
-(*s: constant Efuns.no_action *)
-let no_action = BufferAction (fun _ -> ())
-(*e: constant Efuns.no_action *)
 (*s: function Efuns.get_action *)
 let get_action action =
-  try Hashtbl.find actions action with Not_found -> no_action
+  try Hashtbl.find actions action 
+  with Not_found -> BufferAction (fun _ -> ())
 (*e: function Efuns.get_action *)
 
 (*s: function Efuns.execute_action *)
@@ -668,7 +662,6 @@ let execute_buffer_action action buf =
       Printf.printf "Can't apply action %s on buffer" action;
       print_newline ()
 (*e: function Efuns.execute_buffer_action *)
-      
       
 (*s: function Efuns.string_to_regex *)
 let string_to_regex s = s, Str.regexp s

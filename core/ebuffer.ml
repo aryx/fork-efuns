@@ -111,20 +111,20 @@ let create location name filename text local_map =
       buf_name = name;
       buf_filename = filename;
 
-      buf_last_saved = version text;
-
       buf_point = Text.add_point text;
       buf_start = Text.add_point text;
 
+      buf_last_saved = version text;
+      buf_modified = 0;
+
       buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
-      buf_map_partial = true;
       buf_map = local_map;
+      buf_map_partial = true;
       buf_syntax_table = default_syntax_table;
       buf_vars = Local.vars ();
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
 
-      buf_modified = 0;
       buf_history = [];
       buf_sync = false;
       buf_mark = None;
@@ -441,9 +441,10 @@ let get_binding buf keylist =
     (*e: [[Ebuffer.get_binding()]] major mode key search *)
     (let b = Keymap.get_binding buf.buf_map keylist in
       match b with
-        Prefix _map -> binding := b;
+      | Prefix _map -> binding := b;
       | Function _f -> binding := b; raise Exit
-      | Unbound -> ());
+      | Unbound -> ()
+    );
     (*s: [[Ebuffer.get_binding()]] if partial map *)
     if buf.buf_map_partial then
       (let b = Keymap.get_binding buf.buf_location.loc_map keylist in

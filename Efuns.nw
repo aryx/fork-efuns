@@ -8,11 +8,11 @@
 \finaltrue\verbosefalse % see also other newif in Macros.tex
 
 %------------------------------------------------------------------------------
-%history: 
+%history:
 %------------------------------------------------------------------------------
 
 %thx to LP, changed for the better a few things:
-% - removed deadcode (frm_force_point, frm_force_cursor, loc_counter)
+% - removed deadcode (frm_force_point, frm_force_cursor, loc_counter, resname)
 
 %thx to codemap/codegraph/scheck:
 % - TODO use cg to reduce backward deps, introduce globals.c, utils.c,
@@ -110,6 +110,7 @@ Principia Softwarica: The Text Editor Efuns
 Yoann Padioleau\\
 \texttt{yoann.padioleau@gmail.com}
 }
+% add Fabrice?
 
 \maketitle 
 \onecolumn
@@ -149,7 +150,8 @@ Why? Because I think it makes you a better programmer if
 you fully understand how things work under the hood.
 
 % good cos written in ocaml! more high level, and while
-% want kernel in C, make more sense for an app to use ocaml!
+% you want to write a kernel in C, it makes more sense for an app 
+% to use ocaml!
 
 Here are other candidates that were considered but ultimately discarded:
 \begin{itemize}
@@ -178,7 +180,7 @@ License.
 
 \section{Acknowledgments}
 
-% Fabrice Lefessant of course
+% Fabrice Le Fessant of course
 
 
 \chapter{Overview}
@@ -216,6 +218,8 @@ License.
 % - mouse (menu, window clicks)
 
 \section{[[efuns]] services}
+
+% ./efuns foo.txt
 
 \section{Code organization}
 
@@ -271,13 +275,17 @@ License.
 
 % the world, location that then encapsulate
 %  windows/frames, with buffers, with Text inside
+%
 % then event loop with keyboard dispatch to the right action and
 % right focused frame, taking itself the frame in parameter
+%
+% redisplay engine.
 
 \section{Loading a file}
 % scenario
 
 \section{Trace of a key press}
+
 % keyboard dispatch
 % action (e.g. RETURN)
 % rerendering!
@@ -289,9 +297,9 @@ License.
 
 % text -> buffer -> frame -> window -> top_window
 
-\section{Text}
+\section{Texts}
 
-% text -> line -> repr | item
+% text -> line -> ... repr | item
 % with attrs at each level (text_attr, attr, item_attr)
 
 <<type Text.text>>=
@@ -338,6 +346,7 @@ let create str =
   let newlines = compute_newlines str in
   let nlines = Array.length newlines in
   let attrs = (Array.create (String.length str) direct_attr) in
+
   let text =
     {
       text_string = str;
@@ -368,8 +377,6 @@ let create str =
 %"The buffer corresponds either to a file (thus to a filename) either to
 %a virtual file (for example, compilation messages). The file text itself
 %is stored in the Text.t type."
-
-
 
 <<type Efuns.buffer>>=
 (* a buffer containing a file in Text.t *)
@@ -403,14 +410,27 @@ and point = {
   }
 @
 % not point_x ?
+% it's a charpos or a line/col?
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_point : Text.point;
 mutable buf_start : Text.point;
 @
 % which will be the save value of frm_point
+% when switch between buffer, the current frame is a view
+% on different buffer, but when you go back to a buffer you
+% want the cursor to be at the same position you used to be
+% and the screen at the same starting point.
 
+% there are list of points maintained by the Text itself, why?
+% because of gap things can move so you need to update all
+% the points?
 
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_modified : int;
+@
+% diff with text_modified? seems to be about modification of the
+% frame property itself, not the underlying buffer
 
 
 <<function Ebuffer.create>>=
@@ -422,20 +442,20 @@ let create location name filename text local_map =
       buf_name = name;
       buf_filename = filename;
 
-      buf_last_saved = version text;
-
       buf_point = Text.add_point text;
       buf_start = Text.add_point text;
 
+      buf_last_saved = version text;
+      buf_modified = 0;
+
       buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
-      buf_map_partial = true;
       buf_map = local_map;
+      buf_map_partial = true;
       buf_syntax_table = default_syntax_table;
       buf_vars = Local.vars ();
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
 
-      buf_modified = 0;
       buf_history = [];
       buf_sync = false;
       buf_mark = None;
@@ -487,9 +507,16 @@ mutable frm_height : int;
 % xpos are in line x col dimentions, same for width and height,
 % not pixels.
 
+<<[[Efuns.frame]] other fields>>=
+(* insert point *)
+mutable frm_point : Text.point; 
+@
+% cursor!
+
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_shared : int; (* number of frames for that buffer *)
 @
+
 
 <<function Frame.create_without_top>>=
 let create_without_top location window mini buf =
@@ -497,7 +524,7 @@ let create_without_top location window mini buf =
   let height = window.win_height in
 
   let frm_start = Text.dup_point buf.buf_text buf.buf_start in
-  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in
+  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in (* ?? *)
   let point     = Text.dup_point buf.buf_text buf.buf_point in
 
   buf.buf_shared <- buf.buf_shared + 1;
@@ -508,44 +535,42 @@ let create_without_top location window mini buf =
     { frm_buffer = buf;
       frm_window = window;
 
-      frm_location = location;
-
-      frm_last_text_updated = 0;
-      frm_last_buf_updated = 0;
-      
-      frm_prefix = [];
-      
-      frm_repeat_action = 0;
-      frm_last_action = Keymap.dummy_action;
-      
-      frm_start = frm_start;
-      frm_end = frm_end;
-      frm_y_offset = 0;
-      frm_point = point;
-
-      frm_cursor_x = 0;
-      frm_cursor_y = 0;
-      frm_cursor = String.make 1 ' ';
-      frm_cursor_attr = Text.direct_attr;
-      
-      frm_force_start = false;
-      
-      frm_x_offset = 0;
-      frm_cutline = width - 1;
-      
-      frm_has_scrollbar = 0;
-      frm_has_status_line = 1;
-      frm_status = status;
-      
       frm_xpos = window.win_xpos;
       frm_ypos = window.win_ypos;
       frm_width = width;
       frm_height = height;
 
+      frm_start = frm_start;
+      frm_end = frm_end;
+      frm_point = point;
+      frm_x_offset = 0;
+      frm_y_offset = 0;
+
+      frm_cursor_x = 0;
+      frm_cursor_y = 0;
+      frm_cursor = String.make 1 ' ';
+      frm_cursor_attr = Text.direct_attr;
+
+      frm_last_text_updated = 0;
+      frm_last_buf_updated = 0;
+
+      frm_has_scrollbar = 0;
+      frm_has_status_line = 1;
+      frm_status = status;
+      frm_mini_buffer = mini;
+      
+      frm_prefix = [];
+      
+      frm_repeat_action = 0;
+      frm_last_action = Keymap.dummy_action;
+    
+      frm_force_start = false;
+      frm_cutline = width - 1;
       frm_table = [||];
       frm_killed = false;
-      frm_mini_buffer = mini;
       frm_redraw = true;
+
+      frm_location = location;
     } 
   in
   <<[[Frame.create_without_top()]] adjust status of frame>>
@@ -582,7 +607,8 @@ mutable frm_window : window;
 mutable win_down : window_down;
 mutable win_up : window_up;
 @
-
+% up is important, allow to access top_window and 
+% top_location from any frame (but could use globals I think)
 
 <<type Efuns.window_down>>=
 and window_down =
@@ -649,7 +675,7 @@ let create_at_top xpos ypos width height =
 @
 
 
-%\section{Top windows}
+\section{The top window}
 % LPize Topwindow in window_up and put it here
 
 %"The top_window structure corresponds to an Xterm widget (one X window).
@@ -802,13 +828,13 @@ let define_buffer_action action_name action_fun =
 @
 
 
-<<constant Efuns.no_action>>=
-let no_action = BufferAction (fun _ -> ())
-@
-
+%<<constant Efuns.no_action>>=
+%let no_action = BufferAction (fun _ -> ())
+%@
 <<function Efuns.get_action>>=
 let get_action action =
-  try Hashtbl.find actions action with Not_found -> no_action
+  try Hashtbl.find actions action 
+  with Not_found -> BufferAction (fun _ -> ())
 @
 
 % ?? -> <> who will dispatch and know which frame?
@@ -932,7 +958,6 @@ define_action "get_position" get_pos;
 define_action "unset_attr" unset_attr;
 define_action "recenter"  recenter;
 define_action "revert_buffer" reload;
-define_action "check_file" check_file;
 (* C-x map *)
 define_action "point_at_mark"  point_at_mark;
 (* C-M map *)
@@ -974,9 +999,8 @@ type map =
 @
 
 <<type Efuns.key>>=
-and key = mod_ident * (*Xtypes.*)keySym
+and key = mod_ident * keySym
 @
-% keySym = int (could be a Rune in plan9!)
 
 <<type Efuns.mod_ident>>=
 and mod_ident = 
@@ -985,6 +1009,13 @@ and mod_ident =
 | MetaMap
 | ControlMetaMap
 @
+
+%(*Xtypes.*)
+<<type Efuns.keySym>>=
+and keySym = int
+@
+% keySym = int (could be a Rune in plan9!)
+
 
 <<type Efuns.binding>>=
 and binding = 
@@ -1001,7 +1032,7 @@ let create () =
     interactives = [];
   } 
 @
-
+% will see interactives later
 
 <<[[Efuns.buffer]] other fields>>=
 buf_map : map;
@@ -1020,9 +1051,10 @@ let get_binding buf keylist =
     <<[[Ebuffer.get_binding()]] major mode key search>>
     (let b = Keymap.get_binding buf.buf_map keylist in
       match b with
-        Prefix _map -> binding := b;
+      | Prefix _map -> binding := b;
       | Function _f -> binding := b; raise Exit
-      | Unbound -> ());
+      | Unbound -> ()
+    );
     <<[[Ebuffer.get_binding()]] if partial map>>
     !binding
   with
@@ -1228,7 +1260,8 @@ let bindings_help frame =
   let window = frame.frm_window in
   change_buffer window "*bindings*"
 @
-
+% how can change_buffer with just window info? don't pass the frame?
+% no need because can go back to top_window and active_frame?
 
 
 
@@ -1262,7 +1295,9 @@ let init_global_map location =
 % trick using phantom types?
 
 % put more of local.ml here?
-% why need variables anyway in emacs?
+% why need variables anyway in emacs? to configure things! e.g. level
+% of indentation for this major mode. You can overwrite also
+% global settings. Configurable editor!
 
 <<[[Efuns.buffer]] other fields>>=
 (* see also Loc.vars *)    
@@ -1291,12 +1326,13 @@ let set_local buf var value = Local.set buf.buf_vars var value
 <<function Efuns.get_global>>=
 let get_global location var = Local.get location.loc_vars var
 @
+%todo: put the type of the .mli here? subtle signature. polymorphic vars!
 
 <<function Efuns.get_local>>=
 let get_local buf var = Local.get buf.buf_vars var
 @
 
-
+% buffer -> major -> minors -> global
 <<function Efuns.get_var>>=
 let get_var buf var = 
   try Local.get buf.buf_vars var 
@@ -1318,8 +1354,10 @@ let get_var buf var =
 
 % different kind of hooks:
 % - startup hooks (add_start_hook() and start_hooks[] and Efuns.init())
-% - variable hook 
-% - named hooks, for frame a buffer actions
+%    will see in main chapter.
+% - variable hook, below
+% - named hooks, for frame a buffer actions, so take a string (action name)
+%   for parameter
 
 <<function Efuns.exec_hooks>>=
 let rec exec_hooks hooks arg =
@@ -1339,7 +1377,7 @@ let add_hook location hook_var hook =
 
 
 % example:
-% of a hook var
+% of a hook var. What is the type of create_buf_hook? and get_global below?
 <<constant Ebuffer.create_buf_hook>>=
 let create_buf_hook = Local.create_abstr "create_buf_hook"
 @
@@ -1381,6 +1419,9 @@ let change_buffer_hooks = define_option ["change_buffer_hooks"] ""
 @
 % use?
 
+<<misc actions>>=
+define_action "check_file" check_file;
+@
 
 
 % ?? -> <>
@@ -1414,7 +1455,8 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 
 \chapter{[[main()]]}
 
-
+%\section{General style parameters}
+ 
 <<constant Efuns.width>>=
 let width = define_option ["width"] "" int_option 80
 @
@@ -1456,11 +1498,11 @@ let _ =
    <<[[main()]] command line options>>
  ] 
  (fun name -> init_files := name :: !init_files) 
-  "A small editor entirely written in Objective Caml 
-   by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
-   http ://pauillac.inria.fr/efuns
-   Options :
-  " 
+ "A small editor entirely written in Objective Caml 
+  by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
+  http ://pauillac.inria.fr/efuns
+  Options :
+ " 
 @
 
 %x11
@@ -1468,8 +1510,8 @@ let _ =
 let displayname = ref ""
 @
 <<[[main()]] command line options>>=
-"-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
-"--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
+"-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+"--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
 @
 
 
@@ -1491,17 +1533,8 @@ let init_frames = ref []
   "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
 @
 
-<<[[main()]] command line options>>=
-  "-I",Arg.String (fun s -> load_path =:= 
-      (string_to_path s) @ !!load_path), "<path>: Load Path";
-@
-%dead?
-
 
 % (*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
-
-
-
 
 
 
@@ -1559,6 +1592,7 @@ let no_init = ref false
 
 
 
+% see appendix on configuration file library
 <<toplevel Efuns._4>>=
 let _ =
   Options.filename := 
@@ -1566,6 +1600,39 @@ let _ =
     with _ -> Filename.concat Utils.homedir ".efunsrc");
   (try Options.init () with _ -> ())
 @
+
+\section{The default world}
+
+<<constant Main.location>>=
+let location = {
+    loc_buffers = Hashtbl.create 13;
+    loc_files = Hashtbl.create 13;
+
+    loc_windows = [];
+
+    loc_width = !!width;
+    loc_height = !!height;
+    loc_fg = !!foreground;
+    loc_bg = !!background;
+    loc_font = !!font;
+
+    loc_map = Keymap.create ();
+    loc_dirname = Sys.getcwd ();
+
+    loc_vars = Local.vars ();
+    
+    loc_fonts = Hashtbl.create 37;
+    loc_fonts_names = Array.create 256 "";
+    loc_fonts_n = 0;
+
+    loc_colors = Hashtbl.create 37;
+    loc_colors_names = Array.create 256 "";
+    loc_colors_n = 0;
+    
+    loc_mutex = Mutex.create ()
+} 
+@
+%less: need those loc_fonts_xxx and loc_colors_xxx?
 
 \section{Startup hooks}
 % hooks on location creation, hence they they a location in parameter
@@ -1607,45 +1674,30 @@ let add_start_hook hook =
 @
 
 
-\section{The default world}
-
-<<constant Main.location>>=
-let location = {
-    loc_buffers = Hashtbl.create 13;
-    loc_files = Hashtbl.create 13;
-
-    loc_windows = [];
-
-    loc_width = !!width;
-    loc_height = !!height;
-    loc_fg = !!foreground;
-    loc_bg = !!background;
-    loc_font = !!font;
-
-    loc_map = Keymap.create ();
-    loc_dirname = Sys.getcwd ();
-
-    loc_vars = Local.vars ();
-    
-    loc_fonts = Hashtbl.create 37;
-    loc_fonts_names = Array.create 256 "";
-    loc_fonts_n = 0;
-
-    loc_colors = Hashtbl.create 37;
-    loc_colors_names = Array.create 256 "";
-    loc_colors_n = 0;
-    
-    loc_mutex = Mutex.create ()
-} 
-@
-%less: need those loc_fonts_xxx and loc_colors_xxx?
-
 \section{The graphical window}
 
 <<toplevel Main._4>>=
 let _ =
   Graphics_X11.init location !displayname
 @
+%  Graphics.open_graph (spf " ");
+%  Graphics.set_window_title displayname;
+%  let display = "" in
+%  let top_window = Top_window.create location display in
+%  ...
+%  let _ = Interactive.create_bindings location in
+%  ...
+%  Top_window.update_display location;
+%  ...
+
+
+\section{The event loop}
+
+%  let rec loop () =
+%       ....
+%      Top_window.handler top_window () evt
+%  in
+%  loop ()
 
 \chapter{Main Window}
 
@@ -2521,6 +2573,12 @@ and line_repr =
 mutable text_points : point list;
 @
 
+% there are list of points maintained by the Text itself, why?
+% because of gap things can move so you need to update all
+% the points? So need to create point by using specific
+% API that update this list of points
+
+
 <<function Text.add_point>>=
 let add_point tree =
   let text = tree.tree_text in      
@@ -2731,7 +2789,8 @@ let _ =
 @
 
 
-\section{Font}
+\section{Fonts}
+% with an 's'?
 
 <<[[Efuns.location]] other fields>>=
 loc_fonts : (string,int) Hashtbl.t;
@@ -2765,7 +2824,20 @@ let get_font location font_name =
 
 \section{Text Display}
 
+
+
+
+
 % the redisplay function!!!
+
+<<[[Efuns.frame]] other fields>>=
+(* first point of the first buffer-line on screen *)
+mutable frm_start : Text.point;
+(* last point on screen, -1 if modified *)
+mutable frm_end : Text.point;
+(* offset(+/-) of screen-lines after frm_start *)
+mutable frm_y_offset : int;
+@
 
 
 
@@ -2788,16 +2860,6 @@ mutable frm_last_buf_updated : int;
 @
 % diff?
 
-<<[[Efuns.frame]] other fields>>=
-(* first point of the first buffer-line on screen *)
-mutable frm_start : Text.point;
-(* last point on screen, -1 if modified *)
-mutable frm_end : Text.point; 
-(* offset(+/-) of screen-lines after frm_start *)
-mutable frm_y_offset : int; 
-(* insert point *)
-mutable frm_point : Text.point; 
-@
 
 <<[[Efuns.frame]] other fields>>=
 mutable frm_force_start : bool;
@@ -2811,6 +2873,7 @@ mutable frm_redraw : bool;
 mutable top_active_frame : frame;
 @
 
+% event loop -> Top_window.handler -> handle_key -> Top_window.update_display -> <>
 <<function Frame.update>>=
 let update top_window frame =
   let buf =  frame.frm_buffer in
@@ -2818,6 +2881,7 @@ let update top_window frame =
 
   let start = frame.frm_start in
   let point = frame.frm_point in
+
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
@@ -2920,7 +2984,7 @@ let update top_window frame =
     None -> 
       let status = frame.frm_status in
       status_line frame (point_line text frame.frm_point);
-      status_col frame (point_col text frame.frm_point);
+      status_col frame  (point_col text frame.frm_point);
       status_modified frame (version text <> buf.buf_last_saved);
       status_name frame buf.buf_name;
       status_major_mode frame;
@@ -3150,7 +3214,7 @@ let mouse_save_then_kill frame =
 % not really input, more an output, but strongly related
 % to input devices (input device feedback essentially)
 
-\section{Select}
+\section{Interactive select}
 % here?
 
 \chapter{Basic Features}
@@ -3630,135 +3694,6 @@ let hungry_electric_delete frame =
 
 
 
-\section{Transforming}
-% maybe move in extra features?
-
-<<transforming keys>>=
-[ControlMap, Char.code 't'], "transpose_chars";
-
-[MetaMap, Char.code 't'], "transpose_words";
-[MetaMap, Char.code 'l'], "lowercase_word";
-[MetaMap, Char.code 'u'], "uppercase_word";
-
-[MetaMap, XK.xk_q], "fill_paragraph";
-@
-
-<<transforming actions>>=
-define_action "transpose_chars"  (to_frame transpose_chars);
-
-define_action "transpose_words"  (to_frame transpose_words);
-define_action "lowercase_word" 
-  (fun frame ->
-    let buf = frame.frm_buffer in
-    let point = frame.frm_point in
-    on_word buf point String.lowercase);
-define_action "uppercase_word" 
-  (fun frame ->
-    let buf = frame.frm_buffer in
-    let point = frame.frm_point in
-    on_word buf point String.uppercase);
-
-define_action "fill_paragraph" fill_paragraph;
-@
-
-\subsection{Characters}
-
-<<function Simple.transpose_chars>>=
-let transpose_chars buf point =
-  let text = buf.buf_text in
-  let session = start_session text in
-  bmove text point 1;
-  let pos,c1 = Text.delete_res text point 1 in
-  fmove text point 1;
-  let _ = Text.insert text point c1 in
-  commit_session text session;
-  fmove text point 1;
-  ()
-@
-
-\subsection{Words}
-%\subsection{Case changing}
-
-<<function Simple.transpose_words>>=
-let transpose_words buf point =
-  let text = buf.buf_text in
-  let session = start_session text in
-  let syntax = buf.buf_syntax_table in
-  in_prev_word text point syntax;
-  to_begin_of_word text point syntax;
-  let pos1 = dup_point text point in
-  to_end_of_word text point syntax;
-  let _,word1 = Text.delete_res text pos1 (distance text pos1 point) in
-  goto_point text point pos1;
-  in_next_word text point syntax;
-  let pos2 = dup_point text point in
-  to_end_of_word text point syntax;
-  let _,word2 = Text.delete_res text pos2 (distance text pos2 point) in    
-  let _ = Text.insert text pos1 word2 in
-  let _ = Text.insert text pos2 word1 in
-  fmove text point (String.length word1);
-  commit_session text session;
-  remove_point text pos1;
-  remove_point text pos2
-@
-
-<<function Simple.on_word>>=
-let on_word buf point f =
-  let text = buf.buf_text in
-  let session = start_session text in
-  let syntax = buf.buf_syntax_table in
-  to_begin_of_word text point syntax;
-  let pos1 = dup_point text point in
-  to_end_of_word text point syntax;
-  let _,word1 = Text.delete_res text pos1 (distance text pos1 point) in
-  let w = f word1 in
-  let _ = Text.insert text pos1 w in
-  fmove text point (String.length w);
-  commit_session text session;
-  remove_point text pos1
-@
-
-\subsection{Filling}
-
-<<function Simple.fill_paragraph>>=
-(* We will have to modify this to handle line_comment soon !! *)
-let fill_paragraph frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let start = dup_point text point in
-  let session = start_session text in
-  let syntax = buf.buf_syntax_table in
-  backward_paragraph buf start;
-  let fin = dup_point text start in
-  forward_paragraph buf fin;
-  simplify text start fin;
-  let _ = insert text start "\n" in
-  let rec iter count last_space =
-    if compare text start fin < 0 then
-    if fmove_res text start 1 = 1 then 
-      let c = get_char text start in  
-        if c = ' ' then (* good, a new space *)
-          iter (count+1) 0
-      else
-      if count > 75 && count <> last_space then 
-          begin
-          bmove text start (last_space+1);
-          delete text start 1;
-          insert text start "\n";
-          fmove text start 1;
-          iter 0 0
-          end
-        else
-          iter (count+1) (last_space+1)
-  in
-  iter 0 0;  
-  let _ = insert text fin "\n" in
-  remove_point text start;
-  remove_point text fin;
-  commit_session text session
-@
-
 \section{Moving}
 
 <<moving keys>>=
@@ -3801,11 +3736,6 @@ let set_mark buf point =
       goto_point text mark point
 @
 
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_modified : int;
-@
-% diff with text_modified? seems to be about modification of the
-% frame property itself, not the underlying buffer
 
 
 
@@ -5490,6 +5420,136 @@ let escaped s =
   ss
 @
 
+\section{Transforming}
+% maybe move in extra features?
+
+<<transforming keys>>=
+[ControlMap, Char.code 't'], "transpose_chars";
+
+[MetaMap, Char.code 't'], "transpose_words";
+[MetaMap, Char.code 'l'], "lowercase_word";
+[MetaMap, Char.code 'u'], "uppercase_word";
+
+[MetaMap, XK.xk_q], "fill_paragraph";
+@
+
+<<transforming actions>>=
+define_action "transpose_chars"  (to_frame transpose_chars);
+
+define_action "transpose_words"  (to_frame transpose_words);
+define_action "lowercase_word" 
+  (fun frame ->
+    let buf = frame.frm_buffer in
+    let point = frame.frm_point in
+    on_word buf point String.lowercase);
+define_action "uppercase_word" 
+  (fun frame ->
+    let buf = frame.frm_buffer in
+    let point = frame.frm_point in
+    on_word buf point String.uppercase);
+
+define_action "fill_paragraph" fill_paragraph;
+@
+
+\subsection{Characters}
+
+<<function Simple.transpose_chars>>=
+let transpose_chars buf point =
+  let text = buf.buf_text in
+  let session = start_session text in
+  bmove text point 1;
+  let pos,c1 = Text.delete_res text point 1 in
+  fmove text point 1;
+  let _ = Text.insert text point c1 in
+  commit_session text session;
+  fmove text point 1;
+  ()
+@
+
+\subsection{Words}
+%\subsection{Case changing}
+
+<<function Simple.transpose_words>>=
+let transpose_words buf point =
+  let text = buf.buf_text in
+  let session = start_session text in
+  let syntax = buf.buf_syntax_table in
+  in_prev_word text point syntax;
+  to_begin_of_word text point syntax;
+  let pos1 = dup_point text point in
+  to_end_of_word text point syntax;
+  let _,word1 = Text.delete_res text pos1 (distance text pos1 point) in
+  goto_point text point pos1;
+  in_next_word text point syntax;
+  let pos2 = dup_point text point in
+  to_end_of_word text point syntax;
+  let _,word2 = Text.delete_res text pos2 (distance text pos2 point) in    
+  let _ = Text.insert text pos1 word2 in
+  let _ = Text.insert text pos2 word1 in
+  fmove text point (String.length word1);
+  commit_session text session;
+  remove_point text pos1;
+  remove_point text pos2
+@
+
+<<function Simple.on_word>>=
+let on_word buf point f =
+  let text = buf.buf_text in
+  let session = start_session text in
+  let syntax = buf.buf_syntax_table in
+  to_begin_of_word text point syntax;
+  let pos1 = dup_point text point in
+  to_end_of_word text point syntax;
+  let _,word1 = Text.delete_res text pos1 (distance text pos1 point) in
+  let w = f word1 in
+  let _ = Text.insert text pos1 w in
+  fmove text point (String.length w);
+  commit_session text session;
+  remove_point text pos1
+@
+
+\subsection{Filling}
+
+<<function Simple.fill_paragraph>>=
+(* We will have to modify this to handle line_comment soon !! *)
+let fill_paragraph frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let start = dup_point text point in
+  let session = start_session text in
+  let syntax = buf.buf_syntax_table in
+  backward_paragraph buf start;
+  let fin = dup_point text start in
+  forward_paragraph buf fin;
+  simplify text start fin;
+  let _ = insert text start "\n" in
+  let rec iter count last_space =
+    if compare text start fin < 0 then
+    if fmove_res text start 1 = 1 then 
+      let c = get_char text start in  
+        if c = ' ' then (* good, a new space *)
+          iter (count+1) 0
+      else
+      if count > 75 && count <> last_space then 
+          begin
+          bmove text start (last_space+1);
+          delete text start 1;
+          insert text start "\n";
+          fmove text start 1;
+          iter 0 0
+          end
+        else
+          iter (count+1) (last_space+1)
+  in
+  iter 0 0;  
+  let _ = insert text fin "\n" in
+  remove_point text start;
+  remove_point text fin;
+  commit_session text session
+@
+
+
 \section{Misc}
 
 \subsection{Read-only}
@@ -5544,6 +5604,12 @@ let _ =
 @
 
 \section{Dynamic linking}
+
+<<[[main()]] command line options>>=
+  "-I",Arg.String (fun s -> load_path =:= 
+      (string_to_path s) @ !!load_path), "<path>: Load Path";
+@
+%dead? or for dynlink?
 
 <<constant Efuns.load_path>>=
 let load_path = define_option ["efuns_path"] 

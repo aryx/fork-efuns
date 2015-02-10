@@ -202,9 +202,7 @@ let make_text text lines =
 
 type t = tree_desc
   
-(*s: type Text.t *)
 (* type t = tree tree_desc   *)
-(*e: type Text.t *)
 
 (* external id: t -> tree tree_desc = "%identity" *)
 
@@ -620,6 +618,7 @@ let create str =
   let newlines = compute_newlines str in
   let nlines = Array.length newlines in
   let attrs = (Array.create (String.length str) direct_attr) in
+
   let text =
     {
       text_string = str;
