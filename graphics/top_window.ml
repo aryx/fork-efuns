@@ -125,7 +125,7 @@ let cursor_off top_window =
 
 (*s: function Top_window.update_display *)
 let update_display location =
-  location.top_windows |> List.iter (fun top_window -> 
+  location.top_windows |> List.iter (fun top_window ->
       top_window.window |> Window.iter (fun frm -> Frame.update top_window frm);
       (match top_window.top_mini_buffers with
        | [] -> ()

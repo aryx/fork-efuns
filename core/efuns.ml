@@ -158,8 +158,6 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_location : location;
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_status : status;    
-    (*x: [[Efuns.frame]] other fields *)
     (* first point of the first buffer-line on screen *)
     mutable frm_start : Text.point;
     (* last point on screen, -1 if modified *)
@@ -182,6 +180,8 @@ and frame  =
     mutable frm_cutline : int; (* max_int for no, else length *)
     mutable frm_table : line_repr array;
     mutable frm_redraw : bool;    
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_status : status;    
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_killed : bool;
     (*x: [[Efuns.frame]] other fields *)
@@ -552,19 +552,19 @@ let check = ref false
 let _ =
  Arg.parse [
    (*s: [[main()]] command line options *)
-   "-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
-   "--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
-   (*x: [[main()]] command line options *)
-   "-check", Arg.Set check, ": only for testing";
-   (*x: [[main()]] command line options *)
-     "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
-   (*x: [[main()]] command line options *)
    "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
    "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
 
    "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
    "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
    "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+   (*x: [[main()]] command line options *)
+   "-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+   "--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+   (*x: [[main()]] command line options *)
+   "-check", Arg.Set check, ": only for testing";
+   (*x: [[main()]] command line options *)
+     "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
    (*x: [[main()]] command line options *)
      "-q", Arg.Set no_init,": Don't load init files";
    (*x: [[main()]] command line options *)

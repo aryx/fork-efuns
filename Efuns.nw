@@ -299,7 +299,7 @@ License.
 
 % text -> buffer -> frame -> window -> top_window
 
-\section{Texts}
+\section{[[Text]]}
 
 % text -> line -> ... repr | item
 % with attrs at each level (text_attr, attr, item_attr)
@@ -374,7 +374,7 @@ let create str =
 % compute_newlines()?
 % make_text()?
 
-\section{Buffers}
+\section{[[Buffer]]}
 
 %"The buffer corresponds either to a file (thus to a filename) either to
 %a virtual file (for example, compilation messages). The file text itself
@@ -475,7 +475,7 @@ let create location name filename text local_map =
 
 
 
-\section{Frames}
+\section{[[Frame]]}
 % It's not frame in emacs terminology.
 % It's really a window, but with not just
 %  the geometric info, it packs together geometric info (window type)
@@ -584,7 +584,7 @@ let create_without_top location window mini buf =
 @
 
 
-\section{Windows}
+\section{[[Window]]}
 % It's a window in emacs terminology. And it's really
 % just the geometry part.
 
@@ -679,7 +679,7 @@ let create_at_top xpos ypos width height =
 @
 
 
-\section{The top window}
+\section{The [[Top_window]]}
 % LPize Topwindow in window_up and put it here
 
 %"The top_window structure corresponds to an Xterm widget (one X window).
@@ -728,7 +728,7 @@ mutable top_active_frame : frame;
 
 
 
-\section{The world}
+\section{The world, [[Location]]}
 % full state
 
 % called location in Lefessant's terminology
@@ -801,7 +801,7 @@ loc_mutex : Mutex.t;
 
 
 
-\section{Actions, and [[actions]]}
+\section{[[Action]], and [[actions]]}
 
 <<type Efuns.action>>=
 and action = frame -> unit
@@ -984,7 +984,7 @@ define_action "change_font"  change_font;
 
 
 
-\section{Keyboard maps}
+\section{Keyboard [[Map]]}
 % keyboard handling is important for an editor!
 % emacs spirit: prefix map
 % vi spirit: modes
@@ -998,7 +998,9 @@ define_action "change_font"  change_font;
 % - minor mode
 % - buffer itself (useful for dynamic setting of keys e.g. C-g in minibuffer)
 % good so that each mode can redefine bindings! specialized mode!
-% specialized keys!
+% specialized keys! For instance when TAB to offer completion
+% in minibuffer mode, or semantic completion in C buffer, or just
+% insert a TAB in makefile mode.
 
 <<type Efuns.map>>=
 type map =
@@ -1306,7 +1308,7 @@ let init_global_map location =
 %dead:  let gmap = location.loc_map in 
 
 
-\section{Variables}
+\section{[[Vars]]}
 % actually have polymorphic variables!
 % trick using phantom types?
 
@@ -1527,39 +1529,6 @@ let _ =
  " 
 @
 
-%x11
-<<constant Efuns.displayname>>=
-let displayname = ref ""
-@
-<<[[main()]] command line options>>=
-"-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
-"--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
-@
-
-
-<<constant Efuns.check>>=
-let check = ref false
-@
-<<[[main()]] command line options>>=
-"-check", Arg.Set check, ": only for testing";
-@
-
-
-
-
-
-<<constant Efuns.init_frames>>=
-let init_frames = ref []
-@
-<<[[main()]] command line options>>=
-  "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
-@
-%todo: remove? seems related to original notion of emacs frames
-% that is independent emacs windows
-
-% (*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
-
-
 
 
 \section{Arguments processing}
@@ -1603,6 +1572,44 @@ let _ =
   (match !height_opt with None -> () | Some color -> height =:= color)  
 @
 
+
+
+
+%x11
+<<constant Efuns.displayname>>=
+let displayname = ref ""
+@
+<<[[main()]] command line options>>=
+"-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+"--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+@
+
+
+<<constant Efuns.check>>=
+let check = ref false
+@
+<<[[main()]] command line options>>=
+"-check", Arg.Set check, ": only for testing";
+@
+
+
+
+
+
+<<constant Efuns.init_frames>>=
+let init_frames = ref []
+@
+<<[[main()]] command line options>>=
+  "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
+@
+%todo: remove? seems related to original notion of emacs frames
+% that is independent emacs windows
+
+% (*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
+
+
+
+
 \section{Configuration file, [[.efunsrc]]}
 
 <<constant Efuns.no_init>>=
@@ -1624,7 +1631,7 @@ let _ =
   (try Options.init () with _ -> ())
 @
 
-\section{The default world}
+\section{The default world, [[location]]}
 
 <<constant Main.location>>=
 let location = {
@@ -1848,7 +1855,7 @@ top_window.top_xterm <- Some xterm;
 
 <<function Top_window.update_display>>=
 let update_display location =
-  location.top_windows |> List.iter (fun top_window -> 
+  location.top_windows |> List.iter (fun top_window ->
       top_window.window |> Window.iter (fun frm -> Frame.update top_window frm);
       (match top_window.top_mini_buffers with
        | [] -> ()
@@ -1860,8 +1867,11 @@ let update_display location =
 % why have a list of top_windows?
 % Frame.update only the first minibuffer? then why use a list anyway?
 
-% will see Frame.update later
-% will see cursor_on later
+% minibuffer is a frame!
+% status line? it's attached to a frame actually
+
+% will see Frame.update() later
+% will see cursor_on() later
 
 \section{The event loop}
 
@@ -1872,6 +1882,8 @@ let update_display location =
 %  in
 %  loop ()
 
+
+\subsection{[[Top_window.handler()]]}
 
 <<function Top_window.handler>>=
 let handler top_window xterm event =
@@ -1893,6 +1905,8 @@ let handler top_window xterm event =
 %less: could do with_lock () instead of this style
 
 
+
+\subsection{[[Top_window.handle_key()]]}
 
 <<[[Top_window.handler()]] match event cases>>=
 |  WX_xterm.XTKeyPress (modifiers, _s, keysym) ->
@@ -1961,739 +1975,8 @@ match () with
 
 
 
-
-\chapter{Main Window}
-
-% menu
-% windows/frames with buffers
-% status line (for each frame get this actually)
-% minibuffer (a single one)
-
-
-% see graphics_graphics.ml
-
-\section{Menus}
-
-<<toplevel Std_efunsrc._4>>=
-let _ =
-  <<[[Std_efunsrc]] file menu setup>>
-  <<[[Std_efunsrc]] edit menu setup>>
-  <<[[Std_efunsrc]] help menu setup>>
-  <<[[Std_efunsrc]] buffers menu setup>>
-@
-
-
-
-
-<<[[Top_window.create()]] create menus>>=
-(*
-  top#add_button "Buffers" (!buffers_menu top_window);
-  top#add_menu "File" (Array.map (fun (name,action) ->
-        wrap_item top_window (name, execute_action action)
-    ) (Array.of_list !!file_menu));
-  top#add_menu "Edit" (Array.map (fun (name,action) ->
-        wrap_item top_window (name, execute_action action)
-    ) (Array.of_list !!edit_menu));
-  List.iter (fun (menu_name, items) ->
-      top#add_menu menu_name 
-        (Array.map (fun (name,action) ->
-            wrap_item top_window (name, execute_action action)
-        ) (Array.of_list items))
-  ) !!menus;
-  top#add_separator;
-  top#add_menu "Help" (Array.map (wrap_item top_window) !help_menu);
-  top#show;
-*)
-@
-
-
-\subsection{File menu}
-
-<<constant Top_window.file_menu>>=
-let file_menu = define_option ["file_menu"] "" (list_option string2_option) []
-@
-
-<<[[Std_efunsrc]] file menu setup>>=
-if !!file_menu = [] then begin
-    file_menu =:=    [
-      "Open File", "select_open_file";
-      "Save Buffer", "save_buffer";
-      <<file menu entries>>
-      "", "";
-      "Quit", "exit";
-    ]
-  end;
-@
-% cool, everything is configurable :)
-
-\subsubsection{Opening a file}
-
-%less: optional I think, this use the toolkit to offer a file
-% browser, but could redirect instead to "load_buffer" which
-% use the minibuffer to open a file
-<<loading actions>>=
-define_action "select_open_file" select_open_file;
-@
-
-<<function Std_efunsrc.select_open_file>>=
-let select_open_file frame =
-  let window = frame.frm_window in
-  let top_window = Window.top window in
-  let cdir = Frame.current_dir frame in
-  failwith "Std_efunsrc.select_open_file: TODO"
-(*
-  let info = {
-      filter = Filename.concat cdir "*";
-      current_selection = cdir;
-      predicat = (fun _ -> true);
-      action = (fun _ -> ());
-      cancel = (fun _ -> ());
-    } in
-
-  (* X11 *)
-  let query = new WX_filesel.t top_window.top_root info [] in
-  query#setWM_TRANSIENT_FOR (top_window.top_appli#top :> WX_types.container);
-  info.action <- (fun name ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-          let _ = Frame.load_file window name in ()
-      ) ());
-  info.cancel <- (fun () ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-      ) ());        
-  query#show
-*)
-@
-
-
-
-
-
-% C-x C-f!
-
-<<loading keys>>=
-[c_x; ControlMap, Char.code 'f'], "load_buffer";
-@
-<<loading actions>>=
-(* C-x map *)
-define_action "load_buffer"  load_buffer;
-@
-
-
-% in Complex because requires select and minibuffer
-<<function Complex.load_buffer>>=
-let load_buffer frame = 
-  set_previous_frame frame;
-  select_filename frame "Find file: " (fun str -> 
-      let _ = Frame.load_file frame.frm_window str in ())
-@
-% see later select_filename, quite complicated, use minibuffer
-% and completion buffer.
-
-%\subsection{Helpers}
-
-<<function Frame.load_file>>=
-let load_file window filename =
-  let top_window = Window.top window in
-  let location = top_window.top_location in
-
-  let buf = Ebuffer.read location filename (Keymap.create ()) in
-  let frame = create window None buf in
-  exec_named_hooks !!change_buffer_hooks frame;
-  status_name frame buf.buf_name;
-  frame
-@
-
-
-
-
-
-<<loading keys>>=
-[c_x; NormalMap, Char.code 'i'], "insert_file";
-@
-<<loading actions>>=
-(* C-x map *)
-define_action "insert_file"  insert_file;
-@
-
-<<function Complex.insert_file>>=
-let insert_file frame =
-  select_filename frame "Insert file: " (fun str ->
-      let inc = open_in str in
-      insert_string frame (Utils.read_string inc);
-      close_in inc
-  )
-@
-
-
-
-\subsubsection{Saving the buffer}
-
-<<saving keys>>=
-[c_x; ControlMap, Char.code 's'], "save_buffer"; 
-@
-<<saving actions>>=
-(* C-x map *)
-define_action "save_buffer"  save_buffer; 
-@
-
-<<function Complex.save_buffer>>=
-let save_buffer frame =
-  let buf = frame.frm_buffer in
-  match buf.buf_filename with
-    Some _ -> Ebuffer.save buf
-  | None -> write_buffer frame
-@
-
-
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_last_saved : int;
-@
-
-<<function Ebuffer.save>>=
-let save buf =
-  exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
-  let filename =
-    match buf.buf_filename with
-      None -> raise Not_found
-    | Some name -> name
-  in
-  let outc = open_out filename in
-  Text.save buf.buf_text outc;
-  close_out outc;
-  buf.buf_last_saved <- version buf.buf_text;
-  exec_named_buf_hooks !!saved_buffer_hooks buf
-@
-
-
-
-<<saving keys>>=
-[c_x; NormalMap, Char.code 's'], "save_some_buffers";
-[c_x;ControlMap, Char.code 'w'], "write_file"; 
-@
-<<saving actions>>=
-(* C-x map *)
-define_action "save_some_buffers"  save_some_buffers;
-(* C-x map *)
-define_action "write_file"  write_buffer; 
-@
-
-
-<<function Complex.save_some_buffers>>=
-let save_some_buffers frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buffers = list_of_hash location.loc_buffers in
-  save_buffers_and_action frame buffers (fun _ -> ())
-@
-%less: save_buffers_and_action here?
-
-<<function Complex.write_buffer>>=
-let write_buffer frame = 
-  let buf = frame.frm_buffer in
-  select_filename frame "Save file as: " (fun str -> 
-      let top_window = Window.top frame.frm_window in
-      Ebuffer.change_name top_window.top_location buf str;
-      Ebuffer.save buf
-  )
-@
-
-%\subsection{Helpers}
-<<function Frame.save_buffer>>=
-let save_buffer frame =
-  Ebuffer.save frame.frm_buffer
-@
-% dead?
-
-
-\subsubsection{Exit}
-
-<<misc keys>>=
-[c_x; ControlMap, Char.code 'c'], "exit"; 
-@
-
-<<misc actions>>=
-(* C-x map *)
-define_action "exit"  exit_efuns; 
-@
-
-<<function Complex.exit_efuns>>=
-let exit_efuns frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buffers = Utils.list_of_hash location.loc_buffers in
-  save_buffers_and_action frame buffers (fun _ -> 
-    (* todo: have some exit hooks? *)
-    Graphics.close_graph ();
-    exit 0
-  )
-@
-
-%todo: save_buffers_and_action?
-
-\subsection{Edit menu}
-
-<<constant Top_window.edit_menu>>=
-let edit_menu = define_option ["edit_menu"] ""
-    (list_option string2_option) []
-@
-
-<<[[Std_efunsrc]] edit menu setup>>=
-if !!edit_menu = [] then begin
-    edit_menu =:= [ 
-      "Cut",    "kill_region";
-      "Paste",  "insert_killed";
-
-      "Undo",    "undo";
-      "", "";
-      <<[[edit_menu]] entries>>
-    ];
-  end;
-@
-% will see later
-
-\subsection{Buffers menu}
-
-% will see later
-
-\subsection{Help menu}
-
-<<constant Top_window.help_menu>>=
-let help_menu = ref ([| |]: (string * (frame -> unit)) array)
-@
-% this one is not configurable apparently
-
-<<[[Std_efunsrc]] help menu setup>>=
-help_menu := [|
-  "Key Bindings", (fun frame ->
-      Frame.change_buffer frame.frm_window "*bindings*"
-  );
-  "About Efuns", (fun frame ->
-    Frame.change_buffer frame.frm_window "*help*"
-  );
-  "Changes", (fun frame ->
-    (*
-      let _ = Frame.load_file frame.frm_window (
-          Version.efuns_lib ^"/Changes") in ()
-    *)
-    failwith "Std_xxx.menu changes: TODO"
-  );
-
-|];
-@
-% see Frame.change_buffer later
-
-%   (*
-%        let top_window = Window.top frame.frm_window in        
-%        let dialog = new WX_dialog.t top_window.top_root 
-%            "Efuns,\nVersion 015\nFabrice Le Fessant\nFabrice.Le_Fessant@inria.fr" [] in
-%        dialog#add_button "OK" (fun _ -> dialog#destroy);
-%        dialog#show;
-%    *)
-
-
-
-
-\section{Sub-windows/Frames}
-
-% see later
-
-<<[[Top_window.create()]] optional scrollbar setup>>=
-(* ady#add_subject (fun () -> *) (
-(*
-      let ady = () in
-      let frame = top_window.top_active_frame in
-      if not frame.frm_force_start then
-        wrap top_window (scroll_to_frame ady) ()
-*)
-  ()
-  );
-@
-
-
-\section{Status Line}
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_status : status;    
-@
-
-<<type Efuns.status>>=
-and status =
-  { 
-    mutable stat_name : string;
-    mutable stat_file : string;
-    mutable stat_line : int;
-    mutable stat_col : int;
-
-    mutable status_modified : bool;
-    mutable stat_modified : bool;
-    <<[[Efuns.status]] other fields>>
-  }
-@
-
-
-<<[[Efuns.status]] other fields>>=
-mutable status_format : (status_info * (int * int)) list;
-@
-
-<<type Efuns.status_info>>=
-and status_info =
-| StatName
-| StatFile
-| StatLine
-| StatCol
-| StatModified
-| StatMode
-@
-% also clock, load, etc
-
-<<constant Frame.status_format>>=
-let status_format = ref [
-    StatModified , (1, 2);
-    StatName, (5, 20);
-    StatMode, (30,30);
-    StatLine, (65, 5);
-    StatCol, (70 , 5);
-    StatFile, (35,15);
-  ]
-@
-% meaning?
-
-<<[[Frame.create_without_top()]] let status>>=
-let status = {
-    stat_name = "";
-    stat_file = "";
-    stat_col = -1;
-    stat_line = -1;
-    status_modified = true;
-    stat_modified = (buf.buf_last_saved = version buf.buf_text);
-    stat_modes = [];
-    stat_mode = dummy_mode;
-
-    status_format = !status_format;
-    status_string = String.make 256 '-';
-  } in
-String.blit editname 0 status.status_string 5 (String.length editname);
-@
-
-<<constant Frame.editname>>=
-let editname = "Efuns:"
-@
-
-<<[[Frame.create_without_top()]] adjust status of frame>>=
-status_name frame buf.buf_name;
-@
-
-
-<<function Frame.status_name>>=
-let status_name frame name =
-  let status = frame.frm_status in
-  if status.stat_name <> name then
-    begin
-      status.stat_name <- name;
-      status_print status name StatName
-    end
-@
-
-
-
-% status_name | status_modified | ... -> <>
-<<function Frame.status_print>>=
-let status_print status str stat_type =
-  status.status_modified <- true;
-  try
-    let (pos,maxlen) = List.assoc stat_type status.status_format in
-    let len = min (String.length str) maxlen in
-    String.blit str 0 status.status_string pos len;
-    String.fill status.status_string (pos + len) (maxlen - len) ' '
-  with
-    Not_found -> ()
-@
-
-<<[[Efuns.status]] other fields>>=
-(* the string! --- ... --- *)
-mutable status_string : string;
-@
-% this will then be the only thing used in the rendering
-
-
-% ?? -> <>
-<<function Frame.status_modified>>=
-let status_modified frame modified =
-  let status = frame.frm_status in
-  if status.stat_modified <> modified then
-    begin
-      status_print status (if modified then "**" else "--") StatModified;
-      status.stat_modified <- modified
-    end
-@
-
-% ?? -> <>
-<<function Frame.status_col>>=
-let status_col frame col =
-  let status = frame.frm_status in
-  if status.stat_col <> col then
-    begin
-      status.stat_col <- col;
-      status_print status (Printf.sprintf "C%d" (col+1)) StatCol
-    end
-@
-
-% Frame.update -> <>
-<<function Frame.status_line>>=
-let status_line frame line =
-  let status = frame.frm_status in
-  if status.stat_line <> line then
-    begin
-      status.stat_line <- line;
-      status_print status (Printf.sprintf "L%d" (line+1)) StatLine
-    end
-@
-
-% ?? -> <>
-<<function Frame.status_file>>=
-let status_file frame name =
-  let status = frame.frm_status in
-  if status.stat_file <> name then
-    begin
-      status.stat_file <- name;
-      status_print status name StatFile
-    end
-@
-% dead?
-
-
-
-\section{Minibuffer}
-
-\subsection{Minubuffer creation}
-
-% when it's created? each type enter M-x?
-
-<<[[Efuns.top_window]] other fields>>=
-mutable top_mini_buffers : frame list;
-@
-% there are many mini_buffers??
-
-% ?? -> <>
-<<function Minibuffer.create>>=
-let create frame local_map request =
-  let window = frame.frm_window in
-  let top_window = Window.top window in
-  let location = top_window.top_location in
-
-  let mini_text = Text.create "" in
-  let qlen = String.length request in
-  let request = if qlen < 50 then request else
-      (String.sub request 0 47 ^ "...") in
-
-  let mini_buf = buf_create location mini_text local_map in
-
-  let mini_window = Window.create true (*mini*) (TopWindow top_window) 
-    qlen (top_window.top_height - 1)
-    (top_window.top_width - qlen) 1 in
-  let mini_frame = Frame.create mini_window (Some request) mini_buf
-  in    
-  mini_frame.frm_cutline <- max_int;
-  mini_frame.frm_has_status_line <- 0;
-  top_window.top_mini_buffers <- mini_frame :: top_window.top_mini_buffers;
-
-  Keymap.add_binding local_map [ControlMap, Char.code 'g']
-    (fun mini_frame -> kill mini_frame frame);
-  mini_frame
-@
-
-
-
-<<[[Efuns.window]] other fields>>=
-mutable win_mini : bool;
-@
-
-
-% ?? -> <>
-<<function Minibuffer.buf_create>>=
-let buf_create location text local_map =
-  let buf =
-    { 
-      buf_text = text;
-      buf_name = "*Minibuffer*";
-      buf_filename = None; (* no connected file! *)
-
-      buf_major_mode = fondamental_mode;
-      buf_minor_modes = [];
-      buf_syntax_table = Ebuffer.default_syntax_table;
-
-      buf_modified = 0;
-      buf_last_saved = version text;
-      buf_history = [];
-      buf_charreprs = charreprs;
-      buf_map = local_map;
-      buf_map_partial = true;
-      buf_point = Text.add_point text;
-      buf_sync = false;
-      buf_mark = None;
-      buf_start = Text.add_point text;
-      buf_shared = 0;
-      buf_finalizers = [];
-
-      buf_vars = Local.vars ();
-      buf_location = location;
-    } in
-  buf
-@
-
-<<constant Minibuffer.charreprs>>=
-let charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i))
-@
-<<toplevel Minibuffer._1>>=
-let _ =
-  charreprs.(9) <- String.make !tab_size ' '
-@
-
-
-
-
-
-\subsection{[[M-x]], [[call_interactive()]]}
-
-<<meta keys>>=
-[MetaMap, Char.code 'x'], "call_interactive";
-@
-<<meta actions>>=
-define_action "call_interactive"  call_interactive;
-@
-
-
-<<constant Interactive.meta_hist>>=
-let meta_hist = ref []
-@
-
-<<function Interactive.call_interactive>>=
-let call_interactive frame =
-  let buf = frame.frm_buffer in
-  let interactives = buf_interactives buf in
-  select frame "M-x " meta_hist "" 
-    (fun _ -> List.map fst interactives)
-    (fun s -> s) 
-    (exec_interactive interactives frame)
-@
-
-<<function Interactive.buf_interactives>>=
-let buf_interactives buf =
-  let interactives = 
-    buf.buf_major_mode.maj_map.interactives @
-    buf.buf_location.loc_map.interactives 
-  in
-  List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
-   interactives buf.buf_minor_modes 
-@
-
-
-\subsection{[[Map.interactives]] field}
-
-% in addition to char_map and complex_binding
-
-<<[[Efuns.map]] other fields>>=
-mutable interactives : (string * (action * prefix option)) list;
-@
-% record key so useful so can display the list of bindings?
-
-<<type Efuns.prefix>>=
-and prefix = key list
-@
-
-
-\subsection{[[interactives_map]] global}
-
-<<constant Std_efunsrc.interactives_map>>=
-let interactives_map = define_option ["interactives_map"] ""
-    (list_option string2_option) 
-  []
-@
-
-<<[[Std_efunsrc.toplevel]] set interactives_map>>=
-if !!interactives_map = [] then begin
-    interactives_map =:= List.map (fun x -> x, x ) [
-      <<[[interactives_map]] initial entries>>
-    ]
-  end    
-@
-
-<<[[interactives_map]] initial entries>>=
-"save_options";
-"load_library";
-"get_position";
-"open_display";
-"unset_attr";
-"start_server";
-@      
-
-
-<<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
-List.iter (fun (name, action) ->
-    try
-      add_interactive location.loc_map name (execute_action action)
-    with e ->
-        Log.printf "Error for action %s" action;
-        Log.exn "%s\n" e;
-) !!interactives_map;
-@
-
-<<function Keymap.add_interactive>>=
-let add_interactive map name f =
-    map.interactives <- (name, (f, None)) :: map.interactives
-@
-
-% so each global key and their associated func is accessible!
-<<[[Keymap.interactive()]] add keylist and name to interactives list>>=
-map.interactives <- (name, (f, Some keylist)) :: map.interactives;
-@
-
-\subsection{Messages}
-
-
-<<function Top_window.message>>=
-let message top_window msg =
-  let xterm = Window.xterm top_window in
-  let len = String.length msg in
-  WX_xterm.draw_string xterm 0 (top_window.top_height - 1)
-    msg 0 len Text.direct_attr;
-  WX_xterm.clear_eol xterm len (top_window.top_height - 1)
-    (top_window.top_width - len);
-  match top_window.top_mini_buffers with
-    [] -> (* No mini-buffer ... *) ()
-  | mini_buffer :: _ -> (* one mini-buffer is active *)
-      match top_window.top_display with
-        None -> ()
-      | Some display ->
-          WX_xterm.update_displays ();
-          (* let _ = Unix.select [] [] [] 0.2 in *)
-          mini_buffer.frm_redraw <- true
-@
-
-
-
-
-\section{Hooks}
-
-% see also in core DS chapter
-% - create_buf_hook  (check_file)
-% - change_buffer_hooks
-% - save_buffer_hooks (dead??)
-% - saved_buffer_hooks
-
-
-<<constant Ebuffer.saved_buffer_hooks>>=
-let saved_buffer_hooks = define_option ["saved_buffer_hooks"] "" 
-    (list_option string_option)
-  ["update_time" ]
-@
-
-<<misc actions>>=
-define_buffer_action "update_time" update_time;
-@
-
+% so for now remains Frame.update, and Top_window.try_map
+% which are essential to understand.
 
 \chapter{Text Managment}
 
@@ -3124,11 +2407,363 @@ let get_font location font_name =
 
 
 
-\section{Text Display}
+\chapter{Main Window}
+
+% menu
+% windows/frames with buffers
+% status line (for each frame get this actually)
+% minibuffer (a single one)
+
+
+% see graphics_graphics.ml
+
+\section{Menus}
+
+<<toplevel Std_efunsrc._4>>=
+let _ =
+  <<[[Std_efunsrc]] file menu setup>>
+  <<[[Std_efunsrc]] edit menu setup>>
+  <<[[Std_efunsrc]] help menu setup>>
+  <<[[Std_efunsrc]] buffers menu setup>>
+@
 
 
 
 
+<<[[Top_window.create()]] create menus>>=
+(*
+  top#add_button "Buffers" (!buffers_menu top_window);
+  top#add_menu "File" (Array.map (fun (name,action) ->
+        wrap_item top_window (name, execute_action action)
+    ) (Array.of_list !!file_menu));
+  top#add_menu "Edit" (Array.map (fun (name,action) ->
+        wrap_item top_window (name, execute_action action)
+    ) (Array.of_list !!edit_menu));
+  List.iter (fun (menu_name, items) ->
+      top#add_menu menu_name 
+        (Array.map (fun (name,action) ->
+            wrap_item top_window (name, execute_action action)
+        ) (Array.of_list items))
+  ) !!menus;
+  top#add_separator;
+  top#add_menu "Help" (Array.map (wrap_item top_window) !help_menu);
+  top#show;
+*)
+@
+
+
+\subsection{File menu}
+
+<<constant Top_window.file_menu>>=
+let file_menu = define_option ["file_menu"] "" (list_option string2_option) []
+@
+
+<<[[Std_efunsrc]] file menu setup>>=
+if !!file_menu = [] then begin
+    file_menu =:=    [
+      "Open File", "select_open_file";
+      "Save Buffer", "save_buffer";
+      <<file menu entries>>
+      "", "";
+      "Quit", "exit";
+    ]
+  end;
+@
+% cool, everything is configurable :)
+
+\subsubsection{Opening a file}
+
+%less: optional I think, this use the toolkit to offer a file
+% browser, but could redirect instead to "load_buffer" which
+% use the minibuffer to open a file
+<<loading actions>>=
+define_action "select_open_file" select_open_file;
+@
+
+<<function Std_efunsrc.select_open_file>>=
+let select_open_file frame =
+  let window = frame.frm_window in
+  let top_window = Window.top window in
+  let cdir = Frame.current_dir frame in
+  failwith "Std_efunsrc.select_open_file: TODO"
+(*
+  let info = {
+      filter = Filename.concat cdir "*";
+      current_selection = cdir;
+      predicat = (fun _ -> true);
+      action = (fun _ -> ());
+      cancel = (fun _ -> ());
+    } in
+
+  (* X11 *)
+  let query = new WX_filesel.t top_window.top_root info [] in
+  query#setWM_TRANSIENT_FOR (top_window.top_appli#top :> WX_types.container);
+  info.action <- (fun name ->
+      wrap top_window (fun top_window ->
+          query#destroy;
+          let _ = Frame.load_file window name in ()
+      ) ());
+  info.cancel <- (fun () ->
+      wrap top_window (fun top_window ->
+          query#destroy;
+      ) ());        
+  query#show
+*)
+@
+
+
+
+
+
+% C-x C-f!
+
+<<loading keys>>=
+[c_x; ControlMap, Char.code 'f'], "load_buffer";
+@
+<<loading actions>>=
+(* C-x map *)
+define_action "load_buffer"  load_buffer;
+@
+
+
+% in Complex because requires select and minibuffer
+<<function Complex.load_buffer>>=
+let load_buffer frame = 
+  set_previous_frame frame;
+  select_filename frame "Find file: " (fun str -> 
+      let _ = Frame.load_file frame.frm_window str in ())
+@
+% see later select_filename, quite complicated, use minibuffer
+% and completion buffer.
+
+%\subsection{Helpers}
+
+<<function Frame.load_file>>=
+let load_file window filename =
+  let top_window = Window.top window in
+  let location = top_window.top_location in
+
+  let buf = Ebuffer.read location filename (Keymap.create ()) in
+  let frame = create window None buf in
+  exec_named_hooks !!change_buffer_hooks frame;
+  status_name frame buf.buf_name;
+  frame
+@
+
+
+
+
+
+<<loading keys>>=
+[c_x; NormalMap, Char.code 'i'], "insert_file";
+@
+<<loading actions>>=
+(* C-x map *)
+define_action "insert_file"  insert_file;
+@
+
+<<function Complex.insert_file>>=
+let insert_file frame =
+  select_filename frame "Insert file: " (fun str ->
+      let inc = open_in str in
+      insert_string frame (Utils.read_string inc);
+      close_in inc
+  )
+@
+
+
+
+\subsubsection{Saving the buffer}
+
+<<saving keys>>=
+[c_x; ControlMap, Char.code 's'], "save_buffer"; 
+@
+<<saving actions>>=
+(* C-x map *)
+define_action "save_buffer"  save_buffer; 
+@
+
+<<function Complex.save_buffer>>=
+let save_buffer frame =
+  let buf = frame.frm_buffer in
+  match buf.buf_filename with
+    Some _ -> Ebuffer.save buf
+  | None -> write_buffer frame
+@
+
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_last_saved : int;
+@
+
+<<function Ebuffer.save>>=
+let save buf =
+  exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
+
+  let filename =
+    match buf.buf_filename with
+      None -> raise Not_found
+    | Some name -> name
+  in
+  let outc = open_out filename in
+  Text.save buf.buf_text outc;
+  close_out outc;
+  buf.buf_last_saved <- version buf.buf_text;
+
+  exec_named_buf_hooks !!saved_buffer_hooks buf
+@
+
+
+%\subsubsection{Hooks}
+% see also in core DS chapter
+% - create_buf_hook  (check_file)
+% - change_buffer_hooks
+% - save_buffer_hooks (dead??)
+% - saved_buffer_hooks
+
+
+<<constant Ebuffer.saved_buffer_hooks>>=
+let saved_buffer_hooks = define_option ["saved_buffer_hooks"] "" 
+    (list_option string_option)
+  ["update_time" ]
+@
+
+<<misc actions>>=
+define_buffer_action "update_time" update_time;
+@
+
+
+
+<<saving keys>>=
+[c_x; NormalMap, Char.code 's'], "save_some_buffers";
+[c_x;ControlMap, Char.code 'w'], "write_file"; 
+@
+<<saving actions>>=
+(* C-x map *)
+define_action "save_some_buffers"  save_some_buffers;
+(* C-x map *)
+define_action "write_file"  write_buffer; 
+@
+
+
+<<function Complex.save_some_buffers>>=
+let save_some_buffers frame =
+  let top_window = Window.top frame.frm_window in
+  let location = top_window.top_location in
+  let buffers = list_of_hash location.loc_buffers in
+  save_buffers_and_action frame buffers (fun _ -> ())
+@
+%less: save_buffers_and_action here?
+
+<<function Complex.write_buffer>>=
+let write_buffer frame = 
+  let buf = frame.frm_buffer in
+  select_filename frame "Save file as: " (fun str -> 
+      let top_window = Window.top frame.frm_window in
+      Ebuffer.change_name top_window.top_location buf str;
+      Ebuffer.save buf
+  )
+@
+
+%\subsection{Helpers}
+<<function Frame.save_buffer>>=
+let save_buffer frame =
+  Ebuffer.save frame.frm_buffer
+@
+% dead?
+
+
+
+
+\subsubsection{Exit}
+
+<<misc keys>>=
+[c_x; ControlMap, Char.code 'c'], "exit"; 
+@
+
+<<misc actions>>=
+(* C-x map *)
+define_action "exit"  exit_efuns; 
+@
+
+<<function Complex.exit_efuns>>=
+let exit_efuns frame =
+  let top_window = Window.top frame.frm_window in
+  let location = top_window.top_location in
+  let buffers = Utils.list_of_hash location.loc_buffers in
+  save_buffers_and_action frame buffers (fun _ -> 
+    (* todo: have some exit hooks? *)
+    Graphics.close_graph ();
+    exit 0
+  )
+@
+
+%todo: save_buffers_and_action?
+
+\subsection{Edit menu}
+
+<<constant Top_window.edit_menu>>=
+let edit_menu = define_option ["edit_menu"] ""
+    (list_option string2_option) []
+@
+
+<<[[Std_efunsrc]] edit menu setup>>=
+if !!edit_menu = [] then begin
+    edit_menu =:= [ 
+      "Cut",    "kill_region";
+      "Paste",  "insert_killed";
+
+      "Undo",    "undo";
+      "", "";
+      <<[[edit_menu]] entries>>
+    ];
+  end;
+@
+% will see later
+
+\subsection{Buffers menu}
+
+% will see later
+
+\subsection{Help menu}
+
+<<constant Top_window.help_menu>>=
+let help_menu = ref ([| |]: (string * (frame -> unit)) array)
+@
+% this one is not configurable apparently
+
+<<[[Std_efunsrc]] help menu setup>>=
+help_menu := [|
+  "Key Bindings", (fun frame ->
+      Frame.change_buffer frame.frm_window "*bindings*"
+  );
+  "About Efuns", (fun frame ->
+    Frame.change_buffer frame.frm_window "*help*"
+  );
+  "Changes", (fun frame ->
+    (*
+      let _ = Frame.load_file frame.frm_window (
+          Version.efuns_lib ^"/Changes") in ()
+    *)
+    failwith "Std_xxx.menu changes: TODO"
+  );
+
+|];
+@
+% see Frame.change_buffer later
+
+%   (*
+%        let top_window = Window.top frame.frm_window in        
+%        let dialog = new WX_dialog.t top_window.top_root 
+%            "Efuns,\nVersion 015\nFabrice Le Fessant\nFabrice.Le_Fessant@inria.fr" [] in
+%        dialog#add_button "OK" (fun _ -> dialog#destroy);
+%        dialog#show;
+%    *)
+
+
+
+
+\section{Sub-windows/Frames}
 
 % the redisplay function!!!
 
@@ -3302,7 +2937,410 @@ let update top_window frame =
          request 0 (String.length request) Text.direct_attr
 @
 
-\section{Cursor}
+\subsection{Cursor}
+
+% an output, but strongly related
+% also to input devices (input device feedback essentially)
+
+
+
+% Top_window.update_display -> <>
+<<function Top_window.cursor_on>>=
+let cursor_on top_window =
+  let frame = top_window.top_active_frame in
+  let name = frame.frm_buffer.buf_name in
+  if not (name == top_window.top_name) then
+    begin
+      Common.pr2_once "Top_window.top_apply#setWM_NAME";
+      (* top_window.top_appli#setWM_NAME name; *)
+      top_window.top_name <- name
+    end;
+  set_cursor_on top_window frame;
+  match top_window.top_second_cursor with
+    None -> ()
+  | Some frame -> set_cursor_on top_window frame
+@
+
+
+\subsection{Scrollbar}
+
+<<[[Top_window.create()]] optional scrollbar setup>>=
+(* ady#add_subject (fun () -> *) (
+(*
+      let ady = () in
+      let frame = top_window.top_active_frame in
+      if not frame.frm_force_start then
+        wrap top_window (scroll_to_frame ady) ()
+*)
+  ()
+  );
+@
+
+
+
+\section{[[Status]] Line}
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_status : status;    
+@
+
+<<type Efuns.status>>=
+and status =
+  { 
+    mutable stat_name : string;
+    mutable stat_file : string;
+    mutable stat_line : int;
+    mutable stat_col : int;
+
+    mutable status_modified : bool;
+    mutable stat_modified : bool;
+    <<[[Efuns.status]] other fields>>
+  }
+@
+
+
+<<[[Efuns.status]] other fields>>=
+mutable status_format : (status_info * (int * int)) list;
+@
+
+<<type Efuns.status_info>>=
+and status_info =
+| StatName
+| StatFile
+| StatLine
+| StatCol
+| StatModified
+| StatMode
+@
+% also clock, load, etc
+
+<<constant Frame.status_format>>=
+let status_format = ref [
+    StatModified , (1, 2);
+    StatName, (5, 20);
+    StatMode, (30,30);
+    StatLine, (65, 5);
+    StatCol, (70 , 5);
+    StatFile, (35,15);
+  ]
+@
+% meaning?
+
+<<[[Frame.create_without_top()]] let status>>=
+let status = {
+    stat_name = "";
+    stat_file = "";
+    stat_col = -1;
+    stat_line = -1;
+    status_modified = true;
+    stat_modified = (buf.buf_last_saved = version buf.buf_text);
+    stat_modes = [];
+    stat_mode = dummy_mode;
+
+    status_format = !status_format;
+    status_string = String.make 256 '-';
+  } in
+String.blit editname 0 status.status_string 5 (String.length editname);
+@
+
+<<constant Frame.editname>>=
+let editname = "Efuns:"
+@
+
+<<[[Frame.create_without_top()]] adjust status of frame>>=
+status_name frame buf.buf_name;
+@
+
+
+<<function Frame.status_name>>=
+let status_name frame name =
+  let status = frame.frm_status in
+  if status.stat_name <> name then
+    begin
+      status.stat_name <- name;
+      status_print status name StatName
+    end
+@
+
+
+
+% status_name | status_modified | ... -> <>
+<<function Frame.status_print>>=
+let status_print status str stat_type =
+  status.status_modified <- true;
+  try
+    let (pos,maxlen) = List.assoc stat_type status.status_format in
+    let len = min (String.length str) maxlen in
+    String.blit str 0 status.status_string pos len;
+    String.fill status.status_string (pos + len) (maxlen - len) ' '
+  with
+    Not_found -> ()
+@
+
+<<[[Efuns.status]] other fields>>=
+(* the string! --- ... --- *)
+mutable status_string : string;
+@
+% this will then be the only thing used in the rendering
+
+
+% ?? -> <>
+<<function Frame.status_modified>>=
+let status_modified frame modified =
+  let status = frame.frm_status in
+  if status.stat_modified <> modified then
+    begin
+      status_print status (if modified then "**" else "--") StatModified;
+      status.stat_modified <- modified
+    end
+@
+
+% ?? -> <>
+<<function Frame.status_col>>=
+let status_col frame col =
+  let status = frame.frm_status in
+  if status.stat_col <> col then
+    begin
+      status.stat_col <- col;
+      status_print status (Printf.sprintf "C%d" (col+1)) StatCol
+    end
+@
+
+% Frame.update -> <>
+<<function Frame.status_line>>=
+let status_line frame line =
+  let status = frame.frm_status in
+  if status.stat_line <> line then
+    begin
+      status.stat_line <- line;
+      status_print status (Printf.sprintf "L%d" (line+1)) StatLine
+    end
+@
+
+% ?? -> <>
+<<function Frame.status_file>>=
+let status_file frame name =
+  let status = frame.frm_status in
+  if status.stat_file <> name then
+    begin
+      status.stat_file <- name;
+      status_print status name StatFile
+    end
+@
+% dead?
+
+
+
+\section{Minibuffer}
+
+\subsection{Minubuffer creation}
+
+% when it's created? each type enter M-x?
+
+<<[[Efuns.top_window]] other fields>>=
+mutable top_mini_buffers : frame list;
+@
+% there are many mini_buffers??
+
+% ?? -> <>
+<<function Minibuffer.create>>=
+let create frame local_map request =
+  let window = frame.frm_window in
+  let top_window = Window.top window in
+  let location = top_window.top_location in
+
+  let mini_text = Text.create "" in
+  let qlen = String.length request in
+  let request = if qlen < 50 then request else
+      (String.sub request 0 47 ^ "...") in
+
+  let mini_buf = buf_create location mini_text local_map in
+
+  let mini_window = Window.create true (*mini*) (TopWindow top_window) 
+    qlen (top_window.top_height - 1)
+    (top_window.top_width - qlen) 1 in
+  let mini_frame = Frame.create mini_window (Some request) mini_buf
+  in    
+  mini_frame.frm_cutline <- max_int;
+  mini_frame.frm_has_status_line <- 0;
+  top_window.top_mini_buffers <- mini_frame :: top_window.top_mini_buffers;
+
+  Keymap.add_binding local_map [ControlMap, Char.code 'g']
+    (fun mini_frame -> kill mini_frame frame);
+  mini_frame
+@
+
+
+
+<<[[Efuns.window]] other fields>>=
+mutable win_mini : bool;
+@
+
+
+% ?? -> <>
+<<function Minibuffer.buf_create>>=
+let buf_create location text local_map =
+  let buf =
+    { 
+      buf_text = text;
+      buf_name = "*Minibuffer*";
+      buf_filename = None; (* no connected file! *)
+
+      buf_major_mode = fondamental_mode;
+      buf_minor_modes = [];
+      buf_syntax_table = Ebuffer.default_syntax_table;
+
+      buf_modified = 0;
+      buf_last_saved = version text;
+      buf_history = [];
+      buf_charreprs = charreprs;
+      buf_map = local_map;
+      buf_map_partial = true;
+      buf_point = Text.add_point text;
+      buf_sync = false;
+      buf_mark = None;
+      buf_start = Text.add_point text;
+      buf_shared = 0;
+      buf_finalizers = [];
+
+      buf_vars = Local.vars ();
+      buf_location = location;
+    } in
+  buf
+@
+
+<<constant Minibuffer.charreprs>>=
+let charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i))
+@
+<<toplevel Minibuffer._1>>=
+let _ =
+  charreprs.(9) <- String.make !tab_size ' '
+@
+
+
+
+\subsection{[[M-x foo]], [[call_interactive()]]}
+
+<<meta keys>>=
+[MetaMap, Char.code 'x'], "call_interactive";
+@
+<<meta actions>>=
+define_action "call_interactive"  call_interactive;
+@
+
+
+<<constant Interactive.meta_hist>>=
+let meta_hist = ref []
+@
+
+<<function Interactive.call_interactive>>=
+let call_interactive frame =
+  let buf = frame.frm_buffer in
+  let interactives = buf_interactives buf in
+  select frame "M-x " meta_hist "" 
+    (fun _ -> List.map fst interactives)
+    (fun s -> s) 
+    (exec_interactive interactives frame)
+@
+
+<<function Interactive.buf_interactives>>=
+let buf_interactives buf =
+  let interactives = 
+    buf.buf_major_mode.maj_map.interactives @
+    buf.buf_location.loc_map.interactives 
+  in
+  List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
+   interactives buf.buf_minor_modes 
+@
+
+
+\subsection{Adding interactive functions}
+
+%subsubsection{[[Map.interactives]]}
+
+% in addition to char_map and complex_binding
+
+<<[[Efuns.map]] other fields>>=
+mutable interactives : (string * (action * prefix option)) list;
+@
+% record key so useful so can display the list of bindings?
+
+<<type Efuns.prefix>>=
+and prefix = key list
+@
+
+%\subsection{[[interactives_map]]}
+
+<<constant Std_efunsrc.interactives_map>>=
+let interactives_map = define_option ["interactives_map"] ""
+    (list_option string2_option) 
+  []
+@
+
+<<[[Std_efunsrc.toplevel]] set interactives_map>>=
+if !!interactives_map = [] then begin
+    interactives_map =:= List.map (fun x -> x, x ) [
+      <<[[interactives_map]] initial entries>>
+    ]
+  end    
+@
+
+<<[[interactives_map]] initial entries>>=
+"save_options";
+"load_library";
+"get_position";
+"open_display";
+"unset_attr";
+"start_server";
+@      
+
+
+<<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
+List.iter (fun (name, action) ->
+    try
+      add_interactive location.loc_map name (execute_action action)
+    with e ->
+        Log.printf "Error for action %s" action;
+        Log.exn "%s\n" e;
+) !!interactives_map;
+@
+
+<<function Keymap.add_interactive>>=
+let add_interactive map name f =
+    map.interactives <- (name, (f, None)) :: map.interactives
+@
+
+% so each global key and their associated func is accessible!
+<<[[Keymap.interactive()]] add keylist and name to interactives list>>=
+map.interactives <- (name, (f, Some keylist)) :: map.interactives;
+@
+
+\subsection{[[Top_window.message()]]}
+
+% convenient to communicate info
+
+
+<<function Top_window.message>>=
+let message top_window msg =
+  let xterm = Window.xterm top_window in
+  let len = String.length msg in
+  WX_xterm.draw_string xterm 0 (top_window.top_height - 1)
+    msg 0 len Text.direct_attr;
+  WX_xterm.clear_eol xterm len (top_window.top_height - 1)
+    (top_window.top_width - len);
+  match top_window.top_mini_buffers with
+    [] -> (* No mini-buffer ... *) ()
+  | mini_buffer :: _ -> (* one mini-buffer is active *)
+      match top_window.top_display with
+        None -> ()
+      | Some display ->
+          WX_xterm.update_displays ();
+          (* let _ = Unix.select [] [] [] 0.2 in *)
+          mini_buffer.frm_redraw <- true
+@
+
+
+
 
 
 \chapter{Input Managment}
@@ -3595,29 +3633,6 @@ let mouse_save_then_kill frame =
     update_display top_window.top_location
 @          
 
-\section{Cursor}
-% not really input, more an output, but strongly related
-% to input devices (input device feedback essentially)
-
-
-
-% Top_window.update_display -> <>
-<<function Top_window.cursor_on>>=
-let cursor_on top_window =
-  let frame = top_window.top_active_frame in
-  let name = frame.frm_buffer.buf_name in
-  if not (name == top_window.top_name) then
-    begin
-      Common.pr2_once "Top_window.top_apply#setWM_NAME";
-      (* top_window.top_appli#setWM_NAME name; *)
-      top_window.top_name <- name
-    end;
-  set_cursor_on top_window frame;
-  match top_window.top_second_cursor with
-    None -> ()
-  | Some frame -> set_cursor_on top_window frame
-@
-
 
 \section{Interactive select}
 % here?
@@ -3888,7 +3903,9 @@ let goto_line frame =
       Text.goto_line text point (line - 1))
 @
 
-\subsection{Helpers}
+
+
+%\subsection{Helpers}
 
 <<function Text.point_to_eol>>=
 let point_to_eol tree point =
@@ -4065,7 +4082,7 @@ let kill_end_of_line frame =
   kill_text text frame.frm_point len
 @
 
-\subsection{XXX}
+%\subsection{XXX}
 
 <<function Simple.hungry_char>>=
 let hungry_char c = 

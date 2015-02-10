@@ -200,6 +200,7 @@ let rec exec_named_buf_hooks_with_abort hooks frame =
 (*s: function Ebuffer.save *)
 let save buf =
   exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
+
   let filename =
     match buf.buf_filename with
       None -> raise Not_found
@@ -209,6 +210,7 @@ let save buf =
   Text.save buf.buf_text outc;
   close_out outc;
   buf.buf_last_saved <- version buf.buf_text;
+
   exec_named_buf_hooks !!saved_buffer_hooks buf
 (*e: function Ebuffer.save *)
 

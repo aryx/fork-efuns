@@ -309,10 +309,10 @@ let _ =
   (*x: misc actions *)
   define_action "check_file" check_file;
   (*x: misc actions *)
+  define_buffer_action "update_time" update_time;
+  (*x: misc actions *)
   (* C-x map *)
   define_action "exit"  exit_efuns; 
-  (*x: misc actions *)
-  define_buffer_action "update_time" update_time;
   (*x: misc actions *)
   (* C-x map *)
   define_action "next_error"  next_error;
