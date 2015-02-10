@@ -692,12 +692,12 @@ let find_xy text point line pos =
 (*s: function Text.add_point *)
 let add_point tree =
   let text = tree.tree_text in      
-  let point = {
+  let p = {
       point = 0;
       point_y = 0;
     } in    
-  text.text_points <- point :: text.text_points;
-  point
+  text.text_points <- p :: text.text_points;
+  p
 (*e: function Text.add_point *)
 
 (*s: function Text.dup_point *)
@@ -729,9 +729,9 @@ let move_point_to tree point p =
 let remove_point tree p =
   let text = tree.tree_text in      
   text.text_points <- 
-    (List.fold_left (fun points point ->
+    text.text_points |> List.fold_left (fun points point ->
         if point == p then points else point :: points) 
-    [] text.text_points)
+    []
 (*e: function Text.remove_point *)
 
 (*s: function Text.read *)
@@ -761,26 +761,25 @@ let unset_attr text =
 let set_attr tree point len attr = (* should not exceed one line *)
   let text = tree.tree_text in  
   if len > 0 then
+    let gap_end = text.text_gpoint + text.text_gsize in
+    let x,y = find_xy tree text.text_gpoint text.text_gline point.point in
+    cancel_repr text point.point y;
     let point = point.point in
     let gpoint = text.text_gpoint in
-    let gline = text.text_gline in
-    let size = text.text_size in
-    let gap_end = gpoint + text.text_gsize in
-    let x,y = find_xy tree gpoint gline point in
-    cancel_repr text point y;
     let before, after, after_pos =
       if point > gap_end then
-        0, (min (size - point) len), point
+        0, (min (text.text_size - point) len), point
       else
       if point + len <= gpoint then
         0, len, point
       else
       let before = gpoint - point in
-      let after = min (len - before) (size - gap_end) in
+      let after = min (len - before) (text.text_size - gap_end) in
       before, after, gap_end
     in
     let attrs = text.text_attrs in
-    if before > 0 then Array.fill attrs point before attr;
+    if before > 0 
+    then Array.fill attrs point before attr;
     Array.fill attrs after_pos after attr
 (*e: function Text.set_attr *)
 

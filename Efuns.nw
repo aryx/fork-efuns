@@ -492,21 +492,19 @@ let create location name filename text local_map =
 and frame  =
   {
     mutable frm_buffer : buffer;
+
+    mutable frm_xpos : int;
+    mutable frm_ypos : int;
+    
+    mutable frm_width : int;
+    mutable frm_height : int;
     <<[[Efuns.frame]] other fields>>
   } 
 @
 %less: different sections for the frame (cursor, position, etc)
 %dead: mutable frm_force_point : bool;
 %dead: mutable frm_force_cursor : bool;
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_xpos : int;
-mutable frm_ypos : int;
-
-mutable frm_width : int;
-mutable frm_height : int;
-@
-% seems redundant with frm.frm__window info no?
+%coordinates? seems redundant with frm.frm__window info no?
 % xpos are in line x col dimentions, same for width and height,
 % not pixels.
 
@@ -703,6 +701,7 @@ and top_window =
     <<[[Efuns.top_window]] other fields>>
   } 
 @
+% top_height includes minibuffer line.
 % diff with window? no xpos, ypos here
 % old: used to have a top_windows with an 's' but a bit weird,
 %  and also to use top_windows where really it's windows,
@@ -812,6 +811,10 @@ and generic_action =
   BufferAction of (buffer -> unit)
 | FrameAction of (frame -> unit)
 @
+% really need this BufferAction subtelity?
+% We need a buffer action when something is done only once, e.g.
+% setting up the major mode is a buffer operation and buffer property!
+% A frame is more temporary
 
 <<global Efuns.actions>>=
 let (actions : (string, generic_action) Hashtbl.t) = 
@@ -860,6 +863,7 @@ let execute_action action frame =
   | FrameAction f -> f frame 
 @
 
+% exec_named_buf_hooks -> <>
 <<function Efuns.execute_buffer_action>>=
 let execute_buffer_action action buf =
   match (get_action action) with
@@ -883,19 +887,19 @@ let _ =
 
 
 <<actions definitions>>=
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Loading *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<loading actions>>
 
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Navigating (in the file) *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<navigating actions>>
 
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Editing *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* ------------------------- *)
 (* Inserting *)
 (* ------------------------- *)
@@ -917,56 +921,53 @@ let _ =
 (* ------------------------- *)
 <<replacing actions>>
 
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Searching *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<searching actions>>
 
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Undoing *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<undoing actions>>
 
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* External commands *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<external command actions>>
 
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Buffers/windows/frames *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<buffer managment actions>>
 <<buffer navigating actions>>
 <<frame managment actions>>
 <<frame navigation actions>>
 
-<<window managment actions>>
-
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Meta *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<meta actions>>
 
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Saving *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<saving actions>>
 
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Major mode *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<major mode actions>>
 
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 (* Misc *)
-(* ----------------------------------------------------------------------- *)
+(* ----------------------------------------------------------- *)
 <<misc actions>>
 @
 
 
 %XXX
 <<misc actions>>=
-(*  define_action "load_library" load_library;*)
 define_action "save_options" save_options;
 define_action "get_position" get_pos;
 define_action "unset_attr" unset_attr;
@@ -976,12 +977,16 @@ define_action "revert_buffer" reload;
 define_action "point_at_mark"  point_at_mark;
 (* C-M map *)
 define_action "next_hole" next_hole;
-(*  define_action "start_server" Server.start;  *)
 define_action "open_display" open_display;
 (* C-x map *)
 define_action "change_font"  change_font;
 @  
+%(*  define_action "load_library" load_library;*)
+%(*  define_action "start_server" Server.start;  *)
 
+<<misc actions>>=
+<<window managment actions>>
+@
 
 
 \section{Keyboard [[Map]]}
@@ -1175,19 +1180,19 @@ let c_c = (ControlMap, Char.code 'c')
 
 
 <<[[global_map]] initial entries>>=
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* Loading *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 <<loading keys>>
 
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* Navigating (in the file) *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 <<navigating keys>>
 
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* Editing *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* ------------- *)
 (* Inserting *)
 (* ------------- *)
@@ -1204,50 +1209,47 @@ let c_c = (ControlMap, Char.code 'c')
 (* Transforming *)
 (* ---------------------- *)
 <<transforming keys>>
-
-(* ----------------------------------------------------------------- *)
+(* ---------------------- *)
 (* Replacing *)
-(* ----------------------------------------------------------------- *)
+(* ---------------------- *)
 <<replacing keys>>
 
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* Searching *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 <<searching keys>>
 
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* Undoing *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 <<undoing keys>>
 
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* External commands *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 <<external commands keys>>
 
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* Buffers/windows/frames *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 <<buffer managment keys>>
 <<buffer navigating keys>>
 <<frame managment keys>>
 <<frame navigation keys>>
 
-<<window managment keys>>
-
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* Meta *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 <<meta keys>>
 
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* Saving *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 <<saving keys>>
 
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 (* Misc *)
-(* ----------------------------------------------------------------- *)
+(* -------------------------------------------------------- *)
 <<misc keys>>
 @
 
@@ -1262,6 +1264,9 @@ let c_c = (ControlMap, Char.code 'c')
 @
 
 
+<<misc keys>>=
+<<window managment keys>>
+@
 
 
 
@@ -1735,7 +1740,7 @@ let _ =
 <<function Top_window.create>>=
 let create location display =
  
-  <<[[Top_window.create()]] create top graphical window with right dimensions>>
+  <<[[Top_window.create()]] create graphical window with right dimensions>>
 
   let buf = 
     Ebuffer.default location "*help*" in
@@ -1770,6 +1775,10 @@ let create location display =
 
   top_window
 @
+% loc_height -1 for the minibuffer.
+% top_mini_buffers is empty at first, the minibuffer is created
+% on the fly when do M-x, but before that it does not really
+% exist (hmm what about Top_window.message() though?)
 
 %(*
 %      top_term = xterm;
@@ -1819,7 +1828,7 @@ INRIA Rocquencourt
 %*)
 
 
-<<[[Top_window.create()]] create top graphical window with right dimensions>>=
+<<[[Top_window.create()]] create graphical window with right dimensions>>=
 (*
 let top = new WX_appli.t display.WX_xterm.root_oo [] in
 top#setWM_NAME "new_frame";
@@ -1921,6 +1930,7 @@ let handler top_window xterm event =
 <<constant Top_window.keypressed>>=
 let keypressed = ref 0
 @
+% who uses that?
 
 <<constant Top_window.handle_key_start_hook>>=
 let handle_key_start_hook = Local.create_abstr "handle_key_start_hook"
@@ -1949,6 +1959,7 @@ let handle_key top_window modifiers keysym =
   let key = (mod_, keysym) in
   begin
     try
+      (* should lead to an action being triggered and modifying things! *)
       try_map frame key
     with
     <<[[Top_window.handle_key()]] handle exception of try_map>>
@@ -2167,12 +2178,12 @@ mutable text_points : point list;
 <<function Text.add_point>>=
 let add_point tree =
   let text = tree.tree_text in      
-  let point = {
+  let p = {
       point = 0;
       point_y = 0;
     } in    
-  text.text_points <- point :: text.text_points;
-  point
+  text.text_points <- p :: text.text_points;
+  p
 @
 
 <<function Text.dup_point>>=
@@ -2190,9 +2201,9 @@ let dup_point tree point =
 let remove_point tree p =
   let text = tree.tree_text in      
   text.text_points <- 
-    (List.fold_left (fun points point ->
+    text.text_points |> List.fold_left (fun points point ->
         if point == p then points else point :: points) 
-    [] text.text_points)
+    []
 @
 
 
@@ -2207,6 +2218,7 @@ let goto_point text p1 p2 =
 @
 
 
+\section{The gap}
 
 %    let gap_end = gpoint + text.text_gsize in
 
@@ -2216,13 +2228,17 @@ mutable text_gpoint : int;
 mutable text_gline : int;
 mutable text_gsize : int;
 @
+% rename gpoint? it's not really a point, or rename
+% gline to gpoint_y? more consistent?
+% gx, gy, gsize gap col, gap line, gap size
+
 
 <<function Text.size>>=
 let size tree = 
   let text = tree.tree_text in
   text.text_size - text.text_gsize
 @
-
+% gsize is 0 at the very beginning
 
 <<function Text.move_point_to>>=
 let move_point_to tree point p =
@@ -2274,26 +2290,25 @@ let unset_attr text =
 let set_attr tree point len attr = (* should not exceed one line *)
   let text = tree.tree_text in  
   if len > 0 then
+    let gap_end = text.text_gpoint + text.text_gsize in
+    let x,y = find_xy tree text.text_gpoint text.text_gline point.point in
+    cancel_repr text point.point y;
     let point = point.point in
     let gpoint = text.text_gpoint in
-    let gline = text.text_gline in
-    let size = text.text_size in
-    let gap_end = gpoint + text.text_gsize in
-    let x,y = find_xy tree gpoint gline point in
-    cancel_repr text point y;
     let before, after, after_pos =
       if point > gap_end then
-        0, (min (size - point) len), point
+        0, (min (text.text_size - point) len), point
       else
       if point + len <= gpoint then
         0, len, point
       else
       let before = gpoint - point in
-      let after = min (len - before) (size - gap_end) in
+      let after = min (len - before) (text.text_size - gap_end) in
       before, after, gap_end
     in
     let attrs = text.text_attrs in
-    if before > 0 then Array.fill attrs point before attr;
+    if before > 0 
+    then Array.fill attrs point before attr;
     Array.fill attrs after_pos after attr
 @
 
@@ -2977,6 +2992,14 @@ let cursor_on top_window =
 @
 
 
+\subsection{[[Top_window.clean_display()]]}
+
+% event loop -> ... -> handle_key -> ...; <>; Top_window.update_display()
+<<function Top_window.clean_display>>=
+let clean_display location =
+  location.top_windows |> List.iter (fun top_window -> cursor_off top_window) 
+@
+
 
 \section{[[Status]] Line}
 
@@ -3340,6 +3363,16 @@ let message top_window msg =
 @
 
 
+% event loop -> ... -> Top_window.handle_key -> <>
+<<function Top_window.clear_message>>=
+let clear_message top_window =
+  match top_window.top_mini_buffers with
+    [] -> 
+      let xterm = Window.xterm top_window in
+      WX_xterm.clear_eol xterm 0 
+        (top_window.top_height - 1) top_window.top_width; 
+  | _ -> ()
+@
 
 
 

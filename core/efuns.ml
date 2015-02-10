@@ -144,13 +144,13 @@ and minor_mode = {
 and frame  =
   {
     mutable frm_buffer : buffer;
-    (*s: [[Efuns.frame]] other fields *)
+
     mutable frm_xpos : int;
     mutable frm_ypos : int;
-
+    
     mutable frm_width : int;
     mutable frm_height : int;
-    (*x: [[Efuns.frame]] other fields *)
+    (*s: [[Efuns.frame]] other fields *)
     (* insert point *)
     mutable frm_point : Text.point; 
     (*x: [[Efuns.frame]] other fields *)

@@ -80,9 +80,9 @@ let select_open_file frame =
 (*s: toplevel Std_efunsrc._1 *)
 let _ =
   (*s: actions definitions *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Loading *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: loading actions *)
   define_action "select_open_file" select_open_file;
   (*x: loading actions *)
@@ -93,9 +93,9 @@ let _ =
   define_action "insert_file"  insert_file;
   (*e: loading actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Navigating (in the file) *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: navigating actions *)
   define_action "move_backward"  (fun frame -> ignore (move_backward frame 1));
   define_action "move_forward"   (fun frame -> ignore (move_forward frame 1));
@@ -123,9 +123,9 @@ let _ =
   define_action "goto_line" goto_line;
   (*e: navigating actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Editing *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* ------------------------- *)
   (* Inserting *)
   (* ------------------------- *)
@@ -184,9 +184,9 @@ let _ =
   define_action "query_replace_regexp" query_replace_regexp;
   (*e: replacing actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Searching *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: searching actions *)
   define_action "isearch_forward"  isearch_forward;
   define_action "isearch_backward"  isearch_backward;
@@ -194,16 +194,16 @@ let _ =
   define_action "isearch_backward_regexp"  isearch_backward_regexp;
   (*e: searching actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Undoing *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: undoing actions *)
   define_action "undo"  undo;
   (*e: undoing actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* External commands *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: external command actions *)
   define_action "shell_command"  shell_command;
   (*x: external command actions *)
@@ -211,9 +211,9 @@ let _ =
   (*  define_action "compile" (compile c_find_error); *)
   (*e: external command actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Buffers/windows/frames *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: buffer managment actions *)
   (* C-x map *)
   define_action "change_buffer"  change_buffer;
@@ -247,27 +247,18 @@ let _ =
   define_action "next_frame"  next_frame;
   (*e: frame navigation actions *)
 
-  (*s: window managment actions *)
-  (* C-x 5 map *)
-  define_action "window_load_buffer"  window_load_buffer;
-  (* C-x 5 map *)
-  define_action "window_change_buffer"  window_change_buffer;
-  (* C-x 5 map *)
-  define_action "delete_window"  Top_window.delete_window;
-  (*e: window managment actions *)
-
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Meta *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: meta actions *)
   define_action "call_interactive"  call_interactive;
   (*x: meta actions *)
   define_action "eval" Complex.eval;  
   (*e: meta actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Saving *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: saving actions *)
   (* C-x map *)
   define_action "save_buffer"  save_buffer; 
@@ -278,18 +269,17 @@ let _ =
   define_action "write_file"  write_buffer; 
   (*e: saving actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Major mode *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: major mode actions *)
   define_action "fondamental_mode" fondamental_mode;
   (*e: major mode actions *)
 
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (* Misc *)
-  (* ----------------------------------------------------------------------- *)
+  (* ----------------------------------------------------------- *)
   (*s: misc actions *)
-  (*  define_action "load_library" load_library;*)
   define_action "save_options" save_options;
   define_action "get_position" get_pos;
   define_action "unset_attr" unset_attr;
@@ -299,10 +289,18 @@ let _ =
   define_action "point_at_mark"  point_at_mark;
   (* C-M map *)
   define_action "next_hole" next_hole;
-  (*  define_action "start_server" Server.start;  *)
   define_action "open_display" open_display;
   (* C-x map *)
   define_action "change_font"  change_font;
+  (*x: misc actions *)
+  (*s: window managment actions *)
+  (* C-x 5 map *)
+  define_action "window_load_buffer"  window_load_buffer;
+  (* C-x 5 map *)
+  define_action "window_change_buffer"  window_change_buffer;
+  (* C-x 5 map *)
+  define_action "delete_window"  Top_window.delete_window;
+  (*e: window managment actions *)
   (*x: misc actions *)
   (* C-h map *)
   define_action "help_bindings"  Frame.bindings_help;
@@ -352,18 +350,18 @@ let _ =
   if !!global_map = [] then begin
       global_map =:= [
         (*s: [[global_map]] initial entries *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* Loading *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (*s: loading keys *)
         [c_x; ControlMap, Char.code 'f'], "load_buffer";
         (*x: loading keys *)
         [c_x; NormalMap, Char.code 'i'], "insert_file";
         (*e: loading keys *)
 
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* Navigating (in the file) *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (*s: navigating keys *)
         [NormalMap, XK.xk_Left], "move_backward"; 
         [NormalMap, XK.xk_Right], "move_forward"; 
@@ -392,9 +390,9 @@ let _ =
 
         (*e: navigating keys *)
 
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* Editing *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* ------------- *)
         (* Inserting *)
         (* ------------- *)
@@ -436,17 +434,16 @@ let _ =
 
         [MetaMap, XK.xk_q], "fill_paragraph";
         (*e: transforming keys *)
-
-        (* ----------------------------------------------------------------- *)
+        (* ---------------------- *)
         (* Replacing *)
-        (* ----------------------------------------------------------------- *)
+        (* ---------------------- *)
         (*s: replacing keys *)
         [MetaMap, Char.code '%'], "query_replace_string";
         (*e: replacing keys *)
 
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* Searching *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (*s: searching keys *)
         [ControlMap, Char.code 's'], "isearch_forward";
         [ControlMap, Char.code 'r'], "isearch_backward";
@@ -454,23 +451,23 @@ let _ =
         [MetaMap, Char.code 'r'], "isearch_backward_regexp";
         (*e: searching keys *)
 
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* Undoing *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (*s: undoing keys *)
         [ControlMap, Char.code '_'], "undo";
         (*e: undoing keys *)
 
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* External commands *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (*s: external commands keys *)
         [MetaMap, Char.code '!'], "shell_command";
         (*e: external commands keys *)
 
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* Buffers/windows/frames *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (*s: buffer managment keys *)
         [c_x; NormalMap, Char.code 'b'], "change_buffer";
         (*x: buffer managment keys *)
@@ -493,22 +490,16 @@ let _ =
         [c_x; NormalMap, Char.code 'o'], "next_frame";
         (*e: frame navigation keys *)
 
-        (*s: window managment keys *)
-        [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
-        [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
-        [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
-        (*e: window managment keys *)
-
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* Meta *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (*s: meta keys *)
         [MetaMap, Char.code 'x'], "call_interactive";
         (*e: meta keys *)
 
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* Saving *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (*s: saving keys *)
         [c_x; ControlMap, Char.code 's'], "save_buffer"; 
         (*x: saving keys *)
@@ -516,9 +507,9 @@ let _ =
         [c_x;ControlMap, Char.code 'w'], "write_file"; 
         (*e: saving keys *)
 
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (* Misc *)
-        (* ----------------------------------------------------------------- *)
+        (* -------------------------------------------------------- *)
         (*s: misc keys *)
         [NormalMap, XK.xk_Insert], "overwrite_mode";
         [ControlMap, Char.code 'l'], "recenter";
@@ -526,6 +517,12 @@ let _ =
         [c_x; NormalMap, Char.code 'F'], "change_font";
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
+        (*x: misc keys *)
+        (*s: window managment keys *)
+        [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
+        [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
+        [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
+        (*e: window managment keys *)
         (*x: misc keys *)
         [c_h; NormalMap, Char.code 'K'], "help_bindings";
         (*x: misc keys *)

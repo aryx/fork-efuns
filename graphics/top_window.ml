@@ -137,9 +137,7 @@ let update_display location =
 
 (*s: function Top_window.clean_display *)
 let clean_display location =
-  List.iter (fun top_window -> 
-      cursor_off top_window
-  ) location.top_windows
+  location.top_windows |> List.iter (fun top_window -> cursor_off top_window) 
 (*e: function Top_window.clean_display *)
 
 (*s: function Top_window.resize_window *)
@@ -256,6 +254,7 @@ let handle_key top_window modifiers keysym =
   let key = (mod_, keysym) in
   begin
     try
+      (* should lead to an action being triggered and modifying things! *)
       try_map frame key
     with
     (*s: [[Top_window.handle_key()]] handle exception of try_map *)
@@ -406,7 +405,7 @@ let help_menu = ref ([| |]: (string * (frame -> unit)) array)
 (*s: function Top_window.create *)
 let create location display =
  
-  (*s: [[Top_window.create()]] create top graphical window with right dimensions *)
+  (*s: [[Top_window.create()]] create graphical window with right dimensions *)
   (*
   let top = new WX_appli.t display.WX_xterm.root_oo [] in
   top#setWM_NAME "new_frame";
@@ -421,7 +420,7 @@ let create location display =
   let scrollbar = new WX_scrollbar.v hbar#container ady [] in
   hbar#container_add_s [xterm#contained; scrollbar#contained];
   *)
-  (*e: [[Top_window.create()]] create top graphical window with right dimensions *)
+  (*e: [[Top_window.create()]] create graphical window with right dimensions *)
 
   let buf = 
     Ebuffer.default location "*help*" in

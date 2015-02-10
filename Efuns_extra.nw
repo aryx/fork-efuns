@@ -5485,15 +5485,6 @@ open Dyneval
 
 \subsection*{[[graphics/top_window.ml]]}
 
-<<function Top_window.clear_message>>=
-let clear_message top_window =
-  match top_window.top_mini_buffers with
-    [] -> 
-      let xterm = Window.xterm top_window in
-      WX_xterm.clear_eol xterm 0 
-        (top_window.top_height - 1) top_window.top_width; 
-  | _ -> ()
-@
 
 <<function Top_window.dummy_action>>=
 let dummy_action frame = ()
@@ -5550,12 +5541,6 @@ let cursor_off top_window =
 @
 
 
-<<function Top_window.clean_display>>=
-let clean_display location =
-  List.iter (fun top_window -> 
-      cursor_off top_window
-  ) location.top_windows
-@
 
 <<function Top_window.resize_window>>=
 let rec resize_window window xpos ypos width height =
