@@ -569,9 +569,9 @@ let _ =
         "tex_mode";
         "c_mode";
         (*x: [[interactives_map]] initial entries *)
-        "accents_mode";
         "paren_mode";
         "abbrevs_mode";
+        "accents_mode";
         "ocaml_minor_mode";
         "fill_mode";
         "ocaml_compiler_mode";
@@ -612,7 +612,7 @@ let init_global_map location =
   add_global_key location [NormalMap, XK.xk_Pointer_Button2]
     "insert_at_point" mouse_yank_at_click;
   add_global_key location [NormalMap, XK.xk_Pointer_Button3]
-  "mouse_save_then_kill" mouse_save_then_kill;
+    "mouse_save_then_kill" mouse_save_then_kill;
   (*e: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   ()
 (*e: function Std_efunsrc.init_global_map *)

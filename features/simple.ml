@@ -302,9 +302,7 @@ let kill_end_of_line frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let eol = point_to_end frame in
-  let len =
-    if eol = 0 then 1 else eol
-  in
+  let len = if eol = 0 then 1 else eol in
   kill_text text frame.frm_point len
 (*e: function Simple.kill_end_of_line *)
 
@@ -541,8 +539,7 @@ let hungry_electric_delete frame =
   end;
   commit_session text session
 (*e: function Simple.hungry_electric_delete *)
-  
-(*s: function Simple.forward_screen *)
+
 (*
      let move_backward frame =
    Functions.move_backward frame 1; ()
@@ -550,7 +547,8 @@ let hungry_electric_delete frame =
 let move_forward frame = 
   Functions.move_forward frame 1; () 
 *) 
-
+  
+(*s: function Simple.forward_screen *)
 let forward_screen frame =
   frame.frm_force_start <- true;
   frame.frm_redraw <- true;

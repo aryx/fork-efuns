@@ -99,9 +99,9 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_syntax_table : bool array;
     (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_modified : int;
-    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_mark : Text.point option;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_modified : int;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_history : (int * Text.action) list;
     (*x: [[Efuns.buffer]] other fields *)
@@ -253,6 +253,7 @@ and top_window =
 
     (*s: [[Efuns.top_window]] other fields *)
     mutable top_name : string;
+
     mutable top_display : string option (*WX_xterm.xterm_display option*);
     mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
     (*x: [[Efuns.top_window]] other fields *)
@@ -554,26 +555,26 @@ let check = ref false
 (*s: toplevel Efuns._3 *)
 let _ =
  Arg.parse [
-  "-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
-  "--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
-
    (*s: [[main()]] command line options *)
+   "-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
+   "--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
+   (*x: [[main()]] command line options *)
+   "-check", Arg.Set check, ": only for testing";
+   (*x: [[main()]] command line options *)
+     "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
+   (*x: [[main()]] command line options *)
+     "-I",Arg.String (fun s -> load_path =:= 
+         (string_to_path s) @ !!load_path), "<path>: Load Path";
+   (*x: [[main()]] command line options *)
    "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
    "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
 
    "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
    "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
    "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+   (*x: [[main()]] command line options *)
+     "-q", Arg.Set no_init,": Don't load init files";
    (*e: [[main()]] command line options *)
-
-  "-check", Arg.Set check, ": only for testing";
-
-  "-q", Arg.Set no_init,": Don't load init files";
-  "-I",Arg.String (fun s -> load_path =:= 
-      (string_to_path s) @ !!load_path), "<path>: Load Path";
- (*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
-
-  "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
  ] 
  (fun name -> init_files := name :: !init_files) 
   "A small editor entirely written in Objective Caml 

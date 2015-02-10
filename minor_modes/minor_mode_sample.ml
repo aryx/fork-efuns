@@ -35,8 +35,8 @@ let mode = Ebuffer.new_minor_mode  minor_mode_name [install]
 let _ = 
   List.iter
     (fun key -> 
-      Keymap.add_binding mode.min_map [NormalMap, Char.code key] 
-      minor_mode_fun
+      Keymap.add_binding mode.min_map [NormalMap, Char.code key]
+        minor_mode_fun
   )
   [ ]
 (*e: toplevel Minor_mode_sample._1 *)

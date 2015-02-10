@@ -95,7 +95,7 @@ let new_major_mode name hooks = {
 (*e: function Ebuffer.new_major_mode *)
 
 (*s: constant Ebuffer.fondamental_mode *)
-let fondamental_mode = new_major_mode "Fondamental" []
+let fondamental_mode = new_major_mode "Fondamental" [] (* no hooks *)
 (*e: constant Ebuffer.fondamental_mode *)
   
 (*s: constant Ebuffer.tab_size *)
@@ -353,16 +353,14 @@ let regexp_alist = ref []
 let set_major_mode buf mode =
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
-  List.iter (fun f -> 
-      try f buf with _ -> ()) mode.maj_hooks
+  List.iter (fun f -> try f buf with _ -> ()) mode.maj_hooks
 (*e: function Ebuffer.set_major_mode *)
 
 (*s: function Ebuffer.set_minor_mode *)
 let set_minor_mode buf mode =
   buf.buf_minor_modes <- mode :: buf.buf_minor_modes;
   buf.buf_modified <- buf.buf_modified + 1;
-  List.iter (fun f -> 
-      try f buf with _ -> ()) mode.min_hooks
+  List.iter (fun f -> try f buf with _ -> ()) mode.min_hooks
 (*e: function Ebuffer.set_minor_mode *)
 
 (*s: function Ebuffer.del_minor_mode *)
@@ -466,11 +464,11 @@ let message buf m =
   let name = "*Messages*" in
   try
     let buf = Hashtbl.find location.loc_buffers name in
-    Text.insert_at_end buf.buf_text (m ^ "\n");
+    Text.insert_at_end buf.buf_text (m^"\n");
   with
     Not_found ->
-      let buf = create location name None (Text.create (m^"\n")) (
-          Keymap.create ())
+      let _buf = 
+        create location name None (Text.create (m^"\n")) (Keymap.create ())
       in ()
 (*e: function Ebuffer.message *)
 

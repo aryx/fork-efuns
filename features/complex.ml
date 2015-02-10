@@ -314,9 +314,7 @@ let get_pos frame =
 (*s: function Complex.mark_at_point *)
 let mark_at_point frame =
   let top_window = Window.top frame.frm_window in
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  Ebuffer.set_mark buf point;
+  Ebuffer.set_mark frame.frm_buffer frame.frm_point;
   Top_window.message top_window "Mark set";
   ()
 (*e: function Complex.mark_at_point *)

@@ -2281,29 +2281,9 @@ let find_buffer_frame location buf =
     FoundFrame frame -> frame
 @
 
-<<constant Frame.change_buffer_hooks>>=
-let change_buffer_hooks = define_option ["change_buffer_hooks"] "" 
-    (list_option string_option)
-  [ "check_file" ]
-@
 
-<<function Frame.exec_named_hooks>>=
-let rec exec_named_hooks hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_hooks hooks frame;
-      try execute_action action frame with _ -> ()
-@
 
-<<function Frame.exec_named_hooks_with_abort>>=
-let rec exec_named_hooks_with_abort hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_hooks_with_abort hooks frame;
-      execute_action action frame
-@
+
 
 
 
@@ -2504,9 +2484,6 @@ let insert_string frame str =
   let _ = Text.fmove text point (String.length str) in ()
 @
 
-<<constant Simple.single_char>>=
-let single_char = String.make 1 ' '
-@
 
 
 
@@ -2597,17 +2574,11 @@ let kill_size = ref 0
 let kill_max = 10
 @
 
-<<constant Simple.kill_ring>>=
-let kill_ring = Array.create kill_max ""
-@
 
 <<constant Simple.last_kill>>=
 let last_kill = ref None
 @
 
-<<constant Simple.last_insert>>=
-let last_insert = ref None
-@
 
 <<function Simple.kill_string>>=
 let kill_string str =
@@ -3451,6 +3422,14 @@ open Top_window
 <<function Simple.hungry_char>>
 
 <<function Simple.hungry_electric_delete>>
+
+(*
+     let move_backward frame =
+   Functions.move_backward frame 1; ()
+
+let move_forward frame = 
+  Functions.move_forward frame 1; () 
+*) 
   
 <<function Simple.forward_screen>>
 
@@ -5557,25 +5536,6 @@ open Dyneval
 \section{[[graphics/]]}
 
 \subsection*{[[graphics/top_window.ml]]}
-
-<<function Top_window.message>>=
-let message top_window msg =
-  let xterm = Window.xterm top_window in
-  let len = String.length msg in
-  WX_xterm.draw_string xterm 0 (top_window.top_height - 1)
-    msg 0 len Text.direct_attr;
-  WX_xterm.clear_eol xterm len (top_window.top_height - 1)
-    (top_window.top_width - len);
-  match top_window.top_mini_buffers with
-    [] -> (* No mini-buffer ... *) ()
-  | mini_buffer :: _ -> (* one mini-buffer is active *)
-      match top_window.top_display with
-        None -> ()
-      | Some display ->
-          WX_xterm.update_displays ();
-          (* let _ = Unix.select [] [] [] 0.2 in *)
-          mini_buffer.frm_redraw <- true
-@
 
 <<function Top_window.clear_message>>=
 let clear_message top_window =

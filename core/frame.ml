@@ -530,7 +530,9 @@ let update top_window frame =
           frame.frm_x_offset <- point_c - (width / 2);
           frame.frm_redraw <- true;
         end;
+
       update_table top_window frame;
+
       begin
         if (frame.frm_end < point)  || (start > point)
         then

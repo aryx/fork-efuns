@@ -5,8 +5,7 @@
 %******************************************************************************
 \newif\iffinal
 \newif\ifverbose
-\finaltrue\verbosefalse
-% see also other newif in Macros.tex
+\finaltrue\verbosefalse % see also other newif in Macros.tex
 
 %------------------------------------------------------------------------------
 %history: 
@@ -485,6 +484,8 @@ mutable frm_width : int;
 mutable frm_height : int;
 @
 % seems redundant with frm.frm__window info no?
+% xpos are in line x col dimentions, same for width and height,
+% not pixels.
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_shared : int; (* number of frames for that buffer *)
@@ -675,10 +676,10 @@ and top_window =
 
 <<[[Efuns.top_window]] other fields>>=
 mutable top_name : string;
+
 mutable top_display : string option (*WX_xterm.xterm_display option*);
 mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
 @
-
 %(*
 %mutable top_root : WX_root.t;
 %mutable top_appli : WX_appli.t;
@@ -1315,6 +1316,11 @@ let get_var buf var =
 \section{Hooks}
 % essentially a set of list refs
 
+% different kind of hooks:
+% - startup hooks (add_start_hook() and start_hooks[] and Efuns.init())
+% - variable hook 
+% - named hooks, for frame a buffer actions
+
 <<function Efuns.exec_hooks>>=
 let rec exec_hooks hooks arg =
   match hooks with
@@ -1333,16 +1339,78 @@ let add_hook location hook_var hook =
 
 
 % example:
-
+% of a hook var
 <<constant Ebuffer.create_buf_hook>>=
 let create_buf_hook = Local.create_abstr "create_buf_hook"
 @
-
+%less: remame create_buffer_hooks? more consistent?
+% of use of this hook var
 <<[[Ebuffer.create()]] run hooks>>=
 let hooks = try get_global location create_buf_hook with Not_found -> [] in
 exec_hooks hooks buf;
 @
 
+
+
+
+
+
+<<function Frame.exec_named_hooks>>=
+let rec exec_named_hooks hooks frame =
+  match hooks with
+    [] -> ()
+  | action :: hooks ->
+      exec_named_hooks hooks frame;
+      try execute_action action frame with _ -> ()
+@
+
+<<function Frame.exec_named_hooks_with_abort>>=
+let rec exec_named_hooks_with_abort hooks frame =
+  match hooks with
+    [] -> ()
+  | action :: hooks ->
+      exec_named_hooks_with_abort hooks frame;
+      execute_action action frame
+@
+
+% example:
+<<constant Frame.change_buffer_hooks>>=
+let change_buffer_hooks = define_option ["change_buffer_hooks"] "" 
+    (list_option string_option)
+  [ "check_file" ]
+@
+% use?
+
+
+
+% ?? -> <>
+<<function Ebuffer.exec_named_buf_hooks>>=
+let rec exec_named_buf_hooks hooks frame =
+  match hooks with
+    [] -> ()
+  | action :: hooks ->
+      exec_named_buf_hooks hooks frame;
+      try execute_buffer_action action frame with _ -> ()
+@
+
+% ?? -> <>
+<<function Ebuffer.exec_named_buf_hooks_with_abort>>=
+let rec exec_named_buf_hooks_with_abort hooks frame =
+  match hooks with
+    [] -> ()
+  | action :: hooks ->
+      exec_named_buf_hooks_with_abort hooks frame;
+      execute_buffer_action action frame
+@
+
+
+% example:
+<<constant Ebuffer.save_buffer_hooks>>=
+let save_buffer_hooks = define_option ["save_buffer_hooks"] "" 
+    (list_option string_option)
+  [ ]
+@
+% use
 
 \chapter{[[main()]]}
 
@@ -1374,32 +1442,18 @@ let font = define_option ["font"] "" string_option "fixed"
 
 
 
-<<constant Efuns.check>>=
-let check = ref false
-@
 
-%x11
-<<constant Efuns.displayname>>=
-let displayname = ref ""
+% init files are not the .efunsrc, but the first set of files to open
+% so when do efuns foo.c => init_files = ref ["foo.c"]
+<<constant Efuns.init_files>>=
+let init_files = ref []
 @
-
+% should be used in Graphic.init
 
 <<toplevel Efuns._3>>=
 let _ =
  Arg.parse [
-  "-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
-  "--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
-
    <<[[main()]] command line options>>
-
-  "-check", Arg.Set check, ": only for testing";
-
-  "-q", Arg.Set no_init,": Don't load init files";
-  "-I",Arg.String (fun s -> load_path =:= 
-      (string_to_path s) @ !!load_path), "<path>: Load Path";
- (*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
-
-  "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
  ] 
  (fun name -> init_files := name :: !init_files) 
   "A small editor entirely written in Objective Caml 
@@ -1409,14 +1463,46 @@ let _ =
   " 
 @
 
+%x11
+<<constant Efuns.displayname>>=
+let displayname = ref ""
+@
+<<[[main()]] command line options>>=
+"-d", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
+"--display", Arg.String(fun s -> displayname :=s),"<dpy>: Name of display";
+@
+
+
+<<constant Efuns.check>>=
+let check = ref false
+@
+<<[[main()]] command line options>>=
+"-check", Arg.Set check, ": only for testing";
+@
+
+
+
+
+
 <<constant Efuns.init_frames>>=
 let init_frames = ref []
 @
-
-<<constant Efuns.init_files>>=
-let init_files = ref []
+<<[[main()]] command line options>>=
+  "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
 @
-% dead?
+
+<<[[main()]] command line options>>=
+  "-I",Arg.String (fun s -> load_path =:= 
+      (string_to_path s) @ !!load_path), "<path>: Load Path";
+@
+%dead?
+
+
+% (*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
+
+
+
+
 
 
 
@@ -1467,6 +1553,11 @@ let _ =
 let no_init = ref false
 @
 % dead?
+<<[[main()]] command line options>>=
+  "-q", Arg.Set no_init,": Don't load init files";
+@
+
+
 
 <<toplevel Efuns._4>>=
 let _ =
@@ -1478,18 +1569,6 @@ let _ =
 
 \section{Startup hooks}
 % hooks on location creation, hence they they a location in parameter
-
-% init -> List.iter run <>
-<<constant Efuns.start_hooks>>=
-(* Les hooks de lancement apres le chargement d'un module *)
-let start_hooks = ref []
-@
-% private? rename _start_hooks?
-
-<<function Efuns.add_start_hook>>=
-let add_start_hook hook = 
-  start_hooks := hook :: !start_hooks
-@
 
 <<toplevel Main._3>>=
 let _ =
@@ -1510,7 +1589,23 @@ let init (location : location) =
   start_hooks := [];
   iter hooks
 @
-% why not using exec_hooks?
+%less: why not using exec_hooks?
+%less: why not just List.iter (fun f -> f ()) hook?
+
+
+
+% init -> List.iter run <>
+<<constant Efuns.start_hooks>>=
+(* Les hooks de lancement apres le chargement d'un module *)
+let start_hooks = ref []
+@
+% private? rename _start_hooks?
+
+<<function Efuns.add_start_hook>>=
+let add_start_hook hook = 
+  start_hooks := hook :: !start_hooks
+@
+
 
 \section{The default world}
 
@@ -1556,8 +1651,8 @@ let _ =
 
 % menu
 % windows/frames with buffers
-% status line
-% minibuffer
+% status line (for each frame get this actually)
+% minibuffer (a single one)
 
 
 % see graphics_graphics.ml
@@ -1630,7 +1725,11 @@ let select_open_file frame =
 *)
 @
 
-% what about C-x C-f?
+
+
+
+
+% C-x C-f!
 
 <<loading keys>>=
 [c_x; ControlMap, Char.code 'f'], "load_buffer";
@@ -1641,14 +1740,15 @@ define_action "load_buffer"  load_buffer;
 @
 
 
-
+% in Complex because requires select and minibuffer
 <<function Complex.load_buffer>>=
 let load_buffer frame = 
   set_previous_frame frame;
   select_filename frame "Find file: " (fun str -> 
       let _ = Frame.load_file frame.frm_window str in ())
 @
-%later: has completion?
+% see later select_filename, quite complicated, use minibuffer
+% and completion buffer.
 
 %\subsection{Helpers}
 
@@ -2196,21 +2296,39 @@ let add_interactive map name f =
 map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 @
 
+\subsection{Messages}
 
 
+<<function Top_window.message>>=
+let message top_window msg =
+  let xterm = Window.xterm top_window in
+  let len = String.length msg in
+  WX_xterm.draw_string xterm 0 (top_window.top_height - 1)
+    msg 0 len Text.direct_attr;
+  WX_xterm.clear_eol xterm len (top_window.top_height - 1)
+    (top_window.top_width - len);
+  match top_window.top_mini_buffers with
+    [] -> (* No mini-buffer ... *) ()
+  | mini_buffer :: _ -> (* one mini-buffer is active *)
+      match top_window.top_display with
+        None -> ()
+      | Some display ->
+          WX_xterm.update_displays ();
+          (* let _ = Unix.select [] [] [] 0.2 in *)
+          mini_buffer.frm_redraw <- true
+@
 
 
 
 
 \section{Hooks}
 
-% see also create_buf_hook in core DS chapter
+% see also in core DS chapter
+% - create_buf_hook  (check_file)
+% - change_buffer_hooks
+% - save_buffer_hooks (dead??)
+% - saved_buffer_hooks
 
-<<constant Ebuffer.save_buffer_hooks>>=
-let save_buffer_hooks = define_option ["save_buffer_hooks"] "" 
-    (list_option string_option)
-  [ ]
-@
 
 <<constant Ebuffer.saved_buffer_hooks>>=
 let saved_buffer_hooks = define_option ["saved_buffer_hooks"] "" 
@@ -2220,28 +2338,6 @@ let saved_buffer_hooks = define_option ["saved_buffer_hooks"] ""
 
 <<misc actions>>=
 define_buffer_action "update_time" update_time;
-@
-
-
-
-% ?? -> <>
-<<function Ebuffer.exec_named_buf_hooks>>=
-let rec exec_named_buf_hooks hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_buf_hooks hooks frame;
-      try execute_buffer_action action frame with _ -> ()
-@
-
-% ?? -> <>
-<<function Ebuffer.exec_named_buf_hooks_with_abort>>=
-let rec exec_named_buf_hooks_with_abort hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_buf_hooks_with_abort hooks frame;
-      execute_buffer_action action frame
 @
 
 
@@ -2308,7 +2404,6 @@ let rec exec_named_buf_hooks_with_abort hooks frame =
 \section{Text representation}
 
 % do we need something fancy? naive brute force too slow?
-
 
 
 <<type Text.line>>=
@@ -2598,6 +2693,10 @@ loc_colors_names : string array;
 mutable loc_colors_n : int;
 @
 % 0 1 are used!
+% can seem limited to have a color map, but to have
+% an efficient representation for text attributes, it's
+% better to use an int which then index in different maps (color map,
+% font map)
 
 % have side effect of setting the color if it's not there before!
 <<function Window.get_color>>=
@@ -2667,6 +2766,9 @@ let get_font location font_name =
 \section{Text Display}
 
 % the redisplay function!!!
+
+
+
 
 <<[[Efuns.frame]] other fields>>=
 mutable frm_mini_buffer : string option;
@@ -2751,7 +2853,9 @@ let update top_window frame =
           frame.frm_x_offset <- point_c - (width / 2);
           frame.frm_redraw <- true;
         end;
+
       update_table top_window frame;
+
       begin
         if (frame.frm_end < point)  || (start > point)
         then
@@ -2978,7 +3082,7 @@ add_global_key location [NormalMap, XK.xk_Pointer_Button1]
 add_global_key location [NormalMap, XK.xk_Pointer_Button2]
   "insert_at_point" mouse_yank_at_click;
 add_global_key location [NormalMap, XK.xk_Pointer_Button3]
-"mouse_save_then_kill" mouse_save_then_kill;
+  "mouse_save_then_kill" mouse_save_then_kill;
 @
 
 <<function Simple.mouse_set_frame>>=
@@ -3129,29 +3233,12 @@ let move_forward frame delta =
 
 \subsection{Words and the syntax table}
 
-<<function Simple.backward_word>>=
-let backward_word buf point =
-  let text = buf.buf_text in
-  let syntax = buf.buf_syntax_table in
-  in_prev_word text point syntax;
-  to_begin_of_word text point syntax
-@
-
-<<function Simple.forward_word>>=
-let forward_word buf point =
-  let text = buf.buf_text in
-  let syntax = buf.buf_syntax_table in
-  in_next_word text point syntax;
-  to_end_of_word text point syntax
-@
-
 %\section{Syntax table}
 % was in core DS but better here I think
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_syntax_table : bool array;
 @
-
 
 <<function Ebuffer.create_syntax_table>>=
 let create_syntax_table ()  =
@@ -3172,6 +3259,28 @@ let create_syntax_table ()  =
 <<constant Ebuffer.default_syntax_table>>=
 let default_syntax_table = create_syntax_table ()
 @
+
+
+
+
+
+<<function Simple.backward_word>>=
+let backward_word buf point =
+  let text = buf.buf_text in
+  let syntax = buf.buf_syntax_table in
+  in_prev_word text point syntax;
+  to_begin_of_word text point syntax
+@
+
+<<function Simple.forward_word>>=
+let forward_word buf point =
+  let text = buf.buf_text in
+  let syntax = buf.buf_syntax_table in
+  in_next_word text point syntax;
+  to_end_of_word text point syntax
+@
+
+
 
 
 
@@ -3263,14 +3372,6 @@ let backward_screen frame =
 @
 
 <<function Simple.forward_screen>>=
-(*
-     let move_backward frame =
-   Functions.move_backward frame 1; ()
-
-let move_forward frame = 
-  Functions.move_forward frame 1; () 
-*) 
-
 let forward_screen frame =
   frame.frm_force_start <- true;
   frame.frm_redraw <- true;
@@ -3405,6 +3506,10 @@ let insert_return frame =
 @
 
 
+<<constant Simple.single_char>>=
+let single_char = String.make 1 ' '
+@
+
 <<function Simple.insert_char>>=
 let insert_char frame char =
   let text = frame.frm_buffer.buf_text in
@@ -3487,9 +3592,7 @@ let kill_end_of_line frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let eol = point_to_end frame in
-  let len =
-    if eol = 0 then 1 else eol
-  in
+  let len = if eol = 0 then 1 else eol in
   kill_text text frame.frm_point len
 @
 
@@ -3528,6 +3631,7 @@ let hungry_electric_delete frame =
 
 
 \section{Transforming}
+% maybe move in extra features?
 
 <<transforming keys>>=
 [ControlMap, Char.code 't'], "transpose_chars";
@@ -3676,19 +3780,10 @@ define_action "insert_next_killed"  insert_next_killed;
 <<function Complex.mark_at_point>>=
 let mark_at_point frame =
   let top_window = Window.top frame.frm_window in
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  Ebuffer.set_mark buf point;
+  Ebuffer.set_mark frame.frm_buffer frame.frm_point;
   Top_window.message top_window "Mark set";
   ()
 @
-
-
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_modified : int;
-@
-% diff with text_modified? seems to be about modification of the
-% frame property itself, not the underlying buffer
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_mark : Text.point option;
@@ -3705,6 +3800,14 @@ let set_mark buf point =
   | Some mark ->
       goto_point text mark point
 @
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_modified : int;
+@
+% diff with text_modified? seems to be about modification of the
+% frame property itself, not the underlying buffer
+
+
 
 <<function Ebuffer.get_mark>>=
 let rec get_mark buf point =
@@ -3751,6 +3854,10 @@ let kill_region frame =
 
 \subsection{Paste}
 
+<<constant Simple.kill_ring>>=
+let kill_ring = Array.create kill_max ""
+@
+
 <<function Simple.insert_killed>>=
 let insert_killed frame =
   let buf = frame.frm_buffer in
@@ -3759,6 +3866,10 @@ let insert_killed frame =
   let pos, len =  Text.insert_res text point kill_ring.(0) in
   fmove text point len; 
   last_insert := Some(frame,pos,0,len)
+@
+
+<<constant Simple.last_insert>>=
+let last_insert = ref None
 @
 
 <<function Simple.insert_next_killed>>=
@@ -4200,6 +4311,8 @@ let replace_matched tree repl =
 %  - C-x b interactive
 %  - C-x k to kill the current buffer (which in effect switch to next one)
 %  - cycling
+
+
 \section{Buffer names}
 
 % can have ambiguity?
@@ -4717,8 +4830,7 @@ let new_major_mode name hooks = {
 let set_major_mode buf mode =
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
-  List.iter (fun f -> 
-      try f buf with _ -> ()) mode.maj_hooks
+  List.iter (fun f -> try f buf with _ -> ()) mode.maj_hooks
 @
 
 
@@ -4739,7 +4851,7 @@ let fondamental_mode frame =
 @
 
 <<constant Ebuffer.fondamental_mode>>=
-let fondamental_mode = new_major_mode "Fondamental" []
+let fondamental_mode = new_major_mode "Fondamental" [] (* no hooks *)
 @
 
 \section{Auto detection}
@@ -4889,8 +5001,7 @@ let new_minor_mode name hooks  = {
 let set_minor_mode buf mode =
   buf.buf_minor_modes <- mode :: buf.buf_minor_modes;
   buf.buf_modified <- buf.buf_modified + 1;
-  List.iter (fun f -> 
-      try f buf with _ -> ()) mode.min_hooks
+  List.iter (fun f -> try f buf with _ -> ()) mode.min_hooks
 @
 
 <<function Ebuffer.del_minor_mode>>=
@@ -4914,6 +5025,7 @@ let del_minor_mode buf minor =
 let minor_mode_name = "my_minor_mode"
 @
 
+% empty install hook
 <<function Minor_mode_sample.install>>=
 let install buf = ()
 @
@@ -4930,8 +5042,8 @@ let mode = Ebuffer.new_minor_mode  minor_mode_name [install]
 let _ = 
   List.iter
     (fun key -> 
-      Keymap.add_binding mode.min_map [NormalMap, Char.code key] 
-      minor_mode_fun
+      Keymap.add_binding mode.min_map [NormalMap, Char.code key]
+        minor_mode_fun
   )
   [ ]
 @
@@ -5177,6 +5289,7 @@ let next_error top_frame =
 @
 
 \section{Efuns server and client}
+
 % dual of previous chapter in some sense since this time
 % it's external command that call in efuns instead of efuns
 % calling external commands
@@ -5391,6 +5504,7 @@ let readonly tree =
   text.text_readonly
 @
 
+% dead since not one calls it and it's not an action
 <<function Text.toggle_readonly>>=
 let toggle_readonly tree = 
   let text = tree.tree_text in    
@@ -5496,6 +5610,13 @@ let _ =
 
 \chapter{Conclusion}
 
+
+
+
+
+
+
+
 \appendix
 
 \chapter{Error Managment}
@@ -5506,11 +5627,11 @@ let message buf m =
   let name = "*Messages*" in
   try
     let buf = Hashtbl.find location.loc_buffers name in
-    Text.insert_at_end buf.buf_text (m ^ "\n");
+    Text.insert_at_end buf.buf_text (m^"\n");
   with
     Not_found ->
-      let buf = create location name None (Text.create (m^"\n")) (
-          Keymap.create ())
+      let _buf = 
+        create location name None (Text.create (m^"\n")) (Keymap.create ())
       in ()
 @
 
@@ -5521,9 +5642,13 @@ exception UnboundKey
 
 \chapter{Debugging}
 
+%less: would be good to have a -debug_init so at least print out
+% all those hooks that are run at startup time
+
 \chapter{Profiling}
 
 \chapter{Configuration File Library}
+
 % options.ml
 % quite important, you want the editor to be customizable!
 
@@ -5552,17 +5677,15 @@ exception UnboundKey
 \chapter{Minor mode examples}
 
 <<[[interactives_map]] initial entries>>=
-"accents_mode";
 "paren_mode";
 "abbrevs_mode";
+"accents_mode";
 "ocaml_minor_mode";
 "fill_mode";
 "ocaml_compiler_mode";
 "tab_mode";
 "overwrite_mode";
 @
-
-%\section{Accents}
 
 \section{Abbrevs}
 
@@ -5572,6 +5695,10 @@ exception UnboundKey
 \section{Tab}
 
 \section{Fill}
+
+%\section{Accents}
+
+
 
 \chapter{Extra Code}
 
