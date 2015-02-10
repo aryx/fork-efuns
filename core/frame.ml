@@ -658,8 +658,8 @@ let find_buffer_frame location buf =
     List.iter (fun top_window ->
         Window.iter (fun frame -> 
             if frame.frm_buffer == buf then raise (FoundFrame frame))
-        top_window.top_windows
-    ) location.loc_windows;
+        top_window.window
+    ) location.top_windows;
     raise Not_found
   with
     FoundFrame frame -> frame

@@ -97,7 +97,7 @@ let next_error top_frame =
                     Top_window.create top_window.top_location 
                       display 
                   in
-                  Frame.create new_window.top_windows None buf
+                  Frame.create new_window.window None buf
                 else
                   Frame.create top_frame.frm_window None buf
           in
@@ -185,9 +185,9 @@ let set_compilation_buffer frame comp_buf cdir =
         cut_frame frame
     | Some (frame,point, _) ->
         remove_point frame.frm_buffer.buf_text point;  
-        if frame.frm_killed then cut_frame frame 
-        else
-          frame.frm_window
+        if frame.frm_killed 
+        then cut_frame frame 
+        else frame.frm_window
   in
   let error_point = add_point comp_buf.buf_text in
   let comp_frame = Frame.create window None comp_buf in

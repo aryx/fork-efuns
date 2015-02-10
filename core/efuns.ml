@@ -248,22 +248,22 @@ and line_repr =
 (* an xterm: a window containing some frames *)
 and top_window = 
   { 
+    mutable top_name : string;
+
     mutable top_width : int;
     mutable top_height : int;
 
-    mutable top_windows : window;
+    mutable window : window;
 
     (*s: [[Efuns.top_window]] other fields *)
-    mutable top_name : string;
-
     mutable top_display : string option (*WX_xterm.xterm_display option*);
     mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
+    (*x: [[Efuns.top_window]] other fields *)
+    mutable top_active_frame : frame;
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_location : location;
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_mini_buffers : frame list;
-    (*x: [[Efuns.top_window]] other fields *)
-    mutable top_active_frame : frame;
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_second_cursor : frame option;
     (*e: [[Efuns.top_window]] other fields *)
@@ -312,7 +312,7 @@ and location =
     mutable loc_files : (string, buffer) Hashtbl.t;
 
     (* list??*)
-    mutable loc_windows : top_window list;
+    mutable top_windows : top_window list;
 
     (* pwd of efuns when started *)
     mutable loc_dirname : string;

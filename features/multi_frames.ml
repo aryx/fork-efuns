@@ -88,9 +88,9 @@ let one_frame frame =
   then
     let window = frame.frm_window in
     let top_window = Window.top window in
-    if not (top_window.top_windows == window) then
+    if not (top_window.window == window) then
       begin
-        Frame.install top_window.top_windows frame;
+        Frame.install top_window.window frame;
         Frame.active frame
       end
 (*e: function Multi_frames.one_frame *)

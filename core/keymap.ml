@@ -82,6 +82,7 @@ let rec get_binding map keylist =
   match keylist with
     [] -> Unbound
   | [key] ->
+        (*s: [[Keymap.get_binding()]] find key in map *)
         (match key with
           (NormalMap,key) when key >= 0 && key < 256 -> 
             map.char_map.(key)
@@ -91,8 +92,10 @@ let rec get_binding map keylist =
             with
               Not_found -> Unbound
          )
+        (*e: [[Keymap.get_binding()]] find key in map *)
   | key :: tail ->
       match
+        (*s: [[Keymap.get_binding()]] find key in map *)
         (match key with
           (NormalMap,key) when key >= 0 && key < 256 -> 
             map.char_map.(key)
@@ -101,9 +104,10 @@ let rec get_binding map keylist =
               List.assoc key map.complex_bindings
             with
               Not_found -> Unbound
-        )
+         )
+        (*e: [[Keymap.get_binding()]] find key in map *)
       with
-        Prefix map -> get_binding map tail
+      | Prefix map -> get_binding map tail
       | _ -> Unbound
 (*e: function Keymap.get_binding *)
           

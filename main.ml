@@ -17,7 +17,7 @@ let location = {
     loc_buffers = Hashtbl.create 13;
     loc_files = Hashtbl.create 13;
 
-    loc_windows = [];
+    top_windows = [];
 
     loc_width = !!width;
     loc_height = !!height;

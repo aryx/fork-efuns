@@ -54,22 +54,26 @@ let dummy_action frame = ()
 
 (*s: function Top_window.try_map *)
 let try_map frame key =
-  let prefix = frame.frm_prefix in
-  let keylist = prefix @ [key] in
+  let keylist = frame.frm_prefix @ [key] in
   match Ebuffer.get_binding frame.frm_buffer keylist with
-    Unbound -> raise UnboundKey
+  | Function f ->
+      (*s: [[Top_window.try_map()]] set repeat action *)
+      frame.frm_repeat_action <- 
+        if (f == frame.frm_last_action) 
+        then frame.frm_repeat_action + 1
+        else 0;
+      (*e: [[Top_window.try_map()]] set repeat action *)
+      frame.frm_prefix <- [];
+      (* dispatch the action *)
+      f frame; 
+      (*s: [[Top_window.try_map()]] set last action *)
+      frame.frm_last_action <- f
+      (*e: [[Top_window.try_map()]] set last action *)
   | Prefix map ->
       frame.frm_prefix <- keylist;
       let top_window = top frame.frm_window in
       message top_window (Keymap.print_key_list frame.frm_prefix);
-  | Function f ->
-      frame.frm_repeat_action <- 
-      if (f == frame.frm_last_action) then
-        frame.frm_repeat_action + 1
-      else 0;
-      frame.frm_prefix <- [];
-      f frame;
-      frame.frm_last_action <- f
+  | Unbound -> raise UnboundKey
 (*e: function Top_window.try_map *)
 
 (*s: function Top_window.set_cursor_on *)
@@ -121,21 +125,21 @@ let cursor_off top_window =
 
 (*s: function Top_window.update_display *)
 let update_display location =
-  List.iter (fun top_window -> 
-      iter (Frame.update top_window) top_window.top_windows;
+  location.top_windows |> List.iter (fun top_window -> 
+      top_window.window |> Window.iter (fun frm -> Frame.update top_window frm);
       (match top_window.top_mini_buffers with
-          [] -> ()
-        | frame :: _ ->
-            Frame.update top_window frame);
+       | [] -> ()
+       | frame :: _ -> Frame.update top_window frame
+      );
       cursor_on top_window;
-  ) location.loc_windows
+  ) 
 (*e: function Top_window.update_display *)
 
 (*s: function Top_window.clean_display *)
 let clean_display location =
   List.iter (fun top_window -> 
       cursor_off top_window
-  ) location.loc_windows
+  ) location.top_windows
 (*e: function Top_window.clean_display *)
 
 (*s: function Top_window.resize_window *)
@@ -192,7 +196,7 @@ let find_selected_frame top_window =
         [] -> raise Not_found
       | mini_frame :: _ -> mini_frame
     else
-      find_frame top_window.top_windows x y
+      find_frame top_window.window x y
   in
   Frame.active frame;
   frame
@@ -231,24 +235,31 @@ let handle_key top_window modifiers keysym =
   keypressed := keysym;
   let location = top_window.top_location in
   let frame = top_window.top_active_frame in
+
   clean_display location;
   clear_message top_window;
-  exec_hooks (try get_global location handle_key_start_hook with _ -> []) location;
+
+  exec_hooks 
+     (try get_global location handle_key_start_hook with _ -> []) location;
+
+  let mod_ = 
+    (*s: [[Top_window.handle_key()]] compute mod *)
+    let mask = Xtypes.controlMask lor !meta in
+    let diff = modifiers land mask in
+    match () with
+    | _ when diff = Xtypes.controlMask -> ControlMap
+    | _ when diff = !meta -> MetaMap
+    | _ when diff = 0 -> NormalMap 
+    | _ -> ControlMetaMap
+    (*e: [[Top_window.handle_key()]] compute mod *)
+  in
+  let key = (mod_, keysym) in
   begin
-    let mods = 
-      let mask = Xtypes.controlMask lor !meta in
-      let diff = modifiers land mask in
-      match () with
-      | _ when diff = Xtypes.controlMask -> ControlMap
-      | _ when diff = !meta -> MetaMap
-      | _ when diff = 0 -> NormalMap 
-      | _ -> ControlMetaMap
-    in
-    let key = (mods, keysym) in
     try
       try_map frame key
     with
-      UnboundKey -> 
+    (*s: [[Top_window.handle_key()]] handle exception of try_map *)
+    | UnboundKey -> 
         message top_window
           (Printf.sprintf "Unbound key %s %s"
             (Keymap.print_key_list frame.frm_prefix)
@@ -257,8 +268,12 @@ let handle_key top_window modifiers keysym =
     | Failure str -> message top_window str
     | e -> message top_window 
           (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
+    (*e: [[Top_window.handle_key()]] handle exception of try_map *)
   end;
-  exec_hooks (try get_global location handle_key_end_hook with _ -> []) location;
+
+  exec_hooks 
+      (try get_global location handle_key_end_hook with _ -> []) location;
+
   update_display top_window.top_location
 (*e: function Top_window.handle_key *)
 
@@ -299,25 +314,22 @@ let handler top_window xterm event =
   try
     begin
       match event with
-        WX_xterm.XTKeyPress (modifiers, s, keysym) ->
-(*
-          if (keysym < XK.xk_Shift_L || keysym > XK.xk_Hyper_R)
-          then 
-*)
+      (*s: [[Top_window.handler()]] match event cases *)
+      |  WX_xterm.XTKeyPress (modifiers, _s, keysym) ->
             handle_key top_window modifiers keysym
-      
+      (*x: [[Top_window.handler()]] match event cases *)
       | WX_xterm.XTButtonPress (modifiers,button,x,y) -> 
           mouse_x := x;
           mouse_y := y;
           handle_key top_window modifiers (XK.xk_Pointer_Button_Dflt + button)
-      
+      (*x: [[Top_window.handler()]] match event cases *)
       | WX_xterm.XTMouseMotion (modifiers,button,x,y) ->
           mouse_x := x;
           mouse_y := y;
           handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
-      
+      (*x: [[Top_window.handler()]] match event cases *)
       | WX_xterm.XTResize (new_width, new_height) ->
-          resize_window top_window.top_windows 0 0 new_width (new_height - 1);
+          resize_window top_window.window 0 0 new_width (new_height - 1);
           List.iter
             (fun frame -> 
               let window = frame.frm_window in
@@ -328,12 +340,12 @@ let handler top_window xterm event =
           top_window.top_height <- new_height;
           clear_message top_window;
           update_display top_window.top_location
-          
+      (*e: [[Top_window.handler()]] match event cases *)
     end;
-    Mutex.unlock top_window.top_location.loc_mutex;
+    Mutex.unlock location.loc_mutex;
   with
     e ->   
-      Mutex.unlock top_window.top_location.loc_mutex;
+      Mutex.unlock location.loc_mutex;
       raise e
 (*e: function Top_window.handler *)
 
@@ -393,9 +405,9 @@ let help_menu = ref ([| |]: (string * (frame -> unit)) array)
   
 (*s: function Top_window.create *)
 let create location display =
-  let buf = Ebuffer.default location "*help*" in
-
-(*
+ 
+  (*s: [[Top_window.create()]] create top graphical window with right dimensions *)
+  (*
   let top = new WX_appli.t display.WX_xterm.root_oo [] in
   top#setWM_NAME "new_frame";
   top#setWM_CLASS "Efuns" "efuns";
@@ -409,74 +421,80 @@ let create location display =
   let scrollbar = new WX_scrollbar.v hbar#container ady [] in
   hbar#container_add_s [xterm#contained; scrollbar#contained];
   *)
-  let xterm = () in
+  (*e: [[Top_window.create()]] create top graphical window with right dimensions *)
 
-  let window = Window.create_at_top  0 0 
-    location.loc_width 
-    (location.loc_height - 1) 
-  in
-  let frame = Frame.create_without_top location window None buf  in
+  let buf = 
+    Ebuffer.default location "*help*" in
+  let window = 
+    Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
+  let frame = 
+    Frame.create_without_top location window None buf in
   let top_window =
-    { top_location = location;
-      top_windows = window;
-      top_mini_buffers = [];
+    { 
+      top_name = "window";
       top_width = location.loc_width;
       top_height = location.loc_height;
-      top_name = "window";
+      window = window;
       top_active_frame = frame;
+
+      top_mini_buffers = [];
       top_second_cursor = None;
+
       top_display = Some display;
       top_xterm = Some ();
-(*
-      top_term = xterm;
-      top_attrs = Array.create 256 None;
-      top_root=  display.WX_xterm.root_oo;
-      top_appli = top;
-      top_scrollbar = ady;
-*)
+
+      top_location = location;
     } 
   in
-(* ady#add_subject (fun () -> *) (
-      let ady = () in
-      let frame = top_window.top_active_frame in
-      if not frame.frm_force_start then
-        wrap top_window (scroll_to_frame ady) ()
-  );
+  (*s: [[Top_window.create()]] optional scrollbar setup *)
+  (* ady#add_subject (fun () -> *) (
+  (*
+        let ady = () in
+        let frame = top_window.top_active_frame in
+        if not frame.frm_force_start then
+          wrap top_window (scroll_to_frame ady) ()
+  *)
+    ()
+    );
+  (*e: [[Top_window.create()]] optional scrollbar setup *)
 
   frame.frm_window.win_up <- TopWindow top_window;
-  location.loc_windows <- top_window :: location.loc_windows;
+  location.top_windows <- top_window :: location.top_windows;
 
-(*
-  top#add_button "Buffers" (!buffers_menu top_window);
-  top#add_menu "File" (Array.map (fun (name,action) ->
-        wrap_item top_window (name, execute_action action)
-    ) (Array.of_list !!file_menu));
-  top#add_menu "Edit" (Array.map (fun (name,action) ->
-        wrap_item top_window (name, execute_action action)
-    ) (Array.of_list !!edit_menu));
-  List.iter (fun (menu_name, items) ->
-      top#add_menu menu_name 
-        (Array.map (fun (name,action) ->
-            wrap_item top_window (name, execute_action action)
-        ) (Array.of_list items))
-  ) !!menus;
-  top#add_separator;
-  top#add_menu "Help" (Array.map (wrap_item top_window) !help_menu);
-  top#show;
-*)
-
-(*  let xterm = xterm#xterm in *)
+  (*s: [[Top_window.create()]] create menus *)
+  (*
+    top#add_button "Buffers" (!buffers_menu top_window);
+    top#add_menu "File" (Array.map (fun (name,action) ->
+          wrap_item top_window (name, execute_action action)
+      ) (Array.of_list !!file_menu));
+    top#add_menu "Edit" (Array.map (fun (name,action) ->
+          wrap_item top_window (name, execute_action action)
+      ) (Array.of_list !!edit_menu));
+    List.iter (fun (menu_name, items) ->
+        top#add_menu menu_name 
+          (Array.map (fun (name,action) ->
+              wrap_item top_window (name, execute_action action)
+          ) (Array.of_list items))
+    ) !!menus;
+    top#add_separator;
+    top#add_menu "Help" (Array.map (wrap_item top_window) !help_menu);
+    top#show;
+  *)
+  (*e: [[Top_window.create()]] create menus *)
+  (*s: [[Top_window.create()]] misc stuff *)
+  (* let xterm = xterm#xterm in *)
   let xterm = () in
   top_window.top_xterm <- Some xterm;
 
-(*
-  WX_xterm.install_handler display xterm (handler top_window xterm);
-  top#configure [Bindings [Key (anyKey, anyModifier), (fun _ ->
-          handler top_window xterm (WX_xterm.XTKeyPress (
-              !WX_types.modifiers_event, !key_string, !key_sym));
-          WX_xterm.update_displays ()
-    )]];
-*)
+  (*
+    WX_xterm.install_handler display xterm (handler top_window xterm);
+    top#configure [Bindings [Key (anyKey, anyModifier), (fun _ ->
+            handler top_window xterm (WX_xterm.XTKeyPress (
+                !WX_types.modifiers_event, !key_string, !key_sym));
+            WX_xterm.update_displays ()
+      )]];
+  *)
+  (*e: [[Top_window.create()]] misc stuff *)
 
   top_window
 (*e: function Top_window.create *)
@@ -487,12 +505,12 @@ let delete_window frame =
 (*
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
-  if List.length location.loc_windows > 1 then
+  if List.length location.top_windows > 1 then
     let xterm = Window.xterm top_window in
     top_window.top_appli#destroy;
     WX_xterm.destroy_window xterm;
-    Frame.kill_all top_window.top_windows;
-    location.loc_windows <- Utils.list_remove location.loc_windows
+    Frame.kill_all top_window.window;
+    location.top_windows <- Utils.list_remove location.top_windows
       top_window
 *)
 (*e: function Top_window.delete_window *)

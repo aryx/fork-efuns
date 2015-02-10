@@ -63,7 +63,7 @@ let iter f window =
     | WFrame frame -> f frame
     | NoFrame _ -> ()
   in
-    iter1 window
+  iter1 window
 (*e: function Window.iter *)
 
 (*s: function Window.first *)
@@ -87,7 +87,7 @@ let rec last f window =
 (*s: function Window.next *)
 let rec next f window =
   match window.win_up with
-    TopWindow top_window -> first f top_window.top_windows
+    TopWindow top_window -> first f top_window.window
   | Window win ->
       match win.win_down with
         HComb (w1,w2) ->
@@ -107,9 +107,9 @@ let rec next f window =
 let rec prev f window =
   match window.win_up with
     TopWindow top_window -> 
-      if window == top_window.top_windows then ()
+      if window == top_window.window then ()
       else 
-        last f top_window.top_windows
+        last f top_window.window
   | Window win ->
       match win.win_down with
         HComb (w1,w2) ->

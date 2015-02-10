@@ -246,32 +246,15 @@ let read location filename local_map =
 let default location name =
   try
     Hashtbl.find location.loc_buffers name
-  with
-    Not_found ->
+  with Not_found ->
       let str = 
-        if name = "*help*" then
-          "Welcome to Efuns, a small demo editor written in Ocaml.
+        if name = "*help*" 
+        then "Welcome to Efuns, a small demo editor written in Ocaml.
 
 Fabrice Le Fessant
 PARA/SOR Project
 INRIA Rocquencourt
 "
-(*
-"
-Version is " ^ Version.efuns_version ^"
-built by "^ Version.builder ^ " " ^ Version.date ^ " 
-with
-Efuns installation directory : " ^ Version.efuns_lib ^ "
-Ocaml installation directory : " ^ Version.ocamllib ^ "
-
-Fabrice Le Fessant
-PARA/SOR Project
-INRIA Rocquencourt
-
-Help for Key Bindings: C-h K
-See changes in "^ Version.efuns_lib ^"/Changes
-"
-*)
         else ""
       in
       create location name None (Text.create str) (Keymap.create ())

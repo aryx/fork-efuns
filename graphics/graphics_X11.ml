@@ -28,13 +28,13 @@ let init location displayname =
 
   (* open the first buffers *)
   !init_files +> List.iter (fun name ->
-    let _ = Frame.load_file top_window.top_windows name in ()
+    let _ = Frame.load_file top_window.window name in ()
   );
   !init_frames +> List.iter (fun str -> 
     let top_window = Top_window.create top_window.top_location
       (Window.display top_window) 
     in
-    let _ = Frame.load_file top_window.top_windows str in ()
+    let _ = Frame.load_file top_window.window str in ()
   );
 
   Top_window.update_display location;
