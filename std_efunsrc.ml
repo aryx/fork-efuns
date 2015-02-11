@@ -66,7 +66,7 @@ let select_open_file frame =
   info.action <- (fun name ->
       wrap top_window (fun top_window ->
           query#destroy;
-          let _ = Frame.load_file window name in ()
+          Frame.load_file window name |> ignore
       ) ());
   info.cancel <- (fun () ->
       wrap top_window (fun top_window ->

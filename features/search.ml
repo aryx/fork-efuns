@@ -157,7 +157,7 @@ let no_query f = f true
 let query frame request f =
   let top_window = Window.top frame.frm_window in
   top_window.top_second_cursor <- Some frame;
-  let _ = select_yes_or_no frame request f in ()
+  select_yes_or_no frame request f |> ignore
 (*e: function Search.query *)
 
 (*s: constant Search.string_history *)
@@ -267,7 +267,7 @@ let isearch to_regexp sens frame =
     goto_point text point spoint;
     match !sens with
       Backward -> 
-        let _ = Text.search_backward text regexp point in ()
+        Text.search_backward text regexp point |> ignore
     | Forward ->  
         let len = Text.search_forward text regexp point in
 (*        Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
@@ -323,11 +323,13 @@ let isearch to_regexp sens frame =
   Keymap.add_binding ismap [NormalMap, XK.xk_Left]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      let _ = move_backward frame 1 in ());  
+      move_backward frame 1 |> ignore
+     );  
   Keymap.add_binding ismap [NormalMap, XK.xk_Right]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      let _ = move_forward frame 1 in ());  
+      move_forward frame 1 |> ignore
+    );  
   Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and forward_line);
   Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and backward_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'a'] 

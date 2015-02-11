@@ -395,7 +395,7 @@ let low_delete tree point len =
 <<function Text.insert_at_end>>=
 let insert_at_end tree str =
   let text = tree.tree_text in
-  let _ = low_insert tree text.text_size str in
+  low_insert tree text.text_size str |> ignore;
   text.text_history <- [];
   text.text_modified <- text.text_modified + 1
 @
@@ -410,7 +410,8 @@ let insert_res tree point str =
 @
 
 <<function Text.insert>>=
-let insert text point str = let _ = insert_res text point str in ()
+let insert text point str = 
+   insert_res text point str |> ignore
 @
 
 <<function Text.delete_res>>=
@@ -423,7 +424,8 @@ let delete_res tree point len =
 @
 
 <<function Text.delete>>=
-let delete text point len = let _ = delete_res text point len in ()
+let delete text point len = 
+  delete_res text point len |> ignore
 @
 
 <<function Text.compute_newlines>>=
@@ -654,12 +656,12 @@ let bmove_res tree p delta =
 
 <<function Text.bmove>>=
 let bmove text p delta = 
-  let _ = bmove_res text p delta in ()
+  bmove_res text p delta |> ignore
 @
 
 <<function Text.fmove>>=
 let fmove text p delta = 
-  let _ = fmove_res text p delta in ()
+  fmove_res text p delta |> ignore
 @
 
 <<function Text.to_string>>=
@@ -725,7 +727,7 @@ let set_position tree point pos =
 <<function Text.sub>>=
 let sub text point len =
   let str = String.create len in
-  let _ = blit str text point len in
+  blit str text point len |> ignore;
   str
 @
 
@@ -993,14 +995,15 @@ let move_res text point n =
 @
 
 <<function Text.move>>=
-let move text point n = let _ = move_res text point n in ()
+let move text point n = 
+  move_res text point n |> ignore
 @
 
 
 <<function Text.clear>>=
 let clear tree =
   let text = tree.tree_text in      
-  let _ = low_delete tree 0 (text.text_size - text.text_gsize) in
+  low_delete tree 0 (text.text_size - text.text_gsize) |> ignore;
   text.text_history <- [];
   List.iter (fun p -> p.point <- 0; p.point_y <- 0) text.text_points
 @
@@ -1027,7 +1030,7 @@ let goto_xy tree point x y =
   in
   point.point <- text.text_newlines.(y).position;
   point.point_y <- y;
-  let _ = fmove tree point x in ()
+  fmove tree point x |> ignore
 @
 
 <<function Text.update>>=
@@ -1065,7 +1068,7 @@ let lexing tree curseur end_point =
     (fun str len ->
       let len = min len (distance tree curseur end_point) in
       let len = blit str tree curseur len in
-      let _ = fmove tree curseur len in
+      fmove tree curseur len |> ignore;
       len
   )
 @
@@ -2087,8 +2090,7 @@ let move_point frame point x y =
   let text = buf.buf_text in
   let x, y = cursor_to_point frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
   goto_line text point y;
-  let _ = fmove text point x in
-  ()
+  fmove text point x |> ignore
 @
 
 <<function Frame.current_dir>>=
@@ -2315,8 +2317,8 @@ let key_to_value k = Value (Keymap.print_key k)
 let insert_string frame str =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  let _ = Text.insert text point str in
-  let _ = Text.fmove text point (String.length str) in ()
+  Text.insert text point str |> ignore;
+  Text.fmove text point (String.length str) |> ignore
 @
 
 
@@ -2329,7 +2331,7 @@ let previous_char frame =
   let point = frame.frm_point in
   if bmove_res text point 1 = 0 then raise Not_found;
   let c = get_char text point in
-  let _ = fmove text point 1 in
+  fmove text point 1 |> ignore;
   c
 @
 
@@ -2350,10 +2352,10 @@ let insert_at_place frame char =
     insert_char frame char
   else
   let session = start_session text in
-  let _ = Text.delete text point 1 in
+  Text.delete text point 1 |> ignore;
   single_char.[0] <- char;    
-  let _ = Text.insert text point single_char in
-  let _ = fmove text point 1 in ()
+  Text.insert text point single_char |> ignore;
+  fmove text point 1 |> ignore
 @
 
 <<constant Simple.overwrite_mode>>=
@@ -2463,7 +2465,7 @@ let format_to frame =
   Format.set_formatter_output_functions 
     (fun str pos len ->
       let s = String.sub str pos len in
-      let _ = Text.insert text point s in
+      Text.insert text point s |> ignore;
       Text.fmove text point len)
   (fun () -> ())
 @
@@ -2915,9 +2917,9 @@ let electric_insert_space frame =
         while (backward_word buf mark;
             point_to_bol text mark > 75) do () done;
         forward_word buf mark; backward_word buf mark;
-        let _ = Text.insert text mark "\n" in ()
-      with
-        Not_found -> ());
+        Text.insert text mark "\n" |> ignore
+    with Not_found -> ()
+    );
     remove_point text mark
 @
 
@@ -2928,11 +2930,11 @@ let simplify text start point =
     if start < point then
       let c = get_char text start in
       if c = ' ' || c = '\n' || c = '\t' then
-        ( let _ = delete text start 1 in
+        ( delete text start 1 |> ignore;
           iter ' ')
       else
       if last_c = ' ' then
-        ( let _ = insert text start " " in
+        ( insert text start " " |> ignore;
           fmove text start 2;
           iter 'a')
       else
@@ -2960,9 +2962,10 @@ let set_indent text point offset =
         (fmove text curseur 1; iter (offset - 1))
       else
       if c = '\t' then
-        (let _ = delete text curseur 1 in iter offset)
+        (delete text curseur 1 |> ignore;
+         iter offset)
       else
-        (Text.insert text curseur (String.make offset ' '); ())
+        (Text.insert text curseur (String.make offset ' '))
     else
     if c = ' ' || c='\t' then
       (Text.delete text curseur 1;
@@ -3429,7 +3432,7 @@ let rec save_buffers_and_action frame buffers action =
       Keymap.add_binding map [NormalMap, Char.code 'a'] abort;
       Keymap.add_binding map [NormalMap, Char.code 'A'] abort;
       Keymap.add_binding map [ControlMap, Char.code 'g'] abort;
-      let _ = Minibuffer.create frame map request in ()
+      Minibuffer.create frame map request |> ignore
 @
 
 <<constant Complex.buf_mtime>>=
@@ -3505,7 +3508,7 @@ let check_file frame =
 
 <<function Complex.change_font>>=
 let change_font frame =
-  let _ = Minibuffer.create_return 
+  Minibuffer.create_return 
     frame (Keymap.create ()) "Find font: " "fixed"
     (fun old_frame name ->
       let window = frame.frm_window in
@@ -3513,7 +3516,7 @@ let change_font frame =
       let xterm = Window.xterm top_window in
       (*WX_xterm.change_font xterm name*)
       failwith "Complex.change_font: TODO"
-  ) in ()
+  ) |> ignore
 @
 
 <<function Complex.color>>=
@@ -3566,8 +3569,8 @@ failwith "Complex.open_display: TODO"
       let display = WX_xterm.create_display root_oo
           location.loc_colors_names location.loc_fonts_names
         in
-      let _ = Top_window.create location display in
-      ())
+      Top_window.create location display |> ignore
+   )
 *)
 @
 
@@ -3586,8 +3589,10 @@ let get_pos frame =
 
 
 <<constant Complex.umask>>=
-let umask = let old = Unix.umask 0 in 
-  let _ = Unix.umask old in old
+let umask = 
+  let old = Unix.umask 0 in 
+  Unix.umask old |> ignore;
+  old
 @
 
 <<constant Complex.file_perm>>=
@@ -4176,10 +4181,10 @@ let is_userdir string =
   let n = String.length string in
   (n > 1) && (string.[0] = '~') &&
   (try
-      let _ = String.rindex string '/' in
+      String.rindex string '/' |> ignore;
       false
-    with
-      Not_found -> true)
+   with Not_found -> true
+   )
 @
 
 <<function Select.complete_filename>>=
@@ -4344,22 +4349,21 @@ let select_string frame request history default action =
   let map = Keymap.create () in
   let string = ref "" in
   set_history map string history;
-  let _ = Minibuffer.create_return frame map request default
+  Minibuffer.create_return frame map request default
     (fun _ str -> 
       (match !history with
           hd :: _ when hd = str -> ()
         | _ -> if str <> "" then
               history := str :: !history);
-      action str) in
-  ()
+      action str
+    ) |> ignore
 @
 
 <<function Select.simple_select>>=
 let simple_select frame request action =
   let map = Keymap.create () in
-  let _ = Minibuffer.create_return frame map request ""
-    (fun _ str -> action str) in
-  ()
+  Minibuffer.create_return frame map request "" (fun _ str -> action str) 
+   |> ignore
 @
 
 
@@ -4594,7 +4598,7 @@ let no_query f = f true
 let query frame request f =
   let top_window = Window.top frame.frm_window in
   top_window.top_second_cursor <- Some frame;
-  let _ = select_yes_or_no frame request f in ()
+  select_yes_or_no frame request f |> ignore
 @
 
 <<constant Search.string_history>>=
@@ -5304,7 +5308,7 @@ let eval_buffer frame =
         set_compilation_buffer frame buf (Filename.dirname filename);
         Top_window.message top_window "Error while compiling buffer"
   in
-  let _ = System.system "*Eval*" location cmd end_action in ()
+  System.system "*Eval*" location cmd end_action |> ignore
 @
 
 
@@ -6032,12 +6036,12 @@ let map = mode.maj_map
 
 <<function Dired.viewer>>=
 let viewer commande frame filename =
-  let _ =  Sys.command (Printf.sprintf "(%s %s) &" commande filename) in ()
+  Sys.command (Printf.sprintf "(%s %s) &" commande filename) |> ignore
 @
 
 <<function Dired.commande>>=
 let commande commande frame filename =
-  let _ = Sys.command (Printf.sprintf commande filename) in
+  Sys.command (Printf.sprintf commande filename) |> ignore;
   failwith  (Printf.sprintf commande filename)
 @
 
@@ -6789,8 +6793,7 @@ let tree = new WX_tree.t viewport#container []
 
 <<function Efuns_filebrowser.load>>=
 let load filename =
-  let _ = Sys.command(Printf.sprintf "efuns_server %s &" filename)
-  in ()
+  Sys.command(Printf.sprintf "efuns_server %s &" filename) |> ignore
 @
 
 <<function Efuns_filebrowser.iter_load>>=

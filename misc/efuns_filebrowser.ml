@@ -61,8 +61,7 @@ let tree = new WX_tree.t viewport#container []
 
 (*s: function Efuns_filebrowser.load *)
 let load filename =
-  let _ = Sys.command(Printf.sprintf "efuns_server %s &" filename)
-  in ()
+  Sys.command(Printf.sprintf "efuns_server %s &" filename) |> ignore
 (*e: function Efuns_filebrowser.load *)
 
 (*s: function Efuns_filebrowser.iter_load *)

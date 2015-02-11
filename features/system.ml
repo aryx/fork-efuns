@@ -119,7 +119,7 @@ let shell_hist = ref []
 (*s: function System.shell_command *)
 let shell_command frame =
   select_string frame "Run command:" shell_hist ""
-    (fun cmd -> let _ = start_command "*Command*" (cut_frame frame) cmd in ())
+    (fun cmd -> start_command "*Command*" (cut_frame frame) cmd |> ignore)
 (*e: function System.shell_command *)
   
 (*e: features/system.ml *)

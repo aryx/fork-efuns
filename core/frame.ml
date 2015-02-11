@@ -197,6 +197,7 @@ let create_without_top location window mini buf =
       stat_mode = dummy_mode;
 
       status_format = !status_format;
+
       status_string = String.make 256 '-';
     } in
   String.blit editname 0 status.status_string 5 (String.length editname);
@@ -527,8 +528,7 @@ let update top_window frame =
       let start_c = point_to_cursor buf start in
       if start_c > 0 then begin
         frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
-        let _ = Text.bmove text start start_c in
-        ()
+        Text.bmove text start start_c |> ignore
       end;
 
       let point_c = point_to_cursor buf point in
@@ -536,7 +536,7 @@ let update top_window frame =
           frame.frm_x_offset <- max (point_c - width / 2) 0;
           frame.frm_redraw <- true;
       end else if frame.frm_cutline = max_int && 
-        (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
+                  (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
         then begin
           frame.frm_x_offset <- point_c - (width / 2);
           frame.frm_redraw <- true;
@@ -544,23 +544,20 @@ let update top_window frame =
 
       update_table top_window frame;
 
-      if (frame.frm_end < point)  || (start > point) then begin
+      if (point > frame.frm_end) || (point > start) then begin
           if frame.frm_force_start then begin
             let x,y = 
               cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
             in
             goto_line text frame.frm_point y;
-            let _ = Text.fmove text frame.frm_point x in
-            ()
+            Text.fmove text frame.frm_point x |> ignore
           end else begin
             goto_point text start point;
             frame.frm_y_offset <- - height / 2;
             let start_c = point_to_cursor buf start in
             if start_c > 0 then begin
-                frame.frm_y_offset <- 
-                  frame.frm_y_offset - start_c / frame.frm_cutline;
-                let _ = Text.bmove text start start_c in
-                ()
+              frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
+              Text.bmove text start start_c |> ignore
             end;
             update_table top_window frame;
          end
@@ -569,13 +566,12 @@ let update top_window frame =
       if frame == top_window.top_active_frame then begin
         frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
         let pos_start = get_position text frame.frm_start in
-        let pos_end = get_position text frame.frm_end in
+        let pos_end   = get_position text frame.frm_end in
 
         Common.pr2_once "Frame.update: TODO scrollbar";
         (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
-
            (size text);
-        *)
+         *)
       end;
 
       frame.frm_last_text_updated <- version text;
@@ -586,8 +582,8 @@ let update top_window frame =
       for y = 0 to height - 1 do
         let line = frame.frm_table.(y) in
         if not ((line.repr_prev_reprs == line.repr_reprs) &&
-            (line.repr_prev_offset == line.repr_offset)) 
-          || frame.frm_redraw
+                (line.repr_prev_offset == line.repr_offset)) 
+           || frame.frm_redraw
         then
           begin
             line.repr_prev_reprs <- line.repr_reprs;
@@ -651,8 +647,7 @@ let move_point frame point x y =
   let text = buf.buf_text in
   let x, y = cursor_to_point frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
   goto_line text point y;
-  let _ = fmove text point x in
-  ()
+  fmove text point x |> ignore
 (*e: function Frame.move_point *)
 
 (*s: function Frame.current_dir *)

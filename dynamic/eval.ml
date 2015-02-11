@@ -100,6 +100,6 @@ let eval_buffer frame =
         set_compilation_buffer frame buf (Filename.dirname filename);
         Top_window.message top_window "Error while compiling buffer"
   in
-  let _ = System.system "*Eval*" location cmd end_action in ()
+  System.system "*Eval*" location cmd end_action |> ignore
 (*e: function Eval.eval_buffer *)
 (*e: dynamic/eval.ml *)

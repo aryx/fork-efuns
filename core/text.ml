@@ -561,7 +561,7 @@ let undo tree =
 (*s: function Text.insert_at_end *)
 let insert_at_end tree str =
   let text = tree.tree_text in
-  let _ = low_insert tree text.text_size str in
+  low_insert tree text.text_size str |> ignore;
   text.text_history <- [];
   text.text_modified <- text.text_modified + 1
 (*e: function Text.insert_at_end *)
@@ -576,7 +576,8 @@ let insert_res tree point str =
 (*e: function Text.insert_res *)
 
 (*s: function Text.insert *)
-let insert text point str = let _ = insert_res text point str in ()
+let insert text point str = 
+   insert_res text point str |> ignore
 (*e: function Text.insert *)
   
 (*s: function Text.delete_res *)
@@ -589,7 +590,8 @@ let delete_res tree point len =
 (*e: function Text.delete_res *)
 
 (*s: function Text.delete *)
-let delete text point len = let _ = delete_res text point len in ()
+let delete text point len = 
+  delete_res text point len |> ignore
 (*e: function Text.delete *)
   
 (*s: function Text.compute_newlines *)
@@ -713,7 +715,7 @@ let dup_point tree point =
 (*e: function Text.dup_point *)
 
 (*s: function Text.goto_point *)
-let goto_point text p1 p2 =
+let goto_point _text p1 p2 =
   p1.point <- p2.point;
   p1.point_y <- p2.point_y
 (*e: function Text.goto_point *)
@@ -953,12 +955,12 @@ let bmove_res tree p delta =
 
 (*s: function Text.bmove *)
 let bmove text p delta = 
-  let _ = bmove_res text p delta in ()
+  bmove_res text p delta |> ignore
 (*e: function Text.bmove *)
 
 (*s: function Text.fmove *)
 let fmove text p delta = 
-  let _ = fmove_res text p delta in ()
+  fmove_res text p delta |> ignore
 (*e: function Text.fmove *)
   
 (*s: function Text.to_string *)
@@ -1022,7 +1024,7 @@ let set_position tree point pos =
 (*s: function Text.sub *)
 let sub text point len =
   let str = String.create len in
-  let _ = blit str text point len in
+  blit str text point len |> ignore;
   str
 (*e: function Text.sub *)
     
@@ -1377,7 +1379,8 @@ let move_res text point n =
 (*e: function Text.move_res *)
 
 (*s: function Text.move *)
-let move text point n = let _ = move_res text point n in ()
+let move text point n = 
+  move_res text point n |> ignore
 (*e: function Text.move *)
 
 (*s: function Text.point_to_lof *)
@@ -1410,7 +1413,7 @@ let point_to_line tree point line =
 (*s: function Text.clear *)
 let clear tree =
   let text = tree.tree_text in      
-  let _ = low_delete tree 0 (text.text_size - text.text_gsize) in
+  low_delete tree 0 (text.text_size - text.text_gsize) |> ignore;
   text.text_history <- [];
   List.iter (fun p -> p.point <- 0; p.point_y <- 0) text.text_points
 (*e: function Text.clear *)
@@ -1450,7 +1453,7 @@ let goto_xy tree point x y =
   in
   point.point <- text.text_newlines.(y).position;
   point.point_y <- y;
-  let _ = fmove tree point x in ()
+  fmove tree point x |> ignore
 (*e: function Text.goto_xy *)
 
 (*s: function Text.update *)
@@ -1488,7 +1491,7 @@ let lexing tree curseur end_point =
     (fun str len ->
       let len = min len (distance tree curseur end_point) in
       let len = blit str tree curseur len in
-      let _ = fmove tree curseur len in
+      fmove tree curseur len |> ignore;
       len
   )
 (*e: function Text.lexing *)

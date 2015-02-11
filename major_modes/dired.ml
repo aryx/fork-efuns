@@ -175,12 +175,12 @@ let map = mode.maj_map
 
 (*s: function Dired.viewer *)
 let viewer commande frame filename =
-  let _ =  Sys.command (Printf.sprintf "(%s %s) &" commande filename) in ()
+  Sys.command (Printf.sprintf "(%s %s) &" commande filename) |> ignore
 (*e: function Dired.viewer *)
 
 (*s: function Dired.commande *)
 let commande commande frame filename =
-  let _ = Sys.command (Printf.sprintf commande filename) in
+  Sys.command (Printf.sprintf commande filename) |> ignore;
   failwith  (Printf.sprintf commande filename)
 (*e: function Dired.commande *)
   

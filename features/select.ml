@@ -236,10 +236,10 @@ let is_userdir string =
   let n = String.length string in
   (n > 1) && (string.[0] = '~') &&
   (try
-      let _ = String.rindex string '/' in
+      String.rindex string '/' |> ignore;
       false
-    with
-      Not_found -> true)
+   with Not_found -> true
+   )
 (*e: function Select.is_userdir *)
 
 (*s: function Select.complete_filename *)
@@ -409,23 +409,22 @@ let select_string frame request history default action =
   let map = Keymap.create () in
   let string = ref "" in
   set_history map string history;
-  let _ = Minibuffer.create_return frame map request default
+  Minibuffer.create_return frame map request default
     (fun _ str -> 
       (match !history with
           hd :: _ when hd = str -> ()
         | _ -> if str <> "" then
               history := str :: !history);
-      action str) in
-  ()
+      action str
+    ) |> ignore
 (*e: function Select.select_string *)
 
 
 (*s: function Select.simple_select *)
 let simple_select frame request action =
   let map = Keymap.create () in
-  let _ = Minibuffer.create_return frame map request ""
-    (fun _ str -> action str) in
-  ()
+  Minibuffer.create_return frame map request "" (fun _ str -> action str) 
+   |> ignore
 (*e: function Select.simple_select *)
   
   

@@ -2241,7 +2241,7 @@ let remove_point tree p =
 
 
 <<function Text.goto_point>>=
-let goto_point text p1 p2 =
+let goto_point _text p1 p2 =
   p1.point <- p2.point;
   p1.point_y <- p2.point_y
 @
@@ -2546,7 +2546,7 @@ let select_open_file frame =
   info.action <- (fun name ->
       wrap top_window (fun top_window ->
           query#destroy;
-          let _ = Frame.load_file window name in ()
+          Frame.load_file window name |> ignore
       ) ());
   info.cancel <- (fun () ->
       wrap top_window (fun top_window ->
@@ -2576,7 +2576,8 @@ define_action "load_buffer"  load_buffer;
 let load_buffer frame = 
   set_previous_frame frame;
   select_filename frame "Find file: " (fun str -> 
-      let _ = Frame.load_file frame.frm_window str in ())
+    Frame.load_file frame.frm_window str |> ignore
+  )
 @
 % see later select_filename, quite complicated, use minibuffer
 % and completion buffer.
@@ -2811,6 +2812,9 @@ help_menu := [|
 
 % the redisplay function!!!
 
+\subsection{Frames and windows creation}
+
+% see later
 
 \subsection{[[Frame.update()]]}
 
@@ -2922,14 +2926,15 @@ mutable frm_last_buf_updated : int;
 (buf.buf_modified <> frame.frm_last_buf_updated) ||
 @
 
+<<[[Efuns.frame]] other fields>>=
+mutable frm_redraw : bool;    
+@
+
 <<[[Frame.update()]] conditions for redraw, forced redraw>>=
 frame.frm_redraw
 @
 
-<<[[Efuns.frame]] other fields>>=
-mutable frm_redraw : bool;    
-@
-% diff?
+
 
 
 <<[[Frame.update()]] redraw>>=
@@ -2937,8 +2942,7 @@ let start = frame.frm_start in
 let start_c = point_to_cursor buf start in
 if start_c > 0 then begin
   frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
-  let _ = Text.bmove text start start_c in
-  ()
+  Text.bmove text start start_c |> ignore
 end;
 
 let point_c = point_to_cursor buf point in
@@ -2946,7 +2950,7 @@ if point_c < frame.frm_x_offset then begin
     frame.frm_x_offset <- max (point_c - width / 2) 0;
     frame.frm_redraw <- true;
 end else if frame.frm_cutline = max_int && 
-  (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
+            (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
   then begin
     frame.frm_x_offset <- point_c - (width / 2);
     frame.frm_redraw <- true;
@@ -2954,23 +2958,20 @@ end;
 
 update_table top_window frame;
 
-if (frame.frm_end < point)  || (start > point) then begin
+if (point > frame.frm_end) || (point > start) then begin
     if frame.frm_force_start then begin
       let x,y = 
         cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
       in
       goto_line text frame.frm_point y;
-      let _ = Text.fmove text frame.frm_point x in
-      ()
+      Text.fmove text frame.frm_point x |> ignore
     end else begin
       goto_point text start point;
       frame.frm_y_offset <- - height / 2;
       let start_c = point_to_cursor buf start in
       if start_c > 0 then begin
-          frame.frm_y_offset <- 
-            frame.frm_y_offset - start_c / frame.frm_cutline;
-          let _ = Text.bmove text start start_c in
-          ()
+        frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
+        Text.bmove text start start_c |> ignore
       end;
       update_table top_window frame;
    end
@@ -2979,13 +2980,12 @@ end;
 if frame == top_window.top_active_frame then begin
   frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
   let pos_start = get_position text frame.frm_start in
-  let pos_end = get_position text frame.frm_end in
+  let pos_end   = get_position text frame.frm_end in
 
   Common.pr2_once "Frame.update: TODO scrollbar";
   (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
-
      (size text);
-  *)
+   *)
 end;
 
 frame.frm_last_text_updated <- version text;
@@ -2996,8 +2996,8 @@ frame.frm_force_start <- false;
 for y = 0 to height - 1 do
   let line = frame.frm_table.(y) in
   if not ((line.repr_prev_reprs == line.repr_reprs) &&
-      (line.repr_prev_offset == line.repr_offset)) 
-    || frame.frm_redraw
+          (line.repr_prev_offset == line.repr_offset)) 
+     || frame.frm_redraw
   then
     begin
       line.repr_prev_reprs <- line.repr_reprs;
@@ -3203,6 +3203,8 @@ let clean_display location =
 
 \section{[[Status]] Line}
 
+\subsection{Status line creation}
+
 <<[[Efuns.frame]] other fields>>=
 mutable frm_status : status;    
 @
@@ -3221,6 +3223,43 @@ and status =
   }
 @
 
+<<[[Frame.create_without_top()]] let status>>=
+let status = {
+    stat_name = "";
+    stat_file = "";
+    stat_col = -1;
+    stat_line = -1;
+    status_modified = true;
+    stat_modified = (buf.buf_last_saved = version buf.buf_text);
+    stat_modes = [];
+    stat_mode = dummy_mode;
+
+    status_format = !status_format;
+
+    status_string = String.make 256 '-';
+  } in
+String.blit editname 0 status.status_string 5 (String.length editname);
+@
+
+<<constant Frame.editname>>=
+let editname = "Efuns:"
+@
+
+<<[[Frame.create_without_top()]] adjust status of frame>>=
+status_name frame buf.buf_name;
+@
+
+<<function Frame.status_name>>=
+let status_name frame name =
+  let status = frame.frm_status in
+  if status.stat_name <> name then
+    begin
+      status.stat_name <- name;
+      status_print status name StatName
+    end
+@
+
+\subsection{Status line format}
 
 <<[[Efuns.status]] other fields>>=
 mutable status_format : (status_info * (int * int)) list;
@@ -3249,43 +3288,7 @@ let status_format = ref [
 @
 % meaning?
 
-<<[[Frame.create_without_top()]] let status>>=
-let status = {
-    stat_name = "";
-    stat_file = "";
-    stat_col = -1;
-    stat_line = -1;
-    status_modified = true;
-    stat_modified = (buf.buf_last_saved = version buf.buf_text);
-    stat_modes = [];
-    stat_mode = dummy_mode;
-
-    status_format = !status_format;
-    status_string = String.make 256 '-';
-  } in
-String.blit editname 0 status.status_string 5 (String.length editname);
-@
-
-<<constant Frame.editname>>=
-let editname = "Efuns:"
-@
-
-<<[[Frame.create_without_top()]] adjust status of frame>>=
-status_name frame buf.buf_name;
-@
-
-
-<<function Frame.status_name>>=
-let status_name frame name =
-  let status = frame.frm_status in
-  if status.stat_name <> name then
-    begin
-      status.stat_name <- name;
-      status_print status name StatName
-    end
-@
-
-
+\subsection{[[Frame.status_print()]]}
 
 % status_name | status_modified | ... -> <>
 <<function Frame.status_print>>=
@@ -3306,6 +3309,7 @@ mutable status_string : string;
 @
 % this will then be the only thing used in the rendering
 
+\subsection{[[Frame.status_xxx()]]}
 
 % ?? -> <>
 <<function Frame.status_modified>>=
@@ -3352,7 +3356,7 @@ let status_file frame name =
 @
 % dead?
 
-
+\subsection{Status line display}
 
 \section{Minibuffer}
 
@@ -3448,10 +3452,20 @@ let _ =
   charreprs.(9) <- String.make !tab_size ' '
 @
 
+\subsection{Minibuffer display}
 
 
-\subsection{Minubuffer display}
 
+% event loop -> ... -> Top_window.handle_key -> <>
+<<function Top_window.clear_message>>=
+let clear_message top_window =
+  match top_window.top_mini_buffers with
+    [] -> 
+      let xterm = Window.xterm top_window in
+      WX_xterm.clear_eol xterm 0 
+        (top_window.top_height - 1) top_window.top_width; 
+  | _ -> ()
+@
 
 \subsection{[[M-x foo]], [[call_interactive()]]}
 
@@ -3574,16 +3588,6 @@ let message top_window msg =
 @
 
 
-% event loop -> ... -> Top_window.handle_key -> <>
-<<function Top_window.clear_message>>=
-let clear_message top_window =
-  match top_window.top_mini_buffers with
-    [] -> 
-      let xterm = Window.xterm top_window in
-      WX_xterm.clear_eol xterm 0 
-        (top_window.top_height - 1) top_window.top_width; 
-  | _ -> ()
-@
 
 
 
@@ -3815,7 +3819,7 @@ failwith "Simple.mouse_yank_at_click: TODO"
   let point = frame.frm_point in
   let xterm = Window.xterm top_window in
   let str = WX_xterm.get_cutbuffer xterm in
-  let _ = Text.insert text point str in
+  Text.insert text point str |> ignore;
   Text.fmove text point (String.length str)
 *)
 @
@@ -3838,8 +3842,7 @@ let mouse_save_then_kill frame =
       let (start,term) =
         if point < mark then (point,mark) else (mark,point) 
       in
-      let _ = Text.delete text start (Text.distance text start term) in
-      ()
+      Text.delete text start (Text.distance text start term) |> ignore
     end
   else
   let xterm = Window.xterm top_window in
@@ -4016,13 +4019,13 @@ let forward_word buf point =
 
 <<function Simple.beginning_of_line>>=
 let beginning_of_line frame =
-  let _ = move_backward frame (begin_to_point frame) in ()
+  move_backward frame (begin_to_point frame) |> ignore
 @
 
 <<function Simple.end_of_line>>=
 let end_of_line frame =
   let eol = point_to_end frame in
-  let _ = move_forward frame eol in ()
+  move_forward frame eol |> ignore
 @
 
 
@@ -4033,9 +4036,9 @@ let backward_line frame =
   if point_line text point > 0 then
     let old_x = begin_to_point frame in
     beginning_of_line frame;
-    let _ = move_backward frame 1 in
+    move_backward frame 1 |> ignore;
     beginning_of_line frame;
-    let _ = move_forward  frame (min old_x (point_to_end frame)) in ()
+    move_forward  frame (min old_x (point_to_end frame)) |> ignore
 @
 
 <<function Simple.forward_line>>=
@@ -4045,14 +4048,14 @@ let forward_line frame =
   if point_line text point < nbre_lines text then
     if point_to_end frame = 0 then
       begin
-        let _ = move_forward frame 1 in
+        move_forward frame 1 |> ignore;
         end_of_line frame; ()
       end
     else
     let old_x = begin_to_point frame in
     end_of_line frame;
-    let _ = move_forward frame 1 in
-    let _ = move_forward frame (min old_x (point_to_end frame)) in ()
+    move_forward frame 1 |> ignore;
+    move_forward frame (min old_x (point_to_end frame)) |> ignore;
 @
 
 
@@ -4067,11 +4070,9 @@ let backward_paragraph buf point =
       c = '\n' || c = ' ') 
   do () done;
   try
-    let _ = Text.search_backward text (Str.regexp "\n *\n") point in
-    fmove text point 1; ()
-  with
-    Not_found ->
-      set_position text point 0
+    Text.search_backward text (Str.regexp "\n *\n") point |> ignore;
+    fmove text point 1
+  with Not_found -> set_position text point 0
 @
 
 <<function Simple.forward_paragraph>>=
@@ -4083,11 +4084,9 @@ let forward_paragraph buf point =
       c = '\n' || c = ' ') 
     && fmove_res text point 1 = 1 do () done;
   try
-    let _ = Text.search_forward text (Str.regexp "\n *\n") point in
-    fmove text point 1; ()
-  with
-    Not_found -> 
-      set_position text point (Text.size text)
+    Text.search_forward text (Str.regexp "\n *\n") point |> ignore;
+    fmove text point 1
+  with Not_found -> set_position text point (Text.size text)
 @
 
 \subsection{Screens}
@@ -4245,8 +4244,8 @@ let insert_char frame char =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
   single_char.[0] <- char;
-  let _ = Text.insert text point single_char in
-  let _ = Text.fmove text point 1 in () 
+  Text.insert text point single_char |> ignore;
+  Text.fmove text point 1 in |> ignore
 @
 
 \section{Deleting}
@@ -4279,16 +4278,14 @@ define_action "kill_end_of_line"  kill_end_of_line;
 <<function Simple.delete_backspace_char>>=
 let delete_backspace_char frame =
   let text = frame.frm_buffer.buf_text in
-  if Text.bmove_res text frame.frm_point 1 <> 0 then
-    let _ = Text.delete text frame.frm_point 1 in
-      ()
+  if Text.bmove_res text frame.frm_point 1 <> 0 
+  then Text.delete text frame.frm_point 1 |> ignore
 @
 
 <<function Simple.delete_char>>=
 let delete_char frame =
   let text = frame.frm_buffer.buf_text in
-  let _ = Text.delete text frame.frm_point 1 in
-  ()
+  Text.delete text frame.frm_point 1 |> ignore
 @
 
 \subsection{Words}
@@ -4298,7 +4295,7 @@ let delete_backward_word buf point =
   let text = buf.buf_text in
   let old_point = dup_point text point in
   backward_word buf point;
-  let _ = Text.delete text point (Text.distance text point old_point) in
+  Text.delete text point (Text.distance text point old_point) |> ignore;
   remove_point text old_point;
   ()
 @
@@ -4311,8 +4308,7 @@ let delete_forward_word buf point =
   let len = Text.distance text old_point point in
   remove_point text old_point;
   Text.bmove text point len;
-  let _ = Text.delete text point len in
-  ()
+  Text.delete text point len |> ignore
 @
 
 \subsection{Lines}
@@ -4478,7 +4474,7 @@ let insert_next_killed frame =
     oldframe == frame && oldpoint + len = get_position text point ->
       let n = if n = (min !kill_size kill_max) - 1 then 0 else n+1 in
       bmove text point len;
-      let _ = Text.delete text point len in
+      Text.delete text point len |> ignore;
       let pos, len =  Text.insert_res text point kill_ring.(n) in
       fmove text point len;
       last_insert := Some(frame,pos,n,len)
@@ -4658,7 +4654,7 @@ let isearch to_regexp sens frame =
     goto_point text point spoint;
     match !sens with
       Backward -> 
-        let _ = Text.search_backward text regexp point in ()
+        Text.search_backward text regexp point |> ignore
     | Forward ->  
         let len = Text.search_forward text regexp point in
 (*        Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
@@ -4714,11 +4710,13 @@ let isearch to_regexp sens frame =
   Keymap.add_binding ismap [NormalMap, XK.xk_Left]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      let _ = move_backward frame 1 in ());  
+      move_backward frame 1 |> ignore
+     );  
   Keymap.add_binding ismap [NormalMap, XK.xk_Right]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      let _ = move_forward frame 1 in ());  
+      move_forward frame 1 |> ignore
+    );  
   Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and forward_line);
   Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and backward_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'a'] 
@@ -5152,8 +5150,7 @@ define_action "horizontal_cut_frame"  h_cut_frame;
 <<function Multi_frames.v_cut_frame>>=
 let v_cut_frame frame =
   if frame.frm_mini_buffer = None 
-  then
-    let _ = Frame.create (cut_frame frame) None frame.frm_buffer in ()
+  then Frame.create (cut_frame frame) None frame.frm_buffer |> ignore
 @
 
 <<function Multi_frames.h_cut_frame>>=
@@ -5171,7 +5168,7 @@ let h_cut_frame frame =
           (window.win_width - wi) window.win_height in
       window.win_down <- HComb (w1,w2);
       Frame.install w1 frame;
-      let _ = Frame.create w2 None frame.frm_buffer in ()
+      Frame.create w2 None frame.frm_buffer |> ignore
 @
 
 
@@ -5338,7 +5335,8 @@ let window_load_buffer frame =
       let top_window = Top_window.create top_window.top_location
           (Window.display top_window)
       in
-      let _ = Frame.load_file top_window.window str in ())
+      Frame.load_file top_window.window str |> ignore
+    )
 @
 
 <<function Complex.window_change_buffer>>=
@@ -5710,7 +5708,7 @@ define_action "shell_command"  shell_command;
 <<function System.shell_command>>=
 let shell_command frame =
   select_string frame "Run command:" shell_hist ""
-    (fun cmd -> let _ = start_command "*Command*" (cut_frame frame) cmd in ())
+    (fun cmd -> start_command "*Command*" (cut_frame frame) cmd |> ignore)
 @
 
 
@@ -6130,7 +6128,7 @@ let transpose_chars buf point =
   bmove text point 1;
   let pos,c1 = Text.delete_res text point 1 in
   fmove text point 1;
-  let _ = Text.insert text point c1 in
+  Text.insert text point c1 |> ignore;
   commit_session text session;
   fmove text point 1;
   ()
@@ -6154,8 +6152,8 @@ let transpose_words buf point =
   let pos2 = dup_point text point in
   to_end_of_word text point syntax;
   let _,word2 = Text.delete_res text pos2 (distance text pos2 point) in    
-  let _ = Text.insert text pos1 word2 in
-  let _ = Text.insert text pos2 word1 in
+  Text.insert text pos1 word2 |> ignore;
+  Text.insert text pos2 word1 |> ignore;
   fmove text point (String.length word1);
   commit_session text session;
   remove_point text pos1;
@@ -6172,7 +6170,7 @@ let on_word buf point f =
   to_end_of_word text point syntax;
   let _,word1 = Text.delete_res text pos1 (distance text pos1 point) in
   let w = f word1 in
-  let _ = Text.insert text pos1 w in
+  Text.insert text pos1 w |> ignore;
   fmove text point (String.length w);
   commit_session text session;
   remove_point text pos1
@@ -6193,7 +6191,7 @@ let fill_paragraph frame =
   let fin = dup_point text start in
   forward_paragraph buf fin;
   simplify text start fin;
-  let _ = insert text start "\n" in
+  insert text start "\n" |> ignore;
   let rec iter count last_space =
     if compare text start fin < 0 then
     if fmove_res text start 1 = 1 then 
@@ -6213,7 +6211,7 @@ let fill_paragraph frame =
           iter (count+1) (last_space+1)
   in
   iter 0 0;  
-  let _ = insert text fin "\n" in
+  insert text fin "\n" |> ignore;
   remove_point text start;
   remove_point text fin;
   commit_session text session

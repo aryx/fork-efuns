@@ -57,7 +57,7 @@ let rec save_buffers_and_action frame buffers action =
       Keymap.add_binding map [NormalMap, Char.code 'a'] abort;
       Keymap.add_binding map [NormalMap, Char.code 'A'] abort;
       Keymap.add_binding map [ControlMap, Char.code 'g'] abort;
-      let _ = Minibuffer.create frame map request in ()
+      Minibuffer.create frame map request |> ignore
 (*e: function Complex.save_buffers_and_action *)
 
 (*s: constant Complex.buf_mtime *)
@@ -147,7 +147,8 @@ let save_some_buffers frame =
 let load_buffer frame = 
   set_previous_frame frame;
   select_filename frame "Find file: " (fun str -> 
-      let _ = Frame.load_file frame.frm_window str in ())
+    Frame.load_file frame.frm_window str |> ignore
+  )
 (*e: function Complex.load_buffer *)
 
 (*s: function Complex.insert_file *)
@@ -185,7 +186,8 @@ let window_load_buffer frame =
       let top_window = Top_window.create top_window.top_location
           (Window.display top_window)
       in
-      let _ = Frame.load_file top_window.window str in ())
+      Frame.load_file top_window.window str |> ignore
+    )
 (*e: function Complex.window_load_buffer *)
 
 (*s: function Complex.change_buffer *)
@@ -212,7 +214,7 @@ let window_change_buffer frame =
 
 (*s: function Complex.change_font *)
 let change_font frame =
-  let _ = Minibuffer.create_return 
+  Minibuffer.create_return 
     frame (Keymap.create ()) "Find font: " "fixed"
     (fun old_frame name ->
       let window = frame.frm_window in
@@ -220,7 +222,7 @@ let change_font frame =
       let xterm = Window.xterm top_window in
       (*WX_xterm.change_font xterm name*)
       failwith "Complex.change_font: TODO"
-  ) in ()
+  ) |> ignore
 (*e: function Complex.change_font *)
 
 (*s: function Complex.color *)
@@ -272,8 +274,8 @@ failwith "Complex.open_display: TODO"
       let display = WX_xterm.create_display root_oo
           location.loc_colors_names location.loc_fonts_names
         in
-      let _ = Top_window.create location display in
-      ())
+      Top_window.create location display |> ignore
+   )
 *)
 (*e: function Complex.open_display *)
 
@@ -320,8 +322,10 @@ let mark_at_point frame =
 (*e: function Complex.mark_at_point *)
 
 (*s: constant Complex.umask *)
-let umask = let old = Unix.umask 0 in 
-  let _ = Unix.umask old in old
+let umask = 
+  let old = Unix.umask 0 in 
+  Unix.umask old |> ignore;
+  old
 (*e: constant Complex.umask *)
   
 (*s: constant Complex.file_perm *)

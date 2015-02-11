@@ -108,8 +108,8 @@ let binding_option = tuple2_option (smalllist_option key_option, string_option)
 let insert_string frame str =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  let _ = Text.insert text point str in
-  let _ = Text.fmove text point (String.length str) in ()
+  Text.insert text point str |> ignore;
+  Text.fmove text point (String.length str) |> ignore
 (*e: function Simple.insert_string *)
 
   
@@ -121,8 +121,8 @@ let insert_char frame char =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
   single_char.[0] <- char;
-  let _ = Text.insert text point single_char in
-  let _ = Text.fmove text point 1 in () 
+  Text.insert text point single_char |> ignore;
+  Text.fmove text point 1 |> ignore
 (*e: function Simple.insert_char *)
 
 (*s: function Simple.insert_return *)
@@ -137,7 +137,7 @@ let previous_char frame =
   let point = frame.frm_point in
   if bmove_res text point 1 = 0 then raise Not_found;
   let c = get_char text point in
-  let _ = fmove text point 1 in
+  fmove text point 1 |> ignore;
   c
 (*e: function Simple.previous_char *)
 
@@ -158,10 +158,10 @@ let insert_at_place frame char =
     insert_char frame char
   else
   let session = start_session text in
-  let _ = Text.delete text point 1 in
+  Text.delete text point 1 |> ignore;
   single_char.[0] <- char;    
-  let _ = Text.insert text point single_char in
-  let _ = fmove text point 1 in ()
+  Text.insert text point single_char |> ignore;
+  fmove text point 1 |> ignore
 (*e: function Simple.insert_at_place *)
 
 
@@ -222,13 +222,13 @@ let line_size frame =
 
 (*s: function Simple.beginning_of_line *)
 let beginning_of_line frame =
-  let _ = move_backward frame (begin_to_point frame) in ()
+  move_backward frame (begin_to_point frame) |> ignore
 (*e: function Simple.beginning_of_line *)
 
 (*s: function Simple.end_of_line *)
 let end_of_line frame =
   let eol = point_to_end frame in
-  let _ = move_forward frame eol in ()
+  move_forward frame eol |> ignore
 (*e: function Simple.end_of_line *)
 
 (*s: function Simple.forward_line *)
@@ -236,28 +236,28 @@ let forward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
   if point_line text point < nbre_lines text then
-    if point_to_end frame = 0 then
-      begin
-        let _ = move_forward frame 1 in
-        end_of_line frame; ()
-      end
-    else
-    let old_x = begin_to_point frame in
-    end_of_line frame;
-    let _ = move_forward frame 1 in
-    let _ = move_forward frame (min old_x (point_to_end frame)) in ()
+    if point_to_end frame = 0 then begin
+        move_forward frame 1 |> ignore;
+        end_of_line frame;
+    end else begin
+      let old_x = begin_to_point frame in
+      end_of_line frame;
+      move_forward frame 1 |> ignore;
+      move_forward frame (min old_x (point_to_end frame)) |> ignore
+    end
 (*e: function Simple.forward_line *)
 
 (*s: function Simple.backward_line *)
 let backward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  if point_line text point > 0 then
+  if point_line text point > 0 then begin
     let old_x = begin_to_point frame in
     beginning_of_line frame;
-    let _ = move_backward frame 1 in
+    move_backward frame 1 |> ignore;
     beginning_of_line frame;
-    let _ = move_forward  frame (min old_x (point_to_end frame)) in ()
+    move_forward  frame (min old_x (point_to_end frame)) |> ignore
+  end
 (*e: function Simple.backward_line *)
 
 
@@ -345,7 +345,7 @@ let insert_next_killed frame =
     oldframe == frame && oldpoint + len = get_position text point ->
       let n = if n = (min !kill_size kill_max) - 1 then 0 else n+1 in
       bmove text point len;
-      let _ = Text.delete text point len in
+      Text.delete text point len |> ignore;
       let pos, len =  Text.insert_res text point kill_ring.(n) in
       fmove text point len;
       last_insert := Some(frame,pos,n,len)
@@ -360,7 +360,7 @@ let format_to frame =
   Format.set_formatter_output_functions 
     (fun str pos len ->
       let s = String.sub str pos len in
-      let _ = Text.insert text point s in
+      Text.insert text point s |> ignore;
       Text.fmove text point len)
   (fun () -> ())
 (*e: function Simple.format_to *)
@@ -498,16 +498,14 @@ let buffer_list frame =
 (*s: function Simple.delete_char *)
 let delete_char frame =
   let text = frame.frm_buffer.buf_text in
-  let _ = Text.delete text frame.frm_point 1 in
-  ()
+  Text.delete text frame.frm_point 1 |> ignore
 (*e: function Simple.delete_char *)
 
 (*s: function Simple.delete_backspace_char *)
 let delete_backspace_char frame =
   let text = frame.frm_buffer.buf_text in
-  if Text.bmove_res text frame.frm_point 1 <> 0 then
-    let _ = Text.delete text frame.frm_point 1 in
-      ()
+  if Text.bmove_res text frame.frm_point 1 <> 0 
+  then Text.delete text frame.frm_point 1 |> ignore
 (*e: function Simple.delete_backspace_char *)
 
 (*s: function Simple.hungry_char *)
@@ -598,7 +596,7 @@ let delete_backward_word buf point =
   let text = buf.buf_text in
   let old_point = dup_point text point in
   backward_word buf point;
-  let _ = Text.delete text point (Text.distance text point old_point) in
+  Text.delete text point (Text.distance text point old_point) |> ignore;
   remove_point text old_point;
   ()
 (*e: function Simple.delete_backward_word *)
@@ -611,8 +609,7 @@ let delete_forward_word buf point =
   let len = Text.distance text old_point point in
   remove_point text old_point;
   Text.bmove text point len;
-  let _ = Text.delete text point len in
-  ()
+  Text.delete text point len |> ignore
 (*e: function Simple.delete_forward_word *)
 
 (*s: function Simple.undo *)
@@ -898,7 +895,7 @@ failwith "Simple.mouse_yank_at_click: TODO"
   let point = frame.frm_point in
   let xterm = Window.xterm top_window in
   let str = WX_xterm.get_cutbuffer xterm in
-  let _ = Text.insert text point str in
+  Text.insert text point str |> ignore;
   Text.fmove text point (String.length str)
 *)
 (*e: function Simple.mouse_yank_at_click *)
@@ -922,8 +919,7 @@ let mouse_save_then_kill frame =
       let (start,term) =
         if point < mark then (point,mark) else (mark,point) 
       in
-      let _ = Text.delete text start (Text.distance text start term) in
-      ()
+      Text.delete text start (Text.distance text start term) |> ignore
     end
   else
   let xterm = Window.xterm top_window in
@@ -1019,7 +1015,7 @@ let on_word buf point f =
   to_end_of_word text point syntax;
   let _,word1 = Text.delete_res text pos1 (distance text pos1 point) in
   let w = f word1 in
-  let _ = Text.insert text pos1 w in
+  Text.insert text pos1 w |> ignore;
   fmove text point (String.length w);
   commit_session text session;
   remove_point text pos1
@@ -1040,8 +1036,8 @@ let transpose_words buf point =
   let pos2 = dup_point text point in
   to_end_of_word text point syntax;
   let _,word2 = Text.delete_res text pos2 (distance text pos2 point) in    
-  let _ = Text.insert text pos1 word2 in
-  let _ = Text.insert text pos2 word1 in
+  Text.insert text pos1 word2 |> ignore;
+  Text.insert text pos2 word1 |> ignore;
   fmove text point (String.length word1);
   commit_session text session;
   remove_point text pos1;
@@ -1056,7 +1052,7 @@ let transpose_chars buf point =
   bmove text point 1;
   let pos,c1 = Text.delete_res text point 1 in
   fmove text point 1;
-  let _ = Text.insert text point c1 in
+  Text.insert text point c1 |> ignore;
   commit_session text session;
   fmove text point 1;
   ()
@@ -1072,11 +1068,9 @@ let backward_paragraph buf point =
       c = '\n' || c = ' ') 
   do () done;
   try
-    let _ = Text.search_backward text (Str.regexp "\n *\n") point in
-    fmove text point 1; ()
-  with
-    Not_found ->
-      set_position text point 0
+    Text.search_backward text (Str.regexp "\n *\n") point |> ignore;
+    fmove text point 1
+  with Not_found -> set_position text point 0
 (*e: function Simple.backward_paragraph *)
 
 (*s: function Simple.forward_paragraph *)
@@ -1088,11 +1082,9 @@ let forward_paragraph buf point =
       c = '\n' || c = ' ') 
     && fmove_res text point 1 = 1 do () done;
   try
-    let _ = Text.search_forward text (Str.regexp "\n *\n") point in
-    fmove text point 1; ()
-  with
-    Not_found -> 
-      set_position text point (Text.size text)
+    Text.search_forward text (Str.regexp "\n *\n") point |> ignore;
+    fmove text point 1
+  with Not_found -> set_position text point (Text.size text)
 (*e: function Simple.forward_paragraph *)
 
 
@@ -1109,9 +1101,9 @@ let electric_insert_space frame =
         while (backward_word buf mark;
             point_to_bol text mark > 75) do () done;
         forward_word buf mark; backward_word buf mark;
-        let _ = Text.insert text mark "\n" in ()
-      with
-        Not_found -> ());
+        Text.insert text mark "\n" |> ignore
+    with Not_found -> ()
+    );
     remove_point text mark
 (*e: function Simple.electric_insert_space *)
 
@@ -1122,11 +1114,11 @@ let simplify text start point =
     if start < point then
       let c = get_char text start in
       if c = ' ' || c = '\n' || c = '\t' then
-        ( let _ = delete text start 1 in
+        ( delete text start 1 |> ignore;
           iter ' ')
       else
       if last_c = ' ' then
-        ( let _ = insert text start " " in
+        ( insert text start " " |> ignore;
           fmove text start 2;
           iter 'a')
       else
@@ -1154,7 +1146,7 @@ let fill_paragraph frame =
   let fin = dup_point text start in
   forward_paragraph buf fin;
   simplify text start fin;
-  let _ = insert text start "\n" in
+  insert text start "\n" |> ignore;
   let rec iter count last_space =
     if compare text start fin < 0 then
     if fmove_res text start 1 = 1 then 
@@ -1174,7 +1166,7 @@ let fill_paragraph frame =
           iter (count+1) (last_space+1)
   in
   iter 0 0;  
-  let _ = insert text fin "\n" in
+  insert text fin "\n" |> ignore;
   remove_point text start;
   remove_point text fin;
   commit_session text session
@@ -1192,9 +1184,10 @@ let set_indent text point offset =
         (fmove text curseur 1; iter (offset - 1))
       else
       if c = '\t' then
-        (let _ = delete text curseur 1 in iter offset)
+        (delete text curseur 1 |> ignore;
+         iter offset)
       else
-        (Text.insert text curseur (String.make offset ' '); ())
+        (Text.insert text curseur (String.make offset ' '))
     else
     if c = ' ' || c='\t' then
       (Text.delete text curseur 1;
