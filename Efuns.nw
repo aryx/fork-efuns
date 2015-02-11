@@ -4033,12 +4033,13 @@ let end_of_line frame =
 let backward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  if point_line text point > 0 then
+  if point_line text point > 0 then begin
     let old_x = begin_to_point frame in
     beginning_of_line frame;
     move_backward frame 1 |> ignore;
     beginning_of_line frame;
     move_forward  frame (min old_x (point_to_end frame)) |> ignore
+  end
 @
 
 <<function Simple.forward_line>>=
@@ -4046,16 +4047,15 @@ let forward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
   if point_line text point < nbre_lines text then
-    if point_to_end frame = 0 then
-      begin
+    if point_to_end frame = 0 then begin
         move_forward frame 1 |> ignore;
-        end_of_line frame; ()
-      end
-    else
-    let old_x = begin_to_point frame in
-    end_of_line frame;
-    move_forward frame 1 |> ignore;
-    move_forward frame (min old_x (point_to_end frame)) |> ignore;
+        end_of_line frame;
+    end else begin
+      let old_x = begin_to_point frame in
+      end_of_line frame;
+      move_forward frame 1 |> ignore;
+      move_forward frame (min old_x (point_to_end frame)) |> ignore
+    end
 @
 
 
@@ -4245,7 +4245,7 @@ let insert_char frame char =
   let point = frame.frm_point in
   single_char.[0] <- char;
   Text.insert text point single_char |> ignore;
-  Text.fmove text point 1 in |> ignore
+  Text.fmove text point 1 |> ignore
 @
 
 \section{Deleting}
