@@ -10,7 +10,7 @@ TOP=$(shell pwd)
 TARGET=efuns
 
 
-BACKENDDIR=graphics/x11
+BACKENDDIR=graphics/ocamlgraphics
 OTHERSYSLIBS=graphics.cma
 
 #BACKENDDIR=graphics/gtk_cairo
