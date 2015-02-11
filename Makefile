@@ -10,7 +10,7 @@ TOP=$(shell pwd)
 TARGET=efuns
 
 
-#GRAPHICSDIR=graphics/x11
+#BACKENDDIR=graphics/x11
 #OTHERSYSLIBS=graphics.cma
 
 BACKENDDIR=graphics/gtk_cairo
@@ -24,7 +24,7 @@ SRC=\
  commons2/log.ml\
  commons2/str2.ml\
  commons2/options.ml\
- misc/local.ml\
+ commons2/local.ml\
  graphics/xtypes.ml\
  $(BACKENDDIR)/wX_xterm.ml\
  core/text.ml\
@@ -67,7 +67,7 @@ CMIS=\
  commons/common.cmi\
  commons2/utils.cmi\
  commons2/options.cmi\
- misc/local.cmi\
+ commons2/local.cmi\
  core/text.cmi\
  core/ebuffer.cmi\
  core/frame.cmi\
@@ -79,10 +79,8 @@ SYSLIBS=unix.cma str.cma threads.cma
 
 INCLUDEDIRS=\
   commons commons2\
-  core misc\
-  graphics $(BACKENDDIR)\
-  features \
-  $(GRAPHICSDIR)
+  core features\
+  graphics $(BACKENDDIR) $(GRAPHICSDIR)
 
 ##############################################################################
 # Generic variables
@@ -132,21 +130,22 @@ TEX=Efuns.tex
 SRC_ORIG=Efuns.nw Efuns_extra.nw
 
 SRC_VIEWS= \
+  commons2/local.ml\
   core/efuns.ml\
   core/text.ml\
   core/ebuffer.ml\
   core/keymap.ml\
-  core/minibuffer.ml\
   core/window.ml\
   core/frame.ml\
+  core/minibuffer.ml\
   features/simple.ml\
   features/complexe.ml\
   features/system.ml\
   features/select.ml\
   features/search.ml\
   features/interactive.ml\
-  features/abbrevs.ml\
   features/multi_frames.ml\
+  features/abbrevs.ml\
   features/compil.ml\
   server/server.ml\
   client/efuns_client.ml\
@@ -161,8 +160,7 @@ SRC_VIEWS= \
   minor_modes/fill_mode.ml\
   minor_modes/paren_mode.ml\
   minor_modes/tab_mode.ml\
-  misc/efuns_filebrowser.ml\
-  misc/efuns_texbrowser.ml\
-  misc/local.ml\
   prog_modes/makefile_mode.ml\
   prog_modes/ocaml_toplevel.ml\
+  misc/efuns_filebrowser.ml\
+  misc/efuns_texbrowser.ml\

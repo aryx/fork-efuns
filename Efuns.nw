@@ -2715,7 +2715,7 @@ let exit_efuns frame =
   let buffers = Utils.list_of_hash location.loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
-    Graphics.close_graph ();
+    (*Graphics.close_graph ();*)
     exit 0
   )
 @
@@ -5955,7 +5955,7 @@ let next_error top_frame =
 \section{[[M-x eval]]}
 
 <<meta actions>>=
-define_action "eval" Complex.eval;  
+define_action "eval" Complexe.eval;  
 @
 <<[[interactives_map]] initial entries>>=
 "eval";  

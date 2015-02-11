@@ -5751,7 +5751,7 @@ open Select
 open Search
 open Compil
 open Abbrevs
-open Complex
+open Complexe
 open System
 open Multi_frames
 open Top_window
@@ -7104,7 +7104,9 @@ open WX_filesel
 @
 
 
-\subsection*{[[misc/local.ml]]}
+\section{[[commons2/]]}
+
+\subsection*{[[commons2/local.ml]]}
 
 <<type Local.var>>=
 type 'a var = string
@@ -7211,7 +7213,7 @@ let input = set_input
 
 %-------------------------------------------------------------
 
-<<misc/local.ml>>=
+<<commons2/local.ml>>=
 (***********************************************************************)
 (*                                                                     *)
 (*                             ____________                            *)

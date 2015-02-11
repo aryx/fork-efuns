@@ -1,4 +1,4 @@
-(*s: misc/local.ml *)
+(*s: commons2/local.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                             ____________                            *)
@@ -111,4 +111,4 @@ let print = get_print
 (*s: constant Local.input *)
 let input = set_input
 (*e: constant Local.input *)
-(*e: misc/local.ml *)
+(*e: commons2/local.ml *)
