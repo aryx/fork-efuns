@@ -1,4 +1,4 @@
-(*s: server/server.ml *)
+(*s: ipc/server.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                             ____                                    *)
@@ -91,4 +91,4 @@ let start frame =
 (*e: function Server.start *)
   
 
-(*e: server/server.ml *)
+(*e: ipc/server.ml *)

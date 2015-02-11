@@ -147,9 +147,6 @@ SRC_VIEWS= \
   features/multi_frames.ml\
   features/abbrevs.ml\
   features/compil.ml\
-  server/server.ml\
-  client/efuns_client.ml\
-  dynamic/eval.ml\
   graphics/top_window.ml\
   std_efunsrc.ml\
   main.ml\
@@ -162,5 +159,8 @@ SRC_VIEWS= \
   minor_modes/tab_mode.ml\
   prog_modes/makefile_mode.ml\
   prog_modes/ocaml_toplevel.ml\
+  ipc/server.ml\
+  ipc/efuns_client.ml\
+  dynamic/eval.ml\
   misc/efuns_filebrowser.ml\
   misc/efuns_texbrowser.ml\

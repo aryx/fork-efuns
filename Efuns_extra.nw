@@ -1,3 +1,166 @@
+\section{[[commons2/]]}
+
+\subsection*{[[commons2/local.ml]]}
+
+<<type Local.var>>=
+type 'a var = string
+@
+% phantom type!
+
+<<global Local.vars_table>>=
+let (vars_table :
+    (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t)
+  = Hashtbl.create 203
+@
+
+<<type Local.vars>>=
+type vars = Obj.t ref Vars.t ref
+@
+
+<<function Local.vars>>=
+let vars () = ref Vars.empty
+@
+
+<<function Local.create>>=
+let create name print input =
+  try
+    let _ = Hashtbl.find vars_table name in
+    failwith (Printf.sprintf "A variable named %s already exists" name)
+  with
+    Not_found ->
+      Hashtbl.add vars_table name (magic print,magic input);
+      name
+@
+
+<<function Local.no_print>>=
+let no_print _ = "<abstr>"
+@
+
+<<function Local.no_input>>=
+let no_input (s : string) = failwith "This variable can not be set"
+@
+
+
+<<function Local.create_abstr>>=
+let create_abstr name = create name no_print no_input
+@
+
+<<function Local.create_string>>=
+let create_string name = create name id id
+@
+
+<<function Local.create_int>>=
+let create_int name = create name string_of_int int_of_string
+@
+
+<<function Local.create_float>>=
+let create_float name = create name string_of_float float_of_string
+@
+
+
+
+<<function Local.get>>=
+let get vars var =  Obj.magic !(Vars.find var !vars)
+@
+
+<<function Local.set>>=
+let set vars var value =
+  let value = repr value in
+  try
+    let r = Vars.find var !vars in
+    r := value
+  with
+    Not_found -> 
+      vars := Vars.add var (ref value) !vars
+@
+
+<<function Local.get_print>>=
+let get_print vars var =
+  let value = get vars var in
+  let (p,i) = Hashtbl.find vars_table var in
+  p value  
+@
+
+<<function Local.set_input>>=
+let set_input vars var value =
+  let (p,i) = Hashtbl.find vars_table var in
+  set vars var (i value)
+@
+
+<<function Local.list>>=
+let list vars =
+  let list = ref [] in
+  Vars.iter (fun var value ->
+      list := var :: !list;
+  ) !vars;
+  !list
+@
+
+<<constant Local.print>>=
+let print = get_print
+@
+
+<<constant Local.input>>=
+let input = set_input
+@
+
+
+%-------------------------------------------------------------
+
+<<commons2/local.ml>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                             ____________                            *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+(* We use strings instead of ints to enable migration of datas between
+editors (data must be symbolic) *)
+
+open Obj
+  
+<<type Local.var>>
+
+module Vars = Map.Make (struct  
+      type t = string
+      let compare = compare end)
+
+<<type Local.vars>>
+<<function Local.vars>>
+
+<<global Local.vars_table>>
+
+<<function Local.create>>
+
+<<function Local.no_print>>
+<<function Local.no_input>>
+<<function Local.create_abstr>>
+  
+external id : 'a -> 'a = "%identity"
+
+<<function Local.create_string>>
+<<function Local.create_int>>
+<<function Local.create_float>>
+  
+<<function Local.get>>
+<<function Local.set>>
+      
+<<function Local.get_print>>
+  
+<<function Local.set_input>>
+  
+<<function Local.list>>
+  
+<<constant Local.print>>
+<<constant Local.input>>
+@
+
+
 \section{[[core/]]}
 
 \subsection*{[[core/efuns.ml]]}
@@ -5030,354 +5193,6 @@ open Multi_frames
 @
 
 
-\section{[[server/]]}
-
-\subsection*{[[server/server.ml]]}
-
-<<constant Server.efuns_property>>=
-let efuns_property = "_EFUNS_SERVER"  
-@
-
-<<constant Server.user>>=
-let user = try Sys.getenv "USER" with _ -> "noname"
-@
-
-<<constant Server.socket_name>>=
-let socket_name = (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user !displayname)
-@
-
-<<constant Server.started>>=
-let started = ref false
-@
-
-<<type Server.proto>>=
-type proto =
-  LoadFile of string * int * string
-@
-
-<<function Server.read_command>>=
-let read_command fd frame =
-  let inc = in_channel_of_descr fd in
-  try
-    let cmd = input_value inc in
-    match cmd with
-      LoadFile (name,pos,str) ->
-        let window = frame.frm_window in
-        let top_window = Window.top window in
-        wrap top_window (fun top_window ->
-            let frame = Frame.load_file window name in
-            if pos <> 0 then
-              let buf = frame.frm_buffer in
-              let text = buf.buf_text in
-              let point = frame.frm_point in
-              try
-                if str = "" then raise Not_found else                  
-                let regexp = Str.regexp_string str in
-                let len = Text.search_forward text regexp point in
-                ()
-              with
-                Not_found -> 
-                  Text.set_position text point pos
-        ) ()
-  with
-    _ -> Concur.Thread.remove_reader fd 
-@
-
-<<function Server.module_accept>>=
-let module_accept s frame = 
-  let fd,_ = accept s in
-  Unix.set_close_on_exec fd;
-  Concur.Thread.add_reader fd (fun _ -> read_command fd frame)
-@
-
-<<function Server.start>>=
-let start frame =
-  if not !started then
-  let top_window = Window.top frame.frm_window in
-  Utils.catchexn "Efuns server:" (fun _ ->
-      let s = Unix.socket PF_UNIX SOCK_STREAM 0 in
-      if Sys.file_exists socket_name then Unix.unlink socket_name;
-      Unix.bind s (ADDR_UNIX socket_name);
-      Unix.listen s 254;
-      Unix.set_nonblock s;
-      Unix.set_close_on_exec s;
-      let display = top_window.top_root#display  in
-        Concur.Thread.add_reader s (fun _ -> 
-            started := true;
-            module_accept s frame);
-      let atom = X.internAtom display efuns_property false in
-      X.changeProperty display top_window.top_root#window 
-        PropModeReplace atom XA.xa_string 1 socket_name;
-  )  
-@
-% todo: no M-x server-start?
-
-%-------------------------------------------------------------
-
-<<server/server.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____                                    *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
-open Efuns
-open Xtypes
-open Unix  
-open Top_window
-  
-<<constant Server.efuns_property>>
-<<constant Server.user>>
-<<constant Server.socket_name>>
-
-<<constant Server.started>>
-  
-<<type Server.proto>>
-  
-<<function Server.read_command>>
-  
-<<function Server.module_accept>>
-  
-<<function Server.start>>
-  
-
-@
-
-
-\section{[[client/]]}
-
-\subsection*{[[client/efuns_client.ml]]}
-
-<<constant Efuns_client.pos>>=
-let pos = ref 0
-@
-
-<<constant Efuns_client.string>>=
-let string = ref ""
-@
-
-<<constant Efuns_client.filename>>=
-let filename = ref None
-@
-
-<<toplevel Efuns_client._1>>=
-let _ = Arg.parse [
-    "-pos", Arg.Int (fun i -> pos := i)," <int>: set position";
-    "-str", Arg.String (fun s -> string := s)," <string>: search string";
-  ] (fun name -> filename := Some name)
-  "efuns_server: connect to efuns"
-@
-
-<<constant Efuns_client.pos (client/efuns_client.ml)>>=
-let pos = !pos    
-@
-
-<<constant Efuns_client.filename (client/efuns_client.ml)>>=
-let filename = match !filename with
-    None -> failwith "efuns_server: filename missing"
-  | Some s -> s
-@
-
-<<constant Efuns_client.string (client/efuns_client.ml)>>=
-let string = !string
-@
-
-<<constant Efuns_client.filename (client/efuns_client.ml)2>>=
-let filename = if is_relative filename then 
-    concat (getcwd ()) filename else filename
-@
-
-<<constant Efuns_client.efuns_property>>=
-let efuns_property = "_EFUNS_SERVER"  
-@
-
-<<constant Efuns_client.display>>=
-let display = Xlib.openDisplay ""
-@
-
-<<constant Efuns_client.root>>=
-let root = display.dpy_roots.(0).scr_root
-@
-
-<<constant Efuns_client.atom>>=
-let atom = X.internAtom display efuns_property false
-@
-
-<<constant Efuns_client.socket_name>>=
-let socket_name = (Xlib.getWholeProperty display root atom).gp_value
-@
-
-<<toplevel Efuns_client._2>>=
-let _ =  if not (Sys.file_exists socket_name) then raise Not_found
-@
-
-<<toplevel Efuns_client._3>>=
-let _ =  
-  output_value outc (LoadFile (filename,pos,string)); flush outc
-@
-
-
-%-------------------------------------------------------------
-
-<<client/efuns_client.ml>>=
-open Server  
-open Xtypes
-open Unix
-open Sys
-open Filename
-  
-<<constant Efuns_client.pos>>
-<<constant Efuns_client.string>>
-<<constant Efuns_client.filename>>
-  
-<<toplevel Efuns_client._1>>
-  
-<<constant Efuns_client.pos (client/efuns_client.ml)>>
-<<constant Efuns_client.filename (client/efuns_client.ml)>>
-<<constant Efuns_client.string (client/efuns_client.ml)>>
-    
-<<constant Efuns_client.filename (client/efuns_client.ml)2>>
-    
-<<constant Efuns_client.efuns_property>>
-
-<<constant Efuns_client.display>>
-<<constant Efuns_client.root>>
-<<constant Efuns_client.atom>>
-<<constant Efuns_client.socket_name>>
-<<toplevel Efuns_client._2>>
-let (inc,outc) = open_connection (ADDR_UNIX socket_name)
-<<toplevel Efuns_client._3>>
-  
-@
-
-
-\section{[[dynamic/]]}
-
-\subsection*{[[dynamic/eval.ml]]}
-
-<<function Eval.try_load>>=
-let try_load top_window f =
-  try
-    f (); 
-    Efuns.init top_window.top_location
-  with
-    Dynlink.Error error ->
-      Top_window.message top_window (Dynlink.error_message error)
-  | e -> 
-      Top_window.message top_window
-        (Printf.sprintf "Exception %s" (Printexc.to_string e))
-@
-
-<<function Eval.load>>=
-let load top_window mod_name =
-  try_load top_window (fun () -> load_module mod_name)
-@
-
-<<function Eval.load_library>>=
-let load_library frame =
-  select_lib_filename frame "Load library: " 
-    (fun str ->
-      let top_window = Window.top frame.frm_window in
-      try_load top_window (fun () -> load_file str))
-@
-
-<<function Eval.eval_buffer>>=
-let eval_buffer frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let filename = Filename.temp_file "buffer" ".ml" in
-  let outc = open_out filename in
-  Text.save buf.buf_text outc;
-  close_out outc;
-  let cmd = "ocamlc -c -I " ^ Version.efuns_lib ^ " " ^ filename in 
-  let end_action buf status =
-    match status with
-      0 -> try_load top_window 
-          (fun _ -> 
-            let fl =  ((Filename.chop_suffix filename ".ml") ^ ".cmo") 
-            in 
-            load_file fl;
-            Efuns.init top_window.top_location)
-    | _ -> 
-        set_compilation_buffer frame buf (Filename.dirname filename);
-        Top_window.message top_window "Error while compiling buffer"
-  in
-  System.system "*Eval*" location cmd end_action |> ignore
-@
-
-
-%-------------------------------------------------------------
-
-<<dynamic/eval.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
-
-open Efuns
-open Text
-open Frame
-open Simple
-open Select
-open Search
-open Compil
-
-  (*
-let rec load_module mod_name =
-  let filename = (String.uncapitalize mod_name) ^ ".cmo" in
-  try
-    let filename = Utils.find_in_path !Efuns.load_path filename in
-    load_file filename
-  with
-    Not_found -> failwith ("Can't find file "^filename)
-
-and load_file filename =
-  try
-    Dynlink.loadfile filename
-  with
-    Dynlink.Error (Dynlink.Unavailable_unit mod_name) -> 
-      load_interface mod_name;
-      load_file filename
-  | Dynlink.Error (
-    Dynlink.Linking_error (_, Dynlink.Undefined_global mod_name)) ->
-      load_module mod_name;
-      load_file filename
-
-and load_interface mod_name =
-  try
-    Dynlink.add_interfaces [mod_name] !Efuns.load_path; ()
-  with
-    Not_found ->
-      failwith (Printf.sprintf "No interface for %s" mod_name)
-      *)
-
-open Dyneval
-
-<<function Eval.try_load>>
-
-<<function Eval.load>>
-
-<<function Eval.load_library>>
-
-  
-<<function Eval.eval_buffer>>
-@
-
-
 \section{[[graphics/]]}
 
 \subsection*{[[graphics/top_window.ml]]}
@@ -6725,548 +6540,6 @@ open Top_window
 <<toplevel Tab_mode._2>>
 @
 
-
-\section{[[misc/]]}
-
-\subsection*{[[misc/efuns_filebrowser.ml]]}
-
-<<constant Efuns_filebrowser.argv>>=
-let argv = Array.to_list Sys.argv
-@
-
-<<constant Efuns_filebrowser.regexps>>=
-let regexps = List.map (fun str -> str, 
-      Str.regexp (Utils.glob_to_regexp str)) (
-    match argv with
-      program :: dirname :: strs -> strs
-    | _ -> failwith "Usage: efuns_filebrowser dirname [regexps]")
-@
-
-<<constant Efuns_filebrowser.dirname>>=
-let dirname = ref (if Filename.is_relative Sys.argv.(1) then
-      Filename.concat (Sys.getcwd ()) Sys.argv.(1) else Sys.argv.(1))
-@
-
-<<constant Efuns_filebrowser.display>>=
-let display = new WX_display.t ""
-@
-
-<<constant Efuns_filebrowser.root>>=
-let root = new WX_root.t display 0
-@
-
-<<constant Efuns_filebrowser.top>>=
-let top = new WX_appli.t root [MinWidth 10; MinHeight 10; MaxHeight (root#height - 200)]
-@
-
-<<constant Efuns_filebrowser.adx>>=
-let adx = new WX_adjust.t ()
-@
-
-<<constant Efuns_filebrowser.ady>>=
-let ady = new WX_adjust.t ()
-@
-
-<<constant Efuns_filebrowser.hbar>>=
-let hbar = new WX_bar.h top#container []
-@
-
-<<constant Efuns_filebrowser.viewport>>=
-let viewport = new WX_viewport.t hbar#container adx ady []
-@
-
-<<constant Efuns_filebrowser.scrollbar>>=
-let scrollbar = new WX_scrollbar.v hbar#container ady []
-@
-
-<<constant Efuns_filebrowser.tree>>=
-let tree = new WX_tree.t viewport#container []
-@
-
-<<function Efuns_filebrowser.load>>=
-let load filename =
-  Sys.command(Printf.sprintf "efuns_server %s &" filename) |> ignore
-@
-
-<<function Efuns_filebrowser.iter_load>>=
-let rec iter_load closed dirname basename container =
-  try
-    let dirname = Filename.concat dirname basename in
-    let filenames = Sort.list (<=) (Utils.list_dir dirname) in
-    let subdirs = List.fold_left (fun files filename ->
-          if filename <> "." && filename <> ".." then
-            let fullname = Filename.concat dirname filename in
-            let stats = lstat fullname in
-            if stats.st_kind = S_DIR then filename::files else
-              files
-          else files
-      ) [] filenames in
-    let file_lists = List.fold_left (fun lists (name,regexp) ->
-          let newlist = List.rev (List.fold_left (fun files filename ->
-                if Str.string_match regexp filename 0 then filename :: files
-                else files
-              ) [] filenames) in
-          let rec iter pos newlist addlist lists =
-            match newlist with
-            | ele :: tail -> 
-                if pos mod 15 = 0 then
-                  iter 1 tail [] (((
-                        Printf.sprintf "%s[to %s]" name ele), (ele::addlist)) :: lists)
-                else
-                  iter (pos+1) tail (ele::addlist) lists
-            |   [] -> match addlist with [] -> lists | _ -> 
-                    (name,addlist) :: lists
-          in
-          let newlists = iter 1 newlist [] [] in
-          match newlists with
-            [] -> lists
-          | _ -> (List.rev newlists) @ lists
-      ) [] regexps in
-    (List.map (fun subdir ->
-          let label = new WX_label.t container subdir [] in
-          let tree  = new WX_tree.t container [] in
-          tree#set_desc (iter_load true dirname subdir tree#container);
-          branch true label#contained tree#contained
-      ) subdirs) @ (
-      List.map (fun (name,files) -> 
-          let label = new WX_label.t container name [] in
-          let tree  = new WX_tree.t container [] in
-          tree#set_desc (List.map (fun filename ->
-                let label = new WX_button.with_label tree#container filename 
-                  [IpadX 0; IpadY 0] 
-                  in
-                label#set_action (fun () -> 
-                    load (Filename.concat dirname filename));                
-                leaf 0 label#contained
-            ) (List.rev files));
-            branch true label#contained tree#contained         
-      ) file_lists
-    )
-  with
-    _ -> []
-@
-
-<<constant Efuns_filebrowser.file_menu>>=
-let file_menu = [|
-    "Open", (fun _ -> 
-        let info = {
-            filter = Filename.concat !dirname  "*";
-            current_selection= !dirname;
-            predicat = (fun _ -> true);
-            action = (fun s -> 
-                tree#destroy_desc;
-                dirname := s;
-                tree#set_desc (
-                  iter_load false (Filename.dirname s) (Filename.basename s)
-                  tree#container));
-            cancel = (fun _ -> ());
-          }    in
-        let filesel = new WX_filesel.t root info [] in
-        filesel#show
-        );
-    "Quit", (fun _ -> exit 0);
-  |]
-@
-
-<<toplevel Efuns_filebrowser._1>>=
-let _ =
-  tree#set_desc (iter_load false (Filename.dirname Sys.argv.(1))
-    (Filename.basename Sys.argv.(1))
-    tree#container);
-  top#container_add hbar#contained;
-  hbar#container_add_s [viewport#contained; scrollbar#contained];
-  viewport#container_add tree#contained;
-  top#setWM_NAME (Printf.sprintf "File Browser: %s" Sys.argv.(1));
-  top#add_menu "File" file_menu;
-  top#show;
-  loop ()
-@
-
-
-%-------------------------------------------------------------
-
-<<misc/efuns_filebrowser.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____                                    *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
-open Xtypes
-open WX_types
-open WX_tree
-open Unix
-
-<<constant Efuns_filebrowser.argv>>
-<<constant Efuns_filebrowser.regexps>>
-
-<<constant Efuns_filebrowser.dirname>>
-  
-<<constant Efuns_filebrowser.display>>
-<<constant Efuns_filebrowser.root>>
-<<constant Efuns_filebrowser.top>>
-<<constant Efuns_filebrowser.adx>>
-<<constant Efuns_filebrowser.ady>>
-<<constant Efuns_filebrowser.hbar>>
-<<constant Efuns_filebrowser.viewport>>
-<<constant Efuns_filebrowser.scrollbar>>
-<<constant Efuns_filebrowser.tree>>
-
-<<function Efuns_filebrowser.load>>
-
-<<function Efuns_filebrowser.iter_load>>
-
-open WX_filesel
-  
-<<constant Efuns_filebrowser.file_menu>>
-  
-<<toplevel Efuns_filebrowser._1>>
-@
-
-
-\subsection*{[[misc/efuns_texbrowser.ml]]}
-
-<<constant Efuns_texbrowser.display>>=
-let display = new WX_display.t ""
-@
-
-<<constant Efuns_texbrowser.root>>=
-let root = new WX_root.t display 0
-@
-
-<<constant Efuns_texbrowser.top>>=
-let top = new WX_appli.t root [MinWidth 10; MinHeight 10]
-@
-
-<<constant Efuns_texbrowser.tree>>=
-let tree = new WX_tree.t top#container []
-@
-
-<<constant Efuns_texbrowser.regexp>>=
-let regexp = Str.regexp "\(\\input\|\\section\|\\subsection\|\\subsubsection\|\\chapter\)[*]?{\([^}]+\)}"
-@
-
-<<function Efuns_texbrowser.load>>=
-let load filename pos all =
-  let _ = Sys.command(Printf.sprintf "efuns_server %s -pos %d -str \"%s\" &" filename pos all)
-  in ()
-@
-
-<<constant Efuns_texbrowser.filename>>=
-let filename = ref (if Array.length Sys.argv = 2 then
-      Sys.argv.(1) else 
-      failwith "Usage: efuns_texbrowser filename")
-@
-
-<<constant Efuns_texbrowser.dirname>>=
-let dirname = ref (Filename.dirname !filename)
-@
-
-<<constant Efuns_texbrowser.path>>=
-let path = ref [ !dirname ]
-@
-
-<<function Efuns_texbrowser.iter_load>>=
-let rec iter_load closed filename container =
-  let label = new WX_button.with_label container filename [] in
-  try
-    let filename = try
-        Utils.find_in_path !path filename
-      with Not_found -> 
-          Utils.find_in_path !path (filename^".tex")
-    in
-    label#set_action (fun () -> load filename 0 "");
-    let inc = open_in filename in
-    let s = Utils.read_string inc in
-    close_in inc;
-    let rec iter_search pos list = 
-      try
-        let newpos = Str.search_forward regexp s pos in
-        let keyword = Str.matched_group 1 s in
-        let all = Str.matched_group 0 s in
-        iter_search (newpos+String.length keyword) (
-          (all, keyword,Str.matched_group 2 s,newpos)::list)
-      with
-        _ -> List.rev list
-    in
-    let list =  iter_search 0 [] in
-    if list = [] then leaf 0 label#contained else
-    let tree2 = new WX_tree.t container [] in
-    tree2#set_desc (List.map (
-        fun (all,keyword,name,pos) -> 
-          match keyword with
-            "input" -> iter_load true name tree2#container
-          | _ ->
-              let (offset,prefix) =
-                match keyword with
-                  "section" -> 0, "s:"
-                | "subsection" -> 10, "ss:"
-                | "subsubsection" -> 20, "sss:"
-                | _ -> 30,""
-              in
-              leaf offset (
-                  let button = new WX_button.with_label tree2#container (
-                      prefix^name) [] 
-                  in
-                  button#set_action (fun () -> load filename pos all);
-                  button#contained
-                  )
-      ) list);
-    branch closed label#contained tree2#contained
-  with
-    _ -> 
-      leaf 0 label#contained
-@
-
-<<constant Efuns_texbrowser.file_menu>>=
-let file_menu = [|
-    "Open", (fun _ -> 
-        let info = {
-            filter = Filename.concat !dirname  "*.tex";
-            current_selection= !dirname;
-            predicat = (fun _ -> true);
-            action = (fun s -> 
-                tree#destroy_desc;
-                filename := s;
-                dirname := Filename.dirname s;
-                top#setWM_NAME (Printf.sprintf "LaTeX Browser: %s" !filename);
-                tree#set_desc [iter_load false s tree#container]);
-            cancel = (fun _ -> ());
-          }    in
-        let filesel = new WX_filesel.t root info [] in
-        filesel#show              
-        );
-    "Quit", (fun _ -> exit 0);
-  |]
-@
-
-<<toplevel Efuns_texbrowser._1>>=
-let _ =
-  tree#set_desc [iter_load false Sys.argv.(1) tree#container];
-  top#setWM_NAME (Printf.sprintf "LaTeX Browser: %s" !filename);
-  top#container_add tree#contained;
-  top#add_menu "File" file_menu;
-  top#add_button "Reload" (fun _ () ->
-      tree#destroy_desc;
-      tree#set_desc [iter_load false !filename tree#container];      
-  );
-  top#add_separator;
-  top#show;
-  loop ()
-@
-
-
-%-------------------------------------------------------------
-
-<<misc/efuns_texbrowser.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____                                    *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
-open Xtypes
-open WX_types
-open WX_tree
-
-
-<<constant Efuns_texbrowser.display>>
-<<constant Efuns_texbrowser.root>>
-<<constant Efuns_texbrowser.top>>
-<<constant Efuns_texbrowser.tree>>
-
-<<constant Efuns_texbrowser.regexp>>
-
-<<function Efuns_texbrowser.load>>
-
-<<constant Efuns_texbrowser.filename>>
-  
-<<constant Efuns_texbrowser.dirname>>
-<<constant Efuns_texbrowser.path>>
-  
-<<function Efuns_texbrowser.iter_load>>
-
-open WX_filesel
-  
-<<constant Efuns_texbrowser.file_menu>>
-
-<<toplevel Efuns_texbrowser._1>>
-@
-
-
-\section{[[commons2/]]}
-
-\subsection*{[[commons2/local.ml]]}
-
-<<type Local.var>>=
-type 'a var = string
-@
-% phantom type!
-
-<<global Local.vars_table>>=
-let (vars_table :
-    (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t)
-  = Hashtbl.create 203
-@
-
-<<type Local.vars>>=
-type vars = Obj.t ref Vars.t ref
-@
-
-<<function Local.vars>>=
-let vars () = ref Vars.empty
-@
-
-<<function Local.create>>=
-let create name print input =
-  try
-    let _ = Hashtbl.find vars_table name in
-    failwith (Printf.sprintf "A variable named %s already exists" name)
-  with
-    Not_found ->
-      Hashtbl.add vars_table name (magic print,magic input);
-      name
-@
-
-<<function Local.no_print>>=
-let no_print _ = "<abstr>"
-@
-
-<<function Local.no_input>>=
-let no_input (s : string) = failwith "This variable can not be set"
-@
-
-
-<<function Local.create_abstr>>=
-let create_abstr name = create name no_print no_input
-@
-
-<<function Local.create_string>>=
-let create_string name = create name id id
-@
-
-<<function Local.create_int>>=
-let create_int name = create name string_of_int int_of_string
-@
-
-<<function Local.create_float>>=
-let create_float name = create name string_of_float float_of_string
-@
-
-
-
-<<function Local.get>>=
-let get vars var =  Obj.magic !(Vars.find var !vars)
-@
-
-<<function Local.set>>=
-let set vars var value =
-  let value = repr value in
-  try
-    let r = Vars.find var !vars in
-    r := value
-  with
-    Not_found -> 
-      vars := Vars.add var (ref value) !vars
-@
-
-<<function Local.get_print>>=
-let get_print vars var =
-  let value = get vars var in
-  let (p,i) = Hashtbl.find vars_table var in
-  p value  
-@
-
-<<function Local.set_input>>=
-let set_input vars var value =
-  let (p,i) = Hashtbl.find vars_table var in
-  set vars var (i value)
-@
-
-<<function Local.list>>=
-let list vars =
-  let list = ref [] in
-  Vars.iter (fun var value ->
-      list := var :: !list;
-  ) !vars;
-  !list
-@
-
-<<constant Local.print>>=
-let print = get_print
-@
-
-<<constant Local.input>>=
-let input = set_input
-@
-
-
-%-------------------------------------------------------------
-
-<<commons2/local.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____________                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
-(* We use strings instead of ints to enable migration of datas between
-editors (data must be symbolic) *)
-
-open Obj
-  
-<<type Local.var>>
-
-module Vars = Map.Make (struct  
-      type t = string
-      let compare = compare end)
-
-<<type Local.vars>>
-<<function Local.vars>>
-
-<<global Local.vars_table>>
-
-<<function Local.create>>
-
-<<function Local.no_print>>
-<<function Local.no_input>>
-<<function Local.create_abstr>>
-  
-external id : 'a -> 'a = "%identity"
-
-<<function Local.create_string>>
-<<function Local.create_int>>
-<<function Local.create_float>>
-  
-<<function Local.get>>
-<<function Local.set>>
-      
-<<function Local.get_print>>
-  
-<<function Local.set_input>>
-  
-<<function Local.list>>
-  
-<<constant Local.print>>
-<<constant Local.input>>
-@
-
-
 \section{[[prog_modes/]]}
 
 \subsection*{[[prog_modes/makefile_mode.ml]]}
@@ -7776,3 +7049,728 @@ open Ocaml_env
 <<toplevel Ocaml_toplevel._2>>
 
 @
+
+\section{[[ipc/]]}
+
+\subsection*{[[ipc/server.ml]]}
+
+<<constant Server.efuns_property>>=
+let efuns_property = "_EFUNS_SERVER"  
+@
+
+<<constant Server.user>>=
+let user = try Sys.getenv "USER" with _ -> "noname"
+@
+
+<<constant Server.socket_name>>=
+let socket_name = (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user !displayname)
+@
+
+<<constant Server.started>>=
+let started = ref false
+@
+
+<<type Server.proto>>=
+type proto =
+  LoadFile of string * int * string
+@
+
+<<function Server.read_command>>=
+let read_command fd frame =
+  let inc = in_channel_of_descr fd in
+  try
+    let cmd = input_value inc in
+    match cmd with
+      LoadFile (name,pos,str) ->
+        let window = frame.frm_window in
+        let top_window = Window.top window in
+        wrap top_window (fun top_window ->
+            let frame = Frame.load_file window name in
+            if pos <> 0 then
+              let buf = frame.frm_buffer in
+              let text = buf.buf_text in
+              let point = frame.frm_point in
+              try
+                if str = "" then raise Not_found else                  
+                let regexp = Str.regexp_string str in
+                let len = Text.search_forward text regexp point in
+                ()
+              with
+                Not_found -> 
+                  Text.set_position text point pos
+        ) ()
+  with
+    _ -> Concur.Thread.remove_reader fd 
+@
+
+<<function Server.module_accept>>=
+let module_accept s frame = 
+  let fd,_ = accept s in
+  Unix.set_close_on_exec fd;
+  Concur.Thread.add_reader fd (fun _ -> read_command fd frame)
+@
+
+<<function Server.start>>=
+let start frame =
+  if not !started then
+  let top_window = Window.top frame.frm_window in
+  Utils.catchexn "Efuns server:" (fun _ ->
+      let s = Unix.socket PF_UNIX SOCK_STREAM 0 in
+      if Sys.file_exists socket_name then Unix.unlink socket_name;
+      Unix.bind s (ADDR_UNIX socket_name);
+      Unix.listen s 254;
+      Unix.set_nonblock s;
+      Unix.set_close_on_exec s;
+      let display = top_window.top_root#display  in
+        Concur.Thread.add_reader s (fun _ -> 
+            started := true;
+            module_accept s frame);
+      let atom = X.internAtom display efuns_property false in
+      X.changeProperty display top_window.top_root#window 
+        PropModeReplace atom XA.xa_string 1 socket_name;
+  )  
+@
+% todo: no M-x server-start?
+
+%-------------------------------------------------------------
+
+<<ipc/server.ml>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                             ____                                    *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+open Efuns
+open Xtypes
+open Unix  
+open Top_window
+  
+<<constant Server.efuns_property>>
+<<constant Server.user>>
+<<constant Server.socket_name>>
+
+<<constant Server.started>>
+  
+<<type Server.proto>>
+  
+<<function Server.read_command>>
+  
+<<function Server.module_accept>>
+  
+<<function Server.start>>
+  
+
+@
+
+
+\subsection*{[[ipc/efuns_client.ml]]}
+
+<<constant Efuns_client.pos>>=
+let pos = ref 0
+@
+
+<<constant Efuns_client.string>>=
+let string = ref ""
+@
+
+<<constant Efuns_client.filename>>=
+let filename = ref None
+@
+
+<<toplevel Efuns_client._1>>=
+let _ = Arg.parse [
+    "-pos", Arg.Int (fun i -> pos := i)," <int>: set position";
+    "-str", Arg.String (fun s -> string := s)," <string>: search string";
+  ] (fun name -> filename := Some name)
+  "efuns_server: connect to efuns"
+@
+
+<<constant Efuns_client.pos (client/efuns_client.ml)>>=
+let pos = !pos    
+@
+
+<<constant Efuns_client.filename (client/efuns_client.ml)>>=
+let filename = match !filename with
+    None -> failwith "efuns_server: filename missing"
+  | Some s -> s
+@
+
+<<constant Efuns_client.string (client/efuns_client.ml)>>=
+let string = !string
+@
+
+<<constant Efuns_client.filename (client/efuns_client.ml)2>>=
+let filename = if is_relative filename then 
+    concat (getcwd ()) filename else filename
+@
+
+<<constant Efuns_client.efuns_property>>=
+let efuns_property = "_EFUNS_SERVER"  
+@
+
+<<constant Efuns_client.display>>=
+let display = Xlib.openDisplay ""
+@
+
+<<constant Efuns_client.root>>=
+let root = display.dpy_roots.(0).scr_root
+@
+
+<<constant Efuns_client.atom>>=
+let atom = X.internAtom display efuns_property false
+@
+
+<<constant Efuns_client.socket_name>>=
+let socket_name = (Xlib.getWholeProperty display root atom).gp_value
+@
+
+<<toplevel Efuns_client._2>>=
+let _ =  if not (Sys.file_exists socket_name) then raise Not_found
+@
+
+<<toplevel Efuns_client._3>>=
+let _ =  
+  output_value outc (LoadFile (filename,pos,string)); flush outc
+@
+
+
+%-------------------------------------------------------------
+
+<<ipc/efuns_client.ml>>=
+open Server  
+open Xtypes
+open Unix
+open Sys
+open Filename
+  
+<<constant Efuns_client.pos>>
+<<constant Efuns_client.string>>
+<<constant Efuns_client.filename>>
+  
+<<toplevel Efuns_client._1>>
+  
+<<constant Efuns_client.pos (client/efuns_client.ml)>>
+<<constant Efuns_client.filename (client/efuns_client.ml)>>
+<<constant Efuns_client.string (client/efuns_client.ml)>>
+    
+<<constant Efuns_client.filename (client/efuns_client.ml)2>>
+    
+<<constant Efuns_client.efuns_property>>
+
+<<constant Efuns_client.display>>
+<<constant Efuns_client.root>>
+<<constant Efuns_client.atom>>
+<<constant Efuns_client.socket_name>>
+<<toplevel Efuns_client._2>>
+let (inc,outc) = open_connection (ADDR_UNIX socket_name)
+<<toplevel Efuns_client._3>>
+  
+@
+
+
+\section{[[dynamic/]]}
+
+\subsection*{[[dynamic/eval.ml]]}
+
+<<function Eval.try_load>>=
+let try_load top_window f =
+  try
+    f (); 
+    Efuns.init top_window.top_location
+  with
+    Dynlink.Error error ->
+      Top_window.message top_window (Dynlink.error_message error)
+  | e -> 
+      Top_window.message top_window
+        (Printf.sprintf "Exception %s" (Printexc.to_string e))
+@
+
+<<function Eval.load>>=
+let load top_window mod_name =
+  try_load top_window (fun () -> load_module mod_name)
+@
+
+<<function Eval.load_library>>=
+let load_library frame =
+  select_lib_filename frame "Load library: " 
+    (fun str ->
+      let top_window = Window.top frame.frm_window in
+      try_load top_window (fun () -> load_file str))
+@
+
+<<function Eval.eval_buffer>>=
+let eval_buffer frame =
+  let top_window = Window.top frame.frm_window in
+  let location = top_window.top_location in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let filename = Filename.temp_file "buffer" ".ml" in
+  let outc = open_out filename in
+  Text.save buf.buf_text outc;
+  close_out outc;
+  let cmd = "ocamlc -c -I " ^ Version.efuns_lib ^ " " ^ filename in 
+  let end_action buf status =
+    match status with
+      0 -> try_load top_window 
+          (fun _ -> 
+            let fl =  ((Filename.chop_suffix filename ".ml") ^ ".cmo") 
+            in 
+            load_file fl;
+            Efuns.init top_window.top_location)
+    | _ -> 
+        set_compilation_buffer frame buf (Filename.dirname filename);
+        Top_window.message top_window "Error while compiling buffer"
+  in
+  System.system "*Eval*" location cmd end_action |> ignore
+@
+
+
+%-------------------------------------------------------------
+
+<<dynamic/eval.ml>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                           xlib for Ocaml                            *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+
+open Efuns
+open Text
+open Frame
+open Simple
+open Select
+open Search
+open Compil
+
+  (*
+let rec load_module mod_name =
+  let filename = (String.uncapitalize mod_name) ^ ".cmo" in
+  try
+    let filename = Utils.find_in_path !Efuns.load_path filename in
+    load_file filename
+  with
+    Not_found -> failwith ("Can't find file "^filename)
+
+and load_file filename =
+  try
+    Dynlink.loadfile filename
+  with
+    Dynlink.Error (Dynlink.Unavailable_unit mod_name) -> 
+      load_interface mod_name;
+      load_file filename
+  | Dynlink.Error (
+    Dynlink.Linking_error (_, Dynlink.Undefined_global mod_name)) ->
+      load_module mod_name;
+      load_file filename
+
+and load_interface mod_name =
+  try
+    Dynlink.add_interfaces [mod_name] !Efuns.load_path; ()
+  with
+    Not_found ->
+      failwith (Printf.sprintf "No interface for %s" mod_name)
+      *)
+
+open Dyneval
+
+<<function Eval.try_load>>
+
+<<function Eval.load>>
+
+<<function Eval.load_library>>
+
+  
+<<function Eval.eval_buffer>>
+@
+
+
+\section{[[misc/]]}
+
+\subsection*{[[misc/efuns_filebrowser.ml]]}
+
+<<constant Efuns_filebrowser.argv>>=
+let argv = Array.to_list Sys.argv
+@
+
+<<constant Efuns_filebrowser.regexps>>=
+let regexps = List.map (fun str -> str, 
+      Str.regexp (Utils.glob_to_regexp str)) (
+    match argv with
+      program :: dirname :: strs -> strs
+    | _ -> failwith "Usage: efuns_filebrowser dirname [regexps]")
+@
+
+<<constant Efuns_filebrowser.dirname>>=
+let dirname = ref (if Filename.is_relative Sys.argv.(1) then
+      Filename.concat (Sys.getcwd ()) Sys.argv.(1) else Sys.argv.(1))
+@
+
+<<constant Efuns_filebrowser.display>>=
+let display = new WX_display.t ""
+@
+
+<<constant Efuns_filebrowser.root>>=
+let root = new WX_root.t display 0
+@
+
+<<constant Efuns_filebrowser.top>>=
+let top = new WX_appli.t root [MinWidth 10; MinHeight 10; MaxHeight (root#height - 200)]
+@
+
+<<constant Efuns_filebrowser.adx>>=
+let adx = new WX_adjust.t ()
+@
+
+<<constant Efuns_filebrowser.ady>>=
+let ady = new WX_adjust.t ()
+@
+
+<<constant Efuns_filebrowser.hbar>>=
+let hbar = new WX_bar.h top#container []
+@
+
+<<constant Efuns_filebrowser.viewport>>=
+let viewport = new WX_viewport.t hbar#container adx ady []
+@
+
+<<constant Efuns_filebrowser.scrollbar>>=
+let scrollbar = new WX_scrollbar.v hbar#container ady []
+@
+
+<<constant Efuns_filebrowser.tree>>=
+let tree = new WX_tree.t viewport#container []
+@
+
+<<function Efuns_filebrowser.load>>=
+let load filename =
+  Sys.command(Printf.sprintf "efuns_server %s &" filename) |> ignore
+@
+
+<<function Efuns_filebrowser.iter_load>>=
+let rec iter_load closed dirname basename container =
+  try
+    let dirname = Filename.concat dirname basename in
+    let filenames = Sort.list (<=) (Utils.list_dir dirname) in
+    let subdirs = List.fold_left (fun files filename ->
+          if filename <> "." && filename <> ".." then
+            let fullname = Filename.concat dirname filename in
+            let stats = lstat fullname in
+            if stats.st_kind = S_DIR then filename::files else
+              files
+          else files
+      ) [] filenames in
+    let file_lists = List.fold_left (fun lists (name,regexp) ->
+          let newlist = List.rev (List.fold_left (fun files filename ->
+                if Str.string_match regexp filename 0 then filename :: files
+                else files
+              ) [] filenames) in
+          let rec iter pos newlist addlist lists =
+            match newlist with
+            | ele :: tail -> 
+                if pos mod 15 = 0 then
+                  iter 1 tail [] (((
+                        Printf.sprintf "%s[to %s]" name ele), (ele::addlist)) :: lists)
+                else
+                  iter (pos+1) tail (ele::addlist) lists
+            |   [] -> match addlist with [] -> lists | _ -> 
+                    (name,addlist) :: lists
+          in
+          let newlists = iter 1 newlist [] [] in
+          match newlists with
+            [] -> lists
+          | _ -> (List.rev newlists) @ lists
+      ) [] regexps in
+    (List.map (fun subdir ->
+          let label = new WX_label.t container subdir [] in
+          let tree  = new WX_tree.t container [] in
+          tree#set_desc (iter_load true dirname subdir tree#container);
+          branch true label#contained tree#contained
+      ) subdirs) @ (
+      List.map (fun (name,files) -> 
+          let label = new WX_label.t container name [] in
+          let tree  = new WX_tree.t container [] in
+          tree#set_desc (List.map (fun filename ->
+                let label = new WX_button.with_label tree#container filename 
+                  [IpadX 0; IpadY 0] 
+                  in
+                label#set_action (fun () -> 
+                    load (Filename.concat dirname filename));                
+                leaf 0 label#contained
+            ) (List.rev files));
+            branch true label#contained tree#contained         
+      ) file_lists
+    )
+  with
+    _ -> []
+@
+
+<<constant Efuns_filebrowser.file_menu>>=
+let file_menu = [|
+    "Open", (fun _ -> 
+        let info = {
+            filter = Filename.concat !dirname  "*";
+            current_selection= !dirname;
+            predicat = (fun _ -> true);
+            action = (fun s -> 
+                tree#destroy_desc;
+                dirname := s;
+                tree#set_desc (
+                  iter_load false (Filename.dirname s) (Filename.basename s)
+                  tree#container));
+            cancel = (fun _ -> ());
+          }    in
+        let filesel = new WX_filesel.t root info [] in
+        filesel#show
+        );
+    "Quit", (fun _ -> exit 0);
+  |]
+@
+
+<<toplevel Efuns_filebrowser._1>>=
+let _ =
+  tree#set_desc (iter_load false (Filename.dirname Sys.argv.(1))
+    (Filename.basename Sys.argv.(1))
+    tree#container);
+  top#container_add hbar#contained;
+  hbar#container_add_s [viewport#contained; scrollbar#contained];
+  viewport#container_add tree#contained;
+  top#setWM_NAME (Printf.sprintf "File Browser: %s" Sys.argv.(1));
+  top#add_menu "File" file_menu;
+  top#show;
+  loop ()
+@
+
+
+%-------------------------------------------------------------
+
+<<misc/efuns_filebrowser.ml>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                             ____                                    *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+open Xtypes
+open WX_types
+open WX_tree
+open Unix
+
+<<constant Efuns_filebrowser.argv>>
+<<constant Efuns_filebrowser.regexps>>
+
+<<constant Efuns_filebrowser.dirname>>
+  
+<<constant Efuns_filebrowser.display>>
+<<constant Efuns_filebrowser.root>>
+<<constant Efuns_filebrowser.top>>
+<<constant Efuns_filebrowser.adx>>
+<<constant Efuns_filebrowser.ady>>
+<<constant Efuns_filebrowser.hbar>>
+<<constant Efuns_filebrowser.viewport>>
+<<constant Efuns_filebrowser.scrollbar>>
+<<constant Efuns_filebrowser.tree>>
+
+<<function Efuns_filebrowser.load>>
+
+<<function Efuns_filebrowser.iter_load>>
+
+open WX_filesel
+  
+<<constant Efuns_filebrowser.file_menu>>
+  
+<<toplevel Efuns_filebrowser._1>>
+@
+
+
+\subsection*{[[misc/efuns_texbrowser.ml]]}
+
+<<constant Efuns_texbrowser.display>>=
+let display = new WX_display.t ""
+@
+
+<<constant Efuns_texbrowser.root>>=
+let root = new WX_root.t display 0
+@
+
+<<constant Efuns_texbrowser.top>>=
+let top = new WX_appli.t root [MinWidth 10; MinHeight 10]
+@
+
+<<constant Efuns_texbrowser.tree>>=
+let tree = new WX_tree.t top#container []
+@
+
+<<constant Efuns_texbrowser.regexp>>=
+let regexp = Str.regexp "\(\\input\|\\section\|\\subsection\|\\subsubsection\|\\chapter\)[*]?{\([^}]+\)}"
+@
+
+<<function Efuns_texbrowser.load>>=
+let load filename pos all =
+  let _ = Sys.command(Printf.sprintf "efuns_server %s -pos %d -str \"%s\" &" filename pos all)
+  in ()
+@
+
+<<constant Efuns_texbrowser.filename>>=
+let filename = ref (if Array.length Sys.argv = 2 then
+      Sys.argv.(1) else 
+      failwith "Usage: efuns_texbrowser filename")
+@
+
+<<constant Efuns_texbrowser.dirname>>=
+let dirname = ref (Filename.dirname !filename)
+@
+
+<<constant Efuns_texbrowser.path>>=
+let path = ref [ !dirname ]
+@
+
+<<function Efuns_texbrowser.iter_load>>=
+let rec iter_load closed filename container =
+  let label = new WX_button.with_label container filename [] in
+  try
+    let filename = try
+        Utils.find_in_path !path filename
+      with Not_found -> 
+          Utils.find_in_path !path (filename^".tex")
+    in
+    label#set_action (fun () -> load filename 0 "");
+    let inc = open_in filename in
+    let s = Utils.read_string inc in
+    close_in inc;
+    let rec iter_search pos list = 
+      try
+        let newpos = Str.search_forward regexp s pos in
+        let keyword = Str.matched_group 1 s in
+        let all = Str.matched_group 0 s in
+        iter_search (newpos+String.length keyword) (
+          (all, keyword,Str.matched_group 2 s,newpos)::list)
+      with
+        _ -> List.rev list
+    in
+    let list =  iter_search 0 [] in
+    if list = [] then leaf 0 label#contained else
+    let tree2 = new WX_tree.t container [] in
+    tree2#set_desc (List.map (
+        fun (all,keyword,name,pos) -> 
+          match keyword with
+            "input" -> iter_load true name tree2#container
+          | _ ->
+              let (offset,prefix) =
+                match keyword with
+                  "section" -> 0, "s:"
+                | "subsection" -> 10, "ss:"
+                | "subsubsection" -> 20, "sss:"
+                | _ -> 30,""
+              in
+              leaf offset (
+                  let button = new WX_button.with_label tree2#container (
+                      prefix^name) [] 
+                  in
+                  button#set_action (fun () -> load filename pos all);
+                  button#contained
+                  )
+      ) list);
+    branch closed label#contained tree2#contained
+  with
+    _ -> 
+      leaf 0 label#contained
+@
+
+<<constant Efuns_texbrowser.file_menu>>=
+let file_menu = [|
+    "Open", (fun _ -> 
+        let info = {
+            filter = Filename.concat !dirname  "*.tex";
+            current_selection= !dirname;
+            predicat = (fun _ -> true);
+            action = (fun s -> 
+                tree#destroy_desc;
+                filename := s;
+                dirname := Filename.dirname s;
+                top#setWM_NAME (Printf.sprintf "LaTeX Browser: %s" !filename);
+                tree#set_desc [iter_load false s tree#container]);
+            cancel = (fun _ -> ());
+          }    in
+        let filesel = new WX_filesel.t root info [] in
+        filesel#show              
+        );
+    "Quit", (fun _ -> exit 0);
+  |]
+@
+
+<<toplevel Efuns_texbrowser._1>>=
+let _ =
+  tree#set_desc [iter_load false Sys.argv.(1) tree#container];
+  top#setWM_NAME (Printf.sprintf "LaTeX Browser: %s" !filename);
+  top#container_add tree#contained;
+  top#add_menu "File" file_menu;
+  top#add_button "Reload" (fun _ () ->
+      tree#destroy_desc;
+      tree#set_desc [iter_load false !filename tree#container];      
+  );
+  top#add_separator;
+  top#show;
+  loop ()
+@
+
+
+%-------------------------------------------------------------
+
+<<misc/efuns_texbrowser.ml>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                             ____                                    *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+open Xtypes
+open WX_types
+open WX_tree
+
+
+<<constant Efuns_texbrowser.display>>
+<<constant Efuns_texbrowser.root>>
+<<constant Efuns_texbrowser.top>>
+<<constant Efuns_texbrowser.tree>>
+
+<<constant Efuns_texbrowser.regexp>>
+
+<<function Efuns_texbrowser.load>>
+
+<<constant Efuns_texbrowser.filename>>
+  
+<<constant Efuns_texbrowser.dirname>>
+<<constant Efuns_texbrowser.path>>
+  
+<<function Efuns_texbrowser.iter_load>>
+
+open WX_filesel
+  
+<<constant Efuns_texbrowser.file_menu>>
+
+<<toplevel Efuns_texbrowser._1>>
+@
+
+

@@ -55,7 +55,7 @@ BYTECODE_STATIC=-custom
 
 SYNCFLAGS=-md5sum_in_auxfile -less_marks
 
-SYNCWEB=~/github/syncweb $(SYNCFLAGS)
+SYNCWEB=~/github/syncweb.opt $(SYNCFLAGS)
 NOWEB=~/github/scripts/noweblatex
 OCAMLDOC=ocamldoc $(INCLUDES)
 

@@ -1,4 +1,4 @@
-(*s: client/efuns_client.ml *)
+(*s: ipc/efuns_client.ml *)
 open Server  
 open Xtypes
 open Unix
@@ -65,4 +65,4 @@ let _ =
   output_value outc (LoadFile (filename,pos,string)); flush outc
 (*e: toplevel Efuns_client._3 *)
   
-(*e: client/efuns_client.ml *)
+(*e: ipc/efuns_client.ml *)
