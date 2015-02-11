@@ -264,8 +264,7 @@ and top_window =
     mutable window : window;
 
     (*s: [[Efuns.top_window]] other fields *)
-    mutable top_display : string option (*WX_xterm.xterm_display option*);
-    mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
+    mutable graphic : Xdraw.graphic_backend option;
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_active_frame : frame;
     (*x: [[Efuns.top_window]] other fields *)

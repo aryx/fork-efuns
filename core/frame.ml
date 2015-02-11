@@ -320,29 +320,24 @@ let cursor_to_point frame x y =
 
 (*s: function Frame.update_line *)
 let update_line top_window frame repr_string y = 
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
   let line_repr = frame.frm_table.(y) in
-  let xterm = match top_window.top_xterm with
-      None -> raise Not_found
-    | Some xterm -> xterm 
-  in
+  let graphic = Window.backend top_window in
   let rec iter x offset reprs =
     if frame.frm_width > x then
       match reprs with
         [] -> 
-          WX_xterm.clear_eol xterm
+          graphic.Xdraw.clear_eol 
             (x+frame.frm_xpos) (y+frame.frm_ypos)
             (frame.frm_width - x)
       | repr :: tail ->
           let len = min (frame.frm_width-x) (repr.repr_size - offset) in
-          WX_xterm.draw_string xterm
+          graphic.Xdraw.draw_string
             (x+frame.frm_xpos) (y+frame.frm_ypos)
             repr_string (repr.repr_pos+offset) len
             repr.repr_attr;
           iter (x+len) 0 tail
     else
-        WX_xterm.draw_string xterm
+        graphic.Xdraw.draw_string 
            (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
            "/" 0 1 Text.direct_attr
   in
@@ -403,9 +398,7 @@ let update_table top_window frame =
   let text = buf.buf_text in
 
   let start = frame.frm_start in
-  let point = frame.frm_point in
 
-  let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
   (* assert frame.frm_y_offset >= 0 *)
@@ -564,8 +557,8 @@ let update top_window frame =
     (*s: [[Frame.update()]] redraw, scrollbar adjustments *)
     if frame == top_window.top_active_frame then begin
       frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
-      let pos_start = get_position text frame.frm_start in
-      let pos_end   = get_position text frame.frm_end in
+      let _pos_start = get_position text frame.frm_start in
+      let _pos_end   = get_position text frame.frm_end in
 
       Common.pr2_once "Frame.update: TODO scrollbar";
       (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
@@ -598,10 +591,7 @@ let update top_window frame =
   end;
   (*s: [[Frame.update()]] draw status line or minibuffer *)
   (*s: [[Frame.update()]] let xterm *)
-  let xterm = match top_window.top_xterm with
-    | None -> raise Not_found
-    | Some xterm -> xterm 
-  in
+  let graphic = Window.backend top_window in
   (*e: [[Frame.update()]] let xterm *)
   match frame.frm_mini_buffer with
   | None -> 
@@ -616,14 +606,14 @@ let update top_window frame =
 
       if status.status_modified 
       then
-        WX_xterm.draw_string xterm
+        graphic.Xdraw.draw_string 
           frame.frm_xpos (frame.frm_ypos + frame.frm_height - 1)
           status.status_string 
           0 width Text.inverse_attr
       (*e: [[Frame.update()]] draw status line *)
   | Some request ->
       (*s: [[Frame.update()]] draw minibuffer request string *)
-      WX_xterm.draw_string xterm
+      graphic.Xdraw.draw_string
        0 (top_window.top_height-1)  
        request 
        0 (String.length request) Text.direct_attr

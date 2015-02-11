@@ -20,31 +20,28 @@ open Window
   
 (*s: function Top_window.message *)
 let message top_window msg =
-  let xterm = Window.xterm top_window in
+  let graphic = Window.backend top_window in
   let len = String.length msg in
-  WX_xterm.draw_string xterm 0 (top_window.top_height - 1)
+  graphic.Xdraw.draw_string 0 (top_window.top_height - 1)
     msg 0 len Text.direct_attr;
-  WX_xterm.clear_eol xterm len (top_window.top_height - 1)
+  graphic.Xdraw.clear_eol len (top_window.top_height - 1)
     (top_window.top_width - len);
   match top_window.top_mini_buffers with
     [] -> (* No mini-buffer ... *) ()
   | mini_buffer :: _ -> (* one mini-buffer is active *)
-      match top_window.top_display with
-        None -> ()
-      | Some display ->
-          WX_xterm.update_displays ();
-          (* let _ = Unix.select [] [] [] 0.2 in *)
-          mini_buffer.frm_redraw <- true
+      graphic.Xdraw.update_displays ();
+      (* let _ = Unix.select [] [] [] 0.2 in *)
+      mini_buffer.frm_redraw <- true
 (*e: function Top_window.message *)
 
 (*s: function Top_window.clear_message *)
 let clear_message top_window =
   match top_window.top_mini_buffers with
     [] -> 
-      let xterm = Window.xterm top_window in
-      WX_xterm.clear_eol xterm 
-       0 (top_window.top_height - 1) 
-       top_window.top_width; 
+      let graphic = Window.backend top_window in
+      graphic.Xdraw.clear_eol 
+        0 (top_window.top_height - 1) 
+        top_window.top_width; 
   | _ -> ()
 (*e: function Top_window.clear_message *)
 
@@ -80,8 +77,8 @@ let try_map frame key =
 let set_cursor_on top_window frame = 
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
-    let xterm = xterm top_window in
-    WX_xterm.draw_string xterm
+    let graphic = Window.backend top_window in
+    graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
     (frame.frm_ypos + frame.frm_cursor_y) 
     frame.frm_cursor 0 1 Text.inverse_attr
@@ -90,11 +87,11 @@ let set_cursor_on top_window frame =
 (*s: function Top_window.set_cursor_off *)
 let set_cursor_off top_window frame =
   if frame.frm_cursor.[0] <> '\000' then
-    let xterm = xterm top_window in
-    WX_xterm.draw_string xterm
+    let graphic = Window.backend top_window in
+    graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x) 
-    (frame.frm_ypos + frame.frm_cursor_y) 
-    frame.frm_cursor 0 1 frame.frm_cursor_attr
+      (frame.frm_ypos + frame.frm_cursor_y) 
+      frame.frm_cursor 0 1 frame.frm_cursor_attr
 (*e: function Top_window.set_cursor_off *)
 
 (*s: function Top_window.cursor_on *)
@@ -297,7 +294,8 @@ let wrap top_window f () =
   exec_hooks 
     (try get_global location handle_key_end_hook with _ -> []) location;    
   update_display top_window.top_location;
-  WX_xterm.update_displays ();
+  let graphic = Window.backend top_window in
+  graphic.Xdraw.update_displays ();
   Mutex.unlock top_window.top_location.loc_mutex
 (*e: function Top_window.wrap *)
 
@@ -359,8 +357,7 @@ let scroll_to_frame ady top_window =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let pos_start = Text.get_position text frame.frm_start in
-  let pos_end = Text.get_position text frame.frm_end in
-  let size = Text.size text in
+  let _size = Text.size text in
   Common.pr2 "ady#get_pos size";
   let y = 1
 (*    ady#get_pos size  *)
@@ -436,8 +433,7 @@ let create location display =
       top_mini_buffers = [];
       top_second_cursor = None;
 
-      top_display = Some display;
-      top_xterm = Some ();
+      graphic = None;
 
       top_location = location;
     } 
@@ -479,10 +475,6 @@ let create location display =
   *)
   (*e: [[Top_window.create()]] create menus *)
   (*s: [[Top_window.create()]] misc stuff *)
-  (* let xterm = xterm#xterm in *)
-  let xterm = () in
-  top_window.top_xterm <- Some xterm;
-
   (*
     WX_xterm.install_handler display xterm (handler top_window xterm);
     top#configure [Bindings [Key (anyKey, anyModifier), (fun _ ->

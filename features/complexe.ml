@@ -184,7 +184,7 @@ let window_load_buffer frame =
     (fun str -> 
       let top_window = Window.top frame.frm_window in
       let top_window = Top_window.create top_window.top_location
-          (Window.display top_window)
+          (*(Window.display top_window)*) "TODO_display"
       in
       Frame.load_file top_window.window str |> ignore
     )
@@ -207,7 +207,7 @@ let window_change_buffer frame =
   (fun name ->
       let top_window = Window.top frame.frm_window in
       let top_window = Top_window.create 
-          top_window.top_location (Window.display top_window) in
+          top_window.top_location "TODO_Display" in
       Frame.change_buffer top_window.window name
   )
 (*e: function Complex.window_change_buffer *)
@@ -218,8 +218,7 @@ let change_font frame =
     frame (Keymap.create ()) "Find font: " "fixed"
     (fun old_frame name ->
       let window = frame.frm_window in
-      let top_window = Window.top window in
-      let xterm = Window.xterm top_window in
+      let _top_window = Window.top window in
       (*WX_xterm.change_font xterm name*)
       failwith "Complex.change_font: TODO"
   ) |> ignore

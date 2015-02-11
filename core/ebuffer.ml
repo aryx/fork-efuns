@@ -367,7 +367,7 @@ let modep buf minor =
 (*e: function Ebuffer.modep *)
 
 (*s: constant Ebuffer.suffix_reg *)
-let suffix_reg = Str.regexp "\(.*\)<[0-9]+>$"
+let suffix_reg = Str.regexp "\\(.*\\)<[0-9]+>$"
 (*e: constant Ebuffer.suffix_reg *)
   
 (*s: function Ebuffer.set_buffer_mode *)
@@ -469,11 +469,9 @@ let catch format buf f =
       try
         let buf = Hashtbl.find location.loc_buffers name in
         Text.insert_at_end buf.buf_text (m ^ "\n");
-      with
-        Not_found ->
-          let buf = create location name None (Text.create (m^"\n")) (
-              Keymap.create ())
-          in ()
+      with Not_found ->
+        create location name None (Text.create (m^"\n")) (Keymap.create ()) 
+          |>ignore
 (*e: function Ebuffer.catch *)
           
       

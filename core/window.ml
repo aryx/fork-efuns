@@ -126,17 +126,13 @@ let rec prev f window =
 (*e: function Window.prev *)
 
 (*s: function Window.xterm *)
-let xterm top_window =
-  match top_window.top_xterm with
+let backend top_window =
+  match top_window.graphic with
     None -> raise Not_found
-  | Some xterm -> xterm 
+  | Some x -> x
 (*e: function Window.xterm *)
 
 (*s: function Window.display *)
-let display top_window =
-  match top_window.top_display with
-    None -> raise Not_found
-  | Some display -> display
 (*e: function Window.display *)
 
 (*s: function Window.get_font *)

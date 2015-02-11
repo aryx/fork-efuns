@@ -90,9 +90,10 @@ let next_error top_frame =
           let buf = Ebuffer.read location filename (Keymap.create ()) in
 (* new frame for error buffer *)
           let frame = 
-            try find_buffer_frame location buf with Not_found ->
+            try find_buffer_frame location buf 
+            with Not_found ->
                 if frame == top_frame then
-                  let display = Window.display top_window in
+                  let display = (*Window.display top_window*)"TODO_display" in
                   let new_window = 
                     Top_window.create top_window.top_location 
                       display 
