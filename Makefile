@@ -7,22 +7,16 @@
 ##############################################################################
 TOP=$(shell pwd)
 
+TARGET=efuns
 
 
-CMIS=\
- commons/common.cmi\
- commons2/utils.cmi\
- commons2/options.cmi\
- misc/local.cmi\
- core/text.cmi\
- core/ebuffer.cmi\
- core/frame.cmi\
- features/simple.cmi\
- features/select.cmi\
- features/search.cmi\
+#GRAPHICSDIR=graphics/x11
+#OTHERSYSLIBS=graphics.cma
 
-GRAPHICSDIR=graphics/x11
-OTHERSYSLIBS=graphics.cma
+BACKENDDIR=graphics/gtk_cairo
+GRAPHICSDIR=$(shell ocamlfind query lablgtk2) $(shell ocamlfind query cairo)
+OTHERSYSLIBS=lablgtk.cma cairo.cma cairo_lablgtk.cma 
+
 
 SRC=\
  commons/common.ml\
@@ -32,7 +26,7 @@ SRC=\
  commons2/options.ml\
  misc/local.ml\
  graphics/xtypes.ml\
- $(GRAPHICSDIR)/wX_xterm.ml\
+ $(BACKENDDIR)/wX_xterm.ml\
  core/text.ml\
  core/efuns.ml\
  core/keymap.ml\
@@ -59,8 +53,9 @@ SRC=\
  major_modes/dired.ml\
  prog_modes/makefile_mode.ml\
  std_efunsrc.ml\
- $(GRAPHICSDIR)/graphics_efuns.ml \
+ $(BACKENDDIR)/graphics_efuns.ml \
  main.ml \
+
 
 # minor_modes/accents_mode.ml\
 # client/efuns_client.ml server/server.ml
@@ -68,16 +63,26 @@ SRC=\
 # misc/efuns_xxx.ml
 # prog_modes/*.mll
 
-TARGET=efuns
+CMIS=\
+ commons/common.cmi\
+ commons2/utils.cmi\
+ commons2/options.cmi\
+ misc/local.cmi\
+ core/text.cmi\
+ core/ebuffer.cmi\
+ core/frame.cmi\
+ features/simple.cmi\
+ features/select.cmi\
+ features/search.cmi\
 
 SYSLIBS=unix.cma str.cma threads.cma 
 
-
-
-#OTHERSYSLIBS=cairo.cma lablgtk.cma
-
-INCLUDEDIRS=commons commons2 core misc graphics $(GRAPHICSDIR) features
-
+INCLUDEDIRS=\
+  commons commons2\
+  core misc\
+  graphics $(BACKENDDIR)\
+  features \
+  $(GRAPHICSDIR)
 
 ##############################################################################
 # Generic variables
@@ -102,10 +107,10 @@ $(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS)
 	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa)  $^
 
 clean::
-	rm -f $(CMIS) $(OBJS)
+	rm -f $(OBJS) $(OBJS:.cmo=.cmi)
 
 depend::
-	$(OCAMLDEP) */*.mli */*.ml >> .depend
+	$(OCAMLDEP) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
 
 
 ##############################################################################
@@ -120,7 +125,6 @@ visual:
 ##############################################################################
 
 include $(TOP)/docs/latex/Makefile.common
-
 
 TEXMAIN=Efuns.nw
 TEX=Efuns.tex
