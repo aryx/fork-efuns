@@ -58,7 +58,7 @@ let init location displayname =
 
   let display = "" in
   let top_window = Top_window.create location display in
-  top_window.graphic <- Some backend;
+  top_window.graphics <- Some backend;
 
 (*
   WX_xterm.setHighlight display 2;

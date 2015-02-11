@@ -709,7 +709,7 @@ and top_window =
 %  breaks the conventions of having those top_xxx prefix
 
 <<[[Efuns.top_window]] other fields>>=
-mutable graphic : Xdraw.graphic_backend option;
+mutable graphics : Xdraw.graphics_backend option;
 @
 %(*
 %mutable top_root : WX_root.t;
@@ -1762,7 +1762,7 @@ let create location display =
       top_mini_buffers = [];
       top_second_cursor = None;
 
-      graphic = None;
+      graphics = None;
 
       top_location = location;
     } 

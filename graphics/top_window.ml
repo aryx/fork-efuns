@@ -433,7 +433,7 @@ let create location display =
       top_mini_buffers = [];
       top_second_cursor = None;
 
-      graphic = None;
+      graphics = None;
 
       top_location = location;
     } 

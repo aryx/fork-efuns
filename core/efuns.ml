@@ -264,7 +264,7 @@ and top_window =
     mutable window : window;
 
     (*s: [[Efuns.top_window]] other fields *)
-    mutable graphic : Xdraw.graphic_backend option;
+    mutable graphics : Xdraw.graphics_backend option;
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_active_frame : frame;
     (*x: [[Efuns.top_window]] other fields *)

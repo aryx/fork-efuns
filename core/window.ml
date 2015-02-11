@@ -127,7 +127,7 @@ let rec prev f window =
 
 (*s: function Window.xterm *)
 let backend top_window =
-  match top_window.graphic with
+  match top_window.graphics with
     None -> raise Not_found
   | Some x -> x
 (*e: function Window.xterm *)
