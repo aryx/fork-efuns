@@ -38,8 +38,8 @@ let system buf_name location cmd end_action =
   let curseur = Text.add_point text in
   let buf = Ebuffer.create location buf_name None text (Keymap.create ()) in
   buf.buf_sync <- true;
-  let ins = Unix.descr_of_in_channel inc in
-  let tampon = String.create 1000 in
+  let _ins = Unix.descr_of_in_channel inc in
+  let _tampon = String.create 1000 in
   let active = ref true in
 (*
   Thread.add_reader ins

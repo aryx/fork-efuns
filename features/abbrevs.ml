@@ -86,7 +86,7 @@ let dabbrev_expand frame =
     set_position curr_text mark pos;
     try
       let rec restart () =
-        let len = Text.search_backward curr_text regexp mark in
+        let _len = Text.search_backward curr_text regexp mark in
         if curr_text == text && mark = point then
           raise Exit
         else

@@ -63,7 +63,6 @@ let buf_create location text local_map =
 let kill mini_frame old_frame =
   let window = mini_frame.frm_window in
   let top_window = Window.top window in
-  let location = top_window.top_location in
   clear_message top_window;
   top_window.top_mini_buffers <- List.tl top_window.top_mini_buffers;
   if old_frame.frm_killed then
@@ -126,7 +125,7 @@ let update_request frame request =
   let qlen = String.length request in
   let window = frame.frm_window in
   let top_window = Window.top window in
-  let mini_window = Window.create true window.win_up
+  let _mini_window = Window.create true window.win_up
       qlen window.win_ypos
       (top_window.top_width - qlen) 1
   in

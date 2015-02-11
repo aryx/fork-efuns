@@ -179,7 +179,7 @@ let compile find_error_fun frame =
 
 (*s: function Compil.set_compilation_buffer *)
 let set_compilation_buffer frame comp_buf cdir =
-  let error_point = add_point comp_buf.buf_text in
+  (*let error_point = add_point comp_buf.buf_text in*)
   let window =
     match !compilation_frame with
       None -> 

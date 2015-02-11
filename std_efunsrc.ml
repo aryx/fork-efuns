@@ -48,8 +48,8 @@ let compile frame =
 (*s: function Std_efunsrc.select_open_file *)
 let select_open_file frame =
   let window = frame.frm_window in
-  let top_window = Window.top window in
-  let cdir = Frame.current_dir frame in
+  let _top_window = Window.top window in
+  let _cdir = Frame.current_dir frame in
   failwith "Std_efunsrc.select_open_file: TODO"
 (*
   let info = {
@@ -674,7 +674,7 @@ let _ =
       let buffers = ref [] in
       let loc = top_window.top_location in
       Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
-      let desc = Array.map (fun name -> 
+      let _desc = Array.map (fun name -> 
             (name, wrap top_window (fun top_window ->
                   let frame = top_window.top_active_frame in
                   let window = frame.frm_window in

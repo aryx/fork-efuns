@@ -157,7 +157,7 @@ let insert_at_place frame char =
   if c = '\n' then
     insert_char frame char
   else
-  let session = start_session text in
+  let _sessionTODOBUG = start_session text in
   Text.delete text point 1 |> ignore;
   single_char.[0] <- char;    
   Text.insert text point single_char |> ignore;
@@ -1141,7 +1141,6 @@ let fill_paragraph frame =
   let point = frame.frm_point in
   let start = dup_point text point in
   let session = start_session text in
-  let syntax = buf.buf_syntax_table in
   backward_paragraph buf start;
   let fin = dup_point text start in
   forward_paragraph buf fin;

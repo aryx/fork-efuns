@@ -414,7 +414,7 @@ let low_insert tree point str =
   let gpoint = text.text_gpoint in
   let gsize = text.text_gsize in
   let gline = text.text_gline in
-  let gchars = gpoint - text.text_newlines.(gline).position in
+  (*let gchars = gpoint - text.text_newlines.(gline).position in*)
   cancel_repr text gpoint gline;
   let strlen = String.length str in
   if strlen > gsize then extend_gap text strlen;
@@ -489,7 +489,7 @@ let low_delete tree point len =
   let gpoint = text.text_gpoint in
   let gline = text.text_gline in
   cancel_repr text gpoint gline;
-  let gchars = gpoint - text.text_newlines.(gline).position in
+  (*let gchars = gpoint - text.text_newlines.(gline).position in*)
   let gap_end = gpoint + gsize in
   let len = min (size - gap_end) len in
   let str = String.sub text.text_string gap_end len
@@ -876,13 +876,11 @@ let fmove_res tree p delta =
   let text = tree.tree_text in    
   if delta = 0 then 0 else
   let gpoint = text.text_gpoint in
-  let gsize = text.text_gsize in
   let size = text.text_size in
   let gap_end = gpoint + text.text_gsize in
   let gline = text.text_gline in
   let point = p.point in
   let old_point = point in
-  let string = text.text_string in
   let lines = text.text_newlines in
   let rec iter y point end_point =
     if end_point > point then
@@ -918,13 +916,10 @@ let bmove_res tree p delta =
   let text = tree.tree_text in    
   if delta = 0 then 0 else
   let gpoint = text.text_gpoint in
-  let gsize = text.text_gsize in
-  let size = text.text_size in
   let gap_end = gpoint + text.text_gsize in
   let gline = text.text_gline in
   let point = p.point in
   let old_point = point in
-  let string = text.text_string in
   let lines = text.text_newlines in
   let rec iter y end_point =
     let start_line = lines.(y).position in
@@ -1056,7 +1051,6 @@ let search_forward_matched tree regexp point =
   let gap_end = text.text_gpoint + gsize in
   if point.point = text.text_gpoint then point.point <- gap_end;
   if point.point < gap_end then clean_text text;
-  let gap_end = text.text_gpoint + gsize in  
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.point in
   let pos = if pos >= text.text_gpoint + gsize then pos - gsize else pos in
@@ -1156,10 +1150,7 @@ let compute_representation tree charreprs n =
   let line = text.text_newlines.(n) in
   if line.modified >= 0 then
     begin
-      let start_pos = line.position in
-      let end_pos = text.text_newlines.(n+1).position - 1
-      in
-      let len = low_distance text end_pos start_pos in
+      let end_pos = text.text_newlines.(n+1).position - 1 in
       let rec iter repr_list =
         match repr_list with
           repr :: tail ->
@@ -1188,7 +1179,6 @@ let compute_representation tree charreprs n =
         line_curs := !line_curs + gsize;
       while !line_curs < end_pos do
         let charattr = text.text_attrs.(!line_curs) in
-        let char = Char.code text.text_string.[!line_curs] in      
         let charrepr =
           let char = Char.code text.text_string.[!line_curs] in      
           if char = 9 then tabreprs.(!repr_curs mod 9)
@@ -1200,7 +1190,6 @@ let compute_representation tree charreprs n =
         
         while !line_curs < end_pos && 
           (
-            let char = Char.code text.text_string.[!line_curs] in
             char_repr := 
             (let char = Char.code text.text_string.[!line_curs] in      
               if char = 9 then tabreprs.(!repr_curs mod 9)
@@ -1403,11 +1392,11 @@ let point_to_lol text point n =
 let point_to_line tree point line =
   let text = tree.tree_text in    
   let pos = 
-    if text.text_nlines <= line + 1 then text.text_size
-    else
-      text.text_newlines.(line).position
+    if text.text_nlines <= line + 1 
+    then text.text_size
+    else text.text_newlines.(line).position
   in
-  move_point_to tree point text.text_newlines.(line).position
+  move_point_to tree point pos
 (*e: function Text.point_to_line *)
 
 (*s: function Text.clear *)
@@ -1438,10 +1427,9 @@ let goto_line tree point y =
 
 (*s: function Text.region *)
 let rec region tree p1 p2 =
-  let text = tree.tree_text in    
-  if p1>p2 then region tree p2 p1
-  else
-    sub tree p1 (distance tree p1 p2)
+  if p1>p2 
+  then region tree p2 p1
+  else sub tree p1 (distance tree p1 p2)
 (*e: function Text.region *)
 
 (*s: function Text.goto_xy *)
@@ -1461,9 +1449,9 @@ let update tree str =
   let text = tree.tree_text in    
   let newlines = compute_newlines str in
   let len = String.length str in
-  let pts = List.map (fun point -> 
-        point.point <- get_position tree point) text.text_points
-  in
+  text.text_points |> List.iter (fun point -> 
+    point.point <- get_position tree point
+  );
   text.text_string <- str;
   text.text_attrs <- (Array.create len direct_attr);
   text.text_size <- len;

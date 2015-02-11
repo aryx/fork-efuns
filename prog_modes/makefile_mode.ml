@@ -20,7 +20,7 @@ open Complex
 open Window
 
 (*s: constant Makefile_mode.mkfile_vars *)
-let mkfile_vars= Str.regexp "\(\$([a-zA-Z0-9_]*)\)\|\([a-zA-Z0-9_]+=\)"
+let mkfile_vars= Str.regexp "\\(\\$([a-zA-Z0-9_]*)\\)\\|\\([a-zA-Z0-9_]+=\\)"
 (*e: constant Makefile_mode.mkfile_vars *)
 (*s: constant Makefile_mode.mkfile_target *)
 let mkfile_target= Str.regexp "^.*:"

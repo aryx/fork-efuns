@@ -451,7 +451,7 @@ let low_insert tree point str =
   let gpoint = text.text_gpoint in
   let gsize = text.text_gsize in
   let gline = text.text_gline in
-  let gchars = gpoint - text.text_newlines.(gline).position in
+  (*let gchars = gpoint - text.text_newlines.(gline).position in*)
   cancel_repr text gpoint gline;
   let strlen = String.length str in
   if strlen > gsize then extend_gap text strlen;
@@ -523,7 +523,7 @@ let low_delete tree point len =
   let gpoint = text.text_gpoint in
   let gline = text.text_gline in
   cancel_repr text gpoint gline;
-  let gchars = gpoint - text.text_newlines.(gline).position in
+  (*let gchars = gpoint - text.text_newlines.(gline).position in*)
   let gap_end = gpoint + gsize in
   let len = min (size - gap_end) len in
   let str = String.sub text.text_string gap_end len
@@ -742,13 +742,11 @@ let fmove_res tree p delta =
   let text = tree.tree_text in    
   if delta = 0 then 0 else
   let gpoint = text.text_gpoint in
-  let gsize = text.text_gsize in
   let size = text.text_size in
   let gap_end = gpoint + text.text_gsize in
   let gline = text.text_gline in
   let point = p.point in
   let old_point = point in
-  let string = text.text_string in
   let lines = text.text_newlines in
   let rec iter y point end_point =
     if end_point > point then
@@ -782,13 +780,10 @@ let bmove_res tree p delta =
   let text = tree.tree_text in    
   if delta = 0 then 0 else
   let gpoint = text.text_gpoint in
-  let gsize = text.text_gsize in
-  let size = text.text_size in
   let gap_end = gpoint + text.text_gsize in
   let gline = text.text_gline in
   let point = p.point in
   let old_point = point in
-  let string = text.text_string in
   let lines = text.text_newlines in
   let rec iter y end_point =
     let start_line = lines.(y).position in
@@ -963,10 +958,7 @@ let compute_representation tree charreprs n =
   let line = text.text_newlines.(n) in
   if line.modified >= 0 then
     begin
-      let start_pos = line.position in
-      let end_pos = text.text_newlines.(n+1).position - 1
-      in
-      let len = low_distance text end_pos start_pos in
+      let end_pos = text.text_newlines.(n+1).position - 1 in
       let rec iter repr_list =
         match repr_list with
           repr :: tail ->
@@ -995,7 +987,6 @@ let compute_representation tree charreprs n =
         line_curs := !line_curs + gsize;
       while !line_curs < end_pos do
         let charattr = text.text_attrs.(!line_curs) in
-        let char = Char.code text.text_string.[!line_curs] in      
         let charrepr =
           let char = Char.code text.text_string.[!line_curs] in      
           if char = 9 then tabreprs.(!repr_curs mod 9)
@@ -1007,7 +998,6 @@ let compute_representation tree charreprs n =
         
         while !line_curs < end_pos && 
           (
-            let char = Char.code text.text_string.[!line_curs] in
             char_repr := 
             (let char = Char.code text.text_string.[!line_curs] in      
               if char = 9 then tabreprs.(!repr_curs mod 9)
@@ -1178,10 +1168,9 @@ let point_line text point = point.point_y
 
 <<function Text.region>>=
 let rec region tree p1 p2 =
-  let text = tree.tree_text in    
-  if p1>p2 then region tree p2 p1
-  else
-    sub tree p1 (distance tree p1 p2)
+  if p1>p2 
+  then region tree p2 p1
+  else sub tree p1 (distance tree p1 p2)
 @
 
 <<function Text.goto_xy>>=
@@ -1201,9 +1190,9 @@ let update tree str =
   let text = tree.tree_text in    
   let newlines = compute_newlines str in
   let len = String.length str in
-  let pts = List.map (fun point -> 
-        point.point <- get_position tree point) text.text_points
-  in
+  text.text_points |> List.iter (fun point -> 
+    point.point <- get_position tree point
+  );
   text.text_string <- str;
   text.text_attrs <- (Array.create len direct_attr);
   text.text_size <- len;
@@ -1904,7 +1893,6 @@ let keysym_to_name = []
 let kill mini_frame old_frame =
   let window = mini_frame.frm_window in
   let top_window = Window.top window in
-  let location = top_window.top_location in
   clear_message top_window;
   top_window.top_mini_buffers <- List.tl top_window.top_mini_buffers;
   if old_frame.frm_killed then
@@ -1935,7 +1923,7 @@ let update_request frame request =
   let qlen = String.length request in
   let window = frame.frm_window in
   let top_window = Window.top window in
-  let mini_window = Window.create true window.win_up
+  let _mini_window = Window.create true window.win_up
       qlen window.win_ypos
       (top_window.top_width - qlen) 1
   in
@@ -2508,7 +2496,7 @@ let insert_at_place frame char =
   if c = '\n' then
     insert_char frame char
   else
-  let session = start_session text in
+  let _sessionTODOBUG = start_session text in
   Text.delete text point 1 |> ignore;
   single_char.[0] <- char;    
   Text.insert text point single_char |> ignore;
@@ -4017,8 +4005,8 @@ let system buf_name location cmd end_action =
   let curseur = Text.add_point text in
   let buf = Ebuffer.create location buf_name None text (Keymap.create ()) in
   buf.buf_sync <- true;
-  let ins = Unix.descr_of_in_channel inc in
-  let tampon = String.create 1000 in
+  let _ins = Unix.descr_of_in_channel inc in
+  let _tampon = String.create 1000 in
   let active = ref true in
 (*
   Thread.add_reader ins
@@ -4175,14 +4163,9 @@ let display_completions frame list =
   let buf = Ebuffer.default location "*Completions*" in
   let text = buf.buf_text in
   Text.update text (iter list "Completions :");
-  let frame =
-    try
-      Frame.find_buffer_frame location buf
-    with
-      Not_found ->
-        Frame.create_inactive (cut_frame frame) buf
-  in
-  ()
+  (try Frame.find_buffer_frame location buf
+  with Not_found -> Frame.create_inactive (cut_frame frame) buf
+  ) |> ignore
 @
 
 <<function Select.remove_completions>>=
@@ -4309,7 +4292,7 @@ let file_hist = ref []
 <<constant Select.dont_complete>>=
 let dont_complete = define_option ["avoid_filenames"] ""
     (list_option string_option) 
-  [ ".*\.o"; ".*\.cm.";".*\.cmxa";".*~";".*\.a";"core";"\..*"]
+  [ ".*\\.o"; ".*\\.cm.";".*\\.cmxa";".*~";".*\\.a";"core";"\\..*"]
 @
 
 <<constant Select.dont_complete_regexps>>=
@@ -4462,8 +4445,6 @@ let select_file frame request history start action =
 
 <<function Select.select_filename>>=
 let select_filename frame request action =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
   let curdir = Frame.current_dir frame in
   select_file frame request file_hist (Utils.filename_to_string curdir) action
 @
@@ -4662,7 +4643,7 @@ let replace flag frame query str repl =
           else begin
               last_pos := pos;
               let result = Text.replace_matched text repl in
-              let (_,matched) = delete_res text point len in
+              let (_,_matched) = delete_res text point len in
               insert text point result;
               fmove text point (String.length result);
               n := !n + 1
@@ -4700,7 +4681,7 @@ let replace flag frame query str repl =
                     if yes then
                       begin
                         let result = Text.replace_matched text repl in
-                        let (_,matched) = delete_res text point len in
+                        let (_,_matched) = delete_res text point len in
                         insert text point result;
                         fmove text point (String.length result);
                         n := !n + 1
@@ -4769,7 +4750,7 @@ let select_replace frame request action =
 
 
 <<constant Search.library_regexp>>=
-let library_regexp = Str.regexp ".*\.cm[oa]"
+let library_regexp = Str.regexp ".*\\.cm[oa]"
 @
 
 <<function Search.library_file>>=
@@ -4779,8 +4760,6 @@ let library_file str =
 
 <<function Search.select_lib_filename>>=
 let select_lib_filename frame request action =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
   select frame request file_hist (current_dir frame)
   (complete_filename frame library_file)
   Filename.basename action
@@ -5108,7 +5087,7 @@ let make_hist = ref [!!make_command]
 
 <<function Compil.set_compilation_buffer>>=
 let set_compilation_buffer frame comp_buf cdir =
-  let error_point = add_point comp_buf.buf_text in
+  (*let error_point = add_point comp_buf.buf_text in*)
   let window =
     match !compilation_frame with
       None -> 
@@ -5689,7 +5668,7 @@ let update buf =
 @
 
 <<constant Dired.file_reg>>=
-let file_reg = Str.regexp ".* \([^ ]+\)$"
+let file_reg = Str.regexp ".* \\([^ ]+\\)$"
 @
 %$
 
@@ -5867,13 +5846,13 @@ let _ =
     remove;  
   
   view_list := [
-    ".*\(\.jpg\|\..gig\|\.xpm\|\.ppm\)",viewer "xv";
-    ".*\(\.ps\|\.PS\)",viewer "gv";
-    ".*\(\.dvi\)",viewer "xdvi";
-    ".*\(\.gz\|\.Z\|\.z\)",unzip_and_view; 
-    ".*\.tgz", commande "xterm -e sh -c \"tar zvtf %s | less\"";
-    ".*\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
-    ".*\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
+    ".*\\(\\.jpg\\|\\..gig\\|\\.xpm\\|\\.ppm\\)",viewer "xv";
+    ".*\\(\\.ps\\|\\.PS\\)",viewer "gv";
+    ".*\\(\\.dvi\\)",viewer "xdvi";
+    ".*\\(\\.gz\\|\\.Z\\|\\.z\\)",unzip_and_view; 
+    ".*\\.tgz", commande "xterm -e sh -c \"tar zvtf %s | less\"";
+    ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
+    ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
     ];
   
   Efuns.add_start_hook (fun location ->
@@ -6538,7 +6517,7 @@ open Top_window
 \subsection*{[[prog_modes/makefile_mode.ml]]}
 
 <<constant Makefile_mode.mkfile_vars>>=
-let mkfile_vars= Str.regexp "\(\$([a-zA-Z0-9_]*)\)\|\([a-zA-Z0-9_]+=\)"
+let mkfile_vars= Str.regexp "\\(\\$([a-zA-Z0-9_]*)\\)\\|\\([a-zA-Z0-9_]+=\\)"
 @
 %$
 

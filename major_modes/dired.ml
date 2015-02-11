@@ -30,7 +30,7 @@ let update buf =
 (*e: function Dired.update *)
 
 (*s: constant Dired.file_reg *)
-let file_reg = Str.regexp ".* \([^ ]+\)$"
+let file_reg = Str.regexp ".* \\([^ ]+\\)$"
 (*e: constant Dired.file_reg *)
   
 (*s: function Dired.get_file_line *)
@@ -206,13 +206,13 @@ let _ =
     remove;  
   
   view_list := [
-    ".*\(\.jpg\|\..gig\|\.xpm\|\.ppm\)",viewer "xv";
-    ".*\(\.ps\|\.PS\)",viewer "gv";
-    ".*\(\.dvi\)",viewer "xdvi";
-    ".*\(\.gz\|\.Z\|\.z\)",unzip_and_view; 
-    ".*\.tgz", commande "xterm -e sh -c \"tar zvtf %s | less\"";
-    ".*\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
-    ".*\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
+    ".*\\(\\.jpg\\|\\..gig\\|\\.xpm\\|\\.ppm\\)",viewer "xv";
+    ".*\\(\\.ps\\|\\.PS\\)",viewer "gv";
+    ".*\\(\\.dvi\\)",viewer "xdvi";
+    ".*\\(\\.gz\\|\\.Z\\|\\.z\\)",unzip_and_view; 
+    ".*\\.tgz", commande "xterm -e sh -c \"tar zvtf %s | less\"";
+    ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
+    ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
     ];
   
   Efuns.add_start_hook (fun location ->

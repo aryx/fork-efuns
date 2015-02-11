@@ -2483,8 +2483,8 @@ define_action "select_open_file" select_open_file;
 <<function Std_efunsrc.select_open_file>>=
 let select_open_file frame =
   let window = frame.frm_window in
-  let top_window = Window.top window in
-  let cdir = Frame.current_dir frame in
+  let _top_window = Window.top window in
+  let _cdir = Frame.current_dir frame in
   failwith "Std_efunsrc.select_open_file: TODO"
 (*
   let info = {
@@ -4225,11 +4225,11 @@ let point_to_lol text point n =
 let point_to_line tree point line =
   let text = tree.tree_text in    
   let pos = 
-    if text.text_nlines <= line + 1 then text.text_size
-    else
-      text.text_newlines.(line).position
+    if text.text_nlines <= line + 1 
+    then text.text_size
+    else text.text_newlines.(line).position
   in
-  move_point_to tree point text.text_newlines.(line).position
+  move_point_to tree point pos
 @
 
 
@@ -4639,7 +4639,6 @@ let last_search = ref ""
 
 <<function Search.isearch>>=
 let isearch to_regexp sens frame =
-  let top_window = Window.top frame.frm_window in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
@@ -4711,7 +4710,7 @@ let isearch to_regexp sens frame =
       isearch_s ();
       Minibuffer.update_request mini_frame (request ())
   );  
-  let mini_frame =
+  let _mini_frame =
     incremental_mini_buffer frame ismap (request ()) !string
       (fun frame str -> 
         string := str;
@@ -4776,7 +4775,6 @@ let search_forward_matched tree regexp point =
   let gap_end = text.text_gpoint + gsize in
   if point.point = text.text_gpoint then point.point <- gap_end;
   if point.point < gap_end then clean_text text;
-  let gap_end = text.text_gpoint + gsize in  
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.point in
   let pos = if pos >= text.text_gpoint + gsize then pos - gsize else pos in
@@ -4970,7 +4968,7 @@ buffers_menu := (fun top_window button () ->
     let buffers = ref [] in
     let loc = top_window.top_location in
     Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
-    let desc = Array.map (fun name -> 
+    let _desc = Array.map (fun name -> 
           (name, wrap top_window (fun top_window ->
                 let frame = top_window.top_active_frame in
                 let window = frame.frm_window in
@@ -5960,7 +5958,7 @@ let dabbrev_expand frame =
     set_position curr_text mark pos;
     try
       let rec restart () =
-        let len = Text.search_backward curr_text regexp mark in
+        let _len = Text.search_backward curr_text regexp mark in
         if curr_text == text && mark = point then
           raise Exit
         else
@@ -6148,7 +6146,6 @@ let fill_paragraph frame =
   let point = frame.frm_point in
   let start = dup_point text point in
   let session = start_session text in
-  let syntax = buf.buf_syntax_table in
   backward_paragraph buf start;
   let fin = dup_point text start in
   forward_paragraph buf fin;

@@ -68,14 +68,9 @@ let display_completions frame list =
   let buf = Ebuffer.default location "*Completions*" in
   let text = buf.buf_text in
   Text.update text (iter list "Completions :");
-  let frame =
-    try
-      Frame.find_buffer_frame location buf
-    with
-      Not_found ->
-        Frame.create_inactive (cut_frame frame) buf
-  in
-  ()
+  (try Frame.find_buffer_frame location buf
+  with Not_found -> Frame.create_inactive (cut_frame frame) buf
+  ) |> ignore
 (*e: function Select.display_completions *)
 
 (*s: function Select.remove_completions *)
@@ -208,7 +203,7 @@ let file_hist = ref []
 (*s: constant Select.dont_complete *)
 let dont_complete = define_option ["avoid_filenames"] ""
     (list_option string_option) 
-  [ ".*\.o"; ".*\.cm.";".*\.cmxa";".*~";".*\.a";"core";"\..*"]
+  [ ".*\\.o"; ".*\\.cm.";".*\\.cmxa";".*~";".*\\.a";"core";"\\..*"]
 (*e: constant Select.dont_complete *)
   
 (*s: constant Select.dont_complete_regexps *)
@@ -360,8 +355,6 @@ let select_file frame request history start action =
 
 (*s: function Select.select_filename *)
 let select_filename frame request action =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
   let curdir = Frame.current_dir frame in
   select_file frame request file_hist (Utils.filename_to_string curdir) action
 (*e: function Select.select_filename *)

@@ -64,7 +64,7 @@ let replace flag frame query str repl =
           else begin
               last_pos := pos;
               let result = Text.replace_matched text repl in
-              let (_,matched) = delete_res text point len in
+              let (_,_matched) = delete_res text point len in
               insert text point result;
               fmove text point (String.length result);
               n := !n + 1
@@ -102,7 +102,7 @@ let replace flag frame query str repl =
                     if yes then
                       begin
                         let result = Text.replace_matched text repl in
-                        let (_,matched) = delete_res text point len in
+                        let (_,_matched) = delete_res text point len in
                         insert text point result;
                         fmove text point (String.length result);
                         n := !n + 1
@@ -206,7 +206,7 @@ let query_replace_regexp frame =
 (*e: function Search.query_replace_regexp *)
 
 (*s: constant Search.library_regexp *)
-let library_regexp = Str.regexp ".*\.cm[oa]"
+let library_regexp = Str.regexp ".*\\.cm[oa]"
 (*e: constant Search.library_regexp *)
 (*s: function Search.library_file *)
 let library_file str =
@@ -215,8 +215,6 @@ let library_file str =
 
 (*s: function Search.select_lib_filename *)
 let select_lib_filename frame request action =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
   select frame request file_hist (current_dir frame)
   (complete_filename frame library_file)
   Filename.basename action
@@ -227,7 +225,6 @@ let last_search = ref ""
 (*e: constant Search.last_search *)
 (*s: function Search.isearch *)
 let isearch to_regexp sens frame =
-  let top_window = Window.top frame.frm_window in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
@@ -299,7 +296,7 @@ let isearch to_regexp sens frame =
       isearch_s ();
       Minibuffer.update_request mini_frame (request ())
   );  
-  let mini_frame =
+  let _mini_frame =
     incremental_mini_buffer frame ismap (request ()) !string
       (fun frame str -> 
         string := str;
