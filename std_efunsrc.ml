@@ -21,7 +21,7 @@ open Select
 open Search
 open Compil
 open Abbrevs
-open Complex
+open Complexe
 open System
 open Multi_frames
 open Top_window
@@ -253,7 +253,7 @@ let _ =
   (*s: meta actions *)
   define_action "call_interactive"  call_interactive;
   (*x: meta actions *)
-  define_action "eval" Complex.eval;  
+  define_action "eval" Complexe.eval;  
   (*e: meta actions *)
 
   (* ----------------------------------------------------------- *)

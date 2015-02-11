@@ -3392,7 +3392,8 @@ open Options
 
 
 
-\subsection*{[[features/complex.ml]]}
+\subsection*{[[features/complexe.ml]]}
+% used to be complex.ml, but conflict with stdlib
 
 <<function Complex.save_buffers_and_action>>=
 let rec save_buffers_and_action frame buffers action =
@@ -3711,7 +3712,7 @@ let _ =
 
 %-------------------------------------------------------------
 
-<<features/complex.ml>>=
+<<features/complexe.ml>>=
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)

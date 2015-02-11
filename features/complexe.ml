@@ -1,4 +1,4 @@
-(*s: features/complex.ml *)
+(*s: features/complexe.ml *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -130,8 +130,7 @@ let exit_efuns frame =
   let buffers = Utils.list_of_hash location.loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
-    (* Graphics.close_graph (); *)
-    failwith "close_graph";
+    (*Graphics.close_graph ();*)
     exit 0
   )
 (*e: function Complex.exit_efuns *)
@@ -498,4 +497,4 @@ let _ =
   )
 (*e: toplevel Complex._1 *)
   
-(*e: features/complex.ml *)
+(*e: features/complexe.ml *)

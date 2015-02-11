@@ -16,7 +16,7 @@ TARGET=efuns
 BACKENDDIR=graphics/gtk_cairo
 GRAPHICSDIR=$(shell ocamlfind query lablgtk2) $(shell ocamlfind query cairo)
 OTHERSYSLIBS=lablgtk.cma cairo.cma cairo_lablgtk.cma 
-
+GTKLOOP=gtkThread.cmo
 
 SRC=\
  commons/common.ml\
@@ -40,7 +40,7 @@ SRC=\
  features/multi_frames.ml\
  features/select.ml\
  features/interactive.ml\
- features/complex.ml\
+ features/complexe.ml\
  features/abbrevs.ml\
  features/system.ml\
  features/compil.ml\
@@ -101,7 +101,7 @@ opt:
 	$(MAKE) $(TARGET).opt
 
 $(TARGET): $(LIBS) $(OBJS)
-	$(OCAMLC) -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ $(OTHERSYSLIBS) $(SYSLIBS) $^
+	$(OCAMLC) -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ $(OTHERSYSLIBS) $(SYSLIBS) $(GTKLOOP) $^
 
 $(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS) 
 	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa)  $^
@@ -140,7 +140,7 @@ SRC_VIEWS= \
   core/window.ml\
   core/frame.ml\
   features/simple.ml\
-  features/complex.ml\
+  features/complexe.ml\
   features/system.ml\
   features/select.ml\
   features/search.ml\
