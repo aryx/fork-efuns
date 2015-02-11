@@ -1701,11 +1701,9 @@ let catch format buf f =
       try
         let buf = Hashtbl.find location.loc_buffers name in
         Text.insert_at_end buf.buf_text (m ^ "\n");
-      with
-        Not_found ->
-          let buf = create location name None (Text.create (m^"\n")) (
-              Keymap.create ())
-          in ()
+      with Not_found ->
+        create location name None (Text.create (m^"\n")) (Keymap.create ()) 
+          |>ignore
 @
 
 <<toplevel Ebuffer._1>>=
@@ -1992,17 +1990,13 @@ open Simple
 \subsection*{[[core/window.ml]]}
 
 <<function Window.xterm>>=
-let xterm top_window =
-  match top_window.top_xterm with
+let backend top_window =
+  match top_window.graphic with
     None -> raise Not_found
-  | Some xterm -> xterm 
+  | Some x -> x
 @
 
 <<function Window.display>>=
-let display top_window =
-  match top_window.top_display with
-    None -> raise Not_found
-  | Some display -> display
 @
 
 
@@ -3676,8 +3670,7 @@ let change_font frame =
     frame (Keymap.create ()) "Find font: " "fixed"
     (fun old_frame name ->
       let window = frame.frm_window in
-      let top_window = Window.top window in
-      let xterm = Window.xterm top_window in
+      let _top_window = Window.top window in
       (*WX_xterm.change_font xterm name*)
       failwith "Complex.change_font: TODO"
   ) |> ignore
@@ -5225,8 +5218,8 @@ frame.frm_last_action <- f
 let set_cursor_on top_window frame = 
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
-    let xterm = xterm top_window in
-    WX_xterm.draw_string xterm
+    let graphic = Window.backend top_window in
+    graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
     (frame.frm_ypos + frame.frm_cursor_y) 
     frame.frm_cursor 0 1 Text.inverse_attr
@@ -5235,11 +5228,11 @@ let set_cursor_on top_window frame =
 <<function Top_window.set_cursor_off>>=
 let set_cursor_off top_window frame =
   if frame.frm_cursor.[0] <> '\000' then
-    let xterm = xterm top_window in
-    WX_xterm.draw_string xterm
+    let graphic = Window.backend top_window in
+    graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x) 
-    (frame.frm_ypos + frame.frm_cursor_y) 
-    frame.frm_cursor 0 1 frame.frm_cursor_attr
+      (frame.frm_ypos + frame.frm_cursor_y) 
+      frame.frm_cursor 0 1 frame.frm_cursor_attr
 @
 
 
@@ -5336,7 +5329,8 @@ let wrap top_window f () =
   exec_hooks 
     (try get_global location handle_key_end_hook with _ -> []) location;    
   update_display top_window.top_location;
-  WX_xterm.update_displays ();
+  let graphic = Window.backend top_window in
+  graphic.Xdraw.update_displays ();
   Mutex.unlock top_window.top_location.loc_mutex
 @
 
@@ -5358,8 +5352,7 @@ let scroll_to_frame ady top_window =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let pos_start = Text.get_position text frame.frm_start in
-  let pos_end = Text.get_position text frame.frm_end in
-  let size = Text.size text in
+  let _size = Text.size text in
   Common.pr2 "ady#get_pos size";
   let y = 1
 (*    ady#get_pos size  *)

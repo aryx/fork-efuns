@@ -709,8 +709,7 @@ and top_window =
 %  breaks the conventions of having those top_xxx prefix
 
 <<[[Efuns.top_window]] other fields>>=
-mutable top_display : string option (*WX_xterm.xterm_display option*);
-mutable top_xterm : unit option (* WX_xterm.xterm_window option *);
+mutable graphic : Xdraw.graphic_backend option;
 @
 %(*
 %mutable top_root : WX_root.t;
@@ -1763,8 +1762,7 @@ let create location display =
       top_mini_buffers = [];
       top_second_cursor = None;
 
-      top_display = Some display;
-      top_xterm = Some ();
+      graphic = None;
 
       top_location = location;
     } 
@@ -1881,10 +1879,6 @@ hbar#container_add_s [xterm#contained; scrollbar#contained];
 @
 
 <<[[Top_window.create()]] misc stuff>>=
-(* let xterm = xterm#xterm in *)
-let xterm = () in
-top_window.top_xterm <- Some xterm;
-
 (*
   WX_xterm.install_handler display xterm (handler top_window xterm);
   top#configure [Bindings [Key (anyKey, anyModifier), (fun _ ->
@@ -2848,10 +2842,7 @@ match frame.frm_mini_buffer with
 
 \ifallcode
 <<[[Frame.update()]] let xterm>>=
-let xterm = match top_window.top_xterm with
-  | None -> raise Not_found
-  | Some xterm -> xterm 
-in
+let graphic = Window.backend top_window in
 @
 \fi
 
@@ -2981,29 +2972,24 @@ then
 
 <<function Frame.update_line>>=
 let update_line top_window frame repr_string y = 
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
   let line_repr = frame.frm_table.(y) in
-  let xterm = match top_window.top_xterm with
-      None -> raise Not_found
-    | Some xterm -> xterm 
-  in
+  let graphic = Window.backend top_window in
   let rec iter x offset reprs =
     if frame.frm_width > x then
       match reprs with
         [] -> 
-          WX_xterm.clear_eol xterm
+          graphic.Xdraw.clear_eol 
             (x+frame.frm_xpos) (y+frame.frm_ypos)
             (frame.frm_width - x)
       | repr :: tail ->
           let len = min (frame.frm_width-x) (repr.repr_size - offset) in
-          WX_xterm.draw_string xterm
+          graphic.Xdraw.draw_string
             (x+frame.frm_xpos) (y+frame.frm_ypos)
             repr_string (repr.repr_pos+offset) len
             repr.repr_attr;
           iter (x+len) 0 tail
     else
-        WX_xterm.draw_string xterm
+        graphic.Xdraw.draw_string 
            (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
            "/" 0 1 Text.direct_attr
   in
@@ -3030,9 +3016,7 @@ let update_table top_window frame =
   let text = buf.buf_text in
 
   let start = frame.frm_start in
-  let point = frame.frm_point in
 
-  let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
   (* assert frame.frm_y_offset >= 0 *)
@@ -3222,8 +3206,8 @@ end
 <<[[Frame.update()]] redraw, scrollbar adjustments>>=
 if frame == top_window.top_active_frame then begin
   frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
-  let pos_start = get_position text frame.frm_start in
-  let pos_end   = get_position text frame.frm_end in
+  let _pos_start = get_position text frame.frm_start in
+  let _pos_end   = get_position text frame.frm_end in
 
   Common.pr2_once "Frame.update: TODO scrollbar";
   (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
@@ -3403,7 +3387,7 @@ status_major_mode frame;
 
 if status.status_modified 
 then
-  WX_xterm.draw_string xterm
+  graphic.Xdraw.draw_string 
     frame.frm_xpos (frame.frm_ypos + frame.frm_height - 1)
     status.status_string 
     0 width Text.inverse_attr
@@ -3508,7 +3492,7 @@ let _ =
 \subsection{Minibuffer display}
 
 <<[[Frame.update()]] draw minibuffer request string>>=
-WX_xterm.draw_string xterm
+graphic.Xdraw.draw_string
  0 (top_window.top_height-1)  
  request 
  0 (String.length request) Text.direct_attr
@@ -3519,10 +3503,10 @@ WX_xterm.draw_string xterm
 let clear_message top_window =
   match top_window.top_mini_buffers with
     [] -> 
-      let xterm = Window.xterm top_window in
-      WX_xterm.clear_eol xterm 
-       0 (top_window.top_height - 1) 
-       top_window.top_width; 
+      let graphic = Window.backend top_window in
+      graphic.Xdraw.clear_eol 
+        0 (top_window.top_height - 1) 
+        top_window.top_width; 
   | _ -> ()
 @
 
@@ -3629,21 +3613,18 @@ map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 
 <<function Top_window.message>>=
 let message top_window msg =
-  let xterm = Window.xterm top_window in
+  let graphic = Window.backend top_window in
   let len = String.length msg in
-  WX_xterm.draw_string xterm 0 (top_window.top_height - 1)
+  graphic.Xdraw.draw_string 0 (top_window.top_height - 1)
     msg 0 len Text.direct_attr;
-  WX_xterm.clear_eol xterm len (top_window.top_height - 1)
+  graphic.Xdraw.clear_eol len (top_window.top_height - 1)
     (top_window.top_width - len);
   match top_window.top_mini_buffers with
     [] -> (* No mini-buffer ... *) ()
   | mini_buffer :: _ -> (* one mini-buffer is active *)
-      match top_window.top_display with
-        None -> ()
-      | Some display ->
-          WX_xterm.update_displays ();
-          (* let _ = Unix.select [] [] [] 0.2 in *)
-          mini_buffer.frm_redraw <- true
+      graphic.Xdraw.update_displays ();
+      (* let _ = Unix.select [] [] [] 0.2 in *)
+      mini_buffer.frm_redraw <- true
 @
 
 
@@ -5393,7 +5374,7 @@ let window_load_buffer frame =
     (fun str -> 
       let top_window = Window.top frame.frm_window in
       let top_window = Top_window.create top_window.top_location
-          (Window.display top_window)
+          (*(Window.display top_window)*) "TODO_display"
       in
       Frame.load_file top_window.window str |> ignore
     )
@@ -5406,7 +5387,7 @@ let window_change_buffer frame =
   (fun name ->
       let top_window = Window.top frame.frm_window in
       let top_window = Top_window.create 
-          top_window.top_location (Window.display top_window) in
+          top_window.top_location "TODO_Display" in
       Frame.change_buffer top_window.window name
   )
 @
@@ -5529,7 +5510,7 @@ let modep buf minor =
 @
 
 <<constant Ebuffer.suffix_reg>>=
-let suffix_reg = Str.regexp "\(.*\)<[0-9]+>$"
+let suffix_reg = Str.regexp "\\(.*\\)<[0-9]+>$"
 @
 %$
 
@@ -5925,9 +5906,10 @@ let next_error top_frame =
           let buf = Ebuffer.read location filename (Keymap.create ()) in
 (* new frame for error buffer *)
           let frame = 
-            try find_buffer_frame location buf with Not_found ->
+            try find_buffer_frame location buf 
+            with Not_found ->
                 if frame == top_frame then
-                  let display = Window.display top_window in
+                  let display = (*Window.display top_window*)"TODO_display" in
                   let new_window = 
                     Top_window.create top_window.top_location 
                       display 
