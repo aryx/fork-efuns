@@ -12,8 +12,9 @@ let move_to col line =
   let size_y = Graphics.size_y () in
   Graphics.moveto (w * col) (size_y - h - (line * h))
   
+
 let clear_eol col line len =
-  pr2 (spf "WX_xterm.clear_eol: %d %d %d" col line len);
+  pr2 (spf "clear_eol: %d %d %d" col line len);
   move_to col line;
   let (w,h) = Graphics.text_size "d" in
   Graphics.set_color Graphics.white;
@@ -22,7 +23,7 @@ let clear_eol col line len =
   ()
 
 let draw_string col line  str  offset len   attr =
-  pr2 (spf "WX_xterm.draw_string %d %d %s %d %d %d"
+  pr2 (spf "draw_string %d %d %s %d %d %d"
          col line str offset len attr);
   let (w,h) = Graphics.text_size "d" in
   move_to col line;
@@ -35,7 +36,7 @@ let draw_string col line  str  offset len   attr =
   ()
 
 let update_displays () =
-  pr2 ("WX_xterm.update_displays")
+  pr2 ("update_displays")
 
 let backend = { Xdraw. clear_eol; draw_string; update_displays }
 
@@ -48,24 +49,9 @@ let init location displayname =
   Graphics.open_graph (spf " ");
   Graphics.set_window_title displayname;
 
-  (* compute font_size and adjust size of window, or reverse
-   * by setting size of font depending on size of window ?
-   *)
-(*
-  let (h, w) = Graphics.textsize "aqd" in
-  h := 
-*)
-
   let display = "" in
   let top_window = Top_window.create location display in
   top_window.graphics <- Some backend;
-
-(*
-  WX_xterm.setHighlight display 2;
-  Dyneval.init true;
-  Eval.load top_window "Efunsrc";
-  Efuns.init location; (* launch second hooks *)
-*)
 
   let _ = Interactive.create_bindings location in
 
@@ -73,33 +59,10 @@ let init location displayname =
   !init_files +> List.iter (fun name ->
     let _ = Frame.load_file top_window.window name in ()
   );
-  !init_frames +> List.iter (fun str -> 
-    let top_window = Top_window.create top_window.top_location
-      (*(Window.display top_window) *) "TODO_display"
-    in
-    let _ = Frame.load_file top_window.window str in ()
-  );
-
   Top_window.update_display location;
-
-(*  
-  if not (Sys.file_exists (Filename.concat Utils.homedir ".efunsrc")) then
-    begin
-      Printf.printf "Saving .efunsrc after install"; print_newline ();
-      Options.save ();
-    end;
-*)
-
-(*  if !check then exit 0;   *)
 
   (* Main loop *)
   let rec loop () =
-(*
-    try
-      WX_types.loop ()
-    with
-      SigInt -> loop ()
-*)
     Graphics.loop_at_exit [
       Graphics.Button_down;
       Graphics.Key_pressed;

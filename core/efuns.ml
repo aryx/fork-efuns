@@ -570,12 +570,12 @@ let _ =
    (*x: [[main()]] command line options *)
    "-check", Arg.Set check, ": only for testing";
    (*x: [[main()]] command line options *)
-     "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
-   (*x: [[main()]] command line options *)
      "-q", Arg.Set no_init,": Don't load init files";
    (*x: [[main()]] command line options *)
      "-I",Arg.String (fun s -> load_path =:= 
          (string_to_path s) @ !!load_path), "<path>: Load Path";
+   (*x: [[main()]] command line options *)
+     "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
    (*e: [[main()]] command line options *)
  ] 
  (fun name -> init_files := name :: !init_files) 

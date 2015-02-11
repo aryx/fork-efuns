@@ -293,15 +293,6 @@ let _ =
   (* C-x map *)
   define_action "change_font"  change_font;
   (*x: misc actions *)
-  (*s: window managment actions *)
-  (* C-x 5 map *)
-  define_action "window_load_buffer"  window_load_buffer;
-  (* C-x 5 map *)
-  define_action "window_change_buffer"  window_change_buffer;
-  (* C-x 5 map *)
-  define_action "delete_window"  Top_window.delete_window;
-  (*e: window managment actions *)
-  (*x: misc actions *)
   (* C-h map *)
   define_action "help_bindings"  Frame.bindings_help;
   (*x: misc actions *)
@@ -316,6 +307,15 @@ let _ =
   define_action "next_error"  next_error;
   (*x: misc actions *)
   define_action "compile" compile;
+  (*x: misc actions *)
+  (*s: window managment actions *)
+  (* C-x 5 map *)
+  define_action "window_load_buffer"  window_load_buffer;
+  (* C-x 5 map *)
+  define_action "window_change_buffer"  window_change_buffer;
+  (* C-x 5 map *)
+  define_action "delete_window"  Top_window.delete_window;
+  (*e: window managment actions *)
   (*e: misc actions *)
   (*e: actions definitions *)
   ()

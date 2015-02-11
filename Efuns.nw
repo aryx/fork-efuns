@@ -594,6 +594,7 @@ let create_without_top location window mini buf =
 
 
 \section{[[Window]]}
+
 % It's a window in emacs terminology. And it's really
 % just the geometry part.
 
@@ -989,9 +990,6 @@ define_action "change_font"  change_font;
 %(*  define_action "load_library" load_library;*)
 %(*  define_action "start_server" Server.start;  *)
 
-<<misc actions>>=
-<<window managment actions>>
-@
 
 
 \section{Keyboard [[Map]]}
@@ -1601,21 +1599,7 @@ let check = ref false
 "-check", Arg.Set check, ": only for testing";
 @
 
-
-
-
-
-<<constant Efuns.init_frames>>=
-let init_frames = ref []
-@
-<<[[main()]] command line options>>=
-  "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
-@
-%todo: remove? seems related to original notion of emacs frames
-% that is independent emacs windows
-
 % (*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
-
 
 
 
@@ -5259,6 +5243,27 @@ let delete_frame frame =
         Frame.active frame
 @
 
+
+
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_killed : bool;
+@
+
+%XXX
+% Minibuffer.kill | ??? -> <>
+<<function Frame.kill>>=
+let kill frame = 
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  frame.frm_killed <- true;
+  buf.buf_shared <- buf.buf_shared - 1;
+  Text.remove_point text buf.buf_point;
+  Text.remove_point text buf.buf_start;
+  buf.buf_point <- frame.frm_point;
+  buf.buf_start <- frame.frm_start
+@
+
 \section{Navigating windows}
 
 <<frame navigation keys>>=
@@ -5344,91 +5349,6 @@ let rec prev f window =
       | _ -> ()
 @
 
-
-
-\section{Windows windows XXX}
-
-<<constant Keymap.n_5>>=
-let n_5 = (NormalMap, Char.code '5')
-@
-
-<<window managment keys>>=
-[c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
-[c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
-[c_x; n_5; NormalMap, Char.code '0'], "delete_window";
-@
-
-<<window managment actions>>=
-(* C-x 5 map *)
-define_action "window_load_buffer"  window_load_buffer;
-(* C-x 5 map *)
-define_action "window_change_buffer"  window_change_buffer;
-(* C-x 5 map *)
-define_action "delete_window"  Top_window.delete_window;
-@
-
-
-<<function Complex.window_load_buffer>>=
-let window_load_buffer frame = 
-  select_filename frame "Find file: " 
-    (fun str -> 
-      let top_window = Window.top frame.frm_window in
-      let top_window = Top_window.create top_window.top_location
-          (*(Window.display top_window)*) "TODO_display"
-      in
-      Frame.load_file top_window.window str |> ignore
-    )
-@
-
-<<function Complex.window_change_buffer>>=
-let window_change_buffer frame =
-  select_buffer frame "Switch to buffer in new frame: " 
-    (get_previous_frame ())
-  (fun name ->
-      let top_window = Window.top frame.frm_window in
-      let top_window = Top_window.create 
-          top_window.top_location "TODO_Display" in
-      Frame.change_buffer top_window.window name
-  )
-@
-
-<<function Top_window.delete_window>>=
-let delete_window frame =
-  failwith "Top_window:delete_window: TODO"
-(*
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  if List.length location.top_windows > 1 then
-    let xterm = Window.xterm top_window in
-    top_window.top_appli#destroy;
-    WX_xterm.destroy_window xterm;
-    Frame.kill_all top_window.window;
-    location.top_windows <- Utils.list_remove location.top_windows
-      top_window
-*)
-@
-
-<<function Frame.kill_all>>=
-let kill_all window =
-  Window.iter kill window
-@
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_killed : bool;
-@
-
-%XXX
-<<function Frame.kill>>=
-let kill frame = 
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  frame.frm_killed <- true;
-  buf.buf_shared <- buf.buf_shared - 1;
-  Text.remove_point text buf.buf_point;
-  Text.remove_point text buf.buf_start;
-  buf.buf_point <- frame.frm_point;
-  buf.buf_start <- frame.frm_start
-@
 
 
 \chapter{Major Modes}
@@ -6383,6 +6303,98 @@ let _ =
 <<constant Efuns.t>>=
 (*let t = x_res*)
 @
+
+
+
+
+\section{Multi top windows}
+% called actually frame in emacs terminology, but confusing I think
+
+% I don't think this feature is very useful.
+
+<<misc actions>>=
+<<window managment actions>>
+@
+
+<<constant Keymap.n_5>>=
+let n_5 = (NormalMap, Char.code '5')
+@
+
+<<window managment keys>>=
+[c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
+[c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
+[c_x; n_5; NormalMap, Char.code '0'], "delete_window";
+@
+
+<<window managment actions>>=
+(* C-x 5 map *)
+define_action "window_load_buffer"  window_load_buffer;
+(* C-x 5 map *)
+define_action "window_change_buffer"  window_change_buffer;
+(* C-x 5 map *)
+define_action "delete_window"  Top_window.delete_window;
+@
+
+
+<<function Complex.window_load_buffer>>=
+let window_load_buffer frame = 
+  select_filename frame "Find file: " 
+    (fun str -> 
+      let top_window = Window.top frame.frm_window in
+      let top_window = Top_window.create top_window.top_location
+          (*(Window.display top_window)*) "TODO_display"
+      in
+      Frame.load_file top_window.window str |> ignore
+    )
+@
+
+<<function Complex.window_change_buffer>>=
+let window_change_buffer frame =
+  select_buffer frame "Switch to buffer in new frame: " 
+    (get_previous_frame ())
+  (fun name ->
+      let top_window = Window.top frame.frm_window in
+      let top_window = Top_window.create 
+          top_window.top_location "TODO_Display" in
+      Frame.change_buffer top_window.window name
+  )
+@
+
+<<function Top_window.delete_window>>=
+let delete_window frame =
+  failwith "Top_window:delete_window: TODO"
+(*
+  let top_window = Window.top frame.frm_window in
+  let location = top_window.top_location in
+  if List.length location.top_windows > 1 then
+    let xterm = Window.xterm top_window in
+    top_window.top_appli#destroy;
+    WX_xterm.destroy_window xterm;
+    Frame.kill_all top_window.window;
+    location.top_windows <- Utils.list_remove location.top_windows
+      top_window
+*)
+@
+
+<<function Frame.kill_all>>=
+let kill_all window =
+  Window.iter kill window
+@
+
+
+<<constant Efuns.init_frames>>=
+let init_frames = ref []
+@
+<<[[main()]] command line options>>=
+  "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
+@
+%todo: remove? seems related to original notion of emacs frames
+% that is independent emacs windows
+
+
+
+
+
 
 \chapter{Conclusion}
 
