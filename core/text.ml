@@ -122,8 +122,9 @@ type text = {
     (*x: [[Text.text]] other fields *)
     (* g for gap *)
     mutable text_gpoint : int;
-    mutable text_gline : int;
     mutable text_gsize : int;
+
+    mutable text_gline : int;
     (*x: [[Text.text]] other fields *)
     mutable text_attrs : int array;
     (*x: [[Text.text]] other fields *)

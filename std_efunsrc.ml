@@ -654,7 +654,7 @@ let _ =
   (*s: [[Std_efunsrc]] help menu setup *)
   help_menu := [|
     "Key Bindings", (fun frame ->
-        Frame.change_buffer frame.frm_window "*bindings*"
+      Frame.change_buffer frame.frm_window "*bindings*"
     );
     "About Efuns", (fun frame ->
       Frame.change_buffer frame.frm_window "*help*"

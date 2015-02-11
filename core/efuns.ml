@@ -95,7 +95,6 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_map_partial : bool;
     (*x: [[Efuns.buffer]] other fields *)
-    (* see also Loc.vars *)    
     mutable buf_vars : vars;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_last_saved : int;
@@ -158,6 +157,13 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_location : location;
     (*x: [[Efuns.frame]] other fields *)
+    (* 0 for no scrollbar, 2 for scrollbar *)
+    mutable frm_has_scrollbar : int;
+    (* 0 for minibuffer, 1 for normal frame *)
+    mutable frm_has_status_line : int;
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_mini_buffer : string option;
+    (*x: [[Efuns.frame]] other fields *)
     (* first point of the first buffer-line on screen *)
     mutable frm_start : Text.point;
     (* last point on screen, -1 if modified *)
@@ -165,21 +171,18 @@ and frame  =
     (* offset(+/-) of screen-lines after frm_start *)
     mutable frm_y_offset : int;
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_mini_buffer : string option;
-    (*x: [[Efuns.frame]] other fields *)
-    (* 0 for no scrollbar, 2 for scrollbar *)
-    mutable frm_has_scrollbar : int;
-    (* 0 for minibuffer, 1 for normal frame *)
-    mutable frm_has_status_line : int;
-    (*x: [[Efuns.frame]] other fields *)
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_force_start : bool;
-    mutable frm_x_offset : int;
-    mutable frm_cutline : int; (* max_int for no, else length *)
-    mutable frm_table : line_repr array;
     mutable frm_redraw : bool;    
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_force_start : bool;
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_x_offset : int;
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_cutline : int; (* max_int for no, else length *)
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_table : line_repr array;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_status : status;    
     (*x: [[Efuns.frame]] other fields *)
@@ -552,12 +555,11 @@ let check = ref false
 let _ =
  Arg.parse [
    (*s: [[main()]] command line options *)
-   "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
-   "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
-
-   "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
    "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
    "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+   "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
+   "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
+   "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
    (*x: [[main()]] command line options *)
    "-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
    "--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
@@ -607,11 +609,11 @@ let background = define_option ["background"] "" string_option "black"
   
 (*s: toplevel Efuns._5 *)
 let _ =
+  (match !width_opt with None -> () | Some color -> width =:= color);
+  (match !height_opt with None -> () | Some color -> height =:= color);
   (match !fg_opt with None -> () | Some color -> foreground =:= color);
   (match !bg_opt with None -> () | Some color -> background =:= color);
-  (match !font_opt with None -> () | Some color -> font =:= color);
-  (match !width_opt with None -> () | Some color -> width =:= color);
-  (match !height_opt with None -> () | Some color -> height =:= color)  
+  (match !font_opt with None -> () | Some color -> font =:= color)
 (*e: toplevel Efuns._5 *)
 
 (*s: global Efuns.actions *)

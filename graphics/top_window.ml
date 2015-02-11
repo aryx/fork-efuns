@@ -311,41 +311,39 @@ let handler top_window xterm event =
   let location = top_window.top_location in
   Mutex.lock location.loc_mutex;
   try
-    begin
-      match event with
-      (*s: [[Top_window.handler()]] match event cases *)
-      |  WX_xterm.XTKeyPress (modifiers, _s, keysym) ->
-            handle_key top_window modifiers keysym
-      (*x: [[Top_window.handler()]] match event cases *)
-      | WX_xterm.XTButtonPress (modifiers,button,x,y) -> 
-          mouse_x := x;
-          mouse_y := y;
-          handle_key top_window modifiers (XK.xk_Pointer_Button_Dflt + button)
-      (*x: [[Top_window.handler()]] match event cases *)
-      | WX_xterm.XTMouseMotion (modifiers,button,x,y) ->
-          mouse_x := x;
-          mouse_y := y;
-          handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
-      (*x: [[Top_window.handler()]] match event cases *)
-      | WX_xterm.XTResize (new_width, new_height) ->
-          resize_window top_window.window 0 0 new_width (new_height - 1);
-          List.iter
-            (fun frame -> 
-              let window = frame.frm_window in
-              window.win_ypos <- new_height - 1;
-              window.win_width <- new_width;
-              Frame.install window frame) top_window.top_mini_buffers;
-          top_window.top_width <- new_width;
-          top_window.top_height <- new_height;
-          clear_message top_window;
-          update_display top_window.top_location
-      (*e: [[Top_window.handler()]] match event cases *)
-    end;
+    (match event with
+    (*s: [[Top_window.handler()]] match event cases *)
+    | WX_xterm.XTKeyPress (modifiers, _s, keysym) ->
+        handle_key top_window modifiers keysym
+    (*x: [[Top_window.handler()]] match event cases *)
+    | WX_xterm.XTButtonPress (modifiers,button,x,y) -> 
+        mouse_x := x;
+        mouse_y := y;
+        handle_key top_window modifiers (XK.xk_Pointer_Button_Dflt + button)
+    (*x: [[Top_window.handler()]] match event cases *)
+    | WX_xterm.XTMouseMotion (modifiers,button,x,y) ->
+        mouse_x := x;
+        mouse_y := y;
+        handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
+    (*x: [[Top_window.handler()]] match event cases *)
+    | WX_xterm.XTResize (new_width, new_height) ->
+        resize_window top_window.window 0 0 new_width (new_height - 1);
+        List.iter
+          (fun frame -> 
+            let window = frame.frm_window in
+            window.win_ypos <- new_height - 1;
+            window.win_width <- new_width;
+            Frame.install window frame) top_window.top_mini_buffers;
+        top_window.top_width <- new_width;
+        top_window.top_height <- new_height;
+        clear_message top_window;
+        update_display top_window.top_location
+    (*e: [[Top_window.handler()]] match event cases *)
+    );
     Mutex.unlock location.loc_mutex;
-  with
-    e ->   
-      Mutex.unlock location.loc_mutex;
-      raise e
+  with e ->   
+    Mutex.unlock location.loc_mutex;
+    raise e
 (*e: function Top_window.handler *)
 
 
@@ -393,11 +391,10 @@ let menus = define_option ["menus"] ""
 let file_menu = define_option ["file_menu"] "" (list_option string2_option) []
 (*e: constant Top_window.file_menu *)
 (*s: constant Top_window.edit_menu *)
-let edit_menu = define_option ["edit_menu"] ""
-    (list_option string2_option) []
+let edit_menu = define_option ["edit_menu"] "" (list_option string2_option) []
 (*e: constant Top_window.edit_menu *)
 (*s: constant Top_window.help_menu *)
-let help_menu = ref ([| |]: (string * (frame -> unit)) array)
+let help_menu = ref ([| |]: (string * action) array)
 (*e: constant Top_window.help_menu *)
 
   
@@ -457,6 +454,7 @@ let create location display =
     );
   (*e: [[Top_window.create()]] optional scrollbar setup *)
 
+  (* adjust what Window.create_at_top could not do *)
   frame.frm_window.win_up <- TopWindow top_window;
   location.top_windows <- top_window :: location.top_windows;
 

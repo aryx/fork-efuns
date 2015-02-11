@@ -274,6 +274,9 @@ License.
 
 \section{Software architecture}
 
+%TODO: figure: show graphical window first! so can see concepts
+% of status line, minibuffer, frames, etc!
+
 % the world, location that then encapsulate
 %  windows/frames, with buffers, with Text inside
 %
@@ -404,7 +407,7 @@ and buffer =
 %   see in next chapters
 
 
-% point is an important notion? y?
+% point is an important notion!
 <<type Text.point>>=
 and point = {
     mutable point : int;
@@ -413,6 +416,9 @@ and point = {
 @
 % not point_x ?
 % it's a charpos or a line/col?
+% I think it's a charpos, but you also maintain the line of this
+% charpos to index in the line array? But what you
+% really care is point.point
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_point : Text.point;
@@ -433,7 +439,7 @@ mutable buf_start : Text.point;
 mutable buf_modified : int;
 @
 % diff with text_modified? seems to be about modification of the
-% frame property itself, not the underlying buffer
+% buffer property itself, not the underlying text
 
 
 <<function Ebuffer.create>>=
@@ -505,8 +511,10 @@ and frame  =
 %dead: mutable frm_force_point : bool;
 %dead: mutable frm_force_cursor : bool;
 %coordinates? seems redundant with frm.frm__window info no?
-% xpos are in line x col dimentions, same for width and height,
-% not pixels.
+%xpos are in line x col dimentions, same for width and height,
+% not pixels!
+%later: if decide to have variable size fonts we'll have to revisit
+% this no? emacs 21 did that?
 
 <<[[Efuns.frame]] other fields>>=
 (* insert point *)
@@ -545,6 +553,7 @@ let create_without_top location window mini buf =
       frm_start = frm_start;
       frm_end = frm_end;
       frm_point = point;
+
       frm_x_offset = 0;
       frm_y_offset = 0;
 
@@ -555,6 +564,8 @@ let create_without_top location window mini buf =
 
       frm_last_text_updated = 0;
       frm_last_buf_updated = 0;
+
+      frm_redraw = true;
 
       frm_has_scrollbar = 0;
       frm_has_status_line = 1;
@@ -568,9 +579,9 @@ let create_without_top location window mini buf =
     
       frm_force_start = false;
       frm_cutline = width - 1;
-      frm_table = [||];
       frm_killed = false;
-      frm_redraw = true;
+
+      frm_table = [||];
 
       frm_location = location;
     } 
@@ -627,6 +638,10 @@ and window_up =
   Window of window
 | TopWindow of top_window
 @
+%less: this also makes the structures mutually recursive!
+% from a top_window -> window and can get back the top_window back
+%todo: if we were using globals, we would need that? would need
+% create_at_top?
 
 
 <<function Window.top>>=
@@ -657,24 +672,9 @@ let create mini up_window xpos ypos width height =
   win_mini = mini;
   }
 @
+% will see mini later
 
 
-
-<<function Window.create_at_top>>=
-let create_at_top xpos ypos width height =
-  let rec window = {
-    win_xpos = xpos;
-    win_ypos = ypos;
-    win_width = width;
-    win_height = height;
-
-    win_down = NoFrame (); 
-    win_up = Window window;
-
-    win_mini = false;
-  } in
-  window
-@
 
 
 \section{The [[Top_window]]}
@@ -799,6 +799,12 @@ loc_mutex : Mutex.t;
 % have multiple threads? need mutual exclusion?
 
 
+
+%TODO: figure: showing relations between all of that.
+% it's a bit complicated because of many fields that
+% introduce cycles (mutually recursive data structures, e.g.
+% with location pointers, top_window pointer),
+% so does not only go down, it also can go back up.
 
 \section{[[Action]], and [[actions]]}
 
@@ -1324,7 +1330,6 @@ let init_global_map location =
 % global settings. Configurable editor!
 
 <<[[Efuns.buffer]] other fields>>=
-(* see also Loc.vars *)    
 mutable buf_vars : vars;
 @
 % vars defined in ? local.mli?
@@ -1342,7 +1347,6 @@ loc_vars : vars;
 <<function Efuns.set_global>>=
 let set_global location var value = Local.set location.loc_vars var value
 @
-
 <<function Efuns.set_local>>=
 let set_local buf var value = Local.set buf.buf_vars var value
 @
@@ -1351,7 +1355,6 @@ let set_local buf var value = Local.set buf.buf_vars var value
 let get_global location var = Local.get location.loc_vars var
 @
 %todo: put the type of the .mli here? subtle signature. polymorphic vars!
-
 <<function Efuns.get_local>>=
 let get_local buf var = Local.get buf.buf_vars var
 @
@@ -1480,6 +1483,12 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 @
 % use
 
+
+
+
+
+
+
 \chapter{[[main()]]}
 % there is actually no really main() in ocaml, instead
 % a list of toplevels doing stuff (in the order of the linking)
@@ -1489,7 +1498,6 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 <<constant Efuns.width>>=
 let width = define_option ["width"] "" int_option 80
 @
-
 <<constant Efuns.height (core/efuns.ml)>>=
 let height = define_option ["height"] "" int_option 25
 @
@@ -1502,7 +1510,6 @@ let height = define_option ["height"] "" int_option 25
 <<constant Efuns.foreground>>=
 let foreground = define_option ["foreground"] "" string_option "white"
 @
-
 <<constant Efuns.background>>=
 let background = define_option ["background"] "" string_option "black"
 @
@@ -1541,40 +1548,38 @@ let _ =
 <<constant Efuns.width_opt>>=
 let width_opt = ref None
 @
-
 <<constant Efuns.height_opt>>=
 let height_opt = ref None
+@
+
+<<constant Efuns.fg_opt>>=
+let fg_opt = ref None
+@
+<<constant Efuns.bg_opt>>=
+let bg_opt = ref None
 @
 
 <<constant Efuns.font_opt>>=
 let font_opt = ref None
 @
 
-<<constant Efuns.fg_opt>>=
-let fg_opt = ref None
-@
-
-<<constant Efuns.bg_opt>>=
-let bg_opt = ref None
-@
 
 % actually it's in Efun._3
 <<[[main()]] command line options>>=
-"-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
-"-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
-
-"-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
 "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
 "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+"-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
+"-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
+"-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
 @
 
 <<toplevel Efuns._5>>=
 let _ =
+  (match !width_opt with None -> () | Some color -> width =:= color);
+  (match !height_opt with None -> () | Some color -> height =:= color);
   (match !fg_opt with None -> () | Some color -> foreground =:= color);
   (match !bg_opt with None -> () | Some color -> background =:= color);
-  (match !font_opt with None -> () | Some color -> font =:= color);
-  (match !width_opt with None -> () | Some color -> width =:= color);
-  (match !height_opt with None -> () | Some color -> height =:= color)  
+  (match !font_opt with None -> () | Some color -> font =:= color)
 @
 
 
@@ -1624,7 +1629,6 @@ let no_init = ref false
 <<[[main()]] command line options>>=
   "-q", Arg.Set no_init,": Don't load init files";
 @
-
 
 
 % see appendix on configuration file library
@@ -1767,6 +1771,7 @@ let create location display =
   in
   <<[[Top_window.create()]] optional scrollbar setup>>
 
+  (* adjust what Window.create_at_top could not do *)
   frame.frm_window.win_up <- TopWindow top_window;
   location.top_windows <- top_window :: location.top_windows;
 
@@ -1775,10 +1780,14 @@ let create location display =
 
   top_window
 @
-% loc_height -1 for the minibuffer.
-% top_mini_buffers is empty at first, the minibuffer is created
-% on the fly when do M-x, but before that it does not really
-% exist (hmm what about Top_window.message() though?)
+% a few notes:
+% - loc_height -1 for the minibuffer.
+% - top_mini_buffers is empty at first, the minibuffer is created
+%   on the fly when do M-x, but before that it does not really
+%    exist (hmm what about Top_window.message() though?)
+% - we use create_without_top() because mutually recursive :) we need
+%   an active frame to create a top_window, and we need a top_window
+%   for from.frm_window.win_up.
 
 %(*
 %      top_term = xterm;
@@ -1787,6 +1796,7 @@ let create location display =
 %      top_appli = top;
 %      top_scrollbar = ady;
 %*)
+
 
 
 
@@ -1826,6 +1836,31 @@ INRIA Rocquencourt
 %See changes in "^ Version.efuns_lib ^"/Changes
 %"
 %*)
+
+
+
+% Top_window.create -> ()
+<<function Window.create_at_top>>=
+let create_at_top xpos ypos width height =
+  let rec window = {
+    win_xpos = xpos;
+    win_ypos = ypos;
+    win_width = width;
+    win_height = height;
+
+    win_down = NoFrame (); 
+    win_up = Window window;
+
+    win_mini = false;
+  } in
+  window
+@
+% let rec!! because it's used to bootstrap!
+%less: could do without if were defining window, frame, and top_window
+% with a 'let rec ... and ...'?
+% or if were using globals for top_window, would need that? why
+% we need the win_up field that makes things mutually recursive and
+% slightly complicated?
 
 
 <<[[Top_window.create()]] create graphical window with right dimensions>>=
@@ -1899,15 +1934,13 @@ let handler top_window xterm event =
   let location = top_window.top_location in
   Mutex.lock location.loc_mutex;
   try
-    begin
-      match event with
-      <<[[Top_window.handler()]] match event cases>>
-    end;
+    (match event with
+    <<[[Top_window.handler()]] match event cases>>
+    );
     Mutex.unlock location.loc_mutex;
-  with
-    e ->   
-      Mutex.unlock location.loc_mutex;
-      raise e
+  with e ->   
+    Mutex.unlock location.loc_mutex;
+    raise e
 @
 %old: was using top_window.top_location.loc_mutex in 2 cases of 3
 % more consistent to always use the same form
@@ -1918,8 +1951,8 @@ let handler top_window xterm event =
 \subsection{[[Top_window.handle_key()]]}
 
 <<[[Top_window.handler()]] match event cases>>=
-|  WX_xterm.XTKeyPress (modifiers, _s, keysym) ->
-      handle_key top_window modifiers keysym
+| WX_xterm.XTKeyPress (modifiers, _s, keysym) ->
+    handle_key top_window modifiers keysym
 @
 %  (*
 %    if (keysym < XK.xk_Shift_L || keysym > XK.xk_Hyper_R)
@@ -1970,7 +2003,7 @@ let handle_key top_window modifiers keysym =
 
   update_display top_window.top_location
 @
-% update_display again!
+% update_display() again!! each key down trigger a redisplay action
 % will see try_map() later in keyboard section
 
 
@@ -1986,8 +2019,8 @@ match () with
 
 
 
-% so for now remains Frame.update, and Top_window.try_map
-% which are essential to understand.
+% so for now remains Frame.update(), and Top_window.try_map()
+% which are big pieces to understand that we have not seen.
 
 \chapter{Text Managment}
 
@@ -2169,10 +2202,10 @@ and line_repr =
 mutable text_points : point list;
 @
 
-% there are list of points maintained by the Text itself, why?
-% because of gap things can move so you need to update all
-% the points? So need to create point by using specific
-% API that update this list of points
+% There are a list of points maintained by the Text itself. Why?
+% because the gap can move so you need to update all
+% the points references. So need to create points by using specific
+% APIs that maintain somewhere this list of points.
 
 
 <<function Text.add_point>>=
@@ -2207,10 +2240,6 @@ let remove_point tree p =
 @
 
 
-
-
-
-
 <<function Text.goto_point>>=
 let goto_point text p1 p2 =
   p1.point <- p2.point;
@@ -2225,8 +2254,9 @@ let goto_point text p1 p2 =
 <<[[Text.text]] other fields>>=
 (* g for gap *)
 mutable text_gpoint : int;
-mutable text_gline : int;
 mutable text_gsize : int;
+
+mutable text_gline : int;
 @
 % rename gpoint? it's not really a point, or rename
 % gline to gpoint_y? more consistent?
@@ -2718,8 +2748,7 @@ let exit_efuns frame =
 \subsection{Edit menu}
 
 <<constant Top_window.edit_menu>>=
-let edit_menu = define_option ["edit_menu"] ""
-    (list_option string2_option) []
+let edit_menu = define_option ["edit_menu"] "" (list_option string2_option) []
 @
 
 <<[[Std_efunsrc]] edit menu setup>>=
@@ -2743,14 +2772,14 @@ if !!edit_menu = [] then begin
 \subsection{Help menu}
 
 <<constant Top_window.help_menu>>=
-let help_menu = ref ([| |]: (string * (frame -> unit)) array)
+let help_menu = ref ([| |]: (string * action) array)
 @
 % this one is not configurable apparently
 
 <<[[Std_efunsrc]] help menu setup>>=
 help_menu := [|
   "Key Bindings", (fun frame ->
-      Frame.change_buffer frame.frm_window "*bindings*"
+    Frame.change_buffer frame.frm_window "*bindings*"
   );
   "About Efuns", (fun frame ->
     Frame.change_buffer frame.frm_window "*help*"
@@ -2782,20 +2811,30 @@ help_menu := [|
 
 % the redisplay function!!!
 
-<<[[Efuns.frame]] other fields>>=
-(* first point of the first buffer-line on screen *)
-mutable frm_start : Text.point;
-(* last point on screen, -1 if modified *)
-mutable frm_end : Text.point;
-(* offset(+/-) of screen-lines after frm_start *)
-mutable frm_y_offset : int;
-@
 
+\subsection{[[Frame.update()]]}
 
+% (main -> Graphics.init | event loop -> ...) -> Top_window.update_display -> <>
+% called for each frame (including the minibuffer's frame when in use)
+<<function Frame.update>>=
+let update top_window frame =
+  let buf =  frame.frm_buffer in
+  let text = buf.buf_text in
 
+  let point = frame.frm_point in
 
-<<[[Efuns.frame]] other fields>>=
-mutable frm_mini_buffer : string option;
+  let width = frame.frm_width - frame.frm_has_scrollbar in
+  let height = frame.frm_height - frame.frm_has_status_line in
+
+  <<[[Frame.update()]] if buf sync>>
+  if
+    <<[[Frame.update()]] conditions for redraw>>
+  then
+    begin
+      <<[[Frame.update()]] redraw>>
+    end;
+
+  <<[[Frame.update()]] draw status line or minibuffer>>
 @
 
 <<[[Efuns.frame]] other fields>>=
@@ -2807,27 +2846,193 @@ mutable frm_has_status_line : int;
 
 
 <<[[Efuns.frame]] other fields>>=
+mutable frm_mini_buffer : string option;
+@
+
+<<[[Frame.update()]] draw status line or minibuffer>>=
+<<[[Frame.update()]] let xterm>>
+match frame.frm_mini_buffer with
+| None -> 
+    let status = frame.frm_status in
+    status_line frame (point_line text frame.frm_point);
+    status_col frame  (point_col text frame.frm_point);
+    status_modified frame (version text <> buf.buf_last_saved);
+    status_name frame buf.buf_name;
+    status_major_mode frame;
+    if status.status_modified then
+
+      WX_xterm.draw_string xterm
+        frame.frm_xpos (frame.frm_ypos + frame.frm_height - 1)
+        status.status_string 
+        0 width Text.inverse_attr
+| Some request ->
+      WX_xterm.draw_string xterm
+       0 (top_window.top_height-1)  
+       request 
+       0 (String.length request) Text.direct_attr
+@
+
+<<[[Frame.update()]] let xterm>>=
+let xterm = match top_window.top_xterm with
+  | None -> raise Not_found
+  | Some xterm -> xterm 
+in
+@
+
+
+
+
+
+
+<<[[Frame.update()]] conditions for redraw>>=
+<<[[Frame.update()]] conditions for redraw, point outside frame>>
+<<[[Frame.update()]] conditions for redraw, buffer modified>>
+<<[[Frame.update()]] conditions for redraw, forced redraw>>
+@
+
+
+<<[[Efuns.frame]] other fields>>=
+(* first point of the first buffer-line on screen *)
+mutable frm_start : Text.point;
+(* last point on screen, -1 if modified *)
+mutable frm_end : Text.point;
+(* offset(+/-) of screen-lines after frm_start *)
+mutable frm_y_offset : int;
+@
+
+
+<<[[Frame.update()]] conditions for redraw, point outside frame>>=
+(point > frame.frm_end)  || 
+(point < frame.frm_start) ||
+@
+% > ?? because use the first field anyway?
+
+
+
+
+
+
+<<[[Efuns.frame]] other fields>>=
 mutable frm_last_text_updated : int;
 mutable frm_last_buf_updated : int;
+@
+
+<<[[Frame.update()]] conditions for redraw, buffer modified>>=
+(version text <> frame.frm_last_text_updated) ||
+(buf.buf_modified <> frame.frm_last_buf_updated) ||
+@
+
+<<[[Frame.update()]] conditions for redraw, forced redraw>>=
+frame.frm_redraw
+@
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_redraw : bool;    
 @
 % diff?
 
 
-<<[[Efuns.frame]] other fields>>=
-mutable frm_force_start : bool;
-mutable frm_x_offset : int;
-mutable frm_cutline : int; (* max_int for no, else length *)
-mutable frm_table : line_repr array;
-mutable frm_redraw : bool;    
+<<[[Frame.update()]] redraw>>=
+let start = frame.frm_start in
+let start_c = point_to_cursor buf start in
+if start_c > 0 then begin
+  frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
+  let _ = Text.bmove text start start_c in
+  ()
+end;
+
+let point_c = point_to_cursor buf point in
+if point_c < frame.frm_x_offset then begin
+    frame.frm_x_offset <- max (point_c - width / 2) 0;
+    frame.frm_redraw <- true;
+end else if frame.frm_cutline = max_int && 
+  (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
+  then begin
+    frame.frm_x_offset <- point_c - (width / 2);
+    frame.frm_redraw <- true;
+end;
+
+update_table top_window frame;
+
+if (frame.frm_end < point)  || (start > point) then begin
+    if frame.frm_force_start then begin
+      let x,y = 
+        cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
+      in
+      goto_line text frame.frm_point y;
+      let _ = Text.fmove text frame.frm_point x in
+      ()
+    end else begin
+      goto_point text start point;
+      frame.frm_y_offset <- - height / 2;
+      let start_c = point_to_cursor buf start in
+      if start_c > 0 then begin
+          frame.frm_y_offset <- 
+            frame.frm_y_offset - start_c / frame.frm_cutline;
+          let _ = Text.bmove text start start_c in
+          ()
+      end;
+      update_table top_window frame;
+   end
+end;
+
+if frame == top_window.top_active_frame then begin
+  frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
+  let pos_start = get_position text frame.frm_start in
+  let pos_end = get_position text frame.frm_end in
+
+  Common.pr2_once "Frame.update: TODO scrollbar";
+  (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
+
+     (size text);
+  *)
+end;
+
+frame.frm_last_text_updated <- version text;
+frame.frm_last_buf_updated <- buf.buf_modified;
+
+frame.frm_force_start <- false;
+
+for y = 0 to height - 1 do
+  let line = frame.frm_table.(y) in
+  if not ((line.repr_prev_reprs == line.repr_reprs) &&
+      (line.repr_prev_offset == line.repr_offset)) 
+    || frame.frm_redraw
+  then
+    begin
+      line.repr_prev_reprs <- line.repr_reprs;
+      line.repr_prev_offset <- line.repr_offset;
+      update_line top_window frame line.repr_line.repr_string y;
+    end;
+done;
+frame.frm_redraw <- false
 @
 
 
-\subsection{[[Frame.update()]]}
 
 
-% (main -> Graphics.init | event loop -> ...) -> Top_window.update_display -> <>
-<<function Frame.update>>=
-let update top_window frame =
+%XXX
+<<[[Efuns.frame]] other fields>>=
+mutable frm_force_start : bool;
+@
+<<[[Efuns.frame]] other fields>>=
+mutable frm_x_offset : int;
+@
+<<[[Efuns.frame]] other fields>>=
+mutable frm_cutline : int; (* max_int for no, else length *)
+@
+
+
+
+\subsection{[[Frame.update_table()]]}
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_table : line_repr array;
+@
+
+% Top_window.update_display -> Frame.update -> <>
+<<function Frame.update_table>>=
+let update_table top_window frame =
   let buf =  frame.frm_buffer in
   let text = buf.buf_text in
 
@@ -2837,120 +3042,115 @@ let update top_window frame =
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
-  if  buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated then
-    Text.set_position text point (Text.size text); 
-  if
-    (frame.frm_end < point)  || 
-    (start > point) ||
-    (version text <> frame.frm_last_text_updated) ||
-    (buf.buf_modified <> frame.frm_last_buf_updated) ||
-    frame.frm_redraw
+  (* assert frame.frm_y_offset >= 0 *)
+  let current_n = ref (point_line text start) in
+  let current_line = ref (compute_representation buf !current_n) in
+  while frame.frm_y_offset < 0 && !current_n > 0 do
+    current_n := !current_n - 1;
+    current_line := compute_representation buf !current_n;
+    let lines = !current_line.repr_len / frame.frm_cutline in
+    frame.frm_y_offset <- frame.frm_y_offset + lines + 1;
+  done;
+  if !current_n = 0 && frame.frm_y_offset <0 then
+    frame.frm_y_offset <- 0;
+  (* assert current_line is the first line *)
+  while frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
+      && !current_n < nbre_lines text
+  do
+    frame.frm_y_offset <- frame.frm_y_offset - 
+    (!current_line.repr_len / frame.frm_cutline) - 1;
+    current_n := !current_n + 1;
+    current_line := compute_representation buf !current_n;
+  done;
+  if !current_n = nbre_lines text && 
+    frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
   then
-    begin
-      let start_c = point_to_cursor buf start in
-      if start_c > 0 then
+    frame.frm_y_offset <- !current_line.repr_len / frame.frm_cutline;
+  (* update frame.frm_start *)
+  goto_line text start !current_n; 
+  (* update frame representation *)
+  let rec iter_line y n line =
+    if y < height then
+      let reprs = List.rev line.representation in
+      if y >= 0 then
         begin
-          frame.frm_y_offset <- 
-            frame.frm_y_offset - start_c / frame.frm_cutline;
-          let _ = Text.bmove text start start_c in
-          ()
+          let line_repr = frame.frm_table.(y) in
+          line_repr.repr_line <- line;
+          line_repr.repr_y <- n;
+          line_repr.repr_x <- 0;
+          line_repr.repr_offset <- 0;
+          line_repr.repr_reprs <- reprs;
         end;
-      let point_c = point_to_cursor buf point in
-      if point_c < frame.frm_x_offset then
-        begin
-          frame.frm_x_offset <- max (point_c - width / 2) 0;
-          frame.frm_redraw <- true;
-        end
-      else
-      if frame.frm_cutline = max_int && 
-        (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
-      then
-        begin
-          frame.frm_x_offset <- point_c - (width / 2);
-          frame.frm_redraw <- true;
-        end;
-
-      update_table top_window frame;
-
-      begin
-        if (frame.frm_end < point)  || (start > point)
-        then
-          begin
-            if frame.frm_force_start then
-              let x,y = 
-                cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
-              in
-              goto_line text frame.frm_point y;
-              let _ = Text.fmove text frame.frm_point x in
-              ()
+      iter_repr frame.frm_cutline (y+1) n line reprs
+    else
+      goto_line text frame.frm_end (n-1)
+  
+  and iter_repr x y n line reprs =
+    if x < line.repr_len then
+      match reprs with
+      | repr :: tail ->
+          if repr.repr_pos <= x && 
+            repr.repr_pos + repr.repr_size > x then
+            if y = height then
+              goto_line text frame.frm_end n 
             else
               begin
-                goto_point text start point;
-                frame.frm_y_offset <- - height / 2;
-                let start_c = point_to_cursor buf start in
-                if start_c > 0 then
+                if y>= 0 then
                   begin
-                    frame.frm_y_offset <- 
-                      frame.frm_y_offset - start_c / frame.frm_cutline;
-                    let _ = Text.bmove text start start_c in
-                    ()
+                    let line_repr = frame.frm_table.(y) in
+                    line_repr.repr_line <- line;
+                    line_repr.repr_y <- n;
+                    line_repr.repr_x <- repr.repr_pos;
+                    line_repr.repr_offset <- x - repr.repr_pos;
+                    line_repr.repr_reprs <- reprs;
                   end;
-                update_table top_window frame;
-              end;
-          end
-      end;
-      if frame == top_window.top_active_frame then
-        begin
-          frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
-          let pos_start = get_position text frame.frm_start in
-          let pos_end = get_position text frame.frm_end in
+                iter_repr (x+frame.frm_cutline) (y+1) n line reprs
+              end
+          else
+            iter_repr x y n line tail
+      | _ -> 
+          let line = compute_representation buf (n + 1) in
+          iter_line (y+1) (n+1) line
+    else  
+    let line = compute_representation buf (n + 1) in
+    iter_line y (n+1) line
+  in
+  iter_line (- frame.frm_y_offset) !current_n !current_line
+@
 
-          Common.pr2_once "Frame.update: TODO scrollbar";
-          (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
+\subsection{[[Frame.update_line()]]}
 
-             (size text);
-          *)
-        end;
-      frame.frm_last_text_updated <- version text;
-      frame.frm_last_buf_updated <- buf.buf_modified;
-      frame.frm_force_start <- false;
-      for y = 0 to height - 1 do
-        let line = frame.frm_table.(y) in
-        if not ((line.repr_prev_reprs == line.repr_reprs) &&
-            (line.repr_prev_offset == line.repr_offset)) 
-          || frame.frm_redraw
-        then
-          begin
-            line.repr_prev_reprs <- line.repr_reprs;
-            line.repr_prev_offset <- line.repr_offset;
-            update_line top_window frame line.repr_line.repr_string y;
-          end;
-      done;
-      frame.frm_redraw <- false
-    end;
+<<function Frame.update_line>>=
+let update_line top_window frame repr_string y = 
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let line_repr = frame.frm_table.(y) in
   let xterm = match top_window.top_xterm with
       None -> raise Not_found
     | Some xterm -> xterm 
   in
-  match frame.frm_mini_buffer with
-    None -> 
-      let status = frame.frm_status in
-      status_line frame (point_line text frame.frm_point);
-      status_col frame  (point_col text frame.frm_point);
-      status_modified frame (version text <> buf.buf_last_saved);
-      status_name frame buf.buf_name;
-      status_major_mode frame;
-      if status.status_modified then
-
+  let rec iter x offset reprs =
+    if frame.frm_width > x then
+      match reprs with
+        [] -> 
+          WX_xterm.clear_eol xterm
+            (x+frame.frm_xpos) (y+frame.frm_ypos)
+            (frame.frm_width - x)
+      | repr :: tail ->
+          let len = min (frame.frm_width-x) (repr.repr_size - offset) in
+          WX_xterm.draw_string xterm
+            (x+frame.frm_xpos) (y+frame.frm_ypos)
+            repr_string (repr.repr_pos+offset) len
+            repr.repr_attr;
+          iter (x+len) 0 tail
+    else
         WX_xterm.draw_string xterm
-          frame.frm_xpos
-          (frame.frm_ypos + frame.frm_height - 1)  
-          status.status_string 0 width Text.inverse_attr
-  | Some request ->
-        WX_xterm.draw_string xterm
-         0 (top_window.top_height-1)  
-         request 0 (String.length request) Text.direct_attr
+           (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
+           "/" 0 1 Text.direct_attr
+  in
+  iter 0 (line_repr.repr_offset+frame.frm_x_offset) line_repr.repr_reprs
 @
+
 
 \subsection{Cursor}
 
@@ -3172,64 +3372,72 @@ let create frame local_map request =
   let top_window = Window.top window in
   let location = top_window.top_location in
 
-  let mini_text = Text.create "" in
   let qlen = String.length request in
-  let request = if qlen < 50 then request else
-      (String.sub request 0 47 ^ "...") in
+  let request = 
+     if qlen < 50 
+     then request 
+     else String.sub request 0 47 ^ "..."
+  in
 
-  let mini_buf = buf_create location mini_text local_map in
+  let mini_text = 
+    Text.create "" in
+  let mini_buf = 
+    buf_create location mini_text local_map in
+  let mini_window = 
+    Window.create true (*mini*) (TopWindow top_window) 
+      qlen (top_window.top_height - 1) (top_window.top_width - qlen) 1 in
+  let mini_frame = 
+    Frame.create mini_window (Some request)(*mini*) mini_buf in    
 
-  let mini_window = Window.create true (*mini*) (TopWindow top_window) 
-    qlen (top_window.top_height - 1)
-    (top_window.top_width - qlen) 1 in
-  let mini_frame = Frame.create mini_window (Some request) mini_buf
-  in    
   mini_frame.frm_cutline <- max_int;
   mini_frame.frm_has_status_line <- 0;
+
   top_window.top_mini_buffers <- mini_frame :: top_window.top_mini_buffers;
 
   Keymap.add_binding local_map [ControlMap, Char.code 'g']
     (fun mini_frame -> kill mini_frame frame);
   mini_frame
 @
-
+% C-g :)
 
 
 <<[[Efuns.window]] other fields>>=
 mutable win_mini : bool;
 @
+% which is what is used in Window.create true
 
 
-% ?? -> <>
+% Minibuffer.create -> <>
 <<function Minibuffer.buf_create>>=
 let buf_create location text local_map =
-  let buf =
-    { 
-      buf_text = text;
-      buf_name = "*Minibuffer*";
-      buf_filename = None; (* no connected file! *)
+  { 
+    buf_text = text;
+    buf_name = "*Minibuffer*";
+    buf_filename = None; (* no connected file! *)
 
-      buf_major_mode = fondamental_mode;
-      buf_minor_modes = [];
-      buf_syntax_table = Ebuffer.default_syntax_table;
+    buf_major_mode = fondamental_mode;
+    buf_minor_modes = [];
 
-      buf_modified = 0;
-      buf_last_saved = version text;
-      buf_history = [];
-      buf_charreprs = charreprs;
-      buf_map = local_map;
-      buf_map_partial = true;
-      buf_point = Text.add_point text;
-      buf_sync = false;
-      buf_mark = None;
-      buf_start = Text.add_point text;
-      buf_shared = 0;
-      buf_finalizers = [];
+    buf_charreprs = charreprs;
+    buf_map = local_map;
+    buf_map_partial = true;
+    buf_syntax_table = Ebuffer.default_syntax_table;
 
-      buf_vars = Local.vars ();
-      buf_location = location;
-    } in
-  buf
+    buf_modified = 0;
+    buf_last_saved = version text;
+
+    buf_point = Text.add_point text;
+    buf_start = Text.add_point text;
+    buf_mark = None;
+
+    buf_sync = false;
+    buf_history = [];
+    buf_shared = 0;
+    buf_finalizers = [];
+
+    buf_vars = Local.vars ();
+    buf_location = location;
+  }
 @
 
 <<constant Minibuffer.charreprs>>=
@@ -3240,6 +3448,9 @@ let _ =
   charreprs.(9) <- String.make !tab_size ' '
 @
 
+
+
+\subsection{Minubuffer display}
 
 
 \subsection{[[M-x foo]], [[call_interactive()]]}

@@ -214,6 +214,7 @@ let create_without_top location window mini buf =
       frm_start = frm_start;
       frm_end = frm_end;
       frm_point = point;
+
       frm_x_offset = 0;
       frm_y_offset = 0;
 
@@ -224,6 +225,8 @@ let create_without_top location window mini buf =
 
       frm_last_text_updated = 0;
       frm_last_buf_updated = 0;
+
+      frm_redraw = true;
 
       frm_has_scrollbar = 0;
       frm_has_status_line = 1;
@@ -237,9 +240,9 @@ let create_without_top location window mini buf =
     
       frm_force_start = false;
       frm_cutline = width - 1;
-      frm_table = [||];
       frm_killed = false;
-      frm_redraw = true;
+
+      frm_table = [||];
 
       frm_location = location;
     } 
@@ -405,11 +408,14 @@ let set_cursor frame =
 let update_table top_window frame =
   let buf =  frame.frm_buffer in
   let text = buf.buf_text in
+
   let start = frame.frm_start in
   let point = frame.frm_point in
+
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
-(* assert frame.frm_y_offset >= 0 *)
+
+  (* assert frame.frm_y_offset >= 0 *)
   let current_n = ref (point_line text start) in
   let current_line = ref (compute_representation buf !current_n) in
   while frame.frm_y_offset < 0 && !current_n > 0 do
@@ -420,7 +426,7 @@ let update_table top_window frame =
   done;
   if !current_n = 0 && frame.frm_y_offset <0 then
     frame.frm_y_offset <- 0;
-(* assert current_line is the first line *)
+  (* assert current_line is the first line *)
   while frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
       && !current_n < nbre_lines text
   do
@@ -433,9 +439,9 @@ let update_table top_window frame =
     frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
   then
     frame.frm_y_offset <- !current_line.repr_len / frame.frm_cutline;
-(* update frame.frm_start *)
+  (* update frame.frm_start *)
   goto_line text start !current_n; 
-(* update frame representation *)
+  (* update frame representation *)
   let rec iter_line y n line =
     if y < height then
       let reprs = List.rev line.representation in
@@ -491,89 +497,92 @@ let update top_window frame =
   let buf =  frame.frm_buffer in
   let text = buf.buf_text in
 
-  let start = frame.frm_start in
   let point = frame.frm_point in
 
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
-  if  buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated then
-    Text.set_position text point (Text.size text); 
+  (*s: [[Frame.update()]] if buf sync *)
+  if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
+  then Text.set_position text point (Text.size text); 
+  (*e: [[Frame.update()]] if buf sync *)
   if
-    (frame.frm_end < point)  || 
-    (start > point) ||
+    (*s: [[Frame.update()]] conditions for redraw *)
+    (*s: [[Frame.update()]] conditions for redraw, point outside frame *)
+    (point > frame.frm_end)  || 
+    (point < frame.frm_start) ||
+    (*e: [[Frame.update()]] conditions for redraw, point outside frame *)
+    (*s: [[Frame.update()]] conditions for redraw, buffer modified *)
     (version text <> frame.frm_last_text_updated) ||
     (buf.buf_modified <> frame.frm_last_buf_updated) ||
+    (*e: [[Frame.update()]] conditions for redraw, buffer modified *)
+    (*s: [[Frame.update()]] conditions for redraw, forced redraw *)
     frame.frm_redraw
+    (*e: [[Frame.update()]] conditions for redraw, forced redraw *)
+    (*e: [[Frame.update()]] conditions for redraw *)
   then
     begin
+      (*s: [[Frame.update()]] redraw *)
+      let start = frame.frm_start in
       let start_c = point_to_cursor buf start in
-      if start_c > 0 then
-        begin
-          frame.frm_y_offset <- 
-            frame.frm_y_offset - start_c / frame.frm_cutline;
-          let _ = Text.bmove text start start_c in
-          ()
-        end;
+      if start_c > 0 then begin
+        frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
+        let _ = Text.bmove text start start_c in
+        ()
+      end;
+
       let point_c = point_to_cursor buf point in
-      if point_c < frame.frm_x_offset then
-        begin
+      if point_c < frame.frm_x_offset then begin
           frame.frm_x_offset <- max (point_c - width / 2) 0;
           frame.frm_redraw <- true;
-        end
-      else
-      if frame.frm_cutline = max_int && 
+      end else if frame.frm_cutline = max_int && 
         (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
-      then
-        begin
+        then begin
           frame.frm_x_offset <- point_c - (width / 2);
           frame.frm_redraw <- true;
-        end;
+      end;
 
       update_table top_window frame;
 
-      begin
-        if (frame.frm_end < point)  || (start > point)
-        then
-          begin
-            if frame.frm_force_start then
-              let x,y = 
-                cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
-              in
-              goto_line text frame.frm_point y;
-              let _ = Text.fmove text frame.frm_point x in
-              ()
-            else
-              begin
-                goto_point text start point;
-                frame.frm_y_offset <- - height / 2;
-                let start_c = point_to_cursor buf start in
-                if start_c > 0 then
-                  begin
-                    frame.frm_y_offset <- 
-                      frame.frm_y_offset - start_c / frame.frm_cutline;
-                    let _ = Text.bmove text start start_c in
-                    ()
-                  end;
-                update_table top_window frame;
-              end;
-          end
+      if (frame.frm_end < point)  || (start > point) then begin
+          if frame.frm_force_start then begin
+            let x,y = 
+              cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
+            in
+            goto_line text frame.frm_point y;
+            let _ = Text.fmove text frame.frm_point x in
+            ()
+          end else begin
+            goto_point text start point;
+            frame.frm_y_offset <- - height / 2;
+            let start_c = point_to_cursor buf start in
+            if start_c > 0 then begin
+                frame.frm_y_offset <- 
+                  frame.frm_y_offset - start_c / frame.frm_cutline;
+                let _ = Text.bmove text start start_c in
+                ()
+            end;
+            update_table top_window frame;
+         end
       end;
-      if frame == top_window.top_active_frame then
-        begin
-          frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
-          let pos_start = get_position text frame.frm_start in
-          let pos_end = get_position text frame.frm_end in
 
-          Common.pr2_once "Frame.update: TODO scrollbar";
-          (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
+      if frame == top_window.top_active_frame then begin
+        frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
+        let pos_start = get_position text frame.frm_start in
+        let pos_end = get_position text frame.frm_end in
 
-             (size text);
-          *)
-        end;
+        Common.pr2_once "Frame.update: TODO scrollbar";
+        (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
+
+           (size text);
+        *)
+      end;
+
       frame.frm_last_text_updated <- version text;
       frame.frm_last_buf_updated <- buf.buf_modified;
+
       frame.frm_force_start <- false;
+
       for y = 0 to height - 1 do
         let line = frame.frm_table.(y) in
         if not ((line.repr_prev_reprs == line.repr_reprs) &&
@@ -587,13 +596,18 @@ let update top_window frame =
           end;
       done;
       frame.frm_redraw <- false
+      (*e: [[Frame.update()]] redraw *)
     end;
+
+  (*s: [[Frame.update()]] draw status line or minibuffer *)
+  (*s: [[Frame.update()]] let xterm *)
   let xterm = match top_window.top_xterm with
-      None -> raise Not_found
+    | None -> raise Not_found
     | Some xterm -> xterm 
   in
+  (*e: [[Frame.update()]] let xterm *)
   match frame.frm_mini_buffer with
-    None -> 
+  | None -> 
       let status = frame.frm_status in
       status_line frame (point_line text frame.frm_point);
       status_col frame  (point_col text frame.frm_point);
@@ -603,13 +617,15 @@ let update top_window frame =
       if status.status_modified then
 
         WX_xterm.draw_string xterm
-          frame.frm_xpos
-          (frame.frm_ypos + frame.frm_height - 1)  
-          status.status_string 0 width Text.inverse_attr
+          frame.frm_xpos (frame.frm_ypos + frame.frm_height - 1)
+          status.status_string 
+          0 width Text.inverse_attr
   | Some request ->
         WX_xterm.draw_string xterm
          0 (top_window.top_height-1)  
-         request 0 (String.length request) Text.direct_attr
+         request 
+         0 (String.length request) Text.direct_attr
+  (*e: [[Frame.update()]] draw status line or minibuffer *)
 (*e: function Frame.update *)
 
 (*s: exception Frame.BufferKilled *)
