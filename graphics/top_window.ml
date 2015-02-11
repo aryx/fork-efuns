@@ -13,7 +13,6 @@
 open Options
 
 open Xtypes
-open WX_types
 
 open Efuns
 open Window
@@ -43,8 +42,9 @@ let clear_message top_window =
   match top_window.top_mini_buffers with
     [] -> 
       let xterm = Window.xterm top_window in
-      WX_xterm.clear_eol xterm 0 
-        (top_window.top_height - 1) top_window.top_width; 
+      WX_xterm.clear_eol xterm 
+       0 (top_window.top_height - 1) 
+       top_window.top_width; 
   | _ -> ()
 (*e: function Top_window.clear_message *)
 
@@ -313,20 +313,20 @@ let handler top_window xterm event =
   try
     (match event with
     (*s: [[Top_window.handler()]] match event cases *)
-    | WX_xterm.XTKeyPress (modifiers, _s, keysym) ->
+    | Xtypes.XTKeyPress (modifiers, _s, keysym) ->
         handle_key top_window modifiers keysym
     (*x: [[Top_window.handler()]] match event cases *)
-    | WX_xterm.XTButtonPress (modifiers,button,x,y) -> 
+    | Xtypes.XTButtonPress (modifiers,button,x,y) -> 
         mouse_x := x;
         mouse_y := y;
         handle_key top_window modifiers (XK.xk_Pointer_Button_Dflt + button)
     (*x: [[Top_window.handler()]] match event cases *)
-    | WX_xterm.XTMouseMotion (modifiers,button,x,y) ->
+    | Xtypes.XTMouseMotion (modifiers,button,x,y) ->
         mouse_x := x;
         mouse_y := y;
         handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
     (*x: [[Top_window.handler()]] match event cases *)
-    | WX_xterm.XTResize (new_width, new_height) ->
+    | Xtypes.XTResize (new_width, new_height) ->
         resize_window top_window.window 0 0 new_width (new_height - 1);
         List.iter
           (fun frame -> 

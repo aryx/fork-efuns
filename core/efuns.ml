@@ -159,30 +159,32 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     (* 0 for no scrollbar, 2 for scrollbar *)
     mutable frm_has_scrollbar : int;
+    (*x: [[Efuns.frame]] other fields *)
     (* 0 for minibuffer, 1 for normal frame *)
     mutable frm_has_status_line : int;
-    (*x: [[Efuns.frame]] other fields *)
+    (* Some for minibuffer, None for normal frame *)
     mutable frm_mini_buffer : string option;
     (*x: [[Efuns.frame]] other fields *)
     (* first point of the first buffer-line on screen *)
     mutable frm_start : Text.point;
     (* last point on screen, -1 if modified *)
     mutable frm_end : Text.point;
-    (* offset(+/-) of screen-lines after frm_start *)
-    mutable frm_y_offset : int;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_redraw : bool;    
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_force_start : bool;
+    mutable frm_table : line_repr array;
     (*x: [[Efuns.frame]] other fields *)
+    (* ?? *)
     mutable frm_x_offset : int;
-    (*x: [[Efuns.frame]] other fields *)
+    (* offset(+/-) of screen-lines after frm_start *)
+    mutable frm_y_offset : int;
+    (* ?? *)
     mutable frm_cutline : int; (* max_int for no, else length *)
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_table : line_repr array;
+    mutable frm_force_start : bool;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_status : status;    
     (*x: [[Efuns.frame]] other fields *)
@@ -240,10 +242,13 @@ and line_repr =
     mutable repr_y : int;
     mutable repr_x : int;
 
-    mutable repr_prev_offset : int;
-    mutable repr_prev_reprs : Text.repr list;
     mutable repr_offset : int;
     mutable repr_reprs : Text.repr list;
+
+    (* previous values, so can check if the line changed *)
+    mutable repr_prev_offset : int;
+    mutable repr_prev_reprs : Text.repr list;
+
   } 
 (*e: type Efuns.line_repr *)
 

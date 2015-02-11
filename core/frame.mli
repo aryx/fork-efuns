@@ -11,13 +11,15 @@
 
 val status_format : (Efuns.status_info * (int * int)) list ref
 val status_print : Efuns.status -> string -> Efuns.status_info -> unit
+
 val status_modified : Efuns.frame -> bool -> unit
 val status_col : Efuns.frame -> int -> unit
-val print_list : string list -> string
 val status_major_mode : Efuns.frame  -> unit
 val status_line : Efuns.frame -> int -> unit
 val status_name : Efuns.frame -> string -> unit
-val status_file : Efuns.frame -> string -> unit
+
+val print_list : string list -> string
+
 val kill : Efuns.frame -> unit
 val kill_all : Efuns.window -> unit
 val install : Efuns.window -> Efuns.frame -> unit

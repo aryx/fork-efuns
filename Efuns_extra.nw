@@ -1903,27 +1903,29 @@ let rec print_list list =
 % Frame.create_without_top | one_frame | v_cut | ... -> <>
 <<function Frame.install>>=
 let install window frame =
-  if window.win_mini = (frame.frm_mini_buffer = None) then
-    (kill frame; failwith "Cannot install in minibuffer");
-  Window.iter (fun f -> if not(f == frame) then kill f) window;
+  if window.win_mini = (frame.frm_mini_buffer = None) 
+  then (kill frame; failwith "Cannot install in minibuffer");
+
+  window |> Window.iter (fun f -> if not (f == frame) then kill f);
   window.win_down <- WFrame frame;
+
   frame.frm_xpos <- window.win_xpos;
   frame.frm_ypos <- window.win_ypos;
   frame.frm_width <- window.win_width;
   frame.frm_height <- window.win_height;
   frame.frm_window <- window;
-  if frame.frm_cutline < max_int then
-    frame.frm_cutline <- window.win_width - 1;
-  frame.frm_table <- 
-    (Array.init window.win_height (fun i -> 
+
+  if frame.frm_cutline < max_int 
+  then frame.frm_cutline <- window.win_width - 1;
+  frame.frm_table <- (Array.init window.win_height (fun i -> 
         {
           repr_line = dummy_line;
           repr_y = 0;
           repr_x = 0;
-          repr_prev_reprs = [];
-          repr_prev_offset = 0;
           repr_offset = 0;
           repr_reprs = [];
+          repr_prev_reprs = [];
+          repr_prev_offset = 0;
         } ));
   frame.frm_redraw <- true
 @
@@ -2160,8 +2162,6 @@ open Ebuffer
 <<function Frame.status_line>>
 
 <<function Frame.status_name>>
-
-<<function Frame.status_file>>
 
 <<function Frame.kill>>
 
@@ -5427,14 +5427,6 @@ let set_cursor_off top_window frame =
 @
 
 
-<<function Top_window.cursor_off>>=
-let cursor_off top_window =
-  let frame = top_window.top_active_frame in
-  set_cursor_off top_window frame;
-  match top_window.top_second_cursor with
-    None -> ()
-  | Some frame -> set_cursor_off top_window frame
-@
 
 
 
@@ -5622,7 +5614,6 @@ let check_abort frame =
 open Options
 
 open Xtypes
-open WX_types
 
 open Efuns
 open Window

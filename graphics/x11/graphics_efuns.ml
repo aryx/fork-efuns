@@ -73,7 +73,7 @@ let init location displayname =
             Xtypes.controlMask, code - 1 + Char.code 'a'
           | _ -> 0, code
         in
-        let evt = WX_xterm.XTKeyPress (modifiers, spf "%c" charkey, code) in
+        let evt = Xtypes.XTKeyPress (modifiers, spf "%c" charkey, code) in
         Top_window.handler top_window () evt
     )
   in

@@ -107,16 +107,6 @@ let status_name frame name =
     end
 (*e: function Frame.status_name *)
 
-(*s: function Frame.status_file *)
-let status_file frame name =
-  let status = frame.frm_status in
-  if status.stat_file <> name then
-    begin
-      status.stat_file <- name;
-      status_print status name StatFile
-    end
-(*e: function Frame.status_file *)
-
 (*s: function Frame.kill *)
 let kill frame = 
   let buf = frame.frm_buffer in
@@ -136,27 +126,29 @@ let kill_all window =
 
 (*s: function Frame.install *)
 let install window frame =
-  if window.win_mini = (frame.frm_mini_buffer = None) then
-    (kill frame; failwith "Cannot install in minibuffer");
-  Window.iter (fun f -> if not(f == frame) then kill f) window;
+  if window.win_mini = (frame.frm_mini_buffer = None) 
+  then (kill frame; failwith "Cannot install in minibuffer");
+
+  window |> Window.iter (fun f -> if not (f == frame) then kill f);
   window.win_down <- WFrame frame;
+
   frame.frm_xpos <- window.win_xpos;
   frame.frm_ypos <- window.win_ypos;
   frame.frm_width <- window.win_width;
   frame.frm_height <- window.win_height;
   frame.frm_window <- window;
-  if frame.frm_cutline < max_int then
-    frame.frm_cutline <- window.win_width - 1;
-  frame.frm_table <- 
-    (Array.init window.win_height (fun i -> 
+
+  if frame.frm_cutline < max_int 
+  then frame.frm_cutline <- window.win_width - 1;
+  frame.frm_table <- (Array.init window.win_height (fun i -> 
         {
           repr_line = dummy_line;
           repr_y = 0;
           repr_x = 0;
-          repr_prev_reprs = [];
-          repr_prev_offset = 0;
           repr_offset = 0;
           repr_reprs = [];
+          repr_prev_reprs = [];
+          repr_prev_offset = 0;
         } ));
   frame.frm_redraw <- true
 (*e: function Frame.install *)
@@ -521,80 +513,89 @@ let update top_window frame =
     frame.frm_redraw
     (*e: [[Frame.update()]] conditions for redraw, forced redraw *)
     (*e: [[Frame.update()]] conditions for redraw *)
-  then
-    begin
-      (*s: [[Frame.update()]] redraw *)
-      let start = frame.frm_start in
-      let start_c = point_to_cursor buf start in
-      if start_c > 0 then begin
-        frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
-        Text.bmove text start start_c |> ignore
-      end;
+  then begin
+    (*s: [[Frame.update()]] redraw *)
+    (*s: [[Frame.update()]] redraw, possibly update frm_y_offset *)
+    let start = frame.frm_start in
+    let start_c = point_to_cursor buf start in
+    if start_c > 0 then begin
+      frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
+      Text.bmove text start start_c |> ignore
+    end;
+    (*e: [[Frame.update()]] redraw, possibly update frm_y_offset *)
+    (*s: [[Frame.update()]] redraw, possibly update frm_x_offset *)
+    let point_c = point_to_cursor buf point in
+    if point_c < frame.frm_x_offset then begin
+        frame.frm_x_offset <- max (point_c - width / 2) 0;
+        frame.frm_redraw <- true;
+    end else if frame.frm_cutline = max_int && 
+                (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
+      then begin
+        frame.frm_x_offset <- point_c - (width / 2);
+        frame.frm_redraw <- true;
+    end;
+    (*e: [[Frame.update()]] redraw, possibly update frm_x_offset *)
+    update_table top_window frame;
 
-      let point_c = point_to_cursor buf point in
-      if point_c < frame.frm_x_offset then begin
-          frame.frm_x_offset <- max (point_c - width / 2) 0;
-          frame.frm_redraw <- true;
-      end else if frame.frm_cutline = max_int && 
-                  (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
-        then begin
-          frame.frm_x_offset <- point_c - (width / 2);
-          frame.frm_redraw <- true;
-      end;
-
-      update_table top_window frame;
-
-      if (point > frame.frm_end) || (point > start) then begin
-          if frame.frm_force_start then begin
-            let x,y = 
-              cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
-            in
-            goto_line text frame.frm_point y;
-            Text.fmove text frame.frm_point x |> ignore
-          end else begin
-            goto_point text start point;
-            frame.frm_y_offset <- - height / 2;
-            let start_c = point_to_cursor buf start in
-            if start_c > 0 then begin
-              frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
-              Text.bmove text start start_c |> ignore
-            end;
-            update_table top_window frame;
-         end
-      end;
-
-      if frame == top_window.top_active_frame then begin
-        frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
-        let pos_start = get_position text frame.frm_start in
-        let pos_end   = get_position text frame.frm_end in
-
-        Common.pr2_once "Frame.update: TODO scrollbar";
-        (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
-           (size text);
-         *)
-      end;
-
-      frame.frm_last_text_updated <- version text;
-      frame.frm_last_buf_updated <- buf.buf_modified;
-
-      frame.frm_force_start <- false;
-
-      for y = 0 to height - 1 do
-        let line = frame.frm_table.(y) in
-        if not ((line.repr_prev_reprs == line.repr_reprs) &&
-                (line.repr_prev_offset == line.repr_offset)) 
-           || frame.frm_redraw
-        then
-          begin
-            line.repr_prev_reprs <- line.repr_reprs;
-            line.repr_prev_offset <- line.repr_offset;
-            update_line top_window frame line.repr_line.repr_string y;
+    if (point > frame.frm_end) || (point > start) then begin
+        (*s: [[Frame.update()]] redraw, if frm_force_restart *)
+        if frame.frm_force_start then begin
+          let x,y = 
+            cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
+          in
+          goto_line text frame.frm_point y;
+          Text.fmove text frame.frm_point x |> ignore
+        end 
+        (*e: [[Frame.update()]] redraw, if frm_force_restart *)
+        else begin
+          goto_point text start point;
+          (*s: [[Frame.update()]] redraw, update frm_y_offset again *)
+          frame.frm_y_offset <- - height / 2;
+          let start_c = point_to_cursor buf start in
+          if start_c > 0 then begin
+            frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
+            Text.bmove text start start_c |> ignore
           end;
-      done;
-      frame.frm_redraw <- false
-      (*e: [[Frame.update()]] redraw *)
+          (*e: [[Frame.update()]] redraw, update frm_y_offset again *)
+          update_table top_window frame;
+       end
     end;
 
+    (*s: [[Frame.update()]] redraw, scrollbar adjustments *)
+    if frame == top_window.top_active_frame then begin
+      frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
+      let pos_start = get_position text frame.frm_start in
+      let pos_end   = get_position text frame.frm_end in
+
+      Common.pr2_once "Frame.update: TODO scrollbar";
+      (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
+         (size text);
+       *)
+    end;
+    frame.frm_force_start <- false;
+    (*e: [[Frame.update()]] redraw, scrollbar adjustments *)
+
+    frame.frm_last_text_updated <- version text;
+    frame.frm_last_buf_updated <- buf.buf_modified;
+
+    for y = 0 to height - 1 do
+      (*s: [[Frame.update()]] redraw, draw line y if line changed *)
+      let line = frame.frm_table.(y) in
+      if not ((line.repr_prev_reprs == line.repr_reprs) &&
+              (line.repr_prev_offset == line.repr_offset)) 
+         || frame.frm_redraw
+      then
+        begin
+          line.repr_prev_reprs <- line.repr_reprs;
+          line.repr_prev_offset <- line.repr_offset;
+
+          update_line top_window frame line.repr_line.repr_string y;
+        end;
+      (*e: [[Frame.update()]] redraw, draw line y if line changed *)
+    done;
+    frame.frm_redraw <- false
+    (*e: [[Frame.update()]] redraw *)
+  end;
   (*s: [[Frame.update()]] draw status line or minibuffer *)
   (*s: [[Frame.update()]] let xterm *)
   let xterm = match top_window.top_xterm with
@@ -604,23 +605,29 @@ let update top_window frame =
   (*e: [[Frame.update()]] let xterm *)
   match frame.frm_mini_buffer with
   | None -> 
+      (*s: [[Frame.update()]] draw status line *)
       let status = frame.frm_status in
-      status_line frame (point_line text frame.frm_point);
-      status_col frame  (point_col text frame.frm_point);
+
+      status_line frame  (point_line text frame.frm_point);
+      status_col  frame  (point_col  text frame.frm_point);
       status_modified frame (version text <> buf.buf_last_saved);
       status_name frame buf.buf_name;
       status_major_mode frame;
-      if status.status_modified then
 
+      if status.status_modified 
+      then
         WX_xterm.draw_string xterm
           frame.frm_xpos (frame.frm_ypos + frame.frm_height - 1)
           status.status_string 
           0 width Text.inverse_attr
+      (*e: [[Frame.update()]] draw status line *)
   | Some request ->
-        WX_xterm.draw_string xterm
-         0 (top_window.top_height-1)  
-         request 
-         0 (String.length request) Text.direct_attr
+      (*s: [[Frame.update()]] draw minibuffer request string *)
+      WX_xterm.draw_string xterm
+       0 (top_window.top_height-1)  
+       request 
+       0 (String.length request) Text.direct_attr
+      (*e: [[Frame.update()]] draw minibuffer request string *)
   (*e: [[Frame.update()]] draw status line or minibuffer *)
 (*e: function Frame.update *)
 
@@ -704,7 +711,6 @@ let rec exec_named_hooks_with_abort hooks frame =
 let load_file window filename =
   let top_window = Window.top window in
   let location = top_window.top_location in
-
   let buf = Ebuffer.read location filename (Keymap.create ()) in
   let frame = create window None buf in
   exec_named_hooks !!change_buffer_hooks frame;

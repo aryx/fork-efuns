@@ -1,10 +1,5 @@
 open Common
 
-type xterm_event =
-  XTKeyPress of Xtypes.modifiers * string * Xtypes.keySym
-| XTButtonPress of Xtypes.modifiers * int * int * int
-| XTMouseMotion of Xtypes.modifiers * int * int * int
-| XTResize of int * int
 
 (* helper *)
 let move_to col line =

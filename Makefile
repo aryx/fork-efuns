@@ -7,6 +7,8 @@
 ##############################################################################
 TOP=$(shell pwd)
 
+
+
 CMIS=\
  commons/common.cmi\
  commons2/utils.cmi\
@@ -19,6 +21,9 @@ CMIS=\
  features/select.cmi\
  features/search.cmi\
 
+GRAPHICSDIR=graphics/x11
+OTHERSYSLIBS=graphics.cma
+
 SRC=\
  commons/common.ml\
  commons2/utils.ml\
@@ -27,8 +32,7 @@ SRC=\
  commons2/options.ml\
  misc/local.ml\
  graphics/xtypes.ml\
- graphics/wX_types.ml\
- graphics/wX_xterm.ml\
+ $(GRAPHICSDIR)/wX_xterm.ml\
  core/text.ml\
  core/efuns.ml\
  core/keymap.ml\
@@ -55,7 +59,7 @@ SRC=\
  major_modes/dired.ml\
  prog_modes/makefile_mode.ml\
  std_efunsrc.ml\
- graphics/graphics_X11.ml \
+ $(GRAPHICSDIR)/graphics_efuns.ml \
  main.ml \
 
 # minor_modes/accents_mode.ml\
@@ -66,9 +70,14 @@ SRC=\
 
 TARGET=efuns
 
-SYSLIBS=unix.cma str.cma threads.cma graphics.cma
+SYSLIBS=unix.cma str.cma threads.cma 
 
-INCLUDEDIRS=commons commons2 core misc graphics features
+
+
+#OTHERSYSLIBS=cairo.cma lablgtk.cma
+
+INCLUDEDIRS=commons commons2 core misc graphics $(GRAPHICSDIR) features
+
 
 ##############################################################################
 # Generic variables
@@ -87,7 +96,7 @@ opt:
 	$(MAKE) $(TARGET).opt
 
 $(TARGET): $(LIBS) $(OBJS)
-	$(OCAMLC) -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ $(SYSLIBS) $^
+	$(OCAMLC) -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ $(OTHERSYSLIBS) $(SYSLIBS) $^
 
 $(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS) 
 	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa)  $^
