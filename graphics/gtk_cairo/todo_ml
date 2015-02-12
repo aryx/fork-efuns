@@ -185,3 +185,17 @@ let configure _da w ev =
   in
   loop ()
 
+
+
+    GdkEvent.Key.state key |> List.iter (function
+      | `CONTROL -> modifiers := !modifiers lor Xtypes.controlMask;
+        pr2 "CONTROL";
+      | `MOD1 -> 
+        pr2 "MOD1";
+        modifiers := !modifiers lor Xtypes.mod1Mask
+      | `MOD2 -> modifiers := !modifiers lor Xtypes.mod2Mask
+      | `MOD3 -> modifiers := !modifiers lor Xtypes.mod3Mask
+      | `MOD4 -> modifiers := !modifiers lor Xtypes.mod4Mask
+      | `MOD5 -> modifiers := !modifiers lor Xtypes.mod5Mask
+      | _ -> ()
+    );

@@ -305,7 +305,7 @@ let wrap_item top_window (n,f) =
 (*e: function Top_window.wrap_item *)
         
 (*s: function Top_window.handler *)
-let handler top_window xterm event =
+let handler top_window event =
   let location = top_window.top_location in
   Mutex.lock location.loc_mutex;
   try

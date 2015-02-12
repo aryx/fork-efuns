@@ -259,8 +259,11 @@ let point_col tree point =
 
 (*s: function Text.make_attr *)
 let make_attr fg bg font highlighted =
-  let attr = fg + (bg lsl 8) + (font lsl 16) + 
-      (if highlighted then 1 lsl 24 else 0) 
+  let attr = 
+     fg + 
+     (bg lsl 8) + 
+     (font lsl 16) + 
+     (if highlighted then 1 lsl 24 else 0)
   in
   attr
 (*e: function Text.make_attr *)

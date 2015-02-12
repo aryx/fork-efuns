@@ -1532,10 +1532,10 @@ let _ =
  ] 
  (fun name -> init_files := name :: !init_files) 
  "A small editor entirely written in Objective Caml 
-  by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
-  http ://pauillac.inria.fr/efuns
-  Options :
- " 
+by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
+http://pauillac.inria.fr/efuns
+Options:
+"
 @
 
 
@@ -1908,7 +1908,7 @@ let update_display location =
 \subsection{[[Top_window.handler()]]}
 
 <<function Top_window.handler>>=
-let handler top_window xterm event =
+let handler top_window event =
   let location = top_window.top_location in
   Mutex.lock location.loc_mutex;
   try
@@ -2248,8 +2248,11 @@ mutable text_attrs : int array;
 
 <<function Text.make_attr>>=
 let make_attr fg bg font highlighted =
-  let attr = fg + (bg lsl 8) + (font lsl 16) + 
-      (if highlighted then 1 lsl 24 else 0) 
+  let attr = 
+     fg + 
+     (bg lsl 8) + 
+     (font lsl 16) + 
+     (if highlighted then 1 lsl 24 else 0)
   in
   attr
 @

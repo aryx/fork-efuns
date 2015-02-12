@@ -1,31 +1,38 @@
 
+(* must be less than Char.code 'A', the first printable ascii char *)
+let xk_Up = 1
+let xk_Down = 2
+let xk_Left = 3
+let xk_Right = 4
+
+let xk_Prior = 5
+let xk_Next = 6
+
+let xk_BackSpace = 8
+let xk_Tab = 9
+let xk_Return = 13
+
+
+
+
+
+
 let xk_Pointer_Button1 = 0
 let xk_Pointer_Button2 = 0
 let xk_Pointer_Button3 = 0
 let xk_Pointer_Button4 = 0
 let xk_Pointer_Button5 = 0
 
-let xk_Pointer_Drag1 = 1
+let xk_Pointer_Drag1 = 0
 let xk_Pointer_Button_Dflt = 0
 let xk_Pointer_Drag_Dflt = 0
 
-let xk_Menu = 1
+let xk_Menu = 0
 
-let xk_Shift_L = 1
-let xk_Hyper_R = 1
+let xk_Shift_L = 0
+let xk_Hyper_R = 0
 
-let xk_Up = 0
-let xk_Down = 0
-let xk_Left = 0
-let xk_Right = 0
 
-let xk_Prior = 0
-let xk_Next = 0
-
-let xk_Return = 13
-let xk_Tab = 9
-
-let xk_BackSpace = 8
 let xk_Insert = 0
 let xk_Delete = 0
 

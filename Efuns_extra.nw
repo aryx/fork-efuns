@@ -7590,7 +7590,7 @@ let tree = new WX_tree.t top#container []
 @
 
 <<constant Efuns_texbrowser.regexp>>=
-let regexp = Str.regexp "\(\\input\|\\section\|\\subsection\|\\subsubsection\|\\chapter\)[*]?{\([^}]+\)}"
+let regexp = Str.regexp "\\(\\input\\|\\section\\|\\subsection\\|\\subsubsection\\|\\chapter\\)[*]?{\\([^}]+\\)}"
 @
 
 <<function Efuns_texbrowser.load>>=
