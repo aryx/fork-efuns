@@ -580,10 +580,10 @@ let _ =
  ] 
  (fun name -> init_files := name :: !init_files) 
  "A small editor entirely written in Objective Caml 
-  by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
-  http ://pauillac.inria.fr/efuns
-  Options :
- " 
+by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
+http://pauillac.inria.fr/efuns
+Options:
+"
 (*e: toplevel Efuns._3 *)
 (*s: toplevel Efuns._4 *)
 let _ =

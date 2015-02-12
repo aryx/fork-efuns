@@ -13,28 +13,73 @@
  * license.txt for more details.
  *)
 open Common
-
 open Efuns
+module Color = Simple_color
 
 (*****************************************************************************)
-(* Final view rendering *)
+(* Types *)
 (*****************************************************************************)
+
+type world = {
+  model: Efuns.location;
+
+  (* viewport, device coordinates *)
+  mutable width:  int;
+  mutable height: int;
+}
+
+(*****************************************************************************)
+(* Helpers *)
+(*****************************************************************************)
+
+module ArithFloatInfix = struct
+    let (+..) = (+)
+    let (-..) = (-)
+    let (/..) = (/)
+    let ( *.. ) = ( * )
+
+
+    let (+) = (+.)
+    let (-) = (-.)
+    let (/) = (/.)
+    let ( * ) = ( *. )
+
+    let (+=) ref v = ref := !ref + v
+    let (-=) ref v = ref := !ref - v
+
+end
+(* floats are the norm in cairo *)
+open ArithFloatInfix
+
+
+(*****************************************************************************)
+(* Cairo helpers *)
+(*****************************************************************************)
+
+(* was in pfff/.../cairo_helpers.ml *)
+let set_source_color ?(alpha=1.) ~cr ~color () = 
+  (let (r,g,b) = color |> Color.rgbf_of_string in
+  Cairo.set_source_rgba cr r g b alpha;
+  )
+
+let show_text cr s =
+  if s = "" 
+  then () 
+  else 
+    Cairo.show_text cr s
 
 (*****************************************************************************)
 (* Draw API *)
 (*****************************************************************************)
 
 (* helper *)
-let move_to col line =
-  pr2 "TODO"
-(*
-  let (w,h) = Graphics.text_size "d" in
-  let size_y = Graphics.size_y () in
-  Graphics.moveto (w * col) (size_y - h - (line * h))
-*)  
+let move_to cr col line =
+   let extent = Cairo.text_extents cr "peh" in
+   let (w,h) = extent.Cairo.text_width / 3., extent.Cairo.text_height in
+   Cairo.move_to cr (w * col) (line * h)
 
-let clear_eol () col line len =
-  pr2 "TODO"
+let clear_eol cr  col line len =
+  pr2 "TODO_eol"
 (*
   pr2 (spf "WX_xterm.clear_eol: %d %d %d" col line len);
   move_to col line;
@@ -45,53 +90,132 @@ let clear_eol () col line len =
   ()
 *)
 
-let draw_string () col line  str  offset len   attr =
-  pr2 "TODO"
-(*
-  pr2 (spf "WX_xterm.draw_string %d %d %s %d %d %d"
+let draw_string cr   col line  str  offset len   attr =
+  pr2 (spf "WX_xterm.draw_string %f %f %s %d %d %d"
          col line str offset len attr);
-  let (w,h) = Graphics.text_size "d" in
-  move_to col line;
-  Graphics.set_color Graphics.white;
-  Graphics.fill_rect (Graphics.current_x()) (Graphics.current_y())
-    (w * len) h;
-  Graphics.set_color Graphics.black;
-  move_to col line;
-  Graphics.draw_string (String.sub str offset len);
-  ()
-*)
 
-let update_displays () =
+(*
+  let extent = Cairo.text_extents cr "d" in
+  let (w,h) = extent.Cairo.text_width, extent.Cairo.text_height in
+  move_to cr col line;
+  set_source_color ~cr ~color:"white" ();
+  fill_rectangle_xywh ~x ~y ~w:(w * len) ~h;
+*)
+  set_source_color ~cr ~color:"black" ();
+
+  move_to cr col line;
+  show_text cr (String.sub str offset len);
+  ()
+
+let update_displays cr =
   pr2 ("WX_xterm.update_displays")
+
+
+let backend cr = 
+  let conv x = float_of_int x in
+  { Xdraw. 
+  clear_eol = (fun a b c -> 
+    clear_eol cr (conv a) (conv b) c); 
+  draw_string = (fun a b c d e f -> 
+    draw_string cr (conv a) (conv b) c d e f);
+  update_displays = (fun () -> 
+    update_displays cr);
+}
+
+
+
+(*****************************************************************************)
+(* Test UI *)
+(*****************************************************************************)
+
+let width = 500
+let height = 500
+
+let test_draw cr =
+  (* [0,0][1,1] world scaled to a width x height screen *)
+  Cairo.scale cr (float_of_int width) (float_of_int height);
+
+  Cairo.set_source_rgba cr ~red:0.5 ~green:0.5 ~blue:0.5 ~alpha:0.5;
+  Cairo.set_line_width cr 0.001;
+
+  Cairo.move_to cr 0.5 0.5;
+  Cairo.line_to cr 0.6 0.6;
+  Cairo.stroke cr;
+
+  Cairo.select_font_face cr "serif"
+    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_BOLD;
+  Cairo.set_font_size cr 0.1;
+
+  let _extent = Cairo.text_extents cr "peh" in
+  (* weird: if Cairo.text_extents cr "d" create an Out_of_memory exn *)
+
+  Cairo.move_to cr 0.1 0.1;
+  Cairo.show_text cr "THIS IS SOME TEXT";
+  Cairo.move_to cr 0.1 0.2;
+  Cairo.show_text cr "THIS IS SOME TEXT";
+  Cairo.set_font_size cr 0.05;
+  Cairo.move_to cr 0.1 0.3;
+  Cairo.show_text cr "THIS IS SOME TEXT";
+
+  Cairo.set_source_rgb cr ~red:0.1 ~green:0.1 ~blue:0.1;
+  Cairo.move_to cr 0.1 0.1;
+  Cairo.line_to cr 0.1 0.2;
+  Cairo.stroke cr;
+
+  let start = ref 0.0 in
+
+  for _i = 0 to 3 do
+    let end_ = !start +. 0.5 in
+    Cairo.arc cr ~xc:0.5 ~yc:0.5 ~radius:0.3 ~angle1:!start
+      ~angle2:end_;
+    Cairo.stroke cr;
+    start := end_;
+  done;
+
+  ()
+
+let test_cairo () =
+  let _locale = GtkMain.Main.init () in
+  let w = GWindow.window ~title:"test" () in
+  (w#connect#destroy GMain.quit) +> ignore;
+  let px = GDraw.pixmap ~width ~height ~window:w () in
+  px#set_foreground `WHITE;
+  px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
+  let cr = Cairo_lablgtk.create px#pixmap in
+  test_draw cr;
+  (GMisc.pixmap px ~packing:w#add ()) +> ignore;
+  w#show ();
+  GMain.main()
+
+
+(*****************************************************************************)
+(* Final view rendering *)
+(*****************************************************************************)
+
+let paint w =
+  pr2 "paint";
+  Top_window.update_display w.model 
 
 
 (*****************************************************************************)
 (* The main UI *)
 (*****************************************************************************)
 
-let init location displayname =
+let init2 location displayname =
   let _locale = GtkMain.Main.init () in
 
-  (* compute font_size and adjust size of window, or reverse
-   * by setting size of font depending on size of window ?
-   *)
-(*
-  let (h, w) = Graphics.textsize "aqd" in
-  h := 
-*)
-
-
-  let win = GWindow.window
-    ~title:"Efuns"
-    ~width:600 ~height:600
-    ~allow_shrink:true ~allow_grow:true
-    ()
+  (* those are a first guess. The first configure ev will force a resize *)
+  let width = 600 in
+  let height = 600 in
+  let w = {
+    model = location;
+    width;
+    height;
+  }
   in
 
-  let quit () = 
-    (*Controller.before_quit_all model;*)
-    GMain.Main.quit ();
-  in
+  let win = GWindow.window ~title:"Efuns" () in
+  let quit () = GMain.Main.quit (); in
 
   (*-------------------------------------------------------------------*)
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
@@ -100,117 +224,40 @@ let init location displayname =
   let display = "" in
   let top_window = Top_window.create location display in
 
-(*
-  WX_xterm.setHighlight display 2;
-  Dyneval.init true;
-  Eval.load top_window "Efunsrc";
-  Efuns.init location; (* launch second hooks *)
-*)
-
   let _ = Interactive.create_bindings location in
 
   (* open the first buffers *)
   !init_files +> List.iter (fun name ->
     let _ = Frame.load_file top_window.window name in ()
   );
-  !init_frames +> List.iter (fun str -> 
-    let top_window = Top_window.create top_window.top_location
-      (Window.display top_window) 
-    in
-    let _ = Frame.load_file top_window.window str in ()
-  );
-
-  Top_window.update_display location;
-
-(*  
-  if not (Sys.file_exists (Filename.concat Utils.homedir ".efunsrc")) then
-    begin
-      Printf.printf "Saving .efunsrc after install"; print_newline ();
-      Options.save ();
-    end;
-*)
-
-(*  if !check then exit 0;   *)
-
 
   (*-------------------------------------------------------------------*)
   (* Layout *)
   (*-------------------------------------------------------------------*)
 
-  let vbox = GPack.vbox ~packing:win#add () in
+  let px = GDraw.pixmap ~width ~height ~window:win () in
+  px#set_foreground `WHITE;
+  px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
+  let cr = Cairo_lablgtk.create px#pixmap in
+(*  Cairo.scale cr (float_of_int width) (float_of_int height); *)
+  Cairo.scale cr 1.0 1.0;
+  Cairo.select_font_face cr "serif"
+    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_BOLD;
+  Cairo.set_font_size cr 10.0;
 
-    (*-------------------------------------------------------------------*)
-    (* Menu *)
-    (*-------------------------------------------------------------------*)
-
-
-    (*-------------------------------------------------------------------*)
-    (* main view *)
-    (*-------------------------------------------------------------------*)
-
-    let da = GMisc.drawing_area () in
-    da#misc#set_double_buffered false;
-
-    vbox#pack da#coerce;
-    da#misc#set_can_focus true ;
-    da#event#add [ `KEY_PRESS;
-                   `BUTTON_MOTION; `POINTER_MOTION;
-                   `BUTTON_PRESS; `BUTTON_RELEASE ];
-
-(*
-    da#event#connect#expose ~callback:(expose da w) +> ignore;
-    da#event#connect#configure ~callback:(configure da w) +> ignore;
-
-    da#event#connect#button_press   
-      (View_matrix.button_action da w) +> ignore;
-    da#event#connect#button_release 
-      (View_matrix.button_action da w) +> ignore;
-
-    da#event#connect#motion_notify  
-      (View_overlays.motion_notify da w) +> ignore; 
-
-*)
+  top_window.graphics <- Some (backend cr); 
+  paint w;
+  (GMisc.pixmap px ~packing:win#add ()) +> ignore;
 
   (*-------------------------------------------------------------------*)
   (* End *)
   (*-------------------------------------------------------------------*)
 
-  win#event#connect#delete    ~callback:(fun _  -> quit(); true) +> ignore;
-  win#connect#destroy         ~callback:(fun () -> quit(); ) +> ignore;
+  win#connect#destroy ~callback:quit |> ignore;
   win#show ();
+  GMain.main()
 
-  GtkThread.main ();
-
-
-  (* Main loop *)
-  let rec loop () =
-    ()
-(*
-    try
-      WX_types.loop ()
-    with
-      SigInt -> loop ()
-*)
-(*
-    Graphics.loop_at_exit [
-      Graphics.Button_down;
-      Graphics.Key_pressed;
-    ] (fun status ->
-      if status.Graphics.keypressed
-      then 
-        let charkey = status.Graphics.key in
-        let code = Char.code charkey in
-        pr2 (spf "key: %c, %d" charkey code);
-        let modifiers, code = 
-          match code with
-          | 8 | 9 | 13  -> 0, code
-          | _ when code >= 1 && code <= 26 -> 
-            Xtypes.controlMask, code - 1 + Char.code 'a'
-          | _ -> 0, code
-        in
-        let evt = Xtypes.XTKeyPress (modifiers, spf "%c" charkey, code) in
-        Top_window.handler top_window () evt
-    )
-*)
-  in
-  loop ()
+let init a b =
+  if !Efuns.check
+  then test_cairo ()
+  else init2 a b

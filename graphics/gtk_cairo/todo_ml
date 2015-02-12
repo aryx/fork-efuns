@@ -1,0 +1,187 @@
+
+  mutable base:    [ `Any ] Cairo.surface;
+
+let _refresh_drawing_area = ref (fun () ->
+  failwith "no refresh drawing area setup"
+)
+
+let new_surface ~alpha ~width ~height =
+  let drawable = GDraw.pixmap ~width:1 ~height:1 () in
+  drawable#set_foreground `WHITE;
+  drawable#rectangle ~x:0 ~y:0 ~width:1 ~height:1 ~filled:true ();
+
+  let cr = Cairo_lablgtk.create drawable#pixmap in
+  let surface = Cairo.get_target cr in
+  Cairo.surface_create_similar surface
+    (if alpha 
+    then Cairo.CONTENT_COLOR_ALPHA
+    else Cairo.CONTENT_COLOR
+    ) width height
+
+let paint
+  !_refresh_drawing_area ()
+
+
+(* Composing the "layers". Each move of the cursor will call
+ * assemble_layers which does all those pixels copying from one
+ * layer to the other (but this is fast enough).
+ * (see also cairo/tests/knockout.ml example).
+ * 
+ * The final target is the actual gtk window which is represented by cr_final.
+ * We copy the pixels from the pixmap w.base on the window. 
+ * Then we copy the pixels from the pixmap w.overlay on the window
+ * getting the final result.
+ *)
+let assemble_layers cr_final w =
+  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
+  Cairo.set_source_surface cr_final w.base 0. 0.;
+  Cairo.paint cr_final;
+(*
+  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
+  Cairo.set_source_surface cr_final w.overlay 0. 0.;
+  Cairo.paint cr_final;
+*)
+  ()
+
+let expose da w _ev = 
+  pr2 "expose";
+  let gwin = da#misc#window in
+  let cr = Cairo_lablgtk.create gwin in
+  assemble_layers cr w;
+  true
+
+let configure _da w ev =
+  pr2 "configure";
+  let width = GdkEvent.Configure.width ev in
+  let height = GdkEvent.Configure.height ev in
+
+  (* quite similar to Model.init_world *)
+  w.width <- width;
+  w.height <- height;
+  w.base <- new_surface ~alpha:false ~width ~height;
+
+  let top_window = List.hd w.model.top_windows in
+  let cr = Cairo.create w.base in
+  Cairo.scale cr 1.0 1.0;
+
+  (* todo? need scale_coordinate? *)
+  top_window.graphics <- Some (backend cr); 
+
+  set_source_color ~cr ~color:"yellow" ();
+  Cairo.set_line_width cr 10.0;
+  Cairo.rectangle cr 10.0 10.0 100.0 100.0;
+
+  (* compute font_size and adjust size of window, or reverse
+   * by setting size of font depending on size of window ?
+   *)
+(*
+  let (h, w) = Graphics.textsize "aqd" in
+  h := 
+*)
+
+  paint w;
+  true
+
+
+
+    base = new_surface ~alpha:false ~width ~height;
+
+
+
+
+  let vbox = GPack.vbox ~packing:win#add () in
+
+    (*-------------------------------------------------------------------*)
+    (* Menu *)
+    (*-------------------------------------------------------------------*)
+
+    (*-------------------------------------------------------------------*)
+    (* main view *)
+    (*-------------------------------------------------------------------*)
+
+    let da = GMisc.drawing_area () in
+    da#misc#set_double_buffered false;
+
+    vbox#pack da#coerce;
+    da#misc#set_can_focus true;
+    da#event#add [ `KEY_PRESS;
+                   `BUTTON_MOTION; `POINTER_MOTION;
+                   `BUTTON_PRESS; `BUTTON_RELEASE ];
+
+    da#event#connect#configure ~callback:(configure da w) +> ignore;
+    da#event#connect#expose ~callback:(expose da w) +> ignore;
+
+(*
+    da#event#connect#button_press   
+      (View_matrix.button_action da w) +> ignore;
+    da#event#connect#button_release 
+      (View_matrix.button_action da w) +> ignore;
+    da#event#connect#motion_notify  
+      (View_overlays.motion_notify da w) +> ignore; 
+*)
+
+    (* to generate expose event *)
+    _refresh_drawing_area := (fun () ->
+      GtkBase.Widget.queue_draw da#as_widget;
+    );
+
+
+
+
+
+    ~width ~height
+    ~allow_shrink:true ~allow_grow:true
+
+
+(* WX_xterm.setHighlight display 2; *)
+
+(*
+  Dyneval.init true;
+  Eval.load top_window "Efunsrc";
+  Efuns.init location; (* launch second hooks *)
+*)
+
+
+
+
+(*  
+  if not (Sys.file_exists (Filename.concat Utils.homedir ".efunsrc")) then
+    begin
+      Printf.printf "Saving .efunsrc after install"; print_newline ();
+      Options.save ();
+    end;
+*)
+
+
+  win#event#connect#delete    ~callback:(fun _  -> quit(); true) +> ignore;
+
+  GtkThread.main ();
+
+
+  (* Main loop *)
+  let rec loop () =
+    ()
+(*
+    Graphics.loop_at_exit [
+      Graphics.Button_down;
+      Graphics.Key_pressed;
+    ] (fun status ->
+      if status.Graphics.keypressed
+      then 
+        let charkey = status.Graphics.key in
+        let code = Char.code charkey in
+        pr2 (spf "key: %c, %d" charkey code);
+        let modifiers, code = 
+          match code with
+          | 8 | 9 | 13  -> 0, code
+          | _ when code >= 1 && code <= 26 -> 
+            Xtypes.controlMask, code - 1 + Char.code 'a'
+          | _ -> 0, code
+        in
+        let evt = Xtypes.XTKeyPress (modifiers, spf "%c" charkey, code) in
+        Top_window.handler top_window () evt
+    )
+*)
+  in
+  loop ()
+

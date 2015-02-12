@@ -6309,6 +6309,8 @@ let _ =
 
 % I don't think this feature is very useful.
 
+%todo: this is why have list top_window in location.top_windows?
+
 <<misc actions>>=
 <<window managment actions>>
 @

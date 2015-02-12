@@ -10,16 +10,17 @@ TOP=$(shell pwd)
 TARGET=efuns
 
 
-BACKENDDIR=graphics/ocamlgraphics
-OTHERSYSLIBS=graphics.cma
+#BACKENDDIR=graphics/ocamlgraphics
+#OTHERSYSLIBS=graphics.cma
 
-#BACKENDDIR=graphics/gtk_cairo
-#GRAPHICSDIR=$(shell ocamlfind query lablgtk2) $(shell ocamlfind query cairo)
-#OTHERSYSLIBS=lablgtk.cma cairo.cma cairo_lablgtk.cma 
-#GTKLOOP=gtkThread.cmo
+BACKENDDIR=graphics/gtk_cairo
+GRAPHICSDIR=$(shell ocamlfind query lablgtk2) $(shell ocamlfind query cairo)
+OTHERSYSLIBS=lablgtk.cma cairo.cma cairo_lablgtk.cma 
+GTKLOOP=gtkThread.cmo
 
 SRC=\
  commons/common.ml\
+ commons/simple_color.ml\
  commons2/utils.ml\
  commons2/log.ml\
  commons2/str2.ml\
@@ -65,6 +66,7 @@ SRC=\
 
 CMIS=\
  commons/common.cmi\
+ commons/simple_color.cmi\
  commons2/utils.cmi\
  commons2/options.cmi\
  commons2/local.cmi\
