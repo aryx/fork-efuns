@@ -118,9 +118,9 @@ let create location name filename text local_map =
       buf_modified = 0;
 
       buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
+      buf_syntax_table = default_syntax_table;
       buf_map = local_map;
       buf_map_partial = true;
-      buf_syntax_table = default_syntax_table;
       buf_vars = Local.vars ();
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;

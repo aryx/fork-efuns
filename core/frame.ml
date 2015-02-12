@@ -168,12 +168,10 @@ let dummy_mode = Ebuffer.new_major_mode "" []
   
 (*s: function Frame.create_without_top *)
 let create_without_top location window mini buf =
-  let width = window.win_width in
-  let height = window.win_height in
 
   let frm_start = Text.dup_point buf.buf_text buf.buf_start in
-  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in (* ?? *)
   let point     = Text.dup_point buf.buf_text buf.buf_point in
+  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in (* ?? *)
 
   buf.buf_shared <- buf.buf_shared + 1;
 
@@ -201,12 +199,12 @@ let create_without_top location window mini buf =
 
       frm_xpos = window.win_xpos;
       frm_ypos = window.win_ypos;
-      frm_width = width;
-      frm_height = height;
+      frm_width = window.win_width;
+      frm_height = window.win_height;
 
       frm_start = frm_start;
-      frm_end = frm_end;
       frm_point = point;
+      frm_end = frm_end;
 
       frm_x_offset = 0;
       frm_y_offset = 0;
@@ -232,7 +230,7 @@ let create_without_top location window mini buf =
       frm_last_action = Keymap.dummy_action;
     
       frm_force_start = false;
-      frm_cutline = width - 1;
+      frm_cutline = window.win_width - 1;
       frm_killed = false;
 
       frm_table = [||];

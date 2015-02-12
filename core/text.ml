@@ -638,6 +638,7 @@ let create str =
       text_gpoint = 0;
       text_gline = 0;
       text_gsize = 0;
+
       text_clean = false;
       text_history = [];
       text_readonly = false;

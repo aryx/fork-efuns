@@ -13,7 +13,8 @@
 
 %thx to LP, changed for the better a few things:
 % - better decomposition than simple.ml, complex.ml, good TOC
-% - removed deadcode (frm_force_point, frm_force_cursor, loc_counter, resname)
+% - removed deadcode (frm_force_point, frm_force_cursor, loc_counter, 
+%    resname)
 
 %thx to codemap/codegraph/scheck:
 % - TODO use cg to reduce backward deps, introduce globals.c, utils.c,
@@ -26,6 +27,7 @@
 %   (harder to understand non functional code using lots of globals)
 
 %thx to this manual, better understand XXX?:
+% - 
 
 %history LP-ization:
 % - skeleton, mostly copy paste of Template.nw skeleton
@@ -156,10 +158,10 @@ you fully understand how things work under the hood.
 
 Here are other candidates that were considered but ultimately discarded:
 \begin{itemize}
-\item ed
-\item vi
 \item emacs
 %todo: look at emacs lisp manual, and emacs manual to see the concepts
+\item microemacs
+% the source of many forks apparently, so maybe the code is cleaner?
 \item qemacs
 \end{itemize}
 
@@ -365,6 +367,7 @@ let create str =
       text_gpoint = 0;
       text_gline = 0;
       text_gsize = 0;
+
       text_clean = false;
       text_history = [];
       text_readonly = false;
@@ -458,9 +461,9 @@ let create location name filename text local_map =
       buf_modified = 0;
 
       buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
+      buf_syntax_table = default_syntax_table;
       buf_map = local_map;
       buf_map_partial = true;
-      buf_syntax_table = default_syntax_table;
       buf_vars = Local.vars ();
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
@@ -530,12 +533,10 @@ mutable buf_shared : int; (* number of frames for that buffer *)
 
 <<function Frame.create_without_top>>=
 let create_without_top location window mini buf =
-  let width = window.win_width in
-  let height = window.win_height in
 
   let frm_start = Text.dup_point buf.buf_text buf.buf_start in
-  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in (* ?? *)
   let point     = Text.dup_point buf.buf_text buf.buf_point in
+  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in (* ?? *)
 
   buf.buf_shared <- buf.buf_shared + 1;
 
@@ -547,12 +548,12 @@ let create_without_top location window mini buf =
 
       frm_xpos = window.win_xpos;
       frm_ypos = window.win_ypos;
-      frm_width = width;
-      frm_height = height;
+      frm_width = window.win_width;
+      frm_height = window.win_height;
 
       frm_start = frm_start;
-      frm_end = frm_end;
       frm_point = point;
+      frm_end = frm_end;
 
       frm_x_offset = 0;
       frm_y_offset = 0;
@@ -578,7 +579,7 @@ let create_without_top location window mini buf =
       frm_last_action = Keymap.dummy_action;
     
       frm_force_start = false;
-      frm_cutline = width - 1;
+      frm_cutline = window.win_width - 1;
       frm_killed = false;
 
       frm_table = [||];
@@ -676,8 +677,6 @@ let create mini up_window xpos ypos width height =
 % will see mini later
 
 
-
-
 \section{The [[Top_window]]}
 % LPize Topwindow in window_up and put it here
 
@@ -708,6 +707,7 @@ and top_window =
 %  and also to use top_windows where really it's windows,
 %  so I renamed this field 'window' even though then it
 %  breaks the conventions of having those top_xxx prefix
+% less: rename window to windows? after all this window has some win_down
 
 <<[[Efuns.top_window]] other fields>>=
 mutable graphics : Xdraw.graphics_backend option;
@@ -765,8 +765,8 @@ and location =
   } 
 @
 %(*    
-%    loc_vars_table : (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t;
-%  *)  
+% loc_vars_table : (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t;
+% *)  
 %dead: mutable loc_counter : int;
 %old: was loc_windows, but it's really top_windows
 
@@ -1267,9 +1267,6 @@ let c_c = (ControlMap, Char.code 'c')
 @
 
 
-<<misc keys>>=
-<<window managment keys>>
-@
 
 
 
@@ -1288,6 +1285,7 @@ let bindings_help frame =
 @
 % how can change_buffer with just window info? don't pass the frame?
 % no need because can go back to top_window and active_frame?
+
 
 
 
@@ -3733,6 +3731,15 @@ let set_binding map key binding =
 
 \subsection{Bindings display}
 
+% Graphics_efun.init -> <>
+<<function Interactive.create_bindings>>=
+let create_bindings location =
+  let s = Keymap.all_bindings location in
+  let text = Text.create s in
+  Ebuffer.create location "*bindings*" None text (Keymap.create ())
+@
+
+
 <<function Keymap.all_bindings>>=
 let all_bindings location =
   let s = ref "Default bindings:" in
@@ -3740,12 +3747,13 @@ let all_bindings location =
       match binding with
         None -> ()
       | Some key_list ->
-          s := Printf.sprintf "%s\n%s : %s" !s 
-            (print_key_list (List.rev key_list)) name
+          s := Printf.sprintf "%s\n%20s : %s" !s 
+            (print_key_list (key_list)) name
   ) location.loc_map.interactives;
   !s
 @
-
+% used to be copy pasted in create_bindings, with only diff was
+% the %s\n%20s : %s" and the use of List.rev.
 
 <<function Keymap.print_key>>=
 let print_key (map,keysym) =
@@ -3757,10 +3765,10 @@ let print_key (map,keysym) =
     | ControlMetaMap -> "CM-"
   in
   let kname =
-    try
-      List.assoc keysym (*XK.*)keysym_to_name
-    with
-      Not_found -> "?"
+    try List.assoc keysym (*XK.*)keysym_to_name
+    with Not_found -> 
+      try Printf.sprintf "%c" (Char.chr keysym)
+      with Invalid_argument _ -> "?"
   in
   prefix^kname
 @
@@ -6313,6 +6321,10 @@ let _ =
 % I don't think this feature is very useful.
 
 %todo: this is why have list top_window in location.top_windows?
+
+<<misc keys>>=
+<<window managment keys>>
+@
 
 <<misc actions>>=
 <<window managment actions>>

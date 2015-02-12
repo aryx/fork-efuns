@@ -518,12 +518,6 @@ let _ =
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
         (*x: misc keys *)
-        (*s: window managment keys *)
-        [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
-        [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
-        [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
-        (*e: window managment keys *)
-        (*x: misc keys *)
         [c_h; NormalMap, Char.code 'K'], "help_bindings";
         (*x: misc keys *)
         [c_x; ControlMap, Char.code 'c'], "exit"; 
@@ -532,6 +526,12 @@ let _ =
         (*x: misc keys *)
         [NormalMap, Char.code ' '], "char_expand_abbrev";
         [MetaMap, Char.code '/'], "dabbrev_expand";
+        (*x: misc keys *)
+        (*s: window managment keys *)
+        [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
+        [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
+        [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
+        (*e: window managment keys *)
         (*e: misc keys *)
         (*e: [[global_map]] initial entries *)
       ]

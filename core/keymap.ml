@@ -47,10 +47,10 @@ let print_key (map,keysym) =
     | ControlMetaMap -> "CM-"
   in
   let kname =
-    try
-      List.assoc keysym (*XK.*)keysym_to_name
-    with
-      Not_found -> "?"
+    try List.assoc keysym (*XK.*)keysym_to_name
+    with Not_found -> 
+      try Printf.sprintf "%c" (Char.chr keysym)
+      with Invalid_argument _ -> "?"
   in
   prefix^kname
 (*e: function Keymap.print_key *)
@@ -172,8 +172,8 @@ let all_bindings location =
       match binding with
         None -> ()
       | Some key_list ->
-          s := Printf.sprintf "%s\n%s : %s" !s 
-            (print_key_list (List.rev key_list)) name
+          s := Printf.sprintf "%s\n%20s : %s" !s 
+            (print_key_list (key_list)) name
   ) location.loc_map.interactives;
   !s
 (*e: function Keymap.all_bindings *)

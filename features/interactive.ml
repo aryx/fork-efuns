@@ -20,16 +20,8 @@ open Keymap
   
 (*s: function Interactive.create_bindings *)
 let create_bindings location =
-  let actives = location.loc_map.interactives in
-  let s = ref "Default bindings:" in
-  List.iter (fun (name,(_,binding)) ->
-    match binding with
-      None -> ()
-    | Some key_list ->
-        s := Printf.sprintf "%s\n%20s : %s" !s 
-             (Keymap.print_key_list key_list) name
-             ) actives;
-  let text = Text.create !s in
+  let s = Keymap.all_bindings location in
+  let text = Text.create s in
   Ebuffer.create location "*bindings*" None text (Keymap.create ())
 (*e: function Interactive.create_bindings *)
 
