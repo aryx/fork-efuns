@@ -306,7 +306,7 @@ License.
 
 \section{[[Text]]}
 
-% text -> line -> ... repr | item
+% text -> string | lines -> ... repr | item
 % with attrs at each level (text_attr, attr, item_attr)
 
 <<type Text.text>>=
@@ -319,7 +319,26 @@ type text = {
     <<[[Text.text]] other fields>>
   } 
 @
-% will see line later, subtle
+
+% need line because a text editor is line oriented, column number display,
+% line display, lots of things are important to do at line level.
+
+
+<<type Text.line>>=
+and line = {
+    mutable position : int; (* bol *)
+
+    <<[[Text.line]] representation fields>>
+    <<[[Text.line]] attribute fields>>
+    <<[[Text.line]] other fields>>
+  } 
+@
+
+%old: was Line.position type
+%$<<type Text.direct>>=
+%type direct = int
+%@
+%todo: rename charpos?
 
 
 
@@ -337,13 +356,6 @@ let version tree =
 @
 % tree? because of wx_text stuff
 
-
-<<function Text.nbre_lines>>=
-let nbre_lines tree = 
-  let text = tree.tree_text in
-  text.text_nlines - 2
-@
-% - 2? why? because has some empty sentinels?
 
 
 
@@ -379,6 +391,48 @@ let create str =
 
 % compute_newlines()?
 % make_text()?
+
+
+
+<<function Text.compute_newlines>>=
+let compute_newlines string =
+  let (nbr_newlines,_) = count_char string '\n' in
+  let newlines = Array.create (nbr_newlines + 2) (mk_line_with_pos 0) in
+  let curs = ref 0 in
+  (* newlines.(0) is already set with 0 position for its bol *)
+  for i = 1 to nbr_newlines do
+    let pos = String.index_from string !curs '\n' in
+    newlines.(i) <- mk_line_with_pos (pos+1);
+    curs := pos + 1;
+  done;
+  newlines.(nbr_newlines+1) <- mk_line_with_pos (String.length string + 1);
+  newlines
+@
+% + 2 because even if has no newline we still need one array of one,
+% hence +1, and then the other +1 is for the EOF sentinel
+
+<<function Text.nbre_lines>>=
+let nbre_lines tree = 
+  let text = tree.tree_text in
+  text.text_nlines - 2
+@
+
+
+<<function Text.mk_line>>=
+let mk_line_with_pos pos = 
+  {
+   position = pos; 
+
+   representation = []; 
+   repr_len = 0; 
+   repr_string = ""; 
+   modified = 0; 
+   line_hlt = 0; 
+   items = [||]; 
+  }
+@
+
+
 
 \section{[[Buffer]]}
 
@@ -2135,27 +2189,7 @@ let move_point_to tree point p =
 
 \section{Lines}
 
-% already seen Text.text_newlines, Text.text_nlines
-
-<<type Text.line>>=
-and line = {
-    mutable position : direct;
-
-    <<[[Text.line]] representation fields>>
-    <<[[Text.line]] attribute fields>>
-    <<[[Text.line]] other fields>>
-  } 
-@
-% do we need something fancy? naive brute force too slow?
-% well like explained above in an editor you edit (as opposed to codemap),
-% and so you want the insertion of characters to be reasonably fast!
-
-
-% Line.position type
-<<type Text.direct>>=
-type direct = int
-@
-%todo: rename charpos?
+% already seen Text.text_newlines, Text.text_nlines, and Text.line
 
 
 % status line display the line of the cursor -> <>
@@ -2186,9 +2220,7 @@ mutable line_hlt : int;
 
 
 
-
-
-
+\subsection{Line internal representation}
 
 
 <<[[Text.line]] representation fields>>=
@@ -2217,6 +2249,7 @@ and repr =
 
 
 
+\subsection{Line attributes}
 
 <<[[Text.line]] attribute fields>>=
 (* hightlighting on the line:
@@ -2240,9 +2273,6 @@ and item_attr =
 | Foreground of color
 | Background of color
 @
-
-
-
 
 
 
@@ -2914,6 +2944,9 @@ mutable frm_last_buf_updated : int;
 <<[[Efuns.frame]] other fields>>=
 mutable frm_redraw : bool;    
 @
+% Used also when modify some text in which case we don't
+% need to redraw the other lines. But if we end up scrolling,
+% then we want to redraw all the lines.
 
 <<[[Frame.update()]] conditions for redraw, forced redraw>>=
 frame.frm_redraw
@@ -2976,6 +3009,7 @@ and line_repr =
 % argh, again repr_line that is actually a line.
 % maybe rename just line again?
 % rename this frm_table_line?
+% otherwise have line_repr.repr_line.representation.repr_line_pos, hmmm
 
 \subsubsection{[[Frame.update_line()]]}
 
@@ -3378,6 +3412,7 @@ let status_line frame line =
       status_print status (Printf.sprintf "L%d" (line+1)) StatLine
     end
 @
+% note the +1
 
 % Frame.update -> <>
 <<function Frame.status_col>>=
@@ -3389,6 +3424,7 @@ let status_col frame col =
       status_print status (Printf.sprintf "C%d" (col+1)) StatCol
     end
 @
+% note the +1
 
 
 %<<function Frame.status_file>>=
@@ -6574,6 +6610,8 @@ let message buf m =
 \label{sec:glossary}
 
 \begin{verbatim}
+BOL Beginning Of Line
+EOL End Of Line
 \end{verbatim}
 
 \chapter*{Indexes}

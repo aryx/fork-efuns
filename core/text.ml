@@ -58,16 +58,13 @@ type delta = int
 type position = int
 (*e: type Text.position *)
 
-(*s: type Text.direct *)
-type direct = int
-(*e: type Text.direct *)
 (*s: type Text.session *)
 type session = int
 (*e: type Text.session *)
 
 (*s: type Text.line *)
 and line = {
-    mutable position : direct;
+    mutable position : int; (* bol *)
 
     (*s: [[Text.line]] representation fields *)
     mutable representation : repr list;
@@ -598,26 +595,33 @@ let delete_res tree point len =
 let delete text point len = 
   delete_res text point len |> ignore
 (*e: function Text.delete *)
+
+(*s: function Text.mk_line *)
+let mk_line_with_pos pos = 
+  {
+   position = pos; 
+
+   representation = []; 
+   repr_len = 0; 
+   repr_string = ""; 
+   modified = 0; 
+   line_hlt = 0; 
+   items = [||]; 
+  }
+(*e: function Text.mk_line *)
   
 (*s: function Text.compute_newlines *)
 let compute_newlines string =
   let (nbr_newlines,_) = count_char string '\n' in
-  let newlines = Array.create (nbr_newlines + 2) 
-    { position = 0; representation = []; modified = 0; repr_len = 0; repr_string = ""; line_hlt = 0; items = [||]; } in
+  let newlines = Array.create (nbr_newlines + 2) (mk_line_with_pos 0) in
   let curs = ref 0 in
+  (* newlines.(0) is already set with 0 position for its bol *)
   for i = 1 to nbr_newlines do
     let pos = String.index_from string !curs '\n' in
-    newlines.(i) <- { position = pos+1; representation = []; 
-      modified = 0; repr_len = 0; repr_string = "";
-      line_hlt = 0; items = [||];
-    };
+    newlines.(i) <- mk_line_with_pos (pos+1);
     curs := pos + 1;
   done;
-  newlines.(nbr_newlines+1) <- { position = String.length string + 1; 
-    representation = []; modified = 0; 
-    repr_len = 0; repr_string = "";
-    line_hlt = 0; items = [||];
-  };
+  newlines.(nbr_newlines+1) <- mk_line_with_pos (String.length string + 1);
   newlines
 (*e: function Text.compute_newlines *)
 

@@ -27,7 +27,6 @@ and item_attr =
 type position = int
 type delta = int
 
-type direct
 type point
 type action
 type t
@@ -45,7 +44,7 @@ type repr =
 
 type line =
   { 
-    mutable position : direct;
+    mutable position : int;
     mutable representation : repr list;
     mutable repr_len : int;
     mutable repr_string : string;

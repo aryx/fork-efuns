@@ -580,27 +580,7 @@ let delete text point len =
   delete_res text point len |> ignore
 @
 
-<<function Text.compute_newlines>>=
-let compute_newlines string =
-  let (nbr_newlines,_) = count_char string '\n' in
-  let newlines = Array.create (nbr_newlines + 2) 
-    { position = 0; representation = []; modified = 0; repr_len = 0; repr_string = ""; line_hlt = 0; items = [||]; } in
-  let curs = ref 0 in
-  for i = 1 to nbr_newlines do
-    let pos = String.index_from string !curs '\n' in
-    newlines.(i) <- { position = pos+1; representation = []; 
-      modified = 0; repr_len = 0; repr_string = "";
-      line_hlt = 0; items = [||];
-    };
-    curs := pos + 1;
-  done;
-  newlines.(nbr_newlines+1) <- { position = String.length string + 1; 
-    representation = []; modified = 0; 
-    repr_len = 0; repr_string = "";
-    line_hlt = 0; items = [||];
-  };
-  newlines
-@
+
 
 
 <<function Text.find_xy>>=
@@ -1288,7 +1268,6 @@ type color = string
 <<type Text.delta>>
 <<type Text.position>>
 
-<<type Text.direct>>
 <<type Text.session>>
 
 <<type Text.line>>
@@ -1456,6 +1435,8 @@ let print_newlines text =
 <<function Text.delete_res>>
 
 <<function Text.delete>>
+
+<<function Text.mk_line>>
   
 <<function Text.compute_newlines>>
 
