@@ -3819,11 +3819,13 @@ List.iter (fun (name, action) ->
 let add_interactive map name f =
     map.interactives <- (name, (f, None)) :: map.interactives
 @
+%less: should look for duplicates
 
 % so each global key and their associated func is accessible!
 <<[[Keymap.interactive()]] add keylist and name to interactives list>>=
 map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 @
+%less: should look for duplicates
 
 \subsection{[[Top_window.message()]]}
 
@@ -3915,9 +3917,8 @@ let rec get_binding map keylist =
 <<[[Top_window.handle_key()]] handle exception of try_map>>=
 | UnboundKey -> 
     message top_window
-      (Printf.sprintf "Unbound key %s %s"
-        (Keymap.print_key_list frame.frm_prefix)
-      (Keymap.print_key key));
+      (Printf.sprintf "Unbound key %s"
+        (Keymap.print_key_list (frame.frm_prefix @ [key])));
     frame.frm_prefix <- [];
 | Failure str -> message top_window str
 | e -> message top_window 
@@ -4011,7 +4012,7 @@ let all_bindings location =
 let print_key (map,keysym) =
   let prefix =
     match map with
-      NormalMap -> ""
+    | NormalMap -> ""
     | ControlMap -> "C-"
     | MetaMap -> "M-"
     | ControlMetaMap -> "CM-"
@@ -4028,9 +4029,10 @@ let print_key (map,keysym) =
 <<function Keymap.print_key_list>>=
 let rec print_key_list key_list =
   match key_list with
-    key :: tail ->
+  | [] -> ""
+  | [key] -> Printf.sprintf "%s" (print_key key)
+  | key :: tail ->
       Printf.sprintf "%s %s" (print_key key) (print_key_list tail)
-  | _ -> ""
 @
 
 

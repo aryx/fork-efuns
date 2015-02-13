@@ -257,9 +257,8 @@ let handle_key top_window modifiers keysym =
     (*s: [[Top_window.handle_key()]] handle exception of try_map *)
     | UnboundKey -> 
         message top_window
-          (Printf.sprintf "Unbound key %s %s"
-            (Keymap.print_key_list frame.frm_prefix)
-          (Keymap.print_key key));
+          (Printf.sprintf "Unbound key %s"
+            (Keymap.print_key_list (frame.frm_prefix @ [key])));
         frame.frm_prefix <- [];
     | Failure str -> message top_window str
     | e -> message top_window 

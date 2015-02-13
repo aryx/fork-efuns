@@ -37,7 +37,7 @@ let create () =
 let print_key (map,keysym) =
   let prefix =
     match map with
-      NormalMap -> ""
+    | NormalMap -> ""
     | ControlMap -> "C-"
     | MetaMap -> "M-"
     | ControlMetaMap -> "CM-"
@@ -54,11 +54,10 @@ let print_key (map,keysym) =
 (*s: function Keymap.print_key_list *)
 let rec print_key_list key_list =
   match key_list with
-  | [key] -> 
-      Printf.sprintf "%s" (print_key key)
+  | [] -> ""
+  | [key] -> Printf.sprintf "%s" (print_key key)
   | key :: tail ->
       Printf.sprintf "%s %s" (print_key key) (print_key_list tail)
-  | _ -> ""
 (*e: function Keymap.print_key_list *)
 
    
