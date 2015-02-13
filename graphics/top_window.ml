@@ -401,7 +401,7 @@ let create location =
  
   let buf = 
     Ebuffer.default location "*help*" in
-  (* keep one line for the minibuffer *)
+  (* keep one line for the minibuffer, hence the -1 *)
   let window = 
     Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
   let frame = 

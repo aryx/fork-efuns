@@ -18,6 +18,8 @@ GRAPHICSDIR=$(shell ocamlfind query lablgtk2) $(shell ocamlfind query cairo)
 OTHERSYSLIBS=lablgtk.cma cairo.cma cairo_lablgtk.cma 
 GTKLOOP=gtkThread.cmo
 
+#todo: put top_window.ml in core and minibuffer in features/ instead
+
 SRC=\
  commons/common.ml\
  commons/simple_color.ml\
@@ -32,8 +34,8 @@ SRC=\
  core/text.ml\
  core/efuns.ml\
  core/keymap.ml\
- core/window.ml\
  core/ebuffer.ml\
+ core/window.ml\
  core/frame.ml\
  graphics/top_window.ml\
  features/simple.ml\

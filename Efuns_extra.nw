@@ -4739,7 +4739,6 @@ let remove_frame frame =
 (*                                                                     *)
 (***********************************************************************)
 
-
 open Efuns
 open Text
 open Frame

@@ -393,10 +393,12 @@ let init (location : location) =
   (* Les variables locales *)
   
 (*s: function Efuns.set_global *)
-let set_global location var value = Local.set location.loc_vars var value
+let set_global location var value = 
+  Local.set location.loc_vars var value
 (*e: function Efuns.set_global *)
 (*s: function Efuns.set_local *)
-let set_local buf var value = Local.set buf.buf_vars var value
+let set_local buf var value = 
+  Local.set buf.buf_vars var value
 (*e: function Efuns.set_local *)
 (*s: function Efuns.get_var *)
 let get_var buf var = 
@@ -424,10 +426,12 @@ let get_var buf var =
 (*e: function Efuns.get_var *)
           
 (*s: function Efuns.get_global *)
-let get_global location var = Local.get location.loc_vars var
+let get_global location var = 
+  Local.get location.loc_vars var
 (*e: function Efuns.get_global *)
 (*s: function Efuns.get_local *)
-let get_local buf var = Local.get buf.buf_vars var
+let get_local buf var = 
+  Local.get buf.buf_vars var
 (*e: function Efuns.get_local *)
   
 (*s: function Efuns.set_minor_var *)

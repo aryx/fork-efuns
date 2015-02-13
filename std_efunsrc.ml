@@ -251,6 +251,7 @@ let _ =
   define_action "revert_buffer" reload;
   (* C-x map *)
   define_action "point_at_mark"  point_at_mark;
+
   define_action "open_display" open_display;
   (* C-x map *)
   define_action "change_font"  change_font;

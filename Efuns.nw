@@ -1047,6 +1047,7 @@ define_action "recenter"  recenter;
 define_action "revert_buffer" reload;
 (* C-x map *)
 define_action "point_at_mark"  point_at_mark;
+
 define_action "open_display" open_display;
 (* C-x map *)
 define_action "change_font"  change_font;
@@ -1384,18 +1385,22 @@ loc_vars : Local.vars;
 % - minor mode
 
 <<function Efuns.set_global>>=
-let set_global location var value = Local.set location.loc_vars var value
+let set_global location var value = 
+  Local.set location.loc_vars var value
 @
 <<function Efuns.set_local>>=
-let set_local buf var value = Local.set buf.buf_vars var value
+let set_local buf var value = 
+  Local.set buf.buf_vars var value
 @
 
 <<function Efuns.get_global>>=
-let get_global location var = Local.get location.loc_vars var
+let get_global location var = 
+  Local.get location.loc_vars var
 @
 %todo: put the type of the .mli here? subtle signature. polymorphic vars!
 <<function Efuns.get_local>>=
-let get_local buf var = Local.get buf.buf_vars var
+let get_local buf var = 
+  Local.get buf.buf_vars var
 @
 
 % buffer -> major -> minors -> global
@@ -1793,7 +1798,7 @@ let create location =
  
   let buf = 
     Ebuffer.default location "*help*" in
-  (* keep one line for the minibuffer *)
+  (* keep one line for the minibuffer, hence the -1 *)
   let window = 
     Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
   let frame = 
@@ -1862,7 +1867,6 @@ INRIA Rocquencourt
       in
       create location name None (Text.create str) (Keymap.create ())
 @
-
 %(*
 %"
 %Version is " ^ Version.efuns_version ^"
@@ -2234,6 +2238,7 @@ let goto_point _text p1 p2 =
 
 %\section{The gap}
 
+% ?? -> <>
 <<function Text.move_point_to>>=
 let move_point_to tree point p =
   let text = tree.tree_text in    
@@ -2245,7 +2250,7 @@ let move_point_to tree point p =
 
 \section{Lines}
 
-% already seen Text.text_newlines, Text.text_nlines, and Text.line
+% already seen Text.text_newlines, Text.text_nlines, and Text.line type
 
 
 % status line display the line of the cursor -> <>
