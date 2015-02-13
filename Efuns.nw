@@ -319,7 +319,7 @@ type text = {
     <<[[Text.text]] other fields>>
   } 
 @
-% will see line later
+% will see line later, subtle
 
 
 
@@ -418,10 +418,10 @@ and point = {
   }
 @
 % not point_x ?
-% it's a charpos or a line/col?
-% I think it's a charpos, but you also maintain the line of this
-% charpos to index in the line array? But what you
-% really care is point.point
+% it's a charpos, not a column. The additional y/line is
+% to quickly know the line so can index in the text.text_lines array
+% and do certain stuff.
+% Most of the time what you care is really point.point though.
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_point : Text.point;
@@ -1708,8 +1708,6 @@ let _ =
 <<function Top_window.create>>=
 let create location =
  
-  <<[[Top_window.create()]] create graphical window with right dimensions>>
-
   let buf = 
     Ebuffer.default location "*help*" in
   let window = 
@@ -1732,14 +1730,10 @@ let create location =
       top_location = location;
     } 
   in
-  <<[[Top_window.create()]] optional scrollbar setup>>
 
   (* adjust what Window.create_at_top could not do *)
   frame.frm_window.win_up <- TopWindow top_window;
   location.top_windows <- top_window :: location.top_windows;
-
-  <<[[Top_window.create()]] create menus>>
-  <<[[Top_window.create()]] misc stuff>>
 
   top_window
 @
@@ -1751,6 +1745,8 @@ let create location =
 % - we use create_without_top() because mutually recursive :) we need
 %   an active frame to create a top_window, and we need a top_window
 %   for from.frm_window.win_up.
+%old: this used to contain far more graphical stuff, but I've
+% extracted it from it and moved instead in Graphics_efuns.init()
 
 %(*
 %      top_term = xterm;
@@ -1826,33 +1822,33 @@ let create_at_top xpos ypos width height =
 % slightly complicated?
 
 
-<<[[Top_window.create()]] create graphical window with right dimensions>>=
-(*
-let top = new WX_appli.t display.WX_xterm.root_oo [] in
-top#setWM_NAME "new_frame";
-top#setWM_CLASS "Efuns" "efuns";
-let hbar = new WX_bar.h top#container [] in
-top#container_add hbar#contained;
-let xterm = new WX_xterm.t 
-    hbar#container display
-    location.loc_width
-    location.loc_height in
-let ady = new WX_adjust.t () in
-let scrollbar = new WX_scrollbar.v hbar#container ady [] in
-hbar#container_add_s [xterm#contained; scrollbar#contained];
-*)
-@
+%<<[[Top_window.create()]] create graphical window with right dimensions>>=
+%(*
+%let top = new WX_appli.t display.WX_xterm.root_oo [] in
+%top#setWM_NAME "new_frame";
+%top#setWM_CLASS "Efuns" "efuns";
+%let hbar = new WX_bar.h top#container [] in
+%top#container_add hbar#contained;
+%let xterm = new WX_xterm.t 
+%    hbar#container display
+%    location.loc_width
+%    location.loc_height in
+%let ady = new WX_adjust.t () in
+%let scrollbar = new WX_scrollbar.v hbar#container ady [] in
+%hbar#container_add_s [xterm#contained; scrollbar#contained];
+%*)
+%@
 
-<<[[Top_window.create()]] misc stuff>>=
-(*
-  WX_xterm.install_handler display xterm (handler top_window xterm);
-  top#configure [Bindings [Key (anyKey, anyModifier), (fun _ ->
-          handler top_window xterm (WX_xterm.XTKeyPress (
-              !WX_types.modifiers_event, !key_string, !key_sym));
-          WX_xterm.update_displays ()
-    )]];
-*)
-@
+%<<[[Top_window.create()]] misc stuff>>=
+%(*
+%  WX_xterm.install_handler display xterm (handler top_window xterm);
+%  top#configure [Bindings [Key (anyKey, anyModifier), (fun _ ->
+%          handler top_window xterm (WX_xterm.XTKeyPress (
+%              !WX_types.modifiers_event, !key_string, !key_sym));
+%          WX_xterm.update_displays ()
+%    )]];
+%*)
+%@
 
 \subsection{[[Top_window.update_display()]]}
 
@@ -1966,6 +1962,10 @@ let handle_key top_window modifiers keysym =
 % will see try_map() later in keyboard section
 
 
+<<constant Top_window.meta>>=
+let meta = ref Xtypes.mod1Mask
+@
+
 <<[[Top_window.handle_key()]] compute mod>>=
 let mask = Xtypes.controlMask lor !meta in
 let diff = modifiers land mask in
@@ -1980,6 +1980,9 @@ match () with
 
 % so for now remains Frame.update(), and Top_window.try_map()
 % which are big pieces to understand that we have not seen.
+
+
+
 
 \chapter{Text Managment}
 
@@ -2041,100 +2044,34 @@ match () with
 %http://en.wikipedia.org/wiki/Rope_(data_structure)
 
 
-\section{Text representation}
-
-% do we need something fancy? naive brute force too slow?
+% already seen Text.text_size, Text.text_string in core DS chapter
 
 
-<<type Text.line>>=
-and line = {
-    mutable position : direct;
+%    let gap_end = gpoint + text.text_gsize in
 
-    mutable representation : repr list;
-    mutable repr_len : int;
-    mutable repr_string : string;
+<<[[Text.text]] other fields>>=
+(* g for gap *)
+mutable text_gpoint : int;
+mutable text_gsize : int;
 
-    (* hightlighting on the line:
-    0 => no hightlighting
-    n => chars are hightlighted from the beginning of the line until pos n
-    *)
-    mutable items : item array;
-
-    <<[[Text.line]] other fields>>
-  } 
+mutable text_gline : int;
 @
+% rename gpoint? it's not really a point, or rename
+% gline to gpoint_y? more consistent?
+% gx, gy, gsize gap col, gap line, gap size
 
-%XXX
-<<[[Text.line]] other fields>>=
-mutable modified : int; (* first modified position *)
-mutable line_hlt : int;
+
+<<function Text.size>>=
+let size tree = 
+  let text = tree.tree_text in
+  text.text_size - text.text_gsize
 @
-
-
-
-
-%(* from WX_text *)
-<<type Text.item>>=
-type item =
-  String     of item_attr list * int
-| RealString of item_attr list * string
-@
-%(*| Widget of contained array*)
-
-<<type Text.item_attr>>=
-and item_attr =
-  Font of font
-| Foreground of color
-| Background of color
-@
-
-
-
-
-%XXX?
-<<type Text.repr>>=
-and repr = 
-  { 
-    repr_line_pos : int;   (* pos of repr in Text.t string *)
-    repr_line_len : int;   (* len of repr in Text.t string *)
-    
-    mutable repr_attr : int;    (* common attribute *)
-    repr_charsize : int; (* common size *)
-    
-    repr_size : int;
-    repr_pos : int;  (* pos of repr in representation string *)
-  } 
-@
-
-% Line.position type
-<<type Text.direct>>=
-type direct = int
-@
-
-
-% why not use this type in Text.text.attrs? int array -> attribute array?
-<<type Text.attribute>>=
-type attribute = int
-@
-
-<<type Text.delta>>=
-type delta = int
-@
-
-<<type Text.position>>=
-type position = int
-@
-% used?
-
-
-<<type Text.session>>=
-type session = int
-@
-% used?
-
+% gsize is 0 at the very beginning
 
 
 \section{Points}
+
+% see Point type in core DS chapter with Buffer type.
 
 <<[[Text.text]] other fields>>=
 mutable text_points : point list;
@@ -2185,28 +2122,7 @@ let goto_point _text p1 p2 =
 @
 
 
-\section{The gap}
-
-%    let gap_end = gpoint + text.text_gsize in
-
-<<[[Text.text]] other fields>>=
-(* g for gap *)
-mutable text_gpoint : int;
-mutable text_gsize : int;
-
-mutable text_gline : int;
-@
-% rename gpoint? it's not really a point, or rename
-% gline to gpoint_y? more consistent?
-% gx, gy, gsize gap col, gap line, gap size
-
-
-<<function Text.size>>=
-let size tree = 
-  let text = tree.tree_text in
-  text.text_size - text.text_gsize
-@
-% gsize is 0 at the very beginning
+%\section{The gap}
 
 <<function Text.move_point_to>>=
 let move_point_to tree point p =
@@ -2215,9 +2131,147 @@ let move_point_to tree point p =
   point.point <- p;
   point.point_y <- y
 @
+% find_xy???
+
+\section{Lines}
+
+% already seen Text.text_newlines, Text.text_nlines
+
+<<type Text.line>>=
+and line = {
+    mutable position : direct;
+
+    <<[[Text.line]] representation fields>>
+    <<[[Text.line]] attribute fields>>
+    <<[[Text.line]] other fields>>
+  } 
+@
+% do we need something fancy? naive brute force too slow?
+% well like explained above in an editor you edit (as opposed to codemap),
+% and so you want the insertion of characters to be reasonably fast!
 
 
-\section{Text attributes}
+% Line.position type
+<<type Text.direct>>=
+type direct = int
+@
+%todo: rename charpos?
+
+
+% status line display the line of the cursor -> <>
+<<function Text.point_line>>=
+let point_line text point = 
+  point.point_y
+@
+
+% status line display the co of the cursor -> <>
+<<function Text.point_col>>=
+let point_col tree point = 
+  let text = tree.tree_text in    
+  let y = point.point_y in
+  let gpoint = text.text_gpoint in
+  let point = point.point in
+  let bol = text.text_newlines.(y).position in
+  if point > gpoint && bol <= gpoint 
+  then point - bol - text.text_gsize
+  else point - bol
+@
+
+
+%XXX
+<<[[Text.line]] other fields>>=
+mutable modified : int; (* first modified position *)
+mutable line_hlt : int;
+@
+
+
+
+
+
+
+
+
+<<[[Text.line]] representation fields>>=
+mutable representation : repr list;
+mutable repr_len : int;
+mutable repr_string : string;
+@
+
+
+%XXX?
+<<type Text.repr>>=
+and repr = 
+  { 
+    repr_line_pos : int;   (* pos of repr in Text.t string *)
+    repr_line_len : int;   (* len of repr in Text.t string *)
+    
+    mutable repr_attr : int;    (* common attribute *)
+    repr_charsize : int; (* common size *)
+    
+    repr_size : int;
+    repr_pos : int;  (* pos of repr in representation string *)
+  } 
+@
+
+
+
+
+
+
+<<[[Text.line]] attribute fields>>=
+(* hightlighting on the line:
+0 => no hightlighting
+n => chars are hightlighted from the beginning of the line until pos n
+*)
+mutable items : item array;
+@
+
+%(* from WX_text *)
+<<type Text.item>>=
+type item =
+  String     of item_attr list * int
+| RealString of item_attr list * string
+@
+%(*| Widget of contained array*)
+
+<<type Text.item_attr>>=
+and item_attr =
+  Font of font
+| Foreground of color
+| Background of color
+@
+
+
+
+
+
+
+
+
+%XXX
+% why not use this type in Text.text.attrs? int array -> attribute array?
+<<type Text.attribute>>=
+type attribute = int
+@
+
+<<type Text.delta>>=
+type delta = int
+@
+
+<<type Text.position>>=
+type position = int
+@
+% used?
+
+
+<<type Text.session>>=
+type session = int
+@
+% used?
+
+
+
+\section{Attributes}
 
 <<[[Text.text]] other fields>>=
 mutable text_attrs : int array;
@@ -2250,20 +2304,49 @@ let inverse_attr =  make_attr 1 0 0 false
 
 % let no_attr = 0?
 
-<<function Text.unset_attr>>=
-let unset_attr text =
-  let text = text.tree_text in  
-  Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
-  Array.iter (fun line -> line.modified <- 0) text.text_newlines
+
+
+<<function Text.get_attr>>=
+let get_attr tree point =
+  let text = tree.tree_text in
+  let point = 
+    (* gap handling *)
+    if point.point = text.text_gpoint 
+    then point.point + text.text_gsize 
+    else point.point
+  in
+  if point < text.text_size 
+  then text.text_attrs.(point)
+  else direct_attr
 @
+
+<<function Text.set_char_attr>>=
+let set_char_attr tree point attr =
+  let text = tree.tree_text in    
+  let y = point.point_y in
+  let point = 
+    (* gap handling *)
+    if point.point = text.text_gpoint 
+    then point.point + text.text_gsize 
+    else point.point
+  in
+  if point < text.text_size then begin
+    cancel_repr text point y;
+    text.text_attrs.(point) <- attr
+  end
+@
+% cancel_repr? a cache?
+
 
 <<function Text.set_attr>>=
 let set_attr tree point len attr = (* should not exceed one line *)
   let text = tree.tree_text in  
   if len > 0 then
     let gap_end = text.text_gpoint + text.text_gsize in
+
     let x,y = find_xy tree text.text_gpoint text.text_gline point.point in
     cancel_repr text point.point y;
+
     let point = point.point in
     let gpoint = text.text_gpoint in
     let before, after, after_pos =
@@ -2277,41 +2360,22 @@ let set_attr tree point len attr = (* should not exceed one line *)
       let after = min (len - before) (text.text_size - gap_end) in
       before, after, gap_end
     in
-    let attrs = text.text_attrs in
     if before > 0 
-    then Array.fill attrs point before attr;
-    Array.fill attrs after_pos after attr
+    then Array.fill text.text_attrs point before attr;
+    Array.fill text.text_attrs after_pos after attr
+@
+%TODO: figure: where show 3 different configs depending
+% on where is the covered area regarding the hole
+
+
+<<function Text.unset_attr>>=
+let unset_attr text =
+  let text = text.tree_text in  
+  Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
+  Array.iter (fun line -> line.modified <- 0) text.text_newlines
 @
 
 
-<<function Text.get_attr>>=
-let get_attr tree point =
-  let text = tree.tree_text in
-  let point = 
-    if point.point = text.text_gpoint 
-    then point.point + text.text_gsize 
-    else point.point
-  in
-  if point < text.text_size then
-    text.text_attrs.(point)
-  else
-    direct_attr
-@
-
-<<function Text.set_char_attr>>=
-let set_char_attr tree point attr =
-  let text = tree.tree_text in    
-  let y = point.point_y in
-  let point = 
-    if point.point = text.text_gpoint 
-    then point.point + text.text_gsize 
-    else point.point
-  in
-  if point < text.text_size then begin
-    cancel_repr text point y;
-    text.text_attrs.(point) <- attr
-  end
-@
 
 
 \section{Colors}
@@ -2414,26 +2478,26 @@ let _ =
 
 
 
-<<[[Top_window.create()]] create menus>>=
-(*
-  top#add_button "Buffers" (!buffers_menu top_window);
-  top#add_menu "File" (Array.map (fun (name,action) ->
-        wrap_item top_window (name, execute_action action)
-    ) (Array.of_list !!file_menu));
-  top#add_menu "Edit" (Array.map (fun (name,action) ->
-        wrap_item top_window (name, execute_action action)
-    ) (Array.of_list !!edit_menu));
-  List.iter (fun (menu_name, items) ->
-      top#add_menu menu_name 
-        (Array.map (fun (name,action) ->
-            wrap_item top_window (name, execute_action action)
-        ) (Array.of_list items))
-  ) !!menus;
-  top#add_separator;
-  top#add_menu "Help" (Array.map (wrap_item top_window) !help_menu);
-  top#show;
-*)
-@
+%<<[[Top_window.create()]] create menus>>=
+%(*
+%  top#add_button "Buffers" (!buffers_menu top_window);
+%  top#add_menu "File" (Array.map (fun (name,action) ->
+%        wrap_item top_window (name, execute_action action)
+%    ) (Array.of_list !!file_menu));
+%  top#add_menu "Edit" (Array.map (fun (name,action) ->
+%        wrap_item top_window (name, execute_action action)
+%    ) (Array.of_list !!edit_menu));
+%  List.iter (fun (menu_name, items) ->
+%      top#add_menu menu_name 
+%        (Array.map (fun (name,action) ->
+%            wrap_item top_window (name, execute_action action)
+%        ) (Array.of_list items))
+%  ) !!menus;
+%  top#add_separator;
+%  top#add_menu "Help" (Array.map (wrap_item top_window) !help_menu);
+%  top#show;
+%*)
+%@
 
 
 \subsection{File menu}
@@ -2445,7 +2509,7 @@ let file_menu = define_option ["file_menu"] "" (list_option string2_option) []
 <<[[Std_efunsrc]] file menu setup>>=
 if !!file_menu = [] then begin
     file_menu =:=    [
-      "Open File", "select_open_file";
+      "Open File", "load_buffer";
       "Save Buffer", "save_buffer";
       <<file menu entries>>
       "", "";
@@ -2455,52 +2519,11 @@ if !!file_menu = [] then begin
 @
 % cool, everything is configurable :)
 
+%old: open file was: (* "select_open_file";*)
+
 \subsubsection{Opening a file}
 
-%less: optional I think, this use the toolkit to offer a file
-% browser, but could redirect instead to "load_buffer" which
-% use the minibuffer to open a file
-<<loading actions>>=
-define_action "select_open_file" select_open_file;
-@
-
-<<function Std_efunsrc.select_open_file>>=
-let select_open_file frame =
-  let window = frame.frm_window in
-  let _top_window = Window.top window in
-  let _cdir = Frame.current_dir frame in
-  failwith "Std_efunsrc.select_open_file: TODO"
-(*
-  let info = {
-      filter = Filename.concat cdir "*";
-      current_selection = cdir;
-      predicat = (fun _ -> true);
-      action = (fun _ -> ());
-      cancel = (fun _ -> ());
-    } in
-
-  (* X11 *)
-  let query = new WX_filesel.t top_window.top_root info [] in
-  query#setWM_TRANSIENT_FOR (top_window.top_appli#top :> WX_types.container);
-  info.action <- (fun name ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-          Frame.load_file window name |> ignore
-      ) ());
-  info.cancel <- (fun () ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-      ) ());        
-  query#show
-*)
-@
-
-
-
-
-
 % C-x C-f!
-
 <<loading keys>>=
 [c_x; ControlMap, Char.code 'f'], "load_buffer";
 @
@@ -2537,7 +2560,6 @@ let load_file window filename =
 
 
 
-
 <<loading keys>>=
 [c_x; NormalMap, Char.code 'i'], "insert_file";
 @
@@ -2554,6 +2576,47 @@ let insert_file frame =
       close_in inc
   )
 @
+
+
+
+%%less: optional I think, this use the toolkit to offer a file
+%% browser, but could redirect instead to "load_buffer" which
+%% use the minibuffer to open a file
+%<<loading actions>>=
+%define_action "select_open_file" select_open_file;
+%@
+%
+%<<function Std_efunsrc.select_open_file>>=
+%let select_open_file frame =
+%  let window = frame.frm_window in
+%  let _top_window = Window.top window in
+%  let _cdir = Frame.current_dir frame in
+%  failwith "Std_efunsrc.select_open_file: TODO"
+%(*
+%  let info = {
+%      filter = Filename.concat cdir "*";
+%      current_selection = cdir;
+%      predicat = (fun _ -> true);
+%      action = (fun _ -> ());
+%      cancel = (fun _ -> ());
+%    } in
+%
+%  (* X11 *)
+%  let query = new WX_filesel.t top_window.top_root info [] in
+%  query#setWM_TRANSIENT_FOR (top_window.top_appli#top :> WX_types.container);
+%  info.action <- (fun name ->
+%      wrap top_window (fun top_window ->
+%          query#destroy;
+%          Frame.load_file window name |> ignore
+%      ) ());
+%  info.cancel <- (fun () ->
+%      wrap top_window (fun top_window ->
+%          query#destroy;
+%      ) ());        
+%  query#show
+%*)
+%@
+
 
 
 
@@ -2677,10 +2740,10 @@ let exit_efuns frame =
   let buffers = Utils.list_of_hash location.loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
-    (*Graphics.close_graph ();*)
     exit 0
   )
 @
+%    (*Graphics.close_graph ();*)
 
 %todo: save_buffers_and_action?
 
@@ -2798,7 +2861,7 @@ mutable frm_mini_buffer : string option;
 %less: redundant frm_has_status_line?
 
 <<[[Frame.update()]] draw status line or minibuffer>>=
-<<[[Frame.update()]] let xterm>>
+let graphic = Window.backend top_window in
 match frame.frm_mini_buffer with
 | None -> 
     <<[[Frame.update()]] draw status line>>
@@ -2807,12 +2870,6 @@ match frame.frm_mini_buffer with
 @
 % hmm but if minibuffer, it will also redraw its content?
 % no cos minibuffer is one line? so does not move?
-
-\ifallcode
-<<[[Frame.update()]] let xterm>>=
-let graphic = Window.backend top_window in
-@
-\fi
 
 
 \subsubsection{Conditions for redraw}
@@ -3143,20 +3200,22 @@ let cursor_off top_window =
 @
 
 
+
 \subsection{Scrollbar}
 
-<<[[Top_window.create()]] optional scrollbar setup>>=
-(* ady#add_subject (fun () -> *) (
-(*
-      let ady = () in
-      let frame = top_window.top_active_frame in
-      if not frame.frm_force_start then
-        wrap top_window (scroll_to_frame ady) ()
-*)
-  ()
-  );
-@
+%<<[[Top_window.create()]] optional scrollbar setup>>=
+%(* ady#add_subject (fun () -> *) (
+%(*
+%      let ady = () in
+%      let frame = top_window.top_active_frame in
+%      if not frame.frm_force_start then
+%        wrap top_window (scroll_to_frame ady) ()
+%*)
+%  ()
+%  );
+%@
 
+% not sure it's related only to scrollbar thing
 <<[[Efuns.frame]] other fields>>=
 mutable frm_force_start : bool;
 @
@@ -3248,6 +3307,7 @@ let status_name frame name =
 \subsection{Status line format}
 
 <<[[Efuns.status]] other fields>>=
+(* the pair of int is a:   pos * max_len *)
 mutable status_format : (status_info * (int * int)) list;
 @
 
@@ -3347,9 +3407,9 @@ let status_col frame col =
 <<[[Frame.update()]] draw status line>>=
 let status = frame.frm_status in
 
+status_modified frame (version text <> buf.buf_last_saved);
 status_line frame  (point_line text frame.frm_point);
 status_col  frame  (point_col  text frame.frm_point);
-status_modified frame (version text <> buf.buf_last_saved);
 status_name frame buf.buf_name;
 status_major_mode frame;
 
@@ -6316,9 +6376,11 @@ let _ =
 
 
 \section{Multi top windows}
-% called actually frame in emacs terminology, but confusing I think
-
+% called actually frame in emacs terminology, but confusing I think.
 % I don't think this feature is very useful.
+
+% this used to require also the display parameter passed around,
+% but I've removed it for now.
 
 %todo: this is why have list top_window in location.top_windows?
 

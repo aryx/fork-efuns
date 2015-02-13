@@ -223,6 +223,7 @@ and status =
     mutable status_modified : bool;
     mutable stat_modified : bool;
     (*s: [[Efuns.status]] other fields *)
+    (* the pair of int is a:   pos * max_len *)
     mutable status_format : (status_info * (int * int)) list;
     (*x: [[Efuns.status]] other fields *)
     (* the string! --- ... --- *)

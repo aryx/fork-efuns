@@ -330,17 +330,6 @@ open Options
 
 \subsection*{[[core/text.ml]]}
 
-<<function Text.point_col>>=
-let point_col tree point = 
-  let text = tree.tree_text in    
-  let gpoint = text.text_gpoint in
-  let bol = text.text_newlines.(point.point_y).position in
-  let point = point.point in
-  if point > gpoint && bol <= gpoint then
-    point - bol - text.text_gsize
-  else
-    point - bol
-@
 
 
 
@@ -1161,9 +1150,6 @@ let clear tree =
   List.iter (fun p -> p.point <- 0; p.point_y <- 0) text.text_points
 @
 
-<<function Text.point_line>>=
-let point_line text point = point.point_y
-@
 
 
 <<function Text.region>>=
@@ -5271,9 +5257,6 @@ let mini_message frame msg =
 @
 
 
-<<constant Top_window.meta>>=
-let meta = ref Xtypes.mod1Mask
-@
 
 
 <<function Top_window.wrap>>=
@@ -5537,14 +5520,10 @@ open Top_window
 
 <<function Std_efunsrc.compile>>
 
-<<function Std_efunsrc.select_open_file>>
-
-  
 <<toplevel Std_efunsrc._1>>
   
   
 <<constant Std_efunsrc.global_map>>
-
 <<constant Std_efunsrc.interactives_map>>
 
 <<constant Std_efunsrc.c_h>>

@@ -399,23 +399,6 @@ let help_menu = ref ([| |]: (string * action) array)
 (*s: function Top_window.create *)
 let create location =
  
-  (*s: [[Top_window.create()]] create graphical window with right dimensions *)
-  (*
-  let top = new WX_appli.t display.WX_xterm.root_oo [] in
-  top#setWM_NAME "new_frame";
-  top#setWM_CLASS "Efuns" "efuns";
-  let hbar = new WX_bar.h top#container [] in
-  top#container_add hbar#contained;
-  let xterm = new WX_xterm.t 
-      hbar#container display
-      location.loc_width
-      location.loc_height in
-  let ady = new WX_adjust.t () in
-  let scrollbar = new WX_scrollbar.v hbar#container ady [] in
-  hbar#container_add_s [xterm#contained; scrollbar#contained];
-  *)
-  (*e: [[Top_window.create()]] create graphical window with right dimensions *)
-
   let buf = 
     Ebuffer.default location "*help*" in
   let window = 
@@ -438,52 +421,10 @@ let create location =
       top_location = location;
     } 
   in
-  (*s: [[Top_window.create()]] optional scrollbar setup *)
-  (* ady#add_subject (fun () -> *) (
-  (*
-        let ady = () in
-        let frame = top_window.top_active_frame in
-        if not frame.frm_force_start then
-          wrap top_window (scroll_to_frame ady) ()
-  *)
-    ()
-    );
-  (*e: [[Top_window.create()]] optional scrollbar setup *)
 
   (* adjust what Window.create_at_top could not do *)
   frame.frm_window.win_up <- TopWindow top_window;
   location.top_windows <- top_window :: location.top_windows;
-
-  (*s: [[Top_window.create()]] create menus *)
-  (*
-    top#add_button "Buffers" (!buffers_menu top_window);
-    top#add_menu "File" (Array.map (fun (name,action) ->
-          wrap_item top_window (name, execute_action action)
-      ) (Array.of_list !!file_menu));
-    top#add_menu "Edit" (Array.map (fun (name,action) ->
-          wrap_item top_window (name, execute_action action)
-      ) (Array.of_list !!edit_menu));
-    List.iter (fun (menu_name, items) ->
-        top#add_menu menu_name 
-          (Array.map (fun (name,action) ->
-              wrap_item top_window (name, execute_action action)
-          ) (Array.of_list items))
-    ) !!menus;
-    top#add_separator;
-    top#add_menu "Help" (Array.map (wrap_item top_window) !help_menu);
-    top#show;
-  *)
-  (*e: [[Top_window.create()]] create menus *)
-  (*s: [[Top_window.create()]] misc stuff *)
-  (*
-    WX_xterm.install_handler display xterm (handler top_window xterm);
-    top#configure [Bindings [Key (anyKey, anyModifier), (fun _ ->
-            handler top_window xterm (WX_xterm.XTKeyPress (
-                !WX_types.modifiers_event, !key_string, !key_sym));
-            WX_xterm.update_displays ()
-      )]];
-  *)
-  (*e: [[Top_window.create()]] misc stuff *)
 
   top_window
 (*e: function Top_window.create *)

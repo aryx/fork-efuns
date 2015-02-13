@@ -69,16 +69,18 @@ type session = int
 and line = {
     mutable position : direct;
 
+    (*s: [[Text.line]] representation fields *)
     mutable representation : repr list;
     mutable repr_len : int;
     mutable repr_string : string;
-
+    (*e: [[Text.line]] representation fields *)
+    (*s: [[Text.line]] attribute fields *)
     (* hightlighting on the line:
     0 => no hightlighting
     n => chars are hightlighted from the beginning of the line until pos n
     *)
     mutable items : item array;
-
+    (*e: [[Text.line]] attribute fields *)
     (*s: [[Text.line]] other fields *)
     mutable modified : int; (* first modified position *)
     mutable line_hlt : int;
@@ -118,13 +120,13 @@ type text = {
     (* version *)    
     mutable text_modified : int;
     (*x: [[Text.text]] other fields *)
-    mutable text_points : point list;
-    (*x: [[Text.text]] other fields *)
     (* g for gap *)
     mutable text_gpoint : int;
     mutable text_gsize : int;
 
     mutable text_gline : int;
+    (*x: [[Text.text]] other fields *)
+    mutable text_points : point list;
     (*x: [[Text.text]] other fields *)
     mutable text_attrs : int array;
     (*x: [[Text.text]] other fields *)
@@ -248,13 +250,13 @@ let size tree =
 (*s: function Text.point_col *)
 let point_col tree point = 
   let text = tree.tree_text in    
+  let y = point.point_y in
   let gpoint = text.text_gpoint in
-  let bol = text.text_newlines.(point.point_y).position in
   let point = point.point in
-  if point > gpoint && bol <= gpoint then
-    point - bol - text.text_gsize
-  else
-    point - bol
+  let bol = text.text_newlines.(y).position in
+  if point > gpoint && bol <= gpoint 
+  then point - bol - text.text_gsize
+  else point - bol
 (*e: function Text.point_col *)
 
 (*s: function Text.make_attr *)
@@ -769,8 +771,10 @@ let set_attr tree point len attr = (* should not exceed one line *)
   let text = tree.tree_text in  
   if len > 0 then
     let gap_end = text.text_gpoint + text.text_gsize in
+
     let x,y = find_xy tree text.text_gpoint text.text_gline point.point in
     cancel_repr text point.point y;
+
     let point = point.point in
     let gpoint = text.text_gpoint in
     let before, after, after_pos =
@@ -784,10 +788,9 @@ let set_attr tree point len attr = (* should not exceed one line *)
       let after = min (len - before) (text.text_size - gap_end) in
       before, after, gap_end
     in
-    let attrs = text.text_attrs in
     if before > 0 
-    then Array.fill attrs point before attr;
-    Array.fill attrs after_pos after attr
+    then Array.fill text.text_attrs point before attr;
+    Array.fill text.text_attrs after_pos after attr
 (*e: function Text.set_attr *)
 
 (*s: function Text.low_distance *)
@@ -849,14 +852,14 @@ let get_char tree point =
 let get_attr tree point =
   let text = tree.tree_text in
   let point = 
+    (* gap handling *)
     if point.point = text.text_gpoint 
     then point.point + text.text_gsize 
     else point.point
   in
-  if point < text.text_size then
-    text.text_attrs.(point)
-  else
-    direct_attr
+  if point < text.text_size 
+  then text.text_attrs.(point)
+  else direct_attr
 (*e: function Text.get_attr *)
 
 
@@ -865,6 +868,7 @@ let set_char_attr tree point attr =
   let text = tree.tree_text in    
   let y = point.point_y in
   let point = 
+    (* gap handling *)
     if point.point = text.text_gpoint 
     then point.point + text.text_gsize 
     else point.point
@@ -1413,7 +1417,8 @@ let clear tree =
 
 
 (*s: function Text.point_line *)
-let point_line text point = point.point_y
+let point_line text point = 
+  point.point_y
 (*e: function Text.point_line *)
 
 

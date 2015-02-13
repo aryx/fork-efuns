@@ -45,38 +45,6 @@ let compile frame =
   exec_interactive (buf_interactives frame.frm_buffer) frame "compile"
 (*e: function Std_efunsrc.compile *)
 
-(*s: function Std_efunsrc.select_open_file *)
-let select_open_file frame =
-  let window = frame.frm_window in
-  let _top_window = Window.top window in
-  let _cdir = Frame.current_dir frame in
-  failwith "Std_efunsrc.select_open_file: TODO"
-(*
-  let info = {
-      filter = Filename.concat cdir "*";
-      current_selection = cdir;
-      predicat = (fun _ -> true);
-      action = (fun _ -> ());
-      cancel = (fun _ -> ());
-    } in
-
-  (* X11 *)
-  let query = new WX_filesel.t top_window.top_root info [] in
-  query#setWM_TRANSIENT_FOR (top_window.top_appli#top :> WX_types.container);
-  info.action <- (fun name ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-          Frame.load_file window name |> ignore
-      ) ());
-  info.cancel <- (fun () ->
-      wrap top_window (fun top_window ->
-          query#destroy;
-      ) ());        
-  query#show
-*)
-(*e: function Std_efunsrc.select_open_file *)
-
-  
 (*s: toplevel Std_efunsrc._1 *)
 let _ =
   (*s: actions definitions *)
@@ -84,8 +52,6 @@ let _ =
   (* Loading *)
   (* ----------------------------------------------------------- *)
   (*s: loading actions *)
-  define_action "select_open_file" select_open_file;
-  (*x: loading actions *)
   (* C-x map *)
   define_action "load_buffer"  load_buffer;
   (*x: loading actions *)
@@ -325,7 +291,6 @@ let _ =
 (*s: constant Std_efunsrc.global_map *)
 let global_map = define_option ["global_map"] "" (list_option binding_option) []
 (*e: constant Std_efunsrc.global_map *)
-
 (*s: constant Std_efunsrc.interactives_map *)
 let interactives_map = define_option ["interactives_map"] ""
     (list_option string2_option) 
@@ -622,7 +587,7 @@ let _ =
   (*s: [[Std_efunsrc]] file menu setup *)
   if !!file_menu = [] then begin
       file_menu =:=    [
-        "Open File", "select_open_file";
+        "Open File", "load_buffer";
         "Save Buffer", "save_buffer";
         (*s: file menu entries *)
         "Kill Buffer", "kill_buffer";

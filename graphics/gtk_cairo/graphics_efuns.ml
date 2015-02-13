@@ -39,15 +39,10 @@ module ArithFloatInfix = struct
     let (/..) = (/)
     let ( *.. ) = ( * )
 
-
     let (+) = (+.)
     let (-) = (-.)
     let (/) = (/.)
     let ( * ) = ( *. )
-
-    let (+=) ref v = ref := !ref + v
-    let (-=) ref v = ref := !ref - v
-
 end
 (* floats are the norm in cairo *)
 open ArithFloatInfix
@@ -58,12 +53,20 @@ let set_source_color ?(alpha=1.) ~cr ~color () =
   Cairo.set_source_rgba cr r g b alpha;
   )
 
+(* Text cairo API seems buggy, especially on MacOS X, see
+ * https://github.com/diagrams/diagrams-cairo/issues/43
+ * so I had to hack many things in move_to() by using different extents..
+ * Indeed the main cairo documents says Cairo.text_xxx are a "toy text API"
+ * http://cairographics.org/manual/cairo-text.html
+ *)
 (* less: prepare_string thing *)
 let show_text cr s =
   if s = "" 
   then () 
   else 
     Cairo.show_text cr s
+
+
 
 let fill_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () = 
   set_source_color ?alpha ~cr ~color ();
@@ -85,17 +88,9 @@ let draw_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () =
   Cairo.stroke cr;
   ()
 
-
 (*****************************************************************************)
-(* Draw API *)
+(* Draw Efuns API *)
 (*****************************************************************************)
-
-(* Text cairo API seems buggy, especially on MacOS X, see
- * https://github.com/diagrams/diagrams-cairo/issues/43
- * so I had to hack many things.
- * Indeed the main cairo documents says Cairo.text_xxx are a "toy text API"
- * http://cairographics.org/manual/cairo-text.html
- *)
 
 (* helper *)
 let move_to cr col line =
@@ -136,18 +131,14 @@ let update_displays cr =
 let backend cr = 
   let conv x = float_of_int x in
   { Xdraw. 
-  clear_eol = (fun a b c -> 
-    clear_eol cr (conv a) (conv b) c); 
-  draw_string = (fun a b c d e f -> 
-    draw_string cr (conv a) (conv b) c d e f);
-  update_displays = (fun () -> 
-    update_displays cr);
-}
-
+    clear_eol = (fun a b c -> clear_eol cr (conv a) (conv b) c); 
+    draw_string = (fun a b c d e f -> draw_string cr (conv a) (conv b) c d e f);
+    update_displays = (fun () -> update_displays cr);
+  }
 
 
 (*****************************************************************************)
-(* Test UI *)
+(* Test cairo/gtk *)
 (*****************************************************************************)
 
 let width = 500
@@ -221,7 +212,7 @@ let paint w =
   pr2 "paint";
   Top_window.update_display w.model 
 
-
+(* for the special key, Control, Meta, etc *)
 let modifiers = ref 0
 
 (*****************************************************************************)
@@ -231,7 +222,6 @@ let modifiers = ref 0
 let init2 location =
   let _locale = GtkMain.Main.init () in
 
-  (* those are a first guess. The first configure ev will force a resize *)
   let width = 800 in
   let height = 1010 in
   let w = {
@@ -249,9 +239,8 @@ let init2 location =
   (*-------------------------------------------------------------------*)
 
   location.loc_height <- 50;
-  (* will boostrap using a newly created *help* buffer *)
+  (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create location in
-
   (* the *bindings* buffer *)
   Interactive.create_bindings location |> ignore;
   (* open the first buffers *)
@@ -272,6 +261,7 @@ let init2 location =
   Cairo.select_font_face cr "fixed"
     Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
   Cairo.set_font_size cr 20.0;
+
 
   top_window.graphics <- Some (backend cr); 
   paint w;

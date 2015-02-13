@@ -588,17 +588,15 @@ let update top_window frame =
     (*e: [[Frame.update()]] redraw *)
   end;
   (*s: [[Frame.update()]] draw status line or minibuffer *)
-  (*s: [[Frame.update()]] let xterm *)
   let graphic = Window.backend top_window in
-  (*e: [[Frame.update()]] let xterm *)
   match frame.frm_mini_buffer with
   | None -> 
       (*s: [[Frame.update()]] draw status line *)
       let status = frame.frm_status in
 
+      status_modified frame (version text <> buf.buf_last_saved);
       status_line frame  (point_line text frame.frm_point);
       status_col  frame  (point_col  text frame.frm_point);
-      status_modified frame (version text <> buf.buf_last_saved);
       status_name frame buf.buf_name;
       status_major_mode frame;
 
