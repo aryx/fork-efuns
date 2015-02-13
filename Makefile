@@ -28,13 +28,13 @@ SRC=\
  commons2/local.ml\
  graphics/xtypes.ml\
  graphics/xdraw.ml\
+ graphics/xK.ml\
  core/text.ml\
  core/efuns.ml\
  core/keymap.ml\
  core/window.ml\
  core/ebuffer.ml\
  core/frame.ml\
- graphics/xK.ml\
  graphics/top_window.ml\
  features/simple.ml\
  core/minibuffer.ml\
@@ -47,9 +47,9 @@ SRC=\
  features/compil.ml\
  features/search.ml\
  minor_modes/minor_mode_sample.ml\
+ minor_modes/paren_mode.ml\
  minor_modes/abbrevs_mode.ml\
  minor_modes/fill_mode.ml\
- minor_modes/paren_mode.ml\
  minor_modes/tab_mode.ml\
  major_modes/dired.ml\
  prog_modes/makefile_mode.ml\
@@ -57,12 +57,11 @@ SRC=\
  $(BACKENDDIR)/graphics_efuns.ml \
  main.ml \
 
-
 # minor_modes/accents_mode.ml\
-# client/efuns_client.ml server/server.ml
+# prog_modes/*.mll
+# ipc/efuns_client.ml ipc/server.ml
 # dynamic/eval.ml
 # misc/efuns_xxx.ml
-# prog_modes/*.mll
 
 CMIS=\
  commons/common.cmi\
@@ -133,6 +132,7 @@ SRC_ORIG=Efuns.nw Efuns_extra.nw
 
 SRC_VIEWS= \
   commons2/local.ml\
+  commons2/local.mli\
   core/efuns.ml\
   core/text.ml\
   core/ebuffer.ml\

@@ -620,7 +620,7 @@ let undo frame =
   let action, at_point, len = Text.undo text in
   frame.frm_last_text_updated <- version text - 1;
   Text.set_position text point at_point;
-  Text.fmove text point len; ()
+  Text.fmove text point len
 (*e: function Simple.undo *)
 
 (*s: function Simple.kill_region *)
@@ -1264,11 +1264,13 @@ let add_parameter location (name : string) (input : string -> 'a)
 (*s: function Simple.add_option_parameter *)
 let add_option_parameter location option =
   add_parameter location (shortname option)
-  (fun s -> from_value (get_class option) (Value s))
-  (fun v -> 
+   (fun s -> from_value (get_class option) (Value s))
+   (fun v -> 
       match to_value (get_class option) v with
         Value s -> s
-      | _ -> failwith "Unable to print option") option
+      | _ -> failwith "Unable to print option"
+    ) 
+    option
 (*e: function Simple.add_option_parameter *)
   
 (*s: constant Simple.all_params *)
@@ -1331,7 +1333,7 @@ let _ =
       done;
       Keymap.add_binding gmap [NormalMap, XK.xk_Pointer_Drag1]
         mouse_drag_region;
-      Keymap.add_interactive (location.loc_map) "fondamental-mode" 
+      Keymap.add_interactive (location.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
             Ebuffer.fondamental_mode);
       set_global location line_comment ""

@@ -19,15 +19,21 @@ open Obj
 type 'a var = string
 (*e: type Local.var *)
 
-module Vars = Map.Make (struct  
+(*s: module Local.Vars *)
+module Vars = Map.Make 
+ (struct  
       type t = string
-      let compare = compare end)
+      let compare = compare 
+ end)
+(*e: module Local.Vars *)
 
 (*s: type Local.vars *)
+(* (string * Obj.t ref) Map ref *)
 type vars = Obj.t ref Vars.t ref
 (*e: type Local.vars *)
 (*s: function Local.vars *)
-let vars () = ref Vars.empty
+let vars () = 
+  ref Vars.empty
 (*e: function Local.vars *)
 
 (*s: global Local.vars_table *)
@@ -43,7 +49,7 @@ let create name print input =
     failwith (Printf.sprintf "A variable named %s already exists" name)
   with
     Not_found ->
-      Hashtbl.add vars_table name (magic print,magic input);
+      Hashtbl.add vars_table name (Obj.magic print, Obj.magic input);
       name
 (*e: function Local.create *)
 
@@ -54,27 +60,32 @@ let no_print _ = "<abstr>"
 let no_input (s : string) = failwith "This variable can not be set"
 (*e: function Local.no_input *)
 (*s: function Local.create_abstr *)
-let create_abstr name = create name no_print no_input
+let create_abstr name = 
+  create name no_print no_input
 (*e: function Local.create_abstr *)
   
 external id : 'a -> 'a = "%identity"
 
 (*s: function Local.create_string *)
-let create_string name = create name id id
+let create_string name = 
+  create name id id
 (*e: function Local.create_string *)
 (*s: function Local.create_int *)
-let create_int name = create name string_of_int int_of_string
+let create_int name = 
+  create name string_of_int int_of_string
 (*e: function Local.create_int *)
 (*s: function Local.create_float *)
-let create_float name = create name string_of_float float_of_string
+let create_float name = 
+  create name string_of_float float_of_string
 (*e: function Local.create_float *)
   
 (*s: function Local.get *)
-let get vars var =  Obj.magic !(Vars.find var !vars)
+let get vars var =  
+  Obj.magic !(Vars.find var !vars)
 (*e: function Local.get *)
 (*s: function Local.set *)
 let set vars var value =
-  let value = repr value in
+  let value = Obj.repr value in
   try
     let r = Vars.find var !vars in
     r := value

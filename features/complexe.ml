@@ -259,7 +259,7 @@ let color buf regexp strict attr =
 (*e: constant Complex.display_hist *)
 (*s: function Complex.open_display *)
 let open_display frame =
-failwith "Complex.open_display: TODO"
+  failwith "Complex.open_display: TODO"
 (*
   select frame "open_display :" display_hist ""
     (fun _ -> [])
@@ -380,7 +380,7 @@ let all_variables frame _ =
   
 (*s: function Complex.set_local_variable *)
 let set_local_variable frame = 
-  Select.select frame "set-local-variable : " variable_hist
+  Select.select frame "set_local_variable : " variable_hist
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
@@ -389,7 +389,7 @@ let set_local_variable frame =
   
 (*s: function Complex.set_global_variable *)
 let set_global_variable frame =
-  Select.select frame "set-global-variable : " variable_hist
+  Select.select frame "set_global_variable : " variable_hist
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
@@ -398,7 +398,7 @@ let set_global_variable frame =
   
 (*s: function Complex.get_variable *)
 let get_variable frame = 
-  Select.select frame "get-variable : " variable_hist
+  Select.select frame "get_variable : " variable_hist
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
         (Printf.sprintf "%s : %s" variable (
@@ -483,14 +483,13 @@ let right_buffer frame =
 (*s: toplevel Complex._1 *)
 let _ =
   Efuns.add_start_hook (fun location ->
-      Keymap.add_interactive location.loc_map "make-directory" mkdir;
-      Keymap.add_interactive location.loc_map "set-local-variable" 
+      Keymap.add_interactive location.loc_map "make_directory" mkdir;
+      Keymap.add_interactive location.loc_map "set_local_variable" 
         set_local_variable;
-      Keymap.add_interactive location.loc_map "set-global-variable" 
+      Keymap.add_interactive location.loc_map "set_global_variable" 
         set_global_variable;
-      Keymap.add_interactive location.loc_map "get-variable" get_variable;
-      Keymap.add_interactive location.loc_map "set-parameter" set_parameter;
-      Keymap.add_interactive location.loc_map "get-parameter" get_parameter;
+      Keymap.add_interactive location.loc_map "set_parameter" set_parameter;
+      Keymap.add_interactive location.loc_map "get_parameter" get_parameter;
       
   )
 (*e: toplevel Complex._1 *)

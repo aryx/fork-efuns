@@ -79,9 +79,9 @@ let interactives_map = define_option ["makefile_mode"; "interactives_map"] ""
   []
 (*e: constant Makefile_mode.interactives_map *)
 
-(*s: toplevel Makefile_mode._1 *)
 (* let insert_tab frame = ignore (insert_string frame "\t") *)
-  
+ 
+(*s: toplevel Makefile_mode._1 *)
 let _ =
   if !!local_map = [] then
     local_map =:= [
@@ -97,7 +97,8 @@ let _ =
 (*e: toplevel Makefile_mode._1 *)
 
 (*s: function Makefile_mode.makefile_mode *)
-let makefile_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
+let makefile_mode frame = 
+  Ebuffer.set_major_mode frame.frm_buffer mode
 (*e: function Makefile_mode.makefile_mode *)
         
 (*s: toplevel Makefile_mode._2 *)
@@ -105,7 +106,6 @@ let _ =
   define_action "makefile_mode.compile" (compile c_find_error);
   define_action "makefile_mode.color_buffer" 
     (fun frame -> makefile_color frame.frm_buffer);
-(*  define_action "insert_tab" insert_tab; *)
   define_action "makefile_mode" makefile_mode;
   ()
 (*e: toplevel Makefile_mode._2 *)

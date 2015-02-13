@@ -34,6 +34,7 @@ open WX_text
 (* from WX_types *)
 type font = string
 type color = string
+
 (*s: type Text.item *)
 type item =
   String     of item_attr list * int
@@ -47,7 +48,6 @@ and item_attr =
 (*e: type Text.item_attr *)
 
 
-  
 (*s: type Text.attribute *)
 type attribute = int
 (*e: type Text.attribute *)
@@ -57,10 +57,11 @@ type delta = int
 (*s: type Text.position *)
 type position = int
 (*e: type Text.position *)
-
 (*s: type Text.session *)
 type session = int
 (*e: type Text.session *)
+
+
 
 (*s: type Text.line *)
 and line = {
@@ -140,6 +141,7 @@ type text = {
 and action =
   Insertion of int * int * int
 | Deletion of int * string * int
+
 | Session of action list
 (*e: type Text.action *)
 

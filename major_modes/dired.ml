@@ -15,7 +15,6 @@ open Keymap
 open Efuns
 open Simple
 open Compil
-(*open Complex*)
 open Window
 
 (*s: function Dired.update *)
@@ -196,13 +195,13 @@ let unzip_and_view frame filename =
     
 (*s: toplevel Dired._1 *)
 let _ = 
-  interactive map [NormalMap, XK.xk_Return] "dired-open-file" open_file;
-  interactive map [NormalMap, Char.code 'g'] "dired-update" 
+  interactive map [NormalMap, XK.xk_Return] "dired_open_file" open_file;
+  interactive map [NormalMap, Char.code 'g'] "dired_update" 
   (fun frame -> update frame.frm_buffer);  
-  interactive map [NormalMap, Char.code 'v'] "dired-view-file" open_view;  
-  interactive map [NormalMap, Char.code '+'] "dired-make-directory" 
+  interactive map [NormalMap, Char.code 'v'] "dired_view_file" open_view;  
+  interactive map [NormalMap, Char.code '+'] "dired_make_directory" 
     mkdir;  
-  interactive map [NormalMap, Char.code '-'] "dired-remove-entry" 
+  interactive map [NormalMap, Char.code '-'] "dired_remove_entry" 
     remove;  
   
   view_list := [
@@ -216,7 +215,7 @@ let _ =
     ];
   
   Efuns.add_start_hook (fun location ->
-      add_interactive (location.loc_map) "dired-mode" 
+      add_interactive (location.loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
       set_global location Ebuffer.modes_alist ((".*/$",mode) :: 

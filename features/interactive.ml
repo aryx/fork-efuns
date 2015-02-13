@@ -50,7 +50,7 @@ let exec_interactive interactives frame name =
           let top_window = Window.top frame.frm_window in
           Top_window.message top_window
             ("you can run "^name^" by typing "^
-              (Keymap.print_key_list (List.rev key_list)))
+              (Keymap.print_key_list key_list))
     end;
     f frame
   with

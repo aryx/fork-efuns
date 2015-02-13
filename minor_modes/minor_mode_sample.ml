@@ -16,7 +16,7 @@ open Efuns
 open Top_window
           
 (*s: constant Minor_mode_sample.minor_mode_name *)
-let minor_mode_name = "my_minor_mode"
+let minor_mode_name = "my_minor"
 (*e: constant Minor_mode_sample.minor_mode_name *)
 
 (*s: function Minor_mode_sample.install *)
@@ -38,7 +38,7 @@ let _ =
       Keymap.add_binding mode.min_map [NormalMap, Char.code key]
         minor_mode_fun
   )
-  [ ]
+  [ ] (* no keys *)
 (*e: toplevel Minor_mode_sample._1 *)
 
 (*s: toplevel Minor_mode_sample._2 *)
@@ -51,6 +51,5 @@ let _ =
       else Ebuffer.set_minor_mode buf mode
     )
 (*e: toplevel Minor_mode_sample._2 *)
-    
     
 (*e: minor_modes/minor_mode_sample.ml *)

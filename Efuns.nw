@@ -167,6 +167,16 @@ Here are other candidates that were considered but ultimately discarded:
 
 % see Editor.nw for more choices
 
+% vs emacs:
+%  - no extension language (lisp) to extend the editor with plugins
+%    but it made sense for Emacs because the implementation language
+%    was C, which is more error prone than lisp, but by using OCaml
+%    for the implementation language we need less another 
+%    language to extend the core. Just add a module! Yes you need
+%    to recompile, but so what? less dynamic, but anyway
+%    in emacs case I usually do it via modifying my .emacs and
+%    very often reloading my emacs.
+
 \section{Getting started}
 
 \section{Requirements}
@@ -1323,7 +1333,8 @@ let c_c = (ControlMap, Char.code 'c')
 
 
 
-% start_hook -> (Std_efunsrc._5 -> add_start_hook(<>) )
+% main -> Efuns.init -> List.iter f start_hooks -> 
+%  (Std_efunsrc._5 -> add_start_hook(<>) )
 <<function Std_efunsrc.init_global_map>>=
 let init_global_map location = 
   List.iter (fun (keys, action) ->
@@ -1349,22 +1360,21 @@ let init_global_map location =
 
 
 \section{[[Vars]]}
-% actually have polymorphic variables!
-% trick using phantom types?
 
-% put more of local.ml here?
+% actually have polymorphic variables!
+% trick using phantom types.
+% See appendix (or put more of local.ml here?)
 
 % why need variables anyway in emacs? to configure things! e.g. level
 % of indentation for this major mode. You can overwrite also
 % global settings. Configurable editor!
 
 <<[[Efuns.buffer]] other fields>>=
-mutable buf_vars : vars;
+mutable buf_vars : Local.vars;
 @
-% vars defined in ? local.mli?
 
 <<[[Efuns.location]] other fields>>=
-loc_vars : vars;
+loc_vars : Local.vars;
 @
 
 % different scopes:
@@ -1402,8 +1412,10 @@ let get_var buf var =
           Local.get buf.buf_location.loc_vars var
 @
 
-
-
+% was not there originally
+<<misc keys>>=
+[c_h; NormalMap, Char.code 'v'], "get_variable";
+@
 
 \section{Hooks}
 % essentially a set of list refs
@@ -1655,7 +1667,6 @@ let _ =
   (try Options.init () with _ -> ())
 @
 
-
 <<misc actions>>=
 define_action "save_options" save_options;
 @
@@ -1740,6 +1751,15 @@ let add_start_hook hook =
   start_hooks := hook :: !start_hooks
 @
 
+
+
+<<toplevel Std_efunsrc._5>>=
+let _ =
+  Efuns.add_start_hook (fun location ->
+      <<[[Std_efunsrc._5]] start hooks options>>
+      init_global_map location
+  )
+@
 
 \section{The graphical window}
 
@@ -2502,6 +2522,42 @@ let _ =
   let _ = Window.get_color location !!background in
 (* color 2 is highlight *)
   let _ = Window.get_color location !!highlight_color in
+@
+
+
+% see makefile_color() function, switching to makefile_mode
+% will then trigger coloration of the buffer
+
+% makefile_color | ... -> <>
+<<function Simple.color>>=
+let color buf regexp strict attr =
+  let text = buf.buf_text in
+  let point = Text.add_point text in
+  try
+    while true do
+      let len = Text.search_forward text regexp point in
+      let before =
+        if Text.bmove_res text point 1 = 1 then
+          (let c = Text.get_char text point in
+            Text.fmove text point (len+1);c)
+        else
+          (let c = Text.get_char text point in
+            Text.fmove text point (len+1); c)
+      in
+      let after = Text.get_char text point in
+      if not (strict && (buf.buf_syntax_table.(Char.code before) ||
+            buf.buf_syntax_table.(Char.code after))) then
+        begin
+          bmove text point len;
+          Text.set_attr text point len attr;
+          fmove text point len;
+          ()
+        end
+    done
+  with
+    Not_found -> 
+      Text.remove_point text point;
+      buf.buf_modified <- buf.buf_modified + 1
 @
 
 
@@ -3304,6 +3360,28 @@ let cursor_off top_window =
 %  );
 %@
 
+<<function Top_window.scroll_to_frame>>=
+let scroll_to_frame ady top_window =
+  let frame = top_window.top_active_frame in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let pos_start = Text.get_position text frame.frm_start in
+  let _size = Text.size text in
+  Common.pr2 "ady#get_pos size";
+  let y = 1
+(*    ady#get_pos size  *)
+  in
+  if abs (y - pos_start) > 80 then
+  (* the position has changed *)
+    begin
+      frame.frm_force_start <- true;
+      frame.frm_redraw <- true;
+      Text.set_position text frame.frm_start y
+    end
+@
+
+
+
 % not sure it's related only to scrollbar thing
 <<[[Efuns.frame]] other fields>>=
 mutable frm_force_start : bool;
@@ -3664,6 +3742,28 @@ let buf_interactives buf =
 @
 
 
+<<function Interactive.exec_interactive>>=
+let exec_interactive interactives frame name =
+  try
+    let f, key = List.assoc name interactives in
+    begin
+      match key with
+        None -> ()
+      | Some key_list ->
+          let top_window = Window.top frame.frm_window in
+          Top_window.message top_window
+            ("you can run "^name^" by typing "^
+              (Keymap.print_key_list key_list))
+    end;
+    f frame
+  with
+    Not_found -> 
+      let top_window = Window.top frame.frm_window in
+      Top_window.message top_window ("No interactive command "^name)
+@
+
+
+
 \subsection{Adding interactive functions}
 
 %subsubsection{[[Map.interactives]]}
@@ -3773,7 +3873,7 @@ let try_map frame key =
       <<[[Top_window.try_map()]] set last action>>
   | Prefix map ->
       frame.frm_prefix <- keylist;
-      let top_window = top frame.frm_window in
+      let top_window = Window.top frame.frm_window in
       message top_window (Keymap.print_key_list frame.frm_prefix);
   | Unbound -> raise UnboundKey
 @
@@ -3900,7 +4000,7 @@ let all_bindings location =
         None -> ()
       | Some key_list ->
           s := Printf.sprintf "%s\n%20s : %s" !s 
-            (print_key_list (key_list)) name
+            (print_key_list key_list) name
   ) location.loc_map.interactives;
   !s
 @
@@ -3917,7 +4017,7 @@ let print_key (map,keysym) =
     | ControlMetaMap -> "CM-"
   in
   let kname =
-    try List.assoc keysym (*XK.*)keysym_to_name
+    try List.assoc keysym XK.keysym_to_name
     with Not_found -> 
       try Printf.sprintf "%c" (Char.chr keysym)
       with Invalid_argument _ -> "?"
@@ -4089,7 +4189,7 @@ let mouse_save_then_kill frame =
 [ControlMap, Char.code 'a'], "beginning_of_line";
 [ControlMap, Char.code 'e'], "end_of_line";
 
-[NormalMap, XK.xk_Up], "backward-line"; 
+[NormalMap, XK.xk_Up], "backward_line"; 
 [NormalMap, XK.xk_Down], "forward_line"; 
 
 [ControlMap, XK.xk_Up], "backward_paragraph";
@@ -4120,7 +4220,7 @@ define_action "forward_word"  (to_frame forward_word);
 define_action "beginning_of_line"  beginning_of_line;
 define_action "end_of_line"  end_of_line;
 
-define_action "backward-line"  backward_line;
+define_action "backward_line"  backward_line;
 define_action "forward_line"  forward_line;  
 
 define_action "backward_paragraph"  (to_frame backward_paragraph);
@@ -4682,6 +4782,13 @@ let insert_next_killed frame =
 [ControlMap, Char.code '_'], "undo";
 @
 
+\ifallcode
+<<undoing keys>>=
+(* pad: *)
+[ControlMap, Char.code '/'], "undo";
+@
+\fi
+
 <<undoing actions>>=
 define_action "undo"  undo;
 @
@@ -4695,7 +4802,7 @@ let undo frame =
   let action, at_point, len = Text.undo text in
   frame.frm_last_text_updated <- version text - 1;
   Text.set_position text point at_point;
-  Text.fmove text point len; ()
+  Text.fmove text point len
 @
 
 <<[[Text.text]] other fields>>=
@@ -4713,6 +4820,7 @@ mutable buf_history : (int * Text.action) list;
 and action =
   Insertion of int * int * int
 | Deletion of int * string * int
+
 | Session of action list
 @
 % for undo?
@@ -5686,6 +5794,10 @@ Local.get buf.buf_major_mode.maj_vars var
 
 \chapter{Minor Modes}
 
+% diff with major mode? can have multi minor mode, but
+% could unify and have multi major mode? or major mode
+% is just the one to display first?
+
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_minor_modes : minor_mode list;
 @
@@ -5704,17 +5816,17 @@ and minor_mode = {
   }
 @
 
-<<function Ebuffer.new_minor_mode>>=
-let new_minor_mode name = {
-    min_name = name;
-    min_map = Keymap.create ();
-    min_hooks = [];
-    min_vars = Local.vars ()
-  }
-@
+%<<function Ebuffer.new_minor_mode>>=
+%let new_minor_mode name = {
+%    min_name = name;
+%    min_map = Keymap.create ();
+%    min_hooks = [];
+%    min_vars = Local.vars ()
+%  }
+%@
 % dead?
 
-<<function Ebuffer.new_minor_mode (core/ebuffer.ml)>>=
+<<function Ebuffer.new_minor_mode>>=
 let new_minor_mode name hooks  = {
     min_name = name;
     min_map = Keymap.create ();
@@ -5747,9 +5859,11 @@ let del_minor_mode buf minor =
 
 
 \section{Example}
+%less: maybe better to use paren mode as example, more concrete
+% instead of all those empty functions, harder to understand.
 
 <<constant Minor_mode_sample.minor_mode_name>>=
-let minor_mode_name = "my_minor_mode"
+let minor_mode_name = "my_minor"
 @
 
 % empty install hook
@@ -5757,13 +5871,16 @@ let minor_mode_name = "my_minor_mode"
 let install buf = ()
 @
 
+%!! that's what you will modify
+<<constant Minor_mode_sample.mode>>=
+let mode = Ebuffer.new_minor_mode  minor_mode_name [install]
+@
+
+
 <<function Minor_mode_sample.minor_mode_fun>>=
 let minor_mode_fun frame = ()
 @
 
-<<constant Minor_mode_sample.mode>>=
-let mode = Ebuffer.new_minor_mode  minor_mode_name [install]
-@
 
 <<toplevel Minor_mode_sample._1>>=
 let _ = 
@@ -5772,8 +5889,18 @@ let _ =
       Keymap.add_binding mode.min_map [NormalMap, Char.code key]
         minor_mode_fun
   )
-  [ ]
+  [ ] (* no keys *)
 @
+
+%ex:
+%<<toplevel Paren_mode._1>>=
+%let _ = 
+%  List.iter
+%    (fun key -> 
+%      Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
+%  ) [ ')'; '}'; ']' ]
+%@
+
 
 <<toplevel Minor_mode_sample._2>>=
 let _ = 
@@ -5785,7 +5912,7 @@ let _ =
       else Ebuffer.set_minor_mode buf mode
     )
 @
-
+% could be define_buffer_action too as don't use any info from the frame
 
 \section{Minor mode variables and keys}
 
@@ -6490,6 +6617,10 @@ let _ =
 <<window managment actions>>
 @
 
+<<constant Std_efunsrc.n_5>>=
+let n_5 = (NormalMap, Char.code '5') 
+@
+
 <<constant Keymap.n_5>>=
 let n_5 = (NormalMap, Char.code '5')
 @
@@ -6606,10 +6737,303 @@ let message buf m =
 
 \chapter{Profiling}
 
+\chapter{Heterogeneous Collection Library}
+
+% local.ml (why local?)
+% quite important when you want each mode to be able to store
+% variables in the buffer, but each of those variables have
+% different types. It's like you want a list of things or,
+% an assoc, but each element value has a different type.
+% Ould do via Variant encapsulation, but annoying.
+% Enters the heterogeneous map using type tricks!
+
+\section{Interface}
+
+<<signature type Local.vars>>=
+type vars
+@
+
+<<signature function Local.vars>>=
+val vars : unit -> vars
+@
+
+<<signature type Local.var>>=
+type 'a var
+@
+
+<<signature function Local.get>>=
+val get : vars -> 'a var -> 'a
+@
+
+<<signature function Local.set>>=
+val set : vars -> 'a var -> 'a -> unit
+@
+
+<<signature functions Local.create_xxx>>=
+val create_int : string -> int var
+val create_string : string -> string var
+val create_float : string -> float var
+@
+
+% let allvars = vars ()
+% let myintvar = create_int "myint"
+% let mystrvar = create_string "mystr"
+
+% set allvars myintvar 2
+% set allvars mystrvar "foo"
+
+% let i = get allvars myintvar
+% let s = get allvars mystrvar
+
+\section{Implementation}
+
+\subsection{[[vars]]}
+
+<<type Local.vars>>=
+(* (string * Obj.t ref) Map ref *)
+type vars = Obj.t ref Vars.t ref
+@
+
+<<module Local.Vars>>=
+module Vars = Map.Make 
+ (struct  
+      type t = string
+      let compare = compare 
+ end)
+@
+% Map string -> 'a
+
+
+<<function Local.vars>>=
+let vars () = 
+  ref Vars.empty
+@
+
+\subsection{[[var]]}
+
+<<type Local.var>>=
+type 'a var = string
+@
+% phantom type!
+
+
+<<function Local.create_int>>=
+let create_int name = 
+  create name string_of_int int_of_string
+@
+
+<<function Local.create_float>>=
+let create_float name = 
+  create name string_of_float float_of_string
+@
+
+<<function Local.create_string>>=
+let create_string name = 
+  create name id id
+@
+
+
+<<global Local.vars_table>>=
+let (vars_table :
+    (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t)
+  = Hashtbl.create 203
+@
+% global to all vars! can't have the same key in different
+% table buth with different type!
+
+<<signature function Local.create>>=
+val create : string -> ('a -> string) -> (string -> 'a) -> 'a var
+@
+
+<<function Local.create>>=
+let create name print input =
+  try
+    let _ = Hashtbl.find vars_table name in
+    failwith (Printf.sprintf "A variable named %s already exists" name)
+  with
+    Not_found ->
+      Hashtbl.add vars_table name (Obj.magic print, Obj.magic input);
+      name
+@
+
+
+<<signature functions Local.create_xxx>>=
+val create_abstr : string -> 'a var
+@
+
+<<function Local.create_abstr>>=
+let create_abstr name = 
+  create name no_print no_input
+@
+
+<<function Local.no_print>>=
+let no_print _ = "<abstr>"
+@
+<<function Local.no_input>>=
+let no_input (s : string) = failwith "This variable can not be set"
+@
+
+\subsection{Getter/setter}
+
+<<function Local.get>>=
+let get vars var =  
+  Obj.magic !(Vars.find var !vars)
+@
+
+<<function Local.set>>=
+let set vars var value =
+  let value = Obj.repr value in
+  try
+    let r = Vars.find var !vars in
+    r := value
+  with
+    Not_found -> 
+      vars := Vars.add var (ref value) !vars
+@
+
+\subsection{Misc}
+
+<<signature functions Local>>=
+val no_input : string -> 'a
+val no_print : 'a -> string
+
+val set_input : vars -> 'a var -> string -> unit
+val get_print : vars -> 'a var -> string
+val list : vars -> string list
+
+val print : vars -> string -> string
+val input : vars -> string -> string -> unit
+@
+
+<<function Local.get_print>>=
+let get_print vars var =
+  let value = get vars var in
+  let (p,i) = Hashtbl.find vars_table var in
+  p value  
+@
+
+<<function Local.set_input>>=
+let set_input vars var value =
+  let (p,i) = Hashtbl.find vars_table var in
+  set vars var (i value)
+@
+
+<<function Local.list>>=
+let list vars =
+  let list = ref [] in
+  Vars.iter (fun var value ->
+      list := var :: !list;
+  ) !vars;
+  !list
+@
+
+<<constant Local.print>>=
+let print = get_print
+@
+
+<<constant Local.input>>=
+let input = set_input
+@
+
+
 \chapter{Configuration File Library}
 
 % options.ml
 % quite important, you want the editor to be customizable!
+
+\section{Adding options}
+
+% interface
+<<[[Std_efunsrc._5]] start hooks options>>=
+add_option_parameter location compile_find_makefile;
+add_option_parameter location Text.add_amount;
+@
+
+
+<<type Simple.parameter>>=
+type parameter = (string * ((string -> Obj.t) * (Obj.t -> string) * 
+      Obj.t option_record))
+@
+
+<<constant Simple.parameters_var>>=
+let parameters_var = Local.create_abstr "parameters"
+@
+
+
+
+
+<<function Simple.add_option_parameter>>=
+let add_option_parameter location option =
+  add_parameter location (shortname option)
+   (fun s -> from_value (get_class option) (Value s))
+   (fun v -> 
+      match to_value (get_class option) v with
+        Value s -> s
+      | _ -> failwith "Unable to print option"
+    ) 
+    option
+@
+
+<<function Simple.add_parameter>>=
+let add_parameter location (name : string) (input : string -> 'a) 
+  (print : 'a -> string) (param : 'a option_record) =
+  let (input : string -> Obj.t) = Obj.magic input in
+  let (print : Obj.t -> string) = Obj.magic print in
+  let (param : Obj.t option_record) = Obj.magic param in
+  set_global location parameters_var (
+    (name, (input, print, param)) :: 
+    (try get_global location parameters_var with _ -> []))
+@
+
+
+
+<<constant Simple.all_params>>=
+let all_params = ref None
+@
+
+<<function Simple.all_parameters>>=
+let all_parameters frame _ =
+  let parameters = try get_global frame.frm_location parameters_var with _ -> []
+  in
+  match !all_params with
+    Some (f,l) when f == parameters -> l
+  | _ ->
+      let list = List.map fst parameters in
+      all_params := Some (parameters, list);
+      list
+@
+
+
+<<constant Complex.parameters_hist>>=
+let parameters_hist = ref []
+@
+
+<<function Complex.set_parameter>>=
+let set_parameter frame = 
+  let parameters = get_global frame.frm_location parameters_var in
+  Select.select frame "set-parameter : " parameters_hist
+    "" (all_parameters frame) (fun s -> s) (fun variable ->
+      Select.select_string frame (Printf.sprintf "%s : " variable)
+      value_hist "" (fun value ->
+          let (input,print,param) = List.assoc variable parameters
+          in
+          param =:= input value))
+@
+
+<<function Complex.get_parameter>>=
+let get_parameter frame =
+  let parameters = get_global frame.frm_location parameters_var in  
+  Select.select frame "get-parameter : " parameters_hist
+    "" (all_parameters frame) (fun s -> s) (fun variable ->
+      Top_window.mini_message frame 
+        (Printf.sprintf "%s : %s" variable (
+          let (input,print,param) = List.assoc variable parameters
+          in
+          print !!param)))
+@
+
+
+
 
 \chapter{Major mode examples}
 

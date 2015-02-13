@@ -132,9 +132,6 @@ let backend top_window =
   | Some x -> x
 (*e: function Window.xterm *)
 
-(*s: function Window.display *)
-(*e: function Window.display *)
-
 (*s: function Window.get_font *)
 let get_font location font_name =
   try

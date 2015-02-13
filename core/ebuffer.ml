@@ -66,24 +66,14 @@ let get_name location filename =
       compute_name ()
 (*e: function Ebuffer.get_name *)
 
-      
 (*s: function Ebuffer.new_minor_mode *)
-let new_minor_mode name = {
-    min_name = name;
-    min_map = Keymap.create ();
-    min_hooks = [];
-    min_vars = Local.vars ()
-  }
-(*e: function Ebuffer.new_minor_mode *)
-      
-(*s: function Ebuffer.new_minor_mode (core/ebuffer.ml) *)
 let new_minor_mode name hooks  = {
     min_name = name;
     min_map = Keymap.create ();
     min_hooks = hooks;
     min_vars = Local.vars ()
   }
-(*e: function Ebuffer.new_minor_mode (core/ebuffer.ml) *)
+(*e: function Ebuffer.new_minor_mode *)
 
 (*s: function Ebuffer.new_major_mode *)
 let new_major_mode name hooks = {

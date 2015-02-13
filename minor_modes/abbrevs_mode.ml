@@ -35,7 +35,7 @@ let install buf =
   try
     ignore (get_local buf abbrev_table)
   with _ -> 
-      set_local buf abbrev_table abbrevs
+    set_local buf abbrev_table abbrevs
 (*e: function Abbrevs_mode.install *)
 
 (*s: constant Abbrevs_mode.mode *)
@@ -74,6 +74,5 @@ let _ =
         end else
         Ebuffer.set_minor_mode buf mode)
 (*e: toplevel Abbrevs_mode._3 *)
-    
-    
+
 (*e: minor_modes/abbrevs_mode.ml *)

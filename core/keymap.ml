@@ -16,7 +16,6 @@ En effet, on aurait envie de pouvoir modifier les bindings selon divers
   crite`res, tels que le buffer (possible), le mode(pas possible).
 *)
 
-
 open Efuns
 
 (*s: function Keymap.dummy_action *)
@@ -34,9 +33,6 @@ let create () =
   } 
 (*e: function Keymap.create *)
 
-
-let keysym_to_name = []
-
 (*s: function Keymap.print_key *)
 let print_key (map,keysym) =
   let prefix =
@@ -47,7 +43,7 @@ let print_key (map,keysym) =
     | ControlMetaMap -> "CM-"
   in
   let kname =
-    try List.assoc keysym (*XK.*)keysym_to_name
+    try List.assoc keysym XK.keysym_to_name
     with Not_found -> 
       try Printf.sprintf "%c" (Char.chr keysym)
       with Invalid_argument _ -> "?"
@@ -160,7 +156,7 @@ let all_bindings location =
         None -> ()
       | Some key_list ->
           s := Printf.sprintf "%s\n%20s : %s" !s 
-            (print_key_list (key_list)) name
+            (print_key_list key_list) name
   ) location.loc_map.interactives;
   !s
 (*e: function Keymap.all_bindings *)

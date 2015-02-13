@@ -283,6 +283,8 @@ let init2 location =
       | 65507 -> modifiers := !modifiers lor Xtypes.controlMask; None
       | 65511 -> modifiers := !modifiers lor Xtypes.mod1Mask; None
 
+      | x when x > 65000 -> None
+
       | x -> Some x
     in
     code_opt |> Common.do_option (fun code ->

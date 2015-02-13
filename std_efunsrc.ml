@@ -73,7 +73,7 @@ let _ =
   define_action "beginning_of_line"  beginning_of_line;
   define_action "end_of_line"  end_of_line;
 
-  define_action "backward-line"  backward_line;
+  define_action "backward_line"  backward_line;
   define_action "forward_line"  forward_line;  
 
   define_action "backward_paragraph"  (to_frame backward_paragraph);
@@ -346,7 +346,7 @@ let _ =
         [ControlMap, Char.code 'a'], "beginning_of_line";
         [ControlMap, Char.code 'e'], "end_of_line";
 
-        [NormalMap, XK.xk_Up], "backward-line"; 
+        [NormalMap, XK.xk_Up], "backward_line"; 
         [NormalMap, XK.xk_Down], "forward_line"; 
 
         [ControlMap, XK.xk_Up], "backward_paragraph";
@@ -429,6 +429,9 @@ let _ =
         (* -------------------------------------------------------- *)
         (*s: undoing keys *)
         [ControlMap, Char.code '_'], "undo";
+        (*x: undoing keys *)
+        (* pad: *)
+        [ControlMap, Char.code '/'], "undo";
         (*e: undoing keys *)
 
         (* -------------------------------------------------------- *)
@@ -489,6 +492,8 @@ let _ =
 
         [c_x; NormalMap, Char.code 'F'], "change_font";
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
+        (*x: misc keys *)
+        [c_h; NormalMap, Char.code 'v'], "get_variable";
         (*x: misc keys *)
         [c_x; ControlMap, Char.code 'c'], "exit"; 
         (*x: misc keys *)
@@ -670,8 +675,10 @@ let _ =
 (*s: toplevel Std_efunsrc._5 *)
 let _ =
   Efuns.add_start_hook (fun location ->
+      (*s: [[Std_efunsrc._5]] start hooks options *)
       add_option_parameter location compile_find_makefile;
       add_option_parameter location Text.add_amount;
+      (*e: [[Std_efunsrc._5]] start hooks options *)
       init_global_map location
   )
 (*e: toplevel Std_efunsrc._5 *)

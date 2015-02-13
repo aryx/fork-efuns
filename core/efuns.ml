@@ -95,7 +95,7 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_map_partial : bool;
     (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_vars : vars;
+    mutable buf_vars : Local.vars;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_last_saved : int;
     (*x: [[Efuns.buffer]] other fields *)
@@ -339,7 +339,7 @@ and location =
     (*x: [[Efuns.location]] other fields *)
     loc_map : map;
     (*x: [[Efuns.location]] other fields *)
-    loc_vars : vars;
+    loc_vars : Local.vars;
     (*x: [[Efuns.location]] other fields *)
     loc_colors : (string,int) Hashtbl.t;
     loc_colors_names : string array;

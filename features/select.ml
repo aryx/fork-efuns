@@ -19,7 +19,9 @@ open Top_window
 open Multi_frames
 open Utils
 
-let string_to_filename str = str
+(* pad: was using some other library before *)
+let string_to_filename str = 
+  str
 
 (*s: function Select.select_yes_or_no *)
 let select_yes_or_no frame request action =

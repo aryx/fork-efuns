@@ -1,109 +1,34 @@
 \section{[[commons2/]]}
 
+\subsection*{[[commons2/local.mli]]}
+
+<<commons2/local.mli>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                             ____________                            *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+<<signature type Local.vars>>
+<<signature function Local.vars>>
+
+<<signature type Local.var>>
+<<signature functions Local.create_xxx>>
+(* internal *)
+<<signature function Local.create>>
+
+<<signature function Local.get>>
+<<signature function Local.set>>
+
+<<signature functions Local>>
+@
+
 \subsection*{[[commons2/local.ml]]}
-
-<<type Local.var>>=
-type 'a var = string
-@
-% phantom type!
-
-<<global Local.vars_table>>=
-let (vars_table :
-    (string, (Obj.t -> string) * (string -> Obj.t)) Hashtbl.t)
-  = Hashtbl.create 203
-@
-
-<<type Local.vars>>=
-type vars = Obj.t ref Vars.t ref
-@
-
-<<function Local.vars>>=
-let vars () = ref Vars.empty
-@
-
-<<function Local.create>>=
-let create name print input =
-  try
-    let _ = Hashtbl.find vars_table name in
-    failwith (Printf.sprintf "A variable named %s already exists" name)
-  with
-    Not_found ->
-      Hashtbl.add vars_table name (magic print,magic input);
-      name
-@
-
-<<function Local.no_print>>=
-let no_print _ = "<abstr>"
-@
-
-<<function Local.no_input>>=
-let no_input (s : string) = failwith "This variable can not be set"
-@
-
-
-<<function Local.create_abstr>>=
-let create_abstr name = create name no_print no_input
-@
-
-<<function Local.create_string>>=
-let create_string name = create name id id
-@
-
-<<function Local.create_int>>=
-let create_int name = create name string_of_int int_of_string
-@
-
-<<function Local.create_float>>=
-let create_float name = create name string_of_float float_of_string
-@
-
-
-
-<<function Local.get>>=
-let get vars var =  Obj.magic !(Vars.find var !vars)
-@
-
-<<function Local.set>>=
-let set vars var value =
-  let value = repr value in
-  try
-    let r = Vars.find var !vars in
-    r := value
-  with
-    Not_found -> 
-      vars := Vars.add var (ref value) !vars
-@
-
-<<function Local.get_print>>=
-let get_print vars var =
-  let value = get vars var in
-  let (p,i) = Hashtbl.find vars_table var in
-  p value  
-@
-
-<<function Local.set_input>>=
-let set_input vars var value =
-  let (p,i) = Hashtbl.find vars_table var in
-  set vars var (i value)
-@
-
-<<function Local.list>>=
-let list vars =
-  let list = ref [] in
-  Vars.iter (fun var value ->
-      list := var :: !list;
-  ) !vars;
-  !list
-@
-
-<<constant Local.print>>=
-let print = get_print
-@
-
-<<constant Local.input>>=
-let input = set_input
-@
-
 
 %-------------------------------------------------------------
 
@@ -126,9 +51,7 @@ open Obj
   
 <<type Local.var>>
 
-module Vars = Map.Make (struct  
-      type t = string
-      let compare = compare end)
+<<module Local.Vars>>
 
 <<type Local.vars>>
 <<function Local.vars>>
@@ -329,7 +252,6 @@ open Options
 
 
 \subsection*{[[core/text.ml]]}
-
 
 
 
@@ -1251,16 +1173,17 @@ open WX_text
 (* from WX_types *)
 type font = string
 type color = string
+
 <<type Text.item>>
 <<type Text.item_attr>>
 
 
-  
 <<type Text.attribute>>
 <<type Text.delta>>
 <<type Text.position>>
-
 <<type Text.session>>
+
+
 
 <<type Text.line>>
 
@@ -1691,10 +1614,7 @@ open Text
 
 <<function Ebuffer.get_name>>
 
-      
 <<function Ebuffer.new_minor_mode>>
-      
-<<function Ebuffer.new_minor_mode (core/ebuffer.ml)>>
 
 <<function Ebuffer.new_major_mode>>
 
@@ -1772,13 +1692,17 @@ open Options
 <<function Keymap.unbound_key>>=
 let unbound_key buffer _ = raise UnboundKey
 @
+%dead?
 
 
 <<function Keymap.define_char_binding>>=
 let define_char_binding map char (f : frame -> 'a) =
   add_binding map [NormalMap,Char.code char] f
 @
+%dead?
 
+%dead: let keysym_to_name = []
+% (it's in XK now)
 
 %-------------------------------------------------------------
 
@@ -1800,16 +1724,12 @@ En effet, on aurait envie de pouvoir modifier les bindings selon divers
   crite`res, tels que le buffer (possible), le mode(pas possible).
 *)
 
-
 open Efuns
 
 <<function Keymap.dummy_action>>
 <<function Keymap.unbound_key>>
 
 <<function Keymap.create>>
-
-
-let keysym_to_name = []
 
 <<function Keymap.print_key>>
             
@@ -1942,11 +1862,7 @@ let backend top_window =
   | Some x -> x
 @
 
-<<function Window.display>>=
-@
-
-
-
+%old: function Window.display>>=
 
 %-------------------------------------------------------------
 
@@ -1981,8 +1897,6 @@ open Efuns
 <<function Window.prev>>
 
 <<function Window.xterm>>
-
-<<function Window.display>>
 
 <<function Window.get_font>>
         
@@ -2226,9 +2140,6 @@ let find_buffer_frame location buf =
 
 
 
-
-
-
 %-------------------------------------------------------------
 
 <<core/frame.ml>>=
@@ -2335,6 +2246,7 @@ open Ebuffer
 
 \subsection*{[[features/simple.ml]]}
 
+% ?? -> <>
 <<function Simple.string_to_modifier>>=
 let string_to_modifier s =  
   let mask = ref 0 in
@@ -2955,36 +2867,6 @@ let next_buffer location buf =
 @
 
 
-<<function Simple.color>>=
-let color buf regexp strict attr =
-  let text = buf.buf_text in
-  let point = Text.add_point text in
-  try
-    while true do
-      let len = Text.search_forward text regexp point in
-      let before =
-        if Text.bmove_res text point 1 = 1 then
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1);c)
-        else
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1); c)
-      in
-      let after = Text.get_char text point in
-      if not (strict && (buf.buf_syntax_table.(Char.code before) ||
-            buf.buf_syntax_table.(Char.code after))) then
-        begin
-          bmove text point len;
-          Text.set_attr text point len attr;
-          fmove text point len;
-          ()
-        end
-    done
-  with
-    Not_found -> 
-      Text.remove_point text point;
-      buf.buf_modified <- buf.buf_modified + 1
-@
 
 <<function Simple.point_at_mark>>=
 let point_at_mark frame =
@@ -3126,51 +3008,9 @@ let install_structures buf list =
   )
 @
 
-<<type Simple.parameter>>=
-type parameter = (string * ((string -> Obj.t) * (Obj.t -> string) * 
-      Obj.t option_record))
-@
 
-<<constant Simple.parameters_var>>=
-let parameters_var = Local.create_abstr "parameters"
-@
 
-<<function Simple.add_parameter>>=
-let add_parameter location (name : string) (input : string -> 'a) 
-  (print : 'a -> string) (param : 'a option_record) =
-  let (input : string -> Obj.t) = Obj.magic input in
-  let (print : Obj.t -> string) = Obj.magic print in
-  let (param : Obj.t option_record) = Obj.magic param in
-  set_global location parameters_var (
-    (name, (input, print, param)) :: 
-    (try get_global location parameters_var with _ -> []))
-@
 
-<<function Simple.add_option_parameter>>=
-let add_option_parameter location option =
-  add_parameter location (shortname option)
-  (fun s -> from_value (get_class option) (Value s))
-  (fun v -> 
-      match to_value (get_class option) v with
-        Value s -> s
-      | _ -> failwith "Unable to print option") option
-@
-
-<<constant Simple.all_params>>=
-let all_params = ref None
-@
-
-<<function Simple.all_parameters>>=
-let all_parameters frame _ =
-  let parameters = try get_global frame.frm_location parameters_var with _ -> []
-  in
-  match !all_params with
-    Some (f,l) when f == parameters -> l
-  | _ ->
-      let list = List.map fst parameters in
-      all_params := Some (parameters, list);
-      list
-@
 
 <<toplevel Simple._1>>=
 let _ =
@@ -3216,7 +3056,7 @@ let _ =
       done;
       Keymap.add_binding gmap [NormalMap, XK.xk_Pointer_Drag1]
         mouse_drag_region;
-      Keymap.add_interactive (location.loc_map) "fondamental-mode" 
+      Keymap.add_interactive (location.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
             Ebuffer.fondamental_mode);
       set_global location line_comment ""
@@ -3496,580 +3336,7 @@ open Options
 %let add_bool_parameter location name param = 
 %  add_parameter location name bool_of_string string_of_bool param
 %    *)
-
-
-
-\subsection*{[[features/complexe.ml]]}
-% used to be complex.ml, but conflict with stdlib
-
-<<function Complex.save_buffers_and_action>>=
-let rec save_buffers_and_action frame buffers action =
-  match buffers with
-    [] -> let () = action frame in ()
-  | (_,buf) :: buffers ->
-      let text = buf.buf_text in
-      if buf.buf_last_saved = version text  ||
-        buf.buf_name.[0] = '*'
-      then
-        save_buffers_and_action frame buffers action
-      else
-      let map = Keymap.create () in
-      let request = Printf.sprintf "Save buffer %s ? (y,n,!,a)" buf.buf_name
-      in
-      let yes mini_frame =
-        Minibuffer.kill mini_frame frame;
-        Ebuffer.save buf;
-        save_buffers_and_action frame buffers action
-      in
-      let no mini_frame =
-        Minibuffer.kill mini_frame frame;
-        save_buffers_and_action frame buffers action; ()
-      in
-      let action_immediately mini_frame = 
-        Minibuffer.kill mini_frame frame;
-        let () = action mini_frame in ()
-      in
-      let abort mini_frame =
-        Minibuffer.kill mini_frame frame
-      in
-      Keymap.add_binding map [NormalMap, Char.code 'y'] yes;
-      Keymap.add_binding map [NormalMap, Char.code 'Y'] yes;
-      Keymap.add_binding map [NormalMap, Char.code 'n'] no;
-      Keymap.add_binding map [NormalMap, Char.code 'N'] no;
-      Keymap.add_binding map [NormalMap, Char.code '!'] action_immediately;
-      Keymap.add_binding map [NormalMap, Char.code 'a'] abort;
-      Keymap.add_binding map [NormalMap, Char.code 'A'] abort;
-      Keymap.add_binding map [ControlMap, Char.code 'g'] abort;
-      Minibuffer.create frame map request |> ignore
-@
-
-<<constant Complex.buf_mtime>>=
-let buf_mtime = Local.create "buf_mtime" string_of_float float_of_string
-@
-
-<<function Complex.update_time>>=
-let update_time buf =
-  try
-    match buf.buf_filename with
-      None -> ()
-    | Some file ->
-        let st = Unix.lstat file in
-        if st.st_kind = S_REG then begin
-            set_local buf buf_mtime st.st_mtime;
-          end
-  with _ -> ()
-@
-
-<<function Complex.reload>>=
-let reload frame = 
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  match buf.buf_filename with
-    None -> ()
-  | Some file ->
-      let inc = open_in file in
-      let s = read_string inc in
-      close_in inc;
-      let point = frame.frm_point in
-      let pos = Text.get_position text point in
-      Text.clear buf.buf_text;
-      Text.insert_at_end text s;
-      Text.set_position text point pos;
-      List.iter (fun f -> f buf) buf.buf_major_mode.maj_hooks;
-      List.iter (fun minor_mode -> List.iter
-          (fun f -> f buf) minor_mode.min_hooks) buf.buf_minor_modes;
-      Frame.status_modified frame false 
-@
-
-<<function Complex.check_file>>=
-let check_file frame =
-  try
-    let buf = frame.frm_buffer in
-    match buf.buf_filename with
-      None -> ()
-    | Some file ->
-        let st = Unix.lstat file in
-        if st.st_kind = S_REG then
-          try
-            let time = get_local buf buf_mtime in
-            set_local buf buf_mtime st.st_mtime;
-            if time <> st.st_mtime then
-              ignore (select_yes_or_no frame 
-                  (Printf.sprintf 
-                    "%s changed on disk; reload (y/n) ?" 
-                    buf.buf_name) (fun bool ->
-                    if bool then reload frame else
-                      Frame.status_modified frame true
-                      ))
-          with _ -> 
-              set_local buf buf_mtime st.st_mtime
-  with _ -> ()
-@
-
-
-
-
-
-
-
-
-
-<<function Complex.change_font>>=
-let change_font frame =
-  Minibuffer.create_return 
-    frame (Keymap.create ()) "Find font: " "fixed"
-    (fun old_frame name ->
-      let window = frame.frm_window in
-      let _top_window = Window.top window in
-      (*WX_xterm.change_font xterm name*)
-      failwith "Complex.change_font: TODO"
-  ) |> ignore
-@
-
-<<function Complex.color>>=
-let color buf regexp strict attr =
-  let text = buf.buf_text in
-  let point = Text.add_point text in
-  try
-    while true do
-      let len = Text.search_forward text regexp point in
-      let before =
-        if Text.bmove_res text point 1 = 1 then
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1);c)
-        else
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1); c)
-      in
-      let after = Text.get_char text point in
-      if not (strict && (buf.buf_syntax_table.(Char.code before) ||
-            buf.buf_syntax_table.(Char.code after))) then
-        begin
-          bmove text point len;
-          Text.set_attr text point len attr;
-          fmove text point len;
-          ()
-        end
-    done
-  with
-    Not_found -> 
-      Text.remove_point text point;
-      buf.buf_modified <- buf.buf_modified + 1
-@
-
-<<constant Complex.display_hist>>=
-(*let display_hist = ref []*)
-@
-
-<<function Complex.open_display>>=
-let open_display frame =
-failwith "Complex.open_display: TODO"
-(*
-  select frame "open_display :" display_hist ""
-    (fun _ -> [])
-  (fun s -> s)
-  (fun name -> 
-      let top_window = Window.top frame.frm_window in
-      let location = top_window.top_location in
-      let dpy_oo = new WX_display.t name in
-      let root_oo = new WX_root.t dpy_oo 0 in
-      let display = WX_xterm.create_display root_oo
-          location.loc_colors_names location.loc_fonts_names
-        in
-      Top_window.create location display |> ignore
-   )
-*)
-@
-
-
-
-<<function Complex.get_pos>>=
-let get_pos frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  let top_window = Window.top frame.frm_window in
-  Top_window.message top_window 
-    (Printf.sprintf "Char position %d" 
-      (get_position text point))
-@
-
-
-<<constant Complex.umask>>=
-let umask = 
-  let old = Unix.umask 0 in 
-  Unix.umask old |> ignore;
-  old
-@
-
-<<constant Complex.file_perm>>=
-let file_perm = Local.create "file_perm" string_of_int int_of_string
-@
-
-<<function Complex.mkdir>>=
-let mkdir frame =
-  select_filename frame "Make directory: "
-    (fun str -> 
-      let file_perm = try get_var frame.frm_buffer file_perm with _ -> 
-            0x1ff land (lnot umask) in
-      Unix.mkdir str file_perm)
-@
-
-
-<<constant Complex.variable_hist>>=
-let variable_hist = ref []
-@
-
-<<constant Complex.value_hist>>=
-let value_hist = ref []
-@
-
-<<constant Complex.all_vars>>=
-let all_vars = ref None
-@
-
-<<function Complex.all_variables>>=
-let all_variables frame _ =
-  let buf = frame.frm_buffer in
-  let location = buf.buf_location in
-  match !all_vars with
-    Some (f,l) when f == frame -> l
-  | _ ->
-      let list = (Local.list buf.buf_vars) @ (Local.list location.loc_vars) in
-      all_vars := Some (frame, list);
-      list
-@
-
-<<function Complex.set_local_variable>>=
-let set_local_variable frame = 
-  Select.select frame "set-local-variable : " variable_hist
-    "" (all_variables frame) (fun s -> s) (fun variable ->
-      Select.select_string frame (Printf.sprintf "%s : " variable)
-      value_hist "" (fun value ->
-          Local.input frame.frm_buffer.buf_vars variable value))
-@
-
-<<function Complex.set_global_variable>>=
-let set_global_variable frame =
-  Select.select frame "set-global-variable : " variable_hist
-    "" (all_variables frame) (fun s -> s) (fun variable ->
-      Select.select_string frame (Printf.sprintf "%s : " variable)
-      value_hist "" (fun value ->
-          Local.input frame.frm_location.loc_vars variable value))
-@
-
-<<function Complex.get_variable>>=
-let get_variable frame = 
-  Select.select frame "get-variable : " variable_hist
-    "" (all_variables frame) (fun s -> s) (fun variable ->
-      Top_window.mini_message frame 
-        (Printf.sprintf "%s : %s" variable (
-          let buf = frame.frm_buffer in
-          try
-            Local.print buf.buf_vars variable
-          with _ ->
-              Local.print buf.buf_location.loc_vars variable)))
-@
-
-<<constant Complex.parameters_hist>>=
-let parameters_hist = ref []
-@
-
-<<function Complex.set_parameter>>=
-let set_parameter frame = 
-  let parameters = get_global frame.frm_location parameters_var in
-  Select.select frame "set-parameter : " parameters_hist
-    "" (all_parameters frame) (fun s -> s) (fun variable ->
-      Select.select_string frame (Printf.sprintf "%s : " variable)
-      value_hist "" (fun value ->
-          let (input,print,param) = List.assoc variable parameters
-          in
-          param =:= input value))
-@
-
-<<function Complex.get_parameter>>=
-let get_parameter frame =
-  let parameters = get_global frame.frm_location parameters_var in  
-  Select.select frame "get-parameter : " parameters_hist
-    "" (all_parameters frame) (fun s -> s) (fun variable ->
-      Top_window.mini_message frame 
-        (Printf.sprintf "%s : %s" variable (
-          let (input,print,param) = List.assoc variable parameters
-          in
-          print !!param)))
-@
-
-
-<<toplevel Complex._1>>=
-let _ =
-  Efuns.add_start_hook (fun location ->
-      Keymap.add_interactive location.loc_map "make-directory" mkdir;
-      Keymap.add_interactive location.loc_map "set-local-variable" 
-        set_local_variable;
-      Keymap.add_interactive location.loc_map "set-global-variable" 
-        set_global_variable;
-      Keymap.add_interactive location.loc_map "get-variable" get_variable;
-      Keymap.add_interactive location.loc_map "set-parameter" set_parameter;
-      Keymap.add_interactive location.loc_map "get-parameter" get_parameter;
-      
-  )
-@
-
-
-%-------------------------------------------------------------
-
-<<features/complexe.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
-open Unix
-open Utils
-open Efuns
-open Text
-open Frame
-open Simple
-open Select
-open Interactive
-
-<<function Complex.save_buffers_and_action>>
-
-<<constant Complex.buf_mtime>>
-
-<<function Complex.update_time>>
-      
-<<function Complex.reload>>
-      
-<<function Complex.check_file>>
-    
-<<function Complex.exit_efuns>>
-
-<<function Complex.save_some_buffers>>
-
-<<function Complex.load_buffer>>
-
-<<function Complex.insert_file>>
-
-<<function Complex.write_buffer>>
-
-<<function Complex.save_buffer>>
-
-<<function Complex.window_load_buffer>>
-
-<<function Complex.change_buffer>>
-
-<<function Complex.window_change_buffer>>
-
-<<function Complex.change_font>>
-
-<<function Complex.color>>
-
-<<constant Complex.display_hist>>
-<<function Complex.open_display>>
-
-<<function Complex.goto_line>>
-
-<<function Complex.goto_char>>
-
-
-<<function Complex.get_pos>>
-
-<<function Complex.mark_at_point>>
-
-<<constant Complex.umask>>
-  
-<<constant Complex.file_perm>>
-<<function Complex.mkdir>>
-
-<<constant Complex.eval_history>>
-<<function Complex.eval>>
-
-<<constant Complex.variable_hist>>
-<<constant Complex.value_hist>>
-  
-<<constant Complex.all_vars>>
-<<function Complex.all_variables>>
-  
-<<function Complex.set_local_variable>>
-  
-<<function Complex.set_global_variable>>
-  
-<<function Complex.get_variable>>
-
-open Options
-  
-<<constant Complex.parameters_hist>>
-  
-<<function Complex.set_parameter>>
-  
-<<function Complex.get_parameter>>
-
-<<constant Complex.up_buffer>>
-  
-<<function Complex.down_buffer>>
-<<function Complex.up_buffer>>
-  
-<<function Complex.left_buffer>>
-
-<<function Complex.right_buffer>>
-  
-  
-<<toplevel Complex._1>>
-  
-@
-
-
-\subsection*{[[features/system.ml]]}
-
-<<function System.open_process>>=
-let open_process cmd =
-  let (in_read, in_write) = pipe() in
-  let (out_read, out_write) = pipe() in
-  let inchan = in_channel_of_descr in_read in
-  let outchan = out_channel_of_descr out_write in
-  match fork() with
-    0 ->
-      if out_read <> stdin then begin
-          dup2 out_read stdin; close out_read end;
-      if in_write <> Unix.stdout ||  in_write <> Unix.stderr then begin
-          if in_write <> Unix.stdout then dup2 in_write stdout;
-          if in_write <> Unix.stderr then dup2 in_write stderr; 
-          close in_write end;
-      List.iter close [in_read;out_write];
-      execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
-      exit 127
-  | pid -> 
-      Unix.close out_read;
-      Unix.close in_write;
-      (pid,inchan, outchan)
-@
-
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_sync : bool;
-@
-
-<<[[Frame.update()]] if buf sync>>=
-if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
-then Text.set_position text point (Text.size text); 
-@
-
-<<function System.system>>=
-let system buf_name location cmd end_action =
-  let (pid,inc,outc) = open_process cmd in
-  let text = Text.create "" in
-  let curseur = Text.add_point text in
-  let buf = Ebuffer.create location buf_name None text (Keymap.create ()) in
-  buf.buf_sync <- true;
-  let _ins = Unix.descr_of_in_channel inc in
-  let _tampon = String.create 1000 in
-  let active = ref true in
-(*
-  Thread.add_reader ins
-    (function () ->
-        let pos,str = Text.delete_res text curseur
-            (Text.point_to_eof text curseur) in
-        let len = input inc tampon 0 1000 in
-        Mutex.lock location.loc_mutex;
-        if len = 0 then
-          let pid,status = waitpid [WNOHANG] pid in
-          begin
-            match status with 
-              WEXITED s -> Text.insert_at_end text 
-                  (Printf.sprintf "Exited with status %d\n" s); 
-                close_in inc;
-                close_out outc;
-                (try end_action buf s with _ -> ())
-            | _ -> Text.insert_at_end text "Broken pipe" 
-          end;
-          Text.set_position text curseur (Text.size text);
-          active := false;
-          (* redraw screen *)
-          update_display location;
-          WX_xterm.update_displays ();
-          Mutex.unlock location.loc_mutex;
-          Thread.remove_reader ins; (* Kill self *)
-        else
-          Text.insert_at_end text (String.sub tampon 0 len);
-        Text.set_position text curseur (Text.size text);
-        Text.insert text curseur str;
-        buf.buf_modified <- buf.buf_modified +1;
-        (* redraw screen *)
-        update_display location;
-        WX_xterm.update_displays ();
-        Mutex.unlock location.loc_mutex
-  );
-*)
-  failwith "System.system: TODO";
-  let lmap = buf.buf_map in
-  Keymap.add_binding lmap [NormalMap, XK.xk_Return]
-    (fun frame ->
-      let point = frame.frm_point in
-      Text.insert text point "\n";
-      Text.fmove text point 1;
-      if !active then (* to avoid a segmentation fault in Ocaml *)
-        let str = Text.sub text curseur 
-            (Text.point_to_eof text curseur) in
-        Text.set_position text curseur (Text.size text);
-          (* synchronize viewpoint *)
-        output outc str 0 (String.length str);
-        flush outc
-  );
-  buf.buf_finalizers <- 
-    (fun () -> 
-      (try 
-          Unix.kill pid Sys.sigkill;
-          let _,_ = waitpid [] pid in ()
-        with _ -> ());
-      (*Concur.Thread.remove_reader ins*) failwith "System.system: TODO 2"
-    )
-  :: buf.buf_finalizers;
-  buf
-@
-
-<<function System.start_command>>=
-let start_command buf_name window cmd =
-  let top_window = Window.top window in
-  let location = top_window.top_location in
-  let buf = system buf_name location cmd (fun buf status -> ()) in
-  let frame = Frame.create window None buf in
-  frame
-@
-
-<<constant System.shell_hist>>=
-let shell_hist = ref []
-@
-
-
-
-%-------------------------------------------------------------
-
-<<features/system.ml>>=
-open Efuns
-open Unix
-(*open Concur*)
-(*open ThreadUnix*)
-open Select
-open Simple
-open Top_window
-open Multi_frames
-
-<<function System.open_process>>
-
-<<function System.system>>
-
-<<function System.start_command>>
-
-<<constant System.shell_hist>>
-<<function System.shell_command>>
-  
-@
+% ????
 
 
 \subsection*{[[features/select.ml]]}
@@ -4490,7 +3757,9 @@ open Top_window
 open Multi_frames
 open Utils
 
-let string_to_filename str = str
+(* pad: was using some other library before *)
+let string_to_filename str = 
+  str
 
 <<function Select.select_yes_or_no>>
 
@@ -4551,6 +3820,551 @@ let string_to_filename str = str
 
 <<function Select.simple_select>>
   
+  
+@
+
+
+\subsection*{[[features/complexe.ml]]}
+% used to be complex.ml, but conflict with stdlib
+
+<<function Complex.save_buffers_and_action>>=
+let rec save_buffers_and_action frame buffers action =
+  match buffers with
+    [] -> let () = action frame in ()
+  | (_,buf) :: buffers ->
+      let text = buf.buf_text in
+      if buf.buf_last_saved = version text  ||
+        buf.buf_name.[0] = '*'
+      then
+        save_buffers_and_action frame buffers action
+      else
+      let map = Keymap.create () in
+      let request = Printf.sprintf "Save buffer %s ? (y,n,!,a)" buf.buf_name
+      in
+      let yes mini_frame =
+        Minibuffer.kill mini_frame frame;
+        Ebuffer.save buf;
+        save_buffers_and_action frame buffers action
+      in
+      let no mini_frame =
+        Minibuffer.kill mini_frame frame;
+        save_buffers_and_action frame buffers action; ()
+      in
+      let action_immediately mini_frame = 
+        Minibuffer.kill mini_frame frame;
+        let () = action mini_frame in ()
+      in
+      let abort mini_frame =
+        Minibuffer.kill mini_frame frame
+      in
+      Keymap.add_binding map [NormalMap, Char.code 'y'] yes;
+      Keymap.add_binding map [NormalMap, Char.code 'Y'] yes;
+      Keymap.add_binding map [NormalMap, Char.code 'n'] no;
+      Keymap.add_binding map [NormalMap, Char.code 'N'] no;
+      Keymap.add_binding map [NormalMap, Char.code '!'] action_immediately;
+      Keymap.add_binding map [NormalMap, Char.code 'a'] abort;
+      Keymap.add_binding map [NormalMap, Char.code 'A'] abort;
+      Keymap.add_binding map [ControlMap, Char.code 'g'] abort;
+      Minibuffer.create frame map request |> ignore
+@
+
+<<constant Complex.buf_mtime>>=
+let buf_mtime = Local.create "buf_mtime" string_of_float float_of_string
+@
+
+<<function Complex.update_time>>=
+let update_time buf =
+  try
+    match buf.buf_filename with
+      None -> ()
+    | Some file ->
+        let st = Unix.lstat file in
+        if st.st_kind = S_REG then begin
+            set_local buf buf_mtime st.st_mtime;
+          end
+  with _ -> ()
+@
+
+<<function Complex.reload>>=
+let reload frame = 
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  match buf.buf_filename with
+    None -> ()
+  | Some file ->
+      let inc = open_in file in
+      let s = read_string inc in
+      close_in inc;
+      let point = frame.frm_point in
+      let pos = Text.get_position text point in
+      Text.clear buf.buf_text;
+      Text.insert_at_end text s;
+      Text.set_position text point pos;
+      List.iter (fun f -> f buf) buf.buf_major_mode.maj_hooks;
+      List.iter (fun minor_mode -> List.iter
+          (fun f -> f buf) minor_mode.min_hooks) buf.buf_minor_modes;
+      Frame.status_modified frame false 
+@
+
+% it's in a hook somewhere?
+<<function Complex.check_file>>=
+let check_file frame =
+  try
+    let buf = frame.frm_buffer in
+    match buf.buf_filename with
+      None -> ()
+    | Some file ->
+        let st = Unix.lstat file in
+        if st.st_kind = S_REG then
+          try
+            let time = get_local buf buf_mtime in
+            set_local buf buf_mtime st.st_mtime;
+            if time <> st.st_mtime then
+              ignore (select_yes_or_no frame 
+                  (Printf.sprintf 
+                    "%s changed on disk; reload (y/n) ?" 
+                    buf.buf_name) (fun bool ->
+                    if bool then reload frame else
+                      Frame.status_modified frame true
+                      ))
+          with _ -> 
+              set_local buf buf_mtime st.st_mtime
+  with _ -> ()
+@
+
+
+
+
+
+
+
+
+
+<<function Complex.change_font>>=
+let change_font frame =
+  Minibuffer.create_return 
+    frame (Keymap.create ()) "Find font: " "fixed"
+    (fun old_frame name ->
+      let window = frame.frm_window in
+      let _top_window = Window.top window in
+      (*WX_xterm.change_font xterm name*)
+      failwith "Complex.change_font: TODO"
+  ) |> ignore
+@
+
+<<function Complex.color>>=
+let color buf regexp strict attr =
+  let text = buf.buf_text in
+  let point = Text.add_point text in
+  try
+    while true do
+      let len = Text.search_forward text regexp point in
+      let before =
+        if Text.bmove_res text point 1 = 1 then
+          (let c = Text.get_char text point in
+            Text.fmove text point (len+1);c)
+        else
+          (let c = Text.get_char text point in
+            Text.fmove text point (len+1); c)
+      in
+      let after = Text.get_char text point in
+      if not (strict && (buf.buf_syntax_table.(Char.code before) ||
+            buf.buf_syntax_table.(Char.code after))) then
+        begin
+          bmove text point len;
+          Text.set_attr text point len attr;
+          fmove text point len;
+          ()
+        end
+    done
+  with
+    Not_found -> 
+      Text.remove_point text point;
+      buf.buf_modified <- buf.buf_modified + 1
+@
+
+<<constant Complex.display_hist>>=
+(*let display_hist = ref []*)
+@
+
+<<function Complex.open_display>>=
+let open_display frame =
+  failwith "Complex.open_display: TODO"
+(*
+  select frame "open_display :" display_hist ""
+    (fun _ -> [])
+  (fun s -> s)
+  (fun name -> 
+      let top_window = Window.top frame.frm_window in
+      let location = top_window.top_location in
+      let dpy_oo = new WX_display.t name in
+      let root_oo = new WX_root.t dpy_oo 0 in
+      let display = WX_xterm.create_display root_oo
+          location.loc_colors_names location.loc_fonts_names
+        in
+      Top_window.create location display |> ignore
+   )
+*)
+@
+
+
+
+<<function Complex.get_pos>>=
+let get_pos frame =
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  let text = buf.buf_text in
+  let top_window = Window.top frame.frm_window in
+  Top_window.message top_window 
+    (Printf.sprintf "Char position %d" 
+      (get_position text point))
+@
+
+
+<<constant Complex.umask>>=
+let umask = 
+  let old = Unix.umask 0 in 
+  Unix.umask old |> ignore;
+  old
+@
+
+<<constant Complex.file_perm>>=
+let file_perm = Local.create "file_perm" string_of_int int_of_string
+@
+
+<<function Complex.mkdir>>=
+let mkdir frame =
+  select_filename frame "Make directory: "
+    (fun str -> 
+      let file_perm = try get_var frame.frm_buffer file_perm with _ -> 
+            0x1ff land (lnot umask) in
+      Unix.mkdir str file_perm)
+@
+
+
+<<constant Complex.variable_hist>>=
+let variable_hist = ref []
+@
+
+<<constant Complex.value_hist>>=
+let value_hist = ref []
+@
+
+<<constant Complex.all_vars>>=
+let all_vars = ref None
+@
+
+<<function Complex.all_variables>>=
+let all_variables frame _ =
+  let buf = frame.frm_buffer in
+  let location = buf.buf_location in
+  match !all_vars with
+    Some (f,l) when f == frame -> l
+  | _ ->
+      let list = (Local.list buf.buf_vars) @ (Local.list location.loc_vars) in
+      all_vars := Some (frame, list);
+      list
+@
+
+<<function Complex.set_local_variable>>=
+let set_local_variable frame = 
+  Select.select frame "set_local_variable : " variable_hist
+    "" (all_variables frame) (fun s -> s) (fun variable ->
+      Select.select_string frame (Printf.sprintf "%s : " variable)
+      value_hist "" (fun value ->
+          Local.input frame.frm_buffer.buf_vars variable value))
+@
+
+<<function Complex.set_global_variable>>=
+let set_global_variable frame =
+  Select.select frame "set_global_variable : " variable_hist
+    "" (all_variables frame) (fun s -> s) (fun variable ->
+      Select.select_string frame (Printf.sprintf "%s : " variable)
+      value_hist "" (fun value ->
+          Local.input frame.frm_location.loc_vars variable value))
+@
+
+<<function Complex.get_variable>>=
+let get_variable frame = 
+  Select.select frame "get_variable : " variable_hist
+    "" (all_variables frame) (fun s -> s) (fun variable ->
+      Top_window.mini_message frame 
+        (Printf.sprintf "%s : %s" variable (
+          let buf = frame.frm_buffer in
+          try
+            Local.print buf.buf_vars variable
+          with _ ->
+              Local.print buf.buf_location.loc_vars variable)))
+@
+
+
+<<toplevel Complex._1>>=
+let _ =
+  Efuns.add_start_hook (fun location ->
+      Keymap.add_interactive location.loc_map "make_directory" mkdir;
+      Keymap.add_interactive location.loc_map "set_local_variable" 
+        set_local_variable;
+      Keymap.add_interactive location.loc_map "set_global_variable" 
+        set_global_variable;
+      Keymap.add_interactive location.loc_map "set_parameter" set_parameter;
+      Keymap.add_interactive location.loc_map "get_parameter" get_parameter;
+      
+  )
+@
+
+
+%-------------------------------------------------------------
+
+<<features/complexe.ml>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                           xlib for Ocaml                            *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+open Unix
+open Utils
+open Efuns
+open Text
+open Frame
+open Simple
+open Select
+open Interactive
+
+<<function Complex.save_buffers_and_action>>
+
+<<constant Complex.buf_mtime>>
+
+<<function Complex.update_time>>
+      
+<<function Complex.reload>>
+      
+<<function Complex.check_file>>
+    
+<<function Complex.exit_efuns>>
+
+<<function Complex.save_some_buffers>>
+
+<<function Complex.load_buffer>>
+
+<<function Complex.insert_file>>
+
+<<function Complex.write_buffer>>
+
+<<function Complex.save_buffer>>
+
+<<function Complex.window_load_buffer>>
+
+<<function Complex.change_buffer>>
+
+<<function Complex.window_change_buffer>>
+
+<<function Complex.change_font>>
+
+<<function Complex.color>>
+
+<<constant Complex.display_hist>>
+<<function Complex.open_display>>
+
+<<function Complex.goto_line>>
+
+<<function Complex.goto_char>>
+
+
+<<function Complex.get_pos>>
+
+<<function Complex.mark_at_point>>
+
+<<constant Complex.umask>>
+  
+<<constant Complex.file_perm>>
+<<function Complex.mkdir>>
+
+<<constant Complex.eval_history>>
+<<function Complex.eval>>
+
+<<constant Complex.variable_hist>>
+<<constant Complex.value_hist>>
+  
+<<constant Complex.all_vars>>
+<<function Complex.all_variables>>
+  
+<<function Complex.set_local_variable>>
+  
+<<function Complex.set_global_variable>>
+  
+<<function Complex.get_variable>>
+
+open Options
+  
+<<constant Complex.parameters_hist>>
+  
+<<function Complex.set_parameter>>
+  
+<<function Complex.get_parameter>>
+
+<<constant Complex.up_buffer>>
+  
+<<function Complex.down_buffer>>
+<<function Complex.up_buffer>>
+  
+<<function Complex.left_buffer>>
+
+<<function Complex.right_buffer>>
+  
+  
+<<toplevel Complex._1>>
+  
+@
+
+
+\subsection*{[[features/system.ml]]}
+
+<<function System.open_process>>=
+let open_process cmd =
+  let (in_read, in_write) = pipe() in
+  let (out_read, out_write) = pipe() in
+  let inchan = in_channel_of_descr in_read in
+  let outchan = out_channel_of_descr out_write in
+  match fork() with
+    0 ->
+      if out_read <> stdin then begin
+          dup2 out_read stdin; close out_read end;
+      if in_write <> Unix.stdout ||  in_write <> Unix.stderr then begin
+          if in_write <> Unix.stdout then dup2 in_write stdout;
+          if in_write <> Unix.stderr then dup2 in_write stderr; 
+          close in_write end;
+      List.iter close [in_read;out_write];
+      execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
+      exit 127
+  | pid -> 
+      Unix.close out_read;
+      Unix.close in_write;
+      (pid,inchan, outchan)
+@
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_sync : bool;
+@
+
+<<[[Frame.update()]] if buf sync>>=
+if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
+then Text.set_position text point (Text.size text); 
+@
+
+<<function System.system>>=
+let system buf_name location cmd end_action =
+  let (pid,inc,outc) = open_process cmd in
+  let text = Text.create "" in
+  let curseur = Text.add_point text in
+  let buf = Ebuffer.create location buf_name None text (Keymap.create ()) in
+  buf.buf_sync <- true;
+  let _ins = Unix.descr_of_in_channel inc in
+  let _tampon = String.create 1000 in
+  let active = ref true in
+(*
+  Thread.add_reader ins
+    (function () ->
+        let pos,str = Text.delete_res text curseur
+            (Text.point_to_eof text curseur) in
+        let len = input inc tampon 0 1000 in
+        Mutex.lock location.loc_mutex;
+        if len = 0 then
+          let pid,status = waitpid [WNOHANG] pid in
+          begin
+            match status with 
+              WEXITED s -> Text.insert_at_end text 
+                  (Printf.sprintf "Exited with status %d\n" s); 
+                close_in inc;
+                close_out outc;
+                (try end_action buf s with _ -> ())
+            | _ -> Text.insert_at_end text "Broken pipe" 
+          end;
+          Text.set_position text curseur (Text.size text);
+          active := false;
+          (* redraw screen *)
+          update_display location;
+          WX_xterm.update_displays ();
+          Mutex.unlock location.loc_mutex;
+          Thread.remove_reader ins; (* Kill self *)
+        else
+          Text.insert_at_end text (String.sub tampon 0 len);
+        Text.set_position text curseur (Text.size text);
+        Text.insert text curseur str;
+        buf.buf_modified <- buf.buf_modified +1;
+        (* redraw screen *)
+        update_display location;
+        WX_xterm.update_displays ();
+        Mutex.unlock location.loc_mutex
+  );
+*)
+  failwith "System.system: TODO";
+  let lmap = buf.buf_map in
+  Keymap.add_binding lmap [NormalMap, XK.xk_Return]
+    (fun frame ->
+      let point = frame.frm_point in
+      Text.insert text point "\n";
+      Text.fmove text point 1;
+      if !active then (* to avoid a segmentation fault in Ocaml *)
+        let str = Text.sub text curseur 
+            (Text.point_to_eof text curseur) in
+        Text.set_position text curseur (Text.size text);
+          (* synchronize viewpoint *)
+        output outc str 0 (String.length str);
+        flush outc
+  );
+  buf.buf_finalizers <- 
+    (fun () -> 
+      (try 
+          Unix.kill pid Sys.sigkill;
+          let _,_ = waitpid [] pid in ()
+        with _ -> ());
+      (*Concur.Thread.remove_reader ins*) failwith "System.system: TODO 2"
+    )
+  :: buf.buf_finalizers;
+  buf
+@
+
+<<function System.start_command>>=
+let start_command buf_name window cmd =
+  let top_window = Window.top window in
+  let location = top_window.top_location in
+  let buf = system buf_name location cmd (fun buf status -> ()) in
+  let frame = Frame.create window None buf in
+  frame
+@
+
+<<constant System.shell_hist>>=
+let shell_hist = ref []
+@
+
+
+
+%-------------------------------------------------------------
+
+<<features/system.ml>>=
+open Efuns
+open Unix
+(*open Concur*)
+(*open ThreadUnix*)
+open Select
+open Simple
+open Top_window
+open Multi_frames
+
+<<function System.open_process>>
+
+<<function System.system>>
+
+<<function System.start_command>>
+
+<<constant System.shell_hist>>
+<<function System.shell_command>>
   
 @
 
@@ -4797,25 +4611,6 @@ open Select
 
 
 
-<<function Interactive.exec_interactive>>=
-let exec_interactive interactives frame name =
-  try
-    let f, key = List.assoc name interactives in
-    begin
-      match key with
-        None -> ()
-      | Some key_list ->
-          let top_window = Window.top frame.frm_window in
-          Top_window.message top_window
-            ("you can run "^name^" by typing "^
-              (Keymap.print_key_list (List.rev key_list)))
-    end;
-    f frame
-  with
-    Not_found -> 
-      let top_window = Window.top frame.frm_window in
-      Top_window.message top_window ("No interactive command "^name)
-@
 
 
 
@@ -5270,36 +5065,8 @@ let buffers_menu = ref
   -> ())
 @
 
-<<function Top_window.scroll_to_frame>>=
-let scroll_to_frame ady top_window =
-  let frame = top_window.top_active_frame in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let pos_start = Text.get_position text frame.frm_start in
-  let _size = Text.size text in
-  Common.pr2 "ady#get_pos size";
-  let y = 1
-(*    ady#get_pos size  *)
-  in
-  if abs (y - pos_start) > 80 then
-  (* the position has changed *)
-    begin
-      frame.frm_force_start <- true;
-      frame.frm_redraw <- true;
-      Text.set_position text frame.frm_start y
-    end
-@
 
 <<constant Top_window.menus>>=
-(*
-    Text.set_position text point y;
-      let point = Text.add_point text in
-      let curline = Text.point_line text frame.frm_start in
-      let newline = Text.point_line text point in
-      Text.remove_point text point;
-    frame.frm_y_offset <- frame.frm_y_offset + (newline - curline);
-  *)
-
 let menus = define_option ["menus"] ""
     (list_option (tuple2_option (string_option, list_option string2_option)))
   []
@@ -5345,11 +5112,8 @@ let check_abort frame =
 (***********************************************************************)
 
 open Options
-
 open Xtypes
-
 open Efuns
-open Window
 
   
 <<function Top_window.message>>
@@ -5410,6 +5174,16 @@ open Window
 <<constant Top_window.buffers_menu>>
 
 <<function Top_window.scroll_to_frame>>
+(*
+    Text.set_position text point y;
+      let point = Text.add_point text in
+      let curline = Text.point_line text frame.frm_start in
+      let newline = Text.point_line text point in
+      Text.remove_point text point;
+    frame.frm_y_offset <- frame.frm_y_offset + (newline - curline);
+  *)
+
+
 <<constant Top_window.menus>>
 <<constant Top_window.file_menu>>
 <<constant Top_window.edit_menu>>
@@ -5420,8 +5194,6 @@ open Window
 <<function Top_window.create>>
 
 <<function Top_window.delete_window>>
-    
-    
 
         
 <<constant Top_window.check_abort>>
@@ -5439,20 +5211,6 @@ open Window
 
 \subsection*{[[std_efunsrc.ml]]}
 
-
-
-<<constant Std_efunsrc.n_5>>=
-let n_5 = (NormalMap, Char.code '5') 
-@
-
-<<toplevel Std_efunsrc._5>>=
-let _ =
-  Efuns.add_start_hook (fun location ->
-      add_option_parameter location compile_find_makefile;
-      add_option_parameter location Text.add_amount;
-      init_global_map location
-  )
-@
 
 
 %-------------------------------------------------------------
@@ -5774,13 +5532,13 @@ let unzip_and_view frame filename =
 
 <<toplevel Dired._1>>=
 let _ = 
-  interactive map [NormalMap, XK.xk_Return] "dired-open-file" open_file;
-  interactive map [NormalMap, Char.code 'g'] "dired-update" 
+  interactive map [NormalMap, XK.xk_Return] "dired_open_file" open_file;
+  interactive map [NormalMap, Char.code 'g'] "dired_update" 
   (fun frame -> update frame.frm_buffer);  
-  interactive map [NormalMap, Char.code 'v'] "dired-view-file" open_view;  
-  interactive map [NormalMap, Char.code '+'] "dired-make-directory" 
+  interactive map [NormalMap, Char.code 'v'] "dired_view_file" open_view;  
+  interactive map [NormalMap, Char.code '+'] "dired_make_directory" 
     mkdir;  
-  interactive map [NormalMap, Char.code '-'] "dired-remove-entry" 
+  interactive map [NormalMap, Char.code '-'] "dired_remove_entry" 
     remove;  
   
   view_list := [
@@ -5794,7 +5552,7 @@ let _ =
     ];
   
   Efuns.add_start_hook (fun location ->
-      add_interactive (location.loc_map) "dired-mode" 
+      add_interactive (location.loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
       set_global location Ebuffer.modes_alist ((".*/$",mode) :: 
@@ -5823,7 +5581,6 @@ open Keymap
 open Efuns
 open Simple
 open Compil
-(*open Complex*)
 open Window
 
 <<function Dired.update>>
@@ -5904,7 +5661,6 @@ open Top_window
 
 <<toplevel Minor_mode_sample._2>>
     
-    
 @
 
 
@@ -5929,7 +5685,7 @@ let install buf =
   try
     ignore (get_local buf abbrev_table)
   with _ -> 
-      set_local buf abbrev_table abbrevs
+    set_local buf abbrev_table abbrevs
 @
 
 <<constant Abbrevs_mode.mode>>=
@@ -6009,8 +5765,7 @@ open Top_window
 <<toplevel Abbrevs_mode._2>>
 
 <<toplevel Abbrevs_mode._3>>
-    
-    
+
 @
 
 
@@ -6243,7 +5998,7 @@ open Simple
 open Efuns
 open Top_window
   
-  (* franc;ais strict *)
+(* franc;ais strict *)
 <<function Accents_mode.accent>>
           
           
@@ -6254,8 +6009,7 @@ open Top_window
 <<toplevel Accents_mode._1>>
 
 <<toplevel Accents_mode._2>>
-    
-    
+
 @
 
 
@@ -6345,7 +6099,9 @@ let mode = Ebuffer.new_minor_mode "paren" []
 @
 
 <<function Paren_mode.find_matching>>=
-let find_matching  frame = self_insert_command frame; highlight_paren frame
+let find_matching  frame = 
+  self_insert_command frame; 
+  highlight_paren frame
 @
 
 <<toplevel Paren_mode._1>>=
@@ -6360,10 +6116,10 @@ let _ =
 let _ = 
   define_buffer_action "paren_mode" 
     (fun buf -> 
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode)
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+    )
 @
 
 
@@ -6415,10 +6171,10 @@ let _ =
 let _ = 
   define_buffer_action "tab_mode" 
     (fun buf -> 
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode);
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+  );
   define_action "insert_tab" insert_tab
 @
 
@@ -6454,6 +6210,8 @@ open Top_window
 
 \subsection*{[[prog_modes/makefile_mode.ml]]}
 
+\subsubsection{Colors}
+
 <<constant Makefile_mode.mkfile_vars>>=
 let mkfile_vars= Str.regexp "\\(\\$([a-zA-Z0-9_]*)\\)\\|\\([a-zA-Z0-9_]+=\\)"
 @
@@ -6468,21 +6226,20 @@ let mkfile_rules= Str.regexp "^\t.*$"
 @
 %$
 
+<<constant Makefile_mode.vars_color>>=
+let vars_color = define_option ["makefile_mode"; "vars_color"] ""
+    string_option "blue"
+@
+<<constant Makefile_mode.target_color>>=
+let target_color = define_option ["makefile_mode"; "target_color"] ""
+    string_option "cadetblue"
+@
 <<constant Makefile_mode.rules_color>>=
 let rules_color = define_option ["makefile_mode";"rules_color"] "" 
   string_option "red"
 @
 
-<<constant Makefile_mode.target_color>>=
-let target_color = define_option ["makefile_mode"; "target_color"] ""
-    string_option "cadetblue"
-@
-
-<<constant Makefile_mode.vars_color>>=
-let vars_color = define_option ["makefile_mode"; "vars_color"] ""
-    string_option "blue"
-@
-
+% font-lock-mode :)
 <<function Makefile_mode.makefile_color>>=
 let makefile_color buf =
   let location = buf.buf_location in
@@ -6494,34 +6251,47 @@ let makefile_color buf =
     (make_attr (get_color location !!vars_color) 1 0 false)
 @
 
-<<constant Makefile_mode.c_c>>=
-let c_c = (ControlMap,Char.code 'c')
-@
-
 <<function Makefile_mode.install>>=
 let install buf =
   makefile_color buf;
   execute_buffer_action "tab_mode" buf
 @
-
 <<constant Makefile_mode.mode>>=
 let mode = Ebuffer.new_major_mode "Makefile" [makefile_color]
 @
+% should be install instead no? bug?
 
+\subsubsection{Keys and actions}
+
+<<constant Makefile_mode.c_c>>=
+let c_c = (ControlMap,Char.code 'c')
+@
+
+% its own configuration!
 <<constant Makefile_mode.local_map>>=
 let local_map = define_option ["makefile_mode"; "local_map"] ""
     (list_option binding_option) []
 @
-
 <<constant Makefile_mode.interactives_map>>=
 let interactives_map = define_option ["makefile_mode"; "interactives_map"] ""
     (list_option string2_option) 
   []
 @
+% useful? redundant this interactives_map no?
+
+
+<<toplevel Makefile_mode._2>>=
+let _ = 
+  define_action "makefile_mode.compile" (compile c_find_error);
+  define_action "makefile_mode.color_buffer" 
+    (fun frame -> makefile_color frame.frm_buffer);
+  define_action "makefile_mode" makefile_mode;
+  ()
+@
+%(*  define_action "insert_tab" insert_tab; *)
+% why not use define_buffer_action for color_buffer?
 
 <<toplevel Makefile_mode._1>>=
-(* let insert_tab frame = ignore (insert_string frame "\t") *)
-  
 let _ =
   if !!local_map = [] then
     local_map =:= [
@@ -6535,20 +6305,16 @@ let _ =
           "color_buffer", "makefile_mode.color_buffer";
       ]
 @
+% meh for interactives, ok shorter name, but meh
+%less: forced to do C-l to recolor :(
+
+\subsubsection{Major mode}
 
 <<function Makefile_mode.makefile_mode>>=
-let makefile_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
+let makefile_mode frame = 
+  Ebuffer.set_major_mode frame.frm_buffer mode
 @
 
-<<toplevel Makefile_mode._2>>=
-let _ = 
-  define_action "makefile_mode.compile" (compile c_find_error);
-  define_action "makefile_mode.color_buffer" 
-    (fun frame -> makefile_color frame.frm_buffer);
-(*  define_action "insert_tab" insert_tab; *)
-  define_action "makefile_mode" makefile_mode;
-  ()
-@
 
 <<toplevel Makefile_mode._3>>=
 let _ =
@@ -6631,6 +6397,8 @@ open Window
 
 <<constant Makefile_mode.interactives_map>>
 
+(* let insert_tab frame = ignore (insert_string frame "\t") *)
+ 
 <<toplevel Makefile_mode._1>>
 
 <<function Makefile_mode.makefile_mode>>
@@ -7682,5 +7450,3 @@ open WX_filesel
 
 <<toplevel Efuns_texbrowser._1>>
 @
-
-

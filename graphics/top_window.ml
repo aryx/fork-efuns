@@ -11,11 +11,8 @@
 (***********************************************************************)
 
 open Options
-
 open Xtypes
-
 open Efuns
-open Window
 
   
 (*s: function Top_window.message *)
@@ -68,7 +65,7 @@ let try_map frame key =
       (*e: [[Top_window.try_map()]] set last action *)
   | Prefix map ->
       frame.frm_prefix <- keylist;
-      let top_window = top frame.frm_window in
+      let top_window = Window.top frame.frm_window in
       message top_window (Keymap.print_key_list frame.frm_prefix);
   | Unbound -> raise UnboundKey
 (*e: function Top_window.try_map *)
@@ -373,7 +370,6 @@ let scroll_to_frame ady top_window =
       Text.set_position text frame.frm_start y
     end
 (*e: function Top_window.scroll_to_frame *)
-(*s: constant Top_window.menus *)
 (*
     Text.set_position text point y;
       let point = Text.add_point text in
@@ -383,6 +379,8 @@ let scroll_to_frame ady top_window =
     frame.frm_y_offset <- frame.frm_y_offset + (newline - curline);
   *)
 
+
+(*s: constant Top_window.menus *)
 let menus = define_option ["menus"] ""
     (list_option (tuple2_option (string_option, list_option string2_option)))
   []
@@ -448,8 +446,6 @@ let delete_window frame =
       top_window
 *)
 (*e: function Top_window.delete_window *)
-    
-    
 
         
 (*s: constant Top_window.check_abort *)

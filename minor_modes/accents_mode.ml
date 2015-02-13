@@ -15,7 +15,7 @@ open Simple
 open Efuns
 open Top_window
   
-  (* franc;ais strict *)
+(* franc;ais strict *)
 (*s: function Accents_mode.accent *)
 let accent frame =
   let key = !keypressed in
@@ -223,6 +223,5 @@ let _ =
         end else
         Ebuffer.set_minor_mode buf mode)
 (*e: toplevel Accents_mode._2 *)
-    
-    
+
 (*e: minor_modes/accents_mode.ml *)

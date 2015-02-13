@@ -32,10 +32,10 @@ let _ =
 let _ = 
   define_buffer_action "tab_mode" 
     (fun buf -> 
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode);
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+  );
   define_action "insert_tab" insert_tab
 (*e: toplevel Tab_mode._2 *)
 (*e: minor_modes/tab_mode.ml *)
