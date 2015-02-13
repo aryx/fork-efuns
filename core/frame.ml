@@ -320,6 +320,7 @@ let cursor_to_point frame x y =
 let update_line top_window frame repr_string y = 
   let line_repr = frame.frm_table.(y) in
   let graphic = Window.backend top_window in
+
   let rec iter x offset reprs =
     if frame.frm_width > x then
       match reprs with
@@ -571,16 +572,16 @@ let update top_window frame =
 
     for y = 0 to height - 1 do
       (*s: [[Frame.update()]] redraw, draw line y if line changed *)
-      let line = frame.frm_table.(y) in
-      if not ((line.repr_prev_reprs == line.repr_reprs) &&
-              (line.repr_prev_offset == line.repr_offset)) 
+      let frm_line = frame.frm_table.(y) in
+      if not ((frm_line.repr_prev_reprs == frm_line.repr_reprs) &&
+              (frm_line.repr_prev_offset == frm_line.repr_offset)) 
          || frame.frm_redraw
       then
         begin
-          line.repr_prev_reprs <- line.repr_reprs;
-          line.repr_prev_offset <- line.repr_offset;
+          frm_line.repr_prev_reprs <- frm_line.repr_reprs;
+          frm_line.repr_prev_offset <- frm_line.repr_offset;
 
-          update_line top_window frame line.repr_line.repr_string y;
+          update_line top_window frame frm_line.repr_line.repr_string y;
         end;
       (*e: [[Frame.update()]] redraw, draw line y if line changed *)
     done;

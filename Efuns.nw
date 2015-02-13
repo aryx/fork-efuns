@@ -2313,7 +2313,7 @@ and item_attr =
 
 
 
-
+\subsection{XXX}
 
 %XXX
 % why not use this type in Text.text.attrs? int array -> attribute array?
@@ -2337,6 +2337,9 @@ type session = int
 % used?
 
 
+\section{Inserting/deleting characters}
+
+%subsection{extending the gap}
 
 \section{Attributes}
 
@@ -2992,6 +2995,8 @@ mutable frm_last_buf_updated : int;
 <<[[Efuns.frame]] other fields>>=
 mutable frm_redraw : bool;    
 @
+% when switch back or create a new frame, nothing has
+%  been computed in frm_table, so we force a redraw.
 % Used also when modify some text in which case we don't
 % need to redraw the other lines. But if we end up scrolling,
 % then we want to redraw all the lines.
@@ -3062,18 +3067,19 @@ and line_repr =
 \subsubsection{[[Frame.update_line()]]}
 
 <<[[Frame.update()]] redraw, draw line y if line changed>>=
-let line = frame.frm_table.(y) in
-if not ((line.repr_prev_reprs == line.repr_reprs) &&
-        (line.repr_prev_offset == line.repr_offset)) 
+let frm_line = frame.frm_table.(y) in
+if not ((frm_line.repr_prev_reprs == frm_line.repr_reprs) &&
+        (frm_line.repr_prev_offset == frm_line.repr_offset)) 
    || frame.frm_redraw
 then
   begin
-    line.repr_prev_reprs <- line.repr_reprs;
-    line.repr_prev_offset <- line.repr_offset;
+    frm_line.repr_prev_reprs <- frm_line.repr_reprs;
+    frm_line.repr_prev_offset <- frm_line.repr_offset;
 
-    update_line top_window frame line.repr_line.repr_string y;
+    update_line top_window frame frm_line.repr_line.repr_string y;
   end;
 @
+%todo: old: was line.repr_line.repr_string, ugly
 
 
 
@@ -3081,6 +3087,7 @@ then
 let update_line top_window frame repr_string y = 
   let line_repr = frame.frm_table.(y) in
   let graphic = Window.backend top_window in
+
   let rec iter x offset reprs =
     if frame.frm_width > x then
       match reprs with
