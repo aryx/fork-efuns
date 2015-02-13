@@ -149,6 +149,7 @@ and frame  =
     
     mutable frm_width : int;
     mutable frm_height : int;
+
     (*s: [[Efuns.frame]] other fields *)
     (* insert point *)
     mutable frm_point : Text.point; 

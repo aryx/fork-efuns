@@ -1234,16 +1234,15 @@ let insert_structure s frame =
 
 (*s: function Simple.install_structures *)
 let install_structures buf list =
-  List.iter (
-    fun (key, s) ->
-      Keymap.add_binding buf.buf_map key (insert_structure s)
-  ) list
+  list |> List.iter (fun (key, s) ->
+    Keymap.add_binding buf.buf_map key (insert_structure s)
+  )
 (*e: function Simple.install_structures *)
   
 open Options
 
 (*s: type Simple.parameter *)
-type parameter =   (string * ((string -> Obj.t) * (Obj.t -> string) * 
+type parameter = (string * ((string -> Obj.t) * (Obj.t -> string) * 
       Obj.t option_record))
 (*e: type Simple.parameter *)
   

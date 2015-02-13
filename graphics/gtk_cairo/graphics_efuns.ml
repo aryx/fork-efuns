@@ -238,7 +238,7 @@ let init2 location =
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
   (*-------------------------------------------------------------------*)
 
-  location.loc_height <- 50;
+  location.loc_height <- 25;
   (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create location in
   (* the *bindings* buffer *)

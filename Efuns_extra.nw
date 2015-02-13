@@ -833,14 +833,6 @@ let blit str tree point len =
   len
 @
 
-<<function Text.get_position>>=
-let get_position tree point = 
-  let text = tree.tree_text in    
-  if point.point > text.text_gpoint then
-    point.point - text.text_gsize
-  else
-    point.point
-@
 
 <<function Text.set_position>>=
 let set_position tree point pos =
@@ -2446,12 +2438,6 @@ let previous_char frame =
   c
 @
 
-<<function Simple.unset_attr>>=
-let unset_attr frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  Text.unset_attr text
-@
 
 <<function Simple.insert_at_place>>=
 let insert_at_place frame char =
@@ -3096,6 +3082,16 @@ let insert_special_char frame =
     insert_char frame (Char.chr (key - 65))
 @
 
+<<misc keys>>=
+[ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
+@
+
+<<misc actions>>=
+(* C-M map *)
+define_action "next_hole" next_hole;
+@
+
+% Simple.insert_structure -> <>
 <<function Simple.next_hole>>=
 (* a hole is two consecutive '^' chars *)
 let next_hole frame = 
@@ -3113,6 +3109,7 @@ let next_hole frame =
   remove_point text curseur
 @
 
+% install_structures -> <>
 <<function Simple.insert_structure>>=
 let insert_structure s frame =
   let buf = frame.frm_buffer in
@@ -3121,17 +3118,16 @@ let insert_structure s frame =
   insert text point s;
   next_hole frame
 @
-
+% ???
 <<function Simple.install_structures>>=
 let install_structures buf list =
-  List.iter (
-    fun (key, s) ->
-      Keymap.add_binding buf.buf_map key (insert_structure s)
-  ) list
+  list |> List.iter (fun (key, s) ->
+    Keymap.add_binding buf.buf_map key (insert_structure s)
+  )
 @
 
 <<type Simple.parameter>>=
-type parameter =   (string * ((string -> Obj.t) * (Obj.t -> string) * 
+type parameter = (string * ((string -> Obj.t) * (Obj.t -> string) * 
       Obj.t option_record))
 @
 
@@ -5443,9 +5439,6 @@ open Window
 
 \subsection*{[[std_efunsrc.ml]]}
 
-<<function Std_efunsrc.save_options>>=
-let save_options frame = Options.save ()
-@
 
 
 <<constant Std_efunsrc.n_5>>=

@@ -123,10 +123,13 @@ let cursor_off top_window =
 (*s: function Top_window.update_display *)
 let update_display location =
   location.top_windows |> List.iter (fun top_window ->
-      top_window.window |> Window.iter (fun frm -> Frame.update top_window frm);
+      top_window.window |> Window.iter (fun frm -> 
+        Frame.update top_window frm
+      );
       (match top_window.top_mini_buffers with
        | [] -> ()
-       | frame :: _ -> Frame.update top_window frame
+       | frame :: _ -> 
+           Frame.update top_window frame
       );
       cursor_on top_window;
   ) 
@@ -242,9 +245,9 @@ let handle_key top_window modifiers keysym =
     let mask = Xtypes.controlMask lor !meta in
     let diff = modifiers land mask in
     match () with
+    | _ when diff = 0 -> NormalMap 
     | _ when diff = Xtypes.controlMask -> ControlMap
     | _ when diff = !meta -> MetaMap
-    | _ when diff = 0 -> NormalMap 
     | _ -> ControlMetaMap
     (*e: [[Top_window.handle_key()]] compute mod *)
   in
@@ -401,6 +404,7 @@ let create location =
  
   let buf = 
     Ebuffer.default location "*help*" in
+  (* keep one line for the minibuffer *)
   let window = 
     Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
   let frame = 

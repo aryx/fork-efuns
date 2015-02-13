@@ -251,7 +251,8 @@ let point_col tree point =
   let gpoint = text.text_gpoint in
   let point = point.point in
   let bol = text.text_newlines.(y).position in
-  if point > gpoint && bol <= gpoint 
+  (* gap handling *)
+  if bol <= gpoint && gpoint < point
   then point - bol - text.text_gsize
   else point - bol
 (*e: function Text.point_col *)
@@ -612,7 +613,7 @@ let mk_line_with_pos pos =
   
 (*s: function Text.compute_newlines *)
 let compute_newlines string =
-  let (nbr_newlines,_) = count_char string '\n' in
+  let (nbr_newlines,_) = Utils.count_char string '\n' in
   let newlines = Array.create (nbr_newlines + 2) (mk_line_with_pos 0) in
   let curs = ref 0 in
   (* newlines.(0) is already set with 0 position for its bol *)
@@ -628,23 +629,25 @@ let compute_newlines string =
 (*s: function Text.create *)
 let create str =
   let newlines = compute_newlines str in
-  let nlines = Array.length newlines in
   let attrs = (Array.create (String.length str) direct_attr) in
 
   let text =
     {
       text_string = str;
       text_size = String.length str;
+
       text_newlines = newlines;
-      text_nlines = nlines;
+      text_nlines = Array.length newlines;
+
       text_attrs = attrs;
-      text_modified = 0;
-      
+
       text_points = [];
+
       text_gpoint = 0;
       text_gline = 0;
       text_gsize = 0;
 
+      text_modified = 0;
       text_clean = false;
       text_history = [];
       text_readonly = false;
@@ -1013,10 +1016,10 @@ let blit str tree point len =
 (*s: function Text.get_position *)
 let get_position tree point = 
   let text = tree.tree_text in    
-  if point.point > text.text_gpoint then
-    point.point - text.text_gsize
-  else
-    point.point
+  (* gap handling *)
+  if point.point > text.text_gpoint 
+  then point.point - text.text_gsize
+  else point.point
 (*e: function Text.get_position *)
 
 (*s: function Text.set_position *)

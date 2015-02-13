@@ -33,7 +33,8 @@ let grep_hist = ref ["grep -n "]
 (*e: constant Std_efunsrc.grep_hist *)
 
 (*s: function Std_efunsrc.save_options *)
-let save_options frame = Options.save ()
+let save_options frame = 
+  Options.save ()
 (*e: function Std_efunsrc.save_options *)
 (*s: function Std_efunsrc.fondamental_mode *)
 let fondamental_mode frame =
@@ -246,20 +247,21 @@ let _ =
   (* Misc *)
   (* ----------------------------------------------------------- *)
   (*s: misc actions *)
-  define_action "save_options" save_options;
-  define_action "get_position" get_pos;
-  define_action "unset_attr" unset_attr;
   define_action "recenter"  recenter;
   define_action "revert_buffer" reload;
   (* C-x map *)
   define_action "point_at_mark"  point_at_mark;
-  (* C-M map *)
-  define_action "next_hole" next_hole;
   define_action "open_display" open_display;
   (* C-x map *)
   define_action "change_font"  change_font;
   (*x: misc actions *)
   define_action "check_file" check_file;
+  (*x: misc actions *)
+  define_action "save_options" save_options;
+  (*x: misc actions *)
+  define_action "get_position" get_pos;
+  (*x: misc actions *)
+  define_action "unset_attr" unset_attr;
   (*x: misc actions *)
   define_buffer_action "update_time" update_time;
   (*x: misc actions *)
@@ -282,6 +284,9 @@ let _ =
   (* C-x 5 map *)
   define_action "delete_window"  Top_window.delete_window;
   (*e: window managment actions *)
+  (*x: misc actions *)
+  (* C-M map *)
+  define_action "next_hole" next_hole;
   (*e: misc actions *)
   (*e: actions definitions *)
   ()
@@ -352,7 +357,10 @@ let _ =
 
         [ControlMap, XK.xk_Next], "end_of_file";
         [ControlMap, XK.xk_Prior], "begin_of_file";
-
+        (*x: navigating keys *)
+        (* pad: *)
+        [MetaMap, Char.code '>'], "end_of_file";
+        [MetaMap, Char.code '<'], "begin_of_file";
         (*e: navigating keys *)
 
         (* -------------------------------------------------------- *)
@@ -481,7 +489,6 @@ let _ =
 
         [c_x; NormalMap, Char.code 'F'], "change_font";
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
-        [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
         (*x: misc keys *)
         [c_x; ControlMap, Char.code 'c'], "exit"; 
         (*x: misc keys *)
@@ -497,6 +504,8 @@ let _ =
         [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
         [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
         (*e: window managment keys *)
+        (*x: misc keys *)
+        [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
         (*e: misc keys *)
         (*e: [[global_map]] initial entries *)
       ]
