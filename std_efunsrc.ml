@@ -293,15 +293,15 @@ let _ =
   (* C-x map *)
   define_action "change_font"  change_font;
   (*x: misc actions *)
-  (* C-h map *)
-  define_action "help_bindings"  Frame.bindings_help;
-  (*x: misc actions *)
   define_action "check_file" check_file;
   (*x: misc actions *)
   define_buffer_action "update_time" update_time;
   (*x: misc actions *)
   (* C-x map *)
   define_action "exit"  exit_efuns; 
+  (*x: misc actions *)
+  (* C-h map *)
+  define_action "help_bindings"  Frame.bindings_help;
   (*x: misc actions *)
   (* C-x map *)
   define_action "next_error"  next_error;
@@ -518,9 +518,9 @@ let _ =
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
         (*x: misc keys *)
-        [c_h; NormalMap, Char.code 'K'], "help_bindings";
-        (*x: misc keys *)
         [c_x; ControlMap, Char.code 'c'], "exit"; 
+        (*x: misc keys *)
+        [c_h; NormalMap, Char.code 'K'], "help_bindings";
         (*x: misc keys *)
         [c_x;NormalMap, Char.code '`' ], "next_error";
         (*x: misc keys *)

@@ -1270,25 +1270,6 @@ let c_c = (ControlMap, Char.code 'c')
 
 
 
-<<misc keys>>=
-[c_h; NormalMap, Char.code 'K'], "help_bindings";
-@
-<<misc actions>>=
-(* C-h map *)
-define_action "help_bindings"  Frame.bindings_help;
-@
-
-<<function Frame.bindings_help>>=
-let bindings_help frame =
-  let window = frame.frm_window in
-  change_buffer window "*bindings*"
-@
-% how can change_buffer with just window info? don't pass the frame?
-% no need because can go back to top_window and active_frame?
-
-
-
-
 % start_hook -> (Std_efunsrc._5 -> add_start_hook(<>) )
 <<function Std_efunsrc.init_global_map>>=
 let init_global_map location = 
@@ -1662,6 +1643,9 @@ let _ =
   Efuns.init location (* launch first hooks *)
 @
 
+% not that this function reset also the start_hooks global!
+%  so that can run it again later, if other hooks are setup later
+%  (e.g. in the .efunsrc loading)
 % main.ml -> <>
 <<function Efuns.init>>=
 let init (location : location) =
@@ -1700,15 +1684,13 @@ let add_start_hook hook =
 
 <<toplevel Main._4>>=
 let _ =
-  Graphics_efuns.init location !displayname
+  Graphics_efuns.init location
 @
-%  Graphics.open_graph (spf " ");
-%  Graphics.set_window_title displayname;
-%  let display = "" in
+
+% <<function Graphics_efuns.init>>=
+%  Graphics_xxx.open_graphics
 %  ...
 %  let top_window = Top_window.create location display in
-%  ...
-%  let _ = Interactive.create_bindings location in
 %  ...
 %  Top_window.update_display location;
 %  ...
@@ -1716,6 +1698,7 @@ let _ =
 %    ...
 %    Top_window.handler top_window () evt
 %    ...
+% @
 
 
 % will see main functions called from init below
@@ -1723,7 +1706,7 @@ let _ =
 \subsection{[[Top_window.create()]]}
 
 <<function Top_window.create>>=
-let create location display =
+let create location =
  
   <<[[Top_window.create()]] create graphical window with right dimensions>>
 
@@ -3731,6 +3714,24 @@ let set_binding map key binding =
 
 \subsection{Bindings display}
 
+<<misc keys>>=
+[c_h; NormalMap, Char.code 'K'], "help_bindings";
+@
+<<misc actions>>=
+(* C-h map *)
+define_action "help_bindings"  Frame.bindings_help;
+@
+
+<<function Frame.bindings_help>>=
+let bindings_help frame =
+  let window = frame.frm_window in
+  change_buffer window "*bindings*"
+@
+% how can change_buffer with just window info? don't pass the frame?
+% no need because can go back to top_window and active_frame?
+
+
+
 % Graphics_efun.init -> <>
 <<function Interactive.create_bindings>>=
 let create_bindings location =
@@ -3785,20 +3786,20 @@ let rec print_key_list key_list =
 
 
 % ?? -> <>
-<<function Keymap.print>>=
-let print map =
-  Printf.printf "MAP:\n";
-  List.iter (fun (key, binding) ->
-    (match binding with
-      Prefix _ -> print_string "Prefix "; 
-    | Function _ -> print_string "Function"
-    | Unbound -> print_string "Unbound"
-          );
-    print_string (print_key key);
-    print_newline ()
-      ) map.complex_bindings
-@
-
+%<<function Keymap.print>>=
+%let print map =
+%  Printf.printf "MAP:\n";
+%  List.iter (fun (key, binding) ->
+%    (match binding with
+%      Prefix _ -> print_string "Prefix "; 
+%    | Function _ -> print_string "Function"
+%    | Unbound -> print_string "Unbound"
+%          );
+%    print_string (print_key key);
+%    print_newline ()
+%      ) map.complex_bindings
+%@
+% dumper? could mv in debugging section
 
 
 
@@ -5838,10 +5839,9 @@ let next_error top_frame =
             try find_buffer_frame location buf 
             with Not_found ->
                 if frame == top_frame then
-                  let display = (*Window.display top_window*)"TODO_display" in
                   let new_window = 
                     Top_window.create top_window.top_location 
-                      display 
+                      (*Window.display top_window*) 
                   in
                   Frame.create new_window.window None buf
                 else
@@ -6356,7 +6356,7 @@ let window_load_buffer frame =
     (fun str -> 
       let top_window = Window.top frame.frm_window in
       let top_window = Top_window.create top_window.top_location
-          (*(Window.display top_window)*) "TODO_display"
+          (*(Window.display top_window)*)
       in
       Frame.load_file top_window.window str |> ignore
     )
@@ -6369,7 +6369,7 @@ let window_change_buffer frame =
   (fun name ->
       let top_window = Window.top frame.frm_window in
       let top_window = Top_window.create 
-          top_window.top_location "TODO_Display" in
+          top_window.top_location (*"TODO_Display"*) in
       Frame.change_buffer top_window.window name
   )
 @

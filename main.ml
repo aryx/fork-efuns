@@ -88,6 +88,6 @@ let _ =
 
 (*s: toplevel Main._4 *)
 let _ =
-  Graphics_efuns.init location !displayname
+  Graphics_efuns.init location
 (*e: toplevel Main._4 *)
 (*e: main.ml *)

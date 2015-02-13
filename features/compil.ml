@@ -93,10 +93,9 @@ let next_error top_frame =
             try find_buffer_frame location buf 
             with Not_found ->
                 if frame == top_frame then
-                  let display = (*Window.display top_window*)"TODO_display" in
                   let new_window = 
                     Top_window.create top_window.top_location 
-                      display 
+                      (*Window.display top_window*) 
                   in
                   Frame.create new_window.window None buf
                 else

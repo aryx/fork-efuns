@@ -1856,8 +1856,7 @@ let keysym_to_name = []
             
 <<function Keymap.print_key_list>>
 
-<<function Keymap.print>>
-    
+   
 <<function Keymap.get_binding>>
           
           

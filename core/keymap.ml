@@ -63,20 +63,7 @@ let rec print_key_list key_list =
   | _ -> ""
 (*e: function Keymap.print_key_list *)
 
-(*s: function Keymap.print *)
-let print map =
-  Printf.printf "MAP:\n";
-  List.iter (fun (key, binding) ->
-    (match binding with
-      Prefix _ -> print_string "Prefix "; 
-    | Function _ -> print_string "Function"
-    | Unbound -> print_string "Unbound"
-          );
-    print_string (print_key key);
-    print_newline ()
-      ) map.complex_bindings
-(*e: function Keymap.print *)
-    
+   
 (*s: function Keymap.get_binding *)
 let rec get_binding map keylist =
   match keylist with

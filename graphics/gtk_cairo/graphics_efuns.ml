@@ -228,7 +228,7 @@ let modifiers = ref 0
 (* The main UI *)
 (*****************************************************************************)
 
-let init2 location displayname =
+let init2 location =
   let _locale = GtkMain.Main.init () in
 
   (* those are a first guess. The first configure ev will force a resize *)
@@ -249,14 +249,14 @@ let init2 location displayname =
   (*-------------------------------------------------------------------*)
 
   location.loc_height <- 50;
-  let display = "" in
-  let top_window = Top_window.create location display in
+  (* will boostrap using a newly created *help* buffer *)
+  let top_window = Top_window.create location in
 
-  let _ = Interactive.create_bindings location in
-
+  (* the *bindings* buffer *)
+  Interactive.create_bindings location |> ignore;
   (* open the first buffers *)
   !init_files +> List.iter (fun name ->
-    let _ = Frame.load_file top_window.window name in ()
+    Frame.load_file top_window.window name |> ignore
   );
 
   (*-------------------------------------------------------------------*)
@@ -321,7 +321,7 @@ let init2 location displayname =
   win#show ();
   GMain.main()
 
-let init a b =
+let init a =
   if !Efuns.check
   then test_cairo ()
-  else init2 a b
+  else init2 a

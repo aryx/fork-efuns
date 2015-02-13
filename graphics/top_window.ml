@@ -397,7 +397,7 @@ let help_menu = ref ([| |]: (string * action) array)
   
   
 (*s: function Top_window.create *)
-let create location display =
+let create location =
  
   (*s: [[Top_window.create()]] create graphical window with right dimensions *)
   (*

@@ -184,7 +184,7 @@ let window_load_buffer frame =
     (fun str -> 
       let top_window = Window.top frame.frm_window in
       let top_window = Top_window.create top_window.top_location
-          (*(Window.display top_window)*) "TODO_display"
+          (*(Window.display top_window)*)
       in
       Frame.load_file top_window.window str |> ignore
     )
@@ -207,7 +207,7 @@ let window_change_buffer frame =
   (fun name ->
       let top_window = Window.top frame.frm_window in
       let top_window = Top_window.create 
-          top_window.top_location "TODO_Display" in
+          top_window.top_location (*"TODO_Display"*) in
       Frame.change_buffer top_window.window name
   )
 (*e: function Complex.window_change_buffer *)
