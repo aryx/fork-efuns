@@ -391,7 +391,7 @@ let create str =
       text_points = [];
 
       text_gpoint = 0;
-      text_gline = 0;
+      text_gpoint_line = 0;
       text_gsize = 0;
 
       text_modified = 0;
@@ -483,13 +483,18 @@ and buffer =
 <<type Text.point>>=
 and point = {
     mutable point : int;
-    mutable point_y : int;
+    mutable point_line : int;
   }
 @
-% not point_x? it's a charpos, not a column. The additional y/line is
-% to quickly know the line so can index in the text.text_lines array
+% the first field is a charpos, not a column. The additional y/line is
+% to quickly know the line number so can index in the text.text_lines array
 % and do certain stuff.
-% Most of the time what you care is really point.point though.
+% Most of the time what you care is really point.pos though.
+%todo? point.point_y was confusing as you would expect then
+% a point_x which the first field is really not. It's more
+% consistent to have point_line? with text_gpoint and text_gline fields?
+% at the same time it makes you think it's a line when really it's a lineno.
+% but if keep the point attached to it then it's ok no?
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_point : Text.point;
@@ -2147,14 +2152,14 @@ match () with
 <<[[Text.text]] other fields>>=
 (* g for gap *)
 mutable text_gpoint : int;
-mutable text_gsize : int;
+mutable text_gpoint_line : int;
 
-mutable text_gline : int;
+mutable text_gsize : int;
 @
 % rename gpoint? it's not really a point, or rename
 % gline to gpoint_y? more consistent?
 % gx, gy, gsize gap col, gap line, gap size
-
+%less: merge gpoint and gpoint_line to just be gpoint?
 
 <<function Text.size>>=
 let size tree = 
@@ -2202,7 +2207,7 @@ let add_point tree =
   let text = tree.tree_text in      
   let p = {
       point = 0;
-      point_y = 0;
+      point_line = 0;
     } in    
   text.text_points <- p :: text.text_points;
   p
@@ -2213,7 +2218,7 @@ let dup_point tree point =
   let text = tree.tree_text in      
   let p = {
       point = point.point;
-      point_y = point.point_y
+      point_line = point.point_line
     } in
   text.text_points <- p :: text.text_points;
   p
@@ -2232,7 +2237,7 @@ let remove_point tree p =
 <<function Text.goto_point>>=
 let goto_point _text p1 p2 =
   p1.point <- p2.point;
-  p1.point_y <- p2.point_y
+  p1.point_line <- p2.point_line
 @
 
 
@@ -2242,9 +2247,9 @@ let goto_point _text p1 p2 =
 <<function Text.move_point_to>>=
 let move_point_to tree point p =
   let text = tree.tree_text in    
-  let _x,y = find_xy tree text.text_gpoint text.text_gline p in
+  let _x,y = find_xy tree text.text_gpoint text.text_gpoint_line p in
   point.point <- p;
-  point.point_y <- y
+  point.point_line <- y
 @
 % find_xy???
 
@@ -2256,14 +2261,14 @@ let move_point_to tree point p =
 % status line display the line of the cursor -> <>
 <<function Text.point_line>>=
 let point_line text point = 
-  point.point_y
+  point.point_line
 @
 
 % status line display the co of the cursor -> <>
 <<function Text.point_col>>=
 let point_col tree point = 
   let text = tree.tree_text in    
-  let y = point.point_y in
+  let y = point.point_line in
   let gpoint = text.text_gpoint in
   let point = point.point in
   let bol = text.text_newlines.(y).position in
@@ -2418,7 +2423,7 @@ let get_attr tree point =
 <<function Text.set_char_attr>>=
 let set_char_attr tree point attr =
   let text = tree.tree_text in    
-  let y = point.point_y in
+  let y = point.point_line in
   let point = 
     (* gap handling *)
     if point.point = text.text_gpoint 
@@ -2439,7 +2444,7 @@ let set_attr tree point len attr = (* should not exceed one line *)
   if len > 0 then
     let gap_end = text.text_gpoint + text.text_gsize in
 
-    let x,y = find_xy tree text.text_gpoint text.text_gline point.point in
+    let x,y = find_xy tree text.text_gpoint text.text_gpoint_line point.point in
     cancel_repr text point.point y;
 
     let point = point.point in
@@ -4456,14 +4461,14 @@ let goto_line frame =
 let point_to_eol tree point =
   let text = tree.tree_text in    
   low_distance text point.point 
-    (text.text_newlines.(point.point_y + 1).position - 1)
+    (text.text_newlines.(point.point_line + 1).position - 1)
 @
 
 <<function Text.point_to_bol>>=
 let point_to_bol tree point =
   let text = tree.tree_text in    
   low_distance text 
-    text.text_newlines.(point.point_y).position
+    text.text_newlines.(point.point_line).position
     point.point
 @
 
@@ -4519,7 +4524,7 @@ let goto_line tree point y =
   else 
   let line = text.text_newlines.(y) in
   point.point <- line.position;
-  point.point_y <- y
+  point.point_line <- y
 @
 
 \section{Inserting}
