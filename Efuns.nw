@@ -30,6 +30,7 @@
 
 %thx to this manual, better understand XXX?:
 % - that the minibuffer is really a buffer/frame like the other :)
+% - TODO how the mark get changed when you do big move?
 
 %history LP-ization:
 % - skeleton, mostly copy paste of Template.nw skeleton
@@ -399,8 +400,9 @@ let create str =
       text_attrs = attrs;
 
       text_points = [];
-      text_gpoint = { pos = 0; line = 0 };
-      text_gsize = 0;
+      (* no gap at the beginning *)
+      gpoint = { pos = 0; line = 0 };
+      gsize = 0;
 
       text_modified = 0;
       text_clean = false;
@@ -1788,17 +1790,21 @@ let _ =
 
 \section{The graphical window}
 
-\subsection{[[Graphics.init()]]}
-
 <<toplevel Main._4>>=
 let _ =
   Graphics_efuns.init location
 @
 
+\subsection{[[Graphics.init()]]}
+
+% this is the not portable part!
+
 % <<function Graphics_efuns.init>>=
 %  Graphics_xxx.open_graphics
 %  ...
 %  let top_window = Top_window.create location display in
+%  ...
+%  top_window.graphics <- Some (backend location Graphic_xxx.context); 
 %  ...
 %  Top_window.update_display location;
 %  ...
@@ -1975,8 +1981,10 @@ let update_display location =
   ) 
 @
 % Why have a list of top_windows? because of Emacs "Frames" supported by
-%  efuns
-% Frame.update only the first minibuffer? then why use a list anyway?
+%  efuns?
+%less: get rid of top_windows, just have one
+% Why have a list for minibuffer?
+% and Frame.update only the first minibuffer? 
 
 % minibuffer is a frame!
 % status line? it's attached to a frame actually
@@ -1987,6 +1995,8 @@ let update_display location =
 
 \section{The event loop}
 
+% again not portable part
+
 %  let rec loop () =
 %      let evt = ... in
 %      ...
@@ -1995,7 +2005,12 @@ let update_display location =
 %  loop ()
 
 
+\subsection{[[Event]]}
+
+% event type?
+
 \subsection{[[Top_window.handler()]]}
+
 
 <<function Top_window.handler>>=
 let handler top_window event =
@@ -2159,12 +2174,12 @@ match () with
 
 % already seen Text.text_size, Text.text_string in core DS chapter
 
-% let gap_end = gpoint.pos + text.text_gsize in
+% let gap_end = gpoint.pos + text.gsize in
 
 <<[[Text.text]] other fields>>=
 (* g for gap *)
-mutable text_gpoint : point;
-mutable text_gsize : int;
+mutable gpoint : point;
+mutable gsize : int;
 @
 %old: used to have gpoint and gline fields, but it was confusing.
 % better to merge in a gpoint that is actually a Text.gpoint.
@@ -2173,7 +2188,7 @@ mutable text_gsize : int;
 <<function Text.size>>=
 let size tree = 
   let text = tree.tree_text in
-  text.text_size - text.text_gsize
+  text.text_size - text.gsize
 @
 % gsize is 0 at the very beginning
 
@@ -2182,7 +2197,7 @@ let size tree =
 
 \section{Points}
 
-% see Point type in core DS chapter with Buffer type.
+% seen Point type in core DS chapter with Buffer type.
 
 <<misc actions>>=
 define_action "get_position" get_pos;
@@ -2192,8 +2207,8 @@ define_action "get_position" get_pos;
 let get_position tree point = 
   let text = tree.tree_text in    
   (* gap handling *)
-  if point.pos > text.text_gpoint.pos 
-  then point.pos - text.text_gsize
+  if point.pos > text.gpoint.pos 
+  then point.pos - text.gsize
   else point.pos
 @
 % note that point can never be in the middle of the hole.
@@ -2214,10 +2229,7 @@ mutable text_points : point list;
 <<function Text.add_point>>=
 let add_point tree =
   let text = tree.tree_text in      
-  let p = {
-      pos = 0;
-      line = 0;
-    } in    
+  let p = { pos = 0; line = 0; } in    
   text.text_points <- p :: text.text_points;
   p
 @
@@ -2256,7 +2268,7 @@ let goto_point _text p1 p2 =
 <<function Text.move_point_to>>=
 let move_point_to tree point p =
   let text = tree.tree_text in    
-  let _x,y = find_xy tree text.text_gpoint.pos text.text_gpoint.line p in
+  let _x,y = find_xy tree text.gpoint.pos text.gpoint.line p in
   point.pos <- p;
   point.line <- y
 @
@@ -2277,13 +2289,12 @@ let point_line _text point =
 <<function Text.point_col>>=
 let point_col tree point = 
   let text = tree.tree_text in    
-  let y = point.line in
   let pos = point.pos in
-  let gpos = text.text_gpoint.pos in
-  let bol = text.text_newlines.(y).position in
+  let gpos = text.gpoint.pos in
+  let bol = text.text_newlines.(point.line).position in
   (* gap handling *)
   if bol <= gpos && gpos < pos
-  then pos - bol - text.text_gsize
+  then pos - bol - text.gsize
   else pos - bol
 @
 
@@ -2416,8 +2427,8 @@ let get_attr tree point =
   let text = tree.tree_text in
   let pos = 
     (* gap handling *)
-    if point.pos = text.text_gpoint.pos
-    then point.pos + text.text_gsize 
+    if point.pos = text.gpoint.pos
+    then point.pos + text.gsize 
     else point.pos
   in
   if pos < text.text_size 
@@ -2431,8 +2442,8 @@ let set_char_attr tree point attr =
   let y = point.line in
   let pos = 
     (* gap handling *)
-    if point.pos = text.text_gpoint.pos
-    then point.pos + text.text_gsize 
+    if point.pos = text.gpoint.pos
+    then point.pos + text.gsize 
     else point.pos
   in
   if pos < text.text_size then begin
@@ -2447,13 +2458,13 @@ let set_char_attr tree point attr =
 let set_attr tree point len attr = (* should not exceed one line *)
   let text = tree.tree_text in  
   if len > 0 then
-    let gap_end = text.text_gpoint.pos + text.text_gsize in
+    let gap_end = text.gpoint.pos + text.gsize in
 
-    let x,y = find_xy tree text.text_gpoint.pos text.text_gpoint.line point.pos in
+    let x,y = find_xy tree text.gpoint.pos text.gpoint.line point.pos in
     cancel_repr text point.pos y;
 
     let pos = point.pos in
-    let gpos = text.text_gpoint.pos in
+    let gpos = text.gpoint.pos in
     let before, after, after_pos =
       if pos > gap_end then
         0, (min (text.text_size - pos) len), pos
@@ -4878,8 +4889,8 @@ and action =
 let undo tree =
   let text = tree.tree_text in  
   let rec undo action =
-    let gpos = text.text_gpoint.pos in
-    let gsize = text.text_gsize in
+    let gpos = text.gpoint.pos in
+    let gsize = text.gsize in
     match action with
       Insertion(point_pos, len, modified) ->
         let point = if gpos < point_pos then point_pos + gsize else point_pos in
@@ -5081,13 +5092,13 @@ let isearch to_regexp sens frame =
 <<function Text.search_forward>>=
 let search_forward tree regexp point =
   let text = tree.tree_text in    
-  let gsize = text.text_gsize in
-  let gap_end = text.text_gpoint.pos + gsize in
-  if point.pos = text.text_gpoint.pos 
+  let gsize = text.gsize in
+  let gap_end = text.gpoint.pos + gsize in
+  if point.pos = text.gpoint.pos 
   then point.pos <- gap_end;
   if point.pos < gap_end 
   then clean_text text;
-  let gap_end = text.text_gpoint.pos + gsize in  
+  let gap_end = text.gpoint.pos + gsize in  
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.pos in
   let pos = if pos >= gap_end then pos - gsize else pos in
@@ -5099,16 +5110,16 @@ let search_forward tree regexp point =
 <<function Text.search_forward_matched>>=
 let search_forward_matched tree regexp point =
   let text = tree.tree_text in      
-  let gsize = text.text_gsize in
-  let gap_end = text.text_gpoint.pos + gsize in
-  if point.pos = text.text_gpoint.pos 
+  let gsize = text.gsize in
+  let gap_end = text.gpoint.pos + gsize in
+  if point.pos = text.gpoint.pos 
   then point.pos <- gap_end;
   if point.pos < gap_end 
   then clean_text text;
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.pos in
   let pos = 
-    if pos >= text.text_gpoint.pos + gsize 
+    if pos >= text.gpoint.pos + gsize 
     then pos - gsize 
     else pos 
   in
@@ -5119,13 +5130,13 @@ let search_forward_matched tree regexp point =
 <<function Text.search_forward_groups>>=
 let search_forward_groups tree regexp point groups =
   let text = tree.tree_text in      
-  let gsize = text.text_gsize in
-  let gap_end = text.text_gpoint.pos + gsize in
-  if point.pos = text.text_gpoint.pos 
+  let gsize = text.gsize in
+  let gap_end = text.gpoint.pos + gsize in
+  if point.pos = text.gpoint.pos 
   then point.pos <- gap_end;
   if point.pos < gap_end 
   then clean_text text;
-  let gap_end = text.text_gpoint.pos + gsize in  
+  let gap_end = text.gpoint.pos + gsize in  
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.pos in
   let pos = if pos >= gap_end then pos - gsize else pos in
@@ -5137,7 +5148,7 @@ let search_forward_groups tree regexp point groups =
 <<function Text.search_backward>>=
 let search_backward tree regexp point =
   let text = tree.tree_text in    
-  if point.pos > text.text_gpoint.pos 
+  if point.pos > text.gpoint.pos 
   then clean_text text;
   let string = text.text_string in
   let start_pos =     
@@ -5153,7 +5164,7 @@ let search_backward tree regexp point =
 <<function Text.search_backward_groups>>=
 let search_backward_groups tree regexp point groups =  
   let text = tree.tree_text in    
-  if point.pos > text.text_gpoint.pos 
+  if point.pos > text.gpoint.pos 
   then clean_text text;
   let string = text.text_string in
   let start_pos =     
