@@ -401,7 +401,7 @@ let create str =
 
       text_points = [];
 
-      text_gpoint = { pos = 0; point_line = 0 };
+      text_gpoint = { pos = 0; line = 0 };
       text_gsize = 0;
 
       text_modified = 0;
@@ -493,7 +493,7 @@ and buffer =
 <<type Text.point>>=
 and point = {
     mutable pos : position;
-    mutable point_line : int;
+    mutable line : int;
   }
 @
 % the first field is a charpos, not a column. The additional y/line is
@@ -2213,7 +2213,7 @@ let add_point tree =
   let text = tree.tree_text in      
   let p = {
       pos = 0;
-      point_line = 0;
+      line = 0;
     } in    
   text.text_points <- p :: text.text_points;
   p
@@ -2224,7 +2224,7 @@ let dup_point tree point =
   let text = tree.tree_text in      
   let p = {
       pos = point.pos;
-      point_line = point.point_line
+      line = point.line
     } in
   text.text_points <- p :: text.text_points;
   p
@@ -2243,7 +2243,7 @@ let remove_point tree p =
 <<function Text.goto_point>>=
 let goto_point _text p1 p2 =
   p1.pos <- p2.pos;
-  p1.point_line <- p2.point_line
+  p1.line <- p2.line
 @
 
 
@@ -2253,9 +2253,9 @@ let goto_point _text p1 p2 =
 <<function Text.move_point_to>>=
 let move_point_to tree point p =
   let text = tree.tree_text in    
-  let _x,y = find_xy tree text.text_gpoint.pos text.text_gpoint.point_line p in
+  let _x,y = find_xy tree text.text_gpoint.pos text.text_gpoint.line p in
   point.pos <- p;
-  point.point_line <- y
+  point.line <- y
 @
 % find_xy???
 
@@ -2267,14 +2267,14 @@ let move_point_to tree point p =
 % status line display the line of the cursor -> <>
 <<function Text.point_line>>=
 let point_line _text point = 
-  point.point_line
+  point.line
 @
 
 % status line display the co of the cursor -> <>
 <<function Text.point_col>>=
 let point_col tree point = 
   let text = tree.tree_text in    
-  let y = point.point_line in
+  let y = point.line in
   let pos = point.pos in
   let gpos = text.text_gpoint.pos in
   let bol = text.text_newlines.(y).position in
@@ -2425,7 +2425,7 @@ let get_attr tree point =
 <<function Text.set_char_attr>>=
 let set_char_attr tree point attr =
   let text = tree.tree_text in    
-  let y = point.point_line in
+  let y = point.line in
   let pos = 
     (* gap handling *)
     if point.pos = text.text_gpoint.pos
@@ -2446,7 +2446,7 @@ let set_attr tree point len attr = (* should not exceed one line *)
   if len > 0 then
     let gap_end = text.text_gpoint.pos + text.text_gsize in
 
-    let x,y = find_xy tree text.text_gpoint.pos text.text_gpoint.point_line point.pos in
+    let x,y = find_xy tree text.text_gpoint.pos text.text_gpoint.line point.pos in
     cancel_repr text point.pos y;
 
     let pos = point.pos in
@@ -4464,14 +4464,14 @@ let goto_line frame =
 let point_to_eol tree point =
   let text = tree.tree_text in    
   low_distance text point.pos
-    (text.text_newlines.(point.point_line + 1).position - 1)
+    (text.text_newlines.(point.line + 1).position - 1)
 @
 
 <<function Text.point_to_bol>>=
 let point_to_bol tree point =
   let text = tree.tree_text in    
   low_distance text 
-    text.text_newlines.(point.point_line).position
+    text.text_newlines.(point.line).position
     point.pos
 @
 
@@ -4527,7 +4527,7 @@ let goto_line tree point y =
   else 
   let line = text.text_newlines.(y) in
   point.pos <- line.position;
-  point.point_line <- y
+  point.line <- y
 @
 
 \section{Inserting}
