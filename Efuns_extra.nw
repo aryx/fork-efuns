@@ -302,9 +302,11 @@ let move_gpoint_to text pos =
 let cancel_repr text point n =
   let line = text.text_newlines.(n) in
   let pos =  point - line.position in
-  line.modified <- 
-    (if line.modified < 0 then pos
-    else min line.modified pos)
+  line.line_modified <- 
+    (if line.line_modified < 0
+    then pos
+    else min line.modified pos
+    )
 @
 
 <<constant Text.add_amount>>=
@@ -378,7 +380,7 @@ let low_insert tree point str =
           let new_cache = Array.create (old_size + (max 20 nbr_newlines)) 
             { position = -1;
               representation = [];
-              modified = -1;
+              line_modified = -1;
               repr_len = 0;
               repr_string = "";
               line_hlt = 0;
@@ -396,7 +398,7 @@ let low_insert tree point str =
         let new_pos = String.index_from text.text_string pos '\n' in
         text.text_newlines.(gline+n) <- { position = (new_pos + 1);
           representation = [];
-          modified = 0;
+          line_modified = 0;
           repr_len = 0;
           repr_string = "";
           line_hlt = 0;
@@ -804,7 +806,7 @@ let (dummy_line : line) =
   {
     position = max_int;
     representation = [];
-    modified = 0;
+    line_modified = 0;
     repr_len = 0;
     repr_string = "";
     line_hlt = 0;
@@ -827,6 +829,12 @@ buf.buf_charreprs.(9) <- String.make !tab_size ' ';
 @
 
 
+<<[[Text.line]] other fields>>=
+mutable line_hlt : int; (* highlighting *)
+@
+%dead? seems never set. subsumed by color attribute?
+
+
 
 <<function Text.compute_representation>>=
 (* On devrait reprendre la representation la ou elle est ... *)
@@ -839,14 +847,14 @@ let compute_representation tree charreprs n =
     end
   else
   let line = text.text_newlines.(n) in
-  if line.modified >= 0 then
+  if line.line_modified >= 0 then
     begin
       let end_pos = text.text_newlines.(n+1).position - 1 in
       let rec iter repr_list =
         match repr_list with
           repr :: tail ->
             let next_pos = repr.repr_line_pos + repr.repr_line_len in
-            if next_pos < line.modified then
+            if next_pos < line.line_modified then
               repr_list, next_pos, repr.repr_pos + repr.repr_size
             else
               iter tail
@@ -920,7 +928,7 @@ let compute_representation tree charreprs n =
         repr_tail := repr :: !repr_tail;
       done;
       line.representation <- !repr_tail;
-      line.modified <- -1;
+      line.line_modified <- -1;
       line.repr_len <- !repr_curs;
       line.repr_string <- !repr_string;
 

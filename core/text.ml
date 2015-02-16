@@ -84,8 +84,9 @@ and line = {
     mutable items : item array;
     (*e: [[Text.line]] attribute fields *)
     (*s: [[Text.line]] other fields *)
-    mutable modified : int; (* first modified position *)
-    mutable line_hlt : int;
+    mutable line_modified : int; (* first modified position *)
+    (*x: [[Text.line]] other fields *)
+    mutable line_hlt : int; (* highlighting *)
     (*e: [[Text.line]] other fields *)
   } 
 (*e: type Text.line *)
@@ -251,8 +252,8 @@ let size tree =
 let point_col tree point = 
   let text = tree.tree_text in    
   let y = point.point_line in
-  let gpos = text.text_gpoint.point_pos in
   let pos = point.point_pos in
+  let gpos = text.text_gpoint.point_pos in
   let bol = text.text_newlines.(y).position in
   (* gap handling *)
   if bol <= gpos && gpos < pos
@@ -325,9 +326,11 @@ let move_gpoint_to text pos =
 let cancel_repr text point n =
   let line = text.text_newlines.(n) in
   let pos =  point - line.position in
-  line.modified <- 
-    (if line.modified < 0 then pos
-    else min line.modified pos)
+  line.line_modified <- 
+    (if line.line_modified < 0
+    then pos
+    else min line.line_modified pos
+    )
 (*e: function Text.cancel_repr *)
 
 (*s: constant Text.add_amount *)
@@ -436,7 +439,7 @@ let low_insert tree point str =
           let new_cache = Array.create (old_size + (max 20 nbr_newlines)) 
             { position = -1;
               representation = [];
-              modified = -1;
+              line_modified = -1;
               repr_len = 0;
               repr_string = "";
               line_hlt = 0;
@@ -454,7 +457,7 @@ let low_insert tree point str =
         let new_pos = String.index_from text.text_string pos '\n' in
         text.text_newlines.(gline+n) <- { position = (new_pos + 1);
           representation = [];
-          modified = 0;
+          line_modified = 0;
           repr_len = 0;
           repr_string = "";
           line_hlt = 0;
@@ -607,7 +610,7 @@ let mk_line_with_pos pos =
    representation = []; 
    repr_len = 0; 
    repr_string = ""; 
-   modified = 0; 
+   line_modified = 0; 
    line_hlt = 0; 
    items = [||]; 
   }
@@ -768,10 +771,10 @@ let save tree outc =
 (*e: function Text.save *)
 
 (*s: function Text.unset_attr *)
-let unset_attr text =
-  let text = text.tree_text in  
+let unset_attr tree =
+  let text = tree.tree_text in  
   Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
-  Array.iter (fun line -> line.modified <- 0) text.text_newlines
+  Array.iter (fun line -> line.line_modified <- 0) text.text_newlines
 (*e: function Text.unset_attr *)
 
 (*s: function Text.set_attr *)
@@ -1147,7 +1150,7 @@ let (dummy_line : line) =
   {
     position = max_int;
     representation = [];
-    modified = 0;
+    line_modified = 0;
     repr_len = 0;
     repr_string = "";
     line_hlt = 0;
@@ -1181,14 +1184,14 @@ let compute_representation tree charreprs n =
     end
   else
   let line = text.text_newlines.(n) in
-  if line.modified >= 0 then
+  if line.line_modified >= 0 then
     begin
       let end_pos = text.text_newlines.(n+1).position - 1 in
       let rec iter repr_list =
         match repr_list with
           repr :: tail ->
             let next_pos = repr.repr_line_pos + repr.repr_line_len in
-            if next_pos < line.modified then
+            if next_pos < line.line_modified then
               repr_list, next_pos, repr.repr_pos + repr.repr_size
             else
               iter tail
@@ -1262,7 +1265,7 @@ let compute_representation tree charreprs n =
         repr_tail := repr :: !repr_tail;
       done;
       line.representation <- !repr_tail;
-      line.modified <- -1;
+      line.line_modified <- -1;
       line.repr_len <- !repr_curs;
       line.repr_string <- !repr_string;
 
@@ -1442,7 +1445,7 @@ let clear tree =
 
 
 (*s: function Text.point_line *)
-let point_line text point = 
+let point_line _text point = 
   point.point_line
 (*e: function Text.point_line *)
 

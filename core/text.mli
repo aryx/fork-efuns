@@ -49,7 +49,7 @@ type line =
     mutable repr_len : int;
     mutable repr_string : string;
     mutable items : (*WX_text.*)item array;
-    mutable modified : int; (* first modified position *)
+    mutable line_modified : int; (* first modified position *)
     mutable line_hlt : int;
   }
 

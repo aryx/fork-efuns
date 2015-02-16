@@ -451,7 +451,7 @@ let mk_line_with_pos pos =
    representation = []; 
    repr_len = 0; 
    repr_string = ""; 
-   modified = 0; 
+   line_modified = 0; 
    line_hlt = 0; 
    items = [||]; 
   }
@@ -2151,14 +2151,12 @@ match () with
 
 %http://en.wikipedia.org/wiki/Gap_buffer
 %http://scienceblogs.com/goodmath/2009/02/18/gap-buffers-or-why-bother-with-1/
-
 %alternative used in emacs:
 %http://en.wikipedia.org/wiki/Rope_(data_structure)
 
-
 % already seen Text.text_size, Text.text_string in core DS chapter
 
-%    let gap_end = gpoint.point_pos + text.text_gsize in
+% let gap_end = gpoint.point_pos + text.text_gsize in
 
 <<[[Text.text]] other fields>>=
 (* g for gap *)
@@ -2268,7 +2266,7 @@ let move_point_to tree point p =
 
 % status line display the line of the cursor -> <>
 <<function Text.point_line>>=
-let point_line text point = 
+let point_line _text point = 
   point.point_line
 @
 
@@ -2277,8 +2275,8 @@ let point_line text point =
 let point_col tree point = 
   let text = tree.tree_text in    
   let y = point.point_line in
-  let gpos = text.text_gpoint.point_pos in
   let pos = point.point_pos in
+  let gpos = text.text_gpoint.point_pos in
   let bol = text.text_newlines.(y).position in
   (* gap handling *)
   if bol <= gpos && gpos < pos
@@ -2289,9 +2287,9 @@ let point_col tree point =
 
 %XXX
 <<[[Text.line]] other fields>>=
-mutable modified : int; (* first modified position *)
-mutable line_hlt : int;
+mutable line_modified : int; (* first modified position *)
 @
+
 
 
 
@@ -2473,10 +2471,10 @@ let set_attr tree point len attr = (* should not exceed one line *)
 
 
 <<function Text.unset_attr>>=
-let unset_attr text =
-  let text = text.tree_text in  
+let unset_attr tree =
+  let text = tree.tree_text in  
   Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
-  Array.iter (fun line -> line.modified <- 0) text.text_newlines
+  Array.iter (fun line -> line.line_modified <- 0) text.text_newlines
 @
 
 <<misc actions>>=
@@ -3817,7 +3815,8 @@ if !!interactives_map = [] then begin
 "unset_attr";
 "start_server";
 @      
-
+% a big ugly. An ocaml attribute would be better
+% that then auto generate the list of interactive functions.
 
 <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
 List.iter (fun (name, action) ->
