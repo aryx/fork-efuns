@@ -85,7 +85,7 @@ and buffer =
     mutable buf_point : Text.point;
     mutable buf_start : Text.point;
     (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_modified : int;
+    mutable buf_modified : int; (* version? *)
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_shared : int; (* number of frames for that buffer *)
     (*x: [[Efuns.buffer]] other fields *)
@@ -611,10 +611,10 @@ let height = define_option ["height"] "" int_option 25
 let font = define_option ["font"] "" string_option "fixed"
 (*e: constant Efuns.font *)
 (*s: constant Efuns.foreground *)
-let foreground = define_option ["foreground"] "" string_option "white"
+let foreground = define_option ["foreground"] "" string_option "wheat"
 (*e: constant Efuns.foreground *)
 (*s: constant Efuns.background *)
-let background = define_option ["background"] "" string_option "black"
+let background = define_option ["background"] "" string_option "DarkSlateGray"
 (*e: constant Efuns.background *)
   
 (*s: toplevel Efuns._5 *)

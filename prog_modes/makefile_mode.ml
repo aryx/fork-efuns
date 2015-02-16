@@ -29,18 +29,24 @@ let mkfile_target= Str.regexp "^.*:"
 let mkfile_rules= Str.regexp "^\t.*$"
 (*e: constant Makefile_mode.mkfile_rules *)
 
+(* todo: this causes some Out of Memory in cairo, hmmm *)
+let mkfile_comments= Str.regexp "^abcd#.*$"
+
 (*s: constant Makefile_mode.rules_color *)
 let rules_color = define_option ["makefile_mode";"rules_color"] "" 
-  string_option "red"
+  string_option "orange"
 (*e: constant Makefile_mode.rules_color *)
 (*s: constant Makefile_mode.target_color *)
 let target_color = define_option ["makefile_mode"; "target_color"] ""
-    string_option "cadetblue"
+    string_option "MediumAquamarine"
 (*e: constant Makefile_mode.target_color *)
 (*s: constant Makefile_mode.vars_color *)
 let vars_color = define_option ["makefile_mode"; "vars_color"] ""
-    string_option "blue"
+    string_option "LightBlue3"
 (*e: constant Makefile_mode.vars_color *)
+let comments_color = define_option ["makefile_mode"; "comments_color"] ""
+    string_option "gray"
+
   
 (*s: function Makefile_mode.makefile_color *)
 let makefile_color buf =
@@ -50,7 +56,10 @@ let makefile_color buf =
   color buf mkfile_target false 
     (make_attr (get_color location !!target_color) 1 0 false);
   color buf mkfile_vars false 
-    (make_attr (get_color location !!vars_color) 1 0 false)
+    (make_attr (get_color location !!vars_color) 1 0 false);
+  color buf mkfile_comments false 
+    (make_attr (get_color location !!comments_color) 1 0 false);
+  ()
 (*e: function Makefile_mode.makefile_color *)
  
 (*s: constant Makefile_mode.c_c *)
@@ -144,6 +153,7 @@ let _ =
       add_option_parameter location vars_color;
       add_option_parameter location target_color;
       add_option_parameter location rules_color;
+      add_option_parameter location comments_color;
       )   
 (*e: toplevel Makefile_mode._4 *)
 (*e: prog_modes/makefile_mode.ml *)

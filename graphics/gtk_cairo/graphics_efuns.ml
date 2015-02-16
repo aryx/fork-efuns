@@ -53,6 +53,26 @@ let set_source_color ?(alpha=1.) ~cr ~color () =
   Cairo.set_source_rgba cr r g b alpha;
   )
 
+
+(*let re_space = Str.regexp "^[ ]+$"*)
+
+(* !does side effect on the (mutable) string! *)
+let prepare_string s = 
+(*  if s ==~ re_space then  s ^ s (* double it *) else  *)
+  begin
+    for i = 0 to String.length s -.. 1 do
+      let c = String.get s i in
+      if int_of_char c >= 128
+      then String.set s i 'Z'
+      else 
+        if c = '\t'
+        then String.set s i ' '
+      else ()
+    done;
+    s
+  end
+
+
 (* Text cairo API seems buggy, especially on MacOS X, see
  * https://github.com/diagrams/diagrams-cairo/issues/43
  * so I had to hack many things in move_to() by using different extents..
@@ -61,10 +81,18 @@ let set_source_color ?(alpha=1.) ~cr ~color () =
  *)
 (* less: prepare_string thing *)
 let show_text cr s =
-  if s = "" 
-  then () 
-  else 
-    Cairo.show_text cr s
+  (* this 'if' is only for compatibility with old versions of cairo
+   * that returns some out_of_memory error when applied to empty strings
+   *)
+  if s = "" then () else 
+  try 
+    let s' = prepare_string s in
+    Cairo.show_text cr s'
+  with _exn ->
+    let status = Cairo.status cr in
+    let s2 = Cairo.string_of_status status in
+    failwith ("Cairo pb: " ^ s2 ^ " s = " ^ s)
+
 
 
 
@@ -102,7 +130,9 @@ let move_to cr col line =
    let (w,h) = extent2.Cairo.text_width / 3., extent.Cairo.font_height in
    Cairo.move_to cr (w * col) (line * h + h - extent.Cairo.descent)
 
-let clear_eol ?(color="DarkSlateGray") cr  col line len =
+
+
+let clear_eol ?(color="DarkSlateGray") loc cr  col line len =
 (*  pr2 (spf "WX_xterm.clear_eol: %.f %.f %d" col line len); *)
   let extent = Cairo.font_extents cr in
   let extent2 = Cairo.text_extents cr "peh" in
@@ -113,27 +143,36 @@ let clear_eol ?(color="DarkSlateGray") cr  col line len =
   fill_rectangle_xywh ~cr ~x ~y ~w:(w * (float_of_int len)) ~h ~color ();
   ()
 
-let draw_string cr   col line  str  offset len   attr =
+let draw_string loc cr   col line  str  offset len   attr =
   pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
     col line str offset len attr);
-  let color = if attr = Text.inverse_attr then "wheat" else "DarkSlateGray" in
-  clear_eol ~color cr col line len;
+  let bgcolor = 
+    let idx = (attr lsr 8) land 255 in
+    loc.loc_colors_names.(idx)
+  in
+  clear_eol ~color:bgcolor loc cr col line len;
   move_to cr col line;
-  let color = if attr = Text.inverse_attr then "DarkSlateGray" else "wheat" in
-  set_source_color ~cr ~color ();
+  let fgcolor = 
+    let idx = (attr) land 255 in
+    loc.loc_colors_names.(idx)
+  in
+  set_source_color ~cr ~color:fgcolor ();
   show_text cr (String.sub str offset len);
   ()
 
-let update_displays cr =
+let update_displays _loc _cr =
   pr2 ("WX_xterm.update_displays")
 
 
-let backend cr = 
+let backend loc cr = 
   let conv x = float_of_int x in
   { Xdraw. 
-    clear_eol = (fun a b c -> clear_eol cr (conv a) (conv b) c); 
-    draw_string = (fun a b c d e f -> draw_string cr (conv a) (conv b) c d e f);
-    update_displays = (fun () -> update_displays cr);
+    clear_eol = (fun a b c -> 
+      clear_eol loc cr (conv a) (conv b) c); 
+    draw_string = (fun a b c d e f -> 
+      draw_string loc cr (conv a) (conv b) c d e f);
+    update_displays = (fun () -> 
+      update_displays loc cr);
   }
 
 
@@ -263,7 +302,7 @@ let init2 location =
   Cairo.set_font_size cr 20.0;
 
 
-  top_window.graphics <- Some (backend cr); 
+  top_window.graphics <- Some (backend location cr); 
   paint w;
 
   win#event#connect#key_press ~callback:(fun key ->
