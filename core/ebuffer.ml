@@ -98,6 +98,7 @@ let create location name filename text local_map =
   let buf =
     { 
       buf_text = text;
+
       buf_name = name;
       buf_filename = filename;
 
@@ -107,9 +108,10 @@ let create location name filename text local_map =
       buf_last_saved = version text;
       buf_modified = 0;
 
+      buf_map = local_map;
+
       buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
       buf_syntax_table = default_syntax_table;
-      buf_map = local_map;
       buf_map_partial = true;
       buf_vars = Local.vars ();
       buf_minor_modes = [];

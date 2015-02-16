@@ -647,7 +647,6 @@ let create str =
       text_attrs = attrs;
 
       text_points = [];
-
       text_gpoint = { pos = 0; line = 0 };
       text_gsize = 0;
 

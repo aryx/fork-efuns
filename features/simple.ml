@@ -998,10 +998,11 @@ let point_at_mark frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
+
   let mark = Ebuffer.get_mark buf point in
-  let point_pos = get_position text point in
+  let pos = get_position text point in
   goto_point text point mark;
-  set_position text mark point_pos
+  set_position text mark pos
 (*e: function Simple.point_at_mark *)
 
 

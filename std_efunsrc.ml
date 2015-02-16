@@ -249,8 +249,6 @@ let _ =
   (*s: misc actions *)
   define_action "recenter"  recenter;
   define_action "revert_buffer" reload;
-  (* C-x map *)
-  define_action "point_at_mark"  point_at_mark;
 
   define_action "open_display" open_display;
   (* C-x map *)
@@ -271,6 +269,9 @@ let _ =
   (*x: misc actions *)
   (* C-h map *)
   define_action "help_bindings"  Frame.bindings_help;
+  (*x: misc actions *)
+  (* C-x map *)
+  define_action "point_at_mark"  point_at_mark;
   (*x: misc actions *)
   (* C-x map *)
   define_action "next_error"  next_error;
@@ -492,13 +493,14 @@ let _ =
         [ControlMap, Char.code 'l'], "recenter";
 
         [c_x; NormalMap, Char.code 'F'], "change_font";
-        [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         (*x: misc keys *)
         [c_h; NormalMap, Char.code 'v'], "get_variable";
         (*x: misc keys *)
         [c_x; ControlMap, Char.code 'c'], "exit"; 
         (*x: misc keys *)
         [c_h; NormalMap, Char.code 'K'], "help_bindings";
+        (*x: misc keys *)
+        [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         (*x: misc keys *)
         [c_x;NormalMap, Char.code '`' ], "next_error";
         (*x: misc keys *)

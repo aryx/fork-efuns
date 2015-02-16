@@ -371,14 +371,13 @@ type version = int
 <<[[Text.text]] other fields>>=
 mutable text_modified : version;
 @
-%less: type version = int; ?
 
 <<function Text.version>>=
 let version tree = 
   let text = tree.tree_text in
   text.text_modified
 @
-% tree? because of wx_text stuff
+%less: tree? because of wx_text stuff, could remove that no?
 
 
 
@@ -400,7 +399,6 @@ let create str =
       text_attrs = attrs;
 
       text_points = [];
-
       text_gpoint = { pos = 0; line = 0 };
       text_gsize = 0;
 
@@ -434,7 +432,9 @@ let compute_newlines string =
 @
 % we Array.create nbr_newlines + 2 because :
 % - even if the string has no newline we still need a array[1] at least
-% - we count the EOF has its own newline, a sentinel?
+% - we count the EOF has its own newline, a sentinel? maybe simpler
+%   that way indeed, I remember I had many Commons.line_xxx functions
+%   to handle those special cases
 
 <<function Text.nbre_lines>>=
 let nbre_lines tree = 
@@ -496,8 +496,8 @@ and point = {
     mutable line : int;
   }
 @
-% the first field is a charpos, not a column. The additional y/line is
-% to quickly know the line number so can index in the text.text_lines array
+% the first field is a charpos, not a column. The additional .line(was y) is
+% to quickly know the line number so can index in the text.text_newlines array
 % and do certain stuff.
 % Most of the time what you care is really point.pos though.
 %old: was point.point and point.point_y but it was confusing as you
@@ -511,11 +511,11 @@ mutable buf_point : Text.point;
 mutable buf_start : Text.point;
 @
 % current!
-% which will be the save value of frm_point
-% when switch between buffer, the current frame is a view
-% on different buffer, but when you go back to a buffer you
+% which will be the saved value from frm_point
+% when switch between buffers; the current frame is a view
+% on different buffers, but when you go back to a buffer you
 % want the cursor to be at the same position you used to be
-% and the screen at the same starting point.
+% (and the screen start at the same starting point too).
 
 % there are also a list of points maintained by the Text itself, why?
 % because of gap things can move so you need to update all
@@ -534,6 +534,7 @@ let create location name filename text local_map =
   let buf =
     { 
       buf_text = text;
+
       buf_name = name;
       buf_filename = filename;
 
@@ -543,9 +544,10 @@ let create location name filename text local_map =
       buf_last_saved = version text;
       buf_modified = 0;
 
+      buf_map = local_map;
+
       buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
       buf_syntax_table = default_syntax_table;
-      buf_map = local_map;
       buf_map_partial = true;
       buf_vars = Local.vars ();
       buf_minor_modes = [];
@@ -680,7 +682,7 @@ let create_without_top location window mini buf =
 
 \section{[[Window]]}
 
-% It's a window in emacs terminology. And it's really
+% It's a window in Emacs terminology. And it's really
 % just the geometry part.
 
 
@@ -742,6 +744,7 @@ let top window =
 % often used then to access the location, but
 % not sure why you need that since the location
 % is also accessible in the frame and buffer
+%less: make it a global?
 
 <<function Window.create>>=
 let create mini up_window xpos ypos width height =
@@ -814,12 +817,13 @@ mutable top_active_frame : frame;
 \section{The world, [[Location]]}
 % full state
 
-% called location in Lefessant's terminology
 
 %"All the editor information is organised inside one structure: the location.
 %The location grants access to all other structures inside the editor. This
 %is done to easily save the editor state after a session (or to move it
 %from one editor to another)."
+
+% called location in Lefessant's terminology. Why? jocaml ancestry?
 
 
 %(* the world *)
@@ -1060,8 +1064,6 @@ let _ =
 <<misc actions>>=
 define_action "recenter"  recenter;
 define_action "revert_buffer" reload;
-(* C-x map *)
-define_action "point_at_mark"  point_at_mark;
 
 define_action "open_display" open_display;
 (* C-x map *)
@@ -1069,6 +1071,8 @@ define_action "change_font"  change_font;
 @  
 %(*  define_action "load_library" load_library;*)
 %(*  define_action "start_server" Server.start;  *)
+
+
 
 
 
@@ -1342,7 +1346,6 @@ let c_c = (ControlMap, Char.code 'c')
 [ControlMap, Char.code 'l'], "recenter";
 
 [c_x; NormalMap, Char.code 'F'], "change_font";
-[c_x; ControlMap, Char.code 'x'], "point_at_mark";
 @
 
 
@@ -4730,6 +4733,10 @@ let remove_mark buf =
       buf.buf_modified <- buf.buf_modified + 1
 @
 
+
+% can actually also navigate with the mark
+
+
 \subsection{Highlight}
 
 \subsection{Cut}
@@ -4789,6 +4796,32 @@ let insert_next_killed frame =
       fmove text point len;
       last_insert := Some(frame,pos,n,len)
   | _ -> ()
+@
+
+%subsection{CUA mode}?
+
+\subsection{Mark navigation}
+
+<<misc actions>>=
+(* C-x map *)
+define_action "point_at_mark"  point_at_mark;
+@
+
+<<misc keys>>=
+[c_x; ControlMap, Char.code 'x'], "point_at_mark";
+@
+% I use C-u C-space for that?
+
+<<function Simple.point_at_mark>>=
+let point_at_mark frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+
+  let mark = Ebuffer.get_mark buf point in
+  let pos = get_position text point in
+  goto_point text point mark;
+  set_position text mark pos
 @
 
 \section{Undo}
