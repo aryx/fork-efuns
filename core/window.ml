@@ -136,16 +136,15 @@ let backend top_window =
 let get_font location font_name =
   try
     Hashtbl.find location.loc_fonts font_name
-  with
-    Not_found ->
-      if location.loc_fonts_n = 256 then
-        raise Not_found
-      else
-        let n = location.loc_fonts_n in
-        location.loc_fonts_n <- n + 1;
-        location.loc_fonts_names.(n) <- font_name;
-        Hashtbl.add location.loc_fonts font_name n;
-        n
+  with Not_found ->
+    if location.loc_fonts_n = 256 then
+      raise Not_found
+    else
+      let n = location.loc_fonts_n in
+      location.loc_fonts_n <- n + 1;
+      location.loc_fonts_names.(n) <- font_name;
+      Hashtbl.add location.loc_fonts font_name n;
+      n
 (*e: function Window.get_font *)
         
 (*s: function Window.get_color *)

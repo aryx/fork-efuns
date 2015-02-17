@@ -970,12 +970,15 @@ let color buf regexp strict attr =
     while true do
       let len = Text.search_forward text regexp point in
       let before =
-        if Text.bmove_res text point 1 = 1 then
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1);c)
-        else
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1); c)
+        if Text.bmove_res text point 1 = 1 then begin
+            let c = Text.get_char text point in
+            Text.fmove text point (len+1);
+            c
+        end else begin
+            let c = Text.get_char text point in
+            Text.fmove text point (len+1); 
+            c
+        end
       in
       let after = Text.get_char text point in
       if not (strict && (buf.buf_syntax_table.(Char.code before) ||
@@ -987,8 +990,7 @@ let color buf regexp strict attr =
           ()
         end
     done
-  with
-    Not_found -> 
+  with Not_found -> 
       Text.remove_point text point;
       buf.buf_modified <- buf.buf_modified + 1
 (*e: function Simple.color *)

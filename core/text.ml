@@ -101,7 +101,7 @@ and point = {
 (*s: type Text.repr *)
 and repr = 
   { 
-    repr_line_pos : int;   (* pos of repr in Text.t string *)
+    repr_line_pos : position;   (* pos of repr in Text.t string *)
     repr_line_len : int;   (* len of repr in Text.t string *)
     
     mutable repr_attr : int;    (* common attribute *)
@@ -128,13 +128,13 @@ type text = {
     (*x: [[Text.text]] other fields *)
     mutable text_points : point list;
     (*x: [[Text.text]] other fields *)
-    mutable text_attrs : int array;
+    mutable text_clean : bool;
+    (*x: [[Text.text]] other fields *)
+    mutable text_attrs : attribute array;
     (*x: [[Text.text]] other fields *)
     mutable text_history : action list;
     (*x: [[Text.text]] other fields *)
     mutable text_readonly : bool;
-    (*x: [[Text.text]] other fields *)
-    mutable text_clean : bool;
     (*e: [[Text.text]] other fields *)
   } 
 (*e: type Text.text *)
@@ -278,22 +278,37 @@ let direct_attr =  make_attr 0 1 0 false
 let inverse_attr =  make_attr 1 0 0 false
 (*e: constant Text.inverse_attr *)
 
+(*s: function Text.mk_line_with_pos *)
+let mk_line_with_pos pos = 
+  {
+   position = pos; 
+
+   representation = []; 
+   repr_len = 0; 
+   repr_string = ""; 
+   line_modified = 0; 
+   line_hlt = 0; 
+   items = [||]; 
+  }
+(*e: function Text.mk_line_with_pos *)
+
+
 (*s: function Text.move_gpoint_to *)
 let move_gpoint_to text pos =
   let gpos = text.gpoint.pos in
   let gsize = text.gsize in
   let gline = text.gpoint.line in
+  let gap_end = gpos + gsize in
+
   text.text_clean <- false;
-  if pos <> gpos then 
-    let gap_end = gpos + gsize in
-    if pos < gpos then
+  if pos <> gpos then
+    if pos < gpos then begin
+      (*s: [[Text.move_gpoint_to()]] when pos is before gpos *)
       let delta = gpos - pos in
-      let (delta_line,_) = count_char_sub text.text_string
-          pos delta '\n' in
-      String.blit text.text_string pos 
-        text.text_string (pos + gsize) delta;
-      Array.blit text.text_attrs pos 
-        text.text_attrs (pos + gsize) delta;
+      let (delta_line,_) = 
+        Utils.count_char_sub text.text_string pos delta '\n' in
+      String.blit  text.text_string pos   text.text_string (pos + gsize)   delta;
+      Array.blit   text.text_attrs  pos   text.text_attrs  (pos + gsize)   delta;
       for i = gline - delta_line + 1 to gline do
         text.text_newlines.(i).position
           <- text.text_newlines.(i).position + gsize 
@@ -303,22 +318,25 @@ let move_gpoint_to text pos =
         then p.pos <- p.pos + gsize
       );
       text.gpoint <- { pos = pos; line = gline - delta_line };
-    else
-    let delta = pos - gap_end in
-    let (delta_line,_) = 
-      count_char_sub text.text_string gap_end delta '\n' in
-    String.blit text.text_string gap_end text.text_string gpos delta;
-    Array.blit text.text_attrs gap_end text.text_attrs gpos delta;
-    for i = gline + 1 to gline + delta_line do
-      text.text_newlines.(i).position
-        <- text.text_newlines.(i).position - gsize
-    done;
-    text.text_points |> List.iter (fun p -> 
-        if p.pos >= gap_end && p.pos <= pos then
-          p.pos <- p.pos - gsize
-    );
-    text.gpoint <- 
-      { pos = pos - gsize; line = gline + delta_line }
+      (*e: [[Text.move_gpoint_to()]] when pos is before gpos *)
+    end else begin
+      (*s: [[Text.move_gpoint_to()]] when pos is after gpos *)
+      let delta = pos - gap_end in
+      let (delta_line,_) = 
+        Utils.count_char_sub text.text_string gap_end delta '\n' in
+      String.blit  text.text_string gap_end   text.text_string gpos   delta;
+      Array.blit   text.text_attrs  gap_end   text.text_attrs  gpos   delta;
+      for i = gline + 1 to gline + delta_line do
+        text.text_newlines.(i).position
+          <- text.text_newlines.(i).position - gsize
+      done;
+      text.text_points |> List.iter (fun p -> 
+          if p.pos >= gap_end && p.pos <= pos 
+          then p.pos <- p.pos - gsize
+      );
+      text.gpoint <- { pos = pos - gsize; line = gline + delta_line }
+      (*e: [[Text.move_gpoint_to()]] when pos is after gpos *)
+    end
 (*e: function Text.move_gpoint_to *)
 
 (*s: function Text.cancel_repr *)
@@ -341,41 +359,38 @@ let extend_gap text amount =
   let add_size = max !!add_amount 
       ((amount / !!add_amount) * !!add_amount + !!add_amount) in
   let old_size = text.text_size in
-(* use String.create here *)
-  let new_text = String.create (old_size + add_size) in
-  let new_attrs = Array.create (old_size + add_size) direct_attr in
-  let gpos = text.gpoint.pos in
   let gsize = text.gsize in
+
+  let gpos = text.gpoint.pos in
   let gap_end = gpos + gsize in
-  String.blit text.text_string 0 new_text 0 gpos; 
-  Array.blit text.text_attrs 0 new_attrs 0 gpos; 
-  String.blit text.text_string gap_end
-    new_text (gap_end + add_size) 
-  (old_size - gap_end);
-  Array.blit text.text_attrs gap_end
-    new_attrs (gap_end + add_size) 
-  (old_size - gap_end);
+
+  let new_text = String.create (old_size + add_size) in
+  String.blit  text.text_string 0   new_text 0    gpos; 
+  String.blit  text.text_string gap_end   new_text (gap_end + add_size) 
+    (old_size - gap_end);
+  text.text_string <- new_text;
+
+  let new_attrs = Array.create (old_size + add_size) direct_attr in
+  Array.blit   text.text_attrs 0   new_attrs 0   gpos; 
+  Array.blit   text.text_attrs gap_end    new_attrs (gap_end + add_size) 
+    (old_size - gap_end);
+  text.text_attrs <- new_attrs;
+
   for i = text.gpoint.line + 1 to text.text_nlines - 1 do
     text.text_newlines.(i).position <- 
       text.text_newlines.(i).position + add_size
   done;
   text.text_points |> List.iter (fun p -> 
-      if p.pos > gpos then
-        p.pos <- p.pos + add_size
+      if p.pos > gpos 
+      then p.pos <- p.pos + add_size
   );
   text.gsize <- gsize + add_size;
   text.text_size <- old_size + add_size;
-  text.text_string <- new_text;
-  text.text_attrs <- new_attrs
 (*e: function Text.extend_gap *)
 
 (*s: exception Text.ReadOnlyBuffer *)
 exception ReadOnlyBuffer
 (*e: exception Text.ReadOnlyBuffer *)
-
-(*s: function Text.tree_insert *)
-let tree_insert tree t gline nbr = ()
-(*e: function Text.tree_insert *)
 
 (*
   let rec iter tree lines =
@@ -413,73 +428,75 @@ let tree_insert tree t gline nbr = ()
 (*s: function Text.low_insert *)
 let low_insert tree point str =
   let text = tree.tree_text in
+  let strlen = String.length str in
   (*s: [[Text.low_insert()]] fail if readonly buffer *)
   if text.text_readonly 
   then failwith "Buffer is read-only";
   (*e: [[Text.low_insert()]] fail if readonly buffer *)
+
+  (*s: [[Text.low_insert()]] move gap to point *)
   move_gpoint_to text point;
+  (*e: [[Text.low_insert()]] move gap to point *)
+  (* subtle: don't move those 'let' earlier, because moving the gap do side
+   * effects on the position and line of the gpoint. 
+   *)
   let gpos = text.gpoint.pos in
-  let gsize = text.gsize in
   let gline = text.gpoint.line in
-  (*let gchars = gpoint - text.text_newlines.(gline).position in*)
+
   cancel_repr text gpos gline;
-  let strlen = String.length str in
-  if strlen > gsize then extend_gap text strlen;
-  let gsize = text.gsize in
-  String.blit str 0 text.text_string gpos strlen;
+  (*s: [[Text.low_insert()]] extend gap if not enough space *)
+  if strlen > text.gsize 
+  then extend_gap text strlen;
+  (*e: [[Text.low_insert()]] extend gap if not enough space *)
+
+  String.blit  str 0   text.text_string gpos    strlen;
+  (* todo: should refontify! *)
   Array.fill text.text_attrs gpos strlen direct_attr;
-  let (nbr_newlines,nbr_chars) = count_char str '\n' in
-  if nbr_newlines > 0 then
-    begin
-      if (Array.length text.text_newlines - text.text_nlines)
-        < nbr_newlines then
-        begin
-          let old_size = text.text_nlines in
-          let new_cache = Array.create (old_size + (max 20 nbr_newlines)) 
-            { position = -1;
-              representation = [];
-              line_modified = -1;
-              repr_len = 0;
-              repr_string = "";
-              line_hlt = 0;
-              items = [||];
-            } 
-          in
-          Array.blit text.text_newlines 0 new_cache 0 old_size;
-          text.text_newlines <- new_cache;
-        end;
-      Array.blit text.text_newlines (gline+1) 
+
+  let (nbr_newlines, _nbr_chars) = Utils.count_char str '\n' in
+  if nbr_newlines > 0 then begin
+    (*s: [[Text.low_insert()]] adjust newlines when str contains newlines *)
+    if (Array.length text.text_newlines - text.text_nlines) < nbr_newlines then
+      begin
+        (*s: [[Text.low_insert()]] grow newlines *)
+        let old_size = text.text_nlines in
+        let new_cache = Array.create (old_size + (max 20 nbr_newlines)) 
+          { (mk_line_with_pos (-1)) with line_modified = -1 }
+        in
+        Array.blit 
+          text.text_newlines 0 
+          new_cache 0 
+         old_size;
+        text.text_newlines <- new_cache;
+        (*e: [[Text.low_insert()]] grow newlines *)
+      end;
+
+    Array.blit
+      text.text_newlines (gline+1) 
       text.text_newlines (gline+1+ nbr_newlines) 
-      (text.text_nlines - gline -1);
-      text.text_nlines <- text.text_nlines + nbr_newlines;
-      let rec iter n pos =
-        let new_pos = String.index_from text.text_string pos '\n' in
-        text.text_newlines.(gline+n) <- { position = (new_pos + 1);
-          representation = [];
-          line_modified = 0;
-          repr_len = 0;
-          repr_string = "";
-          line_hlt = 0;
-          items = [||];
-        };
-        if n < nbr_newlines then
-          iter (n+1) (new_pos + 1)
-      in
-      iter 1 gpos;
-      tree_insert tree text text.gpoint.line nbr_newlines;
-    end;
-  let gline = text.gpoint.line in
+     (text.text_nlines - gline -1);
+    text.text_nlines <- text.text_nlines + nbr_newlines;
+
+    (* similar to compute_newlines() but just for lines after gpos *)
+    let rec iter n pos =
+      let new_pos = String.index_from text.text_string pos '\n' in
+      text.text_newlines.(gline+n) <- mk_line_with_pos (new_pos + 1);
+      if n < nbr_newlines 
+      then iter (n+1) (new_pos + 1)
+    in
+    iter 1 gpos;
+    (*e: [[Text.low_insert()]] adjust newlines when str contains newlines *)
+  end;
+  let old_gline = text.gpoint.line in
   text.text_points |> List.iter (fun p ->
       if p.pos > gpos then
-        begin
-          if p.line = gline then 
-            (* p.point_x <- (p.point_x - (if nbr_newlines > 0 then gchars else 0)) + nbr_chars; *)
-            p.line <- p.line + nbr_newlines;
-        end
+          (* todo? why this extra condition?? *)
+          if p.line = gline 
+          then p.line <- p.line + nbr_newlines;
+
   );
-  text.gpoint <- 
-    { pos = gpos + strlen;  line = gline + nbr_newlines };
-  text.gsize <- gsize - strlen;
+  text.gpoint <- { pos = gpos + strlen; line = old_gline + nbr_newlines };
+  text.gsize <- text.gsize - strlen;
   (gpos, strlen, text.text_modified) 
 (*e: function Text.low_insert *)
 
@@ -490,41 +507,42 @@ let low_delete tree point len =
   if text.text_readonly 
   then failwith "Buffer is read-only";
   (*e: [[Text.low_insert()]] fail if readonly buffer *)
+
+  (*s: [[Text.low_insert()]] move gap to point *)
   move_gpoint_to text point;
-  let gsize = text.gsize in
-  let size = text.text_size in
+  (*e: [[Text.low_insert()]] move gap to point *)
   let gpos = text.gpoint.pos in
   let gline = text.gpoint.line in
+
   cancel_repr text gpos gline;
-  (*let gchars = gpoint - text.text_newlines.(gline).position in*)
-  let gap_end = gpos + gsize in
-  let len = min (size - gap_end) len in
-  let str = String.sub text.text_string gap_end len
-  in
-  let (nbr_newlines, nbr_chars) = count_char str '\n' in
-  if nbr_newlines > 0 then
-    begin
-      Array.blit text.text_newlines (gline + nbr_newlines + 1)
-      text.text_newlines (gline + 1) 
-      (text.text_nlines - gline - nbr_newlines - 1);
+
+  let gap_end = gpos + text.gsize in
+  let len = min (text.text_size - gap_end) len in
+
+  let str = String.sub text.text_string gap_end len in
+
+  let (nbr_newlines, _nbr_chars) = count_char str '\n' in
+  if nbr_newlines > 0 then 
+  begin
+      (*s: [[Text.low_delete()]] adjust newlines when str contained newlines *)
+      Array.blit 
+        text.text_newlines (gline + nbr_newlines + 1)
+        text.text_newlines (gline + 1) 
+       (text.text_nlines - gline - nbr_newlines - 1);
       text.text_nlines <- text.text_nlines - nbr_newlines;
-    end;
-  text.gsize <- gsize + len;
-  List.iter (fun p -> 
-      if p.pos > gap_end + len then
-        begin
-          (*if p.line = gline + nbr_newlines then
-            p.point_x <- (p.point_x - nbr_chars) + 
-              (if nbr_newlines > 0 then gchars else 0);*)
-          p.line <- p.line - nbr_newlines;
-        end 
+      (*e: [[Text.low_delete()]] adjust newlines when str contained newlines *)
+  end;
+  text.gsize <- text.gsize + len;
+  text.text_points |> List.iter (fun p -> 
+      if p.pos > gap_end + len 
+      then p.line <- p.line - nbr_newlines
       else
-      if p.pos > gpos then
-        ( p.pos <- gpos;
-          (* p.pos_x <- gchars; *)
-          p.line <- gline);
-  ) text.text_points;
-  (gpos,str,text.text_modified) 
+        if p.pos > gpos then begin
+           p.pos <- gpos;
+           p.line <- gline
+         end
+  );
+  (gpos, str, text.text_modified) 
 (*e: function Text.low_delete *)
 
 (*s: function Text.undo *)
@@ -601,19 +619,6 @@ let delete text point len =
   delete_res text point len |> ignore
 (*e: function Text.delete *)
 
-(*s: function Text.mk_line *)
-let mk_line_with_pos pos = 
-  {
-   position = pos; 
-
-   representation = []; 
-   repr_len = 0; 
-   repr_string = ""; 
-   line_modified = 0; 
-   line_hlt = 0; 
-   items = [||]; 
-  }
-(*e: function Text.mk_line *)
   
 (*s: function Text.compute_newlines *)
 let compute_newlines string =

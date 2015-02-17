@@ -335,6 +335,8 @@ type text = {
   } 
 @
 % could put text_attrs also here.
+% actually text_nlines can be more than text_newlines when start
+% to extend the gap buffer
 
 % need line because a text editor is line oriented, column number display,
 % line display, lots of things are important to do at line level.
@@ -343,7 +345,8 @@ type text = {
 <<type Text.position>>=
 type position = int
 @
-% was not used, but now it is.
+% was not used in .ml, was used in .mli and made abstract, but now 
+% I use it also in .ml.
 %less: could rename charpos too
 
 
@@ -445,7 +448,7 @@ let nbre_lines tree =
 @
 
 
-<<function Text.mk_line>>=
+<<function Text.mk_line_with_pos>>=
 let mk_line_with_pos pos = 
   {
    position = pos; 
@@ -901,6 +904,7 @@ loc_mutex : Mutex.t;
 <<type Efuns.action>>=
 and action = frame -> unit
 @
+% is made abstract in .mli
 
 <<type Efuns.generic_action>>=
 and generic_action =
@@ -2176,6 +2180,9 @@ match () with
 
 % let gap_end = gpoint.pos + text.gsize in
 
+
+
+
 <<[[Text.text]] other fields>>=
 (* g for gap *)
 mutable gpoint : point;
@@ -2299,10 +2306,6 @@ let point_col tree point =
 @
 
 
-%XXX
-<<[[Text.line]] other fields>>=
-mutable line_modified : int; (* first modified position *)
-@
 
 
 
@@ -2321,7 +2324,7 @@ mutable repr_string : string;
 <<type Text.repr>>=
 and repr = 
   { 
-    repr_line_pos : int;   (* pos of repr in Text.t string *)
+    repr_line_pos : position;   (* pos of repr in Text.t string *)
     repr_line_len : int;   (* len of repr in Text.t string *)
     
     mutable repr_attr : int;    (* common attribute *)
@@ -2346,6 +2349,8 @@ n => chars are hightlighted from the beginning of the line until pos n
 mutable items : item array;
 @
 
+%less: delete? this was for WX_Text and WX_XTERM? Don't need that?
+
 %(* from WX_text *)
 <<type Text.item>>=
 type item =
@@ -2363,39 +2368,282 @@ and item_attr =
 
 
 
-\subsection{XXX}
+\section{Inserting characters}
 
-%XXX
-% why not use this type in Text.text.attrs? int array -> attribute array?
-<<type Text.attribute>>=
-type attribute = int
+% -> <>
+<<function Text.low_insert>>=
+let low_insert tree point str =
+  let text = tree.tree_text in
+  let strlen = String.length str in
+  <<[[Text.low_insert()]] fail if readonly buffer>>
+
+  <<[[Text.low_insert()]] move gap to point>>
+  (* subtle: don't move those 'let' earlier, because moving the gap do side
+   * effects on the position and line of the gpoint. 
+   *)
+  let gpos = text.gpoint.pos in
+  let gline = text.gpoint.line in
+
+  cancel_repr text gpos gline;
+  <<[[Text.low_insert()]] extend gap if not enough space>>
+
+  String.blit  str 0   text.text_string gpos    strlen;
+  (* todo: should refontify! *)
+  Array.fill text.text_attrs gpos strlen direct_attr;
+
+  let (nbr_newlines, _nbr_chars) = Utils.count_char str '\n' in
+  if nbr_newlines > 0 then begin
+    <<[[Text.low_insert()]] adjust newlines when str contains newlines>>
+  end;
+  let old_gline = text.gpoint.line in
+  text.text_points |> List.iter (fun p ->
+      if p.pos > gpos then
+          (* todo? why this extra condition?? *)
+          if p.line = gline 
+          then p.line <- p.line + nbr_newlines;
+
+  );
+  text.gpoint <- { pos = gpos + strlen; line = old_gline + nbr_newlines };
+  text.gsize <- text.gsize - strlen;
+  (gpos, strlen, text.text_modified) 
+@
+%  (*let gchars = gpoint - text.text_newlines.(gline).position in*)
+% (* p.point_x <- (p.point_x - (if nbr_newlines > 0 then gchars else 0)) + nbr_chars; *)
+
+
+
+\subsection{Moving the gap}
+
+<<[[Text.low_insert()]] move gap to point>>=
+move_gpoint_to text point;
 @
 
-<<type Text.delta>>=
-type delta = int
+
+
+% low_insert | low_delete | clean_text  -> <>
+<<function Text.move_gpoint_to>>=
+let move_gpoint_to text pos =
+  let gpos = text.gpoint.pos in
+  let gsize = text.gsize in
+  let gline = text.gpoint.line in
+  let gap_end = gpos + gsize in
+
+  text.text_clean <- false;
+  if pos <> gpos then
+    if pos < gpos then begin
+      <<[[Text.move_gpoint_to()]] when pos is before gpos>>
+    end else begin
+      <<[[Text.move_gpoint_to()]] when pos is after gpos>>
+    end
 @
 
 
 
-<<type Text.session>>=
-type session = int
+<<[[Text.move_gpoint_to()]] when pos is before gpos>>=
+let delta = gpos - pos in
+let (delta_line,_) = 
+  Utils.count_char_sub text.text_string pos delta '\n' in
+String.blit  text.text_string pos   text.text_string (pos + gsize)   delta;
+Array.blit   text.text_attrs  pos   text.text_attrs  (pos + gsize)   delta;
+for i = gline - delta_line + 1 to gline do
+  text.text_newlines.(i).position
+    <- text.text_newlines.(i).position + gsize 
+done;
+text.text_points |> List.iter (fun p -> 
+  if p.pos > pos && p.pos <= gpos 
+  then p.pos <- p.pos + gsize
+);
+text.gpoint <- { pos = pos; line = gline - delta_line };
 @
-% used?
+%TODO: figure:
+% p.pos > pos? it's not p.pos >= pos?
+
+<<[[Text.move_gpoint_to()]] when pos is after gpos>>=
+let delta = pos - gap_end in
+let (delta_line,_) = 
+  Utils.count_char_sub text.text_string gap_end delta '\n' in
+String.blit  text.text_string gap_end   text.text_string gpos   delta;
+Array.blit   text.text_attrs  gap_end   text.text_attrs  gpos   delta;
+for i = gline + 1 to gline + delta_line do
+  text.text_newlines.(i).position
+    <- text.text_newlines.(i).position - gsize
+done;
+text.text_points |> List.iter (fun p -> 
+    if p.pos >= gap_end && p.pos <= pos 
+    then p.pos <- p.pos - gsize
+);
+text.gpoint <- { pos = pos - gsize; line = gline + delta_line }
+@
+%TODO: figure:
+% for text.gpoint <- { pos = pos - gsize ... } ?? it's not pos?
+% no because it was pos in the text where the gap was before, but
+% now that the gap has moved, it's pos - gsize!
 
 
-\section{Inserting/deleting characters}
 
-%subsection{extending the gap}
+<<[[Text.text]] other fields>>=
+mutable text_clean : bool;
+@
+% useful for?
+
+\subsection{extending the gap}
+
+<<[[Text.low_insert()]] extend gap if not enough space>>=
+if strlen > text.gsize 
+then extend_gap text strlen;
+@
+
+% extending the gap is simple
+
+<<constant Text.add_amount>>=
+let add_amount = define_option ["add_amount"] "Size of the gap in the buffer"
+  int_option 200
+@
+
+% ?? -> <>
+<<function Text.extend_gap>>=
+let extend_gap text amount =
+  let add_size = max !!add_amount 
+      ((amount / !!add_amount) * !!add_amount + !!add_amount) in
+  let old_size = text.text_size in
+  let gsize = text.gsize in
+
+  let gpos = text.gpoint.pos in
+  let gap_end = gpos + gsize in
+
+  let new_text = String.create (old_size + add_size) in
+  String.blit  text.text_string 0   new_text 0    gpos; 
+  String.blit  text.text_string gap_end   new_text (gap_end + add_size) 
+    (old_size - gap_end);
+  text.text_string <- new_text;
+
+  let new_attrs = Array.create (old_size + add_size) direct_attr in
+  Array.blit   text.text_attrs 0   new_attrs 0   gpos; 
+  Array.blit   text.text_attrs gap_end    new_attrs (gap_end + add_size) 
+    (old_size - gap_end);
+  text.text_attrs <- new_attrs;
+
+  for i = text.gpoint.line + 1 to text.text_nlines - 1 do
+    text.text_newlines.(i).position <- 
+      text.text_newlines.(i).position + add_size
+  done;
+  text.text_points |> List.iter (fun p -> 
+      if p.pos > gpos 
+      then p.pos <- p.pos + add_size
+  );
+  text.gsize <- gsize + add_size;
+  text.text_size <- old_size + add_size;
+@
+%TODO: figure:
+
+\subsection{Adjusting newlines information}
+
+<<[[Text.low_insert()]] adjust newlines when str contains newlines>>=
+if (Array.length text.text_newlines - text.text_nlines) < nbr_newlines then
+  begin
+    <<[[Text.low_insert()]] grow newlines>>
+  end;
+
+Array.blit
+  text.text_newlines (gline+1) 
+  text.text_newlines (gline+1+ nbr_newlines) 
+ (text.text_nlines - gline -1);
+text.text_nlines <- text.text_nlines + nbr_newlines;
+
+(* similar to compute_newlines() but just for lines after gpos *)
+let rec iter n pos =
+  let new_pos = String.index_from text.text_string pos '\n' in
+  text.text_newlines.(gline+n) <- mk_line_with_pos (new_pos + 1);
+  if n < nbr_newlines 
+  then iter (n+1) (new_pos + 1)
+in
+iter 1 gpos;
+@
+%old:tree_insert tree text text.gpoint.line nbr_newlines;
+%<<function Text.tree_insert>>=
+%let tree_insert tree t gline nbr = ()
+%@
+
+
+<<[[Text.low_insert()]] grow newlines>>=
+let old_size = text.text_nlines in
+let new_cache = Array.create (old_size + (max 20 nbr_newlines)) 
+  { (mk_line_with_pos (-1)) with line_modified = -1 }
+in
+Array.blit 
+  text.text_newlines 0 
+  new_cache 0 
+ old_size;
+text.text_newlines <- new_cache;
+@
+% not sure needs this subtle line_modified = - 1 
+
+
+\section{Deleting characters}
+
+% ??? -> <>
+<<function Text.low_delete>>=
+let low_delete tree point len =
+  let text = tree.tree_text in      
+  <<[[Text.low_insert()]] fail if readonly buffer>>
+
+  <<[[Text.low_insert()]] move gap to point>>
+  let gpos = text.gpoint.pos in
+  let gline = text.gpoint.line in
+
+  cancel_repr text gpos gline;
+
+  let gap_end = gpos + text.gsize in
+  let len = min (text.text_size - gap_end) len in
+
+  let str = String.sub text.text_string gap_end len in
+
+  let (nbr_newlines, _nbr_chars) = count_char str '\n' in
+  if nbr_newlines > 0 then 
+  begin
+      <<[[Text.low_delete()]] adjust newlines when str contained newlines>>
+  end;
+  text.gsize <- text.gsize + len;
+  text.text_points |> List.iter (fun p -> 
+      if p.pos > gap_end + len 
+      then p.line <- p.line - nbr_newlines
+      else
+        if p.pos > gpos then begin
+           p.pos <- gpos;
+           p.line <- gline
+         end
+  );
+  (gpos, str, text.text_modified) 
+@
+%          (*if p.line = gline + nbr_newlines then
+%            p.point_x <- (p.point_x - nbr_chars) + 
+%              (if nbr_newlines > 0 then gchars else 0);*)
+%         (* p.pos_x <- gchars; *)
+
+
+<<[[Text.low_delete()]] adjust newlines when str contained newlines>>=
+Array.blit 
+  text.text_newlines (gline + nbr_newlines + 1)
+  text.text_newlines (gline + 1) 
+ (text.text_nlines - gline - nbr_newlines - 1);
+text.text_nlines <- text.text_nlines - nbr_newlines;
+@
 
 \section{Attributes}
 
-<<[[Text.text]] other fields>>=
-mutable text_attrs : int array;
+<<type Text.attribute>>=
+type attribute = int
 @
 % int, because need to be efficient!
 % attribute is an encoded int, direct_attr = black fg, white bg, no highlight
 % regular font. Want efficient representation here because each
 % character will have this attribute?
+%old: was used only in .mli before, but now I used it
+% in in Text.text.attrs too
+
+<<[[Text.text]] other fields>>=
+mutable text_attrs : attribute array;
+@
 
 <<function Text.make_attr>>=
 let make_attr fg bg font highlighted =
@@ -2501,7 +2749,7 @@ let unset_attr frame =
   let text = buf.buf_text in
   Text.unset_attr text
 @
-
+% does not trigger redisplay?
 
 
 
@@ -2515,8 +2763,7 @@ mutable loc_colors_n : int;
 % 0 1 are used!
 % can seem limited to have a color map, but to have
 % an efficient representation for text attributes, it's
-% better to use an int which then index in different maps (color map,
-% font map)
+% better to use an int which then indexes a map (color map, font map)
 
 % have side effect of setting the color if it's not there before!
 <<function Window.get_color>>=
@@ -2549,7 +2796,9 @@ let _ =
 (* color 2 is highlight *)
   let _ = Window.get_color location !!highlight_color in
 @
-
+% standard! just like stdin/stdout/stderr convention. Sometimes
+% conventions are convenient.
+% alternative: "foreground", "background", "highlight" color name
 
 % see makefile_color() function, switching to makefile_mode
 % will then trigger coloration of the buffer
@@ -2563,12 +2812,15 @@ let color buf regexp strict attr =
     while true do
       let len = Text.search_forward text regexp point in
       let before =
-        if Text.bmove_res text point 1 = 1 then
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1);c)
-        else
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1); c)
+        if Text.bmove_res text point 1 = 1 then begin
+            let c = Text.get_char text point in
+            Text.fmove text point (len+1);
+            c
+        end else begin
+            let c = Text.get_char text point in
+            Text.fmove text point (len+1); 
+            c
+        end
       in
       let after = Text.get_char text point in
       if not (strict && (buf.buf_syntax_table.(Char.code before) ||
@@ -2580,12 +2832,13 @@ let color buf regexp strict attr =
           ()
         end
     done
-  with
-    Not_found -> 
+  with Not_found -> 
       Text.remove_point text point;
       buf.buf_modified <- buf.buf_modified + 1
 @
 
+% not really incremental as font-lock-mode.
+% but can be a simple starting point!
 
 \section{Fonts}
 % with an 's'?
@@ -2601,16 +2854,15 @@ mutable loc_fonts_n : int;
 let get_font location font_name =
   try
     Hashtbl.find location.loc_fonts font_name
-  with
-    Not_found ->
-      if location.loc_fonts_n = 256 then
-        raise Not_found
-      else
-        let n = location.loc_fonts_n in
-        location.loc_fonts_n <- n + 1;
-        location.loc_fonts_names.(n) <- font_name;
-        Hashtbl.add location.loc_fonts font_name n;
-        n
+  with Not_found ->
+    if location.loc_fonts_n = 256 then
+      raise Not_found
+    else
+      let n = location.loc_fonts_n in
+      location.loc_fonts_n <- n + 1;
+      location.loc_fonts_names.(n) <- font_name;
+      Hashtbl.add location.loc_fonts font_name n;
+      n
 @
 
 <<toplevel Main._2>>=
@@ -2890,7 +3142,6 @@ let save_buffer frame =
 <<misc keys>>=
 [c_x; ControlMap, Char.code 'c'], "exit"; 
 @
-
 <<misc actions>>=
 (* C-x map *)
 define_action "exit"  exit_efuns; 
@@ -4884,6 +5135,11 @@ and action =
 @
 % for undo?
 
+
+<<type Text.session>>=
+type session = int
+@
+% used in .mly
 
 <<function Text.undo>>=
 let undo tree =
