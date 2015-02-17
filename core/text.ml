@@ -448,13 +448,15 @@ let low_insert tree point str =
   if strlen > text.gsize 
   then extend_gap text strlen;
   (*e: [[Text.low_insert()]] extend gap if not enough space *)
+  (* all points should have their point.pos correctly adjusted *)
 
   String.blit  str 0   text.text_string gpos    strlen;
   (* todo: should refontify! *)
   Array.fill text.text_attrs gpos strlen direct_attr;
 
   let (nbr_newlines, _nbr_chars) = Utils.count_char str '\n' in
-  if nbr_newlines > 0 then begin
+  if nbr_newlines > 0 then 
+  begin
     (*s: [[Text.low_insert()]] adjust newlines when str contains newlines *)
     if (Array.length text.text_newlines - text.text_nlines) < nbr_newlines then
       begin
@@ -487,15 +489,15 @@ let low_insert tree point str =
     iter 1 gpos;
     (*e: [[Text.low_insert()]] adjust newlines when str contains newlines *)
   end;
-  let old_gline = text.gpoint.line in
+  let gline = text.gpoint.line in
   text.text_points |> List.iter (fun p ->
       if p.pos > gpos then
-          (* todo? why this extra condition?? *)
+          (* todo? why this extra condition?? BUG?? unit test? *)
           if p.line = gline 
           then p.line <- p.line + nbr_newlines;
 
   );
-  text.gpoint <- { pos = gpos + strlen; line = old_gline + nbr_newlines };
+  text.gpoint <- { pos = gpos + strlen; line = gline + nbr_newlines };
   text.gsize <- text.gsize - strlen;
   (gpos, strlen, text.text_modified) 
 (*e: function Text.low_insert *)
@@ -511,6 +513,9 @@ let low_delete tree point len =
   (*s: [[Text.low_insert()]] move gap to point *)
   move_gpoint_to text point;
   (*e: [[Text.low_insert()]] move gap to point *)
+  (* subtle: don't move those 'let' earlier, because moving the gap do side
+   * effects on the position and line of the gpoint. 
+   *)
   let gpos = text.gpoint.pos in
   let gline = text.gpoint.line in
 
@@ -521,7 +526,7 @@ let low_delete tree point len =
 
   let str = String.sub text.text_string gap_end len in
 
-  let (nbr_newlines, _nbr_chars) = count_char str '\n' in
+  let (nbr_newlines, _nbr_chars) = Utils.count_char str '\n' in
   if nbr_newlines > 0 then 
   begin
       (*s: [[Text.low_delete()]] adjust newlines when str contained newlines *)
@@ -532,16 +537,17 @@ let low_delete tree point len =
       text.text_nlines <- text.text_nlines - nbr_newlines;
       (*e: [[Text.low_delete()]] adjust newlines when str contained newlines *)
   end;
-  text.gsize <- text.gsize + len;
   text.text_points |> List.iter (fun p -> 
       if p.pos > gap_end + len 
       then p.line <- p.line - nbr_newlines
       else
+        (* points that were in deleted region *)
         if p.pos > gpos then begin
            p.pos <- gpos;
            p.line <- gline
          end
   );
+  text.gsize <- text.gsize + len;
   (gpos, str, text.text_modified) 
 (*e: function Text.low_delete *)
 
