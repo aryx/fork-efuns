@@ -23,20 +23,24 @@ GTKLOOP=gtkThread.cmo
 SRC=\
  commons/common.ml\
  commons/simple_color.ml\
- commons2/utils.ml\
- commons2/log.ml\
- commons2/str2.ml\
- commons2/options.ml\
- commons2/local.ml\
+ \
+ commons/utils.ml\
+ commons/log.ml\
+ commons/str2.ml\
+ commons/options.ml\
+ commons/local.ml\
+ \
  graphics/xtypes.ml\
  graphics/xdraw.ml\
  graphics/xK.ml\
+ \
  core/text.ml\
  core/efuns.ml\
  core/keymap.ml\
  core/ebuffer.ml\
  core/window.ml\
  core/frame.ml\
+ \
  graphics/top_window.ml\
  features/simple.ml\
  core/minibuffer.ml\
@@ -68,9 +72,9 @@ SRC=\
 CMIS=\
  commons/common.cmi\
  commons/simple_color.cmi\
- commons2/utils.cmi\
- commons2/options.cmi\
- commons2/local.cmi\
+ commons/utils.cmi\
+ commons/options.cmi\
+ commons/local.cmi\
  core/text.cmi\
  core/ebuffer.cmi\
  core/frame.cmi\
@@ -81,7 +85,7 @@ CMIS=\
 SYSLIBS=unix.cma str.cma threads.cma 
 
 INCLUDEDIRS=\
-  commons commons2\
+  commons\
   core features\
   graphics $(BACKENDDIR) $(GRAPHICSDIR)
 
@@ -133,8 +137,8 @@ TEX=Efuns.tex
 SRC_ORIG=Efuns.nw Efuns_extra.nw
 
 SRC_VIEWS= \
-  commons2/local.ml\
-  commons2/local.mli\
+  commons/local.ml\
+  commons/local.mli\
   core/efuns.ml\
   core/text.ml\
   core/ebuffer.ml\
