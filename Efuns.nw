@@ -114,9 +114,12 @@ Principia Softwarica: The Text Editor Efuns
 
 \author{
 Yoann Padioleau\\
-\texttt{yoann.padioleau@gmail.com}
+\texttt{yoann.padioleau@gmail.com}\\
+\\
+with code from\\
+Fabrice Lefessant
 }
-% add Fabrice?
+
 
 \maketitle 
 \onecolumn
@@ -180,6 +183,9 @@ Here are other candidates that were considered but ultimately discarded:
 %    in emacs case I usually do it via modifying my .emacs and
 %    very often reloading my emacs.
 
+% see also other ocaml editors?
+%  - https://github.com/diml/zed (seems just an "engine")
+
 \section{Getting started}
 
 \section{Requirements}
@@ -217,7 +223,7 @@ License.
 % multi files/buffers, opening/saving/killing switching
 % multi windows (a kind of window manager!)
 
-% specialised "major" modes: color, font, indentation, navigating
+% specialised "major" modes: color!, font, indentation, navigating
 %todo: semantic editing/visualizing!
 
 %emacs:
