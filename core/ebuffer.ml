@@ -426,7 +426,7 @@ let get_binding buf keylist =
     );
     (*s: [[Ebuffer.get_binding()]] if partial map *)
     if buf.buf_map_partial then
-      (let b = Keymap.get_binding (location()).loc_map keylist in
+      (let b = Keymap.get_binding (Efuns.location()).loc_map keylist in
         match b with
           Prefix map -> binding := b;
         | Function f -> binding := b; raise Exit

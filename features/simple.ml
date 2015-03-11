@@ -489,7 +489,7 @@ let dirname frame filename =
 (*s: function Simple.buffer_list *)
 let buffer_list frame =
   let list = ref [] in
-  (location()).loc_buffers |> Hashtbl.iter (fun name _ -> 
+  (Efuns.location()).loc_buffers |> Hashtbl.iter (fun name _ -> 
     list := name :: !list
   );
   !list

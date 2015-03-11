@@ -647,7 +647,7 @@ let current_dir frame =
   let buf = frame.frm_buffer in
   match buf.buf_filename with
     Some filename -> Filename.dirname filename ^ "/"
-  | None -> (location()).loc_dirname ^ "/"
+  | None -> (Efuns.location()).loc_dirname ^ "/"
 (*e: function Frame.current_dir *)
 
 

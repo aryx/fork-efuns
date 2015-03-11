@@ -279,7 +279,7 @@ let handle_key top_window modifiers keysym =
   
 (*s: function Top_window.wrap *)
 let wrap top_window f () = 
-  let location = (location()) in
+  let location = Efuns.location() in
   Mutex.lock location.loc_mutex;  
   clean_display location;    
   clear_message top_window;
@@ -306,7 +306,7 @@ let wrap_item top_window (n,f) =
         
 (*s: function Top_window.handler *)
 let handler top_window event =
-  let location = (location()) in
+  let location = Efuns.location() in
   Mutex.lock location.loc_mutex;
   try
     (match event with
@@ -434,7 +434,7 @@ let delete_window frame =
   failwith "Top_window:delete_window: TODO"
 (*
   let top_window = Window.top frame.frm_window in
-  let location = (location()) in
+  let location = Efuns.location() in
   if List.length location.top_windows > 1 then
     let xterm = Window.xterm top_window in
     top_window.top_appli#destroy;
