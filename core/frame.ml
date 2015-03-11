@@ -169,7 +169,7 @@ let dummy_mode = Ebuffer.new_major_mode "" []
 (*e: constant Frame.dummy_mode *)
   
 (*s: function Frame.create_without_top *)
-let create_without_top location window mini buf =
+let create_without_top window mini buf =
 
   let frm_start = Text.dup_point buf.buf_text buf.buf_start in
   let point     = Text.dup_point buf.buf_text buf.buf_point in
@@ -255,21 +255,21 @@ let active frame =
   match frame.frm_buffer.buf_filename with
     None -> ()
   | Some filename -> 
-      (location()).loc_dirname <- Filename.dirname filename
+      (Efuns.location()).loc_dirname <- Filename.dirname filename
 (*e: function Frame.active *)
       
       
 (*s: function Frame.create *)
 let create window mini buf =
   let top_window = Window.top window in
-  let frame = create_without_top (location()) window mini buf in
+  let frame = create_without_top window mini buf in
   top_window.top_active_frame <- frame;
   frame
 (*e: function Frame.create *)
 
 (*s: function Frame.create_inactive *)
 let create_inactive window buf =
-  create_without_top (location()) window None buf
+  create_without_top window None buf
 (*e: function Frame.create_inactive *)
 
 

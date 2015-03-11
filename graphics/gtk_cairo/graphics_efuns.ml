@@ -279,7 +279,7 @@ let init2 location =
 
   location.loc_height <- 25;
   (* will boostrap and use a newly created *help* buffer *)
-  let top_window = Top_window.create location in
+  let top_window = Top_window.create () in
   (* the *bindings* buffer *)
   Interactive.create_bindings location |> ignore;
   (* open the first buffers *)

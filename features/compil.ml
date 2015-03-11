@@ -94,8 +94,7 @@ let next_error top_frame =
             try find_buffer_frame location buf 
             with Not_found ->
                 if frame == top_frame then
-                  let new_window = 
-                    Top_window.create (Efuns.location()) 
+                  let new_window = Top_window.create ()
                       (*Window.display top_window*) 
                   in
                   Frame.create new_window.window None buf

@@ -177,7 +177,7 @@ let save_buffer frame =
 let window_load_buffer frame = 
   select_filename frame "Find file: " 
     (fun str -> 
-      let top_window = Top_window.create (Efuns.location())
+      let top_window = Top_window.create ()
           (*(Window.display top_window)*)
       in
       Frame.load_file top_window.window str |> ignore
@@ -199,8 +199,9 @@ let window_change_buffer frame =
   select_buffer frame "Switch to buffer in new frame: " 
     (get_previous_frame ())
   (fun name ->
-      let top_window = Top_window.create 
-          (Efuns.location()) (*"TODO_Display"*) in
+      let top_window = Top_window.create ()
+           (*"TODO_Display"*) 
+      in
       Frame.change_buffer top_window.window name
   )
 (*e: function Complex.window_change_buffer *)

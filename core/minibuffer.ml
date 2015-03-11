@@ -28,7 +28,7 @@ let _ =
 (*e: toplevel Minibuffer._1 *)
 
 (*s: function Minibuffer.buf_create *)
-let buf_create location text local_map =
+let buf_create text local_map =
   { 
     buf_text = text;
     buf_name = "*Minibuffer*";
@@ -93,7 +93,7 @@ let create frame local_map request =
   let mini_text = 
     Text.create "" in
   let mini_buf = 
-    buf_create (Efuns.location()) mini_text local_map in
+    buf_create mini_text local_map in
   let mini_window = 
     Window.create true (*mini*) (TopWindow top_window) 
       qlen (top_window.top_height - 1) (top_window.top_width - qlen) 1 in

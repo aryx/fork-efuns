@@ -398,15 +398,15 @@ let help_menu = ref ([| |]: (string * action) array)
   
   
 (*s: function Top_window.create *)
-let create location =
- 
+let create () =
+  let location = Efuns.location() in
   let buf = 
     Ebuffer.default "*help*" in
   (* keep one line for the minibuffer, hence the -1 *)
   let window = 
     Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
   let frame = 
-    Frame.create_without_top location window None buf in
+    Frame.create_without_top window None buf in
   let top_window =
     { 
       top_name = "window";

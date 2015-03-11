@@ -26,8 +26,7 @@ val install : Efuns.window -> Efuns.frame -> unit
 val resize : Efuns.frame -> unit
 val editname : string
 val create_without_top :
-  Efuns.location ->
-  Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
+   Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
 val active : Efuns.frame -> unit
 val create : Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
 val create_inactive : Efuns.window -> Efuns.buffer -> Efuns.frame
