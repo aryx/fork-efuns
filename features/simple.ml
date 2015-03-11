@@ -488,10 +488,10 @@ let dirname frame filename =
 
 (*s: function Simple.buffer_list *)
 let buffer_list frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
   let list = ref [] in
-  Hashtbl.iter (fun name _ -> list := name :: !list) location.loc_buffers;
+  (location()).loc_buffers |> Hashtbl.iter (fun name _ -> 
+    list := name :: !list
+  );
   !list
 (*e: function Simple.buffer_list *)
 
@@ -954,8 +954,7 @@ let next_buffer location buf =
 (*s: function Simple.kill_buffer *)
 let kill_buffer frame =
   let window = frame.frm_window in
-  let top_window = Window.top window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   let buf = frame.frm_buffer in
   let new_buf = next_buffer location buf in
   let _new_frame = Frame.create window None new_buf in
@@ -1282,7 +1281,8 @@ let all_params = ref None
 (*e: constant Simple.all_params *)
 (*s: function Simple.all_parameters *)
 let all_parameters frame _ =
-  let parameters = try get_global frame.frm_location parameters_var with _ -> []
+  let parameters = 
+    try get_global (Efuns.location()) parameters_var with _ -> []
   in
   match !all_params with
     Some (f,l) when f == parameters -> l

@@ -193,6 +193,8 @@ open Options
 <<constant Efuns.fg_opt>>
 <<constant Efuns.bg_opt>>
 <<constant Efuns.check>>
+
+<<constant Efuns.usage_str>>
   
 <<toplevel Efuns._3>>
 <<toplevel Efuns._4>>

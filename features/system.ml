@@ -106,8 +106,7 @@ let system buf_name location cmd end_action =
 
 (*s: function System.start_command *)
 let start_command buf_name window cmd =
-  let top_window = Window.top window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   let buf = system buf_name location cmd (fun buf status -> ()) in
   let frame = Frame.create window None buf in
   frame

@@ -38,7 +38,7 @@ let get_file_line frame =
   (match frame.frm_buffer.buf_filename with
       None -> ()
     | Some filename -> 
-        frame.frm_location.loc_dirname <- Filename.dirname filename);
+        (Efuns.location()).loc_dirname <- Filename.dirname filename);
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
@@ -76,8 +76,7 @@ let fullname frame filename =
 (*s: function Dired.open_file *)
 let open_file frame =
   let filename = fullname frame (select_file (get_file_line frame)) in
-  let location = frame.frm_location in
-  let buf = Ebuffer.read location filename (Keymap.create ()) in
+  let buf = Ebuffer.read (Efuns.location()) filename (Keymap.create ()) in
   let frame = Frame.create  frame.frm_window None buf in
   Frame.active frame
 (*e: function Dired.open_file *)

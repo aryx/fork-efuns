@@ -229,7 +229,7 @@ let meta = ref Xtypes.mod1Mask
 (*s: function Top_window.handle_key *)
 let handle_key top_window modifiers keysym =
   keypressed := keysym;
-  let location = top_window.top_location in
+  let location = (location()) in
   let frame = top_window.top_active_frame in
 
   clean_display location;
@@ -270,7 +270,7 @@ let handle_key top_window modifiers keysym =
   exec_hooks 
       (try get_global location handle_key_end_hook with _ -> []) location;
 
-  update_display top_window.top_location
+  update_display (Efuns.location())
 (*e: function Top_window.handle_key *)
 
   (* We can receive events from different sources. In particular, some of
@@ -279,7 +279,7 @@ let handle_key top_window modifiers keysym =
   
 (*s: function Top_window.wrap *)
 let wrap top_window f () = 
-  let location = top_window.top_location in
+  let location = (location()) in
   Mutex.lock location.loc_mutex;  
   clean_display location;    
   clear_message top_window;
@@ -293,10 +293,10 @@ let wrap top_window f () =
   end;
   exec_hooks 
     (try get_global location handle_key_end_hook with _ -> []) location;    
-  update_display top_window.top_location;
+  update_display (Efuns.location());
   let graphic = Window.backend top_window in
   graphic.Xdraw.update_displays ();
-  Mutex.unlock top_window.top_location.loc_mutex
+  Mutex.unlock (Efuns.location()).loc_mutex
 (*e: function Top_window.wrap *)
 
 (*s: function Top_window.wrap_item *)
@@ -306,7 +306,7 @@ let wrap_item top_window (n,f) =
         
 (*s: function Top_window.handler *)
 let handler top_window event =
-  let location = top_window.top_location in
+  let location = (location()) in
   Mutex.lock location.loc_mutex;
   try
     (match event with
@@ -335,7 +335,7 @@ let handler top_window event =
         top_window.top_width <- new_width;
         top_window.top_height <- new_height;
         clear_message top_window;
-        update_display top_window.top_location
+        update_display (Efuns.location())
     (*e: [[Top_window.handler()]] match event cases *)
     );
     Mutex.unlock location.loc_mutex;
@@ -419,8 +419,6 @@ let create location =
       top_second_cursor = None;
 
       graphics = None;
-
-      top_location = location;
     } 
   in
 
@@ -436,7 +434,7 @@ let delete_window frame =
   failwith "Top_window:delete_window: TODO"
 (*
   let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
+  let location = (location()) in
   if List.length location.top_windows > 1 then
     let xterm = Window.xterm top_window in
     top_window.top_appli#destroy;

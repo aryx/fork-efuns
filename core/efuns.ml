@@ -90,7 +90,7 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_shared : int; (* number of frames for that buffer *)
     (*x: [[Efuns.buffer]] other fields *)
-    buf_location : location;
+    (*buf_location : location;*)
     (*x: [[Efuns.buffer]] other fields *)
     buf_map : map;
     (*x: [[Efuns.buffer]] other fields *)
@@ -157,7 +157,7 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_window : window;
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_location : location;
+    (* mutable frm_location : location; *)
     (*x: [[Efuns.frame]] other fields *)
     (* 0 for no scrollbar, 2 for scrollbar *)
     mutable frm_has_scrollbar : int;
@@ -271,7 +271,7 @@ and top_window =
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_active_frame : frame;
     (*x: [[Efuns.top_window]] other fields *)
-    mutable top_location : location;
+    (* mutable top_location : location; *)
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_mini_buffers : frame list;
     (*x: [[Efuns.top_window]] other fields *)
@@ -314,7 +314,7 @@ and window_down =
 (*e: type Efuns.window_down *)
 
 (*s: type Efuns.location *)
-and location =
+type location =
   { 
     (* key is buffer name *)
     mutable loc_buffers : (string, buffer) Hashtbl.t;
@@ -368,6 +368,12 @@ type to_regexp =
                (*      Values      *)
 (*************************************************************************)
 
+let global_location = ref None
+let location () =
+  match !global_location with
+  | None -> failwith "no global location defined"
+  | Some x -> x
+
 (*s: constant Efuns.start_hooks *)
 (* Les hooks de lancement apres le chargement d'un module *)
 let start_hooks = ref []
@@ -379,6 +385,7 @@ let add_start_hook hook =
 
 (*s: function Efuns.init *)
 let init (location : location) =
+  global_location := Some location;
   let rec iter hooks =
     match hooks with
       [] -> ()
@@ -424,7 +431,7 @@ let get_var buf var =
         iter buf.buf_minor_modes
         (*e: [[Efuns.get_var()]] try with minor mode variables *)
       with Not_found ->
-        Local.get buf.buf_location.loc_vars var
+        Local.get (location()).loc_vars var
 (*e: function Efuns.get_var *)
           
 (*s: function Efuns.get_global *)

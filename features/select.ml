@@ -49,7 +49,7 @@ let select_yes_or_no frame request action =
 
 (*s: function Select.find_completion_frame *)
 let find_completion_frame frame =
-  let location = frame.frm_buffer.buf_location in
+  let location = Efuns.location() in
   let buf = Ebuffer.default location "*Completions*" in
   Frame.find_buffer_frame location buf
 (*e: function Select.find_completion_frame *)
@@ -60,7 +60,7 @@ let display_completions frame list =
   if list = [] then
     Top_window.message top_window "No Completions"
   else
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   let rec iter list s =
     match list with
       [] -> s

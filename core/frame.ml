@@ -236,8 +236,6 @@ let create_without_top location window mini buf =
       frm_killed = false;
 
       frm_table = [||];
-
-      frm_location = location;
     } 
   in
   (*s: [[Frame.create_without_top()]] adjust status of frame *)
@@ -257,23 +255,21 @@ let active frame =
   match frame.frm_buffer.buf_filename with
     None -> ()
   | Some filename -> 
-      frame.frm_location.loc_dirname <- Filename.dirname filename
+      (location()).loc_dirname <- Filename.dirname filename
 (*e: function Frame.active *)
       
       
 (*s: function Frame.create *)
 let create window mini buf =
   let top_window = Window.top window in
-  let frame = create_without_top top_window.top_location window mini buf in
+  let frame = create_without_top (location()) window mini buf in
   top_window.top_active_frame <- frame;
   frame
 (*e: function Frame.create *)
 
 (*s: function Frame.create_inactive *)
 let create_inactive window buf =
-  let top_window = Window.top window in
-  let frame = create_without_top top_window.top_location window None buf in
-  frame
+  create_without_top (location()) window None buf
 (*e: function Frame.create_inactive *)
 
 
@@ -651,7 +647,7 @@ let current_dir frame =
   let buf = frame.frm_buffer in
   match buf.buf_filename with
     Some filename -> Filename.dirname filename ^ "/"
-  | None -> buf.buf_location.loc_dirname ^ "/"
+  | None -> (location()).loc_dirname ^ "/"
 (*e: function Frame.current_dir *)
 
 
@@ -699,7 +695,7 @@ let rec exec_named_hooks_with_abort hooks frame =
 (*s: function Frame.load_file *)
 let load_file window filename =
   let top_window = Window.top window in
-  let location = top_window.top_location in
+  let location = (location()) in
   let buf = Ebuffer.read location filename (Keymap.create ()) in
   let frame = create window None buf in
   exec_named_hooks !!change_buffer_hooks frame;
@@ -711,7 +707,7 @@ let load_file window filename =
 (*s: function Frame.change_buffer *)
 let change_buffer window name = 
   let top_window = Window.top window in
-  let location = top_window.top_location in
+  let location = (location()) in
   try
     let buf = Hashtbl.find location.loc_buffers name in
     let frame = create window None  buf 

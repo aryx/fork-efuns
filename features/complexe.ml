@@ -126,9 +126,7 @@ let check_file frame =
     
 (*s: function Complex.exit_efuns *)
 let exit_efuns frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buffers = Utils.list_of_hash location.loc_buffers in
+  let buffers = Utils.list_of_hash (Efuns.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
     exit 0
@@ -137,9 +135,7 @@ let exit_efuns frame =
 
 (*s: function Complex.save_some_buffers *)
 let save_some_buffers frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buffers = list_of_hash location.loc_buffers in
+  let buffers = list_of_hash (Efuns.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> ())
 (*e: function Complex.save_some_buffers *)
 
@@ -164,8 +160,7 @@ let insert_file frame =
 let write_buffer frame = 
   let buf = frame.frm_buffer in
   select_filename frame "Save file as: " (fun str -> 
-      let top_window = Window.top frame.frm_window in
-      Ebuffer.change_name top_window.top_location buf str;
+      Ebuffer.change_name (Efuns.location()) buf str;
       Ebuffer.save buf
   )
 (*e: function Complex.write_buffer *)
@@ -182,8 +177,7 @@ let save_buffer frame =
 let window_load_buffer frame = 
   select_filename frame "Find file: " 
     (fun str -> 
-      let top_window = Window.top frame.frm_window in
-      let top_window = Top_window.create top_window.top_location
+      let top_window = Top_window.create (Efuns.location())
           (*(Window.display top_window)*)
       in
       Frame.load_file top_window.window str |> ignore
@@ -205,9 +199,8 @@ let window_change_buffer frame =
   select_buffer frame "Switch to buffer in new frame: " 
     (get_previous_frame ())
   (fun name ->
-      let top_window = Window.top frame.frm_window in
       let top_window = Top_window.create 
-          top_window.top_location (*"TODO_Display"*) in
+          (Efuns.location()) (*"TODO_Display"*) in
       Frame.change_buffer top_window.window name
   )
 (*e: function Complex.window_change_buffer *)
@@ -370,11 +363,13 @@ let all_vars = ref None
 (*s: function Complex.all_variables *)
 let all_variables frame _ =
   let buf = frame.frm_buffer in
-  let location = buf.buf_location in
   match !all_vars with
     Some (f,l) when f == frame -> l
   | _ ->
-      let list = (Local.list buf.buf_vars) @ (Local.list location.loc_vars) in
+      let list = 
+        (Local.list buf.buf_vars) @ 
+        (Local.list (Efuns.location()).loc_vars) 
+      in
       all_vars := Some (frame, list);
       list
 (*e: function Complex.all_variables *)
@@ -394,7 +389,7 @@ let set_global_variable frame =
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
-          Local.input frame.frm_location.loc_vars variable value))
+          Local.input (Efuns.location()).loc_vars variable value))
 (*e: function Complex.set_global_variable *)
   
 (*s: function Complex.get_variable *)
@@ -407,7 +402,7 @@ let get_variable frame =
           try
             Local.print buf.buf_vars variable
           with _ ->
-              Local.print buf.buf_location.loc_vars variable)))
+              Local.print (Efuns.location()).loc_vars variable)))
 (*e: function Complex.get_variable *)
 
 open Options
@@ -418,7 +413,7 @@ let parameters_hist = ref []
   
 (*s: function Complex.set_parameter *)
 let set_parameter frame = 
-  let parameters = get_global frame.frm_location parameters_var in
+  let parameters = get_global (Efuns.location()) parameters_var in
   Select.select frame "set-parameter : " parameters_hist
     "" (all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
@@ -430,7 +425,7 @@ let set_parameter frame =
   
 (*s: function Complex.get_parameter *)
 let get_parameter frame =
-  let parameters = get_global frame.frm_location parameters_var in  
+  let parameters = get_global (Efuns.location()) parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
     "" (all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 

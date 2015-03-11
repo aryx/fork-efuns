@@ -67,7 +67,7 @@ let default_error = ref c_find_error
 (*s: function Compil.next_error *)
 let next_error top_frame =
   let top_window = Window.top top_frame.frm_window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   match !compilation_frame with
     None -> Top_window.message top_window "No compilation started"
   | Some (frame, error_point, cdir) ->      
@@ -95,7 +95,7 @@ let next_error top_frame =
             with Not_found ->
                 if frame == top_frame then
                   let new_window = 
-                    Top_window.create top_window.top_location 
+                    Top_window.create (Efuns.location()) 
                       (*Window.display top_window*) 
                   in
                   Frame.create new_window.window None buf
@@ -155,8 +155,7 @@ let compile find_error_fun frame =
             cdir
         else cdir
       in
-      let top_window = Window.top frame.frm_window in
-      let location = top_window.top_location in
+      let location = Efuns.location() in
       let comp_window =
         match !compilation_frame with
           None -> cut_frame frame 
@@ -212,8 +211,7 @@ let grep frame =
       let cmd = if cmd = "" then default else cmd in
       let cmd = !!grep_command ^ " " ^ cmd in
       let cdir = Frame.current_dir frame in
-      let top_window = Window.top frame.frm_window in
-      let location = top_window.top_location in
+      let location = Efuns.location() in
       let comp_window =
         match !compilation_frame with
           None -> cut_frame frame 

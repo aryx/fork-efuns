@@ -655,7 +655,7 @@ let _ =
   (*s: [[Std_efunsrc]] buffers menu setup *)
   buffers_menu := (fun top_window button () ->
       let buffers = ref [] in
-      let loc = top_window.top_location in
+      let loc = Efuns.location() in
       Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
       let _desc = Array.map (fun name -> 
             (name, wrap top_window (fun top_window ->

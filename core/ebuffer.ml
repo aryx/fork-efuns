@@ -124,7 +124,6 @@ let create location name filename text local_map =
       buf_shared = 0;
       buf_finalizers = [];
 
-      buf_location = location;
     } in
   (*s: [[Ebuffer.create()]] adjust location global fields *)
   Hashtbl.add location.loc_buffers name buf;
@@ -425,7 +424,7 @@ let get_binding buf keylist =
     );
     (*s: [[Ebuffer.get_binding()]] if partial map *)
     if buf.buf_map_partial then
-      (let b = Keymap.get_binding buf.buf_location.loc_map keylist in
+      (let b = Keymap.get_binding (location()).loc_map keylist in
         match b with
           Prefix map -> binding := b;
         | Function f -> binding := b; raise Exit
@@ -439,7 +438,7 @@ let get_binding buf keylist =
 
 (*s: function Ebuffer.message *)
 let message buf m =
-  let location = buf.buf_location in
+  let location = (location()) in
   let name = "*Messages*" in
   try
     let buf = Hashtbl.find location.loc_buffers name in
@@ -456,7 +455,7 @@ let catch format buf f =
   try
     f ()
   with e ->
-      let location = buf.buf_location in
+      let location = (location()) in
       let name = "*Messages*" in
       let m = Printf.sprintf format (Utils.printexn e) in
       try

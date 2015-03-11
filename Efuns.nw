@@ -289,6 +289,15 @@ the main author of Efuns.
 
 % ./efuns foo.txt
 
+<<constant Efuns.usage_str>>=
+let usage_str =
+ "A small editor entirely written in Objective Caml 
+by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
+http://pauillac.inria.fr/efuns
+Options:
+"
+@
+
 \section{Code organization}
 
 %from guide.txt:
@@ -1633,6 +1642,27 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 % there is actually no really main() in ocaml, instead
 % a list of toplevels doing stuff (in the order of the linking)
 
+
+% init files are not the .efunsrc, but the first set of files to open
+% so when do efuns foo.c => init_files = ref ["foo.c"]
+<<constant Efuns.init_files>>=
+let init_files = ref []
+@
+% should be used in Graphic.init
+
+<<toplevel Efuns._3>>=
+let _ =
+ Arg.parse [
+   <<[[main()]] command line options>>
+ ] 
+ (fun name -> init_files := name :: !init_files)
+ usage_str
+@
+
+
+
+\section{Arguments processing}
+
 %\section{General style parameters}
  
 <<constant Efuns.width>>=
@@ -1661,32 +1691,6 @@ let font = define_option ["font"] "" string_option "fixed"
 @
 
 
-
-
-% init files are not the .efunsrc, but the first set of files to open
-% so when do efuns foo.c => init_files = ref ["foo.c"]
-<<constant Efuns.init_files>>=
-let init_files = ref []
-@
-% should be used in Graphic.init
-
-<<toplevel Efuns._3>>=
-let _ =
- Arg.parse [
-   <<[[main()]] command line options>>
- ] 
- (fun name -> init_files := name :: !init_files) 
- "A small editor entirely written in Objective Caml 
-by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
-http://pauillac.inria.fr/efuns
-Options:
-"
-@
-
-
-
-\section{Arguments processing}
-
 <<constant Efuns.width_opt>>=
 let width_opt = ref None
 @
@@ -1704,7 +1708,6 @@ let bg_opt = ref None
 <<constant Efuns.font_opt>>=
 let font_opt = ref None
 @
-
 
 % actually it's in Efun._3
 <<[[main()]] command line options>>=

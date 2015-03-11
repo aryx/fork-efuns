@@ -58,8 +58,7 @@ let dabbrev_buf = ref None
 (*e: constant Abbrevs.dabbrev_buf *)
 (*s: function Abbrevs.dabbrev_expand *)
 let dabbrev_expand frame = 
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   let buf = frame.frm_buffer in
   let syntax = buf.buf_syntax_table in
   let text = buf.buf_text in
