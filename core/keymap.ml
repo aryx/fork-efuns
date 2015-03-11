@@ -178,8 +178,8 @@ let add_interactive map name f =
 (*e: function Keymap.add_interactive *)
 
 (*s: function Keymap.add_global_key *)
-let add_global_key location = 
-  interactive location.loc_map 
+let add_global_key = fun prefix string action ->
+  interactive (Efuns.location()).loc_map prefix string action
 (*e: function Keymap.add_global_key *)
 (*s: function Keymap.add_local_key *)
 let add_local_key buf = 

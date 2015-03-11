@@ -229,14 +229,14 @@ let meta = ref Xtypes.mod1Mask
 (*s: function Top_window.handle_key *)
 let handle_key top_window modifiers keysym =
   keypressed := keysym;
-  let location = (location()) in
+  let location = Efuns.location() in
   let frame = top_window.top_active_frame in
 
   clean_display location;
   clear_message top_window;
 
   exec_hooks 
-     (try get_global location handle_key_start_hook with _ -> []) location;
+     (try get_global handle_key_start_hook with _ -> []) location;
 
   let mod_ = 
     (*s: [[Top_window.handle_key()]] compute mod *)
@@ -268,9 +268,9 @@ let handle_key top_window modifiers keysym =
   end;
 
   exec_hooks 
-      (try get_global location handle_key_end_hook with _ -> []) location;
+      (try get_global handle_key_end_hook with _ -> []) location;
 
-  update_display (Efuns.location())
+  update_display location
 (*e: function Top_window.handle_key *)
 
   (* We can receive events from different sources. In particular, some of
@@ -285,14 +285,14 @@ let wrap top_window f () =
   clear_message top_window;
   keypressed := XK.xk_Menu;
   exec_hooks
-    (try get_global location handle_key_start_hook with _ -> []) location;    
+    (try get_global handle_key_start_hook with _ -> []) location;    
   begin
     try f top_window with e ->   
         message top_window 
           (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
   end;
   exec_hooks 
-    (try get_global location handle_key_end_hook with _ -> []) location;    
+    (try get_global handle_key_end_hook with _ -> []) location;    
   update_display (Efuns.location());
   let graphic = Window.backend top_window in
   graphic.Xdraw.update_displays ();
@@ -401,7 +401,7 @@ let help_menu = ref ([| |]: (string * action) array)
 let create location =
  
   let buf = 
-    Ebuffer.default location "*help*" in
+    Ebuffer.default "*help*" in
   (* keep one line for the minibuffer, hence the -1 *)
   let window = 
     Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in

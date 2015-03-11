@@ -76,7 +76,7 @@ let fullname frame filename =
 (*s: function Dired.open_file *)
 let open_file frame =
   let filename = fullname frame (select_file (get_file_line frame)) in
-  let buf = Ebuffer.read (Efuns.location()) filename (Keymap.create ()) in
+  let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = Frame.create  frame.frm_window None buf in
   Frame.active frame
 (*e: function Dired.open_file *)
@@ -214,12 +214,13 @@ let _ =
     ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
     ];
   
-  Efuns.add_start_hook (fun location ->
-      add_interactive (location.loc_map) "dired_mode" 
+  Efuns.add_start_hook (fun () ->
+    let location = Efuns.location () in
+    add_interactive (location.loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
-      set_global location Ebuffer.modes_alist ((".*/$",mode) :: 
-        (get_global location Ebuffer.modes_alist));      
+    set_global Ebuffer.modes_alist 
+      ((".*/$",mode) :: (get_global Ebuffer.modes_alist));
   )   
 (*e: toplevel Dired._1 *)
 (*e: major_modes/dired.ml *)

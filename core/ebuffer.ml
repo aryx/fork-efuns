@@ -43,13 +43,12 @@ let default_syntax_table = create_syntax_table ()
 (*e: constant Ebuffer.default_syntax_table *)
 
 (*s: function Ebuffer.get_name *)
-let get_name location filename =
+let get_name filename =
   let basename = Filename.basename filename in
   let name = 
-    if basename = "" then
-      (Filename.basename (Filename.dirname filename)) ^ "/"
-    else
-      basename
+    if basename = "" 
+    then (Filename.basename (Filename.dirname filename)) ^ "/"
+    else basename
   in
   let i = ref 0 in
   let compute_name () =
@@ -59,7 +58,7 @@ let get_name location filename =
   in
   try
     while true do
-      let _ = Hashtbl.find location.loc_buffers (compute_name ()) in 
+      let _ = Hashtbl.find (Efuns.location()).loc_buffers (compute_name ()) in 
       incr i
     done; assert false
   with
@@ -94,8 +93,8 @@ let tab_size = ref 9
 (*e: constant Ebuffer.tab_size *)
 
 (*s: function Ebuffer.create *)
-let create location name filename text local_map =
-  let name = get_name location name in
+let create name filename text local_map =
+  let name = get_name name in
   let buf =
     { 
       buf_text = text;
@@ -126,7 +125,7 @@ let create location name filename text local_map =
 
     } in
   (*s: [[Ebuffer.create()]] adjust location global fields *)
-  Hashtbl.add location.loc_buffers name buf;
+  Hashtbl.add (Efuns.location()).loc_buffers name buf;
   (*e: [[Ebuffer.create()]] adjust location global fields *)
   (*s: [[Ebuffer.create()]] adjust charreprs *)
   for i=0 to 25 do
@@ -137,14 +136,15 @@ let create location name filename text local_map =
   buf.buf_charreprs.(9) <- String.make !tab_size ' ';
   (*e: [[Ebuffer.create()]] adjust charreprs *)
   (*s: [[Ebuffer.create()]] run hooks *)
-  let hooks = try get_global location create_buf_hook with Not_found -> [] in
+  let hooks = try get_global create_buf_hook with Not_found -> [] in
   exec_hooks hooks buf;
   (*e: [[Ebuffer.create()]] run hooks *)
   buf
 (*e: function Ebuffer.create *)
 
 (*s: function Ebuffer.kill *)
-let kill location buf =
+let kill buf =
+  let location = Efuns.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
   begin
     match buf.buf_filename with
@@ -213,7 +213,8 @@ exception Found of buffer
 
   
 (*s: function Ebuffer.read *)
-let read location filename local_map =
+let read filename local_map =
+  let location = Efuns.location() in
   try
     let filename = Utils.normal_name location.loc_dirname filename in
     try
@@ -229,7 +230,7 @@ let read location filename local_map =
           with
             _ -> Text.create ""
         in
-        let buf = create location filename (Some filename) text local_map in
+        let buf = create filename (Some filename) text local_map in
         Hashtbl.add location.loc_files filename buf;
         buf
   with
@@ -237,9 +238,9 @@ let read location filename local_map =
 (*e: function Ebuffer.read *)
 
 (*s: function Ebuffer.default *)
-let default location name =
+let default name =
   try
-    Hashtbl.find location.loc_buffers name
+    Hashtbl.find (Efuns.location()).loc_buffers name
   with Not_found ->
       let str = 
         if name = "*help*" 
@@ -251,7 +252,7 @@ INRIA Rocquencourt
 "
         else ""
       in
-      create location name None (Text.create str) (Keymap.create ())
+      create name None (Text.create str) (Keymap.create ())
 (*e: function Ebuffer.default *)
       
 
@@ -265,7 +266,8 @@ exception BufferAlreadyOpened
 (*e: exception Ebuffer.BufferAlreadyOpened *)
 
 (*s: function Ebuffer.change_name *)
-let change_name location buf filename =
+let change_name buf filename =
+  let location = Efuns.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
   (match buf.buf_filename with
       None -> ()
@@ -280,7 +282,7 @@ let change_name location buf filename =
   if hashtbl_mem location.loc_files filename then
     raise BufferAlreadyOpened;
   let filename = Utils.normal_name location.loc_dirname filename in
-  let name = get_name location filename in
+  let name = get_name filename in
   Hashtbl.add location.loc_buffers name buf;
   Hashtbl.add location.loc_files filename buf;
   buf.buf_filename <- Some filename;
@@ -438,16 +440,13 @@ let get_binding buf keylist =
 
 (*s: function Ebuffer.message *)
 let message buf m =
-  let location = (location()) in
+  let location = Efuns.location() in
   let name = "*Messages*" in
   try
     let buf = Hashtbl.find location.loc_buffers name in
     Text.insert_at_end buf.buf_text (m^"\n");
-  with
-    Not_found ->
-      let _buf = 
-        create location name None (Text.create (m^"\n")) (Keymap.create ())
-      in ()
+  with Not_found ->
+    create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore
 (*e: function Ebuffer.message *)
 
 (*s: function Ebuffer.catch *)
@@ -455,24 +454,23 @@ let catch format buf f =
   try
     f ()
   with e ->
-      let location = (location()) in
+      let location = Efuns.location() in
       let name = "*Messages*" in
       let m = Printf.sprintf format (Utils.printexn e) in
       try
         let buf = Hashtbl.find location.loc_buffers name in
         Text.insert_at_end buf.buf_text (m ^ "\n");
       with Not_found ->
-        create location name None (Text.create (m^"\n")) (Keymap.create ()) 
-          |>ignore
+        create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
 (*e: function Ebuffer.catch *)
           
       
 (*s: toplevel Ebuffer._1 *)
 let _ =
   Efuns.add_start_hook 
-    (fun location ->
-      set_global location create_buf_hook [set_buffer_mode];
-      set_global location modes_alist []
+    (fun () ->
+      set_global create_buf_hook [set_buffer_mode];
+      set_global modes_alist []
       )
 (*e: toplevel Ebuffer._1 *)
 (*e: core/ebuffer.ml *)

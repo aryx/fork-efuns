@@ -50,7 +50,7 @@ let select_yes_or_no frame request action =
 (*s: function Select.find_completion_frame *)
 let find_completion_frame frame =
   let location = Efuns.location() in
-  let buf = Ebuffer.default location "*Completions*" in
+  let buf = Ebuffer.default "*Completions*" in
   Frame.find_buffer_frame location buf
 (*e: function Select.find_completion_frame *)
 
@@ -68,7 +68,7 @@ let display_completions frame list =
     | f1::f2::tail  ->
         iter tail (Printf.sprintf "%s\n%-40s%s" s f1 f2)
   in
-  let buf = Ebuffer.default location "*Completions*" in
+  let buf = Ebuffer.default "*Completions*" in
   let text = buf.buf_text in
   Text.update text (iter list "Completions :");
   (try Frame.find_buffer_frame location buf

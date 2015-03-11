@@ -389,8 +389,8 @@ let init (location : location) =
   let rec iter hooks =
     match hooks with
       [] -> ()
-    | (f : location -> unit) :: hooks -> 
-        f location;
+    | (f : unit -> unit) :: hooks -> 
+        f ();
         iter hooks
   in
   let hooks = List.rev !start_hooks in
@@ -401,8 +401,8 @@ let init (location : location) =
   (* Les variables locales *)
   
 (*s: function Efuns.set_global *)
-let set_global location var value = 
-  Local.set location.loc_vars var value
+let set_global var value = 
+  Local.set (location()).loc_vars var value
 (*e: function Efuns.set_global *)
 (*s: function Efuns.set_local *)
 let set_local buf var value = 
@@ -435,8 +435,8 @@ let get_var buf var =
 (*e: function Efuns.get_var *)
           
 (*s: function Efuns.get_global *)
-let get_global location var = 
-  Local.get location.loc_vars var
+let get_global var = 
+  Local.get (location()).loc_vars var
 (*e: function Efuns.get_global *)
 (*s: function Efuns.get_local *)
 let get_local buf var = 
@@ -460,9 +460,9 @@ let rec exec_hooks hooks arg =
 (*e: function Efuns.exec_hooks *)
 
 (*s: function Efuns.add_hook *)
-let add_hook location hook_var hook =
-  let tail = try get_global location hook_var with _ -> [] in
-  set_global location hook_var (hook :: tail)
+let add_hook hook_var hook =
+  let tail = try get_global hook_var with _ -> [] in
+  set_global hook_var (hook :: tail)
 (*e: function Efuns.add_hook *)
   
 (*************************************************************************)

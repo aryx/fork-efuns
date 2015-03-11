@@ -23,7 +23,7 @@ open Keymap
 let create_bindings location =
   let s = Keymap.all_bindings location in
   let text = Text.create s in
-  Ebuffer.create location "*bindings*" None text (Keymap.create ())
+  Ebuffer.create "*bindings*" None text (Keymap.create ())
 (*e: function Interactive.create_bindings *)
 
 (*s: constant Interactive.meta_hist *)

@@ -88,7 +88,7 @@ let next_error top_frame =
         frame.frm_redraw <- true;
         if error.err_filename <> "" then
           let filename = Filename.concat cdir error.err_filename in
-          let buf = Ebuffer.read location filename (Keymap.create ()) in
+          let buf = Ebuffer.read filename (Keymap.create ()) in
 (* new frame for error buffer *)
           let frame = 
             try find_buffer_frame location buf 
@@ -155,13 +155,12 @@ let compile find_error_fun frame =
             cdir
         else cdir
       in
-      let location = Efuns.location() in
       let comp_window =
         match !compilation_frame with
           None -> cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
-            Ebuffer.kill location new_frame.frm_buffer;
+            Ebuffer.kill new_frame.frm_buffer;
             if new_frame.frm_killed 
             then cut_frame frame
             else new_frame.frm_window 
@@ -211,13 +210,12 @@ let grep frame =
       let cmd = if cmd = "" then default else cmd in
       let cmd = !!grep_command ^ " " ^ cmd in
       let cdir = Frame.current_dir frame in
-      let location = Efuns.location() in
       let comp_window =
         match !compilation_frame with
           None -> cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
-            Ebuffer.kill location new_frame.frm_buffer;
+            Ebuffer.kill new_frame.frm_buffer;
             if new_frame.frm_killed 
             then cut_frame frame
             else new_frame.frm_window 

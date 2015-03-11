@@ -565,10 +565,11 @@ let _ =
 (*e: toplevel Std_efunsrc._2 *)
     
 (*s: function Std_efunsrc.init_global_map *)
-let init_global_map location = 
+let init_global_map () = 
+  let location = Efuns.location() in
   !!global_map |> List.iter (fun (keys, action) ->
       try
-        Keymap.add_global_key location keys action (execute_action action)
+        Keymap.add_global_key keys action (execute_action action)
       with e ->
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;
@@ -588,11 +589,11 @@ let init_global_map location =
 
   (* Mouse *)
   (*s: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
-  add_global_key location [NormalMap, XK.xk_Pointer_Button1]
+  Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
     "set_active_frame" mouse_set_frame;
-  add_global_key location [NormalMap, XK.xk_Pointer_Button2]
+  Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
     "insert_at_point" mouse_yank_at_click;
-  add_global_key location [NormalMap, XK.xk_Pointer_Button3]
+  Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
     "mouse_save_then_kill" mouse_save_then_kill;
   (*e: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   ()
@@ -678,12 +679,12 @@ let _ =
   
 (*s: toplevel Std_efunsrc._5 *)
 let _ =
-  Efuns.add_start_hook (fun location ->
+  Efuns.add_start_hook (fun () ->
       (*s: [[Std_efunsrc._5]] start hooks options *)
-      add_option_parameter location compile_find_makefile;
-      add_option_parameter location Text.add_amount;
+      add_option_parameter compile_find_makefile;
+      add_option_parameter Text.add_amount;
       (*e: [[Std_efunsrc._5]] start hooks options *)
-      init_global_map location
+      init_global_map ()
   )
 (*e: toplevel Std_efunsrc._5 *)
 (*e: std_efunsrc.ml *)

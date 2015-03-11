@@ -160,7 +160,7 @@ let insert_file frame =
 let write_buffer frame = 
   let buf = frame.frm_buffer in
   select_filename frame "Save file as: " (fun str -> 
-      Ebuffer.change_name (Efuns.location()) buf str;
+      Ebuffer.change_name buf str;
       Ebuffer.save buf
   )
 (*e: function Complex.write_buffer *)
@@ -413,7 +413,7 @@ let parameters_hist = ref []
   
 (*s: function Complex.set_parameter *)
 let set_parameter frame = 
-  let parameters = get_global (Efuns.location()) parameters_var in
+  let parameters = get_global parameters_var in
   Select.select frame "set-parameter : " parameters_hist
     "" (all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
@@ -425,7 +425,7 @@ let set_parameter frame =
   
 (*s: function Complex.get_parameter *)
 let get_parameter frame =
-  let parameters = get_global (Efuns.location()) parameters_var in  
+  let parameters = get_global parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
     "" (all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
@@ -478,7 +478,8 @@ let right_buffer frame =
   
 (*s: toplevel Complex._1 *)
 let _ =
-  Efuns.add_start_hook (fun location ->
+  Efuns.add_start_hook (fun () ->
+    let location = Efuns.location() in
       Keymap.add_interactive location.loc_map "make_directory" mkdir;
       Keymap.add_interactive location.loc_map "set_local_variable" 
         set_local_variable;

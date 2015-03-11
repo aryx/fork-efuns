@@ -959,7 +959,7 @@ let kill_buffer frame =
   let new_buf = next_buffer location buf in
   let _new_frame = Frame.create window None new_buf in
   if buf.buf_shared = 0 
-  then Ebuffer.kill location buf
+  then Ebuffer.kill buf
 (*e: function Simple.kill_buffer *)
 
 (*s: function Simple.color *)
@@ -1254,19 +1254,19 @@ let parameters_var = Local.create_abstr "parameters"
 (*e: constant Simple.parameters_var *)
   
 (*s: function Simple.add_parameter *)
-let add_parameter location (name : string) (input : string -> 'a) 
+let add_parameter (name : string) (input : string -> 'a) 
   (print : 'a -> string) (param : 'a option_record) =
   let (input : string -> Obj.t) = Obj.magic input in
   let (print : Obj.t -> string) = Obj.magic print in
   let (param : Obj.t option_record) = Obj.magic param in
-  set_global location parameters_var (
+  set_global parameters_var (
     (name, (input, print, param)) :: 
-    (try get_global location parameters_var with _ -> []))
+    (try get_global parameters_var with _ -> []))
 (*e: function Simple.add_parameter *)
 
 (*s: function Simple.add_option_parameter *)
-let add_option_parameter location option =
-  add_parameter location (shortname option)
+let add_option_parameter option =
+  add_parameter (shortname option)
    (fun s -> from_value (get_class option) (Value s))
    (fun v -> 
       match to_value (get_class option) v with
@@ -1282,7 +1282,7 @@ let all_params = ref None
 (*s: function Simple.all_parameters *)
 let all_parameters frame _ =
   let parameters = 
-    try get_global (Efuns.location()) parameters_var with _ -> []
+    try get_global parameters_var with _ -> []
   in
   match !all_params with
     Some (f,l) when f == parameters -> l
@@ -1303,10 +1303,11 @@ let _ =
         end else
         Ebuffer.set_minor_mode buf mode);
 
-  Efuns.add_start_hook (fun location ->
+  Efuns.add_start_hook (fun () ->
+      let location = Efuns.location () in
       let gmap = location.loc_map in
       (* unhightlight region *)
-      add_hook location Top_window.handle_key_start_hook unhightlight;      
+      add_hook Top_window.handle_key_start_hook unhightlight;      
       (* standard chars *)
       for key = 32 to 127 do
         Keymap.add_binding gmap [NormalMap, key] self_insert_command
@@ -1340,7 +1341,7 @@ let _ =
       Keymap.add_interactive (location.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
             Ebuffer.fondamental_mode);
-      set_global location line_comment ""
+      set_global line_comment ""
   )
 (*e: toplevel Simple._1 *)
   

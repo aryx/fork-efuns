@@ -146,15 +146,13 @@ let _ =
 (*s: toplevel Makefile_mode._4 *)
 let _ = 
   (* Keymap.add_prefix mode.maj_map [c_c];   *)
-  Efuns.add_start_hook (fun location ->
-      let alist = get_global (location) Ebuffer.modes_alist in
-      set_global location Ebuffer.modes_alist 
-        ((".*/[Mm]akefile.*",mode)
-        :: alist);
-      add_option_parameter location vars_color;
-      add_option_parameter location target_color;
-      add_option_parameter location rules_color;
-      add_option_parameter location comments_color;
+  Efuns.add_start_hook (fun () ->
+      let alist = get_global Ebuffer.modes_alist in
+      set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
+      add_option_parameter vars_color;
+      add_option_parameter target_color;
+      add_option_parameter rules_color;
+      add_option_parameter comments_color;
       )   
 (*e: toplevel Makefile_mode._4 *)
 (*e: prog_modes/makefile_mode.ml *)

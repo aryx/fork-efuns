@@ -13,19 +13,18 @@ val create_buf_hook : (Efuns.buffer -> unit) list Local.var
 val modes_alist : (string * Efuns.major_mode) list Local.var
 val create_syntax_table : unit -> bool array
 val default_syntax_table : bool array
-val get_name : Efuns.location -> string -> string
+val get_name : string -> string
 val fondamental_mode : Efuns.major_mode
 val tab_size : int ref
-val create : Efuns.location -> string -> string option ->
-  Text.t -> Efuns.map -> Efuns.buffer
-val kill : Efuns.location -> Efuns.buffer -> unit
+val create : string -> string option -> Text.t -> Efuns.map -> Efuns.buffer
+val kill : Efuns.buffer -> unit
 val save : Efuns.buffer -> unit
 exception Found of Efuns.buffer
-val read : Efuns.location -> string -> Efuns.map -> Efuns.buffer
-val default : Efuns.location -> string -> Efuns.buffer
+val read : string -> Efuns.map -> Efuns.buffer
+val default : string -> Efuns.buffer
 val compute_representation : Efuns.buffer -> int -> Text.line
 exception BufferAlreadyOpened
-val change_name : Efuns.location -> Efuns.buffer -> string -> unit
+val change_name : Efuns.buffer -> string -> unit
 val set_mark : Efuns.buffer -> Text.point -> unit
 val get_mark : Efuns.buffer -> Text.point -> Text.point
 val remove_mark : Efuns.buffer -> unit

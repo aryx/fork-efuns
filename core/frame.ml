@@ -694,9 +694,7 @@ let rec exec_named_hooks_with_abort hooks frame =
 
 (*s: function Frame.load_file *)
 let load_file window filename =
-  let top_window = Window.top window in
-  let location = (location()) in
-  let buf = Ebuffer.read location filename (Keymap.create ()) in
+  let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = create window None buf in
   exec_named_hooks !!change_buffer_hooks frame;
   status_name frame buf.buf_name;
@@ -706,8 +704,7 @@ let load_file window filename =
   
 (*s: function Frame.change_buffer *)
 let change_buffer window name = 
-  let top_window = Window.top window in
-  let location = (location()) in
+  let location = Efuns.location() in
   try
     let buf = Hashtbl.find location.loc_buffers name in
     let frame = create window None  buf 
