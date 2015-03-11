@@ -570,6 +570,15 @@ let bg_opt = ref None
 let check = ref false
 (*e: constant Efuns.check *)
   
+(*s: constant Efuns.usage_str *)
+let usage_str =
+ "A small editor entirely written in Objective Caml 
+by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
+http://pauillac.inria.fr/efuns
+Options:
+"
+(*e: constant Efuns.usage_str *)
+
 (*s: toplevel Efuns._3 *)
 let _ =
  Arg.parse [
@@ -593,12 +602,8 @@ let _ =
      "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
    (*e: [[main()]] command line options *)
  ] 
- (fun name -> init_files := name :: !init_files) 
- "A small editor entirely written in Objective Caml 
-by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
-http://pauillac.inria.fr/efuns
-Options:
-"
+ (fun name -> init_files := name :: !init_files)
+ usage_str
 (*e: toplevel Efuns._3 *)
 (*s: toplevel Efuns._4 *)
 let _ =

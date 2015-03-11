@@ -133,6 +133,12 @@ open Local
                (*      Values      *)
 (*************************************************************************)
 
+let global_location = ref None
+let location () =
+  match !global_location with
+  | None -> failwith "no global location defined"
+  | Some x -> x
+
 <<constant Efuns.start_hooks>>
 <<function Efuns.add_start_hook>>
 
@@ -193,9 +199,9 @@ open Options
 <<constant Efuns.fg_opt>>
 <<constant Efuns.bg_opt>>
 <<constant Efuns.check>>
-
-<<constant Efuns.usage_str>>
   
+<<constant Efuns.usage_str>>
+
 <<toplevel Efuns._3>>
 <<toplevel Efuns._4>>
 
@@ -1289,7 +1295,8 @@ exception Found of buffer
 @
 
 <<function Ebuffer.read>>=
-let read location filename local_map =
+let read filename local_map =
+  let location = Efuns.location() in
   try
     let filename = Utils.normal_name location.loc_dirname filename in
     try
@@ -1305,7 +1312,7 @@ let read location filename local_map =
           with
             _ -> Text.create ""
         in
-        let buf = create location filename (Some filename) text local_map in
+        let buf = create filename (Some filename) text local_map in
         Hashtbl.add location.loc_files filename buf;
         buf
   with
@@ -1323,7 +1330,8 @@ exception BufferAlreadyOpened
 @
 
 <<function Ebuffer.change_name>>=
-let change_name location buf filename =
+let change_name buf filename =
+  let location = Efuns.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
   (match buf.buf_filename with
       None -> ()
@@ -1338,7 +1346,7 @@ let change_name location buf filename =
   if hashtbl_mem location.loc_files filename then
     raise BufferAlreadyOpened;
   let filename = Utils.normal_name location.loc_dirname filename in
-  let name = get_name location filename in
+  let name = get_name filename in
   Hashtbl.add location.loc_buffers name buf;
   Hashtbl.add location.loc_files filename buf;
   buf.buf_filename <- Some filename;
@@ -1357,23 +1365,22 @@ let catch format buf f =
   try
     f ()
   with e ->
-      let location = buf.buf_location in
+      let location = Efuns.location() in
       let name = "*Messages*" in
       let m = Printf.sprintf format (Utils.printexn e) in
       try
         let buf = Hashtbl.find location.loc_buffers name in
         Text.insert_at_end buf.buf_text (m ^ "\n");
       with Not_found ->
-        create location name None (Text.create (m^"\n")) (Keymap.create ()) 
-          |>ignore
+        create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
 @
 
 <<toplevel Ebuffer._1>>=
 let _ =
   Efuns.add_start_hook 
-    (fun location ->
-      set_global location create_buf_hook [set_buffer_mode];
-      set_global location modes_alist []
+    (fun () ->
+      set_global create_buf_hook [set_buffer_mode];
+      set_global modes_alist []
       )
 @
 
@@ -1717,22 +1724,20 @@ let active frame =
   match frame.frm_buffer.buf_filename with
     None -> ()
   | Some filename -> 
-      frame.frm_location.loc_dirname <- Filename.dirname filename
+      (Efuns.location()).loc_dirname <- Filename.dirname filename
 @
 
 <<function Frame.create>>=
 let create window mini buf =
   let top_window = Window.top window in
-  let frame = create_without_top top_window.top_location window mini buf in
+  let frame = create_without_top window mini buf in
   top_window.top_active_frame <- frame;
   frame
 @
 
 <<function Frame.create_inactive>>=
 let create_inactive window buf =
-  let top_window = Window.top window in
-  let frame = create_without_top top_window.top_location window None buf in
-  frame
+  create_without_top window None buf
 @
 
 <<function Frame.point_to_cursor>>=
@@ -1868,7 +1873,7 @@ let current_dir frame =
   let buf = frame.frm_buffer in
   match buf.buf_filename with
     Some filename -> Filename.dirname filename ^ "/"
-  | None -> buf.buf_location.loc_dirname ^ "/"
+  | None -> (Efuns.location()).loc_dirname ^ "/"
 @
 
 <<exception Frame.FoundFrame>>=
@@ -2324,10 +2329,10 @@ let dirname frame filename =
 
 <<function Simple.buffer_list>>=
 let buffer_list frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
   let list = ref [] in
-  Hashtbl.iter (fun name _ -> list := name :: !list) location.loc_buffers;
+  (Efuns.location()).loc_buffers |> Hashtbl.iter (fun name _ -> 
+    list := name :: !list
+  );
   !list
 @
 
@@ -2754,10 +2759,11 @@ let _ =
         end else
         Ebuffer.set_minor_mode buf mode);
 
-  Efuns.add_start_hook (fun location ->
+  Efuns.add_start_hook (fun () ->
+      let location = Efuns.location () in
       let gmap = location.loc_map in
       (* unhightlight region *)
-      add_hook location Top_window.handle_key_start_hook unhightlight;      
+      add_hook Top_window.handle_key_start_hook unhightlight;      
       (* standard chars *)
       for key = 32 to 127 do
         Keymap.add_binding gmap [NormalMap, key] self_insert_command
@@ -2791,7 +2797,7 @@ let _ =
       Keymap.add_interactive (location.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
             Ebuffer.fondamental_mode);
-      set_global location line_comment ""
+      set_global line_comment ""
   )
 @
 
@@ -3092,8 +3098,8 @@ let select_yes_or_no frame request action =
 
 <<function Select.find_completion_frame>>=
 let find_completion_frame frame =
-  let location = frame.frm_buffer.buf_location in
-  let buf = Ebuffer.default location "*Completions*" in
+  let location = Efuns.location() in
+  let buf = Ebuffer.default "*Completions*" in
   Frame.find_buffer_frame location buf
 @
 
@@ -3103,7 +3109,7 @@ let display_completions frame list =
   if list = [] then
     Top_window.message top_window "No Completions"
   else
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   let rec iter list s =
     match list with
       [] -> s
@@ -3111,7 +3117,7 @@ let display_completions frame list =
     | f1::f2::tail  ->
         iter tail (Printf.sprintf "%s\n%-40s%s" s f1 f2)
   in
-  let buf = Ebuffer.default location "*Completions*" in
+  let buf = Ebuffer.default "*Completions*" in
   let text = buf.buf_text in
   Text.update text (iter list "Completions :");
   (try Frame.find_buffer_frame location buf
@@ -3769,11 +3775,13 @@ let all_vars = ref None
 <<function Complex.all_variables>>=
 let all_variables frame _ =
   let buf = frame.frm_buffer in
-  let location = buf.buf_location in
   match !all_vars with
     Some (f,l) when f == frame -> l
   | _ ->
-      let list = (Local.list buf.buf_vars) @ (Local.list location.loc_vars) in
+      let list = 
+        (Local.list buf.buf_vars) @ 
+        (Local.list (Efuns.location()).loc_vars) 
+      in
       all_vars := Some (frame, list);
       list
 @
@@ -3793,7 +3801,7 @@ let set_global_variable frame =
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
-          Local.input frame.frm_location.loc_vars variable value))
+          Local.input (Efuns.location()).loc_vars variable value))
 @
 
 <<function Complex.get_variable>>=
@@ -3806,13 +3814,14 @@ let get_variable frame =
           try
             Local.print buf.buf_vars variable
           with _ ->
-              Local.print buf.buf_location.loc_vars variable)))
+              Local.print (Efuns.location()).loc_vars variable)))
 @
 
 
 <<toplevel Complex._1>>=
 let _ =
-  Efuns.add_start_hook (fun location ->
+  Efuns.add_start_hook (fun () ->
+    let location = Efuns.location() in
       Keymap.add_interactive location.loc_map "make_directory" mkdir;
       Keymap.add_interactive location.loc_map "set_local_variable" 
         set_local_variable;
@@ -3964,7 +3973,7 @@ let system buf_name location cmd end_action =
   let (pid,inc,outc) = open_process cmd in
   let text = Text.create "" in
   let curseur = Text.add_point text in
-  let buf = Ebuffer.create location buf_name None text (Keymap.create ()) in
+  let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
   buf.buf_sync <- true;
   let _ins = Unix.descr_of_in_channel inc in
   let _tampon = String.create 1000 in
@@ -4034,8 +4043,7 @@ let system buf_name location cmd end_action =
 
 <<function System.start_command>>=
 let start_command buf_name window cmd =
-  let top_window = Window.top window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   let buf = system buf_name location cmd (fun buf status -> ()) in
   let frame = Frame.create window None buf in
   frame
@@ -4684,24 +4692,24 @@ let mini_message frame msg =
 
 <<function Top_window.wrap>>=
 let wrap top_window f () = 
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   Mutex.lock location.loc_mutex;  
   clean_display location;    
   clear_message top_window;
   keypressed := XK.xk_Menu;
   exec_hooks
-    (try get_global location handle_key_start_hook with _ -> []) location;    
+    (try get_global handle_key_start_hook with _ -> []) location;    
   begin
     try f top_window with e ->   
         message top_window 
           (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
   end;
   exec_hooks 
-    (try get_global location handle_key_end_hook with _ -> []) location;    
-  update_display top_window.top_location;
+    (try get_global handle_key_end_hook with _ -> []) location;    
+  update_display (Efuns.location());
   let graphic = Window.backend top_window in
   graphic.Xdraw.update_displays ();
-  Mutex.unlock top_window.top_location.loc_mutex
+  Mutex.unlock (Efuns.location()).loc_mutex
 @
 
 <<function Top_window.wrap_item>>=
@@ -4995,7 +5003,7 @@ let get_file_line frame =
   (match frame.frm_buffer.buf_filename with
       None -> ()
     | Some filename -> 
-        frame.frm_location.loc_dirname <- Filename.dirname filename);
+        (Efuns.location()).loc_dirname <- Filename.dirname filename);
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
@@ -5033,8 +5041,7 @@ let fullname frame filename =
 <<function Dired.open_file>>=
 let open_file frame =
   let filename = fullname frame (select_file (get_file_line frame)) in
-  let location = frame.frm_location in
-  let buf = Ebuffer.read location filename (Keymap.create ()) in
+  let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = Frame.create  frame.frm_window None buf in
   Frame.active frame
 @
@@ -5173,12 +5180,13 @@ let _ =
     ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
     ];
   
-  Efuns.add_start_hook (fun location ->
-      add_interactive (location.loc_map) "dired_mode" 
+  Efuns.add_start_hook (fun () ->
+    let location = Efuns.location () in
+    add_interactive (location.loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
-      set_global location Ebuffer.modes_alist ((".*/$",mode) :: 
-        (get_global location Ebuffer.modes_alist));      
+    set_global Ebuffer.modes_alist 
+      ((".*/$",mode) :: (get_global Ebuffer.modes_alist));
   )   
 @
 %$
@@ -5795,7 +5803,7 @@ let rules_color = define_option ["makefile_mode";"rules_color"] ""
 % font-lock-mode :)
 <<function Makefile_mode.makefile_color>>=
 let makefile_color buf =
-  let location = buf.buf_location in
+  let location = Efuns.location() in
   color buf mkfile_rules false
     (make_attr (get_color location !!rules_color) 1 0 false);
   color buf mkfile_target false 
@@ -5897,15 +5905,13 @@ let _ =
 <<toplevel Makefile_mode._4>>=
 let _ = 
   (* Keymap.add_prefix mode.maj_map [c_c];   *)
-  Efuns.add_start_hook (fun location ->
-      let alist = get_global (location) Ebuffer.modes_alist in
-      set_global location Ebuffer.modes_alist 
-        ((".*/[Mm]akefile.*",mode)
-        :: alist);
-      add_option_parameter location vars_color;
-      add_option_parameter location target_color;
-      add_option_parameter location rules_color;
-      add_option_parameter location comments_color;
+  Efuns.add_start_hook (fun () ->
+      let alist = get_global Ebuffer.modes_alist in
+      set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
+      add_option_parameter vars_color;
+      add_option_parameter target_color;
+      add_option_parameter rules_color;
+      add_option_parameter comments_color;
       )   
 @
 

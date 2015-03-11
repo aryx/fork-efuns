@@ -600,8 +600,8 @@ mutable buf_modified : int; (* version? *)
 
 
 <<function Ebuffer.create>>=
-let create location name filename text local_map =
-  let name = get_name location name in
+let create name filename text local_map =
+  let name = get_name name in
   let buf =
     { 
       buf_text = text;
@@ -630,7 +630,6 @@ let create location name filename text local_map =
       buf_shared = 0;
       buf_finalizers = [];
 
-      buf_location = location;
     } in
   <<[[Ebuffer.create()]] adjust location global fields>>
   <<[[Ebuffer.create()]] adjust charreprs>>
@@ -690,7 +689,7 @@ mutable buf_shared : int; (* number of frames for that buffer *)
 %less: why need that? ocaml has a gc anyway ...
 
 <<function Frame.create_without_top>>=
-let create_without_top location window mini buf =
+let create_without_top window mini buf =
 
   let frm_start = Text.dup_point buf.buf_text buf.buf_start in
   let point     = Text.dup_point buf.buf_text buf.buf_point in
@@ -741,8 +740,6 @@ let create_without_top location window mini buf =
       frm_killed = false;
 
       frm_table = [||];
-
-      frm_location = location;
     } 
   in
   <<[[Frame.create_without_top()]] adjust status of frame>>
@@ -901,7 +898,7 @@ mutable top_active_frame : frame;
 
 %(* the world *)
 <<type Efuns.location>>=
-and location =
+type location =
   { 
     (* key is buffer name *)
     mutable loc_buffers : (string, buffer) Hashtbl.t;
@@ -934,19 +931,19 @@ and location =
 % head of list is current?
 
 <<[[Ebuffer.create()]] adjust location global fields>>=
-Hashtbl.add location.loc_buffers name buf;
+Hashtbl.add (Efuns.location()).loc_buffers name buf;
 @
 
 
 
 <<[[Efuns.buffer]] other fields>>=
-buf_location : location;
+(*buf_location : location;*)
 @
 <<[[Efuns.frame]] other fields>>=
-mutable frm_location : location;
+(* mutable frm_location : location; *)
 @
 <<[[Efuns.top_window]] other fields>>=
-mutable top_location : location;
+(* mutable top_location : location; *)
 @
 %so can access the global world info from a frame
 %todo: but what if location was global, then even easier
@@ -1258,7 +1255,7 @@ mutable buf_map_partial : bool;
 % but always true no?
 <<[[Ebuffer.get_binding()]] if partial map>>=
 if buf.buf_map_partial then
-  (let b = Keymap.get_binding buf.buf_location.loc_map keylist in
+  (let b = Keymap.get_binding (Efuns.location()).loc_map keylist in
     match b with
       Prefix map -> binding := b;
     | Function f -> binding := b; raise Exit
@@ -1271,8 +1268,8 @@ if buf.buf_map_partial then
 
 
 <<function Keymap.add_global_key>>=
-let add_global_key location = 
-  interactive location.loc_map 
+let add_global_key = fun prefix string action ->
+  interactive (Efuns.location()).loc_map prefix string action
 @
 <<function Keymap.add_local_key>>=
 let add_local_key buf = 
@@ -1437,10 +1434,11 @@ let c_c = (ControlMap, Char.code 'c')
 % main -> Efuns.init -> List.iter f start_hooks -> <> 
 %  (as ?? ?<- add_start_hook(<>) <- Std_efunsrc._5)
 <<function Std_efunsrc.init_global_map>>=
-let init_global_map location = 
+let init_global_map () = 
+  let location = Efuns.location() in
   !!global_map |> List.iter (fun (keys, action) ->
       try
-        Keymap.add_global_key location keys action (execute_action action)
+        Keymap.add_global_key keys action (execute_action action)
       with e ->
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;
@@ -1486,8 +1484,8 @@ loc_vars : Local.vars;
 % - minor mode
 
 <<function Efuns.set_global>>=
-let set_global location var value = 
-  Local.set location.loc_vars var value
+let set_global var value = 
+  Local.set (location()).loc_vars var value
 @
 <<function Efuns.set_local>>=
 let set_local buf var value = 
@@ -1495,8 +1493,8 @@ let set_local buf var value =
 @
 
 <<function Efuns.get_global>>=
-let get_global location var = 
-  Local.get location.loc_vars var
+let get_global var = 
+  Local.get (location()).loc_vars var
 @
 %todo: put the type of the .mli here? subtle signature. polymorphic vars!
 <<function Efuns.get_local>>=
@@ -1516,7 +1514,7 @@ let get_var buf var =
       try 
         <<[[Efuns.get_var()]] try with minor mode variables>>
       with Not_found ->
-        Local.get buf.buf_location.loc_vars var
+        Local.get (location()).loc_vars var
 @
 
 % was not there originally
@@ -1548,9 +1546,9 @@ let rec exec_hooks hooks arg =
 @
 
 <<function Efuns.add_hook>>=
-let add_hook location hook_var hook =
-  let tail = try get_global location hook_var with _ -> [] in
-  set_global location hook_var (hook :: tail)
+let add_hook hook_var hook =
+  let tail = try get_global hook_var with _ -> [] in
+  set_global hook_var (hook :: tail)
 @
 
 
@@ -1563,7 +1561,7 @@ let create_buf_hook = Local.create_abstr "create_buf_hook"
 %less: remame create_buffer_hooks? more consistent?
 % of use of this hook var
 <<[[Ebuffer.create()]] run hooks>>=
-let hooks = try get_global location create_buf_hook with Not_found -> [] in
+let hooks = try get_global create_buf_hook with Not_found -> [] in
 exec_hooks hooks buf;
 @
 
@@ -1827,11 +1825,12 @@ let _ =
 % main.ml -> <>
 <<function Efuns.init>>=
 let init (location : location) =
+  global_location := Some location;
   let rec iter hooks =
     match hooks with
       [] -> ()
-    | (f : location -> unit) :: hooks -> 
-        f location;
+    | (f : unit -> unit) :: hooks -> 
+        f ();
         iter hooks
   in
   let hooks = List.rev !start_hooks in
@@ -1859,9 +1858,9 @@ let add_start_hook hook =
 
 <<toplevel Std_efunsrc._5>>=
 let _ =
-  Efuns.add_start_hook (fun location ->
+  Efuns.add_start_hook (fun () ->
       <<[[Std_efunsrc._5]] start hooks options>>
-      init_global_map location
+      init_global_map ()
   )
 @
 
@@ -1897,15 +1896,15 @@ let _ =
 \subsection{[[Top_window.create()]]}
 
 <<function Top_window.create>>=
-let create location =
- 
+let create () =
+  let location = Efuns.location() in
   let buf = 
-    Ebuffer.default location "*help*" in
+    Ebuffer.default "*help*" in
   (* keep one line for the minibuffer, hence the -1 *)
   let window = 
     Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
   let frame = 
-    Frame.create_without_top location window None buf in
+    Frame.create_without_top window None buf in
   let top_window =
     { 
       top_name = "window";
@@ -1918,8 +1917,6 @@ let create location =
       top_second_cursor = None;
 
       graphics = None;
-
-      top_location = location;
     } 
   in
 
@@ -1954,9 +1951,9 @@ let create location =
 
 
 <<function Ebuffer.default>>=
-let default location name =
+let default name =
   try
-    Hashtbl.find location.loc_buffers name
+    Hashtbl.find (Efuns.location()).loc_buffers name
   with Not_found ->
       let str = 
         if name = "*help*" 
@@ -1968,7 +1965,7 @@ INRIA Rocquencourt
 "
         else ""
       in
-      create location name None (Text.create str) (Keymap.create ())
+      create name None (Text.create str) (Keymap.create ())
 @
 %(*
 %"
@@ -2091,7 +2088,7 @@ let update_display location =
 
 <<function Top_window.handler>>=
 let handler top_window event =
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   Mutex.lock location.loc_mutex;
   try
     (match event with
@@ -2137,14 +2134,14 @@ let handle_key_end_hook = Local.create_abstr "handle_key_end_hook"
 <<function Top_window.handle_key>>=
 let handle_key top_window modifiers keysym =
   keypressed := keysym;
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   let frame = top_window.top_active_frame in
 
   clean_display location;
   clear_message top_window;
 
   exec_hooks 
-     (try get_global location handle_key_start_hook with _ -> []) location;
+     (try get_global handle_key_start_hook with _ -> []) location;
 
   let mod_ = 
     <<[[Top_window.handle_key()]] compute mod>>
@@ -2159,9 +2156,9 @@ let handle_key top_window modifiers keysym =
   end;
 
   exec_hooks 
-      (try get_global location handle_key_end_hook with _ -> []) location;
+      (try get_global handle_key_end_hook with _ -> []) location;
 
-  update_display top_window.top_location
+  update_display location
 @
 % update_display() again!! each key down trigger a redisplay action
 % will see try_map() later in keyboard section
@@ -3043,9 +3040,7 @@ let load_buffer frame =
 
 <<function Frame.load_file>>=
 let load_file window filename =
-  let top_window = Window.top window in
-  let location = top_window.top_location in
-  let buf = Ebuffer.read location filename (Keymap.create ()) in
+  let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = create window None buf in
   exec_named_hooks !!change_buffer_hooks frame;
   status_name frame buf.buf_name;
@@ -3190,9 +3185,7 @@ define_action "write_file"  write_buffer;
 
 <<function Complex.save_some_buffers>>=
 let save_some_buffers frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buffers = list_of_hash location.loc_buffers in
+  let buffers = list_of_hash (Efuns.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> ())
 @
 %less: save_buffers_and_action here?
@@ -3201,8 +3194,7 @@ let save_some_buffers frame =
 let write_buffer frame = 
   let buf = frame.frm_buffer in
   select_filename frame "Save file as: " (fun str -> 
-      let top_window = Window.top frame.frm_window in
-      Ebuffer.change_name top_window.top_location buf str;
+      Ebuffer.change_name buf str;
       Ebuffer.save buf
   )
 @
@@ -3229,9 +3221,7 @@ define_action "exit"  exit_efuns;
 
 <<function Complex.exit_efuns>>=
 let exit_efuns frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buffers = Utils.list_of_hash location.loc_buffers in
+  let buffers = Utils.list_of_hash (Efuns.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
     exit 0
@@ -3965,7 +3955,6 @@ mutable top_mini_buffers : frame list;
 let create frame local_map request =
   let window = frame.frm_window in
   let top_window = Window.top window in
-  let location = top_window.top_location in
 
   let qlen = String.length request in
   let request = 
@@ -3977,7 +3966,7 @@ let create frame local_map request =
   let mini_text = 
     Text.create "" in
   let mini_buf = 
-    buf_create location mini_text local_map in
+    buf_create mini_text local_map in
   let mini_window = 
     Window.create true (*mini*) (TopWindow top_window) 
       qlen (top_window.top_height - 1) (top_window.top_width - qlen) 1 in
@@ -4004,7 +3993,7 @@ mutable win_mini : bool;
 
 % Minibuffer.create -> <>
 <<function Minibuffer.buf_create>>=
-let buf_create location text local_map =
+let buf_create text local_map =
   { 
     buf_text = text;
     buf_name = "*Minibuffer*";
@@ -4031,7 +4020,6 @@ let buf_create location text local_map =
     buf_finalizers = [];
 
     buf_vars = Local.vars ();
-    buf_location = location;
   }
 @
 
@@ -4092,7 +4080,7 @@ let call_interactive frame =
 let buf_interactives buf =
   let interactives = 
     buf.buf_major_mode.maj_map.interactives @
-    buf.buf_location.loc_map.interactives 
+    (Efuns.location()).loc_map.interactives 
   in
   List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
    interactives buf.buf_minor_modes 
@@ -4347,7 +4335,7 @@ let bindings_help frame =
 let create_bindings location =
   let s = Keymap.all_bindings location in
   let text = Text.create s in
-  Ebuffer.create location "*bindings*" None text (Keymap.create ())
+  Ebuffer.create "*bindings*" None text (Keymap.create ())
 @
 
 
@@ -4435,11 +4423,11 @@ let mouse_y = ref 0
 
 
 <<[[Std_efunsrc.init_global_map()]] mouse keys setup>>=
-add_global_key location [NormalMap, XK.xk_Pointer_Button1]
+Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
   "set_active_frame" mouse_set_frame;
-add_global_key location [NormalMap, XK.xk_Pointer_Button2]
+Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
   "insert_at_point" mouse_yank_at_click;
-add_global_key location [NormalMap, XK.xk_Pointer_Button3]
+Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
   "mouse_save_then_kill" mouse_save_then_kill;
 @
 
@@ -4524,7 +4512,7 @@ let mouse_save_then_kill frame =
     top_window.top_width <- new_width;
     top_window.top_height <- new_height;
     clear_message top_window;
-    update_display top_window.top_location
+    update_display (Efuns.location())
 @          
 
 
@@ -5625,13 +5613,12 @@ let replace_matched tree repl =
 
 % Ebuffer.create -> <>
 <<function Ebuffer.get_name>>=
-let get_name location filename =
+let get_name filename =
   let basename = Filename.basename filename in
   let name = 
-    if basename = "" then
-      (Filename.basename (Filename.dirname filename)) ^ "/"
-    else
-      basename
+    if basename = "" 
+    then (Filename.basename (Filename.dirname filename)) ^ "/"
+    else basename
   in
   let i = ref 0 in
   let compute_name () =
@@ -5641,7 +5628,7 @@ let get_name location filename =
   in
   try
     while true do
-      let _ = Hashtbl.find location.loc_buffers (compute_name ()) in 
+      let _ = Hashtbl.find (Efuns.location()).loc_buffers (compute_name ()) in 
       incr i
     done; assert false
   with
@@ -5655,7 +5642,7 @@ let get_name location filename =
 <<[[Std_efunsrc]] buffers menu setup>>=
 buffers_menu := (fun top_window button () ->
     let buffers = ref [] in
-    let loc = top_window.top_location in
+    let loc = Efuns.location() in
     Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
     let _desc = Array.map (fun name -> 
           (name, wrap top_window (fun top_window ->
@@ -5700,8 +5687,7 @@ let change_buffer frame =
 
 <<function Frame.change_buffer>>=
 let change_buffer window name = 
-  let top_window = Window.top window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   try
     let buf = Hashtbl.find location.loc_buffers name in
     let frame = create window None  buf 
@@ -5730,18 +5716,18 @@ define_action "kill_buffer"  kill_buffer;
 <<function Simple.kill_buffer>>=
 let kill_buffer frame =
   let window = frame.frm_window in
-  let top_window = Window.top window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   let buf = frame.frm_buffer in
   let new_buf = next_buffer location buf in
   let _new_frame = Frame.create window None new_buf in
   if buf.buf_shared = 0 
-  then Ebuffer.kill location buf
+  then Ebuffer.kill buf
 @
 
 
 <<function Ebuffer.kill>>=
-let kill location buf =
+let kill buf =
+  let location = Efuns.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
   begin
     match buf.buf_filename with
@@ -6419,14 +6405,12 @@ let grep frame =
       let cmd = if cmd = "" then default else cmd in
       let cmd = !!grep_command ^ " " ^ cmd in
       let cdir = Frame.current_dir frame in
-      let top_window = Window.top frame.frm_window in
-      let location = top_window.top_location in
       let comp_window =
         match !compilation_frame with
           None -> cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
-            Ebuffer.kill location new_frame.frm_buffer;
+            Ebuffer.kill new_frame.frm_buffer;
             if new_frame.frm_killed 
             then cut_frame frame
             else new_frame.frm_window 
@@ -6482,14 +6466,12 @@ let compile find_error_fun frame =
             cdir
         else cdir
       in
-      let top_window = Window.top frame.frm_window in
-      let location = top_window.top_location in
       let comp_window =
         match !compilation_frame with
           None -> cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
-            Ebuffer.kill location new_frame.frm_buffer;
+            Ebuffer.kill new_frame.frm_buffer;
             if new_frame.frm_killed 
             then cut_frame frame
             else new_frame.frm_window 
@@ -6508,7 +6490,7 @@ let compile find_error_fun frame =
 <<function Compil.next_error>>=
 let next_error top_frame =
   let top_window = Window.top top_frame.frm_window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   match !compilation_frame with
     None -> Top_window.message top_window "No compilation started"
   | Some (frame, error_point, cdir) ->      
@@ -6529,14 +6511,13 @@ let next_error top_frame =
         frame.frm_redraw <- true;
         if error.err_filename <> "" then
           let filename = Filename.concat cdir error.err_filename in
-          let buf = Ebuffer.read location filename (Keymap.create ()) in
+          let buf = Ebuffer.read filename (Keymap.create ()) in
 (* new frame for error buffer *)
           let frame = 
             try find_buffer_frame location buf 
             with Not_found ->
                 if frame == top_frame then
-                  let new_window = 
-                    Top_window.create top_window.top_location 
+                  let new_window = Top_window.create ()
                       (*Window.display top_window*) 
                   in
                   Frame.create new_window.window None buf
@@ -6636,8 +6617,7 @@ let expand_sabbrev frame =
 
 <<function Abbrevs.dabbrev_expand>>=
 let dabbrev_expand frame = 
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   let buf = frame.frm_buffer in
   let syntax = buf.buf_syntax_table in
   let text = buf.buf_text in
@@ -7056,8 +7036,7 @@ define_action "delete_window"  Top_window.delete_window;
 let window_load_buffer frame = 
   select_filename frame "Find file: " 
     (fun str -> 
-      let top_window = Window.top frame.frm_window in
-      let top_window = Top_window.create top_window.top_location
+      let top_window = Top_window.create ()
           (*(Window.display top_window)*)
       in
       Frame.load_file top_window.window str |> ignore
@@ -7069,9 +7048,9 @@ let window_change_buffer frame =
   select_buffer frame "Switch to buffer in new frame: " 
     (get_previous_frame ())
   (fun name ->
-      let top_window = Window.top frame.frm_window in
-      let top_window = Top_window.create 
-          top_window.top_location (*"TODO_Display"*) in
+      let top_window = Top_window.create ()
+           (*"TODO_Display"*) 
+      in
       Frame.change_buffer top_window.window name
   )
 @
@@ -7081,7 +7060,7 @@ let delete_window frame =
   failwith "Top_window:delete_window: TODO"
 (*
   let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
+  let location = Efuns.location() in
   if List.length location.top_windows > 1 then
     let xterm = Window.xterm top_window in
     top_window.top_appli#destroy;
@@ -7127,16 +7106,13 @@ let init_frames = ref []
 
 <<function Ebuffer.message>>=
 let message buf m =
-  let location = buf.buf_location in
+  let location = Efuns.location() in
   let name = "*Messages*" in
   try
     let buf = Hashtbl.find location.loc_buffers name in
     Text.insert_at_end buf.buf_text (m^"\n");
-  with
-    Not_found ->
-      let _buf = 
-        create location name None (Text.create (m^"\n")) (Keymap.create ())
-      in ()
+  with Not_found ->
+    create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore
 @
 
 
@@ -7356,8 +7332,8 @@ let input = set_input
 
 % interface
 <<[[Std_efunsrc._5]] start hooks options>>=
-add_option_parameter location compile_find_makefile;
-add_option_parameter location Text.add_amount;
+add_option_parameter compile_find_makefile;
+add_option_parameter Text.add_amount;
 @
 
 
@@ -7374,8 +7350,8 @@ let parameters_var = Local.create_abstr "parameters"
 
 
 <<function Simple.add_option_parameter>>=
-let add_option_parameter location option =
-  add_parameter location (shortname option)
+let add_option_parameter option =
+  add_parameter (shortname option)
    (fun s -> from_value (get_class option) (Value s))
    (fun v -> 
       match to_value (get_class option) v with
@@ -7386,14 +7362,14 @@ let add_option_parameter location option =
 @
 
 <<function Simple.add_parameter>>=
-let add_parameter location (name : string) (input : string -> 'a) 
+let add_parameter (name : string) (input : string -> 'a) 
   (print : 'a -> string) (param : 'a option_record) =
   let (input : string -> Obj.t) = Obj.magic input in
   let (print : Obj.t -> string) = Obj.magic print in
   let (param : Obj.t option_record) = Obj.magic param in
-  set_global location parameters_var (
+  set_global parameters_var (
     (name, (input, print, param)) :: 
-    (try get_global location parameters_var with _ -> []))
+    (try get_global parameters_var with _ -> []))
 @
 
 
@@ -7404,7 +7380,8 @@ let all_params = ref None
 
 <<function Simple.all_parameters>>=
 let all_parameters frame _ =
-  let parameters = try get_global frame.frm_location parameters_var with _ -> []
+  let parameters = 
+    try get_global parameters_var with _ -> []
   in
   match !all_params with
     Some (f,l) when f == parameters -> l
@@ -7421,7 +7398,7 @@ let parameters_hist = ref []
 
 <<function Complex.set_parameter>>=
 let set_parameter frame = 
-  let parameters = get_global frame.frm_location parameters_var in
+  let parameters = get_global parameters_var in
   Select.select frame "set-parameter : " parameters_hist
     "" (all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
@@ -7433,7 +7410,7 @@ let set_parameter frame =
 
 <<function Complex.get_parameter>>=
 let get_parameter frame =
-  let parameters = get_global frame.frm_location parameters_var in  
+  let parameters = get_global parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
     "" (all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
