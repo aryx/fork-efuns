@@ -51,7 +51,7 @@ and action = frame -> unit
 (*s: type Efuns.generic_action *)
 and generic_action =
   BufferAction of (buffer -> unit)
-| FrameAction of (frame -> unit)
+| FrameAction of action
 (*e: type Efuns.generic_action *)
 
 (*s: type Efuns.mod_ident *)
@@ -403,7 +403,8 @@ let set_local buf var value =
 (*e: function Efuns.set_local *)
 (*s: function Efuns.get_var *)
 let get_var buf var = 
-  try Local.get buf.buf_vars var 
+  try 
+    Local.get buf.buf_vars var 
   with Not_found ->
     try 
       (*s: [[Efuns.get_var()]] try with major mode variables *)
@@ -423,7 +424,7 @@ let get_var buf var =
         iter buf.buf_minor_modes
         (*e: [[Efuns.get_var()]] try with minor mode variables *)
       with Not_found ->
-          Local.get buf.buf_location.loc_vars var
+        Local.get buf.buf_location.loc_vars var
 (*e: function Efuns.get_var *)
           
 (*s: function Efuns.get_global *)
@@ -635,9 +636,9 @@ let (actions : (string, generic_action) Hashtbl.t) =
 (*s: function Efuns.define_action *)
 let define_action action_name action_fun =
   (*s: sanity check action defined twice *)
-  (try ignore (Hashtbl.find actions action_name);
-      Printf.printf "Warning: action \"%s\" defined twice" action_name;
-      print_newline ();
+  (try 
+      Hashtbl.find actions action_name |> ignore;
+      Printf.printf "Warning: action \"%s\" defined twice\n" action_name;
     with _ -> ());
   (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (FrameAction action_fun)
@@ -646,9 +647,9 @@ let define_action action_name action_fun =
 (*s: function Efuns.define_buffer_action *)
 let define_buffer_action action_name action_fun =
   (*s: sanity check action defined twice *)
-  (try ignore (Hashtbl.find actions action_name);
-      Printf.printf "Warning: action \"%s\" defined twice" action_name;
-      print_newline ();
+  (try 
+      Hashtbl.find actions action_name |> ignore;
+      Printf.printf "Warning: action \"%s\" defined twice\n" action_name;
     with _ -> ());
   (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (BufferAction action_fun)
@@ -672,8 +673,7 @@ let execute_buffer_action action buf =
   match (get_action action) with
     BufferAction f -> f buf
   | FrameAction f -> 
-      Printf.printf "Can't apply action %s on buffer" action;
-      print_newline ()
+      Printf.printf "Can't apply action %s on buffer\n" action
 (*e: function Efuns.execute_buffer_action *)
       
 (*s: function Efuns.string_to_regex *)

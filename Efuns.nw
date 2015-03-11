@@ -30,7 +30,10 @@
 
 %thx to this manual, better understand XXX?:
 % - that the minibuffer is really a buffer/frame like the other :)
+% - that the modeline is actually associated with each window
 % - TODO how the mark get changed when you do big move?
+% - TODO the global vs local variables, I always get confused about
+%    local variables
 
 %history LP-ization:
 % - skeleton, mostly copy paste of Template.nw skeleton
@@ -94,8 +97,7 @@
 % Config
 %------------------------------------------------------------------------------
 \allcodefalse
-% used for forward decl, pragmas, func decl, extern decl, stats, #ifdef,
-% debugging macros
+% used for redundant copyrights, pad special keybindings
 
 %\setcounter{tocdepth}{1}
 
@@ -158,6 +160,7 @@ a text editor.
 Why? Because I think it makes you a better programmer if
 you fully understand how things work under the hood.
 
+% chose efuns, simple, elegant. also different language.
 % good cos written in ocaml! more high level, and while
 % you want to write a kernel in C, it makes more sense for an app 
 % to use ocaml!
@@ -174,14 +177,15 @@ Here are other candidates that were considered but ultimately discarded:
 % see Editor.nw for more choices
 
 % vs emacs:
-%  - no extension language (lisp) to extend the editor with plugins
-%    but it made sense for Emacs because the implementation language
+%  - no extension language (lisp) to extend the editor with plugins.
+%    It made sense for Emacs because the implementation language
 %    was C, which is more error prone than lisp, but by using OCaml
 %    for the implementation language we need less another 
 %    language to extend the core. Just add a module! Yes you need
 %    to recompile, but so what? less dynamic, but anyway
 %    in emacs case I usually do it via modifying my .emacs and
-%    very often reloading my emacs.
+%    very often reloading my emacs (buy maybe I'm not a good dynamic
+%    programmer)
 
 % see also other ocaml editors?
 %  - https://github.com/diml/zed (seems just an "engine")
@@ -243,8 +247,8 @@ License.
 
 \section{Acknowledgments}
 
-% Fabrice Le Fessant of course
-
+I would like to thank of course Fabrice Le Fessant,
+the main author of Efuns.
 
 \chapter{Overview}
 
@@ -262,7 +266,8 @@ License.
 
 % undo! multi steps undo! redo! sessions so macro-level undo
 % multi files/buffers, opening/saving/killing switching
-% multi windows (a kind of window manager!)
+% multi windows (a kind of window manager!) so can see different parts at
+%  the same time
 
 % specialised "major" modes: color!, font, indentation, navigating
 %todo: semantic editing/visualizing!
@@ -348,7 +353,7 @@ License.
 %
 % redisplay engine (actually incremental line oriented display)
 
-\section{Loading a file}
+\section{Trace of a file loading}
 
 % scenario
 
@@ -387,6 +392,7 @@ type text = {
 
 % need line because a text editor is line oriented, column number display,
 % line display, lots of things are important to do at line level.
+% actually the real question is why you need text_string?
 
 
 <<type Text.position>>=
@@ -399,7 +405,7 @@ type position = int
 
 <<type Text.line>>=
 and line = {
-    mutable position : position; (* bol *)
+    mutable position : position; (* bol (beginning of line) *)
 
     <<[[Text.line]] representation fields>>
     <<[[Text.line]] attribute fields>>
@@ -487,6 +493,8 @@ let compute_newlines string =
 % - we count the EOF has its own newline, a sentinel? maybe simpler
 %   that way indeed, I remember I had many Commons.line_xxx functions
 %   to handle those special cases
+% so an empty file will have first empty line, and then second
+% line with just EOF.
 
 <<function Text.nbre_lines>>=
 let nbre_lines tree = 
@@ -533,8 +541,8 @@ and buffer =
 % that are not connected to a file
 
 % diff with Text? 
-% - have a name, Text is really just the content.
-%    here it's connected to a file. 
+% - have a name, Text is really just the content. 
+%   Here it's connected to a file. 
 % - it has also a buf_point (and later a frame will have a cursor),
 %   see below
 % - it has a major mode, minor modes, a keymap, local variables
@@ -552,6 +560,7 @@ and point = {
 % to quickly know the line number so can index in the text.text_newlines array
 % and do certain stuff.
 % Most of the time what you care is really point.pos though.
+
 %old: was point.point and point.point_y but it was confusing as you
 % would expect then a point_x which the first field is really not. It's more
 % consistent to have point_line. It was also ugly to have point.point
@@ -568,6 +577,7 @@ mutable buf_start : Text.point;
 % on different buffers, but when you go back to a buffer you
 % want the cursor to be at the same position you used to be
 % (and the screen start at the same starting point too).
+% (hence the need for M-x pad-make-indirect-buffer)
 
 % there are also a list of points maintained by the Text itself, why?
 % because of gap things can move so you need to update all
@@ -576,7 +586,7 @@ mutable buf_start : Text.point;
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_modified : int; (* version? *)
 @
-% diff with text_modified? seems to be about modification of the
+%less: diff with text_modified? seems to be about modification of the
 % buffer property itself, not the underlying text
 
 
@@ -622,6 +632,7 @@ let create location name filename text local_map =
 
 
 \section{[[Frame]]}
+
 % It's not frame in emacs terminology.
 % It's really a window, but with not just
 %  the geometric info, it packs together geometric info (window type)
@@ -648,11 +659,11 @@ and frame  =
     <<[[Efuns.frame]] other fields>>
   } 
 @
-%less: different sections for the frame (cursor, position, etc)
+%todo: different sections for the frame (cursor, position, etc)
 %dead: mutable frm_force_point : bool;
 %dead: mutable frm_force_cursor : bool;
-%coordinates? seems redundant with frm.frm_window info no?
-%xpos are in line x col dimentions, same for width and height,
+%less: coordinates? seems redundant with frm.frm_window info no?
+% xpos are in line x col dimentions, same for width and height,
 % not pixels!
 %later: if decide to have variable size fonts we'll have to revisit
 % this no? emacs 21 did that?
@@ -682,8 +693,8 @@ let create_without_top location window mini buf =
 
   let frame =
     { frm_buffer = buf;
-      frm_window = window;
 
+      frm_window = window;
       frm_xpos = window.win_xpos;
       frm_ypos = window.win_ypos;
       frm_width = window.win_width;
@@ -731,6 +742,7 @@ let create_without_top location window mini buf =
   frame
 @
 % many many fields ...
+% install!!
 
 \section{[[Window]]}
 
@@ -754,14 +766,15 @@ and window =
 <<[[Efuns.frame]] other fields>>=
 mutable frm_window : window;
 @
+%less: why need that field in frame? frm_xpos not enough?
 
 
 <<[[Efuns.window]] other fields>>=
 mutable win_down : window_down;
 mutable win_up : window_up;
 @
-% up is important, allow to access top_window and 
-% top_location from any frame (but could use globals I think)
+%todo: up is to allow access top_window and 
+% top_location from any frame, but could use globals I think!
 
 <<type Efuns.window_down>>=
 and window_down =
@@ -817,7 +830,7 @@ let create mini up_window xpos ypos width height =
 
 
 \section{The [[Top_window]]}
-% LPize Topwindow in window_up and put it here
+%todo: LPize Topwindow in window_up and put it here
 
 %"The top_window structure corresponds to an Xterm widget (one X window).
 %From the top_window structure, you have access to text windows (window type)
@@ -869,13 +882,12 @@ mutable top_active_frame : frame;
 \section{The world, [[Location]]}
 % full state
 
-
 %"All the editor information is organised inside one structure: the location.
 %The location grants access to all other structures inside the editor. This
 %is done to easily save the editor state after a session (or to move it
 %from one editor to another)."
 
-% called location in Lefessant's terminology. Why? jocaml ancestry?
+% called location in LeFessant's terminology. Why? jocaml ancestry?
 
 
 %(* the world *)
@@ -927,7 +939,6 @@ mutable frm_location : location;
 <<[[Efuns.top_window]] other fields>>=
 mutable top_location : location;
 @
-
 %so can access the global world info from a frame
 %todo: but what if location was global, then even easier
 % to access global info
@@ -945,8 +956,9 @@ loc_mutex : Mutex.t;
 % introduce cycles (mutually recursive data structures, e.g.
 % with location pointers, top_window pointer),
 % so does not only go down, it also can go back up.
+% but maybe can restrict to the down path.
 
-\section{[[Action]], and [[actions]]}
+\section{[[Action]] and [[actions]]}
 
 <<type Efuns.action>>=
 and action = frame -> unit
@@ -956,7 +968,7 @@ and action = frame -> unit
 <<type Efuns.generic_action>>=
 and generic_action =
   BufferAction of (buffer -> unit)
-| FrameAction of (frame -> unit)
+| FrameAction of action
 @
 % really need this BufferAction subtelity?
 % We need a buffer action when something is done only once, e.g.
@@ -970,6 +982,7 @@ let (actions : (string, generic_action) Hashtbl.t) =
 % global!!
 % for M-x! and also so can use string in keybinding or mouse
 % (but could maybe use dirrectly the ocaml action code)
+%less: rename generic_actions then?
 
 
 <<function Efuns.define_action>>=
@@ -985,12 +998,12 @@ let define_buffer_action action_name action_fun =
 @
 
 <<sanity check action defined twice>>=
-(try ignore (Hashtbl.find actions action_name);
-    Printf.printf "Warning: action \"%s\" defined twice" action_name;
-    print_newline ();
+(try 
+    Hashtbl.find actions action_name |> ignore;
+    Printf.printf "Warning: action \"%s\" defined twice\n" action_name;
   with _ -> ());
 @
-
+%old had a sepater print_newline() but useless I think
 
 %<<constant Efuns.no_action>>=
 %let no_action = BufferAction (fun _ -> ())
@@ -1016,8 +1029,7 @@ let execute_buffer_action action buf =
   match (get_action action) with
     BufferAction f -> f buf
   | FrameAction f -> 
-      Printf.printf "Can't apply action %s on buffer" action;
-      print_newline ()
+      Printf.printf "Can't apply action %s on buffer\n" action
 @
 
 
@@ -1126,18 +1138,22 @@ define_action "change_font"  change_font;
 %(*  define_action "start_server" Server.start;  *)
 
 
-
+% a bit annoying, but ocaml is not a dynamic language with
+% eval string, so have to do that. Maybe recent ocaml
+% attribute could help.
 
 
 \section{Keyboard [[Map]]}
 % keyboard handling is important for an editor!
-% emacs spirit: prefix map
-% vi spirit: modes
-% sam spirit: the mouse ...
+% different possibilities:
+%  - emacs spirit: prefix map
+%  - vi spirit: modes
+%  - sam spirit: the mouse ...
 
-% mv stuff in Keyboard section? what is necessary to see before?
+%less: mv stuff in Keyboard section? what is necessary to see before?
 
-% like for variables, have different maps for different "scopes":
+% like for variables that we will see after, have different maps for
+% different "scopes":
 % - global
 % - major mode
 % - minor mode
@@ -1258,7 +1274,8 @@ let add_local_key buf =
 
 % add_local_key | add_global_key | ...-> <>?
 <<function Keymap.interactive>>=
-let interactive map   keylist name f =
+let interactive map =
+ fun keylist name f ->
   <<[[Keymap.interactive()]] add keylist and name to interactives list>>
   add_binding map keylist f
 @
@@ -1294,30 +1311,33 @@ let _ =
   <<[[Std_efunsrc.toplevel]] set interactives_map>>
 @
 
-% a few shortcuts
+% a few important keys
 
 %\section{[[C-h]]}
 <<constant Keymap.c_h>>=
-let c_h = (ControlMap, Char.code 'h')
-@
-<<constant Std_efunsrc.c_h>>=
 let c_h = (ControlMap, Char.code 'h')
 @
 %\section{[[C-x]]}
 <<constant Keymap.c_x>>=
 let c_x = (ControlMap, Char.code 'x')
 @
-<<constant Std_efunsrc.c_x>>=
-let c_x = (ControlMap, Char.code 'x') 
-@
 %\section{[[C-c]]}
 <<constant Keymap.c_c>>=
 let c_c = (ControlMap, Char.code 'c')
 @
+
+\ifallcode
+%less: delete, redundant
+<<constant Std_efunsrc.c_h>>=
+let c_h = (ControlMap, Char.code 'h')
+@
+<<constant Std_efunsrc.c_x>>=
+let c_x = (ControlMap, Char.code 'x') 
+@
 <<constant Std_efunsrc.c_c>>=
 let c_c = (ControlMap, Char.code 'c') 
 @
-
+\fi
 
 <<[[global_map]] initial entries>>=
 (* -------------------------------------------------------- *)
@@ -1405,17 +1425,17 @@ let c_c = (ControlMap, Char.code 'c')
 
 
 
-% main -> Efuns.init -> List.iter f start_hooks -> 
-%  (Std_efunsrc._5 -> add_start_hook(<>) )
+% main -> Efuns.init -> List.iter f start_hooks -> <> 
+%  (as ?? ?<- add_start_hook(<>) <- Std_efunsrc._5)
 <<function Std_efunsrc.init_global_map>>=
 let init_global_map location = 
-  List.iter (fun (keys, action) ->
+  !!global_map |> List.iter (fun (keys, action) ->
       try
         Keymap.add_global_key location keys action (execute_action action)
       with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;
-  ) !!global_map;
+        Log.printf "Error for action %s" action;
+        Log.exn "%s\n" e;
+  );
 
   <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>
     
@@ -1437,13 +1457,14 @@ let init_global_map location =
 % trick using phantom types.
 % See appendix (or put more of local.ml here?)
 
-% why need variables anyway in emacs? to configure things! e.g. level
+% why need variables in emacs? to configure things! e.g. level
 % of indentation for this major mode. You can overwrite also
 % global settings. Configurable editor!
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_vars : Local.vars;
 @
+% less: rename Local? why Local?
 
 <<[[Efuns.location]] other fields>>=
 loc_vars : Local.vars;
@@ -1477,7 +1498,8 @@ let get_local buf var =
 % buffer -> major -> minors -> global
 <<function Efuns.get_var>>=
 let get_var buf var = 
-  try Local.get buf.buf_vars var 
+  try 
+    Local.get buf.buf_vars var 
   with Not_found ->
     try 
       <<[[Efuns.get_var()]] try with major mode variables>>
@@ -1485,7 +1507,7 @@ let get_var buf var =
       try 
         <<[[Efuns.get_var()]] try with minor mode variables>>
       with Not_found ->
-          Local.get buf.buf_location.loc_vars var
+        Local.get buf.buf_location.loc_vars var
 @
 
 % was not there originally
@@ -1501,7 +1523,8 @@ let get_var buf var =
 %    will see in main chapter.
 % - variable hook, below
 % - named hooks, for frame a buffer actions, so take a string (action name)
-%   for parameter
+%   for parameter. why not does not take the action function directly?
+%   because want to possibly save such hooks configuration in a file
 
 % again, configurable editor spirit so hooks to customize things,
 % place where you can plug a customization at certain code points
@@ -6985,7 +7008,7 @@ let _ =
 
 
 
-\section{Multi top windows}
+\section{Multiple toplevel windows}
 % called actually frame in emacs terminology, but confusing I think.
 % I don't think this feature is very useful.
 

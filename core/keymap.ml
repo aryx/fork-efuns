@@ -164,7 +164,8 @@ let all_bindings location =
 (*e: function Keymap.all_bindings *)
   
 (*s: function Keymap.interactive *)
-let interactive map   keylist name f =
+let interactive map =
+ fun keylist name f ->
   (*s: [[Keymap.interactive()]] add keylist and name to interactives list *)
   map.interactives <- (name, (f, Some keylist)) :: map.interactives;
   (*e: [[Keymap.interactive()]] add keylist and name to interactives list *)

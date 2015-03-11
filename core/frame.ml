@@ -197,8 +197,8 @@ let create_without_top location window mini buf =
 
   let frame =
     { frm_buffer = buf;
-      frm_window = window;
 
+      frm_window = window;
       frm_xpos = window.win_xpos;
       frm_ypos = window.win_ypos;
       frm_width = window.win_width;

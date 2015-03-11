@@ -566,13 +566,13 @@ let _ =
     
 (*s: function Std_efunsrc.init_global_map *)
 let init_global_map location = 
-  List.iter (fun (keys, action) ->
+  !!global_map |> List.iter (fun (keys, action) ->
       try
         Keymap.add_global_key location keys action (execute_action action)
       with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;
-  ) !!global_map;
+        Log.printf "Error for action %s" action;
+        Log.exn "%s\n" e;
+  );
 
   (*s: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
   List.iter (fun (name, action) ->

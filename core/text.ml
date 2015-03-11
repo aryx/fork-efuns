@@ -70,7 +70,7 @@ type session = int
 
 (*s: type Text.line *)
 and line = {
-    mutable position : position; (* bol *)
+    mutable position : position; (* bol (beginning of line) *)
 
     (*s: [[Text.line]] representation fields *)
     mutable representation : repr list;
