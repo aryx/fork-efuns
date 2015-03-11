@@ -1,7 +1,8 @@
 (*s: major_modes/dired.ml *)
+(*s: copyright header *)
 (***********************************************************************)
 (*                                                                     *)
-(*                             ____                                    *)
+(*                             ____________                            *)
 (*                                                                     *)
 (*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
 (*                                                                     *)
@@ -9,7 +10,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
+(*e: copyright header *)
 open Text
 open Keymap
 open Efuns

@@ -1,4 +1,5 @@
 (*s: core/text.ml *)
+(*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -9,7 +10,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
+(*e: copyright header2 *)
 (* A FAIRE:
 On doit faire converger ce text vers un text directement affichable par
 WX_text. Pour cela:

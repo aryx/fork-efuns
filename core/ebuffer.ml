@@ -1,4 +1,5 @@
 (*s: core/ebuffer.ml *)
+(*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -9,7 +10,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
+(*e: copyright header2 *)
 open Utils
 open Efuns
 open Text

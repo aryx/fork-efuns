@@ -1,4 +1,5 @@
 (*s: minor_modes/fill_mode.ml *)
+(*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -9,6 +10,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
+(*e: copyright header2 *)
 open Options
 open Text
 open Simple

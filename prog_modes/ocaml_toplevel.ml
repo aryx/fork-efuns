@@ -1,4 +1,5 @@
 (*s: prog_modes/ocaml_toplevel.ml *)
+(*s: copyright header efuns *)
 (***********************************************************************)
 (*                                                                     *)
 (*                             Efuns                                   *)
@@ -9,7 +10,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
+(*e: copyright header efuns *)
 open Ocaml_mode
 open Options
 open Text

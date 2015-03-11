@@ -6,17 +6,7 @@
 %-------------------------------------------------------------
 
 <<commons2/local.mli>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____________                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header>>
 <<signature type Local.vars>>
 <<signature function Local.vars>>
 
@@ -37,17 +27,7 @@
 %-------------------------------------------------------------
 
 <<commons2/local.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____________                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header>>
 (* We use strings instead of ints to enable migration of datas between
 editors (data must be symbolic) *)
 
@@ -96,17 +76,7 @@ external id : 'a -> 'a = "%identity"
 %-------------------------------------------------------------
 
 <<core/efuns.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 (* Useful types for Efuns *)
 
 (*************************************************************************)
@@ -965,17 +935,7 @@ let commit_session tree session_date =
 %-------------------------------------------------------------
 
 <<core/text.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 (* A FAIRE:
 On doit faire converger ce text vers un text directement affichable par
 WX_text. Pour cela:
@@ -1419,17 +1379,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<core/ebuffer.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Utils
 open Efuns
 open Text
@@ -1536,17 +1486,7 @@ let define_char_binding map char (f : frame -> 'a) =
 %-------------------------------------------------------------
 
 <<core/keymap.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 (*
 La gestion des keymaps est inadapte'e a` la modification dynamique.
 En effet, on aurait envie de pouvoir modifier les bindings selon divers
@@ -1644,17 +1584,7 @@ let update_request frame request =
 %-------------------------------------------------------------
 
 <<core/minibuffer.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Text
 open Efuns
 open Frame
@@ -1696,17 +1626,7 @@ let backend top_window =
 %-------------------------------------------------------------
 
 <<core/window.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Efuns
 
 <<function Window.create_at_top>>
@@ -1972,16 +1892,7 @@ let find_buffer_frame location buf =
 %-------------------------------------------------------------
 
 <<core/frame.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
+<<copyright header2>>
 open Common
 
 open Options
@@ -2886,17 +2797,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<features/simple.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Options
 open Xtypes
 open Efuns
@@ -3556,17 +3457,7 @@ let simple_select frame request action =
 %-------------------------------------------------------------
 
 <<features/select.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Options
 open Efuns
 open Text
@@ -3935,17 +3826,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<features/complexe.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Unix
 open Utils
 open Efuns
@@ -4364,17 +4245,7 @@ let select_lib_filename frame request action =
 %-------------------------------------------------------------
 
 <<features/search.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Top_window
 open Efuns
 open Text
@@ -4436,17 +4307,7 @@ open Select
 %-------------------------------------------------------------
 
 <<features/interactive.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Efuns
 open Text
 open Frame
@@ -4472,17 +4333,7 @@ open Keymap
 %-------------------------------------------------------------
 
 <<features/abbrevs.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 (*
 Expansion des abbreviations: 
 deux fonctions principales: 
@@ -4547,17 +4398,7 @@ let remove_frame frame =
 %-------------------------------------------------------------
 
 <<features/multi_frames.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Efuns
 open Text
 open Frame
@@ -4678,17 +4519,7 @@ let grep_hist = ref [""]
 %-------------------------------------------------------------
 
 <<features/compil.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Options
 open Efuns
 open Text
@@ -4918,17 +4749,7 @@ let check_abort frame =
 %-------------------------------------------------------------
 
 <<graphics/top_window.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Options
 open Xtypes
 open Efuns
@@ -5034,17 +4855,7 @@ open Efuns
 %-------------------------------------------------------------
 
 <<std_efunsrc.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Utils
 open Options
 
@@ -5138,16 +4949,7 @@ open Top_window
 %-------------------------------------------------------------
 
 <<main.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
+<<copyright header2>>
 open Options
 open Efuns
   
@@ -5383,17 +5185,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<major_modes/dired.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____                                    *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header>>
 open Text
 open Keymap
 open Efuns
@@ -5451,17 +5243,7 @@ open Window
 %-------------------------------------------------------------
 
 <<minor_modes/minor_mode_sample.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Text
 open Simple
 open Efuns
@@ -5548,17 +5330,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<minor_modes/abbrevs_mode.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Options
 open Abbrevs
 open Text
@@ -5800,17 +5572,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<minor_modes/accents_mode.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Text
 open Simple
 open Efuns
@@ -5876,16 +5638,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<minor_modes/fill_mode.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
+<<copyright header2>>
 open Options
 open Text
 open Simple
@@ -5944,17 +5697,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<minor_modes/paren_mode.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Text
 open Simple
 open Efuns
@@ -5999,17 +5742,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<minor_modes/tab_mode.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Text
 open Simple
 open Efuns
@@ -6178,17 +5911,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<prog_modes/makefile_mode.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 open Options
 open Text
 open Keymap
@@ -6497,17 +6220,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<prog_modes/ocaml_toplevel.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             Efuns                                   *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header efuns>>
 open Ocaml_mode
 open Options
 open Text
@@ -6642,17 +6355,7 @@ let start frame =
 %-------------------------------------------------------------
 
 <<ipc/server.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____                                    *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header>>
 open Efuns
 open Xtypes
 open Unix  
@@ -6841,17 +6544,7 @@ let eval_buffer frame =
 %-------------------------------------------------------------
 
 <<dynamic/eval.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header2>>
 
 open Efuns
 open Text
@@ -7063,17 +6756,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<misc/efuns_filebrowser.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____                                    *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header>>
 open Xtypes
 open WX_types
 open WX_tree
@@ -7241,17 +6924,7 @@ let _ =
 %-------------------------------------------------------------
 
 <<misc/efuns_texbrowser.ml>>=
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____                                    *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+<<copyright header>>
 open Xtypes
 open WX_types
 open WX_tree

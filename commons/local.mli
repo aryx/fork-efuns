@@ -1,4 +1,5 @@
 (*s: commons2/local.mli *)
+(*s: copyright header *)
 (***********************************************************************)
 (*                                                                     *)
 (*                             ____________                            *)
@@ -9,7 +10,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
+(*e: copyright header *)
 (*s: signature type Local.vars *)
 type vars
 (*e: signature type Local.vars *)

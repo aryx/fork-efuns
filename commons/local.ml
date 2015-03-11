@@ -1,4 +1,5 @@
 (*s: commons2/local.ml *)
+(*s: copyright header *)
 (***********************************************************************)
 (*                                                                     *)
 (*                             ____________                            *)
@@ -9,7 +10,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
+(*e: copyright header *)
 (* We use strings instead of ints to enable migration of datas between
 editors (data must be symbolic) *)
 

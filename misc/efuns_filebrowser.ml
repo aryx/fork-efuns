@@ -1,7 +1,8 @@
 (*s: misc/efuns_filebrowser.ml *)
+(*s: copyright header *)
 (***********************************************************************)
 (*                                                                     *)
-(*                             ____                                    *)
+(*                             ____________                            *)
 (*                                                                     *)
 (*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
 (*                                                                     *)
@@ -9,7 +10,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
+(*e: copyright header *)
 open Xtypes
 open WX_types
 open WX_tree

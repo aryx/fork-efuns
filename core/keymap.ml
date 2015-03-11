@@ -1,4 +1,5 @@
 (*s: core/keymap.ml *)
+(*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
 (*                           xlib for Ocaml                            *)
@@ -9,7 +10,7 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
+(*e: copyright header2 *)
 (*
 La gestion des keymaps est inadapte'e a` la modification dynamique.
 En effet, on aurait envie de pouvoir modifier les bindings selon divers

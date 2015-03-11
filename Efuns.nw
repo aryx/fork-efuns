@@ -200,6 +200,47 @@ those parts are copyright by INRIA.
 The prose is mine and is licensed under the GNU Free Documentation
 License.
 
+<<copyright header efuns>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                             Efuns                                   *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+@
+
+\ifallcode
+<<copyright header>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                             ____________                            *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+@
+
+<<copyright header2>>=
+(***********************************************************************)
+(*                                                                     *)
+(*                           xlib for Ocaml                            *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+@
+\fi
+
 \section{Acknowledgments}
 
 % Fabrice Le Fessant of course
