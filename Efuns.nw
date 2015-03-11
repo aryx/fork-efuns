@@ -17,6 +17,7 @@
 %    resname)
 % - cleaner separation between point and position, no more
 %   let point = point.point uglyness
+% - use global for location instead of all those fields
 
 %thx to codemap/codegraph/scheck:
 % - TODO use cg to reduce backward deps, introduce globals.c, utils.c,
@@ -779,8 +780,12 @@ mutable frm_window : window;
 mutable win_down : window_down;
 mutable win_up : window_up;
 @
-%todo: up is to allow access top_window and 
-% top_location from any frame, but could use globals I think!
+%subtle: up is to allow access to upper window, was used
+% for access top_location (but now I use a global), but
+% I think it's still useful for Window.next to know
+% what is upper and do things. Also in a multiple toplevel windows
+% context, we need that I think because we can't use
+% a single top_window global.
 
 <<type Efuns.window_down>>=
 and window_down =
@@ -797,10 +802,8 @@ and window_up =
   Window of window
 | TopWindow of top_window
 @
-%less: this also makes the structures mutually recursive!
+% this makes the structures mutually recursive!
 % from a top_window -> window and can get back the top_window back
-%todo: if we were using globals, we would need that? would need
-% create_at_top?
 
 
 <<function Window.top>>=
@@ -936,17 +939,17 @@ Hashtbl.add (Efuns.location()).loc_buffers name buf;
 
 
 
-<<[[Efuns.buffer]] other fields>>=
-(*buf_location : location;*)
-@
-<<[[Efuns.frame]] other fields>>=
-(* mutable frm_location : location; *)
-@
-<<[[Efuns.top_window]] other fields>>=
-(* mutable top_location : location; *)
-@
-%so can access the global world info from a frame
-%todo: but what if location was global, then even easier
+%<<[[Efuns.buffer]] other fields>>=
+%(*buf_location : location;*)
+%@
+%<<[[Efuns.frame]] other fields>>=
+%(* mutable frm_location : location; *)
+%@
+%<<[[Efuns.top_window]] other fields>>=
+%(* mutable top_location : location; *)
+%@
+%old: so can access the global world info from a frame
+% but what if location was global, then even easier
 % to access global info
 
 
