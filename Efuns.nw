@@ -1059,11 +1059,15 @@ let get_action action =
 % ?? -> <> who will dispatch and know which frame?
 % string -> ocaml code
 <<function Efuns.execute_action>>=
-let execute_action action frame = 
+let execute_action action = 
   match (get_action action) with
-    BufferAction f -> f frame.frm_buffer
-  | FrameAction f -> f frame 
+    BufferAction f -> (fun frame -> f frame.frm_buffer)
+  | FrameAction f -> f 
 @
+%note: it used to be let execute_action action frame = ...
+% but then with that execute action return a closure each time,
+% and then we can't in -debug find the action_name corresponding
+% to an action in try_map, hence my rewrite.
 
 % exec_named_buf_hooks -> <>
 <<function Efuns.execute_buffer_action>>=
@@ -1688,6 +1692,13 @@ let init_files = ref []
 let _ =
  Arg.parse [
    <<[[main()]] command line options>>
+   "-debug", Arg.Set Efuns.debug, 
+   " for debugging";
+   "-debug_graphics", Arg.Set Efuns.debug_graphics, 
+   " for debugging";
+   "-debug_init", Arg.Set Efuns.debug_init, 
+   " for debugging";
+
  ] 
  (fun name -> init_files := name :: !init_files)
  usage_str
@@ -1904,7 +1915,7 @@ let _ =
 
 <<toplevel Main._4>>=
 let _ =
-  Graphics_efuns.init location
+  Graphics_efuns.init location !init_files
 @
 %less: could just take ()
 
@@ -2178,8 +2189,7 @@ let handle_key top_window modifiers keysym =
   clean_display location;
   clear_message top_window;
 
-  exec_hooks 
-     (try get_global handle_key_start_hook with _ -> []) location;
+  exec_hooks (try get_global handle_key_start_hook with _ -> []) ();
 
   let mod_ = 
     <<[[Top_window.handle_key()]] compute mod>>
@@ -2193,8 +2203,7 @@ let handle_key top_window modifiers keysym =
     <<[[Top_window.handle_key()]] handle exception of try_map>>
   end;
 
-  exec_hooks 
-      (try get_global handle_key_end_hook with _ -> []) location;
+  exec_hooks (try get_global handle_key_end_hook with _ -> []) ();
 
   update_display location
 @
@@ -4203,13 +4212,13 @@ if !!interactives_map = [] then begin
 % that then auto generate the list of interactive functions.
 
 <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
-List.iter (fun (name, action) ->
+!!interactives_map |> List.iter (fun (name, action) ->
     try
       add_interactive location.loc_map name (execute_action action)
     with e ->
-        Log.printf "Error for action %s" action;
-        Log.exn "%s\n" e;
-) !!interactives_map;
+      Log.printf "Error for action %s" action;
+      Log.exn "%s\n" e;
+);
 @
 
 <<function Keymap.add_interactive>>=
@@ -4268,6 +4277,19 @@ let try_map frame key =
       <<[[Top_window.try_map()]] set repeat action>>
       frame.frm_prefix <- [];
       (* dispatch the action *)
+      if !Efuns.debug
+      then begin
+        let found = ref false in
+        Efuns.actions |> Hashtbl.iter  (fun k v ->
+          match v with
+          | FrameAction f2 when f == f2 ->
+              found := true;
+              pr2 (spf "action: %s" k)
+          | _ -> ()
+        );
+        if not !found
+        then pr2 ("action not found");
+      end;
       f frame; 
       <<[[Top_window.try_map()]] set last action>>
   | Prefix map ->
@@ -4318,8 +4340,11 @@ let rec get_binding map keylist =
         (Keymap.print_key_list (frame.frm_prefix @ [key])));
     frame.frm_prefix <- [];
 | Failure str -> message top_window str
-| e -> message top_window 
-      (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
+| e -> 
+  if !debug
+  then pr2 (spf "Uncaught exception %s" (Utils.printexn e));
+  message top_window 
+    (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
 @
 
 

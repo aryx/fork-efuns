@@ -167,6 +167,10 @@ let location () =
 open Options
 
 <<constant Efuns.check>>
+
+let debug = ref false
+let debug_graphics = ref false
+let debug_init = ref false
   
 <<constant Efuns.load_path>>
 
@@ -4662,15 +4666,13 @@ let wrap top_window f () =
   clean_display location;    
   clear_message top_window;
   keypressed := XK.xk_Menu;
-  exec_hooks
-    (try get_global handle_key_start_hook with _ -> []) location;    
+  exec_hooks (try get_global handle_key_start_hook with _ -> []) ();    
   begin
-    try f top_window with e ->   
-        message top_window 
-          (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
+    try f top_window 
+    with e -> message top_window (Printf.sprintf "Uncaught exception %s" 
+                                    (Utils.printexn e))
   end;
-  exec_hooks 
-    (try get_global handle_key_end_hook with _ -> []) location;    
+  exec_hooks (try get_global handle_key_end_hook with _ -> []) ();    
   update_display (Efuns.location());
   let graphic = Window.backend top_window in
   graphic.Xdraw.update_displays ();
@@ -4725,6 +4727,7 @@ let check_abort frame =
 
 <<graphics/top_window.ml>>=
 <<copyright header2>>
+open Common
 open Options
 open Xtypes
 open Efuns

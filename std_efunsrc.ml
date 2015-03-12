@@ -576,13 +576,13 @@ let init_global_map () =
   );
 
   (*s: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
-  List.iter (fun (name, action) ->
+  !!interactives_map |> List.iter (fun (name, action) ->
       try
         add_interactive location.loc_map name (execute_action action)
       with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;
-  ) !!interactives_map;
+        Log.printf "Error for action %s" action;
+        Log.exn "%s\n" e;
+  );
   (*e: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
     
   (* standard keys *)

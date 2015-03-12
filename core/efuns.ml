@@ -455,6 +455,10 @@ open Options
 (*s: constant Efuns.check *)
 let check = ref false
 (*e: constant Efuns.check *)
+
+let debug = ref false
+let debug_graphics = ref false
+let debug_init = ref false
   
 (*s: constant Efuns.load_path *)
 let load_path = define_option ["efuns_path"] 
@@ -557,10 +561,10 @@ let get_action action =
 (*e: function Efuns.get_action *)
 
 (*s: function Efuns.execute_action *)
-let execute_action action frame = 
+let execute_action action = 
   match (get_action action) with
-    BufferAction f -> f frame.frm_buffer
-  | FrameAction f -> f frame 
+    BufferAction f -> (fun frame -> f frame.frm_buffer)
+  | FrameAction f -> f 
 (*e: function Efuns.execute_action *)
 
 (*s: function Efuns.execute_buffer_action *)

@@ -11,6 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
+open Common
 open Options
 open Xtypes
 open Efuns
@@ -60,6 +61,19 @@ let try_map frame key =
       (*e: [[Top_window.try_map()]] set repeat action *)
       frame.frm_prefix <- [];
       (* dispatch the action *)
+      if !Efuns.debug
+      then begin
+        let found = ref false in
+        Efuns.actions |> Hashtbl.iter  (fun k v ->
+          match v with
+          | FrameAction f2 when f == f2 ->
+              found := true;
+              pr2 (spf "action: %s" k)
+          | _ -> ()
+        );
+        if not !found
+        then pr2 ("action not found");
+      end;
       f frame; 
       (*s: [[Top_window.try_map()]] set last action *)
       frame.frm_last_action <- f
@@ -235,8 +249,7 @@ let handle_key top_window modifiers keysym =
   clean_display location;
   clear_message top_window;
 
-  exec_hooks 
-     (try get_global handle_key_start_hook with _ -> []) location;
+  exec_hooks (try get_global handle_key_start_hook with _ -> []) ();
 
   let mod_ = 
     (*s: [[Top_window.handle_key()]] compute mod *)
@@ -262,13 +275,15 @@ let handle_key top_window modifiers keysym =
             (Keymap.print_key_list (frame.frm_prefix @ [key])));
         frame.frm_prefix <- [];
     | Failure str -> message top_window str
-    | e -> message top_window 
-          (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
+    | e -> 
+      if !debug
+      then pr2 (spf "Uncaught exception %s" (Utils.printexn e));
+      message top_window 
+        (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
     (*e: [[Top_window.handle_key()]] handle exception of try_map *)
   end;
 
-  exec_hooks 
-      (try get_global handle_key_end_hook with _ -> []) location;
+  exec_hooks (try get_global handle_key_end_hook with _ -> []) ();
 
   update_display location
 (*e: function Top_window.handle_key *)
@@ -284,15 +299,13 @@ let wrap top_window f () =
   clean_display location;    
   clear_message top_window;
   keypressed := XK.xk_Menu;
-  exec_hooks
-    (try get_global handle_key_start_hook with _ -> []) location;    
+  exec_hooks (try get_global handle_key_start_hook with _ -> []) ();    
   begin
-    try f top_window with e ->   
-        message top_window 
-          (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
+    try f top_window 
+    with e -> message top_window (Printf.sprintf "Uncaught exception %s" 
+                                    (Utils.printexn e))
   end;
-  exec_hooks 
-    (try get_global handle_key_end_hook with _ -> []) location;    
+  exec_hooks (try get_global handle_key_end_hook with _ -> []) ();    
   update_display (Efuns.location());
   let graphic = Window.backend top_window in
   graphic.Xdraw.update_displays ();

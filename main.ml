@@ -90,6 +90,13 @@ let _ =
    (*x: [[main()]] command line options *)
      "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
    (*e: [[main()]] command line options *)
+   "-debug", Arg.Set Efuns.debug, 
+   " for debugging";
+   "-debug_graphics", Arg.Set Efuns.debug_graphics, 
+   " for debugging";
+   "-debug_init", Arg.Set Efuns.debug_init, 
+   " for debugging";
+
  ] 
  (fun name -> init_files := name :: !init_files)
  usage_str
@@ -206,6 +213,6 @@ let _ =
 
 (*s: toplevel Main._4 *)
 let _ =
-  Graphics_efuns.init location
+  Graphics_efuns.init location !init_files
 (*e: toplevel Main._4 *)
 (*e: main.ml *)

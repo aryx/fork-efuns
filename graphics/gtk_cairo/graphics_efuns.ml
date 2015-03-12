@@ -144,7 +144,8 @@ let clear_eol ?(color="DarkSlateGray") loc cr  col line len =
   ()
 
 let draw_string loc cr   col line  str  offset len   attr =
-  pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
+  if !debug_graphics
+  then pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
     col line str offset len attr);
   let bgcolor = 
     let idx = (attr lsr 8) land 255 in
@@ -161,7 +162,8 @@ let draw_string loc cr   col line  str  offset len   attr =
   ()
 
 let update_displays _loc _cr =
-  pr2 ("WX_xterm.update_displays")
+  if !debug_graphics
+  then pr2 ("WX_xterm.update_displays")
 
 
 let backend loc cr = 
@@ -248,7 +250,8 @@ let test_cairo () =
 (*****************************************************************************)
 
 let paint w =
-  pr2 "paint";
+  if !debug_graphics
+  then pr2 "paint";
   Top_window.update_display w.model 
 
 (* for the special key, Control, Meta, etc *)
@@ -306,7 +309,9 @@ let init2 location init_files =
   paint w;
 
   win#event#connect#key_press ~callback:(fun key ->
-    pr2 (spf "%d, %s" (GdkEvent.Key.keyval key) (GdkEvent.Key.string key));
+    if !debug
+    then pr2 (spf "key: %d, %s" 
+                (GdkEvent.Key.keyval key) (GdkEvent.Key.string key));
 
     let code_opt =
       match GdkEvent.Key.keyval key with
@@ -347,6 +352,17 @@ let init2 location init_files =
   (*-------------------------------------------------------------------*)
   (* End *)
   (*-------------------------------------------------------------------*)
+
+  GtkSignal.user_handler := (fun exn -> 
+    pr2 "fucking callback";
+    let s = Printexc.get_backtrace () in
+    pr2 s;
+(*
+    let pb = "pb: " ^ Common.exn_to_s exn in
+    G.dialog_text ~text:pb ~title:"pb";
+*)
+    raise exn
+  );
 
   win#connect#destroy ~callback:quit |> ignore;
   win#show ();
