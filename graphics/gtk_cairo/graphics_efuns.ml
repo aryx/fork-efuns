@@ -265,7 +265,7 @@ let init2 location init_files =
   let _locale = GtkMain.Main.init () in
 
   let width = 800 in
-  let height = 1010 in
+  let height = 800 in
   let w = {
     model = location;
     width;
@@ -280,7 +280,7 @@ let init2 location init_files =
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
   (*-------------------------------------------------------------------*)
 
-  location.loc_height <- 25;
+  location.loc_height <- 35;
   (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create () in
   (* the *bindings* buffer *)
@@ -299,7 +299,7 @@ let init2 location init_files =
   px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
 
   let cr = Cairo_lablgtk.create px#pixmap in
-  Cairo.scale cr 1.0 1.0;
+  (* Cairo.scale cr 1.0 1.0; *)
   Cairo.select_font_face cr "fixed"
     Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
   Cairo.set_font_size cr 20.0;
