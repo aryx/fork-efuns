@@ -505,6 +505,8 @@ let update top_window frame =
     (*e: [[Frame.update()]] conditions for redraw *)
   then begin
     (*s: [[Frame.update()]] redraw *)
+    if !debug_display
+    then pr2 "redraw";
     (*s: [[Frame.update()]] redraw, possibly update frm_y_offset *)
     let start = frame.frm_start in
     let start_c = point_to_cursor buf start in

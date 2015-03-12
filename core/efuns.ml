@@ -458,6 +458,7 @@ let check = ref false
 
 let debug = ref false
 let debug_graphics = ref false
+let debug_display = ref false
 let debug_init = ref false
   
 (*s: constant Efuns.load_path *)

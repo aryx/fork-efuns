@@ -94,10 +94,15 @@ let _ =
    " for debugging";
    "-debug_graphics", Arg.Set Efuns.debug_graphics, 
    " for debugging";
+   "-debug_display", Arg.Set Efuns.debug_display, 
+   " for debugging";
    "-debug_init", Arg.Set Efuns.debug_init, 
    " for debugging";
+   "-debugger", Arg.Unit (fun () ->
+     Efuns.debug := true;
+   ), " for debugging";
 
- ] 
+ ]
  (fun name -> init_files := name :: !init_files)
  usage_str
 (*e: toplevel Efuns._3 *)

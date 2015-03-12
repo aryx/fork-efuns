@@ -27,7 +27,12 @@ and item_attr =
 type position = int
 type delta = int
 
-type point
+(* normally abstract! but useful to have it public for ocamldebug *)
+type point = {
+    mutable pos : position;
+    mutable line : int;
+  }
+
 type action
 type t
 type session

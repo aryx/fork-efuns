@@ -170,6 +170,7 @@ open Options
 
 let debug = ref false
 let debug_graphics = ref false
+let debug_display = ref false
 let debug_init = ref false
   
 <<constant Efuns.load_path>>

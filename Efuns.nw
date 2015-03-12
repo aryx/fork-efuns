@@ -1696,6 +1696,8 @@ let _ =
    " for debugging";
    "-debug_graphics", Arg.Set Efuns.debug_graphics, 
    " for debugging";
+   "-debug_display", Arg.Set Efuns.debug_display, 
+   " for debugging";
    "-debug_init", Arg.Set Efuns.debug_init, 
    " for debugging";
 
@@ -3470,6 +3472,8 @@ frame.frm_redraw
 \subsubsection{Redraw}
 
 <<[[Frame.update()]] redraw>>=
+if !debug_display
+then pr2 "redraw";
 <<[[Frame.update()]] redraw, possibly update frm_y_offset>>
 <<[[Frame.update()]] redraw, possibly update frm_x_offset>>
 update_table top_window frame;
@@ -4282,6 +4286,7 @@ let try_map frame key =
         let found = ref false in
         Efuns.actions |> Hashtbl.iter  (fun k v ->
           match v with
+          (* subtle: this will work only if f2 was not a closure *)
           | FrameAction f2 when f == f2 ->
               found := true;
               pr2 (spf "action: %s" k)
