@@ -90,8 +90,6 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_shared : int; (* number of frames for that buffer *)
     (*x: [[Efuns.buffer]] other fields *)
-    (*buf_location : location;*)
-    (*x: [[Efuns.buffer]] other fields *)
     buf_map : map;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_map_partial : bool;
@@ -156,8 +154,6 @@ and frame  =
     mutable frm_point : Text.point; 
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_window : window;
-    (*x: [[Efuns.frame]] other fields *)
-    (* mutable frm_location : location; *)
     (*x: [[Efuns.frame]] other fields *)
     (* 0 for no scrollbar, 2 for scrollbar *)
     mutable frm_has_scrollbar : int;
@@ -270,8 +266,6 @@ and top_window =
     mutable graphics : Xdraw.graphics_backend option;
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_active_frame : frame;
-    (*x: [[Efuns.top_window]] other fields *)
-    (* mutable top_location : location; *)
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_mini_buffers : frame list;
     (*x: [[Efuns.top_window]] other fields *)

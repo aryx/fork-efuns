@@ -242,17 +242,17 @@ let default name =
   try
     Hashtbl.find (Efuns.location()).loc_buffers name
   with Not_found ->
-      let str = 
-        if name = "*help*" 
-        then "Welcome to Efuns, a small demo editor written in Ocaml.
+    let str = 
+      if name = "*help*" 
+      then "Welcome to Efuns, a small demo editor written in Ocaml.
 
 Fabrice Le Fessant
 PARA/SOR Project
 INRIA Rocquencourt
 "
-        else ""
-      in
-      create name None (Text.create str) (Keymap.create ())
+      else ""
+    in
+    create name None (Text.create str) (Keymap.create ())
 (*e: function Ebuffer.default *)
       
 

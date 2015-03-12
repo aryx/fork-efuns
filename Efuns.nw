@@ -29,9 +29,9 @@
 %   relevant file (or even function), better cluster the code
 %   (harder to understand non functional code using lots of globals)
 
-%thx to this manual, better understand XXX?:
-% - that the minibuffer is really a buffer/frame like the other :)
-% - that the modeline is actually associated with each window
+%thx to this manual, better understand Emacs:
+% - the minibuffer is really a buffer/frame like the other :)
+% - the modeline is actually associated with each window
 % - TODO how the mark get changed when you do big move?
 % - TODO the global vs local variables, I always get confused about
 %    local variables
@@ -120,7 +120,7 @@ Yoann Padioleau\\
 \texttt{yoann.padioleau@gmail.com}\\
 \\
 with code from\\
-Fabrice Lefessant
+Fabrice Le Fessant
 }
 
 
@@ -161,18 +161,22 @@ a text editor.
 Why? Because I think it makes you a better programmer if
 you fully understand how things work under the hood.
 
-% chose efuns, simple, elegant. also different language.
-% good cos written in ocaml! more high level, and while
+% chose efuns, simple, elegant. Also different language than previous books.
+% Written in ocaml! more high level, and while
 % you want to write a kernel in C, it makes more sense for an app 
-% to use ocaml!
+% to use a higher level language like ocaml!
 
 Here are other candidates that were considered but ultimately discarded:
 \begin{itemize}
 \item emacs
+%too big, xdisp.c is a single file of 30 000 LOC ... more than the whole
+% efuns
 %todo: look at emacs lisp manual, and emacs manual to see the concepts
 \item microemacs
 % the source of many forks apparently, so maybe the code is cleaner?
+% uemacs, on of them, used by torvalds, is 20 000 LOC so not bad
 \item qemacs
+% size?
 \end{itemize}
 
 % see Editor.nw for more choices
@@ -181,8 +185,8 @@ Here are other candidates that were considered but ultimately discarded:
 %  - no extension language (lisp) to extend the editor with plugins.
 %    It made sense for Emacs because the implementation language
 %    was C, which is more error prone than lisp, but by using OCaml
-%    for the implementation language we need less another 
-%    language to extend the core. Just add a module! Yes you need
+%    for the implementation language we don't need so much another 
+%    language to extend the core. You can just add a module! Yes you need
 %    to recompile, but so what? less dynamic, but anyway
 %    in emacs case I usually do it via modifying my .emacs and
 %    very often reloading my emacs (buy maybe I'm not a good dynamic
@@ -257,6 +261,9 @@ the main author of Efuns.
 
 % "Emacs is the extensible, customizable, self-documenting real-time
 % display editor."
+
+% as opposed to ed, can actually see the content! and update it
+% and get feedback in real-time. wysiwyg!
 
 % navigating in file (fast, different granularities), random access!
 % editing (inserting/deleting/moving/cut-copy-paste/transposing)
@@ -355,10 +362,10 @@ Options:
 %TODO: figure: show graphical window first! so can see concepts
 % of frames, status line, minibuffer (which don't have status lines), etc!
 
-% the world, Location that then encapsulate
-%  Windows/Frames, with Buffers, with Text inside
+% the world (Location) that encapsulates
+%  Windows/Frames, with then Buffers, with then Text inside
 %
-% then event loop with keyboard dispatch to the right action and
+% Event loop with keyboard dispatch to the right action and
 % right focused frame, taking itself the frame in parameter
 %
 % redisplay engine (actually incremental line oriented display)
@@ -756,6 +763,7 @@ let create_without_top window mini buf =
 % It's a window in Emacs terminology. And it's really
 % just the geometry part.
 
+%todo: rename? frame_config? frame_window?
 
 <<type Efuns.window>>=
 and window =
@@ -786,6 +794,9 @@ mutable win_up : window_up;
 % what is upper and do things. Also in a multiple toplevel windows
 % context, we need that I think because we can't use
 % a single top_window global.
+% we will see later than the action type takes a frame as a parameter, and
+% so each action must be able from a frame to access all 
+% necessary information, hence the win_up field too.
 
 <<type Efuns.window_down>>=
 and window_down =
@@ -795,6 +806,7 @@ and window_down =
 | HComb of window * window 
 | VComb of window * window
 @
+% that's the important part! 
 %less: why of unit?
 
 <<type Efuns.window_up>>=
@@ -951,6 +963,9 @@ Hashtbl.add (Efuns.location()).loc_buffers name buf;
 %old: so can access the global world info from a frame
 % but what if location was global, then even easier
 % to access global info
+%I think lefessant started it as a demo for jocaml, and so
+% with migration idea of data, so he could not use
+% globals so much, but I don't need jocaml or this feature.
 
 
 <<[[Efuns.location]] other fields>>=
@@ -967,12 +982,30 @@ loc_mutex : Mutex.t;
 % so does not only go down, it also can go back up.
 % but maybe can restrict to the down path.
 
+% not that it's hard to remove the recursion.
+% for instance the keybinding have an action which takes a frame
+% as a parameter, so binding and frame are mutually recursive, as
+% well as with buffer, window, and even top_window we
+% need to go up sometimes. and a top window needs to know
+% the active frame.
+
 \section{[[Action]] and [[actions]]}
 
 <<type Efuns.action>>=
 and action = frame -> unit
 @
 % is made abstract in .mli
+% this actually causes many types to be mutually recursive, 
+% because the keyboard handling stuff depends on frame and buffers
+% and vice versa.
+
+% actions will be called from the keyboard event dispatcher.
+% the only thing passed is the frame/window where the event
+% occured, but sometimes an action then need to have globa
+% effects (in which case it can use location()), or the upper
+% frames/windows, which means we need from the frame to be able
+% to access lots of information, hence the introduction of
+% certain fields in the frame data structure.
 
 <<type Efuns.generic_action>>=
 and generic_action =
@@ -1873,6 +1906,7 @@ let _ =
 let _ =
   Graphics_efuns.init location
 @
+%less: could just take ()
 
 \subsection{[[Graphics.init()]]}
 
@@ -1958,17 +1992,17 @@ let default name =
   try
     Hashtbl.find (Efuns.location()).loc_buffers name
   with Not_found ->
-      let str = 
-        if name = "*help*" 
-        then "Welcome to Efuns, a small demo editor written in Ocaml.
+    let str = 
+      if name = "*help*" 
+      then "Welcome to Efuns, a small demo editor written in Ocaml.
 
 Fabrice Le Fessant
 PARA/SOR Project
 INRIA Rocquencourt
 "
-        else ""
-      in
-      create name None (Text.create str) (Keymap.create ())
+      else ""
+    in
+    create name None (Text.create str) (Keymap.create ())
 @
 %(*
 %"
@@ -2011,6 +2045,7 @@ let create_at_top xpos ypos width height =
 % or if were using globals for top_window, would need that? why
 % we need the win_up field that makes things mutually recursive and
 % slightly complicated?
+% update: I think there is no choice, need win_up for certain actions.
 
 
 %<<[[Top_window.create()]] create graphical window with right dimensions>>=
