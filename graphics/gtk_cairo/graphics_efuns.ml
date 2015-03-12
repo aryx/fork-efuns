@@ -258,7 +258,7 @@ let modifiers = ref 0
 (* The main UI *)
 (*****************************************************************************)
 
-let init2 location =
+let init2 location init_files =
   let _locale = GtkMain.Main.init () in
 
   let width = 800 in
@@ -283,7 +283,7 @@ let init2 location =
   (* the *bindings* buffer *)
   Interactive.create_bindings location |> ignore;
   (* open the first buffers *)
-  !init_files +> List.iter (fun name ->
+  init_files +> List.iter (fun name ->
     Frame.load_file top_window.window name |> ignore
   );
 
@@ -352,7 +352,7 @@ let init2 location =
   win#show ();
   GMain.main()
 
-let init a =
+let init a b =
   if !Efuns.check
   then test_cairo ()
-  else init2 a
+  else init2 a b

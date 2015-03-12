@@ -142,7 +142,6 @@ let location () =
 <<constant Efuns.start_hooks>>
 <<function Efuns.add_start_hook>>
 
-<<function Efuns.init>>
 
   (* Les variables locales *)
   
@@ -166,6 +165,8 @@ let location () =
   
 (* Les variables importantes dans le reste du programme. *)
 open Options
+
+<<constant Efuns.check>>
   
 <<constant Efuns.load_path>>
 
@@ -175,10 +176,6 @@ open Options
   
 <<toplevel Efuns._1>>
 
-<<constant Efuns.init_files>>
-<<constant Efuns.init_frames>>
-<<constant Efuns.displayname>>
-<<constant Efuns.no_init>>
   
 (*--------------------    Ressources *)
 <<constant Efuns.xdefaults>>
@@ -192,28 +189,6 @@ open Options
   print_newline () 
 *)
   
-(*--------------------    Arguments *)
-<<constant Efuns.width_opt>>
-<<constant Efuns.height_opt>>
-<<constant Efuns.font_opt>>
-<<constant Efuns.fg_opt>>
-<<constant Efuns.bg_opt>>
-<<constant Efuns.check>>
-  
-<<constant Efuns.usage_str>>
-
-<<toplevel Efuns._3>>
-<<toplevel Efuns._4>>
-
-open Options
-  
-<<constant Efuns.width>>
-<<constant Efuns.height (core/efuns.ml)>>
-<<constant Efuns.font>>
-<<constant Efuns.foreground>>
-<<constant Efuns.background>>
-  
-<<toplevel Efuns._5>>
 
 <<global Efuns.actions>>
 
@@ -4962,6 +4937,35 @@ open Top_window
 <<copyright header2>>
 open Options
 open Efuns
+
+<<constant Efuns.init_files>>
+<<constant Efuns.init_frames>>
+<<constant Efuns.displayname>>
+<<constant Efuns.no_init>>
+
+<<function Efuns.init>>
+
+(*--------------------    Arguments *)
+<<constant Efuns.width_opt>>
+<<constant Efuns.height_opt>>
+<<constant Efuns.font_opt>>
+<<constant Efuns.fg_opt>>
+<<constant Efuns.bg_opt>>
+  
+<<constant Efuns.usage_str>>
+
+<<toplevel Efuns._3>>
+<<toplevel Efuns._4>>
+
+open Options
+  
+<<constant Efuns.width>>
+<<constant Efuns.height (core/efuns.ml)>>
+<<constant Efuns.font>>
+<<constant Efuns.foreground>>
+<<constant Efuns.background>>
+  
+<<toplevel Efuns._5>>
   
 <<constant Main.location>>
 

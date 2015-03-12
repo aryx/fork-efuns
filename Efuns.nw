@@ -1852,7 +1852,7 @@ let location = {
 
 <<toplevel Main._3>>=
 let _ =
-  Efuns.init location (* launch first hooks *)
+  init_efuns location (* launch first hooks *)
 @
 
 % not that this function reset also the start_hooks global!
@@ -1860,7 +1860,7 @@ let _ =
 %  (e.g. in the .efunsrc loading)
 % main.ml -> <>
 <<function Efuns.init>>=
-let init (location : location) =
+let init_efuns (location : location) =
   global_location := Some location;
   let rec iter hooks =
     match hooks with
@@ -1875,13 +1875,13 @@ let init (location : location) =
 @
 %less: why not using exec_hooks?
 %less: why not just List.iter (fun f -> f ()) hook?
-
+%old: used to be in efuns.ml, but better in main.ml
 
 
 % init -> List.iter run <>
 <<constant Efuns.start_hooks>>=
 (* Les hooks de lancement apres le chargement d'un module *)
-let start_hooks = ref []
+let start_hooks = (ref []: (unit -> unit) list ref)
 @
 % private? rename _start_hooks?
 
@@ -6959,7 +6959,7 @@ let _ =
 
 <<[[main()]] command line options>>=
   "-I",Arg.String (fun s -> load_path =:= 
-      (string_to_path s) @ !!load_path), "<path>: Load Path";
+      (Utils.string_to_path s) @ !!load_path), "<path>: Load Path";
 @
 %dead? or for dynlink?
 
