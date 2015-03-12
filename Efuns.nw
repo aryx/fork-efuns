@@ -2318,6 +2318,16 @@ let size tree =
 define_action "get_position" get_pos;
 @
 
+<<function Complex.get_pos>>=
+let get_pos frame =
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  let text = buf.buf_text in
+  let top_window = Window.top frame.frm_window in
+  Top_window.message top_window 
+    (Printf.sprintf "Char position %d" (Text.get_position text point))
+@
+
 <<function Text.get_position>>=
 let get_position tree point = 
   let text = tree.tree_text in    
@@ -2348,6 +2358,7 @@ let add_point tree =
   text.text_points <- p :: text.text_points;
   p
 @
+% rename new_point?
 
 <<function Text.dup_point>>=
 let dup_point tree point =
@@ -2435,11 +2446,11 @@ and repr =
     repr_line_pos : position;   (* pos of repr in Text.t string *)
     repr_line_len : int;   (* len of repr in Text.t string *)
     
+    repr_pos : int;  (* pos of repr in representation string *)
+    repr_size : int;
+
     mutable repr_attr : int;    (* common attribute *)
     repr_charsize : int; (* common size *)
-    
-    repr_size : int;
-    repr_pos : int;  (* pos of repr in representation string *)
   } 
 @
 
@@ -2459,6 +2470,7 @@ mutable items : item array;
 
 %less: delete? this was for WX_Text and WX_XTERM? Don't need that?
 
+%XXX? diff?
 %(* from WX_text *)
 <<type Text.item>>=
 type item =
@@ -2776,11 +2788,9 @@ let make_attr fg bg font highlighted =
 <<constant Text.direct_attr>>=
 let direct_attr =  make_attr 0 1 0 false
 @
-
 <<constant Text.inverse_attr>>=
 let inverse_attr =  make_attr 1 0 0 false
 @
-
 % let no_attr = 0?
 
 
@@ -2798,6 +2808,7 @@ let get_attr tree point =
   then text.text_attrs.(pos)
   else direct_attr
 @
+%less: could print a warning if overflow no?
 
 <<function Text.set_char_attr>>=
 let set_char_attr tree point attr =
@@ -2885,16 +2896,16 @@ mutable loc_colors_n : int;
 let get_color location color_name =
   try
     Hashtbl.find location.loc_colors color_name
-  with
-    Not_found ->
-      if location.loc_colors_n = 256 then
-        raise Not_found
-      else
-        let n = location.loc_colors_n in
-        location.loc_colors_n <- n + 1;
-        location.loc_colors_names.(n) <- color_name;
-        Hashtbl.add location.loc_colors color_name n;
-        n
+  with Not_found ->
+    if location.loc_colors_n = 256 
+    then raise Not_found
+    else begin
+      let n = location.loc_colors_n in
+      location.loc_colors_n <- n + 1;
+      location.loc_colors_names.(n) <- color_name;
+      Hashtbl.add location.loc_colors color_name n;
+      n
+    end
 @
 
 
@@ -2948,10 +2959,9 @@ let color buf regexp strict attr =
         end
     done
   with Not_found -> 
-      Text.remove_point text point;
-      buf.buf_modified <- buf.buf_modified + 1
+    Text.remove_point text point;
+    buf.buf_modified <- buf.buf_modified + 1
 @
-
 % not really incremental as font-lock-mode.
 % but can be a simple starting point!
 
@@ -2970,14 +2980,15 @@ let get_font location font_name =
   try
     Hashtbl.find location.loc_fonts font_name
   with Not_found ->
-    if location.loc_fonts_n = 256 then
-      raise Not_found
-    else
+    if location.loc_fonts_n = 256 
+    then raise Not_found
+    else begin
       let n = location.loc_fonts_n in
       location.loc_fonts_n <- n + 1;
       location.loc_fonts_names.(n) <- font_name;
       Hashtbl.add location.loc_fonts font_name n;
       n
+    end
 @
 
 <<toplevel Main._2>>=
@@ -3099,9 +3110,9 @@ define_action "insert_file"  insert_file;
 <<function Complex.insert_file>>=
 let insert_file frame =
   select_filename frame "Insert file: " (fun str ->
-      let inc = open_in str in
-      insert_string frame (Utils.read_string inc);
-      close_in inc
+    let inc = open_in str in
+    insert_string frame (Utils.read_string inc);
+    close_in inc
   )
 @
 
@@ -3501,7 +3512,7 @@ and line_repr =
   } 
 @
 % argh, again repr_line that is actually a line.
-% maybe rename just line again?
+%todo: maybe rename just line again?
 % rename this frm_table_line?
 % otherwise have line_repr.repr_line.representation.repr_line_pos, hmmm
 
@@ -3523,6 +3534,7 @@ then
 %todo: old: was line.repr_line.repr_string, ugly
 
 
+% finally reach the graphic backend!
 
 <<function Frame.update_line>>=
 let update_line top_window frame repr_string y = 
@@ -3708,7 +3720,8 @@ let cursor_on top_window =
     None -> ()
   | Some frame -> set_cursor_on top_window frame
 @
-
+% when can have second_cursor??
+% todo: aspectize second_cursor
 
 
 %\subsection{[[Top_window.clean_display()]]}
@@ -4557,6 +4570,13 @@ let mouse_save_then_kill frame =
 \section{Interactive select}
 % here?
 
+
+
+
+
+
+
+
 \chapter{Basic Features}
 
 \section{Navigating}
@@ -4721,6 +4741,10 @@ let backward_line frame =
     move_forward  frame (min old_x (point_to_end frame)) |> ignore
   end
 @
+%old: was doing also some beginning_of_line when going up,
+% end end_of_line when going down! I prefer
+% to main when I was column-wise
+%todo: Bol | Col of x | Eol
 
 <<function Simple.forward_line>>=
 let forward_line frame =
@@ -4777,7 +4801,7 @@ let backward_screen frame =
   frame.frm_redraw <- true;
   frame.frm_y_offset <- frame.frm_y_offset - frame.frm_height + 2
 @
-% seems redundant a bit frm_force_start and frm_redraw no?
+%less: seems redundant a bit frm_force_start and frm_redraw no?
 
 <<function Simple.forward_screen>>=
 let forward_screen frame =
@@ -4810,10 +4834,10 @@ let goto_char frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  simple_select frame "goto-char:" 
-    (fun name ->
-      let char = int_of_string name in
-      Text.set_position text point char)
+  simple_select frame "goto-char:" (fun name ->
+    let char = int_of_string name in
+    Text.set_position text point char
+  )
 @
 
 <<function Complex.goto_line>>=
@@ -4821,10 +4845,10 @@ let goto_line frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  simple_select frame "goto-line:" 
-    (fun name ->
-      let line = int_of_string name in
-      Text.goto_line text point (line - 1))
+  simple_select frame "goto-line:" (fun name ->
+    let line = int_of_string name in
+    Text.goto_line text point (line - 1)
+  )
 @
 
 
@@ -5034,7 +5058,6 @@ let hungry_electric_delete frame =
   end;
   commit_session text session
 @
-
 
 
 \section{Moving}
@@ -5306,8 +5329,8 @@ define_action "isearch_backward_regexp"  isearch_backward_regexp;
 
 <<type Efuns.sens>>=
 type sens = 
-  Backward | 
-  Forward
+| Backward
+| Forward
 @
 
 \subsection{Strings}
@@ -5669,9 +5692,8 @@ let get_name filename =
       let _ = Hashtbl.find (Efuns.location()).loc_buffers (compute_name ()) in 
       incr i
     done; assert false
-  with
-    Not_found -> 
-      compute_name ()
+  with Not_found -> 
+    compute_name ()
 @
 
 
@@ -5718,8 +5740,8 @@ let change_buffer frame =
   let default = get_previous_frame () in
   set_previous_frame frame;
   select_buffer frame " Switch to buffer: " default (fun str ->
-      let window = frame.frm_window in
-      Frame.change_buffer window str
+    let window = frame.frm_window in
+    Frame.change_buffer window str
   )
 @
 
@@ -5728,12 +5750,10 @@ let change_buffer window name =
   let location = Efuns.location() in
   try
     let buf = Hashtbl.find location.loc_buffers name in
-    let frame = create window None  buf 
-    in
+    let frame = create window None buf in
     exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name
-  with
-    Not_found -> ()
+  with Not_found -> ()
 @
 
 
@@ -5992,7 +6012,6 @@ let next_frame frame =
 @
 
 
-
 <<function Window.next>>=
 let rec next f window =
   match window.win_up with
@@ -6151,32 +6170,31 @@ let set_buffer_mode buf =
     match buf.buf_filename with
       None -> 
         (try
-          if Str.string_match suffix_reg buf.buf_name 0 then
-            Str.matched_group 1 buf.buf_name else buf.buf_name 
-        with
-          _ -> buf.buf_name)
+          if Str.string_match suffix_reg buf.buf_name 0 
+          then Str.matched_group 1 buf.buf_name 
+          else buf.buf_name 
+         with _ -> buf.buf_name
+         )
     | Some file_name -> file_name 
   in 
   let modes_alist = get_var buf modes_alist in
   if not (!modes_old == modes_alist) then
     begin
-      regexp_alist := 
-      List.map 
-        (fun (file_reg, major) ->
-          Str.regexp file_reg, major) modes_alist;
+      regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
+        Str.regexp file_reg, major
+      ) ;
       modes_old := modes_alist;
     end;
   try
-    List.iter (fun (regexp, major) ->
-        if Str.string_match regexp buf_name 0 then
-          try
-            set_major_mode buf major;
-            raise Exit
-          with
-            _ -> raise Exit
-    ) !regexp_alist
-  with
-    Exit -> ()
+    !regexp_alist |> List.iter (fun (regexp, major) ->
+      if Str.string_match regexp buf_name 0 
+      then
+        try
+          set_major_mode buf major;
+          raise Exit
+        with _ -> raise Exit
+    ) 
+  with Exit -> ()
 @
 
 
@@ -6362,13 +6380,13 @@ let add_minor_key minor = interactive minor.min_map
 
 
 <<[[Ebuffer.get_binding()]] minor mode key search>>=
-List.iter (fun minor ->
-    let b = Keymap.get_binding minor.min_map keylist in
-    match b with
-      Prefix map -> binding := b
-    | Function f -> binding := b; raise Exit
-    | Unbound -> ()
-) buf.buf_minor_modes; 
+buf.buf_minor_modes |> List.iter (fun minor ->
+  let b = Keymap.get_binding minor.min_map keylist in
+  match b with
+    Prefix map -> binding := b
+  | Function f -> binding := b; raise Exit
+  | Unbound -> ()
+); 
 @
 
 <<[[Efuns.get_var()]] try with minor mode variables>>=
@@ -6384,7 +6402,7 @@ iter buf.buf_minor_modes
 @
 
 
-\chapter{Other Features}
+\chapter{Extra Features}
 
 \section{External commands}
 
@@ -6790,16 +6808,16 @@ let escaped s =
 define_action "transpose_chars"  (to_frame transpose_chars);
 
 define_action "transpose_words"  (to_frame transpose_words);
-define_action "lowercase_word" 
-  (fun frame ->
-    let buf = frame.frm_buffer in
-    let point = frame.frm_point in
-    on_word buf point String.lowercase);
-define_action "uppercase_word" 
-  (fun frame ->
-    let buf = frame.frm_buffer in
-    let point = frame.frm_point in
-    on_word buf point String.uppercase);
+define_action "lowercase_word" (fun frame ->
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  on_word buf point String.lowercase
+);
+define_action "uppercase_word" (fun frame ->
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  on_word buf point String.uppercase
+);
 
 define_action "fill_paragraph" fill_paragraph;
 @

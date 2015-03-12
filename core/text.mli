@@ -36,10 +36,11 @@ type attribute = int
 type repr =
   { repr_line_pos: int;
     repr_line_len: int;
+    repr_pos: int;
+    repr_size: int;
     mutable repr_attr: attribute;
     repr_charsize: int;
-    repr_size: int;
-    repr_pos: int }
+   }
 
 
 type line =

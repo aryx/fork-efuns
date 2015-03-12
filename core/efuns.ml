@@ -349,8 +349,8 @@ type location =
 
 (*s: type Efuns.sens *)
 type sens = 
-  Backward | 
-  Forward
+| Backward
+| Forward
 (*e: type Efuns.sens *)
 (*s: type Efuns.to_regexp *)
 type to_regexp =

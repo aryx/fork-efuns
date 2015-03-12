@@ -61,9 +61,8 @@ let get_name filename =
       let _ = Hashtbl.find (Efuns.location()).loc_buffers (compute_name ()) in 
       incr i
     done; assert false
-  with
-    Not_found -> 
-      compute_name ()
+  with Not_found -> 
+    compute_name ()
 (*e: function Ebuffer.get_name *)
 
 (*s: function Ebuffer.new_minor_mode *)
@@ -370,32 +369,31 @@ let set_buffer_mode buf =
     match buf.buf_filename with
       None -> 
         (try
-          if Str.string_match suffix_reg buf.buf_name 0 then
-            Str.matched_group 1 buf.buf_name else buf.buf_name 
-        with
-          _ -> buf.buf_name)
+          if Str.string_match suffix_reg buf.buf_name 0 
+          then Str.matched_group 1 buf.buf_name 
+          else buf.buf_name 
+         with _ -> buf.buf_name
+         )
     | Some file_name -> file_name 
   in 
   let modes_alist = get_var buf modes_alist in
   if not (!modes_old == modes_alist) then
     begin
-      regexp_alist := 
-      List.map 
-        (fun (file_reg, major) ->
-          Str.regexp file_reg, major) modes_alist;
+      regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
+        Str.regexp file_reg, major
+      ) ;
       modes_old := modes_alist;
     end;
   try
-    List.iter (fun (regexp, major) ->
-        if Str.string_match regexp buf_name 0 then
-          try
-            set_major_mode buf major;
-            raise Exit
-          with
-            _ -> raise Exit
-    ) !regexp_alist
-  with
-    Exit -> ()
+    !regexp_alist |> List.iter (fun (regexp, major) ->
+      if Str.string_match regexp buf_name 0 
+      then
+        try
+          set_major_mode buf major;
+          raise Exit
+        with _ -> raise Exit
+    ) 
+  with Exit -> ()
 (*e: function Ebuffer.set_buffer_mode *)
       
 (*s: function Ebuffer.get_binding *)
@@ -403,13 +401,13 @@ let get_binding buf keylist =
   let binding = ref Unbound in
   try
     (*s: [[Ebuffer.get_binding()]] minor mode key search *)
-    List.iter (fun minor ->
-        let b = Keymap.get_binding minor.min_map keylist in
-        match b with
-          Prefix map -> binding := b
-        | Function f -> binding := b; raise Exit
-        | Unbound -> ()
-    ) buf.buf_minor_modes; 
+    buf.buf_minor_modes |> List.iter (fun minor ->
+      let b = Keymap.get_binding minor.min_map keylist in
+      match b with
+        Prefix map -> binding := b
+      | Function f -> binding := b; raise Exit
+      | Unbound -> ()
+    ); 
     (*e: [[Ebuffer.get_binding()]] minor mode key search *)
     (*s: [[Ebuffer.get_binding()]] major mode key search *)
     (let b = Keymap.get_binding buf.buf_major_mode.maj_map keylist in

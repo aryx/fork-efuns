@@ -129,16 +129,16 @@ let _ =
   define_action "transpose_chars"  (to_frame transpose_chars);
 
   define_action "transpose_words"  (to_frame transpose_words);
-  define_action "lowercase_word" 
-    (fun frame ->
-      let buf = frame.frm_buffer in
-      let point = frame.frm_point in
-      on_word buf point String.lowercase);
-  define_action "uppercase_word" 
-    (fun frame ->
-      let buf = frame.frm_buffer in
-      let point = frame.frm_point in
-      on_word buf point String.uppercase);
+  define_action "lowercase_word" (fun frame ->
+    let buf = frame.frm_buffer in
+    let point = frame.frm_point in
+    on_word buf point String.lowercase
+  );
+  define_action "uppercase_word" (fun frame ->
+    let buf = frame.frm_buffer in
+    let point = frame.frm_point in
+    on_word buf point String.uppercase
+  );
 
   define_action "fill_paragraph" fill_paragraph;
   (*e: transforming actions *)

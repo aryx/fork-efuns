@@ -105,11 +105,11 @@ and repr =
     repr_line_pos : position;   (* pos of repr in Text.t string *)
     repr_line_len : int;   (* len of repr in Text.t string *)
     
+    repr_pos : int;  (* pos of repr in representation string *)
+    repr_size : int;
+
     mutable repr_attr : int;    (* common attribute *)
     repr_charsize : int; (* common size *)
-    
-    repr_size : int;
-    repr_pos : int;  (* pos of repr in representation string *)
   } 
 (*e: type Text.repr *)
 

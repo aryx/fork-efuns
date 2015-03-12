@@ -150,9 +150,9 @@ let load_buffer frame =
 (*s: function Complex.insert_file *)
 let insert_file frame =
   select_filename frame "Insert file: " (fun str ->
-      let inc = open_in str in
-      insert_string frame (Utils.read_string inc);
-      close_in inc
+    let inc = open_in str in
+    insert_string frame (Utils.read_string inc);
+    close_in inc
   )
 (*e: function Complex.insert_file *)
 
@@ -189,8 +189,8 @@ let change_buffer frame =
   let default = get_previous_frame () in
   set_previous_frame frame;
   select_buffer frame " Switch to buffer: " default (fun str ->
-      let window = frame.frm_window in
-      Frame.change_buffer window str
+    let window = frame.frm_window in
+    Frame.change_buffer window str
   )
 (*e: function Complex.change_buffer *)
 
@@ -277,10 +277,10 @@ let goto_line frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  simple_select frame "goto-line:" 
-    (fun name ->
-      let line = int_of_string name in
-      Text.goto_line text point (line - 1))
+  simple_select frame "goto-line:" (fun name ->
+    let line = int_of_string name in
+    Text.goto_line text point (line - 1)
+  )
 (*e: function Complex.goto_line *)
 
 (*s: function Complex.goto_char *)
@@ -288,10 +288,10 @@ let goto_char frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  simple_select frame "goto-char:" 
-    (fun name ->
-      let char = int_of_string name in
-      Text.set_position text point char)
+  simple_select frame "goto-char:" (fun name ->
+    let char = int_of_string name in
+    Text.set_position text point char
+  )
 (*e: function Complex.goto_char *)
 
 
@@ -302,8 +302,7 @@ let get_pos frame =
   let text = buf.buf_text in
   let top_window = Window.top frame.frm_window in
   Top_window.message top_window 
-    (Printf.sprintf "Char position %d" 
-      (get_position text point))
+    (Printf.sprintf "Char position %d" (Text.get_position text point))
 (*e: function Complex.get_pos *)
 
 (*s: function Complex.mark_at_point *)

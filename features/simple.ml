@@ -991,8 +991,8 @@ let color buf regexp strict attr =
         end
     done
   with Not_found -> 
-      Text.remove_point text point;
-      buf.buf_modified <- buf.buf_modified + 1
+    Text.remove_point text point;
+    buf.buf_modified <- buf.buf_modified + 1
 (*e: function Simple.color *)
 
 (*s: function Simple.point_at_mark *)

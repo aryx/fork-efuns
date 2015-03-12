@@ -3702,16 +3702,6 @@ let open_display frame =
 
 
 
-<<function Complex.get_pos>>=
-let get_pos frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  let top_window = Window.top frame.frm_window in
-  Top_window.message top_window 
-    (Printf.sprintf "Char position %d" 
-      (get_position text point))
-@
 
 
 <<constant Complex.umask>>=
@@ -4964,6 +4954,9 @@ open Options
 <<constant Efuns.font>>
 <<constant Efuns.foreground>>
 <<constant Efuns.background>>
+
+<<constant Main.highlight_color>>
+  
   
 <<toplevel Efuns._5>>
   
@@ -4972,8 +4965,6 @@ open Options
 <<exception Main.SigInt>>
 <<toplevel Main._1>>
 
-<<constant Main.highlight_color>>
-  
 <<toplevel Main._2>>
 
 <<toplevel Main._3>>

@@ -707,12 +707,10 @@ let change_buffer window name =
   let location = Efuns.location() in
   try
     let buf = Hashtbl.find location.loc_buffers name in
-    let frame = create window None  buf 
-    in
+    let frame = create window None buf in
     exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name
-  with
-    Not_found -> ()
+  with Not_found -> ()
 (*e: function Frame.change_buffer *)
 
 (*s: function Frame.save_buffer *)
