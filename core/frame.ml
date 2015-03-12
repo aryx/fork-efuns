@@ -529,7 +529,7 @@ let update top_window frame =
     (*e: [[Frame.update()]] redraw, possibly update frm_x_offset *)
     update_table top_window frame;
 
-    if (point > frame.frm_end) || (point > start) then begin
+    if (point > frame.frm_end) || (point < start) then begin
         (*s: [[Frame.update()]] redraw, if frm_force_restart *)
         if frame.frm_force_start then begin
           let x,y = 

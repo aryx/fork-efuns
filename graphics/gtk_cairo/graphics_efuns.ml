@@ -196,8 +196,13 @@ let test_draw cr =
   Cairo.line_to cr 0.6 0.6;
   Cairo.stroke cr;
 
+(*
   Cairo.select_font_face cr "monospace"
     Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_BOLD;
+*)
+  Cairo.select_font_face cr "fixed"
+    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
+
   Cairo.set_font_size cr 0.1;
 
   let _extent = Cairo.text_extents cr "peh" in
@@ -302,7 +307,7 @@ let init2 location init_files =
   (* Cairo.scale cr 1.0 1.0; *)
   Cairo.select_font_face cr "fixed"
     Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
-  Cairo.set_font_size cr 20.0;
+  Cairo.set_font_size cr 20.;
 
 
   top_window.graphics <- Some (backend location cr); 
