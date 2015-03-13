@@ -3474,9 +3474,6 @@ frame.frm_redraw
 
 \subsubsection{Redraw}
 
-%bug! there was a point > start instead of point < start!
-% so then when going back it was not redisplaying!
-% maybe because also the scrollbar thing?
 <<[[Frame.update()]] redraw>>=
 if !debug_display
 then pr2 "redraw";
@@ -3503,6 +3500,10 @@ for y = 0 to height - 1 do
 done;
 frame.frm_redraw <- false
 @
+%bug! there was a point > start instead of point < start!
+% so then when going back it was not redisplaying!
+% it's because of some past (wrong) refactoring,
+% because before it was 'if (frame.frm_end < point)  || (start > point)'
 
 
 \subsubsection{The frame table}
