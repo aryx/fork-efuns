@@ -181,10 +181,11 @@ let create_without_top window mini buf =
   let status = {
       stat_name = "";
       stat_file = "";
-      stat_col = -1;
       stat_line = -1;
+      stat_col = -1;
       status_modified = true;
       stat_modified = (buf.buf_last_saved = version buf.buf_text);
+
       stat_modes = [];
       stat_mode = dummy_mode;
 
@@ -230,7 +231,7 @@ let create_without_top window mini buf =
       
       frm_repeat_action = 0;
       frm_last_action = Keymap.dummy_action;
-    
+
       frm_force_start = false;
       frm_cutline = window.win_width - 1;
       frm_killed = false;

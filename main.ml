@@ -98,6 +98,7 @@ let _ =
    " for debugging";
    "-debug_init", Arg.Set Efuns.debug_init, 
    " for debugging";
+
    "-debugger", Arg.Unit (fun () ->
      Efuns.debug := true;
    ), " for debugging";

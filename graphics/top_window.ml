@@ -61,6 +61,7 @@ let try_map frame key =
       (*e: [[Top_window.try_map()]] set repeat action *)
       frame.frm_prefix <- [];
       (* dispatch the action *)
+      (*s: [[Top_window.try_map()]] if debug, print action name *)
       if !Efuns.debug
       then begin
         let found = ref false in
@@ -75,6 +76,7 @@ let try_map frame key =
         if not !found
         then pr2 ("action not found");
       end;
+      (*e: [[Top_window.try_map()]] if debug, print action name *)
       f frame; 
       (*s: [[Top_window.try_map()]] set last action *)
       frame.frm_last_action <- f

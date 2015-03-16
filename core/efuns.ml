@@ -82,12 +82,18 @@ and buffer =
     mutable buf_name : string;
     mutable buf_filename : string option;
 
-    (*s: [[Efuns.buffer]] other fields *)
+    (*s: [[Efuns.buffer]] current position fields *)
     mutable buf_point : Text.point;
     mutable buf_start : Text.point;
-    (*x: [[Efuns.buffer]] other fields *)
+    (*e: [[Efuns.buffer]] current position fields *)
+    (*s: [[Efuns.buffer]] history fields *)
     mutable buf_modified : int; (* version? *)
-    (*x: [[Efuns.buffer]] other fields *)
+    (*x: [[Efuns.buffer]] history fields *)
+    mutable buf_last_saved : int;
+    (*x: [[Efuns.buffer]] history fields *)
+    mutable buf_history : (int * Text.action) list;
+    (*e: [[Efuns.buffer]] history fields *)
+    (*s: [[Efuns.buffer]] other fields *)
     mutable buf_shared : int; (* number of frames for that buffer *)
     (*x: [[Efuns.buffer]] other fields *)
     buf_map : map;
@@ -96,13 +102,9 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_vars : Local.vars;
     (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_last_saved : int;
-    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_syntax_table : bool array;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_mark : Text.point option;
-    (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_history : (int * Text.action) list;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_finalizers : (unit -> unit) list;
     (*x: [[Efuns.buffer]] other fields *)
@@ -149,28 +151,35 @@ and frame  =
     mutable frm_width : int;
     mutable frm_height : int;
 
-    (*s: [[Efuns.frame]] other fields *)
+    (*s: [[Efuns.frame]] current position fields *)
     (* insert point *)
     mutable frm_point : Text.point; 
-    (*x: [[Efuns.frame]] other fields *)
-    mutable frm_window : window;
-    (*x: [[Efuns.frame]] other fields *)
-    (* 0 for no scrollbar, 2 for scrollbar *)
-    mutable frm_has_scrollbar : int;
-    (*x: [[Efuns.frame]] other fields *)
-    (* 0 for minibuffer, 1 for normal frame *)
-    mutable frm_has_status_line : int;
-    (* Some for minibuffer, None for normal frame *)
-    mutable frm_mini_buffer : string option;
-    (*x: [[Efuns.frame]] other fields *)
+    (*x: [[Efuns.frame]] current position fields *)
     (* first point of the first buffer-line on screen *)
     mutable frm_start : Text.point;
     (* last point on screen, -1 if modified *)
     mutable frm_end : Text.point;
-    (*x: [[Efuns.frame]] other fields *)
+    (*e: [[Efuns.frame]] current position fields *)
+    (*s: [[Efuns.frame]] window fields *)
+    mutable frm_window : window;
+    (*e: [[Efuns.frame]] window fields *)
+    (*s: [[Efuns.frame]] decoration fields *)
+    (* 0 for no scrollbar, 2 for scrollbar *)
+    mutable frm_has_scrollbar : int;
+    (*x: [[Efuns.frame]] decoration fields *)
+    (* 0 for minibuffer, 1 for normal frame *)
+    mutable frm_has_status_line : int;
+    (* Some for minibuffer, None for normal frame *)
+    mutable frm_mini_buffer : string option;
+    (*e: [[Efuns.frame]] decoration fields *)
+    (*s: [[Efuns.frame]] status field *)
+    mutable frm_status : status;    
+    (*e: [[Efuns.frame]] status field *)
+    (*s: [[Efuns.frame]] history fields *)
     mutable frm_last_text_updated : int;
     mutable frm_last_buf_updated : int;
-    (*x: [[Efuns.frame]] other fields *)
+    (*e: [[Efuns.frame]] history fields *)
+    (*s: [[Efuns.frame]] other fields *)
     mutable frm_redraw : bool;    
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_table : line_repr array;
@@ -184,7 +193,7 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_force_start : bool;
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_status : status;    
+    mutable frm_last_action : action;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_killed : bool;
     (*x: [[Efuns.frame]] other fields *)
@@ -194,8 +203,8 @@ and frame  =
     mutable frm_cursor_attr : Text.attribute;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_prefix : key list;
+    (*x: [[Efuns.frame]] other fields *)
     mutable frm_repeat_action : int;
-    mutable frm_last_action : action;
     (*e: [[Efuns.frame]] other fields *)
   } 
 (*e: type Efuns.frame *)

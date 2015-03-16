@@ -72,10 +72,8 @@ let rec get_binding map keylist =
           (NormalMap,key) when key >= 0 && key < 256 -> 
             map.char_map.(key)
         | _ -> 
-            try
-              List.assoc key map.complex_bindings
-            with
-              Not_found -> Unbound
+            try List.assoc key map.complex_bindings
+            with Not_found -> Unbound
          )
         (*e: [[Keymap.get_binding()]] find key in map *)
   | key :: tail ->
@@ -85,10 +83,8 @@ let rec get_binding map keylist =
           (NormalMap,key) when key >= 0 && key < 256 -> 
             map.char_map.(key)
         | _ -> 
-            try
-              List.assoc key map.complex_bindings
-            with
-              Not_found -> Unbound
+            try List.assoc key map.complex_bindings
+            with Not_found -> Unbound
          )
         (*e: [[Keymap.get_binding()]] find key in map *)
       with

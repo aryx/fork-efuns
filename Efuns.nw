@@ -412,7 +412,10 @@ type text = {
 
 % need line because a text editor is line oriented, column number display,
 % line display, lots of things are important to do at line level.
-% actually the real question is why you need text_string?
+%todo: actually the real question is why you need text_string?
+% because the line will not contain the content? they will just
+% be indexed over text_string? except for repr_string but this
+% is only used as a cache for what is displayed on the screen?
 
 
 <<type Text.position>>=
@@ -531,6 +534,7 @@ let mk_line_with_pos pos =
    representation = []; 
    repr_len = 0; 
    repr_string = ""; 
+
    line_modified = 0; 
    line_hlt = 0; 
    items = [||]; 
@@ -1007,6 +1011,9 @@ and action = frame -> unit
 % this actually causes many types to be mutually recursive, 
 % because the keyboard handling stuff depends on frame and buffers
 % and vice versa.
+%less: could instead use a string here? that would remove
+% some mutual recursivity, and may also help for other things
+% such as -debug, or the 'lastcmd' trick.
 
 % actions will be called from the keyboard event dispatcher.
 % the only thing passed is the frame/window where the event
@@ -1709,6 +1716,7 @@ let _ =
    " for debugging";
    "-debug_init", Arg.Set Efuns.debug_init, 
    " for debugging";
+
    "-debugger", Arg.Unit (fun () ->
      Efuns.debug := true;
    ), " for debugging";
@@ -2458,9 +2466,9 @@ let point_col tree point =
 <<[[Text.line]] representation fields>>=
 mutable representation : repr list;
 mutable repr_len : int;
-mutable repr_string : string;
 @
-
+% this a cache? because at the beginning it's empty, see
+% mk_line_with_pos
 
 %XXX?
 <<type Text.repr>>=
@@ -2477,6 +2485,10 @@ and repr =
   } 
 @
 
+<<[[Text.line]] representation fields>>=
+mutable repr_string : string;
+@
+% this a cache of the cache :)
 
 
 
@@ -3865,10 +3877,11 @@ and status =
 let status = {
     stat_name = "";
     stat_file = "";
-    stat_col = -1;
     stat_line = -1;
+    stat_col = -1;
     status_modified = true;
     stat_modified = (buf.buf_last_saved = version buf.buf_text);
+
     stat_modes = [];
     stat_mode = dummy_mode;
 
@@ -3925,7 +3938,7 @@ let status_format = ref [
     StatFile, (35,15);
   ]
 @
-% meaning?
+% meaning? see below, it's a (pos, maxlen)
 
 \subsection{[[Frame.status_print()]]}
 
@@ -4296,20 +4309,7 @@ let try_map frame key =
       <<[[Top_window.try_map()]] set repeat action>>
       frame.frm_prefix <- [];
       (* dispatch the action *)
-      if !Efuns.debug
-      then begin
-        let found = ref false in
-        Efuns.actions |> Hashtbl.iter  (fun k v ->
-          match v with
-          (* subtle: this will work only if f2 was not a closure *)
-          | FrameAction f2 when f == f2 ->
-              found := true;
-              pr2 (spf "action: %s" k)
-          | _ -> ()
-        );
-        if not !found
-        then pr2 ("action not found");
-      end;
+      <<[[Top_window.try_map()]] if debug, print action name>>
       f frame; 
       <<[[Top_window.try_map()]] set last action>>
   | Prefix map ->
@@ -4346,10 +4346,8 @@ let rec get_binding map keylist =
   (NormalMap,key) when key >= 0 && key < 256 -> 
     map.char_map.(key)
 | _ -> 
-    try
-      List.assoc key map.complex_bindings
-    with
-      Not_found -> Unbound
+    try List.assoc key map.complex_bindings
+    with Not_found -> Unbound
  )
 @
 
@@ -4367,6 +4365,15 @@ let rec get_binding map keylist =
     (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
 @
 
+
+% useful for undo, will see also useful for goal-column
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_last_action : action;
+@
+<<[[Top_window.try_map()]] set last action>>=
+frame.frm_last_action <- f
+@
 
 \subsection{Action to keys, [[add_binding()]]}
 
@@ -4764,45 +4771,113 @@ let forward_word buf point =
 let beginning_of_line frame =
   move_backward frame (begin_to_point frame) |> ignore
 @
-
-<<function Simple.end_of_line>>=
-let end_of_line frame =
-  let eol = point_to_end frame in
-  move_forward frame eol |> ignore
+<<function Simple.begin_to_point>>=
+let begin_to_point frame =
+  Text.point_to_bol frame.frm_buffer.buf_text frame.frm_point
 @
 
 
+<<function Simple.end_of_line>>=
+let end_of_line frame =
+  move_forward frame (point_to_end frame) |> ignore
+@
+<<function Simple.point_to_end>>=
+let point_to_end frame =
+  Text.point_to_eol frame.frm_buffer.buf_text frame.frm_point
+@
+
+
+
+% mutually recursive because of goal_column()
 <<function Simple.backward_line>>=
-let backward_line frame =
+and backward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
   if point_line text point > 0 then begin
-    let old_x = begin_to_point frame in
+    let goal_col = goal_column frame in
     beginning_of_line frame;
     move_backward frame 1 |> ignore;
-    beginning_of_line frame;
-    move_forward  frame (min old_x (point_to_end frame)) |> ignore
+    move_to_goal_column frame goal_col;
   end
 @
 %old: was doing also some beginning_of_line when going up,
 % end end_of_line when going down! I prefer
-% to main when I was column-wise
-%todo: Bol | Col of x | Eol
+% to remain where I was column-wise
+%old:
+%    let old_x = begin_to_point frame in
+%    beginning_of_line frame;
+%    move_backward frame 1 |> ignore;
+%    beginning_of_line frame;
+%    move_forward  frame (min old_x (point_to_end frame)) |> ignore
 
 <<function Simple.forward_line>>=
-let forward_line frame =
+and forward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  if point_line text point < nbre_lines text then
-    if point_to_end frame = 0 then begin
-        move_forward frame 1 |> ignore;
-        end_of_line frame;
-    end else begin
-      let old_x = begin_to_point frame in
-      end_of_line frame;
-      move_forward frame 1 |> ignore;
-      move_forward frame (min old_x (point_to_end frame)) |> ignore
-    end
+  if point_line text point < nbre_lines text then begin
+    let goal_col = goal_column frame in
+    end_of_line frame;
+    move_forward frame 1 |> ignore;
+    move_to_goal_column frame goal_col;
+  end
+@
+%old:
+%    if point_to_end frame = 0 then begin
+%        move_forward frame 1 |> ignore;
+%        end_of_line frame;
+%    end else begin
+%      let old_x = begin_to_point frame in
+%      end_of_line frame;
+%      move_forward frame 1 |> ignore;
+%      move_forward frame (min old_x (point_to_end frame)) |> ignore
+
+
+
+%\subsubsection{Goal column}
+%pad: this was added by me! I get really confused
+% when I don't have the exact look&feel of emacs!
+% But I struggled to implement that :)  
+
+%history:
+% I first added a type Bol | Col of int | Eol, but in fact
+% emacs does not do that, when you do eol and up, you don't
+% want to go to the eol, you want to remain at the same column.
+% Then I added a old_col_pos_max but it's tricky to get right
+% because other moving commands must reset it, but that means
+% ensuring an invariant at every places we use a move command.
+% In the end I had a look in microemacs and found the lastcmd
+% trick. In fact in emacs they uses that to and check if
+% the last command was a next-line or back-line. In fact
+% if you use M-x next-line instead of down you'll see that
+% the goal column is maintained only for the arrow keys, not
+% for the interactive version.
+
+%emacs: 
+% "It is the column where point was at the start of the current run
+% of vertical motion commands."
+<<constant Simple.temporary_goal_column>>=
+let temporary_goal_column = 
+  Local.create_abstr "Simple.temporary_goal_column"
+@
+
+
+
+<<function Simple.goal_column>>=
+let rec goal_column frame =
+  let cur_col = begin_to_point frame in
+  if frame.frm_last_action == forward_line ||
+     frame.frm_last_action == backward_line
+  then 
+    try Efuns.get_local frame.frm_buffer temporary_goal_column
+    with Not_found -> cur_col
+  else cur_col
+@
+
+<<function Simple.move_to_goal_column>>=
+and move_to_goal_column frame goal_col =
+  move_backward frame (begin_to_point frame) |> ignore;
+  move_forward frame (min goal_col (point_to_end frame)) |> ignore;
+  Efuns.set_local frame.frm_buffer temporary_goal_column goal_col
 @
 
 
@@ -7220,6 +7295,25 @@ let message buf m =
 
 %less: would be good to have a -debug_init so at least print out
 % all those hooks that are run at startup time
+
+\section{Actions trace, [[-debug]]}
+
+<<[[Top_window.try_map()]] if debug, print action name>>=
+if !Efuns.debug
+then begin
+  let found = ref false in
+  Efuns.actions |> Hashtbl.iter  (fun k v ->
+    match v with
+    (* subtle: this will work only if f2 was not a closure *)
+    | FrameAction f2 when f == f2 ->
+        found := true;
+        pr2 (spf "action: %s" k)
+    | _ -> ()
+  );
+  if not !found
+  then pr2 ("action not found");
+end;
+@
 
 \chapter{Profiling}
 

@@ -192,29 +192,24 @@ let char_insert_command char frame =
 
 (*s: function Simple.move_backward *)
 let move_backward frame delta =
-  let text = frame.frm_buffer.buf_text in
-  Text.bmove text frame.frm_point delta
+  Text.bmove frame.frm_buffer.buf_text frame.frm_point delta
 (*e: function Simple.move_backward *)
 
 (*s: function Simple.move_forward *)
 let move_forward frame delta =
-  let text = frame.frm_buffer.buf_text in
-  Text.fmove text frame.frm_point delta
+  Text.fmove frame.frm_buffer.buf_text frame.frm_point delta
 (*e: function Simple.move_forward *)
 
 (*s: function Simple.begin_to_point *)
 let begin_to_point frame =
-  let text = frame.frm_buffer.buf_text in
-  let point = frame.frm_point in
-  Text.point_to_bol text point
+  Text.point_to_bol frame.frm_buffer.buf_text frame.frm_point
 (*e: function Simple.begin_to_point *)
 
 (*s: function Simple.point_to_end *)
 let point_to_end frame =
-  let text = frame.frm_buffer.buf_text in
-  let point = frame.frm_point in
-  Text.point_to_eol text point
+  Text.point_to_eol frame.frm_buffer.buf_text frame.frm_point
 (*e: function Simple.point_to_end *)
+
 
 (*s: function Simple.line_size *)
 let line_size frame =
@@ -228,36 +223,54 @@ let beginning_of_line frame =
 
 (*s: function Simple.end_of_line *)
 let end_of_line frame =
-  let eol = point_to_end frame in
-  move_forward frame eol |> ignore
+  move_forward frame (point_to_end frame) |> ignore
 (*e: function Simple.end_of_line *)
 
+
+(*s: constant Simple.temporary_goal_column *)
+let temporary_goal_column = 
+  Local.create_abstr "Simple.temporary_goal_column"
+(*e: constant Simple.temporary_goal_column *)
+
+(*s: function Simple.goal_column *)
+let rec goal_column frame =
+  let cur_col = begin_to_point frame in
+  if frame.frm_last_action == forward_line ||
+     frame.frm_last_action == backward_line
+  then 
+    try Efuns.get_local frame.frm_buffer temporary_goal_column
+    with Not_found -> cur_col
+  else cur_col
+(*e: function Simple.goal_column *)
+
+(*s: function Simple.move_to_goal_column *)
+and move_to_goal_column frame goal_col =
+  move_backward frame (begin_to_point frame) |> ignore;
+  move_forward frame (min goal_col (point_to_end frame)) |> ignore;
+  Efuns.set_local frame.frm_buffer temporary_goal_column goal_col
+(*e: function Simple.move_to_goal_column *)
+
 (*s: function Simple.forward_line *)
-let forward_line frame =
+and forward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  if point_line text point < nbre_lines text then
-    if point_to_end frame = 0 then begin
-        move_forward frame 1 |> ignore;
-        end_of_line frame;
-    end else begin
-      let old_x = begin_to_point frame in
-      end_of_line frame;
-      move_forward frame 1 |> ignore;
-      move_forward frame (min old_x (point_to_end frame)) |> ignore
-    end
+  if point_line text point < nbre_lines text then begin
+    let goal_col = goal_column frame in
+    end_of_line frame;
+    move_forward frame 1 |> ignore;
+    move_to_goal_column frame goal_col;
+  end
 (*e: function Simple.forward_line *)
 
 (*s: function Simple.backward_line *)
-let backward_line frame =
+and backward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
   if point_line text point > 0 then begin
-    let old_x = begin_to_point frame in
+    let goal_col = goal_column frame in
     beginning_of_line frame;
     move_backward frame 1 |> ignore;
-    beginning_of_line frame;
-    move_forward  frame (min old_x (point_to_end frame)) |> ignore
+    move_to_goal_column frame goal_col;
   end
 (*e: function Simple.backward_line *)
 

@@ -2118,19 +2118,7 @@ let char_insert_command char frame =
 @
 
 
-<<function Simple.begin_to_point>>=
-let begin_to_point frame =
-  let text = frame.frm_buffer.buf_text in
-  let point = frame.frm_point in
-  Text.point_to_bol text point
-@
 
-<<function Simple.point_to_end>>=
-let point_to_end frame =
-  let text = frame.frm_buffer.buf_text in
-  let point = frame.frm_point in
-  Text.point_to_eol text point
-@
 
 <<function Simple.line_size>>=
 let line_size frame =
@@ -2841,11 +2829,19 @@ open Top_window
 
 <<function Simple.point_to_end>>
 
+
 <<function Simple.line_size>>
 
 <<function Simple.beginning_of_line>>
 
 <<function Simple.end_of_line>>
+
+
+<<constant Simple.temporary_goal_column>>
+
+<<function Simple.goal_column>>
+
+<<function Simple.move_to_goal_column>>
 
 <<function Simple.forward_line>>
 
@@ -4542,14 +4538,17 @@ open Multi_frames
 \subsection*{[[graphics/top_window.ml]]}
 
 
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_prefix : key list;
+@
+
 <<function Top_window.dummy_action>>=
 let dummy_action frame = ()
 @
 
 <<[[Efuns.frame]] other fields>>=
-mutable frm_prefix : key list;
 mutable frm_repeat_action : int;
-mutable frm_last_action : action;
 @
 % for undo?
 
@@ -4560,9 +4559,6 @@ frame.frm_repeat_action <-
   else 0;
 @
 
-<<[[Top_window.try_map()]] set last action>>=
-frame.frm_last_action <- f
-@
 
 
 <<function Top_window.set_cursor_on>>=

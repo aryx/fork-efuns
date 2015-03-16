@@ -75,6 +75,7 @@ and line = {
     (*s: [[Text.line]] representation fields *)
     mutable representation : repr list;
     mutable repr_len : int;
+    (*x: [[Text.line]] representation fields *)
     mutable repr_string : string;
     (*e: [[Text.line]] representation fields *)
     (*s: [[Text.line]] attribute fields *)
@@ -120,20 +121,23 @@ type text = {
 
     mutable text_newlines : line array;
     mutable text_nlines : int; (* Array.length text.text_newlines *)
-    (*s: [[Text.text]] other fields *)
-    mutable text_modified : version;
-    (*x: [[Text.text]] other fields *)
+    (*s: [[Text.text]] gap fields *)
     (* g for gap *)
     mutable gpoint : point;
     mutable gsize : int;
-    (*x: [[Text.text]] other fields *)
+    (*e: [[Text.text]] gap fields *)
+    (*s: [[Text.text]] history fields *)
+    mutable text_modified : version;
+    (*x: [[Text.text]] history fields *)
+    mutable text_history : action list;
+    (*e: [[Text.text]] history fields *)
+    (*s: [[Text.text]] attribute fields *)
+    mutable text_attrs : attribute array;
+    (*e: [[Text.text]] attribute fields *)
+    (*s: [[Text.text]] other fields *)
     mutable text_points : point list;
     (*x: [[Text.text]] other fields *)
     mutable text_clean : bool;
-    (*x: [[Text.text]] other fields *)
-    mutable text_attrs : attribute array;
-    (*x: [[Text.text]] other fields *)
-    mutable text_history : action list;
     (*x: [[Text.text]] other fields *)
     mutable text_readonly : bool;
     (*e: [[Text.text]] other fields *)
@@ -287,6 +291,7 @@ let mk_line_with_pos pos =
    representation = []; 
    repr_len = 0; 
    repr_string = ""; 
+
    line_modified = 0; 
    line_hlt = 0; 
    items = [||]; 
