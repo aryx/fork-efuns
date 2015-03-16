@@ -1532,6 +1532,8 @@ mutable buf_vars : Local.vars;
 <<[[Efuns.location]] other fields>>=
 loc_vars : Local.vars;
 @
+% does not read good, looks like local variables when really
+% it's global variables here, loc = location, and Local = ???
 
 % different scopes:
 % - global
@@ -2196,11 +2198,10 @@ let keypressed = ref 0
 <<constant Top_window.handle_key_start_hook>>=
 let handle_key_start_hook = Local.create_abstr "handle_key_start_hook"
 @
-
 <<constant Top_window.handle_key_end_hook>>=
 let handle_key_end_hook = Local.create_abstr "handle_key_end_hook"
 @
-
+% who uses that?
 
 <<function Top_window.handle_key>>=
 let handle_key top_window modifiers keysym =
@@ -4859,8 +4860,7 @@ and forward_line frame =
 let temporary_goal_column = 
   Local.create_abstr "Simple.temporary_goal_column"
 @
-
-
+% better than adding yet another field in the Buffer or Frame structure
 
 <<function Simple.goal_column>>=
 let rec goal_column frame =
