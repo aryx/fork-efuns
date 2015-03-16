@@ -152,15 +152,6 @@ and action =
 | Session of action list
 (*e: type Text.action *)
 
-module Text = struct
-    type t = text
-    type text = t
-    type l = line
-    type line = l
-      
-    let representation tree line = line.repr_string, line.position
-    let items tree line = line.items
-  end
 
 (*      
 module TextTree = WX_text.Make(Text)
@@ -182,7 +173,7 @@ type tree_desc =
 
 let make_text text lines =
   let nlines = Array.length lines in
-  let rec tree = {
+  let tree = {
       tree_nlines = nlines;
       tree_width = 0;
       tree_height = 0;
@@ -844,6 +835,7 @@ let compare text p1 p2 =
 (*e: function Text.compare *)
   
 (*s: function Text.add *)
+(*
 let add text point delta =
   let gpos = text.gpoint.pos in
   let gap_end = gpos + text.gsize in
@@ -854,6 +846,7 @@ let add text point delta =
     point + delta - text.gsize
   else
     point + delta
+*)
 (*e: function Text.add *)
 
 (*s: function Text.get_char *)
@@ -1483,6 +1476,7 @@ let rec region tree p1 p2 =
 (*e: function Text.region *)
 
 (*s: function Text.goto_xy *)
+(*
 let goto_xy tree point x y =
   let text = tree.tree_text in    
   let y =
@@ -1492,6 +1486,7 @@ let goto_xy tree point x y =
   point.pos <- text.text_newlines.(y).position;
   point.line <- y;
   fmove tree point x |> ignore
+*)
 (*e: function Text.goto_xy *)
 
 (*s: function Text.update *)

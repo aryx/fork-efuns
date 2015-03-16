@@ -13,10 +13,8 @@
 (*e: copyright header2 *)
 open Options
 open Abbrevs
-open Text
 open Simple
 open Efuns
-open Top_window
 
 (*s: constant Abbrevs_mode.abbreviations *)
 let abbreviations = define_option ["abbrevs_mode"; "abbrevs"] ""

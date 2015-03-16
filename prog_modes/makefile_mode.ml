@@ -17,7 +17,6 @@ open Keymap
 open Efuns
 open Simple
 open Compil
-open Complex
 open Window
 
 (*s: constant Makefile_mode.mkfile_vars *)

@@ -18,10 +18,8 @@ open Interactive
 open Efuns
 open Keymap
 open Simple
-open Select
 open Search
 open Compil
-open Abbrevs
 open Complexe
 open System
 open Multi_frames

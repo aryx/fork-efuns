@@ -11,6 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
+open Common
 open Utils
 open Efuns
 open Text
@@ -159,9 +160,11 @@ let kill buf =
 open Options
   
 (*s: constant Ebuffer.save_buffer_hooks *)
+(*
 let save_buffer_hooks = define_option ["save_buffer_hooks"] "" 
     (list_option string_option)
   [ ]
+*)
 (*e: constant Ebuffer.save_buffer_hooks *)
   
 (*s: constant Ebuffer.saved_buffer_hooks *)
@@ -329,9 +332,11 @@ let regexp_alist = ref []
 
 (*s: function Ebuffer.set_major_mode *)
 let set_major_mode buf mode =
+  if !debug
+  then pr2 (spf "setting %s major mode" mode.maj_name);
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
-  List.iter (fun f -> try f buf with _ -> ()) mode.maj_hooks
+  mode.maj_hooks |> List.iter (fun f -> try f buf with _ -> ())
 (*e: function Ebuffer.set_major_mode *)
 
 (*s: function Ebuffer.set_minor_mode *)
@@ -369,21 +374,20 @@ let set_buffer_mode buf =
     match buf.buf_filename with
       None -> 
         (try
-          if Str.string_match suffix_reg buf.buf_name 0 
-          then Str.matched_group 1 buf.buf_name 
-          else buf.buf_name 
+           if Str.string_match suffix_reg buf.buf_name 0 
+           then Str.matched_group 1 buf.buf_name 
+           else buf.buf_name 
          with _ -> buf.buf_name
          )
     | Some file_name -> file_name 
   in 
   let modes_alist = get_var buf modes_alist in
-  if not (!modes_old == modes_alist) then
-    begin
-      regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
-        Str.regexp file_reg, major
-      ) ;
-      modes_old := modes_alist;
-    end;
+  if (!modes_old <> modes_alist) then begin
+    regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
+      Str.regexp file_reg, major
+    );
+    modes_old := modes_alist;
+  end;
   try
     !regexp_alist |> List.iter (fun (regexp, major) ->
       if Str.string_match regexp buf_name 0 
@@ -465,10 +469,9 @@ let catch format buf f =
       
 (*s: toplevel Ebuffer._1 *)
 let _ =
-  Efuns.add_start_hook 
-    (fun () ->
-      set_global create_buf_hook [set_buffer_mode];
-      set_global modes_alist []
-      )
+  Efuns.add_start_hook (fun () ->
+    set_global create_buf_hook [set_buffer_mode];
+    set_global modes_alist []
+  )
 (*e: toplevel Ebuffer._1 *)
 (*e: core/ebuffer.ml *)

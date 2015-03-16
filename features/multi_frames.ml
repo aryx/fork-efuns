@@ -12,9 +12,6 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Efuns
-open Text
-open Frame
-open Top_window
   
 
 (*s: function Multi_frames.cut_frame *)

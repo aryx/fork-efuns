@@ -14,7 +14,6 @@
 (* We use strings instead of ints to enable migration of datas between
 editors (data must be symbolic) *)
 
-open Obj
   
 (*s: type Local.var *)
 type 'a var = string

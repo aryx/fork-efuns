@@ -13,7 +13,6 @@
 (*e: copyright header2 *)
 open Text
 open Efuns
-open Frame
 open Ebuffer
 open Top_window
 open Simple

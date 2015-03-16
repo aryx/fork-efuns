@@ -15,7 +15,6 @@ open Options
 open Xtypes
 open Efuns
 open Text
-open Frame
 open Top_window
 
 (*s: function Simple.string_to_modifier *)
@@ -34,6 +33,7 @@ let string_to_modifier s =
 (*e: function Simple.string_to_modifier *)
   
 (*s: function Simple.modifier_to_string *)
+(*
 let modifier_to_string mask = 
   let s = if mask land shiftMask = 0 then "" else "S" in
   let s = if mask land controlMask = 0 then s else "C" ^ s in
@@ -43,6 +43,7 @@ let modifier_to_string mask =
   let s = if mask land mod4Mask = 0 then s else "4" ^ s in
   let s = if mask land mod5Mask = 0 then s else "5" ^ s in
   s
+*)
 (*e: function Simple.modifier_to_string *)
       
 (*s: constant Simple.name_to_keysym *)
@@ -56,15 +57,19 @@ let name_to_keysym =
 (*e: constant Simple.name_to_keysym *)
   
 (*s: function Simple.value_to_keysym *)
+(*
 let value_to_keysym v =
   match v with
     Value v -> List.assoc v name_to_keysym
   | _ -> raise Not_found
+*)
 (*e: function Simple.value_to_keysym *)
       
 (*s: function Simple.keysym_to_value *)
+(*
 let keysym_to_value k =
   Value (List.assoc k XK.keysym_to_name)
+*)
 (*e: function Simple.keysym_to_value *)
   
 (*s: function Simple.value_to_key *)
@@ -468,6 +473,7 @@ let end_of_word  buf point =
 (*e: function Simple.end_of_word *)
 
 (*s: function Simple.current_word *)
+(*
 let current_word buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
@@ -479,6 +485,7 @@ let current_word buf point =
   remove_point text start;
   remove_point text term;
   word
+*)
 (*e: function Simple.current_word *)
 
 (*s: function Simple.current_word (features/simple.ml) *)

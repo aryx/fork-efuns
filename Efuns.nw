@@ -285,7 +285,7 @@ the main author of Efuns.
 % customizable => configuration file
 % self-documenting => not really yet? M-x a bit. Have Efuns.nw though :)
 
-% interactive!
+% interactive! (useful for .e.g C-h v)
 
 % see <<actions definitions>>, pretty good overview of functionalities
 
@@ -1090,7 +1090,7 @@ let execute_action action =
 let execute_buffer_action action buf =
   match (get_action action) with
     BufferAction f -> f buf
-  | FrameAction f -> 
+  | FrameAction _f -> 
       Printf.printf "Can't apply action %s on buffer\n" action
 @
 
@@ -1580,6 +1580,20 @@ let get_var buf var =
 [c_h; NormalMap, Char.code 'v'], "get_variable";
 @
 
+% can't understand yet everything (so move it later??)
+<<function Complex.get_variable>>=
+let get_variable frame = 
+  Select.select frame "get_variable : " variable_hist
+    "" (all_variables frame) (fun s -> s) (fun variable ->
+      Top_window.mini_message frame 
+        (Printf.sprintf "%s : %s" variable (
+          let buf = frame.frm_buffer in
+          try
+            Local.print buf.buf_vars variable
+          with _ ->
+            Local.print (Efuns.location()).loc_vars variable)))
+@
+
 \section{Hooks}
 % essentially a set of list refs
 
@@ -1638,12 +1652,14 @@ let rec exec_named_hooks hooks frame =
 @
 
 <<function Frame.exec_named_hooks_with_abort>>=
+(*
 let rec exec_named_hooks_with_abort hooks frame =
   match hooks with
     [] -> ()
   | action :: hooks ->
       exec_named_hooks_with_abort hooks frame;
       execute_action action frame
+*)
 @
 
 % example:
@@ -1682,9 +1698,11 @@ let rec exec_named_buf_hooks_with_abort hooks frame =
 
 % example:
 <<constant Ebuffer.save_buffer_hooks>>=
+(*
 let save_buffer_hooks = define_option ["save_buffer_hooks"] "" 
     (list_option string_option)
   [ ]
+*)
 @
 % use
 
@@ -5722,7 +5740,7 @@ let string_to_regex s = s, Str.regexp s
 let regexp_option = define_option_class "Regexp" 
     (fun v -> match v with
         Value s ->  string_to_regex s | _ -> raise Not_found)
-  (fun (s,r) -> Value s)
+  (fun (s,_r) -> Value s)
 @
 % where need that? for c_error_regexp config file
 
@@ -6222,6 +6240,7 @@ and major_mode = {
   }
 @
 
+% toplevel fondemental_mode | every major modes  -> <>
 <<function Ebuffer.new_major_mode>>=
 let new_major_mode name hooks = {
     maj_name = name;
@@ -6235,9 +6254,11 @@ let new_major_mode name hooks = {
 
 <<function Ebuffer.set_major_mode>>=
 let set_major_mode buf mode =
+  if !debug
+  then pr2 (spf "setting %s major mode" mode.maj_name);
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
-  List.iter (fun f -> try f buf with _ -> ()) mode.maj_hooks
+  mode.maj_hooks |> List.iter (fun f -> try f buf with _ -> ())
 @
 
 
@@ -6247,6 +6268,7 @@ let set_major_mode buf mode =
 <<[[interactives_map]] initial entries>>=
 "fondamental_mode";
 @
+% it's fundamental-mode normally :) french :)
 
 <<major mode actions>>=
 define_action "fondamental_mode" fondamental_mode;
@@ -6266,15 +6288,10 @@ let fondamental_mode = new_major_mode "Fondamental" [] (* no hooks *)
 <<constant Ebuffer.modes_alist>>=
 let modes_alist = Local.create_abstr "modes_alist"
 @
-
+% but who sets it?
 
 <<constant Ebuffer.regexp_alist>>=
 let regexp_alist = ref []
-@
-
-<<function Ebuffer.modep>>=
-let modep buf minor =
-  List.memq minor buf.buf_minor_modes
 @
 
 <<constant Ebuffer.suffix_reg>>=
@@ -6282,27 +6299,27 @@ let suffix_reg = Str.regexp "\\(.*\\)<[0-9]+>$"
 @
 %$
 
+% ?? -> <>
 <<function Ebuffer.set_buffer_mode>>=
 let set_buffer_mode buf =
   let buf_name = 
     match buf.buf_filename with
       None -> 
         (try
-          if Str.string_match suffix_reg buf.buf_name 0 
-          then Str.matched_group 1 buf.buf_name 
-          else buf.buf_name 
+           if Str.string_match suffix_reg buf.buf_name 0 
+           then Str.matched_group 1 buf.buf_name 
+           else buf.buf_name 
          with _ -> buf.buf_name
          )
     | Some file_name -> file_name 
   in 
   let modes_alist = get_var buf modes_alist in
-  if not (!modes_old == modes_alist) then
-    begin
-      regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
-        Str.regexp file_reg, major
-      ) ;
-      modes_old := modes_alist;
-    end;
+  if (!modes_old <> modes_alist) then begin
+    regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
+      Str.regexp file_reg, major
+    );
+    modes_old := modes_alist;
+  end;
   try
     !regexp_alist |> List.iter (fun (regexp, major) ->
       if Str.string_match regexp buf_name 0 
@@ -6313,6 +6330,10 @@ let set_buffer_mode buf =
         with _ -> raise Exit
     ) 
   with Exit -> ()
+@
+
+<<constant Ebuffer.modes_old>>=
+let modes_old = ref []
 @
 
 
@@ -6484,6 +6505,11 @@ let _ =
     )
 @
 % could be define_buffer_action too as don't use any info from the frame
+
+<<function Ebuffer.modep>>=
+let modep buf minor =
+  List.memq minor buf.buf_minor_modes
+@
 
 \section{Minor mode variables and keys}
 

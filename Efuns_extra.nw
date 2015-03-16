@@ -31,7 +31,6 @@
 (* We use strings instead of ints to enable migration of datas between
 editors (data must be symbolic) *)
 
-open Obj
   
 <<type Local.var>>
 
@@ -380,6 +379,7 @@ let compare text p1 p2 =
 @
 
 <<function Text.add>>=
+(*
 let add text point delta =
   let gpos = text.gpoint.pos in
   let gap_end = gpos + text.gsize in
@@ -390,6 +390,7 @@ let add text point delta =
     point + delta - text.gsize
   else
     point + delta
+*)
 @
 
 <<function Text.get_char>>=
@@ -839,6 +840,7 @@ let rec region tree p1 p2 =
 @
 
 <<function Text.goto_xy>>=
+(*
 let goto_xy tree point x y =
   let text = tree.tree_text in    
   let y =
@@ -848,6 +850,7 @@ let goto_xy tree point x y =
   point.pos <- text.text_newlines.(y).position;
   point.line <- y;
   fmove tree point x |> ignore
+*)
 @
 
 <<function Text.update>>=
@@ -972,15 +975,6 @@ type color = string
   
 <<type Text.action>>
 
-module Text = struct
-    type t = text
-    type text = t
-    type l = line
-    type line = l
-      
-    let representation tree line = line.repr_string, line.position
-    let items tree line = line.items
-  end
 
 (*      
 module TextTree = WX_text.Make(Text)
@@ -1002,7 +996,7 @@ type tree_desc =
 
 let make_text text lines =
   let nlines = Array.length lines in
-  let rec tree = {
+  let tree = {
       tree_nlines = nlines;
       tree_width = 0;
       tree_height = 0;
@@ -1334,9 +1328,6 @@ let change_name buf filename =
 @
 
 
-<<constant Ebuffer.modes_old>>=
-let modes_old = ref []
-@
 
 
 
@@ -1357,11 +1348,10 @@ let catch format buf f =
 
 <<toplevel Ebuffer._1>>=
 let _ =
-  Efuns.add_start_hook 
-    (fun () ->
-      set_global create_buf_hook [set_buffer_mode];
-      set_global modes_alist []
-      )
+  Efuns.add_start_hook (fun () ->
+    set_global create_buf_hook [set_buffer_mode];
+    set_global modes_alist []
+  )
 @
 
 
@@ -1576,7 +1566,6 @@ let update_request frame request =
 <<copyright header2>>
 open Text
 open Efuns
-open Frame
 open Ebuffer
 open Top_window
 open Simple
@@ -1990,6 +1979,7 @@ let string_to_modifier s =
 @
 
 <<function Simple.modifier_to_string>>=
+(*
 let modifier_to_string mask = 
   let s = if mask land shiftMask = 0 then "" else "S" in
   let s = if mask land controlMask = 0 then s else "C" ^ s in
@@ -1999,6 +1989,7 @@ let modifier_to_string mask =
   let s = if mask land mod4Mask = 0 then s else "4" ^ s in
   let s = if mask land mod5Mask = 0 then s else "5" ^ s in
   s
+*)
 @
 
 <<constant Simple.name_to_keysym>>=
@@ -2012,15 +2003,19 @@ let name_to_keysym =
 @
 
 <<function Simple.value_to_keysym>>=
+(*
 let value_to_keysym v =
   match v with
     Value v -> List.assoc v name_to_keysym
   | _ -> raise Not_found
+*)
 @
 
 <<function Simple.keysym_to_value>>=
+(*
 let keysym_to_value k =
   Value (List.assoc k XK.keysym_to_name)
+*)
 @
 
 <<function Simple.value_to_key>>=
@@ -2266,6 +2261,7 @@ let end_of_word  buf point =
 @
 
 <<function Simple.current_word>>=
+(*
 let current_word buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
@@ -2277,6 +2273,7 @@ let current_word buf point =
   remove_point text start;
   remove_point text term;
   word
+*)
 @
 
 <<function Simple.current_word (features/simple.ml)>>=
@@ -2778,7 +2775,6 @@ open Options
 open Xtypes
 open Efuns
 open Text
-open Frame
 open Top_window
 
 <<function Simple.string_to_modifier>>
@@ -3445,7 +3441,6 @@ let simple_select frame request action =
 open Options
 open Efuns
 open Text
-open Frame
 open Simple
 open Top_window
 open Multi_frames
@@ -3772,18 +3767,6 @@ let set_global_variable frame =
           Local.input (Efuns.location()).loc_vars variable value))
 @
 
-<<function Complex.get_variable>>=
-let get_variable frame = 
-  Select.select frame "get_variable : " variable_hist
-    "" (all_variables frame) (fun s -> s) (fun variable ->
-      Top_window.mini_message frame 
-        (Printf.sprintf "%s : %s" variable (
-          let buf = frame.frm_buffer in
-          try
-            Local.print buf.buf_vars variable
-          with _ ->
-              Local.print (Efuns.location()).loc_vars variable)))
-@
 
 
 <<toplevel Complex._1>>=
@@ -3810,10 +3793,8 @@ open Unix
 open Utils
 open Efuns
 open Text
-open Frame
 open Simple
 open Select
-open Interactive
 
 <<function Complex.save_buffers_and_action>>
 
@@ -3920,7 +3901,7 @@ let open_process cmd =
           close in_write end;
       List.iter close [in_read;out_write];
       execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
-      exit 127
+      (*      exit 127 *)
   | pid -> 
       Unix.close out_read;
       Unix.close in_write;
@@ -3982,7 +3963,7 @@ let system buf_name location cmd end_action =
         Mutex.unlock location.loc_mutex
   );
 *)
-  failwith "System.system: TODO";
+  if true then failwith "System.system: TODO";
   let lmap = buf.buf_map in
   Keymap.add_binding lmap [NormalMap, XK.xk_Return]
     (fun frame ->
@@ -4031,8 +4012,6 @@ open Unix
 (*open Concur*)
 (*open ThreadUnix*)
 open Select
-open Simple
-open Top_window
 open Multi_frames
 
 <<function System.open_process>>
@@ -4287,11 +4266,7 @@ open Select
 <<features/interactive.ml>>=
 <<copyright header2>>
 open Efuns
-open Text
-open Frame
-open Simple
 open Select
-open Keymap
 
   
 <<function Interactive.create_bindings>>
@@ -4324,9 +4299,7 @@ deux fonctions principales:
 
 open Efuns
 open Text
-open Frame
 open Simple
-open Interactive
 
 <<function Abbrevs.escaped>>
   
@@ -4378,9 +4351,6 @@ let remove_frame frame =
 <<features/multi_frames.ml>>=
 <<copyright header2>>
 open Efuns
-open Text
-open Frame
-open Top_window
   
 
 <<function Multi_frames.cut_frame>>
@@ -4502,7 +4472,6 @@ open Options
 open Efuns
 open Text
 open Frame
-open Simple
 open Select
 open Multi_frames  
 
@@ -4701,11 +4670,11 @@ let menus = define_option ["menus"] ""
 
 
 <<constant Top_window.check_abort>>=
-let check_abort = ref 0
+(*let check_abort = ref 0*)
 @
 
 <<constant Top_window.check_abort_delay>>=
-let check_abort_delay = ref 100
+(*let check_abort_delay = ref 100*)
 @
 
 <<function Top_window.check_abort>>=
@@ -4728,7 +4697,6 @@ let check_abort frame =
 <<copyright header2>>
 open Common
 open Options
-open Xtypes
 open Efuns
 
   
@@ -4840,10 +4808,8 @@ open Interactive
 open Efuns
 open Keymap
 open Simple
-open Select
 open Search
 open Compil
-open Abbrevs
 open Complexe
 open System
 open Multi_frames
@@ -5193,12 +5159,9 @@ let _ =
 
 <<major_modes/dired.ml>>=
 <<copyright header>>
-open Text
 open Keymap
 open Efuns
-open Simple
-open Compil
-open Window
+
 
 <<function Dired.update>>
 
@@ -5251,10 +5214,7 @@ open Window
 
 <<minor_modes/minor_mode_sample.ml>>=
 <<copyright header2>>
-open Text
-open Simple
 open Efuns
-open Top_window
           
 <<constant Minor_mode_sample.minor_mode_name>>
 
@@ -5340,10 +5300,8 @@ let _ =
 <<copyright header2>>
 open Options
 open Abbrevs
-open Text
 open Simple
 open Efuns
-open Top_window
 
 <<constant Abbrevs_mode.abbreviations>>
   
@@ -5647,10 +5605,8 @@ let _ =
 <<minor_modes/fill_mode.ml>>=
 <<copyright header2>>
 open Options
-open Text
 open Simple
 open Efuns
-open Top_window
           
 <<constant Fill_mode.minor_mode_name>>
   
@@ -5705,10 +5661,8 @@ let _ =
 
 <<minor_modes/paren_mode.ml>>=
 <<copyright header2>>
-open Text
 open Simple
 open Efuns
-open Top_window
 
 <<constant Paren_mode.mode>>
 
@@ -5750,10 +5704,8 @@ let _ =
 
 <<minor_modes/tab_mode.ml>>=
 <<copyright header2>>
-open Text
 open Simple
 open Efuns
-open Top_window
 
 <<constant Tab_mode.mode>>
   
@@ -5923,7 +5875,6 @@ open Keymap
 open Efuns
 open Simple
 open Compil
-open Complex
 open Window
 
 <<constant Makefile_mode.mkfile_vars>>

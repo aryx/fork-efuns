@@ -82,7 +82,7 @@ CMIS=\
  features/select.cmi\
  features/search.cmi\
 
-SYSLIBS=unix.cma str.cma threads.cma 
+SYSLIBS=unix.cma str.cma threads.cma nums.cma bigarray.cma
 
 INCLUDEDIRS=\
   commons\
@@ -105,8 +105,9 @@ all:: $(CMIS)
 opt:
 	$(MAKE) $(TARGET).opt
 
+# need -linkall!
 $(TARGET): $(LIBS) $(OBJS)
-	$(OCAMLC) -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ $(OTHERSYSLIBS) $(SYSLIBS) $(GTKLOOP) $^
+	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ $(OTHERSYSLIBS) $(SYSLIBS) $(GTKLOOP) $^
 
 $(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS) 
 	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa)  $^

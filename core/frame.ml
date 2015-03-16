@@ -687,12 +687,14 @@ let rec exec_named_hooks hooks frame =
 (*e: function Frame.exec_named_hooks *)
 
 (*s: function Frame.exec_named_hooks_with_abort *)
+(*
 let rec exec_named_hooks_with_abort hooks frame =
   match hooks with
     [] -> ()
   | action :: hooks ->
       exec_named_hooks_with_abort hooks frame;
       execute_action action frame
+*)
 (*e: function Frame.exec_named_hooks_with_abort *)
 
 (*s: function Frame.load_file *)

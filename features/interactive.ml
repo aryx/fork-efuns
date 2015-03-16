@@ -12,11 +12,7 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Efuns
-open Text
-open Frame
-open Simple
 open Select
-open Keymap
 
   
 (*s: function Interactive.create_bindings *)

@@ -11,10 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-open Text
-open Simple
 open Efuns
-open Top_window
           
 (*s: constant Minor_mode_sample.minor_mode_name *)
 let minor_mode_name = "my_minor"

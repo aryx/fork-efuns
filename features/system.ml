@@ -4,8 +4,6 @@ open Unix
 (*open Concur*)
 (*open ThreadUnix*)
 open Select
-open Simple
-open Top_window
 open Multi_frames
 
 (*s: function System.open_process *)
@@ -24,7 +22,7 @@ let open_process cmd =
           close in_write end;
       List.iter close [in_read;out_write];
       execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
-      exit 127
+      (*      exit 127 *)
   | pid -> 
       Unix.close out_read;
       Unix.close in_write;
@@ -77,7 +75,7 @@ let system buf_name location cmd end_action =
         Mutex.unlock location.loc_mutex
   );
 *)
-  failwith "System.system: TODO";
+  if true then failwith "System.system: TODO";
   let lmap = buf.buf_map in
   Keymap.add_binding lmap [NormalMap, XK.xk_Return]
     (fun frame ->

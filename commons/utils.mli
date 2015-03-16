@@ -41,7 +41,7 @@ val printexn : exn -> string
 val catchexn : string -> (unit -> unit) -> unit
 val vcatchexn : string -> (unit -> 'a) -> 'a option
 val set_signal : int -> Sys.signal_behavior -> unit
-val format_to_string : ('a -> 'b) -> 'a -> string
+(*val format_to_string : ('a -> 'b) -> 'a -> string*)
 val do_and_format : ('a -> 'b) -> 'a -> string * 'b
 val format_to_string : ('a -> 'b) -> 'a -> string
 val is_directory : string -> bool

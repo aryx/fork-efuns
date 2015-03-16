@@ -15,7 +15,6 @@ open Options
 open Efuns
 open Text
 open Frame
-open Simple
 open Select
 open Multi_frames  
 

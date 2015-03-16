@@ -12,10 +12,8 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Options
-open Text
 open Simple
 open Efuns
-open Top_window
           
 (*s: constant Fill_mode.minor_mode_name *)
 let minor_mode_name = "fill"

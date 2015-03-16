@@ -284,6 +284,7 @@ let set_signal sig_num sig_beh =
   let _ = Sys.signal sig_num sig_beh in ()
 
   
+(*
 let format_to_string action arg =
   let string = ref "" in
   let (p,f) = Format.get_formatter_output_functions () in
@@ -302,6 +303,7 @@ let format_to_string action arg =
       Format.print_flush ();
       Format.set_formatter_output_functions p f;
       raise e
+*)
       
 
 let do_and_format action arg =

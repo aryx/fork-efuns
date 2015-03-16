@@ -11,10 +11,8 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-open Text
 open Simple
 open Efuns
-open Top_window
 
 (*s: constant Paren_mode.mode *)
 let mode = Ebuffer.new_minor_mode "paren" []

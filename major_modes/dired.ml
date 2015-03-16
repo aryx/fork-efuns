@@ -11,12 +11,9 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header *)
-open Text
 open Keymap
 open Efuns
-open Simple
-open Compil
-open Window
+
 
 (*s: function Dired.update *)
 let update buf =

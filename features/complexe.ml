@@ -15,10 +15,8 @@ open Unix
 open Utils
 open Efuns
 open Text
-open Frame
 open Simple
 open Select
-open Interactive
 
 (*s: function Complex.save_buffers_and_action *)
 let rec save_buffers_and_action frame buffers action =
@@ -402,7 +400,7 @@ let get_variable frame =
           try
             Local.print buf.buf_vars variable
           with _ ->
-              Local.print (Efuns.location()).loc_vars variable)))
+            Local.print (Efuns.location()).loc_vars variable)))
 (*e: function Complex.get_variable *)
 
 open Options

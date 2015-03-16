@@ -581,7 +581,7 @@ let execute_action action =
 let execute_buffer_action action buf =
   match (get_action action) with
     BufferAction f -> f buf
-  | FrameAction f -> 
+  | FrameAction _f -> 
       Printf.printf "Can't apply action %s on buffer\n" action
 (*e: function Efuns.execute_buffer_action *)
       
@@ -593,6 +593,6 @@ let string_to_regex s = s, Str.regexp s
 let regexp_option = define_option_class "Regexp" 
     (fun v -> match v with
         Value s ->  string_to_regex s | _ -> raise Not_found)
-  (fun (s,r) -> Value s)
+  (fun (s,_r) -> Value s)
 (*e: constant Efuns.regexp_option *)
 (*e: core/efuns.ml *)

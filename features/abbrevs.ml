@@ -23,9 +23,7 @@ deux fonctions principales:
 
 open Efuns
 open Text
-open Frame
 open Simple
-open Interactive
 
 (*s: function Abbrevs.escaped *)
 let escaped s =

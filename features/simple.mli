@@ -52,7 +52,7 @@ val backward_word : Efuns.buffer -> Text.point -> unit
 val forward_word : Efuns.buffer -> Text.point -> unit
 val beginning_of_word : Efuns.buffer -> Text.point -> string
 val end_of_word : Efuns.buffer -> Text.point -> string
-val current_word : Efuns.buffer -> Text.point -> string
+(*val current_word : Efuns.buffer -> Text.point -> string *)
 val current_word : Efuns.buffer -> Text.point -> string
 val dirname : Efuns.frame -> string -> string
 val buffer_list : Efuns.frame -> string list

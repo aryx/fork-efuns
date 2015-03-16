@@ -13,7 +13,6 @@
 (*e: copyright header2 *)
 open Common
 open Options
-open Xtypes
 open Efuns
 
   
@@ -463,10 +462,10 @@ let delete_window frame =
 
         
 (*s: constant Top_window.check_abort *)
-let check_abort = ref 0
+(*let check_abort = ref 0*)
 (*e: constant Top_window.check_abort *)
 (*s: constant Top_window.check_abort_delay *)
-let check_abort_delay = ref 100
+(*let check_abort_delay = ref 100*)
 (*e: constant Top_window.check_abort_delay *)
 
   (* This function should be used in loops that could be interrupted by
