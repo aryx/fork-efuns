@@ -400,6 +400,9 @@ type text = {
 
     mutable text_newlines : line array;
     mutable text_nlines : int; (* Array.length text.text_newlines *)
+    <<[[Text.text]] gap fields>>
+    <<[[Text.text]] history fields>>
+    <<[[Text.text]] attribute fields>>
     <<[[Text.text]] other fields>>
   } 
 @
@@ -442,7 +445,7 @@ and line = {
 type version = int
 @
 
-<<[[Text.text]] other fields>>=
+<<[[Text.text]] history fields>>=
 mutable text_modified : version;
 @
 
@@ -551,6 +554,8 @@ and buffer =
     mutable buf_name : string;
     mutable buf_filename : string option;
 
+    <<[[Efuns.buffer]] current position fields>>
+    <<[[Efuns.buffer]] history fields>>
     <<[[Efuns.buffer]] other fields>>
   } 
 @
@@ -584,7 +589,7 @@ and point = {
 % everywhere and code like let point = point.point. It was confusing
 % two notions, a position and a point!
 
-<<[[Efuns.buffer]] other fields>>=
+<<[[Efuns.buffer]] current position fields>>=
 mutable buf_point : Text.point;
 mutable buf_start : Text.point;
 @
@@ -600,7 +605,7 @@ mutable buf_start : Text.point;
 % because of gap things can move so you need to update all
 % the points. See section on Points later.
 
-<<[[Efuns.buffer]] other fields>>=
+<<[[Efuns.buffer]] history fields>>=
 mutable buf_modified : int; (* version? *)
 @
 %less: diff with text_modified? seems to be about modification of the
@@ -672,10 +677,14 @@ and frame  =
     mutable frm_width : int;
     mutable frm_height : int;
 
+    <<[[Efuns.frame]] current position fields>>
+    <<[[Efuns.frame]] window fields>>
+    <<[[Efuns.frame]] decoration fields>>
+    <<[[Efuns.frame]] status field>>
+    <<[[Efuns.frame]] history fields>>
     <<[[Efuns.frame]] other fields>>
   } 
 @
-%todo: different sections for the frame (cursor, position, etc)
 %dead: mutable frm_force_point : bool;
 %dead: mutable frm_force_cursor : bool;
 %less: coordinates? seems redundant with frm.frm_window info no?
@@ -684,7 +693,7 @@ and frame  =
 %later: if decide to have variable size fonts we'll have to revisit
 % this no? emacs 21 did that?
 
-<<[[Efuns.frame]] other fields>>=
+<<[[Efuns.frame]] current position fields>>=
 (* insert point *)
 mutable frm_point : Text.point; 
 @
@@ -742,7 +751,7 @@ let create_without_top window mini buf =
       
       frm_repeat_action = 0;
       frm_last_action = Keymap.dummy_action;
-    
+
       frm_force_start = false;
       frm_cutline = window.win_width - 1;
       frm_killed = false;
@@ -778,7 +787,7 @@ and window =
   } 
 @
 
-<<[[Efuns.frame]] other fields>>=
+<<[[Efuns.frame]] window fields>>=
 mutable frm_window : window;
 @
 %less: why need that field in frame? frm_xpos not enough?
@@ -2305,7 +2314,7 @@ match () with
 
 
 
-<<[[Text.text]] other fields>>=
+<<[[Text.text]] gap fields>>=
 (* g for gap *)
 mutable gpoint : point;
 mutable gsize : int;
@@ -2782,7 +2791,7 @@ type attribute = int
 %old: was used only in .mli before, but now I used it
 % in in Text.text.attrs too
 
-<<[[Text.text]] other fields>>=
+<<[[Text.text]] attribute fields>>=
 mutable text_attrs : attribute array;
 @
 
@@ -3192,7 +3201,7 @@ let save_buffer frame =
 @
 
 
-<<[[Efuns.buffer]] other fields>>=
+<<[[Efuns.buffer]] history fields>>=
 mutable buf_last_saved : int;
 @
 
@@ -3391,13 +3400,12 @@ let update top_window frame =
 
 \subsubsection{Frame decorations display}
 
-<<[[Efuns.frame]] other fields>>=
+<<[[Efuns.frame]] decoration fields>>=
 (* 0 for no scrollbar, 2 for scrollbar *)
 mutable frm_has_scrollbar : int;
 @
 
-
-<<[[Efuns.frame]] other fields>>=
+<<[[Efuns.frame]] decoration fields>>=
 (* 0 for minibuffer, 1 for normal frame *)
 mutable frm_has_status_line : int;
 (* Some for minibuffer, None for normal frame *)
@@ -3430,7 +3438,7 @@ match frame.frm_mini_buffer with
 % a frame is a view over a buffer, from line x to line y
 % and cursor at point.
 
-<<[[Efuns.frame]] other fields>>=
+<<[[Efuns.frame]] current position fields>>=
 (* first point of the first buffer-line on screen *)
 mutable frm_start : Text.point;
 (* last point on screen, -1 if modified *)
@@ -3446,7 +3454,7 @@ mutable frm_end : Text.point;
 
 
 
-<<[[Efuns.frame]] other fields>>=
+<<[[Efuns.frame]] history fields>>=
 mutable frm_last_text_updated : int;
 mutable frm_last_buf_updated : int;
 @
@@ -3835,7 +3843,7 @@ frame.frm_force_start <- false;
 
 \subsection{Status line creation}
 
-<<[[Efuns.frame]] other fields>>=
+<<[[Efuns.frame]] status field>>=
 mutable frm_status : status;    
 @
 
@@ -4689,14 +4697,12 @@ define_action "goto_line" goto_line;
 
 <<function Simple.move_backward>>=
 let move_backward frame delta =
-  let text = frame.frm_buffer.buf_text in
-  Text.bmove text frame.frm_point delta
+  Text.bmove frame.frm_buffer.buf_text frame.frm_point delta
 @
 
 <<function Simple.move_forward>>=
 let move_forward frame delta =
-  let text = frame.frm_buffer.buf_text in
-  Text.fmove text frame.frm_point delta
+  Text.fmove frame.frm_buffer.buf_text frame.frm_point delta
 @
 
 \subsection{Words and the syntax table}
@@ -5281,11 +5287,11 @@ let undo frame =
   Text.fmove text point len
 @
 
-<<[[Text.text]] other fields>>=
+<<[[Text.text]] history fields>>=
 mutable text_history : action list;
 @
 
-<<[[Efuns.buffer]] other fields>>=
+<<[[Efuns.buffer]] history fields>>=
 mutable buf_history : (int * Text.action) list;
 @
 
