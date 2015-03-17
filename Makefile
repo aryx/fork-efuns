@@ -57,6 +57,7 @@ SRC=\
  \
  major_modes/dired.ml\
  \
+ prog_modes/pl_colors.ml\
  prog_modes/makefile_mode.ml\
  prog_modes/ocaml_mode.ml\
  prog_modes/c_mode.ml\

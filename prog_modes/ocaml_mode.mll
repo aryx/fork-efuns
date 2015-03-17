@@ -13,7 +13,6 @@
 (***********************************************************************)
 (* Lexing *)
 (***********************************************************************)
-
 open Lexing 
 
 type token =
@@ -123,9 +122,6 @@ type token =
 (* for lexers *)
 | RULE
 | PARSE
-(* for JoCaml *)
-| DEF
-| LOC
   
   
 let tokens = [AMPERAMPER,"AMPERAMPER"; AMPERSAND,"AMPERSAND";
@@ -243,9 +239,6 @@ let keyword_table =
     (* for lexers *)
     "rule", RULE;
     "parse", PARSE;
-    (* for JoCaml *)
-    "loc", LOC;
-    "def", DEF;
   ];
   h
   
@@ -498,28 +491,9 @@ let lexing text start_point end_point =
   lexer_start := get_position text start_point;
   Text.lexing text start_point end_point
 
-
 (***********************************************************************)
-(* Colors *)
+(* Paths *)
 (***********************************************************************)
-
-let keyword_color = define_option ["ocaml_mode"; "keyword_color"] ""
-    string_option "red"
-let string_color = define_option ["ocaml_mode"; "string_color"] ""
-    string_option "blue"
-let comment_color = define_option ["ocaml_mode"; "comment_color"] ""
-    string_option "cadetblue"
-let upper_color = define_option ["ocaml_mode"; "upper_color"] ""
-    string_option "blue"
-
-let keyword_font = define_option ["ocaml_mode"; "keyword_font"] ""
-    string_option !!font
-let string_font = define_option ["ocaml_mode"; "string_font"] ""
-    string_option !!font
-let comment_font = define_option ["ocaml_mode"; "comment_font"] ""
-    string_option !!font
-let upper_font = define_option ["ocaml_mode"; "upper_font"] ""
-    string_option !!font
 
 let ocaml_path = define_option ["ocaml_mode"; "ocaml_path"] ""
     path_option []
@@ -527,17 +501,20 @@ let ocaml_path = define_option ["ocaml_mode"; "ocaml_path"] ""
 let setup_ocaml_path () =
   if !!ocaml_path = [] 
   then ocaml_path =:= !!Efuns.load_path
-  
-(*********************** colors ***********************)
+
+(***********************************************************************)
+(* Colors *)
+(***********************************************************************)
+
 let ocaml_color_region buf start_point end_point =
-  let keyword_attr = make_attr (get_color !!keyword_color) 1 
-                           (get_font !!keyword_font) false in
-  let string_attr = make_attr (get_color !!string_color) 1 
-                              (get_font !!string_font)    false in
-  let comment_attr = make_attr (get_color !!comment_color) 1 
-                            (get_font !!comment_font) false in
-  let gray_attr = make_attr (get_color !!upper_color) 1 
-                            (get_font !!upper_font)     false in
+  let keyword_attr = make_attr (get_color !!Pl_colors.keyword_color) 1 
+                               (get_font !!(*keyword_*)font) false in
+  let string_attr = make_attr (get_color !!Pl_colors.string_color) 1 
+                              (get_font !!(*string_*)font)    false in
+  let comment_attr = make_attr (get_color !!Pl_colors.comment_color) 1 
+                               (get_font !!(*comment_*)font) false in
+  let gray_attr = make_attr (get_color !!Pl_colors.module_color) 1 
+                            (get_font !!(*upper_*)font) false in
   let text = buf.buf_text in
   let curseur = Text.add_point text in
   let lexbuf = lexing text start_point end_point in
@@ -551,29 +528,29 @@ let ocaml_color_region buf start_point end_point =
       | OPEN | MODULE | STRUCT | MUTABLE
       | AND | OR | TYPE | VAL | CLASS | SIG | INHERIT | OBJECT
       | EXCEPTION | RULE | METHOD | EXTERNAL -> 
-          set_position text curseur pos;
+          Text.set_position text curseur pos;
           set_attr text curseur len keyword_attr
       | EOFCOMMENT 
       | COMMENT ->
-          set_position text curseur pos;
+          Text.set_position text curseur pos;
           set_attr text curseur len comment_attr
       | EOFSTRING
       | CHAR 
       | STRING ->
-          set_position text curseur pos;
+          Text.set_position text curseur pos;
           set_attr text curseur len string_attr
       | UIDENT ->
-          set_position text curseur pos;
+          Text.set_position text curseur pos;
           set_attr text curseur len gray_attr            
-      | _ -> ());
+      | _ -> ()
+    );
     iter lexbuf
   in
   try
     iter lexbuf
-  with
-    _ ->
-      buf.buf_modified <- buf.buf_modified + 1;
-      remove_point text curseur
+  with _ ->
+    buf.buf_modified <- buf.buf_modified + 1;
+    remove_point text curseur
 
 
 
@@ -582,20 +559,20 @@ let ocaml_color_buffer buf =
   Text.unset_attr text;
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
-  set_position text end_point (size text);
+  Text.set_position text end_point (size text);
   ocaml_color_region buf start_point end_point;
-  remove_point text start_point;
-  remove_point text end_point
+  Text.remove_point text start_point;
+  Text.remove_point text end_point
 
 let ocaml_color frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
-  set_position text end_point (size text);
+  Text.set_position text end_point (size text);
   ocaml_color_region buf start_point end_point;
-  remove_point text start_point;
-  remove_point text end_point
+  Text.remove_point text start_point;
+  Text.remove_point text end_point
 
 (***********************************************************************)
 (************************  abbreviations ********************)
@@ -716,6 +693,7 @@ let start_regexp = define_option ["ocaml_mode"; "start_regexp"]
     string_to_regex "^\\(let\\|module\\|type\\|exception\\|open\\)");;
 
 type indentations = (int * (Text.position list)) list
+
 let indentation = define_option ["ocaml_mode"; "indentation"] ""
   int_option 2
   
@@ -867,30 +845,17 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       (fix indent eols indents)
   
   | EQUAL ->
-      let (stack',kwd,indent') = pop_to_kwds [DEF; BAR] stack in
-      (* if we find a DEF, we are the first = after the DEF, ie a process
-      follows. We put a BAR to prevent any other EQUAL to match this DEF.
-  Other EQUALs should not be affected by this JoCaml need. *)
-      
-      if kwd = DEF then
-        parse lexbuf token 
-          ((BAR,indent)::stack) [] indent (fix indent eols indents)
-      else
-        parse lexbuf token stack [] indent (fix indent eols indents)
+      let (_stack',_kwd,_indent') = pop_to_kwds [BAR] stack in
+      parse lexbuf token stack [] indent (fix indent eols indents)
   
   | AND ->
       let (stack,kwd,indent) = pop_to_kwds 
-          [LET;TYPE;RULE;CLASS;DEF;LOC] stack in
+          [LET;TYPE;RULE;CLASS] stack in
       parse lexbuf token ((kwd,indent)::stack)
       [] (indent+ !!indentation) (fix indent eols indents) 
   | OR ->
-      let (stack',kwd,indent') = pop_to_kwds  [DEF] stack in
-      if kwd = DEF then
-        parse lexbuf token stack
-          [] (indent'+ !!indentation) (fix indent' eols indents)
-      else
-        parse lexbuf token stack
-          [] indent (fix indent eols indents)
+      let (_stack',_kwd,_indent') = pop_to_kwds  [] stack in
+      parse lexbuf token stack [] indent (fix indent eols indents)
   
   | IN -> 
       (* partially terminate a LET structure *)
@@ -898,20 +863,11 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       parse lexbuf token ((IN,indent)::stack)
       [] indent (fix indent eols indents)
   
-  | DEF
-  | LOC -> 
-      parse lexbuf token ((token,indent)::stack)
-      [] (indent+ !!indentation) (fix indent eols indents)
-  
+ 
   | DO ->
 (* starts a DO ... DONE structure *)
-      let (stack',kwd,indent') = pop_to_kwds [WHILE;FOR;LOC] stack in
-      if kwd = LOC then
-      (* LOC ... DO { ... } *)
-        parse lexbuf DO stack [] (indent'+ !!indentation) 
-        (fix indent' eols indents)
-      else
-        parse lexbuf DO ((DO,indent') :: stack') [] (indent'+ !!indentation) 
+      let (stack',kwd,indent') = pop_to_kwds [WHILE;FOR] stack in
+      parse lexbuf DO ((DO,indent') :: stack') [] (indent'+ !!indentation) 
         (fix indent' eols indents)
 (* These keywords start multi-keywords block structures. *)
 
@@ -1017,10 +973,10 @@ let rec parse lexbuf prev_tok stack eols indent indents =
         (fix indent eols indents)
   | BAR ->
       let (stack,kwd,indent) = 
-        pop_to_kwds [WITH;FUNCTION;BAR;TYPE;PARSE;LPAREN;LBRACE;DEF] stack in
+        pop_to_kwds [WITH;FUNCTION;BAR;TYPE;PARSE;LPAREN;LBRACE] stack in
       let kwd = 
         match kwd with
-          TYPE | LPAREN | PARSE | LBRACE | DEF -> kwd
+          TYPE | LPAREN | PARSE | LBRACE -> kwd
         | _ -> BAR
       in
       parse lexbuf token ((kwd,indent)::stack) [] (indent+ !!indentation)
@@ -1472,14 +1428,7 @@ let _ =
       let alist = get_global Ebuffer.modes_alist in
       set_global Ebuffer.modes_alist 
         ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
-      add_option_parameter keyword_color;
-      add_option_parameter string_color;
-      add_option_parameter comment_color;
-      add_option_parameter upper_color;
-      add_option_parameter keyword_font;
-      add_option_parameter string_font;
-      add_option_parameter comment_font;
-      add_option_parameter upper_font;
+
       add_option_parameter ocaml_path;
       add_option_parameter indentation;
 

@@ -9,7 +9,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-
 type token =
   | AMPERAMPER
   | AMPERSAND
@@ -116,30 +115,26 @@ type token =
   | ERROR
   | RULE
   | PARSE
-  | DEF
-  | LOC
+
 val tokens : (token * string) list
 val token_to_string : token -> string
+
 val lexer_start : Text.position ref
 val position : Lexing.lexbuf -> int * int
+
 type lexer_error =
   | Illegal_character
   | Unterminated_comment
   | Unterminated_string
 exception Error of int * int * lexer_error
+
 val token : Lexing.lexbuf -> (Text.position * int) * token
-val keyword_color : string Options.option_record
-val string_color : string Options.option_record
-val comment_color : string Options.option_record
-val upper_color : string Options.option_record
-val keyword_font : string Options.option_record
-val string_font : string Options.option_record
-val comment_font : string Options.option_record
-val upper_font : string Options.option_record
+
 val ocaml_color_region : Efuns.buffer -> Text.point -> Text.point -> unit
 val ocaml_color_buffer : Efuns.buffer -> unit
 val ocaml_color : Efuns.frame -> unit
 type indentations = (int * Text.position list) list
+
 val print_indentations : (int * int list) list -> unit
 val print_stack : (token * int) list -> unit
 val pop_to_top : (token * int) list -> (token * int) list * int
@@ -170,8 +165,10 @@ val split1 : string -> char -> string list
 val parse_name : string -> string list
 val find_long_word : Efuns.buffer -> Text.point -> string
 val module_name : string -> string
+
 val ocaml_find_error : Text.t -> Text.point -> Compil.error
-val c_c : Efuns.key
+
+val find_env:  Efuns.buffer -> Text.point -> string list
+
 val install : Efuns.buffer -> unit
 val ocaml_path : string list Options.option_record
-val find_env:  Efuns.buffer -> Text.point -> string list

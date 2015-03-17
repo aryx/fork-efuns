@@ -397,10 +397,17 @@ let c_find_error text error_point =
 (***********************************************************************)
 
 let c_color_region buf start_point end_point =
-  let red_attr = make_attr (get_color "red") 1 0 false in
-  let yellow_attr = make_attr (get_color "yellow") 1 0 false in
-  let blue_attr = make_attr (get_color "blue") 1 0 false in
-  let _gray_attr = make_attr (get_color "gray") 1 0 false in
+  let keyword_attr = 
+    make_attr (get_color !!Pl_colors.keyword_color) 1 0 false in
+  let string_attr = 
+    make_attr (get_color !!Pl_colors.string_color) 1 0 false in
+  let comment_attr = 
+    make_attr (get_color !!Pl_colors.comment_color) 1 0 false in
+  let _gray_attr = 
+    make_attr (get_color !!Pl_colors.module_color) 1 0 false in
+  let preprocessor_attr = 
+    make_attr (get_color !!Pl_colors.preprocessor_color) 1 0 false in
+
   let text = buf.buf_text in
   let curseur = Text.add_point text in
   let lexbuf = lexing text start_point end_point in
@@ -433,16 +440,16 @@ let c_color_region buf start_point end_point =
       | EXTERN
         -> 
           set_position text curseur pos;
-          set_attr text curseur len red_attr
+          set_attr text curseur len keyword_attr
       | EOFCOMMENT 
       | COMMENT ->
           set_position text curseur pos;
-          set_attr text curseur len blue_attr
+          set_attr text curseur len comment_attr
       | EOFSTRING
       | CHAR 
       | STRING ->
           set_position text curseur pos;
-          set_attr text curseur len yellow_attr
+          set_attr text curseur len string_attr
       | M_IFDEF
       | M_DEFINE
       | M_ELSE
@@ -450,7 +457,7 @@ let c_color_region buf start_point end_point =
       | M_INCLUDE
       | M_ENDIF -> 
           set_position text curseur pos;
-          set_attr text curseur len yellow_attr          
+          set_attr text curseur len preprocessor_attr          
       | IDENT -> ()
       | _ -> ()
           );
