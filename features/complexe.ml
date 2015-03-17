@@ -392,8 +392,10 @@ let set_global_variable frame =
   
 (*s: function Complex.get_variable *)
 let get_variable frame = 
-  Select.select frame "get_variable : " variable_hist
-    "" (all_variables frame) (fun s -> s) (fun variable ->
+  Select.select frame "get_variable : " variable_hist "" 
+    (all_variables frame)
+    (fun s -> s) 
+    (fun variable ->
       Top_window.mini_message frame 
         (Printf.sprintf "%s : %s" variable (
           let buf = frame.frm_buffer in

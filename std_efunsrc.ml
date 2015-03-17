@@ -253,6 +253,8 @@ let _ =
   (* C-x map *)
   define_action "change_font"  change_font;
   (*x: misc actions *)
+  define_action "get_variable"  Complexe.get_variable;
+  (*x: misc actions *)
   define_action "check_file" check_file;
   (*x: misc actions *)
   define_action "save_options" save_options;

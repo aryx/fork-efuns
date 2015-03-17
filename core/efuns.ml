@@ -16,9 +16,13 @@
 (*************************************************************************)
                (*      Types      *)
 (*************************************************************************)
-
+open Common
 open Utils
 open Local
+
+let error s =
+  print_string ("Error: "^s);
+  print_newline ()
   
 (*s: exception Efuns.UnboundKey *)
 exception UnboundKey
@@ -547,7 +551,7 @@ let define_action action_name action_fun =
   (*s: sanity check action defined twice *)
   (try 
       Hashtbl.find actions action_name |> ignore;
-      Printf.printf "Warning: action \"%s\" defined twice\n" action_name;
+      error (spf "action \"%s\" defined twice" action_name);
     with _ -> ());
   (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (FrameAction action_fun)
@@ -558,7 +562,7 @@ let define_buffer_action action_name action_fun =
   (*s: sanity check action defined twice *)
   (try 
       Hashtbl.find actions action_name |> ignore;
-      Printf.printf "Warning: action \"%s\" defined twice\n" action_name;
+      error (spf "action \"%s\" defined twice" action_name);
     with _ -> ());
   (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (BufferAction action_fun)
@@ -567,7 +571,9 @@ let define_buffer_action action_name action_fun =
 (*s: function Efuns.get_action *)
 let get_action action =
   try Hashtbl.find actions action 
-  with Not_found -> BufferAction (fun _ -> ())
+  with Not_found ->
+    error (spf "Could not find action %s. Forgot define_action()?" action);
+    BufferAction (fun _ -> ())
 (*e: function Efuns.get_action *)
 
 (*s: function Efuns.execute_action *)
@@ -582,7 +588,7 @@ let execute_buffer_action action buf =
   match (get_action action) with
     BufferAction f -> f buf
   | FrameAction _f -> 
-      Printf.printf "Can't apply action %s on buffer\n" action
+      error (spf "Can't apply action %s on buffer" action)
 (*e: function Efuns.execute_buffer_action *)
       
 (*s: function Efuns.string_to_regex *)

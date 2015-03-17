@@ -81,9 +81,13 @@ external id : 'a -> 'a = "%identity"
 (*************************************************************************)
                (*      Types      *)
 (*************************************************************************)
-
+open Common
 open Utils
 open Local
+
+let error s =
+  print_string ("Error: "^s);
+  print_newline ()
   
 <<exception Efuns.UnboundKey>>
 
@@ -1359,6 +1363,7 @@ let _ =
 
 <<core/ebuffer.ml>>=
 <<copyright header2>>
+open Common
 open Utils
 open Efuns
 open Text

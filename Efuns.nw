@@ -1058,7 +1058,7 @@ let define_buffer_action action_name action_fun =
 <<sanity check action defined twice>>=
 (try 
     Hashtbl.find actions action_name |> ignore;
-    Printf.printf "Warning: action \"%s\" defined twice\n" action_name;
+    error (spf "action \"%s\" defined twice" action_name);
   with _ -> ());
 @
 %old had a sepater print_newline() but useless I think
@@ -1069,7 +1069,9 @@ let define_buffer_action action_name action_fun =
 <<function Efuns.get_action>>=
 let get_action action =
   try Hashtbl.find actions action 
-  with Not_found -> BufferAction (fun _ -> ())
+  with Not_found ->
+    error (spf "Could not find action %s. Forgot define_action()?" action);
+    BufferAction (fun _ -> ())
 @
 
 % ?? -> <> who will dispatch and know which frame?
@@ -1091,7 +1093,7 @@ let execute_buffer_action action buf =
   match (get_action action) with
     BufferAction f -> f buf
   | FrameAction _f -> 
-      Printf.printf "Can't apply action %s on buffer\n" action
+      error (spf "Can't apply action %s on buffer" action)
 @
 
 
@@ -1583,8 +1585,10 @@ let get_var buf var =
 % can't understand yet everything (so move it later??)
 <<function Complex.get_variable>>=
 let get_variable frame = 
-  Select.select frame "get_variable : " variable_hist
-    "" (all_variables frame) (fun s -> s) (fun variable ->
+  Select.select frame "get_variable : " variable_hist "" 
+    (all_variables frame)
+    (fun s -> s) 
+    (fun variable ->
       Top_window.mini_message frame 
         (Printf.sprintf "%s : %s" variable (
           let buf = frame.frm_buffer in
@@ -1592,6 +1596,9 @@ let get_variable frame =
             Local.print buf.buf_vars variable
           with _ ->
             Local.print (Efuns.location()).loc_vars variable)))
+@
+<<misc actions>>=
+define_action "get_variable"  Complex.get_variable;
 @
 
 \section{Hooks}
