@@ -1619,7 +1619,10 @@ let rec exec_hooks hooks arg =
   match hooks with
     [] -> ()
   | f :: hooks -> 
-      (try f arg with _ -> ());
+      (try f arg 
+       with exn -> 
+         error (spf "exn in hook: %s" (Common.exn_to_s exn))
+      );
       exec_hooks hooks arg
 @
 
@@ -6314,7 +6317,8 @@ let set_buffer_mode buf =
     | Some file_name -> file_name 
   in 
   let modes_alist = get_var buf modes_alist in
-  if (!modes_old <> modes_alist) then begin
+  (* must use != here, because modes_alist contain functional values *)
+  if (!modes_old != modes_alist) then begin
     regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
       Str.regexp file_reg, major
     );
@@ -6334,6 +6338,14 @@ let set_buffer_mode buf =
 
 <<constant Ebuffer.modes_old>>=
 let modes_old = ref []
+@
+
+<<toplevel Ebuffer._1>>=
+let _ =
+  Efuns.add_start_hook (fun () ->
+    set_global create_buf_hook [set_buffer_mode];
+    set_global modes_alist []
+  )
 @
 
 
@@ -7487,7 +7499,8 @@ let create_abstr name =
 @
 
 <<function Local.no_print>>=
-let no_print _ = "<abstr>"
+let no_print x = 
+  "<abstr>:" ^ (Common.dump x)
 @
 <<function Local.no_input>>=
 let no_input (s : string) = failwith "This variable can not be set"

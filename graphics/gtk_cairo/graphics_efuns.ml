@@ -321,16 +321,21 @@ let init2 init_files =
 
     let code_opt =
       match GdkEvent.Key.keyval key with
-      | 65293 -> Some XK.xk_Return
+
+      | 65289 -> Some XK.xk_Tab
       | 65288 -> Some XK.xk_BackSpace
+
+      | 65293 -> Some XK.xk_Return
+
       | 65361 -> Some XK.xk_Left
       | 65362 -> Some XK.xk_Up
       | 65363 -> Some XK.xk_Right
       | 65364 -> Some XK.xk_Down
-
-      | 65289 -> Some XK.xk_Tab
+      | 65365 -> Some XK.xk_Prior
+      | 65366 -> Some XK.xk_Next
 
       | 65507 -> modifiers := !modifiers lor Xtypes.controlMask; None
+
       | 65511 -> modifiers := !modifiers lor Xtypes.mod1Mask; None
 
       | x when x > 65000 -> None

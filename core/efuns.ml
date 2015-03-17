@@ -448,7 +448,10 @@ let rec exec_hooks hooks arg =
   match hooks with
     [] -> ()
   | f :: hooks -> 
-      (try f arg with _ -> ());
+      (try f arg 
+       with exn -> 
+         error (spf "exn in hook: %s" (Common.exn_to_s exn))
+      );
       exec_hooks hooks arg
 (*e: function Efuns.exec_hooks *)
 

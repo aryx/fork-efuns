@@ -382,7 +382,8 @@ let set_buffer_mode buf =
     | Some file_name -> file_name 
   in 
   let modes_alist = get_var buf modes_alist in
-  if (!modes_old <> modes_alist) then begin
+  (* must use != here, because modes_alist contain functional values *)
+  if (!modes_old != modes_alist) then begin
     regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
       Str.regexp file_reg, major
     );

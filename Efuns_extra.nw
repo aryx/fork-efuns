@@ -1353,13 +1353,6 @@ let catch format buf f =
         create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
 @
 
-<<toplevel Ebuffer._1>>=
-let _ =
-  Efuns.add_start_hook (fun () ->
-    set_global create_buf_hook [set_buffer_mode];
-    set_global modes_alist []
-  )
-@
 
 
 %-------------------------------------------------------------
