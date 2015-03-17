@@ -54,7 +54,8 @@ let create name print input =
 (*e: function Local.create *)
 
 (*s: function Local.no_print *)
-let no_print _ = "<abstr>"
+let no_print x = 
+  "<abstr>:" ^ (Common.dump x)
 (*e: function Local.no_print *)
 (*s: function Local.no_input *)
 let no_input (s : string) = failwith "This variable can not be set"
