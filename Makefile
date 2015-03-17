@@ -9,24 +9,20 @@ TOP=$(shell pwd)
 
 TARGET=efuns
 
-
-#BACKENDDIR=graphics/ocamlgraphics
-#OTHERSYSLIBS=graphics.cma
-
 BACKENDDIR=graphics/gtk_cairo
 GRAPHICSDIR=$(shell ocamlfind query lablgtk2) $(shell ocamlfind query cairo)
 OTHERSYSLIBS=lablgtk.cma cairo.cma cairo_lablgtk.cma 
 GTKLOOP=gtkThread.cmo
-
-#todo: put top_window.ml in core and minibuffer in features/ instead
+#alt:
+#BACKENDDIR=graphics/ocamlgraphics
+#OTHERSYSLIBS=graphics.cma
 
 SRC=\
  commons/common.ml\
  commons/simple_color.ml\
  \
- commons/utils.ml\
+ commons/utils.ml commons/str2.ml\
  commons/log.ml\
- commons/str2.ml\
  commons/options.ml\
  commons/local.ml\
  \
@@ -40,10 +36,10 @@ SRC=\
  core/ebuffer.ml\
  core/window.ml\
  core/frame.ml\
+ core/top_window.ml\
  \
- graphics/top_window.ml\
  features/simple.ml\
- core/minibuffer.ml\
+ features/minibuffer.ml\
  features/multi_frames.ml\
  features/select.ml\
  features/interactive.ml\
@@ -52,14 +48,18 @@ SRC=\
  features/system.ml\
  features/compil.ml\
  features/search.ml\
+ \
  minor_modes/minor_mode_sample.ml\
  minor_modes/paren_mode.ml\
  minor_modes/abbrevs_mode.ml\
  minor_modes/fill_mode.ml\
  minor_modes/tab_mode.ml\
+ \
  major_modes/dired.ml\
+ \
  prog_modes/makefile_mode.ml\
  prog_modes/ocaml_mode.ml\
+ \
  std_efunsrc.ml\
  $(BACKENDDIR)/graphics_efuns.ml \
  main.ml \
@@ -116,15 +116,18 @@ $(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS)
 	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa)  $^
 
 clean::
-	rm -f $(OBJS) $(OBJS:.cmo=.cmi)
+	rm -f $(OBJS) $(OBJS:.cmo=.cmi) \
+       $(OBJS:.cmo=.annot) $(OBJS:.cmo=.cmt) $(OBJS:.cmo=.cmti)
 
 depend::
 	$(OCAMLDEP) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
 
 beforedepend:: prog_modes/ocaml_mode.ml
-
 prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
 	ocamllex $^
+
+clean:: 
+	rm -f prog_modes/ocaml_mode.ml
 
 ##############################################################################
 # Developer rules
@@ -153,8 +156,9 @@ SRC_VIEWS= \
   core/keymap.ml\
   core/window.ml\
   core/frame.ml\
-  core/minibuffer.ml\
+  core/top_window.ml\
   features/simple.ml\
+  features/minibuffer.ml\
   features/complexe.ml\
   features/system.ml\
   features/select.ml\
@@ -163,7 +167,6 @@ SRC_VIEWS= \
   features/multi_frames.ml\
   features/abbrevs.ml\
   features/compil.ml\
-  graphics/top_window.ml\
   std_efunsrc.ml\
   main.ml\
   major_modes/dired.ml\
