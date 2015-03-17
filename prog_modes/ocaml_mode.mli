@@ -136,8 +136,7 @@ val keyword_font : string Options.option_record
 val string_font : string Options.option_record
 val comment_font : string Options.option_record
 val upper_font : string Options.option_record
-val ocaml_color_region :
-  Efuns.location -> Efuns.buffer -> Text.point -> Text.point -> unit
+val ocaml_color_region : Efuns.buffer -> Text.point -> Text.point -> unit
 val ocaml_color_buffer : Efuns.buffer -> unit
 val ocaml_color : Efuns.frame -> unit
 type indentations = (int * Text.position list) list

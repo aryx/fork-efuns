@@ -66,7 +66,6 @@ let default_error = ref c_find_error
 (*s: function Compil.next_error *)
 let next_error top_frame =
   let top_window = Window.top top_frame.frm_window in
-  let location = Efuns.location() in
   match !compilation_frame with
     None -> Top_window.message top_window "No compilation started"
   | Some (frame, error_point, cdir) ->      
@@ -90,7 +89,7 @@ let next_error top_frame =
           let buf = Ebuffer.read filename (Keymap.create ()) in
 (* new frame for error buffer *)
           let frame = 
-            try find_buffer_frame location buf 
+            try find_buffer_frame buf 
             with Not_found ->
                 if frame == top_frame then
                   let new_window = Top_window.create ()

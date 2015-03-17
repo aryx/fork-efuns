@@ -212,8 +212,7 @@ let _ =
     ];
   
   Efuns.add_start_hook (fun () ->
-    let location = Efuns.location () in
-    add_interactive (location.loc_map) "dired_mode" 
+    add_interactive ((Efuns.location()).loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
     set_global Ebuffer.modes_alist 

@@ -50,15 +50,14 @@ let comments_color = define_option ["makefile_mode"; "comments_color"] ""
   
 (*s: function Makefile_mode.makefile_color *)
 let makefile_color buf =
-  let location = Efuns.location() in
   color buf mkfile_rules false
-    (make_attr (get_color location !!rules_color) 1 0 false);
+    (make_attr (get_color !!rules_color) 1 0 false);
   color buf mkfile_target false 
-    (make_attr (get_color location !!target_color) 1 0 false);
+    (make_attr (get_color !!target_color) 1 0 false);
   color buf mkfile_vars false 
-    (make_attr (get_color location !!vars_color) 1 0 false);
+    (make_attr (get_color !!vars_color) 1 0 false);
   color buf mkfile_comments false 
-    (make_attr (get_color location !!comments_color) 1 0 false);
+    (make_attr (get_color !!comments_color) 1 0 false);
   ()
 (*e: function Makefile_mode.makefile_color *)
  

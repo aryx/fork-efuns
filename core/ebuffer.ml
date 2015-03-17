@@ -442,10 +442,9 @@ let get_binding buf keylist =
 
 (*s: function Ebuffer.message *)
 let message buf m =
-  let location = Efuns.location() in
   let name = "*Messages*" in
   try
-    let buf = Hashtbl.find location.loc_buffers name in
+    let buf = Hashtbl.find (Efuns.location()).loc_buffers name in
     Text.insert_at_end buf.buf_text (m^"\n");
   with Not_found ->
     create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore

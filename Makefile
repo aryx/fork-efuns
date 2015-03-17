@@ -59,6 +59,7 @@ SRC=\
  minor_modes/tab_mode.ml\
  major_modes/dired.ml\
  prog_modes/makefile_mode.ml\
+ prog_modes/ocaml_mode.ml\
  std_efunsrc.ml\
  $(BACKENDDIR)/graphics_efuns.ml \
  main.ml \
@@ -81,13 +82,15 @@ CMIS=\
  features/simple.cmi\
  features/select.cmi\
  features/search.cmi\
+ prog_modes/ocaml_mode.cmi\
 
 SYSLIBS=unix.cma str.cma threads.cma nums.cma bigarray.cma
 
 INCLUDEDIRS=\
   commons\
   core features\
-  graphics $(BACKENDDIR) $(GRAPHICSDIR)
+  graphics $(BACKENDDIR) $(GRAPHICSDIR) \
+  major_modes minor_modes prog_modes
 
 ##############################################################################
 # Generic variables
@@ -118,6 +121,10 @@ clean::
 depend::
 	$(OCAMLDEP) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
 
+beforedepend:: prog_modes/ocaml_mode.ml
+
+prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
+	ocamllex $^
 
 ##############################################################################
 # Developer rules

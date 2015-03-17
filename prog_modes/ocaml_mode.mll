@@ -1,4 +1,3 @@
- 
 {
   open Lexing 
   
@@ -254,11 +253,13 @@
       end;
     String.unsafe_set (!string_buff) (!string_index) c;
     incr string_index
-  
+
+(*  
   let get_stored_string () =
     let s = String.sub (!string_buff) 0 (!string_index) in
     string_buff := initial_string_buffer;
     s
+*)
 
 (* To translate escape sequences *)
   
@@ -295,7 +296,7 @@
 (* Error report *)
   
   exception Error of int * int * lexer_error
-  let report_error = function
+  let _report_error = function
       Illegal_character ->
         print_string "Illegal character"
     | Unterminated_comment ->
@@ -490,12 +491,9 @@ and string = parse
 open Options
 open Text
 open Efuns
-open Interactive
 open Simple
-open Select
 open Compil
-open Eval
-open Complex
+(*open Eval*)
 open Abbrevs  
 open Keymap
 open Window
@@ -530,15 +528,15 @@ let _ =
     ocaml_path =:= !!Efuns.load_path
   
 (*********************** colors ***********************)
-let ocaml_color_region location buf start_point end_point =
-  let red_attr = make_attr (get_color location !!keyword_color) 1 
-      (get_font location !!keyword_font) false in
-  let yellow_attr = make_attr (get_color location !!string_color) 1 
-      (get_font location !!string_font)    false in
-  let blue_attr = make_attr (get_color location !!comment_color) 1 
-      (get_font location !!comment_font) false in
-  let gray_attr = make_attr (get_color location !!upper_color) 1 
-      (get_font location !!upper_font)     false in
+let ocaml_color_region buf start_point end_point =
+  let red_attr = make_attr (get_color !!keyword_color) 1 
+                           (get_font !!keyword_font) false in
+  let yellow_attr = make_attr (get_color !!string_color) 1 
+                              (get_font !!string_font)    false in
+  let blue_attr = make_attr (get_color !!comment_color) 1 
+                            (get_font !!comment_font) false in
+  let gray_attr = make_attr (get_color !!upper_color) 1 
+                            (get_font !!upper_font)     false in
   let text = buf.buf_text in
   let curseur = Text.add_point text in
   let lexbuf = lexing text start_point end_point in
@@ -584,7 +582,7 @@ let ocaml_color_buffer buf =
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
   set_position text end_point (size text);
-  ocaml_color_region buf.buf_location buf start_point end_point;
+  ocaml_color_region buf start_point end_point;
   remove_point text start_point;
   remove_point text end_point
 
@@ -594,7 +592,7 @@ let ocaml_color frame =
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
   set_position text end_point (size text);
-  ocaml_color_region buf.buf_location buf start_point end_point;
+  ocaml_color_region buf start_point end_point;
   remove_point text start_point;
   remove_point text end_point
 
@@ -710,7 +708,7 @@ let _ =
   
 let start_regexp = define_option ["ocaml_mode"; "start_regexp"]
     "" regexp_option (
-    string_to_regex "^\(let\|module\|type\|exception\|open\)");;
+    string_to_regex "^\\(let\\|module\\|type\\|exception\\|open\\)");;
 
 type indentations = (int * (Text.position list)) list
 let indentation = define_option ["ocaml_mode"; "indentation"] ""
@@ -818,7 +816,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
 *)
       begin
         match prev_tok with
-          IN | THEN | COLONCOLON | INFIXOP0 | INFIXOP0 | INFIXOP1 |
+          IN | THEN | COLONCOLON | INFIXOP0 | INFIXOP1 |
           INFIXOP2 | INFIXOP3 | INFIXOP4 | SUBTRACTIVE | STAR | EQUAL | LESS |
           GREATER | OR | BARBAR | AMPERAMPER | AMPERSAND | COLONEQUAL |
           LESSMINUS | LPAREN | LBRACKET | LBRACKETBAR | MATCH | TRY | IF |
@@ -1045,7 +1043,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       parse lexbuf token ((ELSE,indent)::stack) [] (indent+ !!indentation)
       (fix indent eols indents) 
   | SEMI ->
-      let old_stack = stack in
+      let _old_stack = stack in
 (* le ; termine un THEN ... ou ELSE ... s'il n'y a pas 
    construction infinie (LET, IN, MATCH, BAR) avant *)
       let (stack1,_,indent1) = pop_to_kwds [THEN;ELSE] stack in
@@ -1101,7 +1099,7 @@ let compute_indentations buf start_point end_point =
   let text = buf.buf_text in
   let curseur = Text.dup_point text start_point in
 (* init indentation *)
-  let pos = get_position text end_point in
+  let _pos = get_position text end_point in
   let lexbuf = lexing text curseur end_point in
   try
     let indentations = 
@@ -1176,7 +1174,7 @@ let insert_and_return frame =
 (* colors *)
   let start_point = dup_point text point in
   bmove text start_point (point_to_bol text start_point);
-  ocaml_color_region buf.buf_location buf start_point point;
+  ocaml_color_region buf start_point point;
   remove_point text start_point;
 (* indentations *)
   let curseur = dup_point text point in
@@ -1213,7 +1211,7 @@ let indent_current_line frame =
   let start_point = dup_point text point in
   bmove text start_point (point_to_bol text start_point);
   fmove text end_point (point_to_eol text end_point);
-  ocaml_color_region buf.buf_location buf start_point end_point;
+  ocaml_color_region buf start_point end_point;
   remove_point text start_point;
   remove_point text end_point;
 (* indentations *)
@@ -1381,7 +1379,7 @@ let install buf =
 
   
 let mode =  Ebuffer.new_major_mode "Ocaml" [install]
-let map = mode.maj_map
+let _map = mode.maj_map
 
 let ocaml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
         
@@ -1391,7 +1389,7 @@ let _ =
   define_action "ocaml_mode.color_buffer" 
     (fun frame -> ocaml_color_buffer frame.frm_buffer);
   define_action "ocaml_mode.indent_buffer" indent_buffer;
-  define_action "ocaml_mode.eval_buffer" eval_buffer;
+(*  define_action "ocaml_mode.eval_buffer" eval_buffer; *)
   define_action "ocaml_mode.indent_phrase" indent_phrase;
   define_action "ocaml_mode.indent_line" indent_current_line;
   define_action "ocaml_mode.char_expand_abbrev" (fun frame ->
@@ -1452,23 +1450,23 @@ let _ =
   ()
 
 let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
-    (list_option string_option) [".*\.\(ml\|mli\|mll\|mly\|mlp\|mlg\)"]
+    (list_option string_option) [".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)"]
   
 let _ =  
-  Efuns.add_start_hook (fun location ->
-      let alist = get_global location Ebuffer.modes_alist in
-      set_global location Ebuffer.modes_alist 
+  Efuns.add_start_hook (fun () ->
+      let alist = get_global Ebuffer.modes_alist in
+      set_global Ebuffer.modes_alist 
         ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
-      add_option_parameter location keyword_color;
-      add_option_parameter location string_color;
-      add_option_parameter location comment_color;
-      add_option_parameter location upper_color;
-      add_option_parameter location keyword_font;
-      add_option_parameter location string_font;
-      add_option_parameter location comment_font;
-      add_option_parameter location upper_font;
-      add_option_parameter location ocaml_path;
-      add_option_parameter location indentation;
+      add_option_parameter keyword_color;
+      add_option_parameter string_color;
+      add_option_parameter comment_color;
+      add_option_parameter upper_color;
+      add_option_parameter keyword_font;
+      add_option_parameter string_font;
+      add_option_parameter comment_font;
+      add_option_parameter upper_font;
+      add_option_parameter ocaml_path;
+      add_option_parameter indentation;
   )  
   (*** Ocaml minor mode (for Makefiles (!)) ***)
 

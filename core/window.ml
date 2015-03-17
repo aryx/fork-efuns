@@ -134,7 +134,8 @@ let backend top_window =
 (*e: function Window.xterm *)
 
 (*s: function Window.get_font *)
-let get_font location font_name =
+let get_font font_name =
+  let location = Efuns.location() in
   try
     Hashtbl.find location.loc_fonts font_name
   with Not_found ->
@@ -150,7 +151,8 @@ let get_font location font_name =
 (*e: function Window.get_font *)
         
 (*s: function Window.get_color *)
-let get_color location color_name =
+let get_color color_name =
+  let location = Efuns.location() in
   try
     Hashtbl.find location.loc_colors color_name
   with Not_found ->

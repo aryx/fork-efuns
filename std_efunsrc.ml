@@ -566,7 +566,6 @@ let _ =
     
 (*s: function Std_efunsrc.init_global_map *)
 let init_global_map () = 
-  let location = Efuns.location() in
   !!global_map |> List.iter (fun (keys, action) ->
       try
         Keymap.add_global_key keys action (execute_action action)
@@ -577,11 +576,11 @@ let init_global_map () =
 
   (*s: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
   !!interactives_map |> List.iter (fun (name, action) ->
-      try
-        add_interactive location.loc_map name (execute_action action)
-      with e ->
-        Log.printf "Error for action %s" action;
-        Log.exn "%s\n" e;
+    try
+      add_interactive (Efuns.location()).loc_map name (execute_action action)
+    with e ->
+      Log.printf "Error for action %s" action;
+      Log.exn "%s\n" e;
   );
   (*e: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
     
@@ -680,11 +679,11 @@ let _ =
 (*s: toplevel Std_efunsrc._5 *)
 let _ =
   Efuns.add_start_hook (fun () ->
-      (*s: [[Std_efunsrc._5]] start hooks options *)
-      add_option_parameter compile_find_makefile;
-      add_option_parameter Text.add_amount;
-      (*e: [[Std_efunsrc._5]] start hooks options *)
-      init_global_map ()
+    (*s: [[Std_efunsrc._5]] start hooks options *)
+    add_option_parameter compile_find_makefile;
+    add_option_parameter Text.add_amount;
+    (*e: [[Std_efunsrc._5]] start hooks options *)
+    init_global_map ()
   )
 (*e: toplevel Std_efunsrc._5 *)
 (*e: std_efunsrc.ml *)

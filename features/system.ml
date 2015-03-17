@@ -30,7 +30,7 @@ let open_process cmd =
 (*e: function System.open_process *)
 
 (*s: function System.system *)
-let system buf_name location cmd end_action =
+let system buf_name cmd end_action =
   let (pid,inc,outc) = open_process cmd in
   let text = Text.create "" in
   let curseur = Text.add_point text in
@@ -60,7 +60,7 @@ let system buf_name location cmd end_action =
           Text.set_position text curseur (Text.size text);
           active := false;
           (* redraw screen *)
-          update_display location;
+          update_display ();
           WX_xterm.update_displays ();
           Mutex.unlock location.loc_mutex;
           Thread.remove_reader ins; (* Kill self *)
@@ -70,7 +70,7 @@ let system buf_name location cmd end_action =
         Text.insert text curseur str;
         buf.buf_modified <- buf.buf_modified +1;
         (* redraw screen *)
-        update_display location;
+        update_display ();
         WX_xterm.update_displays ();
         Mutex.unlock location.loc_mutex
   );
@@ -104,8 +104,7 @@ let system buf_name location cmd end_action =
 
 (*s: function System.start_command *)
 let start_command buf_name window cmd =
-  let location = Efuns.location() in
-  let buf = system buf_name location cmd (fun buf status -> ()) in
+  let buf = system buf_name cmd (fun buf status -> ()) in
   let frame = Frame.create window None buf in
   frame
 (*e: function System.start_command *)

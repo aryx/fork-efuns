@@ -197,11 +197,10 @@ let find_implementation frame =
                     Utils.find_in_path !!ocaml_path file
                   with _ -> failwith (Printf.sprintf "No %s in path" file)
                 in 
-                let location = frame.frm_location in
-                let buf = Ebuffer.read location filename (Keymap.create ()) in
+                let buf = Ebuffer.read filename (Keymap.create ()) in
                 let text = buf.buf_text in
                 let frame = try
-                    Frame.find_buffer_frame location buf
+                    Frame.find_buffer_frame buf
                   with Not_found ->
                       Frame.create frame.frm_window None buf
                 in
@@ -235,8 +234,7 @@ let rec backward_implementation frame =
     [] -> failwith "No more buffers in history"
   | (filename, pos) :: tail ->
       back_list := tail;
-      let location = frame.frm_location in
-      let buf = Ebuffer.read location filename (Keymap.create ()) in
+      let buf = Ebuffer.read filename (Keymap.create ()) in
       let frame = Frame.create frame.frm_window None buf in
       Frame.active frame
 (*e: function Ocaml_toplevel.backward_implementation *)

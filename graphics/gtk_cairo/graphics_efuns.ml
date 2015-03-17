@@ -257,7 +257,7 @@ let test_cairo () =
 let paint w =
   if !debug_graphics
   then pr2 "paint";
-  Top_window.update_display w.model 
+  Top_window.update_display () 
 
 (* for the special key, Control, Meta, etc *)
 let modifiers = ref 0
@@ -266,8 +266,9 @@ let modifiers = ref 0
 (* The main UI *)
 (*****************************************************************************)
 
-let init2 location init_files =
+let init2 init_files =
   let _locale = GtkMain.Main.init () in
+  let location = Efuns.location () in
 
   let width = 800 in
   let height = 800 in
@@ -289,7 +290,7 @@ let init2 location init_files =
   (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create () in
   (* the *bindings* buffer *)
-  Interactive.create_bindings location |> ignore;
+  Interactive.create_bindings () |> ignore;
   (* open the first buffers *)
   init_files +> List.iter (fun name ->
     Frame.load_file top_window.window name |> ignore
@@ -373,7 +374,7 @@ let init2 location init_files =
   win#show ();
   GMain.main()
 
-let init a b =
+let init a =
   if !Efuns.check
   then test_cairo ()
-  else init2 a b
+  else init2 a

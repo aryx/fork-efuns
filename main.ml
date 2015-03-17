@@ -37,8 +37,8 @@ let init_efuns (location : location) =
         f ();
         iter hooks
   in
-  let hooks = List.rev !start_hooks in
-  start_hooks := [];
+  let hooks = List.rev !Efuns.start_hooks in
+  Efuns.start_hooks := [];
   iter hooks
 (*e: function Efuns.init *)
 
@@ -85,8 +85,8 @@ let _ =
    (*x: [[main()]] command line options *)
      "-q", Arg.Set no_init,": Don't load init files";
    (*x: [[main()]] command line options *)
-     "-I",Arg.String (fun s -> load_path =:= 
-         (Utils.string_to_path s) @ !!load_path), "<path>: Load Path";
+     "-I",Arg.String (fun s -> Efuns.load_path =:= 
+         (Utils.string_to_path s) @ !!Efuns.load_path), "<path>: Load Path";
    (*x: [[main()]] command line options *)
      "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
    (*e: [[main()]] command line options *)
@@ -110,7 +110,7 @@ let _ =
 (*s: toplevel Efuns._4 *)
 let _ =
   Options.filename := 
-   (try Utils.find_in_path (Utils.homedir :: !!load_path) ".efunsrc" 
+   (try Utils.find_in_path (Utils.homedir :: !!Efuns.load_path) ".efunsrc" 
     with _ -> Filename.concat Utils.homedir ".efunsrc");
   (try Options.init () with _ -> ())
 (*e: toplevel Efuns._4 *)
@@ -123,9 +123,6 @@ let width = define_option ["width"] "" int_option 80
 (*s: constant Efuns.height (core/efuns.ml) *)
 let height = define_option ["height"] "" int_option 25
 (*e: constant Efuns.height (core/efuns.ml) *)
-(*s: constant Efuns.font *)
-let font = define_option ["font"] "" string_option "fixed"
-(*e: constant Efuns.font *)
 (*s: constant Efuns.foreground *)
 let foreground = define_option ["foreground"] "" string_option "wheat"
 (*e: constant Efuns.foreground *)
@@ -202,14 +199,14 @@ let _ =
 (*s: toplevel Main._2 *)
 let _ =
 (* color 0 is foreground *)
-  let _ = Window.get_color location !!foreground in
+  let _ = Window.get_color !!foreground in
 (* color 1 is background *)
-  let _ = Window.get_color location !!background in
+  let _ = Window.get_color !!background in
 (* color 2 is highlight *)
-  let _ = Window.get_color location !!highlight_color in
+  let _ = Window.get_color !!highlight_color in
 (*x: toplevel Main._2 *)
 (* font 0 is initial font *)
-  Window.get_font location !!font
+  Window.get_font !!font
 (*e: toplevel Main._2 *)
 
 (*s: toplevel Main._3 *)
@@ -219,6 +216,6 @@ let _ =
 
 (*s: toplevel Main._4 *)
 let _ =
-  Graphics_efuns.init location !init_files
+  Graphics_efuns.init !init_files
 (*e: toplevel Main._4 *)
 (*e: main.ml *)

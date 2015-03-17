@@ -41,7 +41,7 @@ val unkill : Efuns.window -> Efuns.frame -> unit
 val move_point : Efuns.frame -> Text.point -> int -> int -> unit
 val current_dir : Efuns.frame -> string
 exception FoundFrame of Efuns.frame
-val find_buffer_frame : Efuns.location -> Efuns.buffer -> Efuns.frame
+val find_buffer_frame : Efuns.buffer -> Efuns.frame
 val load_file : Efuns.window -> string -> Efuns.frame
 val change_buffer : Efuns.window -> string -> unit
 val save_buffer : Efuns.frame -> unit

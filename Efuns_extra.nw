@@ -184,6 +184,9 @@ let debug_init = ref false
   
 <<toplevel Efuns._1>>
 
+(* used in some major mode *)
+<<constant Efuns.font>>
+
   
 (*--------------------    Ressources *)
 <<constant Efuns.xdefaults>>
@@ -1855,16 +1858,15 @@ exception FoundFrame of frame
 @
 
 <<function Frame.find_buffer_frame>>=
-let find_buffer_frame location buf =
+let find_buffer_frame buf =
   try
-    List.iter (fun top_window ->
-        Window.iter (fun frame -> 
-            if frame.frm_buffer == buf then raise (FoundFrame frame))
-        top_window.window
-    ) location.top_windows;
+    (Efuns.location()).top_windows |> List.iter (fun top_window ->
+      top_window.window |> Window.iter (fun frame -> 
+        if frame.frm_buffer == buf then raise (FoundFrame frame)
+      )
+    );
     raise Not_found
-  with
-    FoundFrame frame -> frame
+  with FoundFrame frame -> frame
 @
 
 
@@ -2382,7 +2384,7 @@ let highlighted_chars = ref []
 @
 
 <<function Simple.unhightlight>>=
-let unhightlight location =
+let unhightlight () =
     failwith "Simple.unhighlight: TODO"
 (*
   List.iter (fun (buf,curseur,attr) ->
@@ -2567,8 +2569,8 @@ let mouse_drag_region frame =
 
 
 <<function Simple.next_buffer>>=
-let next_buffer location buf =
-  let buf_list = Utils.list_of_hash location.loc_buffers in
+let next_buffer buf =
+  let buf_list = Utils.list_of_hash (Efuns.location()).loc_buffers in
   let rec iter list =
     match list with
       [] -> raise Not_found 
@@ -3075,31 +3077,29 @@ let select_yes_or_no frame request action =
 
 <<function Select.find_completion_frame>>=
 let find_completion_frame frame =
-  let location = Efuns.location() in
   let buf = Ebuffer.default "*Completions*" in
-  Frame.find_buffer_frame location buf
+  Frame.find_buffer_frame buf
 @
 
 <<function Select.display_completions>>=
 let display_completions frame list =
   let top_window = Window.top frame.frm_window in
-  if list = [] then
-    Top_window.message top_window "No Completions"
+  if list = [] 
+  then Top_window.message top_window "No Completions"
   else
-  let location = Efuns.location() in
-  let rec iter list s =
-    match list with
-      [] -> s
-    | [f] -> Printf.sprintf "%s\n%s" s f
-    | f1::f2::tail  ->
-        iter tail (Printf.sprintf "%s\n%-40s%s" s f1 f2)
-  in
-  let buf = Ebuffer.default "*Completions*" in
-  let text = buf.buf_text in
-  Text.update text (iter list "Completions :");
-  (try Frame.find_buffer_frame location buf
-  with Not_found -> Frame.create_inactive (cut_frame frame) buf
-  ) |> ignore
+    let rec iter list s =
+      match list with
+      | [] -> s
+      | [f] -> Printf.sprintf "%s\n%s" s f
+      | f1::f2::tail  ->
+          iter tail (Printf.sprintf "%s\n%-40s%s" s f1 f2)
+    in
+    let buf = Ebuffer.default "*Completions*" in
+    let text = buf.buf_text in
+    Text.update text (iter list "Completions :");
+    (try Frame.find_buffer_frame buf
+     with Not_found -> Frame.create_inactive (cut_frame frame) buf
+    ) |> ignore
 @
 
 <<function Select.remove_completions>>=
@@ -3923,7 +3923,7 @@ then Text.set_position text point (Text.size text);
 @
 
 <<function System.system>>=
-let system buf_name location cmd end_action =
+let system buf_name cmd end_action =
   let (pid,inc,outc) = open_process cmd in
   let text = Text.create "" in
   let curseur = Text.add_point text in
@@ -3953,7 +3953,7 @@ let system buf_name location cmd end_action =
           Text.set_position text curseur (Text.size text);
           active := false;
           (* redraw screen *)
-          update_display location;
+          update_display ();
           WX_xterm.update_displays ();
           Mutex.unlock location.loc_mutex;
           Thread.remove_reader ins; (* Kill self *)
@@ -3963,7 +3963,7 @@ let system buf_name location cmd end_action =
         Text.insert text curseur str;
         buf.buf_modified <- buf.buf_modified +1;
         (* redraw screen *)
-        update_display location;
+        update_display ();
         WX_xterm.update_displays ();
         Mutex.unlock location.loc_mutex
   );
@@ -3997,8 +3997,7 @@ let system buf_name location cmd end_action =
 
 <<function System.start_command>>=
 let start_command buf_name window cmd =
-  let location = Efuns.location() in
-  let buf = system buf_name location cmd (fun buf status -> ()) in
+  let buf = system buf_name cmd (fun buf status -> ()) in
   let frame = Frame.create window None buf in
   frame
 @
@@ -4636,7 +4635,7 @@ let mini_message frame msg =
 let wrap top_window f () = 
   let location = Efuns.location() in
   Mutex.lock location.loc_mutex;  
-  clean_display location;    
+  clean_display ();    
   clear_message top_window;
   keypressed := XK.xk_Menu;
   exec_hooks (try get_global handle_key_start_hook with _ -> []) ();    
@@ -4646,10 +4645,10 @@ let wrap top_window f () =
                                     (Utils.printexn e))
   end;
   exec_hooks (try get_global handle_key_end_hook with _ -> []) ();    
-  update_display (Efuns.location());
+  update_display ();
   let graphic = Window.backend top_window in
   graphic.Xdraw.update_displays ();
-  Mutex.unlock (Efuns.location()).loc_mutex
+  Mutex.unlock location.loc_mutex
 @
 
 <<function Top_window.wrap_item>>=
@@ -4924,7 +4923,6 @@ open Options
   
 <<constant Efuns.width>>
 <<constant Efuns.height (core/efuns.ml)>>
-<<constant Efuns.font>>
 <<constant Efuns.foreground>>
 <<constant Efuns.background>>
 
@@ -5149,8 +5147,7 @@ let _ =
     ];
   
   Efuns.add_start_hook (fun () ->
-    let location = Efuns.location () in
-    add_interactive (location.loc_map) "dired_mode" 
+    add_interactive ((Efuns.location()).loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
     set_global Ebuffer.modes_alist 
@@ -5757,15 +5754,14 @@ let rules_color = define_option ["makefile_mode";"rules_color"] ""
 % font-lock-mode :)
 <<function Makefile_mode.makefile_color>>=
 let makefile_color buf =
-  let location = Efuns.location() in
   color buf mkfile_rules false
-    (make_attr (get_color location !!rules_color) 1 0 false);
+    (make_attr (get_color !!rules_color) 1 0 false);
   color buf mkfile_target false 
-    (make_attr (get_color location !!target_color) 1 0 false);
+    (make_attr (get_color !!target_color) 1 0 false);
   color buf mkfile_vars false 
-    (make_attr (get_color location !!vars_color) 1 0 false);
+    (make_attr (get_color !!vars_color) 1 0 false);
   color buf mkfile_comments false 
-    (make_attr (get_color location !!comments_color) 1 0 false);
+    (make_attr (get_color !!comments_color) 1 0 false);
   ()
 @
 
@@ -6093,11 +6089,10 @@ let find_implementation frame =
                     Utils.find_in_path !!ocaml_path file
                   with _ -> failwith (Printf.sprintf "No %s in path" file)
                 in 
-                let location = frame.frm_location in
-                let buf = Ebuffer.read location filename (Keymap.create ()) in
+                let buf = Ebuffer.read filename (Keymap.create ()) in
                 let text = buf.buf_text in
                 let frame = try
-                    Frame.find_buffer_frame location buf
+                    Frame.find_buffer_frame buf
                   with Not_found ->
                       Frame.create frame.frm_window None buf
                 in
@@ -6131,8 +6126,7 @@ let rec backward_implementation frame =
     [] -> failwith "No more buffers in history"
   | (filename, pos) :: tail ->
       back_list := tail;
-      let location = frame.frm_location in
-      let buf = Ebuffer.read location filename (Keymap.create ()) in
+      let buf = Ebuffer.read filename (Keymap.create ()) in
       let frame = Frame.create frame.frm_window None buf in
       Frame.active frame
 @

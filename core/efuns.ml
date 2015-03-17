@@ -501,6 +501,11 @@ let _ =
   option_hook load_path (fun _ -> path := !!load_path @ efuns_path)
 (*e: toplevel Efuns._1 *)
 
+(* used in some major mode *)
+(*s: constant Efuns.font *)
+let font = define_option ["font"] "" string_option "fixed"
+(*e: constant Efuns.font *)
+
   
 (*--------------------    Ressources *)
 (*s: constant Efuns.xdefaults *)

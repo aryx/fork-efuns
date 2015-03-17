@@ -56,7 +56,6 @@ let dabbrev_buf = ref None
 (*e: constant Abbrevs.dabbrev_buf *)
 (*s: function Abbrevs.dabbrev_expand *)
 let dabbrev_expand frame = 
-  let location = Efuns.location() in
   let buf = frame.frm_buffer in
   let syntax = buf.buf_syntax_table in
   let text = buf.buf_text in
@@ -116,7 +115,7 @@ let dabbrev_expand frame =
     with
       Not_found ->
         remove_point curr_text mark;
-        let curr_buf = next_buffer location curr_buf in
+        let curr_buf = next_buffer curr_buf in
         if curr_buf == buf then
           if !loop then raise Not_found
           else

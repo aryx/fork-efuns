@@ -1493,7 +1493,6 @@ let c_c = (ControlMap, Char.code 'c')
 %  (as ?? ?<- add_start_hook(<>) <- Std_efunsrc._5)
 <<function Std_efunsrc.init_global_map>>=
 let init_global_map () = 
-  let location = Efuns.location() in
   !!global_map |> List.iter (fun (keys, action) ->
       try
         Keymap.add_global_key keys action (execute_action action)
@@ -1598,7 +1597,7 @@ let get_variable frame =
             Local.print (Efuns.location()).loc_vars variable)))
 @
 <<misc actions>>=
-define_action "get_variable"  Complex.get_variable;
+define_action "get_variable"  Complexe.get_variable;
 @
 
 \section{Hooks}
@@ -1860,7 +1859,7 @@ let no_init = ref false
 <<toplevel Efuns._4>>=
 let _ =
   Options.filename := 
-   (try Utils.find_in_path (Utils.homedir :: !!load_path) ".efunsrc" 
+   (try Utils.find_in_path (Utils.homedir :: !!Efuns.load_path) ".efunsrc" 
     with _ -> Filename.concat Utils.homedir ".efunsrc");
   (try Options.init () with _ -> ())
 @
@@ -1929,8 +1928,8 @@ let init_efuns (location : location) =
         f ();
         iter hooks
   in
-  let hooks = List.rev !start_hooks in
-  start_hooks := [];
+  let hooks = List.rev !Efuns.start_hooks in
+  Efuns.start_hooks := [];
   iter hooks
 @
 %less: why not using exec_hooks?
@@ -1955,8 +1954,8 @@ let add_start_hook hook =
 <<toplevel Std_efunsrc._5>>=
 let _ =
   Efuns.add_start_hook (fun () ->
-      <<[[Std_efunsrc._5]] start hooks options>>
-      init_global_map ()
+    <<[[Std_efunsrc._5]] start hooks options>>
+    init_global_map ()
   )
 @
 
@@ -1964,7 +1963,7 @@ let _ =
 
 <<toplevel Main._4>>=
 let _ =
-  Graphics_efuns.init location !init_files
+  Graphics_efuns.init !init_files
 @
 %less: could just take ()
 
@@ -2139,8 +2138,8 @@ let create_at_top xpos ypos width height =
 \subsection{[[Top_window.update_display()]]}
 
 <<function Top_window.update_display>>=
-let update_display location =
-  location.top_windows |> List.iter (fun top_window ->
+let update_display () =
+  (Efuns.location()).top_windows |> List.iter (fun top_window ->
       top_window.window |> Window.iter (fun frm -> 
         Frame.update top_window frm
       );
@@ -2231,10 +2230,9 @@ let handle_key_end_hook = Local.create_abstr "handle_key_end_hook"
 <<function Top_window.handle_key>>=
 let handle_key top_window modifiers keysym =
   keypressed := keysym;
-  let location = Efuns.location() in
   let frame = top_window.top_active_frame in
 
-  clean_display location;
+  clean_display ();
   clear_message top_window;
 
   exec_hooks (try get_global handle_key_start_hook with _ -> []) ();
@@ -2253,7 +2251,7 @@ let handle_key top_window modifiers keysym =
 
   exec_hooks (try get_global handle_key_end_hook with _ -> []) ();
 
-  update_display location
+  update_display ()
 @
 % update_display() again!! each key down trigger a redisplay action
 % will see try_map() later in keyboard section
@@ -2954,7 +2952,8 @@ mutable loc_colors_n : int;
 
 % have side effect of setting the color if it's not there before!
 <<function Window.get_color>>=
-let get_color location color_name =
+let get_color color_name =
+  let location = Efuns.location() in
   try
     Hashtbl.find location.loc_colors color_name
   with Not_found ->
@@ -2977,11 +2976,11 @@ let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 <<toplevel Main._2>>=
 let _ =
 (* color 0 is foreground *)
-  let _ = Window.get_color location !!foreground in
+  let _ = Window.get_color !!foreground in
 (* color 1 is background *)
-  let _ = Window.get_color location !!background in
+  let _ = Window.get_color !!background in
 (* color 2 is highlight *)
-  let _ = Window.get_color location !!highlight_color in
+  let _ = Window.get_color !!highlight_color in
 @
 % standard! just like stdin/stdout/stderr convention. Sometimes
 % conventions are convenient.
@@ -3037,7 +3036,8 @@ mutable loc_fonts_n : int;
 
 % similar to get_color, have the side effect of "allocating" a new font
 <<function Window.get_font>>=
-let get_font location font_name =
+let get_font font_name =
+  let location = Efuns.location() in
   try
     Hashtbl.find location.loc_fonts font_name
   with Not_found ->
@@ -3054,7 +3054,7 @@ let get_font location font_name =
 
 <<toplevel Main._2>>=
 (* font 0 is initial font *)
-  Window.get_font location !!font
+  Window.get_font !!font
 @
 
 
@@ -3794,8 +3794,9 @@ let cursor_on top_window =
 
 % event loop -> ... -> handle_key -> ...; <>; Top_window.update_display()
 <<function Top_window.clean_display>>=
-let clean_display location =
-  location.top_windows |> List.iter (fun top_window -> cursor_off top_window) 
+let clean_display () =
+  (Efuns.location()).top_windows |> List.iter (fun top_window -> 
+    cursor_off top_window) 
 @
 
 % update_display -> clean_display -> <>
@@ -4271,11 +4272,11 @@ if !!interactives_map = [] then begin
 
 <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
 !!interactives_map |> List.iter (fun (name, action) ->
-    try
-      add_interactive location.loc_map name (execute_action action)
-    with e ->
-      Log.printf "Error for action %s" action;
-      Log.exn "%s\n" e;
+  try
+    add_interactive (Efuns.location()).loc_map name (execute_action action)
+  with e ->
+    Log.printf "Error for action %s" action;
+    Log.exn "%s\n" e;
 );
 @
 
@@ -4461,23 +4462,23 @@ let bindings_help frame =
 
 % Graphics_efun.init -> <>
 <<function Interactive.create_bindings>>=
-let create_bindings location =
-  let s = Keymap.all_bindings location in
+let create_bindings () =
+  let s = Keymap.all_bindings () in
   let text = Text.create s in
   Ebuffer.create "*bindings*" None text (Keymap.create ())
 @
 
 
 <<function Keymap.all_bindings>>=
-let all_bindings location =
+let all_bindings () =
   let s = ref "Default bindings:" in
-  List.iter (fun (name,(_,binding)) ->
-      match binding with
-        None -> ()
-      | Some key_list ->
-          s := Printf.sprintf "%s\n%20s : %s" !s 
-            (print_key_list key_list) name
-  ) location.loc_map.interactives;
+  (Efuns.location()).loc_map.interactives |> List.iter(fun (name,(_,binding)) ->
+    match binding with
+    | None -> ()
+    | Some key_list ->
+        s := Printf.sprintf "%s\n%20s : %s" !s 
+              (print_key_list key_list) name
+  );
   !s
 @
 % used to be copy pasted in create_bindings, with only diff was
@@ -4641,7 +4642,7 @@ let mouse_save_then_kill frame =
     top_window.top_width <- new_width;
     top_window.top_height <- new_height;
     clear_message top_window;
-    update_display (Efuns.location())
+    update_display ()
 @          
 
 
@@ -5890,9 +5891,8 @@ let change_buffer frame =
 
 <<function Frame.change_buffer>>=
 let change_buffer window name = 
-  let location = Efuns.location() in
   try
-    let buf = Hashtbl.find location.loc_buffers name in
+    let buf = Hashtbl.find (Efuns.location()).loc_buffers name in
     let frame = create window None buf in
     exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name
@@ -5917,9 +5917,8 @@ define_action "kill_buffer"  kill_buffer;
 <<function Simple.kill_buffer>>=
 let kill_buffer frame =
   let window = frame.frm_window in
-  let location = Efuns.location() in
   let buf = frame.frm_buffer in
-  let new_buf = next_buffer location buf in
+  let new_buf = next_buffer buf in
   let _new_frame = Frame.create window None new_buf in
   if buf.buf_shared = 0 
   then Ebuffer.kill buf
@@ -6697,7 +6696,6 @@ let compile find_error_fun frame =
 <<function Compil.next_error>>=
 let next_error top_frame =
   let top_window = Window.top top_frame.frm_window in
-  let location = Efuns.location() in
   match !compilation_frame with
     None -> Top_window.message top_window "No compilation started"
   | Some (frame, error_point, cdir) ->      
@@ -6721,7 +6719,7 @@ let next_error top_frame =
           let buf = Ebuffer.read filename (Keymap.create ()) in
 (* new frame for error buffer *)
           let frame = 
-            try find_buffer_frame location buf 
+            try find_buffer_frame buf 
             with Not_found ->
                 if frame == top_frame then
                   let new_window = Top_window.create ()
@@ -6824,7 +6822,6 @@ let expand_sabbrev frame =
 
 <<function Abbrevs.dabbrev_expand>>=
 let dabbrev_expand frame = 
-  let location = Efuns.location() in
   let buf = frame.frm_buffer in
   let syntax = buf.buf_syntax_table in
   let text = buf.buf_text in
@@ -6884,7 +6881,7 @@ let dabbrev_expand frame =
     with
       Not_found ->
         remove_point curr_text mark;
-        let curr_buf = next_buffer location curr_buf in
+        let curr_buf = next_buffer curr_buf in
         if curr_buf == buf then
           if !loop then raise Not_found
           else
@@ -7127,8 +7124,8 @@ let _ =
 \section{Dynamic linking}
 
 <<[[main()]] command line options>>=
-  "-I",Arg.String (fun s -> load_path =:= 
-      (Utils.string_to_path s) @ !!load_path), "<path>: Load Path";
+  "-I",Arg.String (fun s -> Efuns.load_path =:= 
+      (Utils.string_to_path s) @ !!Efuns.load_path), "<path>: Load Path";
 @
 %dead? or for dynlink?
 
@@ -7313,10 +7310,9 @@ let init_frames = ref []
 
 <<function Ebuffer.message>>=
 let message buf m =
-  let location = Efuns.location() in
   let name = "*Messages*" in
   try
-    let buf = Hashtbl.find location.loc_buffers name in
+    let buf = Hashtbl.find (Efuns.location()).loc_buffers name in
     Text.insert_at_end buf.buf_text (m^"\n");
   with Not_found ->
     create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore

@@ -147,15 +147,15 @@ let n_5 = (NormalMap, Char.code '5')
 (*e: constant Keymap.n_5 *)
 
 (*s: function Keymap.all_bindings *)
-let all_bindings location =
+let all_bindings () =
   let s = ref "Default bindings:" in
-  List.iter (fun (name,(_,binding)) ->
-      match binding with
-        None -> ()
-      | Some key_list ->
-          s := Printf.sprintf "%s\n%20s : %s" !s 
-            (print_key_list key_list) name
-  ) location.loc_map.interactives;
+  (Efuns.location()).loc_map.interactives |> List.iter(fun (name,(_,binding)) ->
+    match binding with
+    | None -> ()
+    | Some key_list ->
+        s := Printf.sprintf "%s\n%20s : %s" !s 
+              (print_key_list key_list) name
+  );
   !s
 (*e: function Keymap.all_bindings *)
   

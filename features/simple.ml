@@ -723,7 +723,7 @@ let highlighted_chars = ref []
 (*e: constant Simple.highlighted_chars *)
 
 (*s: function Simple.unhightlight *)
-let unhightlight location =
+let unhightlight () =
     failwith "Simple.unhighlight: TODO"
 (*
   List.iter (fun (buf,curseur,attr) ->
@@ -955,8 +955,8 @@ let mouse_save_then_kill frame =
 (*e: function Simple.mouse_save_then_kill *)
 
 (*s: function Simple.next_buffer *)
-let next_buffer location buf =
-  let buf_list = Utils.list_of_hash location.loc_buffers in
+let next_buffer buf =
+  let buf_list = Utils.list_of_hash (Efuns.location()).loc_buffers in
   let rec iter list =
     match list with
       [] -> raise Not_found 
@@ -974,9 +974,8 @@ let next_buffer location buf =
 (*s: function Simple.kill_buffer *)
 let kill_buffer frame =
   let window = frame.frm_window in
-  let location = Efuns.location() in
   let buf = frame.frm_buffer in
-  let new_buf = next_buffer location buf in
+  let new_buf = next_buffer buf in
   let _new_frame = Frame.create window None new_buf in
   if buf.buf_shared = 0 
   then Ebuffer.kill buf

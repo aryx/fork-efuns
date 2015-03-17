@@ -135,8 +135,8 @@ let cursor_off top_window =
 
 
 (*s: function Top_window.update_display *)
-let update_display location =
-  location.top_windows |> List.iter (fun top_window ->
+let update_display () =
+  (Efuns.location()).top_windows |> List.iter (fun top_window ->
       top_window.window |> Window.iter (fun frm -> 
         Frame.update top_window frm
       );
@@ -150,8 +150,9 @@ let update_display location =
 (*e: function Top_window.update_display *)
 
 (*s: function Top_window.clean_display *)
-let clean_display location =
-  location.top_windows |> List.iter (fun top_window -> cursor_off top_window) 
+let clean_display () =
+  (Efuns.location()).top_windows |> List.iter (fun top_window -> 
+    cursor_off top_window) 
 (*e: function Top_window.clean_display *)
 
 (*s: function Top_window.resize_window *)
@@ -245,10 +246,9 @@ let meta = ref Xtypes.mod1Mask
 (*s: function Top_window.handle_key *)
 let handle_key top_window modifiers keysym =
   keypressed := keysym;
-  let location = Efuns.location() in
   let frame = top_window.top_active_frame in
 
-  clean_display location;
+  clean_display ();
   clear_message top_window;
 
   exec_hooks (try get_global handle_key_start_hook with _ -> []) ();
@@ -287,7 +287,7 @@ let handle_key top_window modifiers keysym =
 
   exec_hooks (try get_global handle_key_end_hook with _ -> []) ();
 
-  update_display location
+  update_display ()
 (*e: function Top_window.handle_key *)
 
   (* We can receive events from different sources. In particular, some of
@@ -298,7 +298,7 @@ let handle_key top_window modifiers keysym =
 let wrap top_window f () = 
   let location = Efuns.location() in
   Mutex.lock location.loc_mutex;  
-  clean_display location;    
+  clean_display ();    
   clear_message top_window;
   keypressed := XK.xk_Menu;
   exec_hooks (try get_global handle_key_start_hook with _ -> []) ();    
@@ -308,10 +308,10 @@ let wrap top_window f () =
                                     (Utils.printexn e))
   end;
   exec_hooks (try get_global handle_key_end_hook with _ -> []) ();    
-  update_display (Efuns.location());
+  update_display ();
   let graphic = Window.backend top_window in
   graphic.Xdraw.update_displays ();
-  Mutex.unlock (Efuns.location()).loc_mutex
+  Mutex.unlock location.loc_mutex
 (*e: function Top_window.wrap *)
 
 (*s: function Top_window.wrap_item *)
@@ -350,7 +350,7 @@ let handler top_window event =
         top_window.top_width <- new_width;
         top_window.top_height <- new_height;
         clear_message top_window;
-        update_display (Efuns.location())
+        update_display ()
     (*e: [[Top_window.handler()]] match event cases *)
     );
     Mutex.unlock location.loc_mutex;

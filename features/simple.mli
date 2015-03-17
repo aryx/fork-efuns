@@ -78,7 +78,7 @@ val unhightlight_region :
 val hightlight_region :
   Efuns.buffer -> Text.position -> Text.position -> unit
 val highlighted_chars : (Efuns.buffer * Text.point * Text.attribute) list ref
-val unhightlight : 'a -> unit
+val unhightlight : unit -> unit
 val highlight : Efuns.frame -> unit
 val htmlp : bool ref
 val is_paren_end : char -> bool
@@ -87,7 +87,7 @@ val highlight_paren : Efuns.frame -> unit
 val mouse_drag_region : Efuns.frame -> unit
 val mouse_yank_at_click : Efuns.frame -> unit
 val mouse_save_then_kill : Efuns.frame -> unit
-val next_buffer : Efuns.location -> Efuns.buffer -> Efuns.buffer
+val next_buffer : Efuns.buffer -> Efuns.buffer
 val kill_buffer : Efuns.frame -> unit
 val color : Efuns.buffer -> Str.regexp -> bool -> Text.attribute -> unit
 val point_at_mark : Efuns.frame -> unit

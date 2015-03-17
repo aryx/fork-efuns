@@ -15,9 +15,10 @@
  (join-string 
   (list 
    "-debugger"
-   (case 0
+   (case 1
      
      (0 "/home/pad/github/fork-efuns/changes.txt")
+     (1 "/home/pad/github/fork-efuns/main.ml")
      
      )
    ))

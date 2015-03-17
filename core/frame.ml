@@ -659,16 +659,15 @@ exception FoundFrame of frame
 (*e: exception Frame.FoundFrame *)
 
 (*s: function Frame.find_buffer_frame *)
-let find_buffer_frame location buf =
+let find_buffer_frame buf =
   try
-    List.iter (fun top_window ->
-        Window.iter (fun frame -> 
-            if frame.frm_buffer == buf then raise (FoundFrame frame))
-        top_window.window
-    ) location.top_windows;
+    (Efuns.location()).top_windows |> List.iter (fun top_window ->
+      top_window.window |> Window.iter (fun frame -> 
+        if frame.frm_buffer == buf then raise (FoundFrame frame)
+      )
+    );
     raise Not_found
-  with
-    FoundFrame frame -> frame
+  with FoundFrame frame -> frame
 (*e: function Frame.find_buffer_frame *)
 
 (*s: constant Frame.change_buffer_hooks *)
@@ -709,9 +708,8 @@ let load_file window filename =
   
 (*s: function Frame.change_buffer *)
 let change_buffer window name = 
-  let location = Efuns.location() in
   try
-    let buf = Hashtbl.find location.loc_buffers name in
+    let buf = Hashtbl.find (Efuns.location()).loc_buffers name in
     let frame = create window None buf in
     exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name

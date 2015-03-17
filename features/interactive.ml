@@ -16,8 +16,8 @@ open Select
 
   
 (*s: function Interactive.create_bindings *)
-let create_bindings location =
-  let s = Keymap.all_bindings location in
+let create_bindings () =
+  let s = Keymap.all_bindings () in
   let text = Text.create s in
   Ebuffer.create "*bindings*" None text (Keymap.create ())
 (*e: function Interactive.create_bindings *)

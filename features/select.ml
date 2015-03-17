@@ -48,31 +48,29 @@ let select_yes_or_no frame request action =
 
 (*s: function Select.find_completion_frame *)
 let find_completion_frame frame =
-  let location = Efuns.location() in
   let buf = Ebuffer.default "*Completions*" in
-  Frame.find_buffer_frame location buf
+  Frame.find_buffer_frame buf
 (*e: function Select.find_completion_frame *)
 
 (*s: function Select.display_completions *)
 let display_completions frame list =
   let top_window = Window.top frame.frm_window in
-  if list = [] then
-    Top_window.message top_window "No Completions"
+  if list = [] 
+  then Top_window.message top_window "No Completions"
   else
-  let location = Efuns.location() in
-  let rec iter list s =
-    match list with
-      [] -> s
-    | [f] -> Printf.sprintf "%s\n%s" s f
-    | f1::f2::tail  ->
-        iter tail (Printf.sprintf "%s\n%-40s%s" s f1 f2)
-  in
-  let buf = Ebuffer.default "*Completions*" in
-  let text = buf.buf_text in
-  Text.update text (iter list "Completions :");
-  (try Frame.find_buffer_frame location buf
-  with Not_found -> Frame.create_inactive (cut_frame frame) buf
-  ) |> ignore
+    let rec iter list s =
+      match list with
+      | [] -> s
+      | [f] -> Printf.sprintf "%s\n%s" s f
+      | f1::f2::tail  ->
+          iter tail (Printf.sprintf "%s\n%-40s%s" s f1 f2)
+    in
+    let buf = Ebuffer.default "*Completions*" in
+    let text = buf.buf_text in
+    Text.update text (iter list "Completions :");
+    (try Frame.find_buffer_frame buf
+     with Not_found -> Frame.create_inactive (cut_frame frame) buf
+    ) |> ignore
 (*e: function Select.display_completions *)
 
 (*s: function Select.remove_completions *)
