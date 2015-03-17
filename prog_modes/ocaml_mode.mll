@@ -1,258 +1,257 @@
 {
-  open Lexing 
-  
-  
-  type token =
-    AMPERAMPER
-  | AMPERSAND
-  | AND
-  | AS
-  | ASSERT
-  | BAR
-  | BARBAR
-  | BARRBRACKET
-  | BEGIN
-  | CHAR
-  | CLASS
-  | COLON
-  | COLONCOLON
-  | COLONEQUAL
-  | COLONGREATER
-  | COMMA
-  | CONSTRAINT
-  | DO
-  | DONE
-  | DOT
-  | DOTDOT
-  | DOWNTO
-  | ELSE
-  | END
-  | EOF of (Text.position)
-  | EQUAL
-  | EXCEPTION
-  | EXTERNAL
-  | FALSE
-  | FLOAT
-  | FOR
-  | FUN
-  | FUNCTION
-  | FUNCTOR
-  | GREATER
-  | GREATERRBRACE
-  | GREATERRBRACKET
-  | IF
-  | IN
-  | INCLUDE
-  | INFIXOP0
-  | INFIXOP1
-  | INFIXOP2
-  | INFIXOP3
-  | INFIXOP4
-  | INHERIT
-  | INITIALIZER
-  | INT
-  | LAZY
-  | LBRACE
-  | LBRACELESS
-  | LBRACKET
-  | LBRACKETBAR
-  | LBRACKETLESS
-  | LESS
-  | LESSMINUS
-  | LET
-  | LIDENT
-  | LPAREN
-  | MATCH
-  | METHOD
-  | MINUSGREATER
-  | MODULE
-  | MUTABLE
-  | NEW
-  | OBJECT
-  | OF
-  | OPEN
-  | OR
-  | PARSER
-  | PREFIXOP
-  | PRIVATE
-  | QUESTION
-  | QUOTE
-  | RBRACE
-  | RBRACKET
-  | REC
-  | RPAREN
-  | SEMI
-  | SEMISEMI
-  | SHARP
-  | SIG
-  | STAR
-  | STRING
-  | STRUCT
-  | SUBTRACTIVE
-  | THEN
-  | TO
-  | TRUE
-  | TRY
-  | TYPE
-  | UIDENT
-  | UNDERSCORE
-  | VAL
-  | VIRTUAL
-  | WHEN
-  | WHILE
-  | WITH
-  | COMMENT
-  | EOL of (Text.position)
-  | EOFCOMMENT
-  | EOFSTRING
-  | ERROR
+open Lexing 
+
+type token =
+  AMPERAMPER
+| AMPERSAND
+| AND
+| AS
+| ASSERT
+| BAR
+| BARBAR
+| BARRBRACKET
+| BEGIN
+| CHAR
+| CLASS
+| COLON
+| COLONCOLON
+| COLONEQUAL
+| COLONGREATER
+| COMMA
+| CONSTRAINT
+| DO
+| DONE
+| DOT
+| DOTDOT
+| DOWNTO
+| ELSE
+| END
+| EOF of (Text.position)
+| EQUAL
+| EXCEPTION
+| EXTERNAL
+| FALSE
+| FLOAT
+| FOR
+| FUN
+| FUNCTION
+| FUNCTOR
+| GREATER
+| GREATERRBRACE
+| GREATERRBRACKET
+| IF
+| IN
+| INCLUDE
+| INFIXOP0
+| INFIXOP1
+| INFIXOP2
+| INFIXOP3
+| INFIXOP4
+| INHERIT
+| INITIALIZER
+| INT
+| LAZY
+| LBRACE
+| LBRACELESS
+| LBRACKET
+| LBRACKETBAR
+| LBRACKETLESS
+| LESS
+| LESSMINUS
+| LET
+| LIDENT
+| LPAREN
+| MATCH
+| METHOD
+| MINUSGREATER
+| MODULE
+| MUTABLE
+| NEW
+| OBJECT
+| OF
+| OPEN
+| OR
+| PARSER
+| PREFIXOP
+| PRIVATE
+| QUESTION
+| QUOTE
+| RBRACE
+| RBRACKET
+| REC
+| RPAREN
+| SEMI
+| SEMISEMI
+| SHARP
+| SIG
+| STAR
+| STRING
+| STRUCT
+| SUBTRACTIVE
+| THEN
+| TO
+| TRUE
+| TRY
+| TYPE
+| UIDENT
+| UNDERSCORE
+| VAL
+| VIRTUAL
+| WHEN
+| WHILE
+| WITH
+| COMMENT
+| EOL of (Text.position)
+| EOFCOMMENT
+| EOFSTRING
+| ERROR
 (* for lexers *)
-  | RULE
-  | PARSE
+| RULE
+| PARSE
 (* for JoCaml *)
-  | DEF
-  | LOC
+| DEF
+| LOC
   
   
-  let tokens = [AMPERAMPER,"AMPERAMPER"; AMPERSAND,"AMPERSAND";
-      AND,"AND"; AS,"AS"; ASSERT,"ASSERT"; BAR,"BAR"; BARBAR,"BARBAR";
-      BARRBRACKET,"BARRBRACKET"; BEGIN,"BEGIN"; CHAR,"CHAR";
-      CLASS,"CLASS"; COLON,"COLON"; COLONCOLON,"COLONCOLON";
-      COLONEQUAL,"COLONEQUAL"; COLONGREATER,"COLONGREATER";
-      COMMA,"COMMA"; CONSTRAINT,"CONSTRAINT"; DO,"DO"; DONE,"DONE";
-      DOT,"DOT"; DOTDOT,"DOTDOT"; DOWNTO,"DOWNTO"; ELSE,"ELSE";
-      END,"END"; EQUAL,"EQUAL"; EXCEPTION,"EXCEPTION";
-      EXTERNAL,"EXTERNAL"; FALSE,"FALSE"; FLOAT,"FLOAT"; FOR,"FOR";
-      FUN,"FUN"; FUNCTION,"FUNCTION"; FUNCTOR,"FUNCTOR";
-      GREATER,"GREATER"; GREATERRBRACE,"GREATERRBRACE";
-      GREATERRBRACKET,"GREATERRBRACKET"; IF,"IF"; IN,"IN";
-      INCLUDE,"INCLUDE"; INFIXOP0,"INFIXOP0"; INFIXOP1,"INFIXOP1";
-      INFIXOP2,"INFIXOP2"; INFIXOP3,"INFIXOP3"; INFIXOP4,"INFIXOP4";
-      INHERIT,"INHERIT"; INITIALIZER,"INITIALIZER"; INT,"INT";
-      LAZY,"LAZY"; LBRACE,"LBRACE"; LBRACELESS,"LBRACELESS";
-      LBRACKET,"LBRACKET"; LBRACKETBAR,"LBRACKETBAR";
-      LBRACKETLESS,"LBRACKETLESS"; LESS,"LESS"; LESSMINUS,"LESSMINUS";
-      LET,"LET"; LIDENT,"LIDENT"; LPAREN,"LPAREN"; MATCH,"MATCH";
-      METHOD,"METHOD"; MINUSGREATER,"MINUSGREATER"; MODULE,"MODULE";
-      MUTABLE,"MUTABLE"; NEW,"NEW"; OBJECT,"OBJECT"; OF,"OF";
-      OPEN,"OPEN"; OR,"OR"; PARSER,"PARSER"; PREFIXOP,"PREFIXOP";
-      PRIVATE,"PRIVATE"; QUESTION,"QUESTION"; QUOTE,"QUOTE";
-      RBRACE,"RBRACE"; RBRACKET,"RBRACKET"; REC,"REC"; RPAREN,"RPAREN";
-      SEMI,"SEMI"; SEMISEMI,"SEMISEMI"; SHARP,"SHARP"; SIG,"SIG";
-      STAR,"STAR"; STRING,"STRING"; STRUCT,"STRUCT";
-      SUBTRACTIVE,"SUBTRACTIVE"; THEN,"THEN"; TO,"TO"; TRUE,"TRUE";
-      TRY,"TRY"; TYPE,"TYPE"; UIDENT,"UIDENT"; UNDERSCORE,"UNDERSCORE";
-      VAL,"VAL"; VIRTUAL,"VIRTUAL"; WHEN,"WHEN"; WHILE,"WHILE";
-      WITH,"WITH"; COMMENT,"COMMENT"; EOFCOMMENT,"EOFCOMMENT";
-      EOFSTRING,"EOFSTRING"; ERROR,"ERROR"; RULE,"RULE"; PARSE,"PARSE"]
-  
-  let token_to_string token =
-    List.assoc token tokens
-  
-  let lexer_start = ref 0
-  let position lexbuf =
-    let b = lexeme_start lexbuf in
-    let e = lexeme_end lexbuf in
-    b + !lexer_start, e - b
-  
-  type lexer_error =
-    Illegal_character
-  | Unterminated_comment
-  | Unterminated_string
+let tokens = [AMPERAMPER,"AMPERAMPER"; AMPERSAND,"AMPERSAND";
+    AND,"AND"; AS,"AS"; ASSERT,"ASSERT"; BAR,"BAR"; BARBAR,"BARBAR";
+    BARRBRACKET,"BARRBRACKET"; BEGIN,"BEGIN"; CHAR,"CHAR";
+    CLASS,"CLASS"; COLON,"COLON"; COLONCOLON,"COLONCOLON";
+    COLONEQUAL,"COLONEQUAL"; COLONGREATER,"COLONGREATER";
+    COMMA,"COMMA"; CONSTRAINT,"CONSTRAINT"; DO,"DO"; DONE,"DONE";
+    DOT,"DOT"; DOTDOT,"DOTDOT"; DOWNTO,"DOWNTO"; ELSE,"ELSE";
+    END,"END"; EQUAL,"EQUAL"; EXCEPTION,"EXCEPTION";
+    EXTERNAL,"EXTERNAL"; FALSE,"FALSE"; FLOAT,"FLOAT"; FOR,"FOR";
+    FUN,"FUN"; FUNCTION,"FUNCTION"; FUNCTOR,"FUNCTOR";
+    GREATER,"GREATER"; GREATERRBRACE,"GREATERRBRACE";
+    GREATERRBRACKET,"GREATERRBRACKET"; IF,"IF"; IN,"IN";
+    INCLUDE,"INCLUDE"; INFIXOP0,"INFIXOP0"; INFIXOP1,"INFIXOP1";
+    INFIXOP2,"INFIXOP2"; INFIXOP3,"INFIXOP3"; INFIXOP4,"INFIXOP4";
+    INHERIT,"INHERIT"; INITIALIZER,"INITIALIZER"; INT,"INT";
+    LAZY,"LAZY"; LBRACE,"LBRACE"; LBRACELESS,"LBRACELESS";
+    LBRACKET,"LBRACKET"; LBRACKETBAR,"LBRACKETBAR";
+    LBRACKETLESS,"LBRACKETLESS"; LESS,"LESS"; LESSMINUS,"LESSMINUS";
+    LET,"LET"; LIDENT,"LIDENT"; LPAREN,"LPAREN"; MATCH,"MATCH";
+    METHOD,"METHOD"; MINUSGREATER,"MINUSGREATER"; MODULE,"MODULE";
+    MUTABLE,"MUTABLE"; NEW,"NEW"; OBJECT,"OBJECT"; OF,"OF";
+    OPEN,"OPEN"; OR,"OR"; PARSER,"PARSER"; PREFIXOP,"PREFIXOP";
+    PRIVATE,"PRIVATE"; QUESTION,"QUESTION"; QUOTE,"QUOTE";
+    RBRACE,"RBRACE"; RBRACKET,"RBRACKET"; REC,"REC"; RPAREN,"RPAREN";
+    SEMI,"SEMI"; SEMISEMI,"SEMISEMI"; SHARP,"SHARP"; SIG,"SIG";
+    STAR,"STAR"; STRING,"STRING"; STRUCT,"STRUCT";
+    SUBTRACTIVE,"SUBTRACTIVE"; THEN,"THEN"; TO,"TO"; TRUE,"TRUE";
+    TRY,"TRY"; TYPE,"TYPE"; UIDENT,"UIDENT"; UNDERSCORE,"UNDERSCORE";
+    VAL,"VAL"; VIRTUAL,"VIRTUAL"; WHEN,"WHEN"; WHILE,"WHILE";
+    WITH,"WITH"; COMMENT,"COMMENT"; EOFCOMMENT,"EOFCOMMENT";
+    EOFSTRING,"EOFSTRING"; ERROR,"ERROR"; RULE,"RULE"; PARSE,"PARSE"]
+
+let token_to_string token =
+  List.assoc token tokens
+
+let lexer_start = ref 0
+let position lexbuf =
+  let b = lexeme_start lexbuf in
+  let e = lexeme_end lexbuf in
+  b + !lexer_start, e - b
+
+type lexer_error =
+  Illegal_character
+| Unterminated_comment
+| Unterminated_string
 
 
 (* For nested comments *)
   
-  let comment_depth = ref 0
+let comment_depth = ref 0
 
 (* The table of keywords *)
   
-  let keyword_table =
-    let h = Hashtbl.create 149 in
-    Utils.hash_add_assoc h [
-      "and", AND;
-      "as", AS;
-      "assert", ASSERT;
-      "begin", BEGIN;
-      "class", CLASS;
-      "constraint", CONSTRAINT;
-      "do", DO;
-      "done", DONE;
-      "downto", DOWNTO;
-      "else", ELSE;
-      "end", END;
-      "exception", EXCEPTION;
-      "external", EXTERNAL;
-      "false", FALSE;
-      "for", FOR;
-      "fun", FUN;
-      "function", FUNCTION;
-      "functor", FUNCTOR;
-      "if", IF;
-      "in", IN;
-      "include", INCLUDE;
-      "inherit", INHERIT;
-      "initializer", INITIALIZER;
-      "lazy", LAZY;
-      "let", LET;
-      "match", MATCH;
-      "method", METHOD;
-      "module", MODULE;
-      "mutable", MUTABLE;
-      "new", NEW;
-      "object", OBJECT;
-      "of", OF;
-      "open", OPEN;
-      "or", OR;
-      "parser", PARSER;
-      "private", PRIVATE;
-      "rec", REC;
-      "sig", SIG;
-      "struct", STRUCT;
-      "then", THEN;
-      "to", TO;
-      "true", TRUE;
-      "try", TRY;
-      "type", TYPE;
-      "val", VAL;
-      "virtual", VIRTUAL;
-      "when", WHEN;
-      "while", WHILE;
-      "with", WITH;
-      "mod", INFIXOP3;
-      "land", INFIXOP3;
-      "lor", INFIXOP3;
-      "lxor", INFIXOP3;
-      "lsl", INFIXOP4;
-      "lsr", INFIXOP4;
-      "asr", INFIXOP4;
-(* for lexers *)
-      "rule", RULE;
-      "parse", PARSE;
+let keyword_table =
+  let h = Hashtbl.create 149 in
+  Utils.hash_add_assoc h [
+    "and", AND;
+    "as", AS;
+    "assert", ASSERT;
+    "begin", BEGIN;
+    "class", CLASS;
+    "constraint", CONSTRAINT;
+    "do", DO;
+    "done", DONE;
+    "downto", DOWNTO;
+    "else", ELSE;
+    "end", END;
+    "exception", EXCEPTION;
+    "external", EXTERNAL;
+    "false", FALSE;
+    "for", FOR;
+    "fun", FUN;
+    "function", FUNCTION;
+    "functor", FUNCTOR;
+    "if", IF;
+    "in", IN;
+    "include", INCLUDE;
+    "inherit", INHERIT;
+    "initializer", INITIALIZER;
+    "lazy", LAZY;
+    "let", LET;
+    "match", MATCH;
+    "method", METHOD;
+    "module", MODULE;
+    "mutable", MUTABLE;
+    "new", NEW;
+    "object", OBJECT;
+    "of", OF;
+    "open", OPEN;
+    "or", OR;
+    "parser", PARSER;
+    "private", PRIVATE;
+    "rec", REC;
+    "sig", SIG;
+    "struct", STRUCT;
+    "then", THEN;
+    "to", TO;
+    "true", TRUE;
+    "try", TRY;
+    "type", TYPE;
+    "val", VAL;
+    "virtual", VIRTUAL;
+    "when", WHEN;
+    "while", WHILE;
+    "with", WITH;
+    "mod", INFIXOP3;
+    "land", INFIXOP3;
+    "lor", INFIXOP3;
+    "lxor", INFIXOP3;
+    "lsl", INFIXOP4;
+    "lsr", INFIXOP4;
+    "asr", INFIXOP4;
+    (* for lexers *)
+    "rule", RULE;
+    "parse", PARSE;
     (* for JoCaml *)
-      "loc", LOC;
-      "def", DEF;
-    ];
-    h
+    "loc", LOC;
+    "def", DEF;
+  ];
+  h
   
 (* To buffer string literals *)
   
-  let initial_string_buffer = String.create 256
-  let string_buff = ref initial_string_buffer
-  let string_index = ref 0
-  
-  let reset_string_buffer () =
-    string_buff := initial_string_buffer;
-    string_index := 0
-  
-  let store_string_char c =
-    if !string_index >= String.length (!string_buff) then begin
-        let new_buff = String.create (String.length (!string_buff) * 2) in
-        String.blit (!string_buff) 0 new_buff 0 (String.length (!string_buff));
-        string_buff := new_buff
-      end;
-    String.unsafe_set (!string_buff) (!string_index) c;
-    incr string_index
+let initial_string_buffer = String.create 256
+let string_buff = ref initial_string_buffer
+let string_index = ref 0
+
+let reset_string_buffer () =
+  string_buff := initial_string_buffer;
+  string_index := 0
+
+let store_string_char c =
+  if !string_index >= String.length (!string_buff) then begin
+      let new_buff = String.create (String.length (!string_buff) * 2) in
+      String.blit (!string_buff) 0 new_buff 0 (String.length (!string_buff));
+      string_buff := new_buff
+    end;
+  String.unsafe_set (!string_buff) (!string_index) c;
+  incr string_index
 
 (*  
   let get_stored_string () =
@@ -263,46 +262,38 @@
 
 (* To translate escape sequences *)
   
-  let char_for_backslash =
-    match Sys.os_type with
-    | "Unix" | "Win32" ->
-        begin function
-          | 'n' -> '\010'
-          | 'r' -> '\013'
-          | 'b' -> '\008'
-          | 't' -> '\009'
-          | c   -> c
-        end
-    | "MacOS" ->
-        begin function
-          | 'n' -> '\013'
-          | 'r' -> '\010'
-          | 'b' -> '\008'
-          | 't' -> '\009'
-          | c   -> c
-        end
-    | x -> failwith "Lexer: unknown system type"
-  
-  let char_for_decimal_code lexbuf i =
-    let c = 100 * (Char.code(Lexing.lexeme_char lexbuf i) - 48) +
-        10 * (Char.code(Lexing.lexeme_char lexbuf (i+1)) - 48) +
-        (Char.code(Lexing.lexeme_char lexbuf (i+2)) - 48) in  
-    Char.chr(c land 0xFF)
+let char_for_backslash =
+  match Sys.os_type with
+  | "Unix" ->
+      begin function
+        | 'n' -> '\010'
+        | 'r' -> '\013'
+        | 'b' -> '\008'
+        | 't' -> '\009'
+        | c   -> c
+      end
+  | x -> failwith "Lexer: unknown system type"
+
+let char_for_decimal_code lexbuf i =
+  let c = 100 * (Char.code(Lexing.lexeme_char lexbuf i) - 48) +
+      10 * (Char.code(Lexing.lexeme_char lexbuf (i+1)) - 48) +
+      (Char.code(Lexing.lexeme_char lexbuf (i+2)) - 48) in  
+  Char.chr(c land 0xFF)
 
 (* To store the position of the beginning of a string or comment *)
   
-  let start_pos = ref 0
+let start_pos = ref 0
 
 (* Error report *)
   
-  exception Error of int * int * lexer_error
-  let _report_error = function
-      Illegal_character ->
-        print_string "Illegal character"
-    | Unterminated_comment ->
-        print_string "Comment not terminated"
-    | Unterminated_string ->
-        print_string "String literal not terminated"
+exception Error of int * int * lexer_error
+let _report_error = function
+    Illegal_character ->
+      print_string "Illegal character"
+  | Unterminated_comment ->
+      print_string "Comment not terminated"
+  | Unterminated_string ->
+      print_string "String literal not terminated"
 
 }
 
@@ -315,10 +306,10 @@ let identchar =
 let symbolchar =
   ['!' '$' '%' '&' '*' '+' '-' '.' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~']
 let decimal_literal = ['0'-'9']+
-  let hex_literal = '0' ['x' 'X'] ['0'-'9' 'A'-'F' 'a'-'f']+
-    let oct_literal = '0' ['o' 'O'] ['0'-'7']+
-      let bin_literal = '0' ['b' 'B'] ['0'-'1']+
-        let float_literal =
+let hex_literal = '0' ['x' 'X'] ['0'-'9' 'A'-'F' 'a'-'f']+
+let oct_literal = '0' ['o' 'O'] ['0'-'7']+
+let bin_literal = '0' ['b' 'B'] ['0'-'1']+
+let float_literal =
           ['0'-'9']+ ('.' ['0'-'9']*)? (['e' 'E'] ['+' '-']? ['0'-'9']+)?
 
 rule token = parse
@@ -516,16 +507,16 @@ let keyword_font = define_option ["ocaml_mode"; "keyword_font"] ""
 let string_font = define_option ["ocaml_mode"; "string_font"] ""
     string_option !!font
 let comment_font = define_option ["ocaml_mode"; "comment_font"] ""
-  string_option !!font
+    string_option !!font
 let upper_font = define_option ["ocaml_mode"; "upper_font"] ""
-  string_option !!font
+    string_option !!font
 
 let ocaml_path = define_option ["ocaml_mode"; "ocaml_path"] ""
     path_option []
   
-let _ =
-  if !!ocaml_path = [] then
-    ocaml_path =:= !!Efuns.load_path
+let setup_ocaml_path () =
+  if !!ocaml_path = [] 
+  then ocaml_path =:= !!Efuns.load_path
   
 (*********************** colors ***********************)
 let ocaml_color_region buf start_point end_point =
@@ -601,7 +592,7 @@ let ocaml_color frame =
 let abbreviations = define_option ["ocaml_mode"; "abbrevs"] ""
     (list_option string2_option) []
   
-let _ = 
+let setup_abbrevs () = 
   if !!abbreviations = [] then
     abbreviations =:=
       [
@@ -1337,7 +1328,7 @@ let c_c = (ControlMap,Char.code 'c')
 let structures = define_option ["ocaml_mode"; "structures"] ""
     (list_option binding_option) []
   
-let _ = 
+let setup_structures () = 
   if !!structures = [] then
     let n' = NormalMap,Char.code '\'' in
     structures =:=
@@ -1357,8 +1348,7 @@ let syntax = define_option ["ocaml_mode"; "syntax"]
     "Chars which should not are part of idents" 
     string_option "_\'"
   
-  
-let ocaml_hooks = define_option ["ocaml_mode"; "hooks"] "" 
+  let ocaml_hooks = define_option ["ocaml_mode"; "hooks"] "" 
   (list_option string_option)
   [  "paren_mode" ]
   
@@ -1371,19 +1361,53 @@ let install buf =
   let abbrevs = Hashtbl.create 11 in
   set_local buf abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs !!abbreviations;
-  install_structures buf !!structures;
-    List.iter (fun action ->
+  Simple.install_structures buf !!structures;
+  !!ocaml_hooks |> List.iter (fun action ->
       try execute_buffer_action action buf with _ -> ()
-  ) !!ocaml_hooks;
-  ()
+  )
 
-  
+
 let mode =  Ebuffer.new_major_mode "Ocaml" [install]
-let _map = mode.maj_map
 
+(********************* setup ********************)
+  
 let ocaml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
         
-let _ = 
+let local_map = define_option ["ocaml_mode"; "local_map"] ""
+    (list_option binding_option) []
+
+let interactives_map = define_option ["ocaml_mode"; "interactives_map"] ""
+    (list_option string2_option) 
+  []
+
+let setup_maps () =
+  if !!local_map = [] 
+  then local_map =:= [
+      [c_c; ControlMap, Char.code 'c'], "ocaml_mode.compile";    
+      [ControlMap, Char.code 'l'], "ocaml_mode.color_buffer";
+      [c_c; ControlMap, Char.code 'b'], "ocaml_mode.indent_buffer";
+      [c_c; ControlMap, Char.code 'C'], "ocaml_mode.color_buffer";
+(*      [c_c; ControlMap,Char.code 'e'], "ocaml_mode.eval_buffer"; *)
+      [c_c; ControlMap,Char.code 'l'], "ocaml_mode.color_buffer";
+      [MetaMap,Char.code 'q'], "ocaml_mode.indent_phrase";
+      [NormalMap,XK.xk_Tab], "ocaml_mode.indent_line";
+      [NormalMap, Char.code '.'], "ocaml_mode.char_expand_abbrev";
+      [NormalMap, Char.code ';'], "ocaml_mode.char_expand_abbrev";
+      [NormalMap, XK.xk_Return], "ocaml_mode.return_expand_abbrev";
+    ];
+  if !!interactives_map = [] 
+  then interactives_map =:= [
+(*          "compile", "ocaml_mode.compile";*)
+          "color_buffer", "ocaml_mode.color_buffer";
+      ]
+
+
+let setup () = 
+
+  setup_ocaml_path ();
+  setup_abbrevs ();
+  setup_structures ();
+
   define_action "ocaml_mode" ocaml_mode;
   define_action "ocaml_mode.compile" (compile ocaml_find_error);
   define_action "ocaml_mode.color_buffer" 
@@ -1396,58 +1420,28 @@ let _ =
       expand_sabbrev frame; self_insert_command frame);
   define_action "ocaml_mode.return_expand_abbrev"
     (fun frame -> expand_sabbrev frame; insert_and_return frame); 
-  ()
-  
-let local_map = define_option ["ocaml_mode"; "local_map"] ""
-    (list_option binding_option) []
 
-let interactives_map = define_option ["ocaml_mode"; "interactives_map"] ""
-    (list_option string2_option) 
-  []
+  setup_maps ();
 
-let _ =
-  if !!local_map = [] then
-    local_map =:= [
-      [c_c; ControlMap, Char.code 'c'], "ocaml_mode.compile";    
-      [ControlMap, Char.code 'l'], "ocaml_mode.color_buffer";
-      [c_c; ControlMap, Char.code 'b'], "ocaml_mode.indent_buffer";
-      [c_c; ControlMap, Char.code 'C'], "ocaml_mode.color_buffer";
-      [c_c; ControlMap,Char.code 'e'], "ocaml_mode.eval_buffer";
-      [c_c; ControlMap,Char.code 'l'], "ocaml_mode.color_buffer";
-      [MetaMap,Char.code 'q'], "ocaml_mode.indent_phrase";
-      [NormalMap,XK.xk_Tab], "ocaml_mode.indent_line";
-      [NormalMap, Char.code '.'], "ocaml_mode.char_expand_abbrev";
-      [NormalMap, Char.code ';'], "ocaml_mode.char_expand_abbrev";
-      [NormalMap, XK.xk_Return], "ocaml_mode.return_expand_abbrev";
-
-    ];
-  if !!interactives_map = [] then 
-        interactives_map =:= [
-          "compile", "ocaml_mode.compile";
-          "color_buffer", "ocaml_mode.color_buffer";
-      ]
-
-let _ =
   let map = mode.maj_map in
-  List.iter (fun (keys, action) ->
+  !!local_map |> List.iter (fun (keys, action) ->
       try
         let f = execute_action action in
         Keymap.add_binding map keys f;
         add_interactive map action f;
       with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;
-  
-  ) !!local_map;
-  List.iter (fun (name, action) ->
+        Log.printf "Error for action %s" action;
+        Log.exn "%s\n" e;
+  );
+  !!interactives_map |> List.iter (fun (name, action) ->
       try
         add_interactive map name (execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;          
-  ) !!interactives_map;
-
+  );
   ()
+
 
 let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
     (list_option string_option) [".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)"]
@@ -1467,16 +1461,20 @@ let _ =
       add_option_parameter upper_font;
       add_option_parameter ocaml_path;
       add_option_parameter indentation;
+
+      setup ()
   )  
-  (*** Ocaml minor mode (for Makefiles (!)) ***)
+
+(*** Ocaml minor mode (for Makefiles (!)) ***)
+
 
 let minor_mode = Ebuffer.new_minor_mode "ocaml" []
-  
-let _ =
-  ignore (Keymap.add_binding minor_mode.min_map 
-      [c_c; ControlMap, Char.code 'c'] (execute_action "ocaml_mode.compile"))
-  ;
-  
+
+let _ =  
+  Efuns.add_start_hook (fun () ->
+  Keymap.add_binding minor_mode.min_map 
+      [c_c; ControlMap, Char.code 'c'] (execute_action "ocaml_mode.compile")
+   |> ignore;
   define_action "ocaml_minor_mode" 
     (fun frame -> 
       let buf = frame.frm_buffer in
@@ -1484,5 +1482,6 @@ let _ =
           Ebuffer.del_minor_mode buf minor_mode
         end else
         Ebuffer.set_minor_mode buf minor_mode)
+   )
 
 } 
