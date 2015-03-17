@@ -61,6 +61,7 @@ SRC=\
  prog_modes/makefile_mode.ml\
  prog_modes/ocaml_mode.ml\
  prog_modes/c_mode.ml\
+ prog_modes/lisp_mode.ml\
  \
  std_efunsrc.ml\
  $(BACKENDDIR)/graphics_efuns.ml \
@@ -124,12 +125,15 @@ clean::
 depend::
 	$(OCAMLDEP) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
 
-MODES= prog_modes/ocaml_mode.ml prog_modes/c_mode.ml
+MODES= \
+ prog_modes/ocaml_mode.ml prog_modes/c_mode.ml prog_modes/list_mode.ml \
 
 beforedepend:: $(MODES)
 prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
 	ocamllex $^
 prog_modes/c_mode.ml: prog_modes/c_mode.mll
+	ocamllex $^
+prog_modes/lisp_mode.ml: prog_modes/lisp_mode.mll
 	ocamllex $^
 
 clean:: 

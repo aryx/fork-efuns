@@ -1,3 +1,4 @@
+; foo 
 (setq 
  pad-ocaml-project-path "/home/pad/github/fork-efuns"
  pad-ocaml-project-subdirs 

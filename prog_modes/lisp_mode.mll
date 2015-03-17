@@ -1,5 +1,18 @@
- 
 {
+(***********************************************************************)
+(*                                                                     *)
+(*                           Efuns                                     *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+(***********************************************************************)
+(* Lexing *)
+(***********************************************************************)
 open Lexing 
   
 type token =
@@ -64,18 +77,10 @@ let get_stored_string () =
 
 let char_for_backslash =
   match Sys.os_type with
-  | "Unix" | "Win32" ->
+  | "Unix" ->
       begin function
       | 'n' -> '\010'
       | 'r' -> '\013'
-      | 'b' -> '\008'
-      | 't' -> '\009'
-      | c   -> c
-      end
-  | "MacOS" ->
-      begin function
-      | 'n' -> '\013'
-      | 'r' -> '\010'
       | 'b' -> '\008'
       | 't' -> '\009'
       | c   -> c
@@ -126,7 +131,7 @@ rule token = parse
   | return { let (p,_) as pos = position lexbuf in pos, EOL p }
   | firstidentchar identchar *
       { position lexbuf,
-      let s = Lexing.lexeme lexbuf in
+      let _s = Lexing.lexeme lexbuf in
       IDENT }
   | float_literal
   | decimal_literal | hex_literal | oct_literal | bin_literal
@@ -183,25 +188,11 @@ and string = parse
 {
 (* val token : lexbuf -> token *)
 
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
-
+open Options
 open Text
 open Efuns
-open Interactive
 open Simple
-open Select
 open Compil
-open Eval
-open Complex
 open Abbrevs  
 open Keymap
 open Window
@@ -210,12 +201,21 @@ let lexing text start_point end_point =
   lexer_start := get_position text start_point;
   Text.lexing text start_point end_point
 
+(***********************************************************************)
 (*********************** colors ***********************)
-let lisp_color_region location buf start_point end_point =
-  let red_attr = make_attr (get_color location "red") 1 0 false in
-  let yellow_attr = make_attr (get_color location "black") 1 0 false in
-  let blue_attr = make_attr (get_color location "blue") 1 0 false in
-  let gray_attr = make_attr (get_color location "gray") 1 0 false in
+(***********************************************************************)
+
+let lisp_color_region buf start_point end_point =
+
+  let _keyword_attr = 
+    make_attr (get_color !!Pl_colors.keyword_color) 1 0 false in
+  let string_attr = 
+    make_attr (get_color !!Pl_colors.string_color) 1 0 false in
+  let comment_attr = 
+    make_attr (get_color !!Pl_colors.comment_color) 1 0 false in
+  let gray_attr = 
+    make_attr (get_color !!Pl_colors.module_color) 1 0 false in
+
   let text = buf.buf_text in
   let curseur = Text.add_point text in
   let lexbuf = lexing text start_point end_point in
@@ -225,11 +225,11 @@ let lisp_color_region location buf start_point end_point =
         EOF _ -> raise Exit
       | COMMENT ->
           set_position text curseur pos;
-          set_attr text curseur len blue_attr
+          set_attr text curseur len comment_attr
       | EOFSTRING
       | STRING ->
           set_position text curseur pos;
-          set_attr text curseur len yellow_attr
+          set_attr text curseur len string_attr
       | IDENT when prev_tok = QUOTE ->
           set_position text curseur pos;
           set_attr text curseur len gray_attr            
@@ -238,30 +238,33 @@ let lisp_color_region location buf start_point end_point =
   in
   try
     iter COMMENT lexbuf
-  with
-    _ ->
-      buf.buf_modified <- buf.buf_modified + 1;
-      remove_point text curseur
+  with _ ->
+    buf.buf_modified <- buf.buf_modified + 1;
+    remove_point text curseur
 
 let lisp_color_buffer buf =
   let text = buf.buf_text in
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
   set_position text end_point (size text);
-  lisp_color_region buf.buf_location buf start_point end_point;
+  lisp_color_region buf start_point end_point;
   remove_point text start_point;
   remove_point text end_point
 
 let lisp_color frame =
   lisp_color_buffer frame.frm_buffer
 
+(***********************************************************************)
 (************************  abbreviations ********************)
+(***********************************************************************)
 
 let abbreviations = []
 
+(***********************************************************************)
 (**********************  indentations *******************)
+(***********************************************************************)
 
-let start_regexp = Str.regexp "^\(let\|module\|type\|exception\|open\)";;
+let start_regexp = Str.regexp "^\\(let\\|module\\|type\\|exception\\|open\\)";;
 
 type indentations = (int * (Text.position list)) list
 
@@ -365,7 +368,7 @@ let compute_indentations buf start_point end_point =
   let text = buf.buf_text in
   let curseur = Text.dup_point text start_point in
 (* init indentation *)
-  let pos = get_position text end_point in
+  let _pos = get_position text end_point in
   let lexbuf = lexing text curseur end_point in
   try
     let indentations = 
@@ -440,7 +443,7 @@ let insert_and_return frame =
 (* colors *)
   let start_point = dup_point text point in
   bmove text start_point (point_to_bol text start_point);
-  lisp_color_region buf.buf_location buf start_point point;
+  lisp_color_region buf start_point point;
   remove_point text start_point;
 (* indentations *)
   let curseur = dup_point text point in
@@ -477,7 +480,7 @@ let indent_current_line frame =
   let start_point = dup_point text point in
   bmove text start_point (point_to_bol text start_point);
   fmove text end_point (point_to_eol text end_point);
-  lisp_color_region buf.buf_location buf start_point end_point;
+  lisp_color_region buf start_point end_point;
   remove_point text start_point;
   remove_point text end_point;
 (* indentations *)
@@ -514,7 +517,9 @@ let lisp_find_error text error_point =
   Text.fmove text error_point 1;
   error
     
+(***********************************************************************)
 (*********************  installation ********************)
+(***********************************************************************)
 
 let c_c = (ControlMap,Char.code 'c')
 let install buf =
@@ -531,15 +536,16 @@ let install buf =
 
 let mode = Ebuffer.new_major_mode "Lisp" [install]  
   
-let _ =
+let setup () =
   let map = mode.maj_map in
   add_interactive map "lisp-indent-buffer" indent_buffer;
   add_interactive map "lisp-color-buffer" 
     (fun frame -> lisp_color_buffer frame.frm_buffer);
   add_major_key mode [c_c; ControlMap, Char.code 'c'] 
-  "lisp-compile" (compile lisp_find_error);
-  add_major_key mode [c_c; ControlMap,Char.code 'e']
-  "lisp-eval-buffer" eval_buffer;
+    "lisp-compile" (compile lisp_find_error);
+(*  add_major_key mode [c_c; ControlMap,Char.code 'e']
+    "lisp-eval-buffer" eval_buffer;
+*)
   add_major_key mode [c_c; ControlMap,Char.code 'l']
     "lisp-color-buffer" (fun frame -> lisp_color_buffer frame.frm_buffer);
   add_major_key mode [MetaMap,Char.code 'q']
@@ -547,20 +553,20 @@ let _ =
   add_major_key mode [NormalMap,XK.xk_Tab]
     "lisp-indent-line" indent_current_line;
   Keymap.add_binding map [NormalMap, XK.xk_Return] insert_and_return;
-  List.iter (fun char ->
-      Keymap.add_binding map [NormalMap, Char.code char]
-        (fun frame ->
-          self_insert_command frame;
-          highlight_paren frame)
-      ) ['}';']';')']
+  ['}';']';')'] |> List.iter (fun char ->
+      Keymap.add_binding map [NormalMap, Char.code char] (fun frame ->
+        self_insert_command frame;
+        highlight_paren frame
+      )
+  )
 
 let _ =  
-  Efuns.add_start_hook (fun location ->
-      add_interactive location.loc_map "lisp-mode" 
+  Efuns.add_start_hook (fun () ->
+    add_interactive (Efuns.location()).loc_map "lisp-mode" 
         (fun frame -> install frame.frm_buffer);
-      let alist = get_global location Ebuffer.modes_alist in
-    set_global location Ebuffer.modes_alist 
-        ((".*\.\(el\|gwm\)$",mode)
-       :: alist)
-      )  
+    let alist = get_global Ebuffer.modes_alist in
+    set_global Ebuffer.modes_alist
+      ((".*\\.\\(el\\|gwm\\)$", mode):: alist);
+    setup ();
+  )
 } 
