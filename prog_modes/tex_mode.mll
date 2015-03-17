@@ -592,7 +592,7 @@ let setup_maps () =
       [c_c;ControlMap, Char.code 'c'], "tex_mode.compile" ;
       [c_c;NormalMap, Char.code '%'], "tex_mode.comment_region";
       [c_c;ControlMap, Char.code 'u'; NormalMap,Char.code '%'],
-      "uncomment_region";
+      "tex_mode.uncomment_region";
       [NormalMap, Char.code '{'], "tex_mode.char_expand_abbrev";
       [NormalMap, Char.code '*'], "tex_mode.char_expand_abbrev";
       [NormalMap, Char.code ' '], "tex_mode.char_expand_abbrev";
@@ -604,10 +604,10 @@ let setup_maps () =
       [c_c; NormalMap,XK.xk_bracketright], "tex_mode.end_env";
 *)
       [c_c; NormalMap,XK.xk_Return], "tex_mode.load_input_file";
-      [c_c; NormalMap,XK.xk_Right], "load_next_input_file";
-      [c_c; NormalMap,XK.xk_Left], "load_prev_input_file";
-      [c_c; NormalMap,XK.xk_Down], "set_main_file";
-      [c_c; NormalMap,XK.xk_Up], "to_main_file";
+      [c_c; NormalMap,XK.xk_Right], "tex_mode.load_next_input_file";
+      [c_c; NormalMap,XK.xk_Left], "tex_mode.load_prev_input_file";
+      [c_c; NormalMap,XK.xk_Down], "tex_mode.set_main_file";
+      [c_c; NormalMap,XK.xk_Up], "tex_mode.to_main_file";
       
       [NormalMap, Char.code '}'], "tex_mode.find_matching_paren";
       [NormalMap, Char.code ']'], "tex_mode.find_matching_paren";
@@ -615,7 +615,7 @@ let setup_maps () =
     ];
   if !!interactives_map = [] then 
     interactives_map =:= [
-      "tex_browser", "tex_mode.browse";
+(*      "tex_browser", "tex_mode.browse"; *)
       "color_buffer", "tex_mode.color_buffer";
     ];
 

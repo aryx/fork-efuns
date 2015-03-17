@@ -524,11 +524,11 @@ let _ =
       interactives_map =:= List.map (fun x -> x, x ) [
         (*s: [[interactives_map]] initial entries *)
         "save_options";
-        "load_library";
+        (*"load_library";*)
         "get_position";
         "open_display";
         "unset_attr";
-        "start_server";
+        (*"start_server";*)
         (*x: [[interactives_map]] initial entries *)
         "goto_char";
         "goto_line";
@@ -552,10 +552,10 @@ let _ =
         (*x: [[interactives_map]] initial entries *)
         "paren_mode";
         "abbrevs_mode";
-        "accents_mode";
+        (*"accents_mode";*)
         "ocaml_minor_mode";
         "fill_mode";
-        "ocaml_compiler_mode";
+        (*"ocaml_compiler_mode";*)
         "tab_mode";
         "overwrite_mode";
         (*e: [[interactives_map]] initial entries *)
