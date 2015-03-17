@@ -1,1 +1,4 @@
 Fabrice Lefessant
+
+With contributions from:
+ - Yoann Padioleau (goal column, dircolors?)
