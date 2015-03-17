@@ -62,6 +62,8 @@ SRC=\
  prog_modes/ocaml_mode.ml\
  prog_modes/c_mode.ml\
  prog_modes/lisp_mode.ml\
+ prog_modes/tex_mode.ml\
+ prog_modes/html_mode.ml\
  \
  std_efunsrc.ml\
  $(BACKENDDIR)/graphics_efuns.ml \
@@ -113,10 +115,12 @@ opt:
 
 # need -linkall!
 $(TARGET): $(LIBS) $(OBJS)
-	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ $(OTHERSYSLIBS) $(SYSLIBS) $(GTKLOOP) $^
+	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ \
+      $(OTHERSYSLIBS) $(SYSLIBS) $(GTKLOOP) $^
 
 $(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS) 
-	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa)  $^
+	$(OCAMLOPT) $(STATIC) -cclib -L/opt/X11/lib -o $@ \
+      $(OTHERSYSLIBS:.cma=.cmxa) $(SYSLIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $^
 
 clean::
 	rm -f $(OBJS) $(OBJS:.cmo=.cmi) \
@@ -126,7 +130,8 @@ depend::
 	$(OCAMLDEP) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
 
 MODES= \
- prog_modes/ocaml_mode.ml prog_modes/c_mode.ml prog_modes/list_mode.ml \
+ prog_modes/ocaml_mode.ml prog_modes/c_mode.ml prog_modes/lisp_mode.ml \
+ prog_modes/tex_mode.ml prog_modes/html_mode.ml
 
 beforedepend:: $(MODES)
 prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
@@ -134,6 +139,10 @@ prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
 prog_modes/c_mode.ml: prog_modes/c_mode.mll
 	ocamllex $^
 prog_modes/lisp_mode.ml: prog_modes/lisp_mode.mll
+	ocamllex $^
+prog_modes/tex_mode.ml: prog_modes/tex_mode.mll
+	ocamllex $^
+prog_modes/html_mode.ml: prog_modes/html_mode.mll
 	ocamllex $^
 
 clean:: 

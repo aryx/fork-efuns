@@ -1,42 +1,57 @@
 {
-  open Options
-  open Lexing
-  open Text  
-  open Compil
-  
-  
-  type token =
-    ANY
-  | COMMENT
-  | MATHMODE
-  | STARTMATH
-  | ENDMATH
-  | STARTTABBING
-  | ENDTABBING
-  | KWDTABBING
-  | STARTARRAY
-  | ENDARRAY
-  | KWDARRAY
-  | STARTENV
-  | ENDENV
-  | CONDITION    
-  | ITEM
-  | PARAMETER
-  | COMMAND
-  | FONT
-  | EOF
-  | LBRACE
-  | RBRACE
-  
-  let lexer_start = ref 0
-  let position lexbuf =
-    let b = lexeme_start lexbuf in
-    let e = lexeme_end lexbuf in
-    b + !lexer_start, e - b
-  
-  let lexing text start_point end_point =
-    lexer_start := get_position text start_point;
-    Text.lexing text start_point end_point
+(***********************************************************************)
+(*                                                                     *)
+(*                           Efuns                                     *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+(***********************************************************************)
+(* Lexing *)
+(***********************************************************************)
+
+open Options
+open Lexing
+open Text  
+open Compil
+
+
+type token =
+  ANY
+| COMMENT
+| MATHMODE
+| STARTMATH
+| ENDMATH
+| STARTTABBING
+| ENDTABBING
+| KWDTABBING
+| STARTARRAY
+| ENDARRAY
+| KWDARRAY
+| STARTENV
+| ENDENV
+| CONDITION    
+| ITEM
+| PARAMETER
+| COMMAND
+| FONT
+| EOF
+| LBRACE
+| RBRACE
+
+let lexer_start = ref 0
+let position lexbuf =
+  let b = lexeme_start lexbuf in
+  let e = lexeme_end lexbuf in
+  b + !lexer_start, e - b
+
+let lexing text start_point end_point =
+  lexer_start := get_position text start_point;
+  Text.lexing text start_point end_point
 
 }
 
@@ -87,7 +102,6 @@ rule token = parse
 {
 open Text
 open Efuns
-open Interactive
 open Simple
 open Abbrevs
 open Keymap
@@ -95,17 +109,18 @@ open Window
 
 let abbreviations = define_option ["tex_mode"; "abbrevs"] ""
     (list_option string2_option) []
-  
+
+(*  
 let _ = 
   if !!abbreviations = [] then
     abbreviations =:=
-      [ "\s", "\section";
-      "\ss", "\subsection";
-      "\sss", "\subsubsection";
-      "\p", "\paragraph";
-      "\begit", "\begin{itemize}";
-      "\endit", "\end{itemize}";
-      "\startarticle", "\\documentclass[twocolumn]{article}
+      [ "\\s", "\section";
+      "\\ss", "\subsection";
+      "\\sss", "\subsubsection";
+      "\\p", "\paragraph";
+      "\\begit", "\begin{itemize}";
+      "\\endit", "\end{itemize}";
+      "\\startarticle", "\\documentclass[twocolumn]{article}
 
 \\usepackage{isolatin1}
 \\usepackage{francais}
@@ -145,39 +160,25 @@ let _ =
 \\end{document}
 ";
     ]
+*)
     
 type mode =
   Math_mode
 | Arg_mode
 | Normal_mode
 
-let keyword_color = define_option ["tex_mode"; "keyword_color"] ""
-    string_option "red"
-let string_color = define_option ["tex_mode"; "string_color"] ""
-    string_option "blue"
-let comment_color = define_option ["tex_mode"; "comment_color"] ""
-    string_option "cadetblue"
-let upper_color = define_option ["tex_mode"; "upper_color"] ""
-    string_option "blue"
-let keyword_font = define_option ["tex_mode"; "keyword_font"] ""
-    string_option !!font
-let string_font = define_option ["tex_mode"; "string_font"] ""
-    string_option !!font
-let comment_font = define_option ["tex_mode"; "comment_font"] ""
-  string_option !!font
-let upper_font = define_option ["tex_mode"; "upper_font"] ""
-  string_option !!font
-  
+ 
 let tex_color_buffer buf =
-  let location = buf.buf_location in
-  let red_attr = make_attr (get_color location !!keyword_color) 1 
-    (get_font location !!keyword_font) false in
-  let yellow_attr = make_attr (get_color location !!string_color) 1 
-    (get_font location !!string_font)    false in
-  let blue_attr = make_attr (get_color location !!comment_color) 1 
-    (get_font location !!comment_font) false in
-  let gray_attr = make_attr (get_color location !!upper_color) 1 
-    (get_font location !!upper_font)     false in
+
+  let keyword_attr = 
+    make_attr (get_color !!Pl_colors.keyword_color) 1 0 false in
+  let string_attr = 
+    make_attr (get_color !!Pl_colors.string_color) 1 0 false in
+  let comment_attr = 
+    make_attr (get_color !!Pl_colors.comment_color) 1 0 false in
+  let gray_attr = 
+    make_attr (get_color !!Pl_colors.module_color) 1 0 false in
+
   let text = buf.buf_text in
   let start_point = Text.add_point text in
   let curseur = add_point text in
@@ -193,22 +194,22 @@ let tex_color_buffer buf =
       | COMMENT
         ->
           set_position text curseur pos;
-          set_attr text curseur len blue_attr;
+          set_attr text curseur len comment_attr;
           mode
       | MATHMODE ->
           set_position text curseur pos;
-          set_attr text curseur len yellow_attr;
+          set_attr text curseur len string_attr;
           (match mode with
               Math_mode -> Normal_mode
             | _ -> Math_mode)
       | STARTMATH ->
           set_position text curseur pos;
-          set_attr text curseur len yellow_attr;
+          set_attr text curseur len string_attr;
           Math_mode          
       | ENDMATH
         ->
           set_position text curseur pos;
-          set_attr text curseur len yellow_attr;
+          set_attr text curseur len string_attr;
           Normal_mode
       | STARTTABBING
       | ENDTABBING
@@ -228,21 +229,21 @@ let tex_color_buffer buf =
       | COMMAND
       | FONT ->
           set_position text curseur pos;
-          set_attr text curseur len red_attr;
+          set_attr text curseur len keyword_attr;
           mode
       | LBRACE ->
           set_position text curseur pos;
-          set_attr text curseur len red_attr;
+          set_attr text curseur len keyword_attr;
           Arg_mode
       | RBRACE ->
           set_position text curseur pos;
-          set_attr text curseur len red_attr;
+          set_attr text curseur len keyword_attr;
           Normal_mode
       | _ -> 
           match mode with
             Math_mode -> 
               set_position text curseur pos;
-              set_attr text curseur len yellow_attr;
+              set_attr text curseur len string_attr;
               mode
           | Arg_mode ->
               set_position text curseur pos;
@@ -271,7 +272,9 @@ let _ =
   if !!structures = [] then 
     structures =:=
       [
+(*
       [c_c;NormalMap, Char.code '0'], "\\documentclass[twocolumn^^]{article}\n%^^\\usepackage{isolatin1}\n%^^\\usepackage{francais}\n\\usepackage{url}\n\\usepackage[dvips]{epsfig}\n\n\\begin{document}\n\\title{^^}\n\\bibliographystyle{plain}\n\author{^^}\n\\maketitle\n\\abstract{^^}\n\\section{Introduction}\n^^\n\\bibliography{^^}\n\\end{document}\n";
+*)
       [c_c;NormalMap, Char.code '1'], "\\section{^^}\n^^";
       [c_c;NormalMap, Char.code '2'], "\\subsection{^^}\n^^";
       [c_c;NormalMap, Char.code '3'], "\\subsubsection{^^}\n^^";
@@ -284,9 +287,9 @@ let _ =
     ]
     
 let tex_error_regexp = define_option ["tex_mode"; "error_regexp"] ""
-    regexp_option (string_to_regex "^l.\([0-9]+\)")
+    regexp_option (string_to_regex "^l.\\([0-9]+\\)")
 let tex_error_regexp2 = define_option ["tex_mode"; "warning_regexp"] ""
-    regexp_option (string_to_regex "^LaTeX Warning:.*line +\([0-9]+\)")
+    regexp_option (string_to_regex "^LaTeX Warning:.*line +\\([0-9]+\\)")
   
 let backward_find_unclosed_paren text point =
   let rec iter n =
@@ -342,7 +345,7 @@ let tex_find_error text error_point =
       Not_found -> ""
   in
   remove_point text point;
-  for i = 1 to 3 do
+  for _i = 1 to 3 do
     bmove text error_point 1;
     let bol = point_to_bol text error_point in
     bmove text error_point bol;
@@ -448,7 +451,7 @@ let load_input frame buf point =
     try
       let bol = point_to_bol text curs in
       bmove text curs bol;
-      while sub text curs 7 <> "\input{" do
+      while sub text curs 7 <> "\\input{" do
         let c = get_char text curs in
         if c = '\n' || fmove_res text curs 1 = 0 then raise Not_found;
       done;
@@ -502,9 +505,10 @@ let load_prev_input_file frame =
   let point = match buf.buf_mark with
       None -> add_point text | Some mark -> mark in
   buf.buf_mark <- Some point;
-  let len = search_backward text input_regexp point in
+  let _len = search_backward text input_regexp point in
   load_input frame buf point
 
+(*
 let browse frame =
   let buf = frame.frm_buffer in
   let filename = match buf.buf_filename with
@@ -513,6 +517,7 @@ let browse frame =
   Server.start frame;
   let _ = Sys.command (Printf.sprintf "efuns_texbrowser %s &" filename) in
   ()
+*)
   
   
 let tex_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
@@ -535,7 +540,7 @@ let begin_env frame =
   )
   
 (* Could be improved to avoid nested envs *)
-let begin_env_regexp = Str.regexp "\\begin{\([^}]*\)}"
+let begin_env_regexp = Str.regexp "\\begin{\\([^}]*\\)}"
 let end_env frame = 
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -549,10 +554,10 @@ let end_env frame =
     fmove text point (String.length names.(0) + 7)    
   with e -> remove_point text find_point; raise e
   
-  
-let _ = 
+
+let setup_actions () =  
   define_action "tex_mode" tex_mode;
-  define_action "tex_mode.browse" browse;
+(*  define_action "tex_mode.browse" browse; *)
   define_action "tex_mode.color_buffer" (fun frame -> 
       tex_color_buffer frame.frm_buffer);
   define_action "tex_mode.compile" (compile tex_find_error);
@@ -580,7 +585,7 @@ let interactives_map = define_option ["tex_mode"; "interactives_map"] ""
     (list_option string2_option) 
   []
 
-let _ =
+let setup_maps () =
   if !!local_map = [] then
     local_map =:= [
       [c_c;ControlMap, Char.code 'l'], "tex_mode.color_buffer" ;
@@ -593,9 +598,11 @@ let _ =
       [NormalMap, Char.code ' '], "tex_mode.char_expand_abbrev";
       [MetaMap, Char.code 'q'], "fill_paragraph";
       [NormalMap, XK.xk_Return], "tex_mode.insert_return";  
-      
+
+(*      
       [c_c; NormalMap,XK.xk_bracketleft], "tex_mode.begin_env";
       [c_c; NormalMap,XK.xk_bracketright], "tex_mode.end_env";
+*)
       [c_c; NormalMap,XK.xk_Return], "tex_mode.load_input_file";
       [c_c; NormalMap,XK.xk_Right], "load_next_input_file";
       [c_c; NormalMap,XK.xk_Left], "load_prev_input_file";
@@ -610,12 +617,11 @@ let _ =
     interactives_map =:= [
       "tex_browser", "tex_mode.browse";
       "color_buffer", "tex_mode.color_buffer";
-    ]
+    ];
 
-let _ =
   let map = mode.maj_map in
   (*  Keymap.add_prefix map [c_c]; *)
-  List.iter (fun (keys, action) ->
+   !!local_map |> List.iter (fun (keys, action) ->
       try
         let f = execute_action action in
         Keymap.add_binding map keys f;
@@ -624,31 +630,29 @@ let _ =
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
   
-  ) !!local_map;
-  List.iter (fun (name, action) ->
+  );
+  !!interactives_map |> List.iter (fun (name, action) ->
       try
         add_interactive map name (execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;          
-  ) !!interactives_map;
+  );
   ()
   
 let mode_regexp = define_option ["tex_mode"; "mode_regexp"] ""
-    (list_option string_option) [ ".*\.tex"; ".*\.cls"; ".*\.sty" ]
+    (list_option string_option) 
+     [".*\\.tex"; ".*\\.cls"; ".*\\.sty";
+      ".*\\.nw"
+     ]
 
 
-  
 let _ =  
-  Efuns.add_start_hook (fun location ->
-      let alist = get_global location Ebuffer.modes_alist in
-      set_global location Ebuffer.modes_alist 
-        ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
-      
-      add_option_parameter location keyword_color;
-      add_option_parameter  location string_color;
-      add_option_parameter location comment_color;
-      add_option_parameter location  upper_color;
+  Efuns.add_start_hook (fun () ->
+    let alist = get_global Ebuffer.modes_alist in
+    set_global Ebuffer.modes_alist 
+      ((List.map (fun s -> s, mode) !!mode_regexp) @ alist);
+    setup_actions ();
+    setup_maps ();
   )
-  
 } 

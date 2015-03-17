@@ -24,6 +24,9 @@ let module_color = define_option ["module_color"] ""
 let preprocessor_color = define_option ["preprocessor_color"] ""
     string_option "coral"
 
+let error_color = define_option ["error_color"] ""
+    string_option "red"
+
 let _ =  
   Efuns.add_start_hook (fun () ->
 

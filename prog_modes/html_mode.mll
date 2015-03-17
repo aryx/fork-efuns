@@ -1,5 +1,18 @@
- 
 {
+(***********************************************************************)
+(*                                                                     *)
+(*                           Efuns                                     *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+(***********************************************************************)
+(* Lexing *)
+(***********************************************************************)
 open Lexing 
   
 type token =
@@ -113,26 +126,11 @@ and ampersand = parse
     
 {
 (* val token : lexbuf -> token *)
-
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
+open Options
 
 open Text
 open Efuns
-open Interactive
 open Simple
-open Select
-open Compil
-open Eval
-open Complex
 open Abbrevs  
 open Keymap
 open Window
@@ -141,12 +139,21 @@ let lexing text start_point end_point =
   lexer_start := get_position text start_point;
   Text.lexing text start_point end_point
 
+(***********************************************************************)
 (*********************** colors ***********************)
-let html_color_region location buf start_point end_point =
-  let red_attr = make_attr (get_color location "red") 1 0 false in
-  let yellow_attr = make_attr (get_color location "yellow") 1 0 false in
-  let blue_attr = make_attr (get_color location "blue") 1 0 false in
-  let gray_attr = make_attr (get_color location "gray") 1 0 false in
+(***********************************************************************)
+let html_color_region buf start_point end_point =
+  let keyword_attr = 
+    make_attr (get_color !!Pl_colors.keyword_color) 1 0 false in
+  let _string_attr = 
+    make_attr (get_color !!Pl_colors.string_color) 1 0 false in
+  let comment_attr = 
+    make_attr (get_color !!Pl_colors.comment_color) 1 0 false in
+  let gray_attr = 
+    make_attr (get_color !!Pl_colors.module_color) 1 0 false in
+  let error_attr = 
+    make_attr (get_color !!Pl_colors.error_color) 1 0 false in
+
   let text = buf.buf_text in
   let curseur = Text.add_point text in
   let lexbuf = lexing text start_point end_point in
@@ -156,15 +163,15 @@ let html_color_region location buf start_point end_point =
         EOF  -> raise Exit
       | COMMENT ->
           set_position text curseur pos;
-          set_attr text curseur len blue_attr
+          set_attr text curseur len comment_attr
       | ERROR ->
           set_position text curseur pos;
-          set_attr text curseur len blue_attr
+          set_attr text curseur len error_attr
       
       | OPEN_TAG
       | CLOSE_TAG ->
           set_position text curseur pos;
-          set_attr text curseur len yellow_attr
+          set_attr text curseur len keyword_attr
       | AMPERSAND
       | DOCTYPE ->
           set_position text curseur pos;
@@ -183,19 +190,23 @@ let html_color_buffer buf =
   let text = buf.buf_text in
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
-  set_position text end_point (size text);
-  html_color_region buf.buf_location buf start_point end_point;
-  remove_point text start_point;
-  remove_point text end_point
+  Text.set_position text end_point (size text);
+  html_color_region buf start_point end_point;
+  Text.remove_point text start_point;
+  Text.remove_point text end_point
 
 let html_color frame =
   html_color_buffer frame.frm_buffer
 
+(***********************************************************************)
 (************************  abbreviations ********************)
+(***********************************************************************)
 
 let abbreviations = []
 
+(***********************************************************************)
 (*********************  structures ********************)
+(***********************************************************************)
 
 let structures = [
     [c_c; NormalMap, Char.code 'h'], "<a href=\"^^\"> ^^ </a> ^^";
@@ -226,7 +237,9 @@ Tel travail: 01 69 33 52 93<br>
     ]
   
   
+(***********************************************************************)
 (*********************  installation ********************)
+(***********************************************************************)
 
 let c_c = (ControlMap,Char.code 'c')
 let install buf =
@@ -235,7 +248,7 @@ let install buf =
   buf.buf_syntax_table.(Char.code '-') <- true;
   buf.buf_syntax_table.(Char.code '+') <- true;
   buf.buf_syntax_table.(Char.code '*') <- true;
-  Accents_mode.install buf;
+(*  Accents_mode.install buf; *)
   let abbrevs = Hashtbl.create 11 in
   set_local buf abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs abbreviations;
@@ -260,12 +273,12 @@ let _ =
   ) ['>']
   
 let _ =  
-  Efuns.add_start_hook (fun location ->
-      add_interactive (location.loc_map) "html-mode" 
+  Efuns.add_start_hook (fun () ->
+    add_interactive (Efuns.location()).loc_map "html-mode" 
       (fun frame -> install frame.frm_buffer);
-    let alist = get_global location Ebuffer.modes_alist in
-    set_global location Ebuffer.modes_alist 
-        ((".*\.\(html\|htm\)",mode)
+    let alist = get_global Ebuffer.modes_alist in
+    set_global Ebuffer.modes_alist 
+        ((".*\\.\\(html\\|htm\\)",mode)
         :: alist)
-      )  
+      )
 } 
