@@ -14,7 +14,6 @@
 open Common
 open Utils
 open Efuns
-open Text
 
 (*s: constant Ebuffer.create_buf_hook *)
 let create_buf_hook = Local.create_abstr "create_buf_hook"
@@ -105,7 +104,7 @@ let create name filename text local_map =
       buf_point = Text.add_point text;
       buf_start = Text.add_point text;
 
-      buf_last_saved = version text;
+      buf_last_saved = Text.version text;
       buf_modified = 0;
 
       buf_map = local_map;
@@ -203,7 +202,7 @@ let save buf =
   let outc = open_out filename in
   Text.save buf.buf_text outc;
   close_out outc;
-  buf.buf_last_saved <- version buf.buf_text;
+  buf.buf_last_saved <- Text.version buf.buf_text;
 
   exec_named_buf_hooks !!saved_buffer_hooks buf
 (*e: function Ebuffer.save *)
@@ -298,10 +297,10 @@ let set_mark buf point =
   buf.buf_modified <- buf.buf_modified + 1;
   match buf.buf_mark with
     None ->
-      let mark = dup_point text point in
+      let mark = Text.dup_point text point in
       buf.buf_mark <- Some mark
   | Some mark ->
-      goto_point text mark point
+      Text.goto_point text mark point
 (*e: function Ebuffer.set_mark *)
 
 (*s: function Ebuffer.get_mark *)
@@ -319,7 +318,7 @@ let remove_mark buf =
     None -> ()
   | Some mark ->
       buf.buf_mark <- None;
-      remove_point buf.buf_text mark;
+      Text.remove_point buf.buf_text mark;
       buf.buf_modified <- buf.buf_modified + 1
 (*e: function Ebuffer.remove_mark *)
 

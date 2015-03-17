@@ -27,16 +27,19 @@ and item_attr =
 type position = int
 type delta = int
 
+(* The text ! *)
+type t
+type attribute = int
+
 (* normally abstract! but useful to have it public for ocamldebug *)
 type point = {
     mutable pos : position;
     mutable line : int;
   }
 
+(* for undo *)
 type action
-type t
 type session
-type attribute = int
   
 type repr =
   { repr_line_pos: int;

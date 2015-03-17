@@ -20,10 +20,8 @@ deux fonctions principales:
     dans des tables associees au buffer (variable "abbrev_table") 
     (binding normal: un caractere de fin de mot (espace,newline,..))
 *)
-
 open Efuns
-open Text
-open Simple
+
 
 (*s: function Abbrevs.escaped *)
 let escaped s =
@@ -64,66 +62,65 @@ let dabbrev_expand frame =
   let s, buf, pos, history =
     match !dabbrev_buf with
       Some (s, for_frame, for_position, for_len,buf, pos, history) 
-      when frame == for_frame && for_position = get_position text point ->
-        bmove text point for_len;
+      when frame == for_frame && for_position = Text.get_position text point ->
+        Text.bmove text point for_len;
         Text.delete text point for_len;
         s, buf, pos, history
     | _ -> 
-        let str = beginning_of_word buf point in
+        let str = Simple.beginning_of_word buf point in
         str , buf, 
-        get_position text point - String.length str, []
+        Text.get_position text point - String.length str, []
   in
   let truelen = String.length s in
   let s = escaped s in
-  bmove text point truelen;
+  Text.bmove text point truelen;
   let regexp = Str.regexp s in
   let rec iter curr_buf pos =
     let curr_text = curr_buf.buf_text in
-    let mark = add_point curr_text in
-    set_position curr_text mark pos;
+    let mark = Text.add_point curr_text in
+    Text.set_position curr_text mark pos;
     try
       let rec restart () =
         let _len = Text.search_backward curr_text regexp mark in
         if curr_text == text && mark = point then
           raise Exit
         else
-          if bmove_res curr_text mark 1 <> 0 then
-            if syntax.(Char.code (get_char curr_text mark)) then
-              (fmove curr_text mark 1; restart ())
-            else
-              (fmove curr_text mark 1; ())
+          if Text.bmove_res curr_text mark 1 <> 0 then
+            if syntax.(Char.code (Text.get_char curr_text mark)) 
+            then begin Text.fmove curr_text mark 1; restart () end
+            else Text.fmove curr_text mark 1 |> ignore
           else
             ()
       in
       let rec first () =
         restart ();
-        fmove curr_text mark truelen;
-        let m = end_of_word curr_buf mark in
+        Text.fmove curr_text mark truelen;
+        let m = Simple.end_of_word curr_buf mark in
         if List.mem m history then
-          (bmove curr_text mark truelen; first ())
+          (Text.bmove curr_text mark truelen; first ())
         else
           begin
-            fmove text point truelen;
+            Text.fmove text point truelen;
             let _,len = Text.insert_res text point m in
-            fmove text point len;
-            dabbrev_buf := Some (s, frame, get_position text point, len, 
-              curr_buf, get_position curr_text mark, m :: history);
-            remove_point curr_text mark
+            Text.fmove text point len;
+            dabbrev_buf := Some (s, frame, Text.get_position text point, len, 
+              curr_buf, Text.get_position curr_text mark, m :: history);
+            Text.remove_point curr_text mark
           end
       in
       first ()
     with
       Not_found ->
-        remove_point curr_text mark;
-        let curr_buf = next_buffer curr_buf in
+        Text.remove_point curr_text mark;
+        let curr_buf = Simple.next_buffer curr_buf in
         if curr_buf == buf then
           if !loop then raise Not_found
           else
             loop := true; (* to avoid infinite loop *)
         iter curr_buf (Text.size curr_buf.buf_text) 
     | Exit ->
-        remove_point curr_text mark;
-        fmove text point truelen;
+        Text.remove_point curr_text mark;
+        Text.fmove text point truelen;
         dabbrev_buf := None;
         raise Not_found
   in
@@ -149,8 +146,8 @@ let expand_sabbrev frame =
     let buf = frame.frm_buffer in
     let text = buf.buf_text in
     let abbrevs = get_local buf abbrev_table in
-    let mark = dup_point text point in
-    to_begin_of_word text point buf.buf_syntax_table;
+    let mark = Text.dup_point text point in
+    Simple.to_begin_of_word text point buf.buf_syntax_table;
     let str = Text.region text point mark in
     Text.remove_point text mark;
     let len = String.length str in
@@ -158,9 +155,9 @@ let expand_sabbrev frame =
       let repl = Hashtbl.find abbrevs str in
       Text.delete text point len;
       Text.insert text point repl;
-      fmove text point (String.length repl); ()
+      Text.fmove text point (String.length repl); ()
     with
-      Not_found -> fmove text point len; ()
+      Not_found -> Text.fmove text point len; ()
   with
     _ -> ()
 (*e: function Abbrevs.expand_sabbrev *)
@@ -168,7 +165,7 @@ let expand_sabbrev frame =
 (*s: toplevel Abbrevs._1 *)
 let _ =
   define_action "char_expand_abbrev" (fun frame ->
-      expand_sabbrev frame; self_insert_command frame);
+      expand_sabbrev frame; Simple.self_insert_command frame);
   define_action "dabbrev_expand" dabbrev_expand;
   ()
 (*e: toplevel Abbrevs._1 *)

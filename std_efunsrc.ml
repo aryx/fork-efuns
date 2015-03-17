@@ -13,19 +13,9 @@
 (*e: copyright header2 *)
 open Utils
 open Options
-
-open Interactive
 open Efuns
-open Keymap
 open Simple
-open Search
-open Compil
-open Complexe
-open System
-open Multi_frames
-open Top_window
-(*open Eval*)
-  
+ 
 
 (*s: constant Std_efunsrc.grep_hist *)
 let grep_hist = ref ["grep -n "]
@@ -42,7 +32,8 @@ let fondamental_mode frame =
 
 (*s: function Std_efunsrc.compile *)
 let compile frame =
-  exec_interactive (buf_interactives frame.frm_buffer) frame "compile"
+  Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
+   frame "compile"
 (*e: function Std_efunsrc.compile *)
 
 (*s: toplevel Std_efunsrc._1 *)
@@ -53,10 +44,10 @@ let _ =
   (* ----------------------------------------------------------- *)
   (*s: loading actions *)
   (* C-x map *)
-  define_action "load_buffer"  load_buffer;
+  define_action "load_buffer"  Complexe.load_buffer;
   (*x: loading actions *)
   (* C-x map *)
-  define_action "insert_file"  insert_file;
+  define_action "insert_file"  Complexe.insert_file;
   (*e: loading actions *)
 
   (* ----------------------------------------------------------- *)
@@ -85,8 +76,8 @@ let _ =
   define_action "end_of_file"  end_of_file;
 
   (* M-x *)
-  define_action "goto_char" goto_char;
-  define_action "goto_line" goto_line;
+  define_action "goto_char" Complexe.goto_char;
+  define_action "goto_line" Complexe.goto_line;
   (*e: navigating actions *)
 
   (* ----------------------------------------------------------- *)
@@ -115,7 +106,7 @@ let _ =
   (* Moving (Cut, copy, paste) *)
   (* ------------------------- *)
   (*s: moving actions *)
-  define_action "mark_at_point"  mark_at_point;
+  define_action "mark_at_point"  Complexe.mark_at_point;
   define_action "kill_region"  kill_region;
   define_action "insert_killed"  insert_killed;
   define_action "insert_next_killed"  insert_next_killed;
@@ -144,20 +135,20 @@ let _ =
   (* Replacing *)
   (* ------------------------- *)
   (*s: replacing actions *)
-  define_action "replace_string" replace_string;
-  define_action "replace_regexp" replace_regexp;
-  define_action "query_replace_string" query_replace_string;
-  define_action "query_replace_regexp" query_replace_regexp;
+  define_action "replace_string" Search.replace_string;
+  define_action "replace_regexp" Search.replace_regexp;
+  define_action "query_replace_string" Search.query_replace_string;
+  define_action "query_replace_regexp" Search.query_replace_regexp;
   (*e: replacing actions *)
 
   (* ----------------------------------------------------------- *)
   (* Searching *)
   (* ----------------------------------------------------------- *)
   (*s: searching actions *)
-  define_action "isearch_forward"  isearch_forward;
-  define_action "isearch_backward"  isearch_backward;
-  define_action "isearch_forward_regexp"  isearch_forward_regexp;
-  define_action "isearch_backward_regexp"  isearch_backward_regexp;
+  define_action "isearch_forward"  Search.isearch_forward;
+  define_action "isearch_backward"  Search.isearch_backward;
+  define_action "isearch_forward_regexp"  Search.isearch_forward_regexp;
+  define_action "isearch_backward_regexp"  Search.isearch_backward_regexp;
   (*e: searching actions *)
 
   (* ----------------------------------------------------------- *)
@@ -171,9 +162,9 @@ let _ =
   (* External commands *)
   (* ----------------------------------------------------------- *)
   (*s: external command actions *)
-  define_action "shell_command"  shell_command;
+  define_action "shell_command"  System.shell_command;
   (*x: external command actions *)
-  define_action "grep" grep;
+  define_action "grep" Compil.grep;
   (*  define_action "compile" (compile c_find_error); *)
   (*e: external command actions *)
 
@@ -182,42 +173,42 @@ let _ =
   (* ----------------------------------------------------------- *)
   (*s: buffer managment actions *)
   (* C-x map *)
-  define_action "change_buffer"  change_buffer;
+  define_action "change_buffer"  Complexe.change_buffer;
   (*x: buffer managment actions *)
   (* C-x map *)
   define_action "kill_buffer"  kill_buffer;
   (*e: buffer managment actions *)
   (*s: buffer navigating actions *)
   (* C-M map *)
-  define_action "left_buffer"  left_buffer;
+  define_action "left_buffer"  Complexe.left_buffer;
   (* C-M map *)
-  define_action "right_buffer"  right_buffer;
+  define_action "right_buffer"  Complexe.right_buffer;
   (* C-M map *)
-  define_action "down_buffer"  down_buffer;
+  define_action "down_buffer"  Complexe.down_buffer;
   (* C-M map *)
-  define_action "up_buffer"  up_buffer;
+  define_action "up_buffer"  Complexe.up_buffer;
   (*e: buffer navigating actions *)
   (*s: frame managment actions *)
   (* C-x map *)
-  define_action "vertical_cut_frame"  v_cut_frame;    
+  define_action "vertical_cut_frame"  Multi_frames.v_cut_frame;    
   (* C-x map *)
-  define_action "horizontal_cut_frame"  h_cut_frame;    
+  define_action "horizontal_cut_frame"  Multi_frames.h_cut_frame;    
   (*x: frame managment actions *)
   (* C-x map *)
-  define_action "one_frame"  one_frame;
+  define_action "one_frame"  Multi_frames.one_frame;
   (* C-x map *)
-  define_action "delete_frame"  delete_frame;
+  define_action "delete_frame"  Multi_frames.delete_frame;
   (*e: frame managment actions *)
   (*s: frame navigation actions *)
   (* C-x map *)
-  define_action "next_frame"  next_frame;
+  define_action "next_frame"  Multi_frames.next_frame;
   (*e: frame navigation actions *)
 
   (* ----------------------------------------------------------- *)
   (* Meta *)
   (* ----------------------------------------------------------- *)
   (*s: meta actions *)
-  define_action "call_interactive"  call_interactive;
+  define_action "call_interactive"  Interactive.call_interactive;
   (*x: meta actions *)
   define_action "eval" Complexe.eval;  
   (*e: meta actions *)
@@ -227,12 +218,12 @@ let _ =
   (* ----------------------------------------------------------- *)
   (*s: saving actions *)
   (* C-x map *)
-  define_action "save_buffer"  save_buffer; 
+  define_action "save_buffer"  Complexe.save_buffer; 
   (*x: saving actions *)
   (* C-x map *)
-  define_action "save_some_buffers"  save_some_buffers;
+  define_action "save_some_buffers"  Complexe.save_some_buffers;
   (* C-x map *)
-  define_action "write_file"  write_buffer; 
+  define_action "write_file"  Complexe.write_buffer; 
   (*e: saving actions *)
 
   (* ----------------------------------------------------------- *)
@@ -247,26 +238,26 @@ let _ =
   (* ----------------------------------------------------------- *)
   (*s: misc actions *)
   define_action "recenter"  recenter;
-  define_action "revert_buffer" reload;
+  define_action "revert_buffer" Complexe.reload;
 
-  define_action "open_display" open_display;
+  define_action "open_display" Complexe.open_display;
   (* C-x map *)
-  define_action "change_font"  change_font;
+  define_action "change_font"  Complexe.change_font;
   (*x: misc actions *)
   define_action "get_variable"  Complexe.get_variable;
   (*x: misc actions *)
-  define_action "check_file" check_file;
+  define_action "check_file" Complexe.check_file;
   (*x: misc actions *)
   define_action "save_options" save_options;
   (*x: misc actions *)
-  define_action "get_position" get_pos;
+  define_action "get_position" Complexe.get_pos;
   (*x: misc actions *)
   define_action "unset_attr" unset_attr;
   (*x: misc actions *)
-  define_buffer_action "update_time" update_time;
+  define_buffer_action "update_time" Complexe.update_time;
   (*x: misc actions *)
   (* C-x map *)
-  define_action "exit"  exit_efuns; 
+  define_action "exit"  Complexe.exit_efuns; 
   (*x: misc actions *)
   (* C-h map *)
   define_action "help_bindings"  Frame.bindings_help;
@@ -275,15 +266,15 @@ let _ =
   define_action "point_at_mark"  point_at_mark;
   (*x: misc actions *)
   (* C-x map *)
-  define_action "next_error"  next_error;
+  define_action "next_error"  Compil.next_error;
   (*x: misc actions *)
   define_action "compile" compile;
   (*x: misc actions *)
   (*s: window managment actions *)
   (* C-x 5 map *)
-  define_action "window_load_buffer"  window_load_buffer;
+  define_action "window_load_buffer"  Complexe.window_load_buffer;
   (* C-x 5 map *)
-  define_action "window_change_buffer"  window_change_buffer;
+  define_action "window_change_buffer"  Complexe.window_change_buffer;
   (* C-x 5 map *)
   define_action "delete_window"  Top_window.delete_window;
   (*e: window managment actions *)
@@ -577,7 +568,8 @@ let init_global_map () =
   (*s: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
   !!interactives_map |> List.iter (fun (name, action) ->
     try
-      add_interactive (Efuns.location()).loc_map name (execute_action action)
+      Keymap.add_interactive (Efuns.location()).loc_map name 
+        (execute_action action)
     with e ->
       Log.printf "Error for action %s" action;
       Log.exn "%s\n" e;
@@ -603,8 +595,8 @@ let init_global_map () =
 (*s: toplevel Std_efunsrc._4 *)
 let _ =
   (*s: [[Std_efunsrc]] file menu setup *)
-  if !!file_menu = [] then begin
-      file_menu =:=    [
+  if !!Top_window.file_menu = [] then begin
+      Top_window.file_menu =:=    [
         "Open File", "load_buffer";
         "Save Buffer", "save_buffer";
         (*s: file menu entries *)
@@ -618,8 +610,8 @@ let _ =
     end;
   (*e: [[Std_efunsrc]] file menu setup *)
   (*s: [[Std_efunsrc]] edit menu setup *)
-  if !!edit_menu = [] then begin
-      edit_menu =:= [ 
+  if !!Top_window.edit_menu = [] then begin
+      Top_window.edit_menu =:= [ 
         "Cut",    "kill_region";
         "Paste",  "insert_killed";
 
@@ -635,7 +627,7 @@ let _ =
     end;
   (*e: [[Std_efunsrc]] edit menu setup *)
   (*s: [[Std_efunsrc]] help menu setup *)
-  help_menu := [|
+  Top_window.help_menu := [|
     "Key Bindings", (fun frame ->
       Frame.change_buffer frame.frm_window "*bindings*"
     );
@@ -653,12 +645,12 @@ let _ =
   |];
   (*e: [[Std_efunsrc]] help menu setup *)
   (*s: [[Std_efunsrc]] buffers menu setup *)
-  buffers_menu := (fun top_window button () ->
+  Top_window.buffers_menu := (fun top_window button () ->
       let buffers = ref [] in
       let loc = Efuns.location() in
       Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
       let _desc = Array.map (fun name -> 
-            (name, wrap top_window (fun top_window ->
+            (name, Top_window.wrap top_window (fun top_window ->
                   let frame = top_window.top_active_frame in
                   let window = frame.frm_window in
                   Frame.change_buffer window name
@@ -680,7 +672,7 @@ let _ =
 let _ =
   Efuns.add_start_hook (fun () ->
     (*s: [[Std_efunsrc._5]] start hooks options *)
-    add_option_parameter compile_find_makefile;
+    add_option_parameter Compil.compile_find_makefile;
     add_option_parameter Text.add_amount;
     (*e: [[Std_efunsrc._5]] start hooks options *)
     init_global_map ()
