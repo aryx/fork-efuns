@@ -4258,11 +4258,11 @@ if !!interactives_map = [] then begin
 
 <<[[interactives_map]] initial entries>>=
 "save_options";
-"load_library";
+(*"load_library";*)
 "get_position";
 "open_display";
 "unset_attr";
-"start_server";
+(*"start_server";*)
 @      
 % a big ugly. An ocaml attribute would be better
 % that then auto generate the list of interactive functions.
@@ -7696,10 +7696,10 @@ let get_parameter frame =
 <<[[interactives_map]] initial entries>>=
 "paren_mode";
 "abbrevs_mode";
-"accents_mode";
+(*"accents_mode";*)
 "ocaml_minor_mode";
 "fill_mode";
-"ocaml_compiler_mode";
+(*"ocaml_compiler_mode";*)
 "tab_mode";
 "overwrite_mode";
 @
