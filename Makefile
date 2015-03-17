@@ -59,6 +59,7 @@ SRC=\
  \
  prog_modes/makefile_mode.ml\
  prog_modes/ocaml_mode.ml\
+ prog_modes/c_mode.ml\
  \
  std_efunsrc.ml\
  $(BACKENDDIR)/graphics_efuns.ml \
@@ -122,12 +123,16 @@ clean::
 depend::
 	$(OCAMLDEP) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
 
-beforedepend:: prog_modes/ocaml_mode.ml
+MODES= prog_modes/ocaml_mode.ml prog_modes/c_mode.ml
+
+beforedepend:: $(MODES)
 prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
+	ocamllex $^
+prog_modes/c_mode.ml: prog_modes/c_mode.mll
 	ocamllex $^
 
 clean:: 
-	rm -f prog_modes/ocaml_mode.ml
+	rm -f $(MODES)
 
 ##############################################################################
 # Developer rules

@@ -1,4 +1,19 @@
 {
+(***********************************************************************)
+(*                                                                     *)
+(*                           Efuns                                     *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+(***********************************************************************)
+(* Lexing *)
+(***********************************************************************)
+
 open Lexing 
 
 type token =
@@ -468,16 +483,6 @@ and string = parse
 {
 (* val token : lexbuf -> token *)
 
-(***********************************************************************)
-(*                                                                     *)
-(*                           xlib for Ocaml                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
 
 open Options
 open Text
@@ -492,6 +497,11 @@ open Window
 let lexing text start_point end_point =
   lexer_start := get_position text start_point;
   Text.lexing text start_point end_point
+
+
+(***********************************************************************)
+(* Colors *)
+(***********************************************************************)
 
 let keyword_color = define_option ["ocaml_mode"; "keyword_color"] ""
     string_option "red"
@@ -520,11 +530,11 @@ let setup_ocaml_path () =
   
 (*********************** colors ***********************)
 let ocaml_color_region buf start_point end_point =
-  let red_attr = make_attr (get_color !!keyword_color) 1 
+  let keyword_attr = make_attr (get_color !!keyword_color) 1 
                            (get_font !!keyword_font) false in
-  let yellow_attr = make_attr (get_color !!string_color) 1 
+  let string_attr = make_attr (get_color !!string_color) 1 
                               (get_font !!string_font)    false in
-  let blue_attr = make_attr (get_color !!comment_color) 1 
+  let comment_attr = make_attr (get_color !!comment_color) 1 
                             (get_font !!comment_font) false in
   let gray_attr = make_attr (get_color !!upper_color) 1 
                             (get_font !!upper_font)     false in
@@ -542,16 +552,16 @@ let ocaml_color_region buf start_point end_point =
       | AND | OR | TYPE | VAL | CLASS | SIG | INHERIT | OBJECT
       | EXCEPTION | RULE | METHOD | EXTERNAL -> 
           set_position text curseur pos;
-          set_attr text curseur len red_attr
+          set_attr text curseur len keyword_attr
       | EOFCOMMENT 
       | COMMENT ->
           set_position text curseur pos;
-          set_attr text curseur len blue_attr
+          set_attr text curseur len comment_attr
       | EOFSTRING
       | CHAR 
       | STRING ->
           set_position text curseur pos;
-          set_attr text curseur len yellow_attr
+          set_attr text curseur len string_attr
       | UIDENT ->
           set_position text curseur pos;
           set_attr text curseur len gray_attr            
@@ -587,7 +597,9 @@ let ocaml_color frame =
   remove_point text start_point;
   remove_point text end_point
 
+(***********************************************************************)
 (************************  abbreviations ********************)
+(***********************************************************************)
 
 let abbreviations = define_option ["ocaml_mode"; "abbrevs"] ""
     (list_option string2_option) []
@@ -695,7 +707,9 @@ let setup_abbrevs () =
     ]
     
 
+(***********************************************************************)
 (**********************  indentations *******************)
+(***********************************************************************)
   
 let start_regexp = define_option ["ocaml_mode"; "start_regexp"]
     "" regexp_option (
@@ -1219,7 +1233,9 @@ let indent_current_line frame =
   in
   set_indent text point current
 
+(***********************************************************************)
 (*********************  aide a la programmation *********)
+(***********************************************************************)
 
   (* split a string (remove chr) *)
 let split1 str chr =
@@ -1322,7 +1338,9 @@ let ocaml_find_error text error_point =
   Text.fmove text error_point 1;
   error
 
-  (*********************  structures ********************)
+(***********************************************************************)
+(*********************  structures ********************)
+(***********************************************************************)
 let c_c = (ControlMap,Char.code 'c')
 
 let structures = define_option ["ocaml_mode"; "structures"] ""
@@ -1342,13 +1360,15 @@ let setup_structures () =
       [c_c; n'; NormalMap, Char.code 'l'], "let ^^ = ^^ in\n ^^";
     ]    
   
+(***********************************************************************)
 (*********************  installation ********************)
+(***********************************************************************)
 
 let syntax = define_option ["ocaml_mode"; "syntax"] 
     "Chars which should not are part of idents" 
     string_option "_\'"
   
-  let ocaml_hooks = define_option ["ocaml_mode"; "hooks"] "" 
+let ocaml_hooks = define_option ["ocaml_mode"; "hooks"] "" 
   (list_option string_option)
   [  "paren_mode" ]
   
@@ -1368,11 +1388,12 @@ let install buf =
 
 
 let mode =  Ebuffer.new_major_mode "Ocaml" [install]
-
-(********************* setup ********************)
-  
 let ocaml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
-        
+
+(***********************************************************************)
+(********************* setup ********************)
+(***********************************************************************)
+         
 let local_map = define_option ["ocaml_mode"; "local_map"] ""
     (list_option binding_option) []
 
@@ -1466,7 +1487,6 @@ let _ =
   )  
 
 (*** Ocaml minor mode (for Makefiles (!)) ***)
-
 
 let minor_mode = Ebuffer.new_minor_mode "ocaml" []
 

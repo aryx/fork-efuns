@@ -1,245 +1,242 @@
 {
-  (***********************************************************************)
-  (*                                                                     *)
-  (*                           Efuns                                     *)
-  (*                                                                     *)
-  (*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-  (*                                                                     *)
-  (*  Copyright 1998 Institut National de Recherche en Informatique et   *)
-  (*  Automatique.  Distributed only by permission.                      *)
-  (*                                                                     *)
-  (***********************************************************************)
+(***********************************************************************)
+(*                                                                     *)
+(*                           Efuns                                     *)
+(*                                                                     *)
+(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
+(*                                                                     *)
+(*  Copyright 1998 Institut National de Recherche en Informatique et   *)
+(*  Automatique.  Distributed only by permission.                      *)
+(*                                                                     *)
+(***********************************************************************)
+
+(***********************************************************************)
+(* Lexing *)
+(***********************************************************************)
+
 open Options  
-  open Lexing
+open Lexing
   
-  type token =
-    IDENT
-  | INT
-  | FLOAT
-  | STRING
-  | ELLIPSIS
-  | CHAR
-  | SHARP
-  | STAR
-  | AMPERSAND
+type token =
+| IDENT
+| INT
+| FLOAT
+| STRING
+| ELLIPSIS
+| CHAR
+| SHARP
+| STAR
+| AMPERSAND
     
 (* keywords *)    
-  |  SIZEOF
-  |  ENUM
-  |  STRUCT
-  |  UNION
-  |  IF
-  |  ELSE
-  |  WHILE
-  |  DO
-  |  FOR
-  |  SWITCH
-  |  CASE
-  |  DEFAULT
-  |  BREAK
-  |  CONTINUE
-  |  RETURN
-  |  GOTO
-  |  TYPEOF
-  |  ALIGNOF
-  |  ATTRIBUTE
-  |  EXTENSION
-  |  LABEL
-  (* operators *)
-  | ASSIGN
-  | PREFIXOP
-  | INFIXOP
+| SIZEOF
+| ENUM
+| STRUCT
+| UNION
+| IF
+| ELSE
+| WHILE
+| DO
+| FOR
+| SWITCH
+| CASE
+| DEFAULT
+| BREAK
+| CONTINUE
+| RETURN
+| GOTO
+| TYPEOF
+| ALIGNOF
+| ATTRIBUTE
+| EXTENSION
+| LABEL
+(* operators *)
+| ASSIGN
+| PREFIXOP
+| INFIXOP
 
-  | STATIC
-  | EXTERN
-    
-    (* parenthesis *)
-  | LBRACE
-  | RBRACE
-  | LPAREN
-  | RPAREN
-  | SEMI
-  | COMMA
-    
-    (* Comments *)
-  | COMMENT
-  | EOFCOMMENT
+| STATIC
+| EXTERN
+  
+(* parenthesis *)
+| LBRACE
+| RBRACE
+| LPAREN
+| RPAREN
+| SEMI
+| COMMA
+  
+(* Comments *)
+| COMMENT
+| EOFCOMMENT
 
-    
-  (* Macros *)
-  | M_IFDEF
-  | M_IFNDEF
-  | M_DEFINE
-  | M_ELSE
-  | M_ENDIF
-  | M_INCLUDE
-    
-  (* lines *)
-  | EOL of (Text.position)
-  | EOLMACRO
-  | EOF of (Text.position)
-  | EOFSTRING
-  | ERROR
+  
+(* Macros *)
+| M_IFDEF
+| M_IFNDEF
+| M_DEFINE
+| M_ELSE
+| M_ENDIF
+| M_INCLUDE
+  
+(* lines *)
+| EOL of (Text.position)
+| EOLMACRO
+| EOF of (Text.position)
+| EOFSTRING
+| ERROR
   
   
-  let tokens = [
-      IDENT,"IDENT";
-      INT,"INT";
-      FLOAT,"FLOAT";
-      STRING,"STRING";
-      ELLIPSIS,"ELLIPSIS";
-      SIZEOF,"SIZEOF";
-      ENUM,"ENUM";
-      STRUCT,"STRUCT";
-      UNION,"UNION";
-      IF,"IF";
-      ELSE,"ELSE";
-      WHILE,"WHILE";
-      DO,"DO";
-      FOR,"FOR";
-      SWITCH,"SWITCH";
-      CASE,"CASE";
-      DEFAULT,"DEFAULT";
-      BREAK,"BREAK";
-      CONTINUE,"CONTINUE";
-      RETURN,"RETURN";
-      GOTO,"GOTO";
-      TYPEOF,"TYPEOF";
-      ALIGNOF,"ALIGNOF";
-      ATTRIBUTE,"ATTRIBUTE";
-      EXTENSION,"EXTENSION";
-      LABEL,"LABEL";
-      ASSIGN,"ASSIGN";
-      PREFIXOP,"PREFIXOP";
-      INFIXOP,"INFIXOP";
-      LBRACE,"LBRACE";
-      RBRACE,"RBRACE";
-      LPAREN,"LPAREN";
-      RPAREN,"RPAREN";
-      COMMENT,"COMMENT";
-      EOFCOMMENT,"EOFCOMMENT";
-      EOLMACRO,"EOLMACRO";
-      EOFSTRING,"EOFSTRING";
-      CHAR, "CHAR";
-      SHARP, "SHARP";
-      STAR, "STAR";
-      AMPERSAND, "AMPERSAND";
-      COMMA, "COMMA";
-      SEMI, "SEMI";    
-    ]
+let tokens = [
+    IDENT,"IDENT";
+    INT,"INT";
+    FLOAT,"FLOAT";
+    STRING,"STRING";
+    ELLIPSIS,"ELLIPSIS";
+    SIZEOF,"SIZEOF";
+    ENUM,"ENUM";
+    STRUCT,"STRUCT";
+    UNION,"UNION";
+    IF,"IF";
+    ELSE,"ELSE";
+    WHILE,"WHILE";
+    DO,"DO";
+    FOR,"FOR";
+    SWITCH,"SWITCH";
+    CASE,"CASE";
+    DEFAULT,"DEFAULT";
+    BREAK,"BREAK";
+    CONTINUE,"CONTINUE";
+    RETURN,"RETURN";
+    GOTO,"GOTO";
+    TYPEOF,"TYPEOF";
+    ALIGNOF,"ALIGNOF";
+    ATTRIBUTE,"ATTRIBUTE";
+    EXTENSION,"EXTENSION";
+    LABEL,"LABEL";
+    ASSIGN,"ASSIGN";
+    PREFIXOP,"PREFIXOP";
+    INFIXOP,"INFIXOP";
+    LBRACE,"LBRACE";
+    RBRACE,"RBRACE";
+    LPAREN,"LPAREN";
+    RPAREN,"RPAREN";
+    COMMENT,"COMMENT";
+    EOFCOMMENT,"EOFCOMMENT";
+    EOLMACRO,"EOLMACRO";
+    EOFSTRING,"EOFSTRING";
+    CHAR, "CHAR";
+    SHARP, "SHARP";
+    STAR, "STAR";
+    AMPERSAND, "AMPERSAND";
+    COMMA, "COMMA";
+    SEMI, "SEMI";    
+  ]
   
   
   
-  let token_to_string token =
-    List.assoc token tokens
-  
-  let lexer_start = ref 0
-  let position lexbuf =
-    let b = lexeme_start lexbuf in
-    let e = lexeme_end lexbuf in
-    b + !lexer_start, e - b
-  
-  type lexer_error =
-    Illegal_character
-  | Unterminated_comment
-  | Unterminated_string
+let token_to_string token =
+  List.assoc token tokens
+
+let lexer_start = ref 0
+let position lexbuf =
+  let b = lexeme_start lexbuf in
+  let e = lexeme_end lexbuf in
+  b + !lexer_start, e - b
+
+type lexer_error =
+  Illegal_character
+| Unterminated_comment
+| Unterminated_string
 
 (* The table of keywords *)
   
-  let keyword_table =
-    let h = Hashtbl.create 149 in
-    Utils.hash_add_assoc h [
-      "sizeof",  SIZEOF;
-      
-      "enum", ENUM;
-      "struct", STRUCT;
-      "union",UNION;
-      
-      "if",IF;
-      "else",ELSE;
-      "while",WHILE;
-      "do",DO;
-      "for",FOR;
-      "switch",SWITCH;
-      "case",CASE;
-      "default",DEFAULT;
-      "break",BREAK;
-      "continue",CONTINUE;
-      "return",RETURN;
-      "goto",GOTO;
-      "typeof",TYPEOF;
-      "label",LABEL;
-      "static", STATIC;
-      "extern", EXTERN;
-    ];
-    h
+let keyword_table =
+  let h = Hashtbl.create 149 in
+  Utils.hash_add_assoc h [
+    "sizeof",  SIZEOF;
+    
+    "enum", ENUM;
+    "struct", STRUCT;
+    "union",UNION;
+    
+    "if",IF;
+    "else",ELSE;
+    "while",WHILE;
+    "do",DO;
+    "for",FOR;
+    "switch",SWITCH;
+    "case",CASE;
+    "default",DEFAULT;
+    "break",BREAK;
+    "continue",CONTINUE;
+    "return",RETURN;
+    "goto",GOTO;
+    "typeof",TYPEOF;
+    "label",LABEL;
+    "static", STATIC;
+    "extern", EXTERN;
+  ];
+  h
   
 (* To buffer string literals *)
   
-  let initial_string_buffer = String.create 256
-  let string_buff = ref initial_string_buffer
-  let string_index = ref 0
-  
-  let reset_string_buffer () =
-    string_buff := initial_string_buffer;
-    string_index := 0
-  
-  let store_string_char c =
-    if !string_index >= String.length (!string_buff) then begin
-        let new_buff = String.create (String.length (!string_buff) * 2) in
-        String.blit (!string_buff) 0 new_buff 0 (String.length (!string_buff));
-        string_buff := new_buff
-      end;
-    String.unsafe_set (!string_buff) (!string_index) c;
-    incr string_index
-  
-  let get_stored_string () =
-    let s = String.sub (!string_buff) 0 (!string_index) in
-    string_buff := initial_string_buffer;
-    s
+let initial_string_buffer = String.create 256
+let string_buff = ref initial_string_buffer
+let string_index = ref 0
+
+let reset_string_buffer () =
+  string_buff := initial_string_buffer;
+  string_index := 0
+
+let store_string_char c =
+  if !string_index >= String.length (!string_buff) then begin
+      let new_buff = String.create (String.length (!string_buff) * 2) in
+      String.blit (!string_buff) 0 new_buff 0 (String.length (!string_buff));
+      string_buff := new_buff
+    end;
+  String.unsafe_set (!string_buff) (!string_index) c;
+  incr string_index
+
+let get_stored_string () =
+  let s = String.sub (!string_buff) 0 (!string_index) in
+  string_buff := initial_string_buffer;
+  s
 
 (* To translate escape sequences *)
   
-  let char_for_backslash =
-    match Sys.os_type with
-    | "Unix" | "Win32" ->
-        begin function
-          | 'n' -> '\010'
-          | 'r' -> '\013'
-          | 'b' -> '\008'
-          | 't' -> '\009'
-          | c   -> c
-        end
-    | "MacOS" ->
-        begin function
-          | 'n' -> '\013'
-          | 'r' -> '\010'
-          | 'b' -> '\008'
-          | 't' -> '\009'
-          | c   -> c
-        end
-    | x -> failwith "Lexer: unknown system type"
-  
-  let char_for_decimal_code lexbuf i =
-    let c = 100 * (Char.code(Lexing.lexeme_char lexbuf i) - 48) +
-        10 * (Char.code(Lexing.lexeme_char lexbuf (i+1)) - 48) +
-        (Char.code(Lexing.lexeme_char lexbuf (i+2)) - 48) in  
-    Char.chr(c land 0xFF)
+let char_for_backslash =
+  match Sys.os_type with
+  | "Unix" ->
+      begin function
+        | 'n' -> '\010'
+        | 'r' -> '\013'
+        | 'b' -> '\008'
+        | 't' -> '\009'
+        | c   -> c
+      end
+  | x -> failwith "Lexer: unknown system type"
+
+let char_for_decimal_code lexbuf i =
+  let c = 100 * (Char.code(Lexing.lexeme_char lexbuf i) - 48) +
+      10 * (Char.code(Lexing.lexeme_char lexbuf (i+1)) - 48) +
+      (Char.code(Lexing.lexeme_char lexbuf (i+2)) - 48) in  
+  Char.chr(c land 0xFF)
 
 (* To store the position of the beginning of a string or comment *)
   
-  let start_pos = ref 0
+let start_pos = ref 0
 
 (* Error report *)
   
-  exception Error of int * int * lexer_error
-  let report_error = function
-      Illegal_character ->
-        print_string "Illegal character"
-    | Unterminated_comment ->
-        print_string "Comment not terminated"
-    | Unterminated_string ->
-        print_string "String literal not terminated"
+exception Error of int * int * lexer_error
+let report_error = function
+    Illegal_character ->
+      print_string "Illegal character"
+  | Unterminated_comment ->
+      print_string "Comment not terminated"
+  | Unterminated_string ->
+      print_string "String literal not terminated"
 
 }
 
@@ -254,10 +251,10 @@ let identstart =
 let symbolchar =
   ['!' '$' '%' '&' '*' '+' '-' '.' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~']
 let decimal_literal = ['0'-'9']+
-  let hex_literal = '0' ['x' 'X'] ['0'-'9' 'A'-'F' 'a'-'f']+
-    let oct_literal = '0' ['o' 'O'] ['0'-'7']+
-      let bin_literal = '0' ['b' 'B'] ['0'-'1']+
-        let float_literal =
+let hex_literal = '0' ['x' 'X'] ['0'-'9' 'A'-'F' 'a'-'f']+
+let oct_literal = '0' ['o' 'O'] ['0'-'7']+
+let bin_literal = '0' ['b' 'B'] ['0'-'1']+
+let float_literal =
           ['0'-'9']+ ('.' ['0'-'9']*)? (['e' 'E'] ['+' '-']? ['0'-'9']+)?
 
 rule token = parse
@@ -360,12 +357,8 @@ and string = parse
 
 open Text
 open Efuns
-open Interactive
 open Simple
-open Select
 open Compil
-open Eval
-open Complex
 open Abbrevs  
 open Keymap
 open Window
@@ -375,6 +368,9 @@ let lexing text start_point end_point =
   Text.lexing text start_point end_point
 
 
+(***********************************************************************)
+(* Find errors *)
+(***********************************************************************)
 
 let c_regexp_string =
   "^\\([^:\n]+\\):\\([0-9]+\\):.*$"
@@ -396,13 +392,15 @@ let c_find_error text error_point =
   Text.fmove text error_point 1;
   error
 
+(***********************************************************************)
 (******************* couleurs *********************)
+(***********************************************************************)
 
-let c_color_region location buf start_point end_point =
-  let red_attr = make_attr (get_color location "red") 1 0 false in
-  let yellow_attr = make_attr (get_color location "cadetblue") 1 0 false in
-  let blue_attr = make_attr (get_color location "blue") 1 0 false in
-  let gray_attr = make_attr (get_color location "gray") 1 0 false in
+let c_color_region buf start_point end_point =
+  let red_attr = make_attr (get_color "red") 1 0 false in
+  let yellow_attr = make_attr (get_color "yellow") 1 0 false in
+  let blue_attr = make_attr (get_color "blue") 1 0 false in
+  let _gray_attr = make_attr (get_color "gray") 1 0 false in
   let text = buf.buf_text in
   let curseur = Text.add_point text in
   let lexbuf = lexing text start_point end_point in
@@ -469,12 +467,14 @@ let c_color_buffer buf =
   let text = buf.buf_text in
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
-  set_position text end_point (size text);
-  c_color_region buf.buf_location buf start_point end_point;
+  Text.set_position text end_point (size text);
+  c_color_region buf start_point end_point;
   remove_point text start_point;
   remove_point text end_point
 
-  (*********************** indentation ************************)
+(***********************************************************************)
+(*********************** indentation ************************)
+(***********************************************************************)
   
 let start_regexp = Str.regexp "^{";;
 
@@ -649,7 +649,7 @@ let compute_indentations buf start_point end_point =
   let text = buf.buf_text in
   let curseur = Text.dup_point text start_point in
 (* init indentation *)
-  let pos = get_position text end_point in
+  let _pos = get_position text end_point in
   let lexbuf = lexing text curseur end_point in
   try
     let indentations = 
@@ -724,7 +724,7 @@ let insert_and_return frame =
 (* colors *)
   let start_point = dup_point text point in
   bmove text start_point (point_to_bol text start_point);
-  c_color_region buf.buf_location buf start_point point;
+  c_color_region buf start_point point;
   remove_point text start_point;
 (* indentations *)
   let curseur = dup_point text point in
@@ -761,7 +761,7 @@ let indent_current_line frame =
   let start_point = dup_point text point in
   bmove text start_point (point_to_bol text start_point);
   fmove text end_point (point_to_eol text end_point);
-  c_color_region buf.buf_location buf start_point end_point;
+  c_color_region buf start_point end_point;
   remove_point text start_point;
   remove_point text end_point;
 (* indentations *)
@@ -779,12 +779,16 @@ let indent_current_line frame =
   set_indent text point current
 
   
+(***********************************************************************)
 (************************  abbreviations ********************)
+(***********************************************************************)
 
 let abbreviations =
   []
   
+(***********************************************************************)
 (*********************  installation ********************)
+(***********************************************************************)
 
 let c_c = (ControlMap,Char.code 'c')
 let install buf =
@@ -801,32 +805,25 @@ let install buf =
   let abbrevs =
     try
       get_local (buf) abbrev_table
-    with
-      Failure _ -> 
-        let abbrevs = Hashtbl.create 11 in
-        set_local buf abbrev_table abbrevs;
-        abbrevs
+    with Failure _ -> 
+      let abbrevs = Hashtbl.create 11 in
+      set_local buf abbrev_table abbrevs;
+      abbrevs
   in
   Utils.hash_add_assoc abbrevs abbreviations;
   ()
 
   
 let mode = Ebuffer.new_major_mode "C"  [install]
-
 let c_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
+
+(***********************************************************************)
+(* Setup *)
+(***********************************************************************)
   
-let _ =
-  define_action "c_mode" c_mode;
-  define_action "c_mode.color_buffer"
-    (fun frame -> c_color_buffer frame.frm_buffer);
-  define_action "c_mode.indent_buffer" indent_buffer;
-  define_action "c_mode.compile"  (compile c_find_error);
-  define_action "c_mode.indent_line" indent_current_line;
-  define_action "c_mode.indent_phrase" indent_phrase
-    
 let mode_regexp = define_option ["c_mode"; "mode_regexp"] ""
     (list_option string_option) [ 
-    ".*\.\(c\|cpp\|cc\|h\|H\|C\|y\|l\)$"
+    ".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$"
   ]
   
 let local_map = define_option ["c_mode"; "local_map"] ""
@@ -836,24 +833,33 @@ let interactives_map = define_option ["c_mode"; "interactives_map"] ""
     (list_option string2_option) 
   []
 
+
+let setup_actions () = 
+  define_action "c_mode" c_mode;
+  define_action "c_mode.color_buffer"
+    (fun frame -> c_color_buffer frame.frm_buffer);
+  define_action "c_mode.indent_buffer" indent_buffer;
+  define_action "c_mode.compile"  (compile c_find_error);
+  define_action "c_mode.indent_line" indent_current_line;
+  define_action "c_mode.indent_phrase" indent_phrase
+    
   
-let _ =
+let setup_maps () =
   let map = mode.maj_map in
   add_major_key (mode) [c_c; ControlMap, Char.code 'b'] 
     "c-indent-buffer" indent_buffer;
   add_major_key (mode) [MetaMap,Char.code 'q']
-  "c-indent-phrase" indent_phrase;
+    "c-indent-phrase" indent_phrase;
   add_major_key (mode) [NormalMap,XK.xk_Tab]
-  "c-indent-line" indent_current_line;
+    "c-indent-line" indent_current_line;
   
-    List.iter (fun char ->
-      Keymap.add_binding map [NormalMap, Char.code char]
-        (fun frame ->
-          self_insert_command frame;
-          highlight_paren frame)
-  ) ['}';']';')']
+  ['}';']';')'] |> List.iter (fun char ->
+      Keymap.add_binding map [NormalMap, Char.code char] (fun frame ->
+        self_insert_command frame;
+        highlight_paren frame
+      )
+  );
 
-let _ =
   if !!local_map = [] then
     local_map =:= [
       [c_c;ControlMap, Char.code 'l'], "c_mode.color_buffer" ;
@@ -866,37 +872,36 @@ let _ =
   if !!interactives_map = [] then 
     interactives_map =:= [
       "color_buffer", "c_mode.color_buffer";
-    ]
+    ];
 
-  
-let _ =
-  let map = mode.maj_map in
   (*  Keymap.add_prefix map [c_c]; *)
-  List.iter (fun (keys, action) ->
+  !!local_map |> List.iter (fun (keys, action) ->
       try
         let f = execute_action action in
         Keymap.add_binding map keys f;
         add_interactive map action f;
       with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;  
-  ) !!local_map;
-  List.iter (fun (name, action) ->
+        Log.printf "Error for action %s" action;
+        Log.exn "%s\n" e;  
+  );
+  !!interactives_map |> List.iter (fun (name, action) ->
       try
         add_interactive map name (execute_action action)
       with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;          
-  ) !!interactives_map;
+        Log.printf "Error for action %s" action;
+        Log.exn "%s\n" e;          
+  );
   ()
 
 let _ =  
-  Efuns.add_start_hook (fun location ->
-      add_interactive (location.loc_map) "c-mode" 
+  Efuns.add_start_hook (fun () ->
+    add_interactive (Efuns.location()).loc_map "c-mode" 
         (fun frame -> install frame.frm_buffer);
-      let alist = get_global location Ebuffer.modes_alist in
-      set_global location Ebuffer.modes_alist 
+    let alist = get_global Ebuffer.modes_alist in
+    set_global Ebuffer.modes_alist 
         ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
+    setup_actions ();
+    setup_maps ();
   )
 
 }
