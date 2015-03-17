@@ -4895,8 +4895,9 @@ open Top_window
 
 %-------------------------------------------------------------
 
+% was copyright header2, but better to use header1
 <<main.ml>>=
-<<copyright header2>>
+<<copyright header>>
 open Options
 open Efuns
 
@@ -4904,43 +4905,21 @@ open Efuns
 <<constant Efuns.init_frames>>
 <<constant Efuns.displayname>>
 <<constant Efuns.no_init>>
+<<constants Main options>>
+<<constant Main.highlight_color>>
 
 <<function Efuns.init>>
 
-(*--------------------    Arguments *)
-<<constant Efuns.width_opt>>
-<<constant Efuns.height_opt>>
-<<constant Efuns.font_opt>>
-<<constant Efuns.fg_opt>>
-<<constant Efuns.bg_opt>>
+<<exception Main.SigInt>>
+
+<<constants Main.xxx_opt>>
   
 <<constant Efuns.usage_str>>
-
-<<toplevel Efuns._3>>
-<<toplevel Efuns._4>>
-
-open Options
   
-<<constant Efuns.width>>
-<<constant Efuns.height (core/efuns.ml)>>
-<<constant Efuns.foreground>>
-<<constant Efuns.background>>
+<<function Main.main>>
 
-<<constant Main.highlight_color>>
-  
-  
-<<toplevel Efuns._5>>
-  
-<<constant Main.location>>
+<<toplevel Main._>>
 
-<<exception Main.SigInt>>
-<<toplevel Main._1>>
-
-<<toplevel Main._2>>
-
-<<toplevel Main._3>>
-
-<<toplevel Main._4>>
 @
 
 

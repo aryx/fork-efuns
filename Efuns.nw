@@ -1722,6 +1722,11 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 % there is actually no really main() in ocaml, instead
 % a list of toplevels doing stuff (in the order of the linking)
 
+<<toplevel Main._>>=
+let _ =
+  main ()
+@
+
 
 % init files are not the .efunsrc, but the first set of files to open
 % so when do efuns foo.c => init_files = ref ["foo.c"]
@@ -1730,79 +1735,96 @@ let init_files = ref []
 @
 % should be used in Graphic.init
 
-<<toplevel Efuns._3>>=
-let _ =
- Arg.parse [
-   <<[[main()]] command line options>>
-   "-debug", Arg.Set Efuns.debug, 
-   " for debugging";
-   "-debug_graphics", Arg.Set Efuns.debug_graphics, 
-   " for debugging";
-   "-debug_display", Arg.Set Efuns.debug_display, 
-   " for debugging";
-   "-debug_init", Arg.Set Efuns.debug_init, 
-   " for debugging";
+<<function Main.main>>=
+let main () =
+  <<[[main()]] set signal handlers>>
 
-   "-debugger", Arg.Unit (fun () ->
-     Efuns.debug := true;
-   ), " for debugging";
+  Arg.parse [
+    <<[[main()]] command line options>>
+   ]
+   (fun name -> init_files := name :: !init_files) 
+   usage_str;
+  <<[[main()]] set options>>
 
- ]
- (fun name -> init_files := name :: !init_files)
- usage_str
+  <<[[main()]] initial location>>
+  <<[[main()]] initialize the world>>
+  <<[[main()]] misc initializations>>
+
+  <<[[main()]] run the UI>>
+  ()
 @
 
 
+
+
+\section{Configuration file, [[.efunsrc]]}
+
+<<[[main()]] set options>>=
+<<[[main()]] set options filename>>
+<<[[main()]] adjust options>>
+@
+
+
+% see appendix on configuration file library
+<<[[main()]] set options filename>>=
+Options.filename := 
+  (try Utils.find_in_path (Utils.homedir :: !!Efuns.load_path) ".efunsrc" 
+   with _ -> Filename.concat Utils.homedir ".efunsrc"
+  );
+(try Options.init () with _ -> ());
+@
+
+
+<<misc actions>>=
+define_action "save_options" save_options;
+@
+<<function Std_efunsrc.save_options>>=
+let save_options frame = 
+  Options.save ()
+@
+
+
+
+<<constant Efuns.no_init>>=
+let no_init = ref false
+@
+% dead?
+<<[[main()]] command line options>>=
+  "-q", Arg.Set no_init,": Don't load init files";
+@
 
 \section{Arguments processing}
 
+
 %\section{General style parameters}
  
-<<constant Efuns.width>>=
+<<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-@
-<<constant Efuns.height (core/efuns.ml)>>=
 let height = define_option ["height"] "" int_option 25
+let foreground= define_option ["foreground"] "" string_option "wheat"
+let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
-
+%pad: was white
+%pad: was black
 %<<constant Efuns.height>>=
 %let height = ref 27
 %@
 %redundant?
 
-<<constant Efuns.foreground>>=
-let foreground = define_option ["foreground"] "" string_option "wheat"
-@
-%pad: was white
-<<constant Efuns.background>>=
-let background = define_option ["background"] "" string_option "DarkSlateGray"
-@
-%pad: was black
-
+% used in some major modes
 <<constant Efuns.font>>=
 let font = define_option ["font"] "" string_option "fixed"
 @
 
 
-<<constant Efuns.width_opt>>=
+<<constants Main.xxx_opt>>=
 let width_opt = ref None
-@
-<<constant Efuns.height_opt>>=
 let height_opt = ref None
-@
-
-<<constant Efuns.fg_opt>>=
 let fg_opt = ref None
-@
-<<constant Efuns.bg_opt>>=
 let bg_opt = ref None
-@
-
-<<constant Efuns.font_opt>>=
 let font_opt = ref None
 @
 
-% actually it's in Efun._3
 <<[[main()]] command line options>>=
 "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
 "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
@@ -1810,14 +1832,17 @@ let font_opt = ref None
 "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
 "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
 @
+% gymnastic with intermediate xxx_opt because options filename
+% is set later because need first to process load_path
+% but then once load the value we could possibly have overwritten
+% the values passed by the command line, hence this intermediate
 
-<<toplevel Efuns._5>>=
-let _ =
-  (match !width_opt with None -> () | Some color -> width =:= color);
-  (match !height_opt with None -> () | Some color -> height =:= color);
-  (match !fg_opt with None -> () | Some color -> foreground =:= color);
-  (match !bg_opt with None -> () | Some color -> background =:= color);
-  (match !font_opt with None -> () | Some color -> font =:= color)
+<<[[main()]] adjust options>>=
+(match !width_opt with None -> () | Some color -> width =:= color);
+(match !height_opt with None -> () | Some color -> height =:= color);
+(match !fg_opt with None -> () | Some color -> foreground =:= color);
+(match !bg_opt with None -> () | Some color -> background =:= color);
+(match !font_opt with None -> () | Some color -> font =:= color);
 @
 
 
@@ -1844,38 +1869,9 @@ let check = ref false
 
 
 
-\section{Configuration file, [[.efunsrc]]}
-
-<<constant Efuns.no_init>>=
-let no_init = ref false
-@
-% dead?
-<<[[main()]] command line options>>=
-  "-q", Arg.Set no_init,": Don't load init files";
-@
-
-
-% see appendix on configuration file library
-<<toplevel Efuns._4>>=
-let _ =
-  Options.filename := 
-   (try Utils.find_in_path (Utils.homedir :: !!Efuns.load_path) ".efunsrc" 
-    with _ -> Filename.concat Utils.homedir ".efunsrc");
-  (try Options.init () with _ -> ())
-@
-
-<<misc actions>>=
-define_action "save_options" save_options;
-@
-
-<<function Std_efunsrc.save_options>>=
-let save_options frame = 
-  Options.save ()
-@
-
 \section{The default world, [[location]]}
 
-<<constant Main.location>>=
+<<[[main()]] initial location>>=
 let location = {
     loc_buffers = Hashtbl.create 13;
     loc_files = Hashtbl.create 13;
@@ -1902,16 +1898,15 @@ let location = {
     loc_colors_n = 0;
     
     loc_mutex = Mutex.create ()
-} 
+} in
 @
 %less: need those loc_fonts_xxx and loc_colors_xxx?
 
 \section{Startup hooks}
 % hooks on location creation, hence they they a location in parameter
 
-<<toplevel Main._3>>=
-let _ =
-  init_efuns location (* launch first hooks *)
+<<[[main()]] initialize the world>>=
+init_efuns location (* launch first hooks *);
 @
 
 % not that this function reset also the start_hooks global!
@@ -1961,9 +1956,8 @@ let _ =
 
 \section{The graphical window}
 
-<<toplevel Main._4>>=
-let _ =
-  Graphics_efuns.init !init_files
+<<[[main()]] run the UI>>=
+Graphics_efuns.init !init_files;
 @
 %less: could just take ()
 
@@ -2973,15 +2967,15 @@ let get_color color_name =
 let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 @
 
-<<toplevel Main._2>>=
-let _ =
+<<[[main()]] misc initializations>>=
 (* color 0 is foreground *)
-  let _ = Window.get_color !!foreground in
+Window.get_color !!foreground |> ignore;
 (* color 1 is background *)
-  let _ = Window.get_color !!background in
+Window.get_color !!background |> ignore;
 (* color 2 is highlight *)
-  let _ = Window.get_color !!highlight_color in
+Window.get_color !!highlight_color |> ignore;
 @
+
 % standard! just like stdin/stdout/stderr convention. Sometimes
 % conventions are convenient.
 % alternative: "foreground", "background", "highlight" color name
@@ -3052,9 +3046,9 @@ let get_font font_name =
     end
 @
 
-<<toplevel Main._2>>=
+<<[[main()]] misc initializations>>=
 (* font 0 is initial font *)
-  Window.get_font !!font
+Window.get_font !!font |> ignore;
 @
 
 
@@ -7102,23 +7096,25 @@ then failwith "Buffer is read-only";
 exception SigInt
 @
 
-<<toplevel Main._1>>=
-let _ =
-  Utils.register_exn (fun e ->
-      match e with
-        Unix.Unix_error (error,f,arg) ->
-          Printf.sprintf "Unix error %s: %s %s" 
-            f (Unix.error_message error) arg
-      | _ -> raise e);
+<<[[main()]] set signal handlers>>=
+Utils.register_exn (fun e ->
+  match e with
+  | Unix.Unix_error (error,f,arg) ->
+      Printf.sprintf "Unix error %s: %s %s" f (Unix.error_message error) arg
+  | _ -> raise e
+);
 
-  Utils.set_signal Sys.sigint (Sys.Signal_handle (fun _ ->  
-        (* Should auto-save all buffers, and then exit ... *)
-        exit 1)); 
-  Utils.set_signal Sys.sigterm (Sys.Signal_handle 
-      (fun _ ->  
-        (* Should auto-save all buffers, and then exit ... *)
-        raise SigInt));
-  Utils.set_signal Sys.sighup (Sys.Signal_handle (fun _ ->  raise SigInt))
+Utils.set_signal Sys.sigint (Sys.Signal_handle (fun _ ->  
+  (* Should auto-save all buffers, and then exit ... *)
+  exit 1
+)); 
+Utils.set_signal Sys.sigterm (Sys.Signal_handle (fun _ ->  
+  (* Should auto-save all buffers, and then exit ... *)
+  raise SigInt
+));
+Utils.set_signal Sys.sighup (Sys.Signal_handle (fun _ -> 
+  raise SigInt
+));
 @
 
 \section{Dynamic linking}
@@ -7324,6 +7320,21 @@ let message buf m =
 
 %less: would be good to have a -debug_init so at least print out
 % all those hooks that are run at startup time
+
+<<[[main()]] command line options>>=
+"-debug", Arg.Set Efuns.debug, 
+" for debugging";
+"-debug_graphics", Arg.Set Efuns.debug_graphics, 
+" for debugging";
+"-debug_display", Arg.Set Efuns.debug_display, 
+" for debugging";
+"-debug_init", Arg.Set Efuns.debug_init, 
+" for debugging";
+
+"-debugger", Arg.Unit (fun () ->
+  Efuns.debug := true;
+), " for debugging";
+@
 
 \section{Actions trace, [[-debug]]}
 
