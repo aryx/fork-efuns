@@ -238,12 +238,12 @@ let check_prefix filename prefix =
   String.sub filename len n
       
 let replace_prefix filename prefixes =
-  List.fold_left (fun filename (dir,repl) ->
-      try
-        let fin = check_prefix filename dir in
-        repl ^ fin
-      with
-        Not_found -> filename) filename prefixes
+  prefixes |> List.fold_left (fun filename (dir,repl) ->
+    try
+      let fin = check_prefix filename dir in
+      repl ^ fin
+    with Not_found -> filename
+  ) filename 
   
 let filename_to_string filename =
 (* replace known dirs by ~ *)
