@@ -2276,14 +2276,6 @@ let current_word buf point =
 @
 
 <<function Simple.dirname>>=
-let dirname frame filename =
-  let filename =
-    if Filename.is_relative filename then
-      Filename.concat (Frame.current_dir frame) filename
-    else
-      filename
-  in
-  Filename.dirname filename
 @
 
 <<function Simple.buffer_list>>=
@@ -3088,46 +3080,43 @@ let remove_completions frame =
   try
     let frame = find_completion_frame frame in
     Multi_frames.remove_frame frame
-  with
-    Not_found -> ()
+  with Not_found -> ()
 @
 
 <<function Select.set_history>>=
 let set_history map string history =
   let current = ref 0 in
-  Keymap.add_binding map [NormalMap, XK.xk_Up]
-    (fun mini_frame ->
-      if !current = List.length !history then
-        Top_window.mini_message mini_frame "No previous line in history"
-      else
+  Keymap.add_binding map [NormalMap, XK.xk_Up] (fun mini_frame ->
+    if !current = List.length !history 
+    then Top_window.mini_message mini_frame "No previous line in history"
+    else begin
       let ele = Utils.list_nth !current !history in
       incr current;
       let buf = mini_frame.frm_buffer in
       let text = buf.buf_text in
       Text.clear text;
       string := ele;
-      Simple.insert_string mini_frame ele; ()
+      Simple.insert_string mini_frame ele
+    end
   );      
-  Keymap.add_binding map [NormalMap, XK.xk_Down]
-    (fun mini_frame ->
-      if !current < 1 then
-        Top_window.mini_message mini_frame "No other line in history"
-      else
-        begin
-          decr current;
-          let ele = Utils.list_nth !current !history in
-          let buf = mini_frame.frm_buffer in
-          let text = buf.buf_text in
-          Text.clear text;
-          string := ele;
-          Simple.insert_string mini_frame ele; ()
-        end
+  Keymap.add_binding map [NormalMap, XK.xk_Down] (fun mini_frame ->
+    if !current < 1 
+    then Top_window.mini_message mini_frame "No other line in history"
+    else begin
+      decr current;
+      let ele = Utils.list_nth !current !history in
+      let buf = mini_frame.frm_buffer in
+      let text = buf.buf_text in
+      Text.clear text;
+      string := ele;
+      Simple.insert_string mini_frame ele; ()
+    end
   )
 @
 
 <<function Select.incremental_mini_buffer>>=
-let incremental_mini_buffer frame ismap request default
-    incremental_action action =
+let incremental_mini_buffer 
+ frame ismap request default incremental_action action =
   let top_window = Window.top frame.frm_window in
   let incremental mini_frame =
     incremental_action frame (Text.to_string mini_frame.frm_buffer.buf_text)
@@ -3139,15 +3128,14 @@ let incremental_mini_buffer frame ismap request default
   for key = 32 to 127 do
     Keymap.add_binding ismap [NormalMap, key] incremental_insert
   done;
-  Keymap.add_binding ismap [NormalMap, XK.xk_BackSpace] 
-    (fun mini_frame -> 
-      Simple.delete_backspace_char mini_frame;
-      incremental mini_frame);
+  Keymap.add_binding ismap [NormalMap, XK.xk_BackSpace] (fun mini_frame -> 
+    Simple.delete_backspace_char mini_frame;
+    incremental mini_frame
+  );
   top_window.top_second_cursor <- Some frame;
-  Minibuffer.create_return frame ismap request default
-    (fun frame str -> 
-      top_window.top_second_cursor <- None;
-      action frame str
+  Minibuffer.create_return frame ismap request default (fun frame str -> 
+    top_window.top_second_cursor <- None;
+    action frame str
   )
 @
 
@@ -3155,49 +3143,42 @@ let incremental_mini_buffer frame ismap request default
 let select frame request history start completion_fun prefix_fun action =
   let map = Keymap.create () in
   let string = ref "" in
-  Keymap.add_binding map [ControlMap, Char.code 'g']
-    (fun mini_frame -> 
-      remove_completions mini_frame;
-      Minibuffer.kill mini_frame frame);
+  Keymap.add_binding map [ControlMap, Char.code 'g'] (fun mini_frame -> 
+    remove_completions mini_frame;
+    Minibuffer.kill mini_frame frame
+  );
   let completion = ref "_*NoCompletion*_" in
   let completions = ref [] in
-  Keymap.add_binding map [NormalMap, XK.xk_Tab]
-    (fun mini_frame ->
-      if not(!completion == !string) then
+  Keymap.add_binding map [NormalMap, XK.xk_Tab] (fun mini_frame ->
+      if (!completion != !string) then begin
         let text = mini_frame.frm_buffer.buf_text in
         completions := completion_fun !string;
-        let suffix, n  = Utils.common_suffix
-            !completions
-            (prefix_fun !string) 
-        in
+        let suffix, n  = Utils.common_suffix !completions (prefix_fun !string)in
         completion := !string;
         Text.insert text mini_frame.frm_point suffix;
         Text.fmove text mini_frame.frm_point (String.length suffix);
-        (if n>1 then
-            display_completions frame
-              (Utils.completion !completions (prefix_fun !string));
-        )
-      else
-(* can be improved, by displaying another part of the completion buffer *)
+        if n>1 
+        then display_completions frame
+                (Utils.completion !completions (prefix_fun !string));
+        
+      end else
+      (* can be improved, by displaying another part of the completion buffer *)
         display_completions frame
           (Utils.completion !completions (prefix_fun !string))
   );
   set_history map string history;
-  let _ = 
-    incremental_mini_buffer frame map request start
-    (fun frame str -> 
-        string := str;
-    )
+  incremental_mini_buffer frame map request start
+    (fun frame str -> string := str;)
     (fun old_frame str -> 
-        (match !history with
-            hd :: _ when hd = str -> ()
-          | _ ->
-              if str <> "" then
-                history := str :: !history);
-        remove_completions frame;
-        action str
-    ) in
-  ()
+       (match !history with
+        | hd :: _ when hd = str -> ()
+        | _ ->
+            if str <> "" 
+            then history := str :: !history
+        );
+       remove_completions frame;
+       action str
+    ) |> ignore
 @
 
 <<constant Select.file_hist>>=
@@ -3217,12 +3198,12 @@ let dont_complete_regexps = ref ([],Str.regexp "")
 <<function Select.dont_complete_regexp>>=
 let dont_complete_regexp () =
   let (old,reg) = !dont_complete_regexps in
-  if old == !!dont_complete then
-    reg
+  if old == !!dont_complete 
+  then reg
   else
-  let reg = Str2.regexp_from_list !!dont_complete in
-  dont_complete_regexps := (!!dont_complete, reg);
-  reg
+    let reg = Str2.regexp_from_list !!dont_complete in
+    dont_complete_regexps := (!!dont_complete, reg);
+    reg
 @
 
 <<function Select.avoid_completion>>=
@@ -3247,11 +3228,11 @@ let complete_filename frame good_file filename =
   if is_userdir filename 
   then (* Parse_file.users *) failwith "Select.complete_filename: TODO"
   else
-  let filename = string_to_filename filename in
-  let dirname = Simple.dirname frame filename in
+  let filename = Utils.string_to_filename filename in
+  let dirname = dirname frame filename in
   let file_list = Utils.file_list dirname in
   match file_list with
-    a::b::_ -> 
+  | a::b::_ -> 
       begin
         match 
           List.fold_left (fun list ele ->
@@ -3270,90 +3251,92 @@ let complete_filename frame good_file filename =
 let select_file frame request history start action =
   let map = Keymap.create () in
   let string = ref "" in
-  Keymap.add_binding map [ControlMap, Char.code 'g']
-    (fun mini_frame -> 
-      remove_completions mini_frame;
-      Minibuffer.kill mini_frame frame);
+  Keymap.add_binding map [ControlMap, Char.code 'g'] (fun mini_frame ->
+    pr2 "HERE";
+    remove_completions mini_frame;
+    Minibuffer.kill mini_frame frame
+  );
   let completion = ref "_*NoCompletion*_" in
   let completions = ref [] in
-  Keymap.add_binding map [NormalMap, XK.xk_Tab]
-    (fun mini_frame ->
-      if not(!completion = !string) then
-        let text = mini_frame.frm_buffer.buf_text in
-        completions := complete_filename frame avoid_completion !string;
-        let suffix, n  = Utils.common_suffix
-            !completions
-            (Filename.basename !string) 
-        in
-        let suffix = 
-          let s = !string ^ suffix in
-          let len = String.length s in
-          if len>0 && s.[len - 1] <> '/' then
-            try
-              let filename = string_to_filename s in
-              let dirname = Simple.dirname frame filename in
-              let basename = Filename.basename filename in
-              let stat = Unix.stat (Filename.concat dirname basename) in
-              match stat.Unix.st_kind with
-                Unix.S_DIR -> suffix ^ "/"
-              | _ -> suffix
-            with
-              _ -> suffix
-          else
-            suffix
-        in
-        completion := !string;
-        Text.insert text mini_frame.frm_point suffix;
-        Text.fmove text mini_frame.frm_point (String.length suffix);
-        string := Text.to_string text;
-        (if n>1 then
-            display_completions frame
-              (Utils.completion !completions (Filename.basename !string)))
-      else
-(* can be improved, by displaying another part of the completion buffer *)
-        display_completions frame
-          (Utils.completion !completions (Filename.basename !string))
+  Keymap.add_binding map [NormalMap, XK.xk_Tab] (fun mini_frame ->
+    let text = mini_frame.frm_buffer.buf_text in
+    (*if (!completion <> !string) then  *)
+    begin
+      string := Text.to_string text;
+      completions := complete_filename frame avoid_completion !string;
+      let suffix, n = 
+        Utils.common_suffix !completions (basename !string) in
+      let suffix = 
+        let s = !string ^ suffix in
+        let len = String.length s in
+        if len>0 && s.[len - 1] <> '/' 
+        then
+          try
+            let filename = Utils.string_to_filename s in
+            let dirname = dirname frame filename in
+            let basename = basename filename in
+            let stat = Unix.stat (Filename.concat dirname basename) in
+            match stat.Unix.st_kind with
+            |  Unix.S_DIR -> suffix ^ "/"
+            | _ -> suffix
+          with _ -> suffix
+        else suffix
+      in
+      completion := !string;
+      Text.insert text mini_frame.frm_point suffix;
+      Text.fmove text mini_frame.frm_point (String.length suffix);
+      string := Text.to_string text;
+       if n>1 
+       then
+          display_completions frame
+            (Utils.completion !completions (basename !string))
+    end
+(* TODO later, but right now have some bad side effects.
+ e.g. if do TAB in one dir, then do M-back to remove a dir, and rerun
+ TAB then it does not update the completion buffer with the candidates
+ for the new dir, so for now commented!
+   else
+    (* can be improved, by displaying another part of the completion buffer *)
+      display_completions frame
+          (Utils.completion !completions (basename !string))
+*)
   );
   set_history map string history;
-  let _ = incremental_mini_buffer frame map request start
-    (fun frame str -> 
-      string := str;
-  )
-  (fun old_frame str -> 
+  incremental_mini_buffer frame map request start
+    (fun frame str -> string := str)
+    (fun old_frame str -> 
       history := str :: !history;
       remove_completions frame;
-      let str = string_to_filename str in
+      let str = Utils.string_to_filename str in
       action str
-  ) in
-  Keymap.add_binding map [NormalMap, XK.xk_Prior]
-    (fun frame ->
-      let frame = find_completion_frame frame in
-      Simple.backward_screen frame);
-  Keymap.add_binding map [NormalMap, XK.xk_Next]
-    (fun frame ->
-      let frame = find_completion_frame frame in
-      Simple.forward_screen frame);
-  Keymap.add_binding map [NormalMap, Char.code '~']
-    (fun frame ->
-      let buf = frame.frm_buffer in
-      let text = buf.buf_text in
-      let point = frame.frm_point in
-      Simple.kill_bol buf point;
-      Simple.self_insert_command frame;      
-      string := Text.to_string text
+    ) |> ignore;
+  Keymap.add_binding map [NormalMap, XK.xk_Prior] (fun frame ->
+    let frame = find_completion_frame frame in
+    Simple.backward_screen frame
   );
-  Keymap.add_binding map [NormalMap, Char.code '/']
-    (fun frame ->
-      let buf = frame.frm_buffer in
-      let text = buf.buf_text in
-      let point = frame.frm_point in
-      if Text.bmove_res text point 1 = 1 then
-        ( let c = Text.get_char text point in
-          Text.fmove text point 1;
-          if c = '/' then
-            Simple.kill_bol buf point);
-      Simple.self_insert_command frame;
-      string := Text.to_string text            
+  Keymap.add_binding map [NormalMap, XK.xk_Next] (fun frame ->
+    let frame = find_completion_frame frame in
+    Simple.forward_screen frame
+  );
+  Keymap.add_binding map [NormalMap, Char.code '~'] (fun frame ->
+    let buf = frame.frm_buffer in
+    let text = buf.buf_text in
+    let point = frame.frm_point in
+    Simple.kill_bol buf point;
+    Simple.self_insert_command frame;      
+    string := Text.to_string text
+  );
+  Keymap.add_binding map [NormalMap, Char.code '/'] (fun frame ->
+    let buf = frame.frm_buffer in
+    let text = buf.buf_text in
+    let point = frame.frm_point in
+    if Text.bmove_res text point 1 = 1 then
+      ( let c = Text.get_char text point in
+        Text.fmove text point 1;
+        if c = '/' then
+          Simple.kill_bol buf point);
+    Simple.self_insert_command frame;
+    string := Text.to_string text            
   );
   ()
 @
@@ -3424,12 +3407,29 @@ let simple_select frame request action =
 
 <<features/select.ml>>=
 <<copyright header2>>
+open Common
 open Options
 open Efuns
 
-(* pad: was using some other library before *)
-let string_to_filename str = 
-  str
+(* small wrappers around Filename but that better handles
+ * completion on directories.
+ *)
+let basename str =
+  if str = "" || str =~ ".*/$"
+  then ""
+  else Filename.basename str
+
+let dirname frame filename =
+  let str =
+    if Filename.is_relative filename 
+    then Filename.concat (Frame.current_dir frame) filename
+    else filename
+  in
+  match str with
+  | "" -> Frame.current_dir frame
+  | _ when str =~ ".*/$" -> filename
+  | _ -> Filename.dirname str
+
 
 <<function Select.select_yes_or_no>>
 
