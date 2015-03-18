@@ -6397,6 +6397,15 @@ let add_major_key major = interactive major.maj_map
 Local.get buf.buf_major_mode.maj_vars var
 @
 
+\section{Colors}
+
+\section{Indentation}
+
+\section{Structures}
+% ???
+
+\section{Abbrevs}
+
 \chapter{Minor Modes}
 
 % diff with major mode? can have multi minor mode, but

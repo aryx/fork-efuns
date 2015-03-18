@@ -167,6 +167,8 @@ TEX=Efuns.tex
 
 SRC_ORIG=Efuns.nw Efuns_extra.nw
 
+# dircolors.ml, prog_modes/*
+
 SRC_VIEWS= \
   commons/local.ml\
   commons/local.mli\
