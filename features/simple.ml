@@ -178,19 +178,17 @@ let overwrite_mode = Ebuffer.new_minor_mode "Over" []
 let self_insert_command frame =
   let char = Char.chr !Top_window.keypressed in
   let buf = frame.frm_buffer in
-  if Ebuffer.modep buf overwrite_mode then 
-    insert_at_place frame char
-  else
-    insert_char frame char
+  if Ebuffer.modep buf overwrite_mode 
+  then insert_at_place frame char
+  else insert_char frame char
 (*e: function Simple.self_insert_command *)
     
 (*s: function Simple.char_insert_command *)
 let char_insert_command char frame =
   let buf = frame.frm_buffer in
-  if Ebuffer.modep buf overwrite_mode then 
-    insert_at_place frame char
-  else
-    insert_char frame char
+  if Ebuffer.modep buf overwrite_mode 
+  then insert_at_place frame char
+  else insert_char frame char
 (*e: function Simple.char_insert_command *)
 
 (*s: function Simple.move_backward *)
@@ -493,16 +491,9 @@ let current_word buf point =
 
   
   
-(*s: function Simple.dirname *)
-(*e: function Simple.dirname *)
-
 (*s: function Simple.buffer_list *)
 let buffer_list frame =
-  let list = ref [] in
-  (Efuns.location()).loc_buffers |> Hashtbl.iter (fun name _ -> 
-    list := name :: !list
-  );
-  !list
+  (Efuns.location()).loc_buffers |> Common.hash_to_list |> List.map fst
 (*e: function Simple.buffer_list *)
 
 
@@ -976,13 +967,13 @@ let color buf regexp strict attr =
       let len = Text.search_forward text regexp point in
       let before =
         if Text.bmove_res text point 1 = 1 then begin
-            let c = Text.get_char text point in
-            Text.fmove text point (len+1);
-            c
+          let c = Text.get_char text point in
+          Text.fmove text point (len+1);
+          c
         end else begin
-            let c = Text.get_char text point in
-            Text.fmove text point (len+1); 
-            c
+          let c = Text.get_char text point in
+          Text.fmove text point (len+1); 
+          c
         end
       in
       let after = Text.get_char text point in
@@ -1300,13 +1291,12 @@ let all_parameters frame _ =
   
 (*s: toplevel Simple._1 *)
 let _ =
-  define_buffer_action "overwrite_mode" 
-    (fun buf -> 
+  define_buffer_action "overwrite_mode" (fun buf -> 
       let mode = overwrite_mode in
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode);
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+  );
 
   Efuns.add_start_hook (fun () ->
       let location = Efuns.location () in

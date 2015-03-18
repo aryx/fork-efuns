@@ -958,6 +958,18 @@ type location =
 
 % head of list is current?
 
+
+<<global Efuns.global_location>>=
+let global_location = ref None
+@
+
+<<function Efuns.location>>=
+let location () =
+  match !global_location with
+  | None -> failwith "no global location defined"
+  | Some x -> x
+@
+
 <<[[Ebuffer.create()]] adjust location global fields>>=
 Hashtbl.add (Efuns.location()).loc_buffers name buf;
 @
@@ -2712,6 +2724,7 @@ let extend_gap text amount =
   );
   text.gsize <- gsize + add_size;
   text.text_size <- old_size + add_size;
+  ()
 @
 %TODO: figure:
 
@@ -2996,13 +3009,13 @@ let color buf regexp strict attr =
       let len = Text.search_forward text regexp point in
       let before =
         if Text.bmove_res text point 1 = 1 then begin
-            let c = Text.get_char text point in
-            Text.fmove text point (len+1);
-            c
+          let c = Text.get_char text point in
+          Text.fmove text point (len+1);
+          c
         end else begin
-            let c = Text.get_char text point in
-            Text.fmove text point (len+1); 
-            c
+          let c = Text.get_char text point in
+          Text.fmove text point (len+1); 
+          c
         end
       in
       let after = Text.get_char text point in
@@ -7326,6 +7339,12 @@ let init_frames = ref []
 
 \chapter{Error Managment}
 
+<<function Efuns.error>>=
+let error s =
+  print_string ("Error: "^s);
+  print_newline ()
+@
+
 <<function Ebuffer.message>>=
 let message buf m =
   let name = "*Messages*" in
@@ -7339,6 +7358,13 @@ let message buf m =
 
 
 \chapter{Debugging}
+
+<<constants Efuns.debug_xxx>>=
+let debug = ref false
+let debug_graphics = ref false
+let debug_display = ref false
+let debug_init = ref false
+@
 
 %less: would be good to have a -debug_init so at least print out
 % all those hooks that are run at startup time

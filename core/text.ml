@@ -383,11 +383,8 @@ let extend_gap text amount =
   );
   text.gsize <- gsize + add_size;
   text.text_size <- old_size + add_size;
+  ()
 (*e: function Text.extend_gap *)
-
-(*s: exception Text.ReadOnlyBuffer *)
-exception ReadOnlyBuffer
-(*e: exception Text.ReadOnlyBuffer *)
 
 (*
   let rec iter tree lines =
@@ -985,13 +982,16 @@ let fmove text p delta =
 let to_string tree =
   let text = tree.tree_text in    
   let len = text.text_size - text.gsize in
-  if len = 0 then "" else
-  let str = String.create len in
-  let gpos = text.gpoint.pos in
-  let gap_end = gpos + text.gsize in
-  String.blit text.text_string 0 str 0 gpos;
-  String.blit text.text_string gap_end str gpos (len- gpos);
-  str
+  if len = 0 
+  then "" 
+  else begin
+    let str = String.create len in
+    let gpos = text.gpoint.pos in
+    let gap_end = gpos + text.gsize in
+    String.blit text.text_string 0 str 0 gpos;
+    String.blit text.text_string gap_end str gpos (len- gpos);
+    str
+  end
 (*e: function Text.to_string *)
 
 
@@ -1403,10 +1403,9 @@ let point_to_bof tree point =
 
 (*s: function Text.move_res *)
 let move_res text point n =
-  if n > 0 then
-    fmove_res text point n
-  else
-    bmove_res text point (-n)
+  if n > 0 
+  then fmove_res text point n
+  else bmove_res text point (-n)
 (*e: function Text.move_res *)
 
 (*s: function Text.move *)

@@ -9,8 +9,6 @@
 (*                                                                     *)
 (***********************************************************************)
 
-exception ReadOnlyBuffer
-
 (* from WX *)
 type font = string
 type color = string

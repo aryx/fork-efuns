@@ -220,22 +220,20 @@ let read filename local_map =
     let filename = Utils.normal_name location.loc_dirname filename in
     try
       Hashtbl.find location.loc_files filename
-    with
-      Not_found ->
-        let text =
-          try
-            let inc = open_in filename in
-            let text = Text.read inc in         
-            close_in inc; 
-            text
-          with
-            _ -> Text.create ""
-        in
-        let buf = create filename (Some filename) text local_map in
-        Hashtbl.add location.loc_files filename buf;
-        buf
-  with
-    Found buf -> buf
+    with Not_found ->
+      let text =
+        try
+          let inc = open_in filename in
+          let text = Text.read inc in         
+          close_in inc; 
+          text
+        with
+          _ -> Text.create ""
+      in
+      let buf = create filename (Some filename) text local_map in
+      Hashtbl.add location.loc_files filename buf;
+      buf
+  with Found buf -> buf
 (*e: function Ebuffer.read *)
 
 (*s: function Ebuffer.default *)
@@ -455,14 +453,14 @@ let catch format buf f =
   try
     f ()
   with e ->
-      let location = Efuns.location() in
-      let name = "*Messages*" in
-      let m = Printf.sprintf format (Utils.printexn e) in
-      try
-        let buf = Hashtbl.find location.loc_buffers name in
-        Text.insert_at_end buf.buf_text (m ^ "\n");
-      with Not_found ->
-        create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
+    let location = Efuns.location() in
+    let name = "*Messages*" in
+    let m = Printf.sprintf format (Utils.printexn e) in
+    try
+      let buf = Hashtbl.find location.loc_buffers name in
+      Text.insert_at_end buf.buf_text (m ^ "\n");
+    with Not_found ->
+      create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
 (*e: function Ebuffer.catch *)
           
       

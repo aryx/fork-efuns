@@ -20,9 +20,11 @@ open Common
 open Utils
 open Local
 
+(*s: function Efuns.error *)
 let error s =
   print_string ("Error: "^s);
   print_newline ()
+(*e: function Efuns.error *)
   
 (*s: exception Efuns.UnboundKey *)
 exception UnboundKey
@@ -375,11 +377,15 @@ type to_regexp =
                (*      Values      *)
 (*************************************************************************)
 
+(*s: global Efuns.global_location *)
 let global_location = ref None
+(*e: global Efuns.global_location *)
+(*s: function Efuns.location *)
 let location () =
   match !global_location with
   | None -> failwith "no global location defined"
   | Some x -> x
+(*e: function Efuns.location *)
 
 (*s: constant Efuns.start_hooks *)
 (* Les hooks de lancement apres le chargement d'un module *)
@@ -472,11 +478,13 @@ open Options
 let check = ref false
 (*e: constant Efuns.check *)
 
+(*s: constants Efuns.debug_xxx *)
 let debug = ref false
 let debug_graphics = ref false
 let debug_display = ref false
 let debug_init = ref false
-  
+(*e: constants Efuns.debug_xxx *)
+
 (*s: constant Efuns.load_path *)
 let load_path = define_option ["efuns_path"] 
   "<load_path> is the path where modules (.cmo and .cma) can be found

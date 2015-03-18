@@ -85,9 +85,7 @@ open Common
 open Utils
 open Local
 
-let error s =
-  print_string ("Error: "^s);
-  print_newline ()
+<<function Efuns.error>>
   
 <<exception Efuns.UnboundKey>>
 
@@ -136,11 +134,8 @@ let error s =
                (*      Values      *)
 (*************************************************************************)
 
-let global_location = ref None
-let location () =
-  match !global_location with
-  | None -> failwith "no global location defined"
-  | Some x -> x
+<<global Efuns.global_location>>
+<<function Efuns.location>>
 
 <<constant Efuns.start_hooks>>
 <<function Efuns.add_start_hook>>
@@ -171,11 +166,8 @@ open Options
 
 <<constant Efuns.check>>
 
-let debug = ref false
-let debug_graphics = ref false
-let debug_display = ref false
-let debug_init = ref false
-  
+<<constants Efuns.debug_xxx>>
+
 <<constant Efuns.load_path>>
 
 <<constant Efuns.path>>
@@ -241,9 +233,6 @@ let cancel_repr text point n =
 
 
 
-<<exception Text.ReadOnlyBuffer>>=
-exception ReadOnlyBuffer
-@
 
 
 
@@ -504,13 +493,16 @@ let fmove text p delta =
 let to_string tree =
   let text = tree.tree_text in    
   let len = text.text_size - text.gsize in
-  if len = 0 then "" else
-  let str = String.create len in
-  let gpos = text.gpoint.pos in
-  let gap_end = gpos + text.gsize in
-  String.blit text.text_string 0 str 0 gpos;
-  String.blit text.text_string gap_end str gpos (len- gpos);
-  str
+  if len = 0 
+  then "" 
+  else begin
+    let str = String.create len in
+    let gpos = text.gpoint.pos in
+    let gap_end = gpos + text.gsize in
+    String.blit text.text_string 0 str 0 gpos;
+    String.blit text.text_string gap_end str gpos (len- gpos);
+    str
+  end
 @
 
 
@@ -817,10 +809,9 @@ let compute_representation tree charreprs n =
 
 <<function Text.move_res>>=
 let move_res text point n =
-  if n > 0 then
-    fmove_res text point n
-  else
-    bmove_res text point (-n)
+  if n > 0 
+  then fmove_res text point n
+  else bmove_res text point (-n)
 @
 
 <<function Text.move>>=
@@ -1079,8 +1070,6 @@ let print_newlines text =
 <<constant Text.add_amount>>
 <<function Text.extend_gap>>
 
-<<exception Text.ReadOnlyBuffer>>
-
 (*
   let rec iter tree lines =
     match tree with
@@ -1282,22 +1271,20 @@ let read filename local_map =
     let filename = Utils.normal_name location.loc_dirname filename in
     try
       Hashtbl.find location.loc_files filename
-    with
-      Not_found ->
-        let text =
-          try
-            let inc = open_in filename in
-            let text = Text.read inc in         
-            close_in inc; 
-            text
-          with
-            _ -> Text.create ""
-        in
-        let buf = create filename (Some filename) text local_map in
-        Hashtbl.add location.loc_files filename buf;
-        buf
-  with
-    Found buf -> buf
+    with Not_found ->
+      let text =
+        try
+          let inc = open_in filename in
+          let text = Text.read inc in         
+          close_in inc; 
+          text
+        with
+          _ -> Text.create ""
+      in
+      let buf = create filename (Some filename) text local_map in
+      Hashtbl.add location.loc_files filename buf;
+      buf
+  with Found buf -> buf
 @
 
 
@@ -1343,14 +1330,14 @@ let catch format buf f =
   try
     f ()
   with e ->
-      let location = Efuns.location() in
-      let name = "*Messages*" in
-      let m = Printf.sprintf format (Utils.printexn e) in
-      try
-        let buf = Hashtbl.find location.loc_buffers name in
-        Text.insert_at_end buf.buf_text (m ^ "\n");
-      with Not_found ->
-        create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
+    let location = Efuns.location() in
+    let name = "*Messages*" in
+    let m = Printf.sprintf format (Utils.printexn e) in
+    try
+      let buf = Hashtbl.find location.loc_buffers name in
+      Text.insert_at_end buf.buf_text (m ^ "\n");
+    with Not_found ->
+      create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
 @
 
 
@@ -1672,8 +1659,7 @@ let install window frame =
 
 <<function Frame.resize>>=
 let resize frame =
-  let window = frame.frm_window in
-  install window frame
+  install frame.frm_window frame
 @
 
 
@@ -2091,19 +2077,17 @@ let overwrite_mode = Ebuffer.new_minor_mode "Over" []
 let self_insert_command frame =
   let char = Char.chr !Top_window.keypressed in
   let buf = frame.frm_buffer in
-  if Ebuffer.modep buf overwrite_mode then 
-    insert_at_place frame char
-  else
-    insert_char frame char
+  if Ebuffer.modep buf overwrite_mode 
+  then insert_at_place frame char
+  else insert_char frame char
 @
 
 <<function Simple.char_insert_command>>=
 let char_insert_command char frame =
   let buf = frame.frm_buffer in
-  if Ebuffer.modep buf overwrite_mode then 
-    insert_at_place frame char
-  else
-    insert_char frame char
+  if Ebuffer.modep buf overwrite_mode 
+  then insert_at_place frame char
+  else insert_char frame char
 @
 
 
@@ -2275,16 +2259,9 @@ let current_word buf point =
   (beginning_of_word buf point) ^ (end_of_word buf point)
 @
 
-<<function Simple.dirname>>=
-@
-
 <<function Simple.buffer_list>>=
 let buffer_list frame =
-  let list = ref [] in
-  (Efuns.location()).loc_buffers |> Hashtbl.iter (fun name _ -> 
-    list := name :: !list
-  );
-  !list
+  (Efuns.location()).loc_buffers |> Common.hash_to_list |> List.map fst
 @
 
 
@@ -2698,13 +2675,12 @@ let install_structures buf list =
 
 <<toplevel Simple._1>>=
 let _ =
-  define_buffer_action "overwrite_mode" 
-    (fun buf -> 
+  define_buffer_action "overwrite_mode" (fun buf -> 
       let mode = overwrite_mode in
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode);
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+  );
 
   Efuns.add_start_hook (fun () ->
       let location = Efuns.location () in
@@ -2875,8 +2851,6 @@ open Efuns
 
   
   
-<<function Simple.dirname>>
-
 <<function Simple.buffer_list>>
 
 

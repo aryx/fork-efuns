@@ -155,8 +155,7 @@ let install window frame =
 
 (*s: function Frame.resize *)
 let resize frame =
-  let window = frame.frm_window in
-  install window frame
+  install frame.frm_window frame
 (*e: function Frame.resize *)
 
 (*s: constant Frame.editname *)
