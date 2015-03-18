@@ -1,6 +1,6 @@
 -*- org -*-
 
-* 0.19 (Q2 2015)
+* 0.19 (Q1 2015)
 
 ** factorize color in pl_colors.ml
 
