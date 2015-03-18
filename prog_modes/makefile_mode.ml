@@ -12,12 +12,7 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Options
-open Text
-open Keymap
 open Efuns
-open Simple
-open Compil
-open Window
 
 (*s: constant Makefile_mode.mkfile_vars *)
 let mkfile_vars= Str.regexp "\\(\\$([a-zA-Z0-9_]*)\\)\\|\\([a-zA-Z0-9_]+=\\)"
@@ -50,14 +45,14 @@ let comments_color = define_option ["makefile_mode"; "comments_color"] ""
   
 (*s: function Makefile_mode.makefile_color *)
 let makefile_color buf =
-  color buf mkfile_rules false
-    (make_attr (get_color !!rules_color) 1 0 false);
-  color buf mkfile_target false 
-    (make_attr (get_color !!target_color) 1 0 false);
-  color buf mkfile_vars false 
-    (make_attr (get_color !!vars_color) 1 0 false);
-  color buf mkfile_comments false 
-    (make_attr (get_color !!comments_color) 1 0 false);
+  Simple.color buf mkfile_rules false
+    (Text.make_attr (Window.get_color !!rules_color) 1 0 false);
+  Simple.color buf mkfile_target false 
+    (Text.make_attr (Window.get_color !!target_color) 1 0 false);
+  Simple.color buf mkfile_vars false 
+    (Text.make_attr (Window.get_color !!vars_color) 1 0 false);
+  Simple.color buf mkfile_comments false 
+    (Text.make_attr (Window.get_color !!comments_color) 1 0 false);
   ()
 (*e: function Makefile_mode.makefile_color *)
  
@@ -78,7 +73,7 @@ let mode = Ebuffer.new_major_mode "Makefile" [makefile_color]
 
 (*s: constant Makefile_mode.local_map *)
 let local_map = define_option ["makefile_mode"; "local_map"] ""
-    (list_option binding_option) []
+    (list_option Simple.binding_option) []
 (*e: constant Makefile_mode.local_map *)
 
 (*s: constant Makefile_mode.interactives_map *)
@@ -111,7 +106,7 @@ let makefile_mode frame =
         
 (*s: toplevel Makefile_mode._2 *)
 let _ = 
-  define_action "makefile_mode.compile" (compile c_find_error);
+  define_action "makefile_mode.compile" (Compil.compile Compil.c_find_error);
   define_action "makefile_mode.color_buffer" 
     (fun frame -> makefile_color frame.frm_buffer);
   define_action "makefile_mode" makefile_mode;
@@ -121,22 +116,22 @@ let _ =
 (*s: toplevel Makefile_mode._3 *)
 let _ =
   let map = mode.maj_map in
-  List.iter (fun (keys, action) ->
+  !!local_map |> List.iter (fun (keys, action) ->
       try
         Keymap.add_binding map keys (execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
   
-  ) !!local_map;
-  List.iter (fun (name, action) ->
+  );
+  !!interactives_map |> List.iter (fun (name, action) ->
       try
-        add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
           
-  ) !!interactives_map;
+  );
   ()
 (*e: toplevel Makefile_mode._3 *)
 
@@ -147,10 +142,10 @@ let _ =
   Efuns.add_start_hook (fun () ->
       let alist = get_global Ebuffer.modes_alist in
       set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
-      add_option_parameter vars_color;
-      add_option_parameter target_color;
-      add_option_parameter rules_color;
-      add_option_parameter comments_color;
+      Simple.add_option_parameter vars_color;
+      Simple.add_option_parameter target_color;
+      Simple.add_option_parameter rules_color;
+      Simple.add_option_parameter comments_color;
       )   
 (*e: toplevel Makefile_mode._4 *)
 (*e: prog_modes/makefile_mode.ml *)

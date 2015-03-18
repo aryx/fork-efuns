@@ -476,19 +476,11 @@ and string = parse
 {
 (* val token : lexbuf -> token *)
 
-
 open Options
-open Text
 open Efuns
-open Simple
-open Compil
-(*open Eval*)
-open Abbrevs  
-open Keymap
-open Window
 
 let lexing text start_point end_point =
-  lexer_start := get_position text start_point;
+  lexer_start := Text.get_position text start_point;
   Text.lexing text start_point end_point
 
 (***********************************************************************)
@@ -507,14 +499,18 @@ let setup_ocaml_path () =
 (***********************************************************************)
 
 let ocaml_color_region buf start_point end_point =
-  let keyword_attr = make_attr (get_color !!Pl_colors.keyword_color) 1 
-                               (get_font !!(*keyword_*)font) false in
-  let string_attr = make_attr (get_color !!Pl_colors.string_color) 1 
-                              (get_font !!(*string_*)font)    false in
-  let comment_attr = make_attr (get_color !!Pl_colors.comment_color) 1 
-                               (get_font !!(*comment_*)font) false in
-  let gray_attr = make_attr (get_color !!Pl_colors.module_color) 1 
-                            (get_font !!(*upper_*)font) false in
+  let keyword_attr = 
+    Text.make_attr (Window.get_color !!Pl_colors.keyword_color) 1 
+                               (Window.get_font !!(*keyword_*)font) false in
+  let string_attr = 
+    Text.make_attr (Window.get_color !!Pl_colors.string_color) 1 
+                              (Window.get_font !!(*string_*)font)    false in
+  let comment_attr = 
+    Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 
+                               (Window.get_font !!(*comment_*)font) false in
+  let gray_attr = 
+    Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 
+                            (Window.get_font !!(*upper_*)font) false in
   let text = buf.buf_text in
   let curseur = Text.add_point text in
   let lexbuf = lexing text start_point end_point in
@@ -529,19 +525,19 @@ let ocaml_color_region buf start_point end_point =
       | AND | OR | TYPE | VAL | CLASS | SIG | INHERIT | OBJECT
       | EXCEPTION | RULE | METHOD | EXTERNAL -> 
           Text.set_position text curseur pos;
-          set_attr text curseur len keyword_attr
+          Text.set_attr text curseur len keyword_attr
       | EOFCOMMENT 
       | COMMENT ->
           Text.set_position text curseur pos;
-          set_attr text curseur len comment_attr
+          Text.set_attr text curseur len comment_attr
       | EOFSTRING
       | CHAR 
       | STRING ->
           Text.set_position text curseur pos;
-          set_attr text curseur len string_attr
+          Text.set_attr text curseur len string_attr
       | UIDENT ->
           Text.set_position text curseur pos;
-          set_attr text curseur len gray_attr            
+          Text.set_attr text curseur len gray_attr            
       | _ -> ()
     );
     iter lexbuf
@@ -550,7 +546,7 @@ let ocaml_color_region buf start_point end_point =
     iter lexbuf
   with _ ->
     buf.buf_modified <- buf.buf_modified + 1;
-    remove_point text curseur
+    Text.remove_point text curseur
 
 
 
@@ -559,7 +555,7 @@ let ocaml_color_buffer buf =
   Text.unset_attr text;
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
-  Text.set_position text end_point (size text);
+  Text.set_position text end_point (Text.size text);
   ocaml_color_region buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point
@@ -569,7 +565,7 @@ let ocaml_color frame =
   let text = buf.buf_text in
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
-  Text.set_position text end_point (size text);
+  Text.set_position text end_point (Text.size text);
   ocaml_color_region buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point
@@ -1060,16 +1056,16 @@ let compute_indentations buf start_point end_point =
   let text = buf.buf_text in
   let curseur = Text.dup_point text start_point in
 (* init indentation *)
-  let _pos = get_position text end_point in
+  let _pos = Text.get_position text end_point in
   let lexbuf = lexing text curseur end_point in
   try
     let indentations = 
-      get_indentations (get_position text start_point) lexbuf in
-    remove_point text curseur;
+      get_indentations (Text.get_position text start_point) lexbuf in
+    Text.remove_point text curseur;
     indentations
   with
     e ->
-      remove_point text curseur;
+      Text.remove_point text curseur;
       raise e
 
 let find_phrase_start buf curseur =
@@ -1081,8 +1077,8 @@ let find_phrase_start buf curseur =
 
 let indent_between_points buf start_point end_point =
   let text = buf.buf_text in
-  let session = start_session text in
-  let curseur = dup_point text start_point in
+  let session = Text.start_session text in
+  let curseur = Text.dup_point text start_point in
   try
     find_phrase_start buf curseur;
     let indentations = compute_indentations buf curseur end_point in
@@ -1091,15 +1087,15 @@ let indent_between_points buf start_point end_point =
 (* indent other lines *)
     let rec iter indents =
       let (current,pos,indents) = pop_indentation indents in
-      set_position text curseur (pos+1);
-      set_indent text curseur current;
+      Text.set_position text curseur (pos+1);
+      Simple.set_indent text curseur current;
       iter indents
     in
     iter indentations
   with
     e -> 
-      commit_session text session;
-      remove_point text curseur
+      Text.commit_session text session;
+      Text.remove_point text curseur
 
 (* Interactive: indent all lines of the current block *)
 let indent_phrase frame =
@@ -1120,12 +1116,12 @@ let indent_region frame =
 let indent_buffer frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  let start_point = add_point text in
-  let end_point = add_point text in
-  set_position text end_point (Text.size text);
+  let start_point = Text.add_point text in
+  let end_point = Text.add_point text in
+  Text.set_position text end_point (Text.size text);
   indent_between_points buf start_point end_point;
-  remove_point text start_point;
-  remove_point text end_point
+  Text.remove_point text start_point;
+  Text.remove_point text end_point
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let insert_and_return frame =
@@ -1133,16 +1129,16 @@ let insert_and_return frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
 (* colors *)
-  let start_point = dup_point text point in
-  bmove text start_point (point_to_bol text start_point);
+  let start_point = Text.dup_point text point in
+  Text.bmove text start_point (Text.point_to_bol text start_point);
   ocaml_color_region buf start_point point;
-  remove_point text start_point;
+  Text.remove_point text start_point;
 (* indentations *)
-  let curseur = dup_point text point in
+  let curseur = Text.dup_point text point in
   try
     find_phrase_start buf curseur;
     let indentations = compute_indentations buf curseur point in
-    remove_point text curseur;
+    Text.remove_point text curseur;
     let (next,pos,tail) = pop_indentation indentations in
     let current =
       try
@@ -1150,17 +1146,17 @@ let insert_and_return frame =
       with
         Not_found  -> 0
     in
-    let session = start_session text in
-    set_indent text point current;
-    insert_char frame '\n';
-    set_indent text point next;
-    commit_session text session;
-    fmove text point next; 
+    let session = Text.start_session text in
+    Simple.set_indent text point current;
+    Simple.insert_char frame '\n';
+    Simple.set_indent text point next;
+    Text.commit_session text session;
+    Text.fmove text point next; 
     ()
   with
     e -> 
-      remove_point text curseur;
-      insert_char frame '\n'
+      Text.remove_point text curseur;
+      Simple.insert_char frame '\n'
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let indent_current_line frame =
@@ -1168,18 +1164,18 @@ let indent_current_line frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
 (* colors *)
-  let end_point = dup_point text point in
-  let start_point = dup_point text point in
-  bmove text start_point (point_to_bol text start_point);
-  fmove text end_point (point_to_eol text end_point);
+  let end_point = Text.dup_point text point in
+  let start_point = Text.dup_point text point in
+  Text.bmove text start_point (Text.point_to_bol text start_point);
+  Text.fmove text end_point (Text.point_to_eol text end_point);
   ocaml_color_region buf start_point end_point;
-  remove_point text start_point;
-  remove_point text end_point;
+  Text.remove_point text start_point;
+  Text.remove_point text end_point;
 (* indentations *)
-  let curseur = dup_point text point in
+  let curseur = Text.dup_point text point in
   find_phrase_start buf curseur;
   let indentations = compute_indentations buf curseur point in
-  remove_point text curseur;
+  Text.remove_point text curseur;
   let (next,pos,tail) = pop_indentation indentations in
   let current =
     try
@@ -1187,7 +1183,7 @@ let indent_current_line frame =
     with
       Not_found  -> 0
   in
-  set_indent text point current
+  Simple.set_indent text point current
 
 (***********************************************************************)
 (*********************  aide a la programmation *********)
@@ -1217,7 +1213,7 @@ let parse_name str = split1 str '.'
 
 let find_long_word buf point =
   buf.buf_syntax_table.(Char.code '.') <- true;
-  let w = current_word buf point in
+  let w = Simple.current_word buf point in
   buf.buf_syntax_table.(Char.code '.') <- false;
   w  
   
@@ -1232,7 +1228,7 @@ let module_name buf_name =
 
 let find_env buf point =
   let text = buf.buf_text in
-  let tmp_point = add_point text in
+  let tmp_point = Text.add_point text in
   let rec parse lexbuf stack env =
     let _, t = token lexbuf in
     match t with
@@ -1242,7 +1238,7 @@ let find_env buf point =
         if t <> UIDENT then
           parse lexbuf stack env
         else
-          (set_position text tmp_point pos; 
+          (Text.set_position text tmp_point pos; 
             let ident = Text.sub text tmp_point len in
             parse lexbuf stack (ident::env))
     | END ->
@@ -1258,13 +1254,13 @@ let find_env buf point =
     | EOF _ -> env
     | _ -> parse lexbuf stack env
   in
-  let end_point = dup_point text point in
-  let curseur = add_point text in
+  let end_point = Text.dup_point text point in
+  let curseur = Text.add_point text in
   let lexbuf = lexing text curseur end_point in
   let env = parse lexbuf [] [] in
-  remove_point text curseur;
-  remove_point text tmp_point;
-  remove_point text end_point;
+  Text.remove_point text curseur;
+  Text.remove_point text tmp_point;
+  Text.remove_point text end_point;
   (module_name buf.buf_name) :: env
 
 (* C-f1 : approximatively parse the file to find the implementation for
@@ -1281,7 +1277,7 @@ let ocaml_find_error text error_point =
     Text.search_forward_groups text (snd !!ocaml_error_regexp) 
       error_point 4 in
   let error =
-    {  
+    { Compil. 
       err_msg = Text.get_position text error_point;
       err_filename = groups.(0);
       err_line = (int_of_string groups.(1)) - 1;
@@ -1300,7 +1296,7 @@ let ocaml_find_error text error_point =
 let c_c = (ControlMap,Char.code 'c')
 
 let structures = define_option ["ocaml_mode"; "structures"] ""
-    (list_option binding_option) []
+    (list_option Simple.binding_option) []
   
 let setup_structures () = 
   if !!structures = [] then
@@ -1335,7 +1331,7 @@ let install buf =
     buf.buf_syntax_table.(Char.code syntax.[i]) <- true;
   done;
   let abbrevs = Hashtbl.create 11 in
-  set_local buf abbrev_table abbrevs;
+  set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs !!abbreviations;
   Simple.install_structures buf !!structures;
   !!ocaml_hooks |> List.iter (fun action ->
@@ -1351,7 +1347,7 @@ let ocaml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 (***********************************************************************)
          
 let local_map = define_option ["ocaml_mode"; "local_map"] ""
-    (list_option binding_option) []
+    (list_option Simple.binding_option) []
 
 let interactives_map = define_option ["ocaml_mode"; "interactives_map"] ""
     (list_option string2_option) 
@@ -1386,7 +1382,7 @@ let setup () =
   setup_structures ();
 
   define_action "ocaml_mode" ocaml_mode;
-  define_action "ocaml_mode.compile" (compile ocaml_find_error);
+  define_action "ocaml_mode.compile" (Compil.compile ocaml_find_error);
   define_action "ocaml_mode.color_buffer" 
     (fun frame -> ocaml_color_buffer frame.frm_buffer);
   define_action "ocaml_mode.indent_buffer" indent_buffer;
@@ -1394,9 +1390,9 @@ let setup () =
   define_action "ocaml_mode.indent_phrase" indent_phrase;
   define_action "ocaml_mode.indent_line" indent_current_line;
   define_action "ocaml_mode.char_expand_abbrev" (fun frame ->
-      expand_sabbrev frame; self_insert_command frame);
+      Abbrevs.expand_sabbrev frame; Simple.self_insert_command frame);
   define_action "ocaml_mode.return_expand_abbrev"
-    (fun frame -> expand_sabbrev frame; insert_and_return frame); 
+    (fun frame -> Abbrevs.expand_sabbrev frame; insert_and_return frame); 
 
   setup_maps ();
 
@@ -1405,14 +1401,14 @@ let setup () =
       try
         let f = execute_action action in
         Keymap.add_binding map keys f;
-        add_interactive map action f;
+        Keymap.add_interactive map action f;
       with e ->
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;
   );
   !!interactives_map |> List.iter (fun (name, action) ->
       try
-        add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;          
@@ -1429,8 +1425,8 @@ let _ =
       set_global Ebuffer.modes_alist 
         ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
 
-      add_option_parameter ocaml_path;
-      add_option_parameter indentation;
+      Simple.add_option_parameter ocaml_path;
+      Simple.add_option_parameter indentation;
 
       setup ()
   )  

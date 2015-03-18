@@ -13,12 +13,7 @@
 (***********************************************************************)
 (* Lexing *)
 (***********************************************************************)
-
-open Options
 open Lexing
-open Text  
-open Compil
-
 
 type token =
   ANY
@@ -50,7 +45,7 @@ let position lexbuf =
   b + !lexer_start, e - b
 
 let lexing text start_point end_point =
-  lexer_start := get_position text start_point;
+  lexer_start := Text.get_position text start_point;
   Text.lexing text start_point end_point
 
 }
@@ -100,12 +95,8 @@ rule token = parse
   | _   { position lexbuf, ANY }
 
 {
-open Text
+open Options
 open Efuns
-open Simple
-open Abbrevs
-open Keymap
-open Window
 
 let abbreviations = define_option ["tex_mode"; "abbrevs"] ""
     (list_option string2_option) []
@@ -171,19 +162,19 @@ type mode =
 let tex_color_buffer buf =
 
   let keyword_attr = 
-    make_attr (get_color !!Pl_colors.keyword_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.keyword_color) 1 0 false in
   let string_attr = 
-    make_attr (get_color !!Pl_colors.string_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.string_color) 1 0 false in
   let comment_attr = 
-    make_attr (get_color !!Pl_colors.comment_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 0 false in
   let gray_attr = 
-    make_attr (get_color !!Pl_colors.module_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 0 false in
 
   let text = buf.buf_text in
   let start_point = Text.add_point text in
-  let curseur = add_point text in
-  let end_point = add_point text in 
-  set_position text end_point (size text);
+  let curseur = Text.add_point text in
+  let end_point = Text.add_point text in 
+  Text.set_position text end_point (Text.size text);
   let lexbuf = lexing text start_point end_point in
   let rec iter mode lexbuf =
     let (pos,len), token = token lexbuf in
@@ -193,30 +184,30 @@ let tex_color_buffer buf =
           raise Exit
       | COMMENT
         ->
-          set_position text curseur pos;
-          set_attr text curseur len comment_attr;
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len comment_attr;
           mode
       | MATHMODE ->
-          set_position text curseur pos;
-          set_attr text curseur len string_attr;
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len string_attr;
           (match mode with
               Math_mode -> Normal_mode
             | _ -> Math_mode)
       | STARTMATH ->
-          set_position text curseur pos;
-          set_attr text curseur len string_attr;
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len string_attr;
           Math_mode          
       | ENDMATH
         ->
-          set_position text curseur pos;
-          set_attr text curseur len string_attr;
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len string_attr;
           Normal_mode
       | STARTTABBING
       | ENDTABBING
       | KWDTABBING
         ->
-          set_position text curseur pos;
-          set_attr text curseur len gray_attr;
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len gray_attr;
           mode
       | STARTARRAY
       | ENDARRAY
@@ -228,26 +219,26 @@ let tex_color_buffer buf =
       | PARAMETER
       | COMMAND
       | FONT ->
-          set_position text curseur pos;
-          set_attr text curseur len keyword_attr;
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len keyword_attr;
           mode
       | LBRACE ->
-          set_position text curseur pos;
-          set_attr text curseur len keyword_attr;
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len keyword_attr;
           Arg_mode
       | RBRACE ->
-          set_position text curseur pos;
-          set_attr text curseur len keyword_attr;
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len keyword_attr;
           Normal_mode
       | _ -> 
           match mode with
             Math_mode -> 
-              set_position text curseur pos;
-              set_attr text curseur len string_attr;
+              Text.set_position text curseur pos;
+              Text.set_attr text curseur len string_attr;
               mode
           | Arg_mode ->
-              set_position text curseur pos;
-              set_attr text curseur len gray_attr;
+              Text.set_position text curseur pos;
+              Text.set_attr text curseur len gray_attr;
               mode
           | _ -> mode
     in
@@ -258,15 +249,15 @@ let tex_color_buffer buf =
   with
     _ ->
       buf.buf_modified <- buf.buf_modified + 1;
-      remove_point text curseur;
-      remove_point text end_point;
-      remove_point text start_point
+      Text.remove_point text curseur;
+      Text.remove_point text end_point;
+      Text.remove_point text start_point
 
 
 let c_c = (ControlMap,Char.code 'c')
 
 let structures = define_option ["tex_mode"; "structures"] ""
-    (list_option binding_option) []
+    (list_option Simple.binding_option) []
   
 let _ =
   if !!structures = [] then 
@@ -293,34 +284,34 @@ let tex_error_regexp2 = define_option ["tex_mode"; "warning_regexp"] ""
   
 let backward_find_unclosed_paren text point =
   let rec iter n =
-    if bmove_res text point 1 = 0 then raise Not_found;
-    let d = get_char text point in
+    if Text.bmove_res text point 1 = 0 then raise Not_found;
+    let d = Text.get_char text point in
     if d = '\n' then iter_line n else
     if d = ')' then iter (n+1) else
     if d = '(' then
       (if n > 0 then iter (n-1))
     else iter n
   and iter_line n =
-    let p = get_position text point in
-    let bol = point_to_bol text point in
-    set_position text point (p-bol);
-    if sub text point 4 = "\\OT1" then
-      (if bmove_res text point 1 = 0 then raise Not_found; iter_line n)
+    let p = Text.get_position text point in
+    let bol = Text.point_to_bol text point in
+    Text.set_position text point (p-bol);
+    if Text.sub text point 4 = "\\OT1" then
+      (if Text.bmove_res text point 1 = 0 then raise Not_found; iter_line n)
     else
-      (set_position text point p; iter n)
+      (Text.set_position text point p; iter n)
   in
   iter_line 0 
 
 let filename_after_point text point =
-  let endp = dup_point text point in
+  let endp = Text.dup_point text point in
   let rec iter () = 
-    if fmove_res text endp 1 = 1 &&
-      (let d = get_char text endp in
+    if Text.fmove_res text endp 1 = 1 &&
+      (let d = Text.get_char text endp in
         d <> '\n' && d <> ')' && d <> ' ') then iter ()
   in
   iter ();
-  let filename = Text.sub text point (distance text point endp) in
-  remove_point text endp;
+  let filename = Text.sub text point (Text.distance text point endp) in
+  Text.remove_point text endp;
   filename
 
   
@@ -335,22 +326,23 @@ let tex_find_error text error_point =
         Text.search_forward_groups text (snd !!tex_error_regexp2)
           error_point 1 
   in
-  let point = dup_point text error_point in
+  let point = Text.dup_point text error_point in
   let filename = 
     try
       backward_find_unclosed_paren text point;
-      fmove text point 1;
+      Text.fmove text point 1;
       filename_after_point text point
     with
       Not_found -> ""
   in
-  remove_point text point;
+  Text.remove_point text point;
   for _i = 1 to 3 do
-    bmove text error_point 1;
-    let bol = point_to_bol text error_point in
-    bmove text error_point bol;
+    Text.bmove text error_point 1;
+    let bol = Text.point_to_bol text error_point in
+    Text.bmove text error_point bol;
   done;
-  { err_msg = Text.get_position text error_point;
+  { Compil. 
+      err_msg = Text.get_position text error_point;
       err_filename = filename;
       err_line = int_of_string groups.(0) - 1;
       err_begin = 0;
@@ -373,14 +365,14 @@ let install buf =
   for i = 0 to String.length syntax - 1 do
     buf.buf_syntax_table.(Char.code syntax.[i]) <- true;
   done;
-  let abbrevs = try get_local buf abbrev_table
+  let abbrevs = try get_local buf Abbrevs.abbrev_table
     with _ -> 
         let abbrevs = Hashtbl.create 11 in
-        set_local buf abbrev_table abbrevs;
+        set_local buf Abbrevs.abbrev_table abbrevs;
         abbrevs
   in
   Utils.hash_add_assoc abbrevs !!abbreviations;
-  install_structures buf !!structures; 
+  Simple.install_structures buf !!structures; 
   List.iter (fun action ->
       try execute_buffer_action action buf with _ -> ()
   ) !!tex_hooks;
@@ -389,7 +381,7 @@ let install buf =
 let mode = Ebuffer.new_major_mode"TeX" [install]
 
 let comment_string = "%"
-let _ = set_major_var mode line_comment "%"
+let _ = set_major_var mode Simple.line_comment "%"
   
 let comment_region frame =
   let buf = frame.frm_buffer in
@@ -400,14 +392,14 @@ let comment_region frame =
     match buf.buf_mark with None -> failwith "Mark is not set"
     | Some p ->  p in
   let start, stop = 
-    if compare text point mark < 0 then point, mark else mark, point in
-  let session = start_session text in
-  while compare text start stop < 0 do
-    let c = get_char text start in
-    fmove text start 1;
-    if c = '\n' then (insert text start comment_string; fmove text start len)
+    if Text.compare text point mark < 0 then point, mark else mark, point in
+  let session = Text.start_session text in
+  while Text.compare text start stop < 0 do
+    let c = Text.get_char text start in
+    Text.fmove text start 1;
+    if c = '\n' then (Text.insert text start comment_string; Text.fmove text start len)
   done;
-  commit_session text session
+  Text.commit_session text session
   
 let uncomment_region frame =
   let buf = frame.frm_buffer in
@@ -418,58 +410,59 @@ let uncomment_region frame =
     | Some p ->  p in
   let len = String.length comment_string in
   let start, stop = 
-    if compare text point mark < 0 then point, mark else mark, point in
-  let session = start_session text in
-  while compare text start stop < 0 do
-    let c = get_char text start in
-    fmove text start 1;
-    if c = '\n' && sub text start len = comment_string then 
-      delete text point len
+    if Text.compare text point mark < 0 then point, mark else mark, point in
+  let session = Text.start_session text in
+  while Text.compare text start stop < 0 do
+    let c = Text.get_char text start in
+    Text.fmove text start 1;
+    if c = '\n' && Text.sub text start len = comment_string then 
+     Text.delete text point len
   done;
-  commit_session text session
+  Text.commit_session text session
   
 let insert_return_in_tex frame =
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
   let text = buf.buf_text in
-  let bol = point_to_bol text point in
-  bmove text point bol;
-  let comment = (get_char text point = '%') && bol <> 0 in
-  fmove text point bol;
-  insert_return frame;
-  if comment then insert_char frame '%'
+  let bol = Text.point_to_bol text point in
+  Text.bmove text point bol;
+  let comment = (Text.get_char text point = '%') && bol <> 0 in
+  Text.fmove text point bol;
+  Simple.insert_return frame;
+  if comment 
+  then Simple.insert_char frame '%'
 
   (* load in buffer \input{file} *)
 let load_input frame buf point =
   let str = 
     let text = buf.buf_text in
-    let curs = dup_point text point in
+    let curs = Text.dup_point text point in
     let dirname = match buf.buf_filename with
         None -> ""
       | Some filename -> Filename.dirname filename
     in
     try
-      let bol = point_to_bol text curs in
-      bmove text curs bol;
-      while sub text curs 7 <> "\\input{" do
-        let c = get_char text curs in
-        if c = '\n' || fmove_res text curs 1 = 0 then raise Not_found;
+      let bol = Text.point_to_bol text curs in
+      Text.bmove text curs bol;
+      while Text.sub text curs 7 <> "\\input{" do
+        let c = Text.get_char text curs in
+        if c = '\n' || Text.fmove_res text curs 1 = 0 then raise Not_found;
       done;
-      fmove text curs 7;
-      let pos = get_position text curs in
+      Text.fmove text curs 7;
+      let pos = Text.get_position text curs in
       let rec iter count =
-        let c = get_char text curs in
+        let c = Text.get_char text curs in
         if c = '}' then count else
-        if c = '\n' || fmove_res text curs 1 = 0 then raise Not_found 
+        if c = '\n' || Text.fmove_res text curs 1 = 0 then raise Not_found 
         else iter (count+1)
       in
       let len = iter 0 in
-      set_position text curs pos;
-      let s = sub text curs len in
-      remove_point text curs;
+      Text.set_position text curs pos;
+      let s = Text.sub text curs len in
+      Text.remove_point text curs;
       Filename.concat dirname (s^".tex")
     with
-      e -> remove_point text curs; raise e
+      e -> Text.remove_point text curs; raise e
   in
   let _ = Frame.load_file frame.frm_window str in ()
 
@@ -492,10 +485,10 @@ let load_next_input_file frame =
       None -> raise Not_found | Some buffer -> buffer in
   let text = buf.buf_text in
   let point = match buf.buf_mark with
-      None -> add_point text | Some mark -> mark in
+      None -> Text.add_point text | Some mark -> mark in
   buf.buf_mark <- Some point;
-  let len = search_forward text input_regexp point in
-  fmove text point len;
+  let len = Text.search_forward text input_regexp point in
+  Text.fmove text point len;
   load_input frame buf point
 
 let load_prev_input_file frame =
@@ -503,9 +496,9 @@ let load_prev_input_file frame =
       None -> raise Not_found | Some buffer -> buffer in
   let text = buf.buf_text in
   let point = match buf.buf_mark with
-      None -> add_point text | Some mark -> mark in
+      None -> Text.add_point text | Some mark -> mark in
   buf.buf_mark <- Some point;
-  let _len = search_backward text input_regexp point in
+  let _len = Text.search_backward text input_regexp point in
   load_input frame buf point
 
 (*
@@ -534,7 +527,7 @@ let begin_env frame =
       let buf = frame.frm_buffer in
       let text = buf.buf_text in
       let point = frame.frm_point in
-      insert text point (Printf.sprintf "\\begin{%s}\n\\end{%s}" str str);
+      Text.insert text point (Printf.sprintf "\\begin{%s}\n\\end{%s}" str str);
       Text.fmove text point (8 + String.length str);
       ()
   )
@@ -545,14 +538,14 @@ let end_env frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let find_point = dup_point text point in
+  let find_point = Text.dup_point text point in
   try
     let names = Text.search_backward_groups text begin_env_regexp find_point 1
     in
-    remove_point text find_point;
-    insert text point (Printf.sprintf "\\end{%s}\n" names.(0));
-    fmove text point (String.length names.(0) + 7)    
-  with e -> remove_point text find_point; raise e
+    Text.remove_point text find_point;
+    Text.insert text point (Printf.sprintf "\\end{%s}\n" names.(0));
+    Text.fmove text point (String.length names.(0) + 7)    
+  with e -> Text.remove_point text find_point; raise e
   
 
 let setup_actions () =  
@@ -560,11 +553,11 @@ let setup_actions () =
 (*  define_action "tex_mode.browse" browse; *)
   define_action "tex_mode.color_buffer" (fun frame -> 
       tex_color_buffer frame.frm_buffer);
-  define_action "tex_mode.compile" (compile tex_find_error);
+  define_action "tex_mode.compile" (Compil.compile tex_find_error);
   define_action "tex_mode.comment_region" comment_region;
   define_action "tex_mode.uncomment_region" uncomment_region;
   define_action "tex_mode.char_expand_abbrev" (fun frame ->
-      expand_sabbrev frame; self_insert_command frame);
+      Abbrevs.expand_sabbrev frame; Simple.self_insert_command frame);
   define_action "tex_mode.insert_return" insert_return_in_tex;
   define_action "tex_mode.load_input_file" load_input_file;
   define_action "tex_mode.load_next_input_file" load_next_input_file;
@@ -572,14 +565,14 @@ let setup_actions () =
   define_action "tex_mode.set_main_file" set_main_file;
   define_action "tex_mode.to_main_file" to_main_file;
   define_action "tex_mode.find_matching_paren" (fun frame ->
-      self_insert_command frame;
-      highlight_paren frame);
+      Simple.self_insert_command frame;
+      Simple.highlight_paren frame);
   define_action "tex_mode.end_env" end_env;
   define_action "tex_mode.begin_env" begin_env;
   ()  
     
 let local_map = define_option ["tex_mode"; "local_map"] ""
-    (list_option binding_option) []
+    (list_option Simple.binding_option) []
 
 let interactives_map = define_option ["tex_mode"; "interactives_map"] ""
     (list_option string2_option) 
@@ -625,7 +618,7 @@ let setup_maps () =
       try
         let f = execute_action action in
         Keymap.add_binding map keys f;
-        add_interactive map action f;
+        Keymap.add_interactive map action f;
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
@@ -633,7 +626,7 @@ let setup_maps () =
   );
   !!interactives_map |> List.iter (fun (name, action) ->
       try
-        add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;          
