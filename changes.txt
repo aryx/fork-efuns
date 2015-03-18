@@ -4,6 +4,8 @@
 
 ** factorize color in pl_colors.ml
 
+** a new Dircolors module
+
 ** Simple
 - maintain a "goal column" when goes up and down in a file, similar to emacs
 

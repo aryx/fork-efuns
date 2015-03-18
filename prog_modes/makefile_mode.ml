@@ -36,13 +36,7 @@ let target_color = define_option ["makefile_mode"; "target_color"] ""
     string_option "MediumAquamarine"
 (*e: constant Makefile_mode.target_color *)
 (*s: constant Makefile_mode.vars_color *)
-let vars_color = define_option ["makefile_mode"; "vars_color"] ""
-    string_option "LightBlue3"
 (*e: constant Makefile_mode.vars_color *)
-let comments_color = define_option ["makefile_mode"; "comments_color"] ""
-    string_option "gray"
-
-  
 (*s: function Makefile_mode.makefile_color *)
 let makefile_color buf =
   Simple.color buf mkfile_rules false
@@ -50,9 +44,9 @@ let makefile_color buf =
   Simple.color buf mkfile_target false 
     (Text.make_attr (Window.get_color !!target_color) 1 0 false);
   Simple.color buf mkfile_vars false 
-    (Text.make_attr (Window.get_color !!vars_color) 1 0 false);
+    (Text.make_attr (Window.get_color !!Pl_colors.variable_name_color) 1 0 false);
   Simple.color buf mkfile_comments false 
-    (Text.make_attr (Window.get_color !!comments_color) 1 0 false);
+    (Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 0 false);
   ()
 (*e: function Makefile_mode.makefile_color *)
  
@@ -140,12 +134,11 @@ let _ =
 let _ = 
   (* Keymap.add_prefix mode.maj_map [c_c];   *)
   Efuns.add_start_hook (fun () ->
-      let alist = get_global Ebuffer.modes_alist in
-      set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
-      Simple.add_option_parameter vars_color;
-      Simple.add_option_parameter target_color;
-      Simple.add_option_parameter rules_color;
-      Simple.add_option_parameter comments_color;
-      )   
+    let alist = get_global Ebuffer.modes_alist in
+    set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
+    
+    Simple.add_option_parameter target_color;
+    Simple.add_option_parameter rules_color;
+  )   
 (*e: toplevel Makefile_mode._4 *)
 (*e: prog_modes/makefile_mode.ml *)

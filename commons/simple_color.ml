@@ -910,7 +910,8 @@ let emacs_gray_colors = [
 ]
 
 let emacs_colors = 
-  emacs_basic_colors @ emacs_degrade_colors @ emacs_gray_colors
+  (emacs_basic_colors @ emacs_degrade_colors @ emacs_gray_colors)
+   |> List.map (fun (s, a) -> String.lowercase s, a)
 
 let random_emacs_color xs =
   let len = List.length xs in
@@ -919,7 +920,7 @@ let random_emacs_color xs =
 
 let rgbf_of_string s = 
   try
-    List.assoc s emacs_colors
+    List.assoc (String.lowercase s) emacs_colors
   with
   Not_found -> failwith ("color name not found: " ^ s)
 

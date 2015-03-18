@@ -64,6 +64,8 @@ let find_completion_frame frame =
   Frame.find_buffer_frame buf
 (*e: function Select.find_completion_frame *)
 
+let completions_buf_hook = Local.create_abstr "completions_buf_hook"
+
 (*s: function Select.display_completions *)
 let display_completions frame list =
   let top_window = Window.top frame.frm_window in
@@ -80,6 +82,10 @@ let display_completions frame list =
     let buf = Ebuffer.default "*Completions*" in
     let text = buf.buf_text in
     Text.update text (iter list "Completions :");
+    
+    let hooks = try get_global completions_buf_hook with Not_found -> [] in
+    exec_hooks hooks buf;
+
     (try Frame.find_buffer_frame buf
      with Not_found -> Frame.create_inactive (Multi_frames.cut_frame frame) buf
     ) |> ignore
@@ -246,6 +252,19 @@ let complete_filename frame good_file filename =
   let filename = Utils.string_to_filename filename in
   let dirname = dirname frame filename in
   let file_list = Utils.file_list dirname in
+  let file_list = file_list |> List.map (fun file ->
+    let path = Filename.concat dirname file in
+    try 
+      let stat = Unix.stat path in
+      match stat.Unix.st_kind with
+      | Unix.S_DIR -> file ^ "/"
+      | _ -> file
+    with exn -> 
+      pr2 (spf "complete_filename: exn = %s" (Common.exn_to_s exn));
+      file
+  )
+  in
+
   match file_list with
   | a::b::_ -> 
       begin

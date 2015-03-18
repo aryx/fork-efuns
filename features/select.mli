@@ -10,7 +10,11 @@
 (***********************************************************************)
 
 val select_yes_or_no : Efuns.frame -> string -> (bool -> unit) -> Efuns.frame
+
+
+val completions_buf_hook: (Efuns.buffer -> unit) list Local.var
 val display_completions : Efuns.frame -> string list -> unit
+
 val remove_completions : Efuns.frame -> unit
 val set_history : Efuns.map -> string ref -> string list ref -> unit
 val incremental_mini_buffer :
