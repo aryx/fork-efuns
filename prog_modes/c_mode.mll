@@ -355,16 +355,10 @@ and string = parse
 
 {
 
-open Text
 open Efuns
-open Simple
-open Compil
-open Abbrevs  
-open Keymap
-open Window
 
 let lexing text start_point end_point =
-  lexer_start := get_position text start_point;
+  lexer_start := Text.get_position text start_point;
   Text.lexing text start_point end_point
 
 
@@ -382,7 +376,7 @@ let c_find_error text error_point =
     Text.search_forward_groups text c_error_regexp 
       error_point 2 in
   let error =
-    {  
+    { Compil.  
       err_msg = Text.get_position text error_point;
       err_filename = groups.(0);
       err_line = (int_of_string groups.(1)) - 1;
@@ -398,15 +392,15 @@ let c_find_error text error_point =
 
 let c_color_region buf start_point end_point =
   let keyword_attr = 
-    make_attr (get_color !!Pl_colors.keyword_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.keyword_color) 1 0 false in
   let string_attr = 
-    make_attr (get_color !!Pl_colors.string_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.string_color) 1 0 false in
   let comment_attr = 
-    make_attr (get_color !!Pl_colors.comment_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 0 false in
   let _gray_attr = 
-    make_attr (get_color !!Pl_colors.module_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 0 false in
   let preprocessor_attr = 
-    make_attr (get_color !!Pl_colors.preprocessor_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.preprocessor_color) 1 0 false in
 
   let text = buf.buf_text in
   let curseur = Text.add_point text in
@@ -439,25 +433,25 @@ let c_color_region buf start_point end_point =
       | STATIC
       | EXTERN
         -> 
-          set_position text curseur pos;
-          set_attr text curseur len keyword_attr
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len keyword_attr
       | EOFCOMMENT 
       | COMMENT ->
-          set_position text curseur pos;
-          set_attr text curseur len comment_attr
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len comment_attr
       | EOFSTRING
       | CHAR 
       | STRING ->
-          set_position text curseur pos;
-          set_attr text curseur len string_attr
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len string_attr
       | M_IFDEF
       | M_DEFINE
       | M_ELSE
       | M_IFNDEF
       | M_INCLUDE
       | M_ENDIF -> 
-          set_position text curseur pos;
-          set_attr text curseur len preprocessor_attr          
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len preprocessor_attr          
       | IDENT -> ()
       | _ -> ()
           );
@@ -468,16 +462,16 @@ let c_color_region buf start_point end_point =
   with
     _ ->
       buf.buf_modified <- buf.buf_modified + 1;
-      remove_point text curseur
+      Text.remove_point text curseur
 
 let c_color_buffer buf =
   let text = buf.buf_text in
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
-  Text.set_position text end_point (size text);
+  Text.set_position text end_point (Text.size text);
   c_color_region buf start_point end_point;
-  remove_point text start_point;
-  remove_point text end_point
+  Text.remove_point text start_point;
+  Text.remove_point text end_point
 
 (***********************************************************************)
 (*********************** indentation ************************)
@@ -656,16 +650,16 @@ let compute_indentations buf start_point end_point =
   let text = buf.buf_text in
   let curseur = Text.dup_point text start_point in
 (* init indentation *)
-  let _pos = get_position text end_point in
+  let _pos = Text.get_position text end_point in
   let lexbuf = lexing text curseur end_point in
   try
     let indentations = 
-      get_indentations (get_position text start_point) lexbuf in
-    remove_point text curseur;
+      get_indentations (Text.get_position text start_point) lexbuf in
+    Text.remove_point text curseur;
     indentations
   with
     e ->
-      remove_point text curseur;
+      Text.remove_point text curseur;
       raise e
 
 let find_phrase_start buf curseur =
@@ -677,8 +671,8 @@ let find_phrase_start buf curseur =
 
 let indent_between_points buf start_point end_point =
   let text = buf.buf_text in
-  let session = start_session text in
-  let curseur = dup_point text start_point in
+  let session = Text.start_session text in
+  let curseur = Text.dup_point text start_point in
   try
     find_phrase_start buf curseur;
     let indentations = compute_indentations buf curseur end_point in
@@ -687,15 +681,15 @@ let indent_between_points buf start_point end_point =
 (* indent other lines *)
     let rec iter indents =
       let (current,pos,indents) = pop_indentation indents in
-      set_position text curseur (pos+1);
-      set_indent text curseur current;
+      Text.set_position text curseur (pos+1);
+      Simple.set_indent text curseur current;
       iter indents
     in
     iter indentations
   with
     e -> 
-      commit_session text session;
-      remove_point text curseur
+      Text.commit_session text session;
+      Text.remove_point text curseur
 
 (* Interactive: indent all lines of the current block *)
 let indent_phrase frame =
@@ -716,12 +710,12 @@ let indent_region frame =
 let indent_buffer frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  let start_point = add_point text in
-  let end_point = add_point text in
-  set_position text end_point (Text.size text);
+  let start_point = Text.add_point text in
+  let end_point = Text.add_point text in
+  Text.set_position text end_point (Text.size text);
   indent_between_points buf start_point end_point;
-  remove_point text start_point;
-  remove_point text end_point
+  Text.remove_point text start_point;
+  Text.remove_point text end_point
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let insert_and_return frame =
@@ -729,16 +723,16 @@ let insert_and_return frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
 (* colors *)
-  let start_point = dup_point text point in
-  bmove text start_point (point_to_bol text start_point);
+  let start_point = Text.dup_point text point in
+  Text.bmove text start_point (Text.point_to_bol text start_point);
   c_color_region buf start_point point;
-  remove_point text start_point;
+  Text.remove_point text start_point;
 (* indentations *)
-  let curseur = dup_point text point in
+  let curseur = Text.dup_point text point in
   try
     find_phrase_start buf curseur;
     let indentations = compute_indentations buf curseur point in
-    remove_point text curseur;
+    Text.remove_point text curseur;
     let (next,pos,tail) = pop_indentation indentations in
     let current =
       try
@@ -746,17 +740,17 @@ let insert_and_return frame =
       with
         Not_found  -> 0
     in
-    let session = start_session text in
-    set_indent text point current;
-    insert_char frame '\n';
-    set_indent text point next;
-    commit_session text session;
-    fmove text point next; 
+    let session = Text.start_session text in
+    Simple.set_indent text point current;
+    Simple.insert_char frame '\n';
+    Simple.set_indent text point next;
+    Text.commit_session text session;
+    Text.fmove text point next; 
     ()
   with
     e -> 
-      remove_point text curseur;
-      insert_char frame '\n'
+      Text.remove_point text curseur;
+      Simple.insert_char frame '\n'
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let indent_current_line frame =
@@ -764,18 +758,18 @@ let indent_current_line frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
 (* colors *)
-  let end_point = dup_point text point in
-  let start_point = dup_point text point in
-  bmove text start_point (point_to_bol text start_point);
-  fmove text end_point (point_to_eol text end_point);
+  let end_point = Text.dup_point text point in
+  let start_point = Text.dup_point text point in
+  Text.bmove text start_point (Text.point_to_bol text start_point);
+  Text.fmove text end_point (Text.point_to_eol text end_point);
   c_color_region buf start_point end_point;
-  remove_point text start_point;
-  remove_point text end_point;
+  Text.remove_point text start_point;
+  Text.remove_point text end_point;
 (* indentations *)
-  let curseur = dup_point text point in
+  let curseur = Text.dup_point text point in
   find_phrase_start buf curseur;
   let indentations = compute_indentations buf curseur point in
-  remove_point text curseur;
+  Text.remove_point text curseur;
   let (next,pos,tail) = pop_indentation indentations in
   let current =
     try
@@ -783,7 +777,7 @@ let indent_current_line frame =
     with
       Not_found  -> 0
   in
-  set_indent text point current
+  Simple.set_indent text point current
 
   
 (***********************************************************************)
@@ -811,10 +805,10 @@ let install buf =
   buf.buf_syntax_table.(Char.code '_') <- true;
   let abbrevs =
     try
-      get_local (buf) abbrev_table
+      get_local (buf) Abbrevs.abbrev_table
     with Failure _ -> 
       let abbrevs = Hashtbl.create 11 in
-      set_local buf abbrev_table abbrevs;
+      set_local buf Abbrevs.abbrev_table abbrevs;
       abbrevs
   in
   Utils.hash_add_assoc abbrevs abbreviations;
@@ -834,7 +828,7 @@ let mode_regexp = define_option ["c_mode"; "mode_regexp"] ""
   ]
   
 let local_map = define_option ["c_mode"; "local_map"] ""
-    (list_option binding_option) []
+    (list_option Simple.binding_option) []
 
 let interactives_map = define_option ["c_mode"; "interactives_map"] ""
     (list_option string2_option) 
@@ -846,24 +840,24 @@ let setup_actions () =
   define_action "c_mode.color_buffer"
     (fun frame -> c_color_buffer frame.frm_buffer);
   define_action "c_mode.indent_buffer" indent_buffer;
-  define_action "c_mode.compile"  (compile c_find_error);
+  define_action "c_mode.compile"  (Compil.compile c_find_error);
   define_action "c_mode.indent_line" indent_current_line;
   define_action "c_mode.indent_phrase" indent_phrase
     
   
 let setup_maps () =
   let map = mode.maj_map in
-  add_major_key (mode) [c_c; ControlMap, Char.code 'b'] 
+  Keymap.add_major_key (mode) [c_c; ControlMap, Char.code 'b'] 
     "c-indent-buffer" indent_buffer;
-  add_major_key (mode) [MetaMap,Char.code 'q']
+  Keymap.add_major_key (mode) [MetaMap,Char.code 'q']
     "c-indent-phrase" indent_phrase;
-  add_major_key (mode) [NormalMap,XK.xk_Tab]
+  Keymap.add_major_key (mode) [NormalMap,XK.xk_Tab]
     "c-indent-line" indent_current_line;
   
   ['}';']';')'] |> List.iter (fun char ->
       Keymap.add_binding map [NormalMap, Char.code char] (fun frame ->
-        self_insert_command frame;
-        highlight_paren frame
+        Simple.self_insert_command frame;
+        Simple.highlight_paren frame
       )
   );
 
@@ -886,14 +880,14 @@ let setup_maps () =
       try
         let f = execute_action action in
         Keymap.add_binding map keys f;
-        add_interactive map action f;
+        Keymap.add_interactive map action f;
       with e ->
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;  
   );
   !!interactives_map |> List.iter (fun (name, action) ->
       try
-        add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (execute_action action)
       with e ->
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;          
@@ -902,7 +896,7 @@ let setup_maps () =
 
 let _ =  
   Efuns.add_start_hook (fun () ->
-    add_interactive (Efuns.location()).loc_map "c-mode" 
+    Keymap.add_interactive (Efuns.location()).loc_map "c-mode" 
         (fun frame -> install frame.frm_buffer);
     let alist = get_global Ebuffer.modes_alist in
     set_global Ebuffer.modes_alist 

@@ -125,18 +125,13 @@ and ampersand = parse
   | _ { end_pos lexbuf, ERROR }
     
 {
+
 (* val token : lexbuf -> token *)
 open Options
-
-open Text
 open Efuns
-open Simple
-open Abbrevs  
-open Keymap
-open Window
-  
+ 
 let lexing text start_point end_point =
-  lexer_start := get_position text start_point;
+  lexer_start := Text.get_position text start_point;
   Text.lexing text start_point end_point
 
 (***********************************************************************)
@@ -144,15 +139,15 @@ let lexing text start_point end_point =
 (***********************************************************************)
 let html_color_region buf start_point end_point =
   let keyword_attr = 
-    make_attr (get_color !!Pl_colors.keyword_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.keyword_color) 1 0 false in
   let _string_attr = 
-    make_attr (get_color !!Pl_colors.string_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.string_color) 1 0 false in
   let comment_attr = 
-    make_attr (get_color !!Pl_colors.comment_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 0 false in
   let gray_attr = 
-    make_attr (get_color !!Pl_colors.module_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 0 false in
   let error_attr = 
-    make_attr (get_color !!Pl_colors.error_color) 1 0 false in
+    Text.make_attr (Window.get_color !!Pl_colors.error_color) 1 0 false in
 
   let text = buf.buf_text in
   let curseur = Text.add_point text in
@@ -162,20 +157,20 @@ let html_color_region buf start_point end_point =
     (match token with
         EOF  -> raise Exit
       | COMMENT ->
-          set_position text curseur pos;
-          set_attr text curseur len comment_attr
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len comment_attr
       | ERROR ->
-          set_position text curseur pos;
-          set_attr text curseur len error_attr
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len error_attr
       
       | OPEN_TAG
       | CLOSE_TAG ->
-          set_position text curseur pos;
-          set_attr text curseur len keyword_attr
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len keyword_attr
       | AMPERSAND
       | DOCTYPE ->
-          set_position text curseur pos;
-          set_attr text curseur len gray_attr            
+          Text.set_position text curseur pos;
+          Text.set_attr text curseur len gray_attr            
       | _ -> ());
     iter token lexbuf
   in
@@ -184,13 +179,13 @@ let html_color_region buf start_point end_point =
   with
     _ ->
       buf.buf_modified <- buf.buf_modified + 1;
-      remove_point text curseur
+      Text.remove_point text curseur
 
 let html_color_buffer buf =
   let text = buf.buf_text in
   let start_point = Text.add_point text in
   let end_point = Text.add_point text in
-  Text.set_position text end_point (size text);
+  Text.set_position text end_point (Text.size text);
   html_color_region buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point
@@ -207,6 +202,7 @@ let abbreviations = []
 (***********************************************************************)
 (*********************  structures ********************)
 (***********************************************************************)
+let c_c = Keymap.c_c
 
 let structures = [
     [c_c; NormalMap, Char.code 'h'], "<a href=\"^^\"> ^^ </a> ^^";
@@ -250,31 +246,31 @@ let install buf =
   buf.buf_syntax_table.(Char.code '*') <- true;
 (*  Accents_mode.install buf; *)
   let abbrevs = Hashtbl.create 11 in
-  set_local buf abbrev_table abbrevs;
+  set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs abbreviations;
-  install_structures buf structures;
+  Simple.install_structures buf structures;
   ()
 
 let mode = Ebuffer.new_major_mode "HTML" [install]
 let _ = 
-  add_major_key mode [c_c; ControlMap,Char.code 'l']
+  Keymap.add_major_key mode [c_c; ControlMap,Char.code 'l']
   "html-color-buffer" (fun frame -> html_color_buffer frame.frm_buffer);
   let map = mode.maj_map in
   Keymap.add_binding map [NormalMap, Char.code ' '] 
     (fun frame ->
-      expand_sabbrev frame;
-      electric_insert_space frame);
-  Keymap.add_binding map [MetaMap, Char.code 'q'] fill_paragraph;
+      Abbrevs.expand_sabbrev frame;
+      Simple.electric_insert_space frame);
+  Keymap.add_binding map [MetaMap, Char.code 'q'] Simple.fill_paragraph;
   List.iter (fun char ->
       Keymap.add_binding map [NormalMap, Char.code char]
         (fun frame ->
-          self_insert_command frame;
-          highlight_paren frame)
+          Simple.self_insert_command frame;
+          Simple.highlight_paren frame)
   ) ['>']
   
 let _ =  
   Efuns.add_start_hook (fun () ->
-    add_interactive (Efuns.location()).loc_map "html-mode" 
+    Keymap.add_interactive (Efuns.location()).loc_map "html-mode" 
       (fun frame -> install frame.frm_buffer);
     let alist = get_global Ebuffer.modes_alist in
     set_global Ebuffer.modes_alist 
