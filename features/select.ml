@@ -13,11 +13,6 @@
 (*e: copyright header2 *)
 open Options
 open Efuns
-open Text
-open Simple
-open Top_window
-open Multi_frames
-open Utils
 
 (* pad: was using some other library before *)
 let string_to_filename str = 
@@ -69,7 +64,7 @@ let display_completions frame list =
     let text = buf.buf_text in
     Text.update text (iter list "Completions :");
     (try Frame.find_buffer_frame buf
-     with Not_found -> Frame.create_inactive (cut_frame frame) buf
+     with Not_found -> Frame.create_inactive (Multi_frames.cut_frame frame) buf
     ) |> ignore
 (*e: function Select.display_completions *)
 
@@ -77,7 +72,7 @@ let display_completions frame list =
 let remove_completions frame =
   try
     let frame = find_completion_frame frame in
-    remove_frame frame
+    Multi_frames.remove_frame frame
   with
     Not_found -> ()
 (*e: function Select.remove_completions *)
@@ -88,29 +83,29 @@ let set_history map string history =
   Keymap.add_binding map [NormalMap, XK.xk_Up]
     (fun mini_frame ->
       if !current = List.length !history then
-        mini_message mini_frame "No previous line in history"
+        Top_window.mini_message mini_frame "No previous line in history"
       else
-      let ele = list_nth !current !history in
+      let ele = Utils.list_nth !current !history in
       incr current;
       let buf = mini_frame.frm_buffer in
       let text = buf.buf_text in
       Text.clear text;
       string := ele;
-      insert_string mini_frame ele; ()
+      Simple.insert_string mini_frame ele; ()
   );      
   Keymap.add_binding map [NormalMap, XK.xk_Down]
     (fun mini_frame ->
       if !current < 1 then
-        mini_message mini_frame "No other line in history"
+        Top_window.mini_message mini_frame "No other line in history"
       else
         begin
           decr current;
-          let ele = list_nth !current !history in
+          let ele = Utils.list_nth !current !history in
           let buf = mini_frame.frm_buffer in
           let text = buf.buf_text in
           Text.clear text;
           string := ele;
-          insert_string mini_frame ele; ()
+          Simple.insert_string mini_frame ele; ()
         end
   )
 (*e: function Select.set_history *)
@@ -123,7 +118,7 @@ let incremental_mini_buffer frame ismap request default
     incremental_action frame (Text.to_string mini_frame.frm_buffer.buf_text)
   in
   let incremental_insert mini_frame =
-    self_insert_command mini_frame;
+    Simple.self_insert_command mini_frame;
     incremental mini_frame
   in
   for key = 32 to 127 do
@@ -131,7 +126,7 @@ let incremental_mini_buffer frame ismap request default
   done;
   Keymap.add_binding ismap [NormalMap, XK.xk_BackSpace] 
     (fun mini_frame -> 
-      delete_backspace_char mini_frame;
+      Simple.delete_backspace_char mini_frame;
       incremental mini_frame);
   top_window.top_second_cursor <- Some frame;
   Minibuffer.create_return frame ismap request default
@@ -156,7 +151,7 @@ let select frame request history start completion_fun prefix_fun action =
       if not(!completion == !string) then
         let text = mini_frame.frm_buffer.buf_text in
         completions := completion_fun !string;
-        let suffix, n  = common_suffix
+        let suffix, n  = Utils.common_suffix
             !completions
             (prefix_fun !string) 
         in
@@ -243,7 +238,7 @@ let complete_filename frame good_file filename =
   then (* Parse_file.users *) failwith "Select.complete_filename: TODO"
   else
   let filename = string_to_filename filename in
-  let dirname = dirname frame filename in
+  let dirname = Simple.dirname frame filename in
   let file_list = Utils.file_list dirname in
   match file_list with
     a::b::_ -> 
@@ -286,7 +281,7 @@ let select_file frame request history start action =
           if len>0 && s.[len - 1] <> '/' then
             try
               let filename = string_to_filename s in
-              let dirname = dirname frame filename in
+              let dirname = Simple.dirname frame filename in
               let basename = Filename.basename filename in
               let stat = Unix.stat (Filename.concat dirname basename) in
               match stat.Unix.st_kind with
@@ -323,32 +318,32 @@ let select_file frame request history start action =
   Keymap.add_binding map [NormalMap, XK.xk_Prior]
     (fun frame ->
       let frame = find_completion_frame frame in
-      backward_screen frame);
+      Simple.backward_screen frame);
   Keymap.add_binding map [NormalMap, XK.xk_Next]
     (fun frame ->
       let frame = find_completion_frame frame in
-      forward_screen frame);
+      Simple.forward_screen frame);
   Keymap.add_binding map [NormalMap, Char.code '~']
     (fun frame ->
       let buf = frame.frm_buffer in
       let text = buf.buf_text in
       let point = frame.frm_point in
-      kill_bol buf point;
-      self_insert_command frame;      
-      string := to_string text
+      Simple.kill_bol buf point;
+      Simple.self_insert_command frame;      
+      string := Text.to_string text
   );
   Keymap.add_binding map [NormalMap, Char.code '/']
     (fun frame ->
       let buf = frame.frm_buffer in
       let text = buf.buf_text in
       let point = frame.frm_point in
-      if bmove_res text point 1 = 1 then
-        ( let c = get_char text point in
-          fmove text point 1;
+      if Text.bmove_res text point 1 = 1 then
+        ( let c = Text.get_char text point in
+          Text.fmove text point 1;
           if c = '/' then
-            kill_bol buf point);
-      self_insert_command frame;
-      string := to_string text            
+            Simple.kill_bol buf point);
+      Simple.self_insert_command frame;
+      string := Text.to_string text            
   );
   ()
 (*e: function Select.select_file *)
@@ -388,7 +383,7 @@ let buf_hist = ref []
 (*s: function Select.select_buffer *)
 let select_buffer frame request default action =
   select frame (request^"(default :"^ default ^ ") ") buf_hist ""
-    (fun _ -> buffer_list frame) (fun s ->s) 
+    (fun _ -> Simple.buffer_list frame) (fun s ->s) 
   (fun str ->
       let str = 
         if str = "" then default else str in

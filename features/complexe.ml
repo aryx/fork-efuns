@@ -14,9 +14,6 @@
 open Unix
 open Utils
 open Efuns
-open Text
-open Simple
-open Select
 
 (*s: function Complex.save_buffers_and_action *)
 let rec save_buffers_and_action frame buffers action =
@@ -24,7 +21,7 @@ let rec save_buffers_and_action frame buffers action =
     [] -> let () = action frame in ()
   | (_,buf) :: buffers ->
       let text = buf.buf_text in
-      if buf.buf_last_saved = version text  ||
+      if buf.buf_last_saved = Text.version text  ||
         buf.buf_name.[0] = '*'
       then
         save_buffers_and_action frame buffers action
@@ -110,7 +107,7 @@ let check_file frame =
             let time = get_local buf buf_mtime in
             set_local buf buf_mtime st.st_mtime;
             if time <> st.st_mtime then
-              ignore (select_yes_or_no frame 
+              ignore (Select.select_yes_or_no frame 
                   (Printf.sprintf 
                     "%s changed on disk; reload (y/n) ?" 
                     buf.buf_name) (fun bool ->
@@ -139,17 +136,17 @@ let save_some_buffers frame =
 
 (*s: function Complex.load_buffer *)
 let load_buffer frame = 
-  set_previous_frame frame;
-  select_filename frame "Find file: " (fun str -> 
+  Select.set_previous_frame frame;
+  Select.select_filename frame "Find file: " (fun str -> 
     Frame.load_file frame.frm_window str |> ignore
   )
 (*e: function Complex.load_buffer *)
 
 (*s: function Complex.insert_file *)
 let insert_file frame =
-  select_filename frame "Insert file: " (fun str ->
+  Select.select_filename frame "Insert file: " (fun str ->
     let inc = open_in str in
-    insert_string frame (Utils.read_string inc);
+    Simple.insert_string frame (Utils.read_string inc);
     close_in inc
   )
 (*e: function Complex.insert_file *)
@@ -157,7 +154,7 @@ let insert_file frame =
 (*s: function Complex.write_buffer *)
 let write_buffer frame = 
   let buf = frame.frm_buffer in
-  select_filename frame "Save file as: " (fun str -> 
+  Select.select_filename frame "Save file as: " (fun str -> 
       Ebuffer.change_name buf str;
       Ebuffer.save buf
   )
@@ -173,7 +170,7 @@ let save_buffer frame =
 
 (*s: function Complex.window_load_buffer *)
 let window_load_buffer frame = 
-  select_filename frame "Find file: " 
+  Select.select_filename frame "Find file: " 
     (fun str -> 
       let top_window = Top_window.create ()
           (*(Window.display top_window)*)
@@ -184,9 +181,9 @@ let window_load_buffer frame =
 
 (*s: function Complex.change_buffer *)
 let change_buffer frame =
-  let default = get_previous_frame () in
-  set_previous_frame frame;
-  select_buffer frame " Switch to buffer: " default (fun str ->
+  let default = Select.get_previous_frame () in
+  Select.set_previous_frame frame;
+  Select.select_buffer frame " Switch to buffer: " default (fun str ->
     let window = frame.frm_window in
     Frame.change_buffer window str
   )
@@ -194,8 +191,8 @@ let change_buffer frame =
 
 (*s: function Complex.window_change_buffer *)
 let window_change_buffer frame =
-  select_buffer frame "Switch to buffer in new frame: " 
-    (get_previous_frame ())
+  Select.select_buffer frame "Switch to buffer in new frame: " 
+    (Select.get_previous_frame ())
   (fun name ->
       let top_window = Top_window.create ()
            (*"TODO_Display"*) 
@@ -235,9 +232,9 @@ let color buf regexp strict attr =
       if not (strict && (buf.buf_syntax_table.(Char.code before) ||
             buf.buf_syntax_table.(Char.code after))) then
         begin
-          bmove text point len;
+          Text.bmove text point len;
           Text.set_attr text point len attr;
-          fmove text point len;
+          Text.fmove text point len;
           ()
         end
     done
@@ -275,7 +272,7 @@ let goto_line frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  simple_select frame "goto-line:" (fun name ->
+  Select.simple_select frame "goto-line:" (fun name ->
     let line = int_of_string name in
     Text.goto_line text point (line - 1)
   )
@@ -286,7 +283,7 @@ let goto_char frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  simple_select frame "goto-char:" (fun name ->
+  Select.simple_select frame "goto-char:" (fun name ->
     let char = int_of_string name in
     Text.set_position text point char
   )
@@ -323,7 +320,7 @@ let file_perm = Local.create "file_perm" string_of_int int_of_string
 (*e: constant Complex.file_perm *)
 (*s: function Complex.mkdir *)
 let mkdir frame =
-  select_filename frame "Make directory: "
+  Select.select_filename frame "Make directory: "
     (fun str -> 
       let file_perm = try get_var frame.frm_buffer file_perm with _ -> 
             0x1ff land (lnot umask) in
@@ -335,7 +332,7 @@ let eval_history = ref []
 (*e: constant Complex.eval_history *)
 (*s: function Complex.eval *)
 let eval frame =
-  select_string frame "Eval:" eval_history "" 
+  Select.select_string frame "Eval:" eval_history "" 
     (fun str ->
       let top_window = Window.top frame.frm_window in
       (* This is not enough: the paths also may have changed. *)
@@ -413,9 +410,9 @@ let parameters_hist = ref []
   
 (*s: function Complex.set_parameter *)
 let set_parameter frame = 
-  let parameters = get_global parameters_var in
+  let parameters = get_global Simple.parameters_var in
   Select.select frame "set-parameter : " parameters_hist
-    "" (all_parameters frame) (fun s -> s) (fun variable ->
+    "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
           let (input,print,param) = List.assoc variable parameters
@@ -425,9 +422,9 @@ let set_parameter frame =
   
 (*s: function Complex.get_parameter *)
 let get_parameter frame =
-  let parameters = get_global parameters_var in  
+  let parameters = get_global Simple.parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
-    "" (all_parameters frame) (fun s -> s) (fun variable ->
+    "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
         (Printf.sprintf "%s : %s" variable (
           let (input,print,param) = List.assoc variable parameters
@@ -445,30 +442,30 @@ let down_buffer frame = up_buffer := frame.frm_buffer.buf_name
 (*s: function Complex.up_buffer *)
 let up_buffer frame =
   if !up_buffer = "" then raise Not_found;
-  set_previous_frame frame;
+  Select.set_previous_frame frame;
   Frame.change_buffer frame.frm_window !up_buffer
 (*e: function Complex.up_buffer *)
   
 (*s: function Complex.left_buffer *)
 let left_buffer frame =
-  set_previous_frame frame;
+  Select.set_previous_frame frame;
   Frame.change_buffer frame.frm_window (
-    match !prev_buffers with
+    match !Select.prev_buffers with
       name :: buffer :: tail ->
-        prev_buffers := tail @ [name]; 
+        Select.prev_buffers := tail @ [name]; 
         buffer
     | _ -> raise Not_found)
 (*e: function Complex.left_buffer *)
 
 (*s: function Complex.right_buffer *)
 let right_buffer frame =
-  set_previous_frame frame;
-  Frame.change_buffer frame.frm_window (match !prev_buffers with
+  Select.set_previous_frame frame;
+  Frame.change_buffer frame.frm_window (match !Select.prev_buffers with
       name :: tail ->
         begin
           match List.rev tail with
             buffer :: tail ->
-              prev_buffers := name :: (List.rev tail);
+              Select.prev_buffers := name :: (List.rev tail);
               buffer
           | _ -> raise Not_found
         end

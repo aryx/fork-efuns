@@ -11,12 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-open Top_window
 open Efuns
-open Text
-open Frame
-open Simple
-open Select
     
 (*s: toplevel Search._1 *)
 (*let _ = Time.init ()*)
@@ -51,13 +46,13 @@ let replace flag frame query str repl =
   let text = buf.buf_text in
   let point = frame.frm_point in
   let regexp = to_regexp flag str in
-  let session = start_session text in
+  let session = Text.start_session text in
   let n = ref 0 in
   try
     let last_pos = ref (Text.get_position text point) in
     match flag,query with
       Regexp, NoQuery ->
-        while not (check_abort frame) do
+        while not (Top_window.check_abort frame) do
           let len = Text.search_forward text regexp point in
           let pos = Text.get_position text point in
           if pos = !last_pos then 
@@ -65,23 +60,23 @@ let replace flag frame query str repl =
           else begin
               last_pos := pos;
               let result = Text.replace_matched text repl in
-              let (_,_matched) = delete_res text point len in
-              insert text point result;
-              fmove text point (String.length result);
+              let (_,_matched) = Text.delete_res text point len in
+              Text.insert text point result;
+              Text.fmove text point (String.length result);
               n := !n + 1
             end
         done
     | RegexpString, NoQuery ->
         let delta = String.length repl in
-        while not (check_abort frame) do
+        while not (Top_window.check_abort frame) do
           let len = Text.search_forward text regexp point in
           let pos = Text.get_position text point in
           if pos = !last_pos then 
             (if Text.fmove_res text point 1 = 0 then raise Exit)
           else begin
               last_pos := pos;
-              delete text point len;
-              insert text point repl;
+              Text.delete text point len;
+              Text.insert text point repl;
               Text.fmove text point delta;
               n := !n + 1
             end
@@ -98,14 +93,14 @@ let replace flag frame query str repl =
           else begin
               last_pos := pos;
               top_window.top_second_cursor <- Some frame;
-              let _ = select_yes_or_no frame request 
+              let _ = Select.select_yes_or_no frame request 
                   (fun yes ->
                     if yes then
                       begin
                         let result = Text.replace_matched text repl in
-                        let (_,_matched) = delete_res text point len in
-                        insert text point result;
-                        fmove text point (String.length result);
+                        let (_,_matched) = Text.delete_res text point len in
+                        Text.insert text point result;
+                        Text.fmove text point (String.length result);
                         n := !n + 1
                       end;
                     iter ()) in
@@ -126,12 +121,12 @@ let replace flag frame query str repl =
           else begin
               last_pos := pos;
               top_window.top_second_cursor <- Some frame;
-              let _ = select_yes_or_no frame request 
+              let _ = Select.select_yes_or_no frame request 
                   (fun yes ->
                     if yes then
                       begin
-                        delete text point len;
-                        insert text point repl;
+                        Text.delete text point len;
+                        Text.insert text point repl;
                         Text.fmove text point delta;
                         n := !n + 1
                       end;
@@ -143,11 +138,11 @@ let replace flag frame query str repl =
         iter ()
   with
     Not_found ->
-      commit_session text session;
+      Text.commit_session text session;
       Top_window.message top_window
         ("Replace "^(string_of_int !n)^" occurences")
   | _ ->
-      commit_session text session
+      Text.commit_session text session
 (*e: function Search.replace *)
 
 
@@ -158,7 +153,7 @@ let no_query f = f true
 let query frame request f =
   let top_window = Window.top frame.frm_window in
   top_window.top_second_cursor <- Some frame;
-  select_yes_or_no frame request f |> ignore
+  Select.select_yes_or_no frame request f |> ignore
 (*e: function Search.query *)
 
 (*s: constant Search.string_history *)
@@ -166,7 +161,7 @@ let string_history = ref []
 (*e: constant Search.string_history *)
 (*s: function Search.select_replace *)
 let select_replace frame request action =
-  select_string frame request string_history "" action 
+  Select.select_string frame request string_history "" action 
 (*e: function Search.select_replace *)
 
 (*s: function Search.replace_string *)
@@ -216,8 +211,8 @@ let library_file str =
 
 (*s: function Search.select_lib_filename *)
 let select_lib_filename frame request action =
-  select frame request file_hist (current_dir frame)
-  (complete_filename frame library_file)
+  Select.select frame request Select.file_hist (Frame.current_dir frame)
+  (Select.complete_filename frame library_file)
   Filename.basename action
 (*e: function Search.select_lib_filename *)
 
@@ -262,7 +257,7 @@ let isearch to_regexp sens frame =
     let point = frame.frm_point in
     let buf = frame.frm_buffer in
     let text = buf.buf_text in
-    goto_point text point spoint;
+    Text.goto_point text point spoint;
     match !sens with
       Backward -> 
         Text.search_backward text regexp point |> ignore
@@ -270,7 +265,7 @@ let isearch to_regexp sens frame =
         let len = Text.search_forward text regexp point in
 (*        Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
         print_newline ();*)
-        fmove text point len; ()
+        Text.fmove text point len; ()
   in
   let set_last mini_frame =
     if !string = "" then
@@ -298,7 +293,7 @@ let isearch to_regexp sens frame =
       Minibuffer.update_request mini_frame (request ())
   );  
   let _mini_frame =
-    incremental_mini_buffer frame ismap (request ()) !string
+    Select.incremental_mini_buffer frame ismap (request ()) !string
       (fun frame str -> 
         string := str;
         isearch_s ()
@@ -321,19 +316,19 @@ let isearch to_regexp sens frame =
   Keymap.add_binding ismap [NormalMap, XK.xk_Left]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      move_backward frame 1 |> ignore
+      Simple.move_backward frame 1 |> ignore
      );  
   Keymap.add_binding ismap [NormalMap, XK.xk_Right]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      move_forward frame 1 |> ignore
+      Simple.move_forward frame 1 |> ignore
     );  
-  Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and forward_line);
-  Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and backward_line);
+  Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and Simple.forward_line);
+  Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and Simple.backward_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'a'] 
-    (kill_and beginning_of_line);
+    (kill_and Simple.beginning_of_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'e'] 
-    (kill_and end_of_line)
+    (kill_and Simple.end_of_line)
 (*e: function Search.isearch *)
 
 

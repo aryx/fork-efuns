@@ -11,7 +11,6 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-open Text
 open Simple
 open Efuns
 open Top_window

@@ -11,11 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-open Text
 open Efuns
-open Ebuffer
-open Top_window
-open Simple
 
 
 (*s: constant Minibuffer.charreprs *)
@@ -23,7 +19,7 @@ let charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i))
 (*e: constant Minibuffer.charreprs *)
 (*s: toplevel Minibuffer._1 *)
 let _ =
-  charreprs.(9) <- String.make !tab_size ' '
+  charreprs.(9) <- String.make !Ebuffer.tab_size ' '
 (*e: toplevel Minibuffer._1 *)
 
 (*s: function Minibuffer.buf_create *)
@@ -33,7 +29,7 @@ let buf_create text local_map =
     buf_name = "*Minibuffer*";
     buf_filename = None; (* no connected file! *)
 
-    buf_major_mode = fondamental_mode;
+    buf_major_mode = Ebuffer.fondamental_mode;
     buf_minor_modes = [];
 
     buf_charreprs = charreprs;
@@ -42,7 +38,7 @@ let buf_create text local_map =
     buf_syntax_table = Ebuffer.default_syntax_table;
 
     buf_modified = 0;
-    buf_last_saved = version text;
+    buf_last_saved = Text.version text;
 
     buf_point = Text.add_point text;
     buf_start = Text.add_point text;
@@ -62,7 +58,7 @@ let buf_create text local_map =
 let kill mini_frame old_frame =
   let window = mini_frame.frm_window in
   let top_window = Window.top window in
-  clear_message top_window;
+  Top_window.clear_message top_window;
   top_window.top_mini_buffers <- List.tl top_window.top_mini_buffers;
   if old_frame.frm_killed then
     Frame.unkill window old_frame;
@@ -112,7 +108,7 @@ let create frame local_map request =
 (*s: function Minibuffer.create_return *)
 let create_return frame local_map request default action =
   let mini_frame = create frame local_map request in
-  insert_string mini_frame default;
+  Simple.insert_string mini_frame default;
   Keymap.add_binding local_map [NormalMap, XK.xk_Return] 
     (return action frame);
   mini_frame

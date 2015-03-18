@@ -13,10 +13,6 @@
 (*e: copyright header2 *)
 open Options
 open Efuns
-open Text
-open Frame
-open Select
-open Multi_frames  
 
 (*s: constant Compil.compilation_frame *)
 let compilation_frame = ref None
@@ -70,7 +66,7 @@ let next_error top_frame =
     None -> Top_window.message top_window "No compilation started"
   | Some (frame, error_point, cdir) ->      
       if frame.frm_killed 
-      then unkill (cut_frame top_frame) frame;
+      then Frame.unkill (Multi_frames.cut_frame top_frame) frame;
       let buf = frame.frm_buffer in
       let find_error = try
           get_local buf find_error
@@ -89,7 +85,7 @@ let next_error top_frame =
           let buf = Ebuffer.read filename (Keymap.create ()) in
 (* new frame for error buffer *)
           let frame = 
-            try find_buffer_frame buf 
+            try Frame.find_buffer_frame buf 
             with Not_found ->
                 if frame == top_frame then
                   let new_window = Top_window.create ()
@@ -125,7 +121,7 @@ let make_hist = ref [!!make_command]
 (*s: function Compil.compile *)
 let compile find_error_fun frame =
   let default = List.hd !make_hist in
-  select_string frame ("Compile command: (default :"^ default^") " )
+  Select.select_string frame ("Compile command: (default :"^ default^") " )
   make_hist ""
     (fun cmd -> 
       let cmd = 
@@ -154,12 +150,12 @@ let compile find_error_fun frame =
       in
       let comp_window =
         match !compilation_frame with
-          None -> cut_frame frame 
+          None -> Multi_frames.cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill new_frame.frm_buffer;
             if new_frame.frm_killed 
-            then cut_frame frame
+            then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
       Unix.chdir cdir;
@@ -178,14 +174,14 @@ let set_compilation_buffer frame comp_buf cdir =
   let window =
     match !compilation_frame with
       None -> 
-        cut_frame frame
+        Multi_frames.cut_frame frame
     | Some (frame,point, _) ->
-        remove_point frame.frm_buffer.buf_text point;  
+        Text.remove_point frame.frm_buffer.buf_text point;  
         if frame.frm_killed 
-        then cut_frame frame 
+        then Multi_frames.cut_frame frame 
         else frame.frm_window
   in
-  let error_point = add_point comp_buf.buf_text in
+  let error_point = Text.add_point comp_buf.buf_text in
   let comp_frame = Frame.create window None comp_buf in
   compilation_frame := Some (comp_frame, error_point, cdir)
 (*e: function Compil.set_compilation_buffer *)
@@ -201,7 +197,7 @@ let grep_hist = ref [""]
 (*s: function Compil.grep *)
 let grep frame =
   let default = List.hd !grep_hist in
-  select_string frame (Printf.sprintf "Grep command: %s (default: %s) " !!grep_command default)
+  Select.select_string frame (Printf.sprintf "Grep command: %s (default: %s) " !!grep_command default)
   grep_hist ""
     (fun cmd -> 
       let cmd = if cmd = "" then default else cmd in
@@ -209,12 +205,12 @@ let grep frame =
       let cdir = Frame.current_dir frame in
       let comp_window =
         match !compilation_frame with
-          None -> cut_frame frame 
+          None -> Multi_frames.cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill new_frame.frm_buffer;
             if new_frame.frm_killed 
-            then cut_frame frame
+            then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
       Unix.chdir cdir;

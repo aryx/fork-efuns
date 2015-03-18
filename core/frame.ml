@@ -12,11 +12,9 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Common
-
 open Options
-open Text
 open Efuns
-open Ebuffer
+open Text
 
 (*s: constant Frame.status_format *)
 let status_format = ref [
@@ -144,7 +142,7 @@ let install window frame =
   then frame.frm_cutline <- window.win_width - 1;
   frame.frm_table <- (Array.init window.win_height (fun i -> 
         {
-          repr_line = dummy_line;
+          repr_line = Text.dummy_line;
           repr_y = 0;
           repr_x = 0;
           repr_offset = 0;
@@ -184,7 +182,7 @@ let create_without_top window mini buf =
       stat_line = -1;
       stat_col = -1;
       status_modified = true;
-      stat_modified = (buf.buf_last_saved = version buf.buf_text);
+      stat_modified = (buf.buf_last_saved = Text.version buf.buf_text);
 
       stat_modes = [];
       stat_mode = dummy_mode;
@@ -277,18 +275,19 @@ let create_inactive window buf =
 (*s: function Frame.point_to_cursor *)
 let point_to_cursor buf point =
   let text = buf.buf_text in
-  let line = Ebuffer.compute_representation buf (point_line text point) in
-  let xpos = point_col text point in
+  let line = Ebuffer.compute_representation buf (Text.point_line text point) in
+  let xpos = Text.point_col text point in
   let rec iter reprs =
     match reprs with
       [] -> 0
     | repr :: tail ->
-        if repr.repr_line_pos > xpos then
+        if repr.Text.repr_line_pos > xpos then
           iter tail
         else
-          repr.repr_pos + repr.repr_charsize * (xpos - repr.repr_line_pos)
+          repr.Text.repr_pos + repr.Text.repr_charsize * 
+            (xpos - repr.Text.repr_line_pos)
   in
-  iter line.representation
+  iter line.Text.representation
 (*e: function Frame.point_to_cursor *)
 
 (*s: function Frame.cursor_to_point *)
@@ -401,10 +400,10 @@ let update_table top_window frame =
 
   (* assert frame.frm_y_offset >= 0 *)
   let current_n = ref (point_line text start) in
-  let current_line = ref (compute_representation buf !current_n) in
+  let current_line = ref (Ebuffer.compute_representation buf !current_n) in
   while frame.frm_y_offset < 0 && !current_n > 0 do
     current_n := !current_n - 1;
-    current_line := compute_representation buf !current_n;
+    current_line := Ebuffer.compute_representation buf !current_n;
     let lines = !current_line.repr_len / frame.frm_cutline in
     frame.frm_y_offset <- frame.frm_y_offset + lines + 1;
   done;
@@ -417,7 +416,7 @@ let update_table top_window frame =
     frame.frm_y_offset <- frame.frm_y_offset - 
     (!current_line.repr_len / frame.frm_cutline) - 1;
     current_n := !current_n + 1;
-    current_line := compute_representation buf !current_n;
+    current_line := Ebuffer.compute_representation buf !current_n;
   done;
   if !current_n = nbre_lines text && 
     frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
@@ -466,10 +465,10 @@ let update_table top_window frame =
           else
             iter_repr x y n line tail
       | _ -> 
-          let line = compute_representation buf (n + 1) in
+          let line = Ebuffer.compute_representation buf (n + 1) in
           iter_line (y+1) (n+1) line
     else  
-    let line = compute_representation buf (n + 1) in
+    let line = Ebuffer.compute_representation buf (n + 1) in
     iter_line y (n+1) line
   in
   iter_line (- frame.frm_y_offset) !current_n !current_line
