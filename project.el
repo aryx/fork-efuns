@@ -3,7 +3,8 @@
  pad-ocaml-project-path "/home/pad/github/fork-efuns"
  pad-ocaml-project-subdirs 
  (split-string 
-  "commons core
+  "commons core features graphics
+   major_modes minor_modes prog_modes
   "
   )
  pad-ocaml-project-toplevel "pfff.top"
