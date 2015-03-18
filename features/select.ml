@@ -139,13 +139,13 @@ let incremental_mini_buffer
     Keymap.add_binding ismap [NormalMap, key] incremental_insert
   done;
   Keymap.add_binding ismap [NormalMap, XK.xk_BackSpace] (fun mini_frame -> 
-      Simple.delete_backspace_char mini_frame;
-      incremental mini_frame
+    Simple.delete_backspace_char mini_frame;
+    incremental mini_frame
   );
   top_window.top_second_cursor <- Some frame;
   Minibuffer.create_return frame ismap request default (fun frame str -> 
-      top_window.top_second_cursor <- None;
-      action frame str
+    top_window.top_second_cursor <- None;
+    action frame str
   )
 (*e: function Select.incremental_mini_buffer *)
 
@@ -266,7 +266,8 @@ let complete_filename frame good_file filename =
 let select_file frame request history start action =
   let map = Keymap.create () in
   let string = ref "" in
-  Keymap.add_binding map [ControlMap, Char.code 'g'] (fun mini_frame -> 
+  Keymap.add_binding map [ControlMap, Char.code 'g'] (fun mini_frame ->
+    pr2 "HERE";
     remove_completions mini_frame;
     Minibuffer.kill mini_frame frame
   );
@@ -274,7 +275,8 @@ let select_file frame request history start action =
   let completions = ref [] in
   Keymap.add_binding map [NormalMap, XK.xk_Tab] (fun mini_frame ->
     let text = mini_frame.frm_buffer.buf_text in
-    if (!completion <> !string) then begin
+    (*if (!completion <> !string) then  *)
+    begin
       string := Text.to_string text;
       completions := complete_filename frame avoid_completion !string;
       let suffix, n = 
@@ -303,10 +305,16 @@ let select_file frame request history start action =
        then
           display_completions frame
             (Utils.completion !completions (basename !string))
-    end else
+    end
+(* TODO later, but right now have some bad side effects.
+ e.g. if do TAB in one dir, then do M-back to remove a dir, and rerun
+ TAB then it does not update the completion buffer with the candidates
+ for the new dir, so for now commented!
+   else
     (* can be improved, by displaying another part of the completion buffer *)
       display_completions frame
           (Utils.completion !completions (basename !string))
+*)
   );
   set_history map string history;
   incremental_mini_buffer frame map request start

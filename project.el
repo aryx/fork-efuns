@@ -5,6 +5,7 @@
  (split-string 
   "commons core features graphics
    major_modes minor_modes prog_modes
+   graphics/gtk_cairo
   "
   )
  pad-ocaml-project-toplevel "pfff.top"
