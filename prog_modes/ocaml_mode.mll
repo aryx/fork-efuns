@@ -512,7 +512,7 @@ let ocaml_color_region buf start_point end_point =
     Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 
                             (Window.get_font !!(*upper_*)font) false in
   let text = buf.buf_text in
-  let curseur = Text.add_point text in
+  let curseur = Text.new_point text in
   let lexbuf = lexing text start_point end_point in
   let rec iter lexbuf =
     let (pos,len), token = token lexbuf in
@@ -553,8 +553,8 @@ let ocaml_color_region buf start_point end_point =
 let ocaml_color_buffer buf =
   let text = buf.buf_text in
   Text.unset_attr text;
-  let start_point = Text.add_point text in
-  let end_point = Text.add_point text in
+  let start_point = Text.new_point text in
+  let end_point = Text.new_point text in
   Text.set_position text end_point (Text.size text);
   ocaml_color_region buf start_point end_point;
   Text.remove_point text start_point;
@@ -563,8 +563,8 @@ let ocaml_color_buffer buf =
 let ocaml_color frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  let start_point = Text.add_point text in
-  let end_point = Text.add_point text in
+  let start_point = Text.new_point text in
+  let end_point = Text.new_point text in
   Text.set_position text end_point (Text.size text);
   ocaml_color_region buf start_point end_point;
   Text.remove_point text start_point;
@@ -1116,8 +1116,8 @@ let indent_region frame =
 let indent_buffer frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  let start_point = Text.add_point text in
-  let end_point = Text.add_point text in
+  let start_point = Text.new_point text in
+  let end_point = Text.new_point text in
   Text.set_position text end_point (Text.size text);
   indent_between_points buf start_point end_point;
   Text.remove_point text start_point;
@@ -1228,7 +1228,7 @@ let module_name buf_name =
 
 let find_env buf point =
   let text = buf.buf_text in
-  let tmp_point = Text.add_point text in
+  let tmp_point = Text.new_point text in
   let rec parse lexbuf stack env =
     let _, t = token lexbuf in
     match t with
@@ -1255,7 +1255,7 @@ let find_env buf point =
     | _ -> parse lexbuf stack env
   in
   let end_point = Text.dup_point text point in
-  let curseur = Text.add_point text in
+  let curseur = Text.new_point text in
   let lexbuf = lexing text curseur end_point in
   let env = parse lexbuf [] [] in
   Text.remove_point text curseur;

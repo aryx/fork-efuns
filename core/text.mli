@@ -82,7 +82,7 @@ val unset_attr : t -> unit
 
 val find_xy : t -> int -> int -> int -> int * int
 
-val add_point : t -> point
+val new_point : t -> point
 val dup_point : t -> point -> point
 val remove_point : t -> point -> unit
 val distance : t -> point -> point -> delta

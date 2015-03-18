@@ -716,13 +716,13 @@ let find_xy text point line pos =
   x,y
 (*e: function Text.find_xy *)
 
-(*s: function Text.add_point *)
-let add_point tree =
+(*s: function Text.new_point *)
+let new_point tree =
   let text = tree.tree_text in      
   let p = { pos = 0; line = 0; } in    
   text.text_points <- p :: text.text_points;
   p
-(*e: function Text.add_point *)
+(*e: function Text.new_point *)
 
 (*s: function Text.dup_point *)
 let dup_point tree point =

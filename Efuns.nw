@@ -626,8 +626,8 @@ let create name filename text local_map =
       buf_name = name;
       buf_filename = filename;
 
-      buf_point = Text.add_point text;
-      buf_start = Text.add_point text;
+      buf_point = Text.new_point text;
+      buf_start = Text.new_point text;
 
       buf_last_saved = Text.version text;
       buf_modified = 0;
@@ -2403,8 +2403,8 @@ mutable text_points : point list;
 % APIs that maintain somewhere this list of points.
 
 
-<<function Text.add_point>>=
-let add_point tree =
+<<function Text.new_point>>=
+let new_point tree =
   let text = tree.tree_text in      
   let p = { pos = 0; line = 0; } in    
   text.text_points <- p :: text.text_points;
@@ -2990,7 +2990,7 @@ Window.get_color !!highlight_color |> ignore;
 <<function Simple.color>>=
 let color buf regexp strict attr =
   let text = buf.buf_text in
-  let point = Text.add_point text in
+  let point = Text.new_point text in
   try
     while true do
       let len = Text.search_forward text regexp point in
@@ -4126,8 +4126,8 @@ let buf_create text local_map =
     buf_modified = 0;
     buf_last_saved = Text.version text;
 
-    buf_point = Text.add_point text;
-    buf_start = Text.add_point text;
+    buf_point = Text.new_point text;
+    buf_start = Text.new_point text;
     buf_mark = None;
 
     buf_sync = false;
@@ -4597,7 +4597,7 @@ let mouse_save_then_kill frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
   let mark = Ebuffer.get_mark buf point in
-  let new_point = add_point text in
+  let new_point = new_point text in
   Frame.move_point frame new_point !mouse_x !mouse_y;
   if point = new_point then
     begin
@@ -6641,7 +6641,7 @@ let grep frame =
       let comp_frame = System.start_command "*Grep*" comp_window cmd in
       Frame.active frame;
       let buf = comp_frame.frm_buffer in
-      let error_point = Text.add_point buf.buf_text in
+      let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir);
       set_local buf find_error c_find_error
   )
@@ -6703,7 +6703,7 @@ let compile find_error_fun frame =
       let comp_frame = System.start_command "*Compile*" comp_window cmd in
       Frame.active frame;
       let buf = comp_frame.frm_buffer in
-      let error_point = Text.add_point buf.buf_text in
+      let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir);
       set_local buf find_error find_error_fun
   )
@@ -6862,7 +6862,7 @@ let dabbrev_expand frame =
   let regexp = Str.regexp s in
   let rec iter curr_buf pos =
     let curr_text = curr_buf.buf_text in
-    let mark = Text.add_point curr_text in
+    let mark = Text.new_point curr_text in
     Text.set_position curr_text mark pos;
     try
       let rec restart () =

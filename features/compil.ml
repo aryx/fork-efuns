@@ -162,7 +162,7 @@ let compile find_error_fun frame =
       let comp_frame = System.start_command "*Compile*" comp_window cmd in
       Frame.active frame;
       let buf = comp_frame.frm_buffer in
-      let error_point = Text.add_point buf.buf_text in
+      let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir);
       set_local buf find_error find_error_fun
   )
@@ -170,7 +170,7 @@ let compile find_error_fun frame =
 
 (*s: function Compil.set_compilation_buffer *)
 let set_compilation_buffer frame comp_buf cdir =
-  (*let error_point = add_point comp_buf.buf_text in*)
+  (*let error_point = new_point comp_buf.buf_text in*)
   let window =
     match !compilation_frame with
       None -> 
@@ -181,7 +181,7 @@ let set_compilation_buffer frame comp_buf cdir =
         then Multi_frames.cut_frame frame 
         else frame.frm_window
   in
-  let error_point = Text.add_point comp_buf.buf_text in
+  let error_point = Text.new_point comp_buf.buf_text in
   let comp_frame = Frame.create window None comp_buf in
   compilation_frame := Some (comp_frame, error_point, cdir)
 (*e: function Compil.set_compilation_buffer *)
@@ -217,7 +217,7 @@ let grep frame =
       let comp_frame = System.start_command "*Grep*" comp_window cmd in
       Frame.active frame;
       let buf = comp_frame.frm_buffer in
-      let error_point = Text.add_point buf.buf_text in
+      let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir);
       set_local buf find_error c_find_error
   )

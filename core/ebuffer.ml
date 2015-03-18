@@ -101,8 +101,8 @@ let create name filename text local_map =
       buf_name = name;
       buf_filename = filename;
 
-      buf_point = Text.add_point text;
-      buf_start = Text.add_point text;
+      buf_point = Text.new_point text;
+      buf_start = Text.new_point text;
 
       buf_last_saved = Text.version text;
       buf_modified = 0;

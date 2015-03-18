@@ -216,7 +216,7 @@ let change_font frame =
 (*s: function Complex.color *)
 let color buf regexp strict attr =
   let text = buf.buf_text in
-  let point = Text.add_point text in
+  let point = Text.new_point text in
   try
     while true do
       let len = Text.search_forward text regexp point in

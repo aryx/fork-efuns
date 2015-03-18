@@ -211,7 +211,7 @@ let lisp_color_region buf start_point end_point =
     Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 0 false in
 
   let text = buf.buf_text in
-  let curseur = Text.add_point text in
+  let curseur = Text.new_point text in
   let lexbuf = lexing text start_point end_point in
   let rec iter prev_tok lexbuf =
     let (pos,len), token = token lexbuf in
@@ -238,8 +238,8 @@ let lisp_color_region buf start_point end_point =
 
 let lisp_color_buffer buf =
   let text = buf.buf_text in
-  let start_point = Text.add_point text in
-  let end_point = Text.add_point text in
+  let start_point = Text.new_point text in
+  let end_point = Text.new_point text in
   Text.set_position text end_point (Text.size text);
   lisp_color_region buf start_point end_point;
   Text.remove_point text start_point;
@@ -422,8 +422,8 @@ let indent_region frame =
 let indent_buffer frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  let start_point = Text.add_point text in
-  let end_point = Text.add_point text in
+  let start_point = Text.new_point text in
+  let end_point = Text.new_point text in
   Text.set_position text end_point (Text.size text);
   indent_between_points buf start_point end_point;
   Text.remove_point text start_point;

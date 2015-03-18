@@ -40,8 +40,8 @@ let buf_create text local_map =
     buf_modified = 0;
     buf_last_saved = Text.version text;
 
-    buf_point = Text.add_point text;
-    buf_start = Text.add_point text;
+    buf_point = Text.new_point text;
+    buf_start = Text.new_point text;
     buf_mark = None;
 
     buf_sync = false;

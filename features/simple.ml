@@ -675,8 +675,8 @@ let highlight_bit = 1 lsl 24
 (*s: function Simple.unhightlight_region *)
 let unhightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = Text.add_point text in
-  let final = Text.add_point text in
+  let curseur = Text.new_point text in
+  let final = Text.new_point text in
   Text.set_position text curseur debut;
   Text.set_position text final fin;
   let unhigh = lnot (1 lsl 24) in
@@ -693,8 +693,8 @@ let unhightlight_region buf debut fin =
 (*s: function Simple.hightlight_region *)
 let hightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = Text.add_point text in
-  let final = Text.add_point text in
+  let curseur = Text.new_point text in
+  let final = Text.new_point text in
   Text.set_position text curseur debut;
   Text.set_position text final fin;
   let high = 1 lsl 24 in
@@ -728,8 +728,8 @@ let unhightlight () =
      highlighted := None;
      let buf = frame.frm_buffer in
      let text = buf.buf_text in
-     let curseur = Text.add_point text in
-     let final = Text.add_point text in
+     let curseur = Text.new_point text in
+     let final = Text.new_point text in
      Text.set_position text curseur debut;
      Text.set_position text final fin;
      let str = Text.region text curseur final in
@@ -877,8 +877,8 @@ let mouse_drag_region frame =
         | Some (frame,debut,fin) -> 
             let buf = frame.frm_buffer in
             let text = buf.buf_text in
-            let curseur = add_point text in
-            let final = add_point text in
+            let curseur = new_point text in
+            let final = new_point text in
             set_position text curseur debut;
             set_position text final fin;
             let str = Text.region text curseur final in
@@ -918,7 +918,7 @@ let mouse_save_then_kill frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
   let mark = Ebuffer.get_mark buf point in
-  let new_point = add_point text in
+  let new_point = new_point text in
   Frame.move_point frame new_point !mouse_x !mouse_y;
   if point = new_point then
     begin
@@ -970,7 +970,7 @@ let kill_buffer frame =
 (*s: function Simple.color *)
 let color buf regexp strict attr =
   let text = buf.buf_text in
-  let point = Text.add_point text in
+  let point = Text.new_point text in
   try
     while true do
       let len = Text.search_forward text regexp point in

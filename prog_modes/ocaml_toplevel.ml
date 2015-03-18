@@ -34,8 +34,8 @@ open Ocaml_env
 (*s: function Ocaml_toplevel.type_buffer *)
 let type_buffer buf =
   let text = buf.buf_text in
-  let start_point = Text.add_point text in
-  let end_point = Text.add_point text in
+  let start_point = Text.new_point text in
+  let end_point = Text.new_point text in
   set_position text end_point (size text);
   let lexbuf = lexing text start_point end_point in
   try  

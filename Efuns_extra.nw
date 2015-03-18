@@ -1137,7 +1137,7 @@ let print_newlines text =
   
 <<function Text.find_xy>>
 
-<<function Text.add_point>>
+<<function Text.new_point>>
 
 <<function Text.dup_point>>
 
@@ -2325,8 +2325,8 @@ let highlight_bit = 1 lsl 24
 <<function Simple.unhightlight_region>>=
 let unhightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = Text.add_point text in
-  let final = Text.add_point text in
+  let curseur = Text.new_point text in
+  let final = Text.new_point text in
   Text.set_position text curseur debut;
   Text.set_position text final fin;
   let unhigh = lnot (1 lsl 24) in
@@ -2343,8 +2343,8 @@ let unhightlight_region buf debut fin =
 <<function Simple.hightlight_region>>=
 let hightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = Text.add_point text in
-  let final = Text.add_point text in
+  let curseur = Text.new_point text in
+  let final = Text.new_point text in
   Text.set_position text curseur debut;
   Text.set_position text final fin;
   let high = 1 lsl 24 in
@@ -2378,8 +2378,8 @@ let unhightlight () =
      highlighted := None;
      let buf = frame.frm_buffer in
      let text = buf.buf_text in
-     let curseur = Text.add_point text in
-     let final = Text.add_point text in
+     let curseur = Text.new_point text in
+     let final = Text.new_point text in
      Text.set_position text curseur debut;
      Text.set_position text final fin;
      let str = Text.region text curseur final in
@@ -2527,8 +2527,8 @@ let mouse_drag_region frame =
         | Some (frame,debut,fin) -> 
             let buf = frame.frm_buffer in
             let text = buf.buf_text in
-            let curseur = add_point text in
-            let final = add_point text in
+            let curseur = new_point text in
+            let final = new_point text in
             set_position text curseur debut;
             set_position text final fin;
             let str = Text.region text curseur final in
@@ -3645,7 +3645,7 @@ let change_font frame =
 <<function Complex.color>>=
 let color buf regexp strict attr =
   let text = buf.buf_text in
-  let point = Text.add_point text in
+  let point = Text.new_point text in
   try
     while true do
       let len = Text.search_forward text regexp point in
@@ -3918,7 +3918,7 @@ then Text.set_position text point (Text.size text);
 let system buf_name cmd end_action =
   let (pid,inc,outc) = open_process cmd in
   let text = Text.create "" in
-  let curseur = Text.add_point text in
+  let curseur = Text.new_point text in
   let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
   buf.buf_sync <- true;
   let _ins = Unix.descr_of_in_channel inc in
@@ -4426,7 +4426,7 @@ let make_hist = ref [!!make_command]
 
 <<function Compil.set_compilation_buffer>>=
 let set_compilation_buffer frame comp_buf cdir =
-  (*let error_point = add_point comp_buf.buf_text in*)
+  (*let error_point = new_point comp_buf.buf_text in*)
   let window =
     match !compilation_frame with
       None -> 
@@ -4437,7 +4437,7 @@ let set_compilation_buffer frame comp_buf cdir =
         then Multi_frames.cut_frame frame 
         else frame.frm_window
   in
-  let error_point = Text.add_point comp_buf.buf_text in
+  let error_point = Text.new_point comp_buf.buf_text in
   let comp_frame = Frame.create window None comp_buf in
   compilation_frame := Some (comp_frame, error_point, cdir)
 @
@@ -4745,7 +4745,7 @@ open Efuns
 <<function Top_window.scroll_to_frame>>
 (*
     Text.set_position text point y;
-      let point = Text.add_point text in
+      let point = Text.new_point text in
       let curline = Text.point_line text frame.frm_start in
       let newline = Text.point_line text point in
       Text.remove_point text point;
@@ -5863,8 +5863,8 @@ let mkfile_comments= Str.regexp "^abcd#.*$"
 <<function Ocaml_toplevel.type_buffer>>=
 let type_buffer buf =
   let text = buf.buf_text in
-  let start_point = Text.add_point text in
-  let end_point = Text.add_point text in
+  let start_point = Text.new_point text in
+  let end_point = Text.new_point text in
   set_position text end_point (size text);
   let lexbuf = lexing text start_point end_point in
   try  

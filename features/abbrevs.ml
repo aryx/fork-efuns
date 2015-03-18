@@ -77,7 +77,7 @@ let dabbrev_expand frame =
   let regexp = Str.regexp s in
   let rec iter curr_buf pos =
     let curr_text = curr_buf.buf_text in
-    let mark = Text.add_point curr_text in
+    let mark = Text.new_point curr_text in
     Text.set_position curr_text mark pos;
     try
       let rec restart () =

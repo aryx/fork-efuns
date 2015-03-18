@@ -387,7 +387,7 @@ let scroll_to_frame ady top_window =
 (*e: function Top_window.scroll_to_frame *)
 (*
     Text.set_position text point y;
-      let point = Text.add_point text in
+      let point = Text.new_point text in
       let curline = Text.point_line text frame.frm_start in
       let newline = Text.point_line text point in
       Text.remove_point text point;

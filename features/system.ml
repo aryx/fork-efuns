@@ -33,7 +33,7 @@ let open_process cmd =
 let system buf_name cmd end_action =
   let (pid,inc,outc) = open_process cmd in
   let text = Text.create "" in
-  let curseur = Text.add_point text in
+  let curseur = Text.new_point text in
   let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
   buf.buf_sync <- true;
   let _ins = Unix.descr_of_in_channel inc in

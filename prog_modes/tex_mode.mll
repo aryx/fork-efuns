@@ -171,9 +171,9 @@ let tex_color_buffer buf =
     Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 0 false in
 
   let text = buf.buf_text in
-  let start_point = Text.add_point text in
-  let curseur = Text.add_point text in
-  let end_point = Text.add_point text in 
+  let start_point = Text.new_point text in
+  let curseur = Text.new_point text in
+  let end_point = Text.new_point text in 
   Text.set_position text end_point (Text.size text);
   let lexbuf = lexing text start_point end_point in
   let rec iter mode lexbuf =
@@ -485,7 +485,7 @@ let load_next_input_file frame =
       None -> raise Not_found | Some buffer -> buffer in
   let text = buf.buf_text in
   let point = match buf.buf_mark with
-      None -> Text.add_point text | Some mark -> mark in
+      None -> Text.new_point text | Some mark -> mark in
   buf.buf_mark <- Some point;
   let len = Text.search_forward text input_regexp point in
   Text.fmove text point len;
@@ -496,7 +496,7 @@ let load_prev_input_file frame =
       None -> raise Not_found | Some buffer -> buffer in
   let text = buf.buf_text in
   let point = match buf.buf_mark with
-      None -> Text.add_point text | Some mark -> mark in
+      None -> Text.new_point text | Some mark -> mark in
   buf.buf_mark <- Some point;
   let _len = Text.search_backward text input_regexp point in
   load_input frame buf point
