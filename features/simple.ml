@@ -494,14 +494,6 @@ let current_word buf point =
   
   
 (*s: function Simple.dirname *)
-let dirname frame filename =
-  let filename =
-    if Filename.is_relative filename then
-      Filename.concat (Frame.current_dir frame) filename
-    else
-      filename
-  in
-  Filename.dirname filename
 (*e: function Simple.dirname *)
 
 (*s: function Simple.buffer_list *)

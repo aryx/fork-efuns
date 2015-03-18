@@ -54,7 +54,6 @@ val beginning_of_word : Efuns.buffer -> Text.point -> string
 val end_of_word : Efuns.buffer -> Text.point -> string
 (*val current_word : Efuns.buffer -> Text.point -> string *)
 val current_word : Efuns.buffer -> Text.point -> string
-val dirname : Efuns.frame -> string -> string
 val buffer_list : Efuns.frame -> string list
 val delete_char : Efuns.frame -> unit
 val delete_backspace_char : Efuns.frame -> unit
