@@ -1362,7 +1362,6 @@ let catch format buf f =
 open Common
 open Utils
 open Efuns
-open Text
 
 <<constant Ebuffer.create_buf_hook>>
 <<constant Ebuffer.modes_alist>>
@@ -1520,7 +1519,7 @@ open Efuns
 let kill mini_frame old_frame =
   let window = mini_frame.frm_window in
   let top_window = Window.top window in
-  clear_message top_window;
+  Top_window.clear_message top_window;
   top_window.top_mini_buffers <- List.tl top_window.top_mini_buffers;
   if old_frame.frm_killed then
     Frame.unkill window old_frame;
@@ -1539,7 +1538,7 @@ let return action old_frame mini_frame =
 <<function Minibuffer.create_return>>=
 let create_return frame local_map request default action =
   let mini_frame = create frame local_map request in
-  insert_string mini_frame default;
+  Simple.insert_string mini_frame default;
   Keymap.add_binding local_map [NormalMap, XK.xk_Return] 
     (return action frame);
   mini_frame
@@ -1565,11 +1564,7 @@ let update_request frame request =
 
 <<core/minibuffer.ml>>=
 <<copyright header2>>
-open Text
 open Efuns
-open Ebuffer
-open Top_window
-open Simple
 
 
 <<constant Minibuffer.charreprs>>
@@ -1664,7 +1659,7 @@ let install window frame =
   then frame.frm_cutline <- window.win_width - 1;
   frame.frm_table <- (Array.init window.win_height (fun i -> 
         {
-          repr_line = dummy_line;
+          repr_line = Text.dummy_line;
           repr_y = 0;
           repr_x = 0;
           repr_offset = 0;
@@ -1713,18 +1708,19 @@ let create_inactive window buf =
 <<function Frame.point_to_cursor>>=
 let point_to_cursor buf point =
   let text = buf.buf_text in
-  let line = Ebuffer.compute_representation buf (point_line text point) in
-  let xpos = point_col text point in
+  let line = Ebuffer.compute_representation buf (Text.point_line text point) in
+  let xpos = Text.point_col text point in
   let rec iter reprs =
     match reprs with
       [] -> 0
     | repr :: tail ->
-        if repr.repr_line_pos > xpos then
+        if repr.Text.repr_line_pos > xpos then
           iter tail
         else
-          repr.repr_pos + repr.repr_charsize * (xpos - repr.repr_line_pos)
+          repr.Text.repr_pos + repr.Text.repr_charsize * 
+            (xpos - repr.Text.repr_line_pos)
   in
-  iter line.representation
+  iter line.Text.representation
 @
 
 <<function Frame.cursor_to_point>>=
@@ -1870,11 +1866,9 @@ let find_buffer_frame buf =
 <<core/frame.ml>>=
 <<copyright header2>>
 open Common
-
 open Options
-open Text
 open Efuns
-open Ebuffer
+open Text
 
 <<constant Frame.status_format>>
 
@@ -2066,9 +2060,9 @@ let previous_char frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  if bmove_res text point 1 = 0 then raise Not_found;
-  let c = get_char text point in
-  fmove text point 1 |> ignore;
+  if Text.bmove_res text point 1 = 0 then raise Not_found;
+  let c = Text.get_char text point in
+  Text.fmove text point 1 |> ignore;
   c
 @
 
@@ -2078,15 +2072,15 @@ let insert_at_place frame char =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let c = get_char text point in
+  let c = Text.get_char text point in
   if c = '\n' then
     insert_char frame char
   else
-  let _sessionTODOBUG = start_session text in
+  let _sessionTODOBUG = Text.start_session text in
   Text.delete text point 1 |> ignore;
   single_char.[0] <- char;    
   Text.insert text point single_char |> ignore;
-  fmove text point 1 |> ignore
+  Text.fmove text point 1 |> ignore
 @
 
 <<constant Simple.overwrite_mode>>=
@@ -2095,7 +2089,7 @@ let overwrite_mode = Ebuffer.new_minor_mode "Over" []
 
 <<function Simple.self_insert_command>>=
 let self_insert_command frame =
-  let char = Char.chr !keypressed in
+  let char = Char.chr !Top_window.keypressed in
   let buf = frame.frm_buffer in
   if Ebuffer.modep buf overwrite_mode then 
     insert_at_place frame char
@@ -2159,7 +2153,7 @@ let kill_text text point len =
 <<function Simple.kill_eol>>=
 let kill_eol buf point =
   let text = buf.buf_text in
-  let eol = point_to_eol text point in
+  let eol = Text.point_to_eol text point in
   let len =
     if eol = 0 then 1 else eol
   in
@@ -2169,9 +2163,9 @@ let kill_eol buf point =
 <<function Simple.kill_bol>>=
 let kill_bol buf point =
   let text = buf.buf_text in
-  let len = point_to_bol text point in
+  let len = Text.point_to_bol text point in
   if len > 0 then
-    ( bmove text point len;
+    ( Text.bmove text point len;
       kill_text text point len)
 @
 
@@ -2202,33 +2196,33 @@ let format_to_string () =
 
 <<function Simple.in_next_word>>=
 let in_next_word text mark syntax =
-  while (not syntax.(Char.code (get_char text mark))) &&
-    fmove_res text mark 1 = 1 do () done
+  while (not syntax.(Char.code (Text.get_char text mark))) &&
+    Text.fmove_res text mark 1 = 1 do () done
 @
 
 <<function Simple.in_prev_word>>=
 let in_prev_word text mark syntax =
-  while bmove_res text mark 1 = 1 &&
-    (not syntax.(Char.code (get_char text mark)))
+  while Text.bmove_res text mark 1 = 1 &&
+    (not syntax.(Char.code (Text.get_char text mark)))
   do () done
 @
 
 <<function Simple.to_begin_of_word>>=
 let to_begin_of_word text mark syntax =
-  if bmove_res text mark 1 = 1 then
+  if Text.bmove_res text mark 1 = 1 then
     begin
       while syntax.(Char.code (Text.get_char text mark)) &&
-        (bmove_res text mark 1) <> 0 do ()
+        (Text.bmove_res text mark 1) <> 0 do ()
       done;
       if not syntax.(Char.code (Text.get_char text mark)) then
-        (fmove text mark 1)
+        (Text.fmove text mark 1)
     end
 @
 
 <<function Simple.to_end_of_word>>=
 let to_end_of_word text mark syntax =
-  while syntax.(Char.code (get_char text mark)) &&
-    (fmove_res text mark 1) <> 0 do ()
+  while syntax.(Char.code (Text.get_char text mark)) &&
+    (Text.fmove_res text mark 1) <> 0 do ()
   done
 @
 
@@ -2242,7 +2236,7 @@ let to_frame f frame =
 let beginning_of_word buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
-  let mark = dup_point text point in
+  let mark = Text.dup_point text point in
   to_begin_of_word text mark syntax;
   let s = Text.region text mark point in
   Text.remove_point text mark;
@@ -2253,7 +2247,7 @@ let beginning_of_word buf point =
 let end_of_word  buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
-  let mark = dup_point text point in
+  let mark = Text.dup_point text point in
   to_end_of_word text mark syntax;
   let s = Text.region text point mark in
   Text.remove_point text mark;
@@ -2318,7 +2312,7 @@ let recenter frame =
   let text = buf.buf_text in
   frame.frm_force_start <- true;
   frame.frm_redraw <- true;
-  goto_point text frame.frm_start frame.frm_point;
+  Text.goto_point text frame.frm_start frame.frm_point;
   frame.frm_y_offset <- - frame.frm_height/2
 @
 
@@ -2339,36 +2333,36 @@ let highlight_bit = 1 lsl 24
 <<function Simple.unhightlight_region>>=
 let unhightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = add_point text in
-  let final = add_point text in
-  set_position text curseur debut;
-  set_position text final fin;
+  let curseur = Text.add_point text in
+  let final = Text.add_point text in
+  Text.set_position text curseur debut;
+  Text.set_position text final fin;
   let unhigh = lnot (1 lsl 24) in
   while curseur < final do
-    let attr = get_attr text curseur in
-    set_char_attr text curseur (attr land unhigh);
-    fmove text curseur 1;
+    let attr = Text.get_attr text curseur in
+    Text.set_char_attr text curseur (attr land unhigh);
+    Text.fmove text curseur 1;
   done;
-  remove_point text curseur;
-  remove_point text final;
+  Text.remove_point text curseur;
+  Text.remove_point text final;
   buf.buf_modified <- buf.buf_modified + 1
 @
 
 <<function Simple.hightlight_region>>=
 let hightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = add_point text in
-  let final = add_point text in
-  set_position text curseur debut;
-  set_position text final fin;
+  let curseur = Text.add_point text in
+  let final = Text.add_point text in
+  Text.set_position text curseur debut;
+  Text.set_position text final fin;
   let high = 1 lsl 24 in
   while curseur < final do
-    let attr = get_attr text curseur in
-    set_char_attr text curseur (attr lor high);
-    fmove text curseur 1
+    let attr = Text.get_attr text curseur in
+    Text.set_char_attr text curseur (attr lor high);
+    Text.fmove text curseur 1
   done;
-  remove_point text curseur;
-  remove_point text final;
+  Text.remove_point text curseur;
+  Text.remove_point text final;
   buf.buf_modified <- buf.buf_modified + 1
 @
 
@@ -2380,9 +2374,9 @@ let highlighted_chars = ref []
 let unhightlight () =
   !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
       let text = buf.buf_text in
-      set_char_attr text curseur attr;
+      Text.set_char_attr text curseur attr;
       buf.buf_modified <- buf.buf_modified + 1;
-      remove_point text curseur
+      Text.remove_point text curseur
   );
   highlighted_chars := [];
   match !highlighted with
@@ -2421,8 +2415,8 @@ let highlight frame =
     else
       mark,point
   in
-  let pos1 = get_position text debut in
-  let pos2 = get_position text fin in
+  let pos1 = Text.get_position text debut in
+  let pos2 = Text.get_position text fin in
   let debut,fin =
     match !highlighted with
       None -> pos1,pos2
@@ -2459,24 +2453,26 @@ let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
 
 <<function Simple.highlight_paren>>=
 let highlight_paren frame =
-  htmlp := (!keypressed = Char.code '>');
+  htmlp := (!Top_window.keypressed = Char.code '>');
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let curseur = dup_point text point in
-  if bmove_res text curseur 1 = 0 then remove_point text curseur
+  let curseur = Text.dup_point text point in
+  if Text.bmove_res text curseur 1 = 0 
+  then Text.remove_point text curseur
   else
-  let c = get_char text curseur in
-  if not(is_paren_end c) then remove_point text curseur 
+  let c = Text.get_char text curseur in
+  if not(is_paren_end c) 
+  then Text.remove_point text curseur 
   else
   let rec iter stack =
-    if bmove_res text curseur 1 = 0 then
+    if Text.bmove_res text curseur 1 = 0 then
       begin
-        remove_point text curseur;
+        Text.remove_point text curseur;
         Top_window.mini_message frame "No matching parenthesis"
       end
     else
-    let d = get_char text curseur in
+    let d = Text.get_char text curseur in
     if is_paren_end d then
       begin
         iter (d :: stack)
@@ -2485,9 +2481,9 @@ let highlight_paren frame =
     if is_paren_begin d then
       match stack with
         [] -> (* found matching par *)
-          let attr = get_attr text curseur in
+          let attr = Text.get_attr text curseur in
           highlighted_chars := (buf,curseur,attr) :: !highlighted_chars;
-          set_char_attr text curseur (attr lor (1 lsl 24));
+          Text.set_char_attr text curseur (attr lor (1 lsl 24));
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack
@@ -2585,39 +2581,39 @@ let electric_insert_space frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let line_len = point_to_bol text point in
+  let line_len = Text.point_to_bol text point in
   if line_len > 75 then
-    let mark = dup_point text point in
+    let mark = Text.dup_point text point in
     (try
         while (backward_word buf mark;
-            point_to_bol text mark > 75) do () done;
+            Text.point_to_bol text mark > 75) do () done;
         forward_word buf mark; backward_word buf mark;
         Text.insert text mark "\n" |> ignore
     with Not_found -> ()
     );
-    remove_point text mark
+    Text.remove_point text mark
 @
 
 <<function Simple.simplify>>=
 let simplify text start point =
-  let start = dup_point text start in
+  let start = Text.dup_point text start in
   let rec iter last_c =
     if start < point then
-      let c = get_char text start in
+      let c = Text.get_char text start in
       if c = ' ' || c = '\n' || c = '\t' then
-        ( delete text start 1 |> ignore;
+        ( Text.delete text start 1 |> ignore;
           iter ' ')
       else
       if last_c = ' ' then
-        ( insert text start " " |> ignore;
-          fmove text start 2;
+        ( Text.insert text start " " |> ignore;
+          Text.fmove text start 2;
           iter 'a')
       else
-        ( fmove text start 1;
+        ( Text.fmove text start 1;
           iter 'a')
   in
   iter 'a';
-  remove_point text start
+  Text.remove_point text start
 @
 
 <<constant Simple.line_comment>>=
@@ -2628,16 +2624,16 @@ let line_comment = Local.create_abstr "Fill_mode.line_comment"
 <<function Simple.set_indent>>=
 (* modify the indentation of (point) line. Does not modify point *)
 let set_indent text point offset = 
-  let curseur = dup_point text point in
-  bmove text curseur (point_to_bol text curseur);
+  let curseur = Text.dup_point text point in
+  Text.bmove text curseur (Text.point_to_bol text curseur);
   let rec iter offset =
-    let c = get_char text curseur in
+    let c = Text.get_char text curseur in
     if offset > 0 then
       if c = ' ' then
-        (fmove text curseur 1; iter (offset - 1))
+        (Text.fmove text curseur 1; iter (offset - 1))
       else
       if c = '\t' then
-        (delete text curseur 1 |> ignore;
+        (Text.delete text curseur 1 |> ignore;
          iter offset)
       else
         (Text.insert text curseur (String.make offset ' '))
@@ -2647,12 +2643,12 @@ let set_indent text point offset =
         iter 0)
   in
   iter offset;
-  remove_point text curseur
+  Text.remove_point text curseur
 @
 
 <<function Simple.insert_special_char>>=
 let insert_special_char frame =
-  let key = !keypressed in
+  let key = !Top_window.keypressed in
   let char = Char.chr key in
   if char >= 'a' && char <= 'z' then
     insert_char frame (Char.chr (key - 97))
@@ -2676,15 +2672,15 @@ let next_hole frame =
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
   let text = buf.buf_text in
-  let curseur = dup_point text point in
+  let curseur = Text.dup_point text point in
   while 
-    not ((get_char text curseur = '^') && (fmove_res text curseur 1 = 1) &&
-      (get_char text curseur = '^')) && (fmove_res text curseur 1 = 1) do () done;
-  if get_char text curseur = '^' then
-    (bmove text curseur 1;
-      delete text curseur 2;
-      goto_point text point curseur);
-  remove_point text curseur
+    not ((Text.get_char text curseur = '^') && (Text.fmove_res text curseur 1 = 1) &&
+      (Text.get_char text curseur = '^')) && (Text.fmove_res text curseur 1 = 1) do () done;
+  if Text.get_char text curseur = '^' then
+    (Text.bmove text curseur 1;
+      Text.delete text curseur 2;
+      Text.goto_point text point curseur);
+  Text.remove_point text curseur
 @
 
 % install_structures -> <>
@@ -2693,7 +2689,7 @@ let insert_structure s frame =
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
   let text = buf.buf_text in
-  insert text point s;
+  Text.insert text point s;
   next_hole frame
 @
 % ???
@@ -2768,8 +2764,6 @@ let _ =
 open Options
 open Xtypes
 open Efuns
-open Text
-open Top_window
 
 <<function Simple.string_to_modifier>>
   
@@ -3085,7 +3079,7 @@ let display_completions frame list =
     let text = buf.buf_text in
     Text.update text (iter list "Completions :");
     (try Frame.find_buffer_frame buf
-     with Not_found -> Frame.create_inactive (cut_frame frame) buf
+     with Not_found -> Frame.create_inactive (Multi_frames.cut_frame frame) buf
     ) |> ignore
 @
 
@@ -3093,7 +3087,7 @@ let display_completions frame list =
 let remove_completions frame =
   try
     let frame = find_completion_frame frame in
-    remove_frame frame
+    Multi_frames.remove_frame frame
   with
     Not_found -> ()
 @
@@ -3104,29 +3098,29 @@ let set_history map string history =
   Keymap.add_binding map [NormalMap, XK.xk_Up]
     (fun mini_frame ->
       if !current = List.length !history then
-        mini_message mini_frame "No previous line in history"
+        Top_window.mini_message mini_frame "No previous line in history"
       else
-      let ele = list_nth !current !history in
+      let ele = Utils.list_nth !current !history in
       incr current;
       let buf = mini_frame.frm_buffer in
       let text = buf.buf_text in
       Text.clear text;
       string := ele;
-      insert_string mini_frame ele; ()
+      Simple.insert_string mini_frame ele; ()
   );      
   Keymap.add_binding map [NormalMap, XK.xk_Down]
     (fun mini_frame ->
       if !current < 1 then
-        mini_message mini_frame "No other line in history"
+        Top_window.mini_message mini_frame "No other line in history"
       else
         begin
           decr current;
-          let ele = list_nth !current !history in
+          let ele = Utils.list_nth !current !history in
           let buf = mini_frame.frm_buffer in
           let text = buf.buf_text in
           Text.clear text;
           string := ele;
-          insert_string mini_frame ele; ()
+          Simple.insert_string mini_frame ele; ()
         end
   )
 @
@@ -3139,7 +3133,7 @@ let incremental_mini_buffer frame ismap request default
     incremental_action frame (Text.to_string mini_frame.frm_buffer.buf_text)
   in
   let incremental_insert mini_frame =
-    self_insert_command mini_frame;
+    Simple.self_insert_command mini_frame;
     incremental mini_frame
   in
   for key = 32 to 127 do
@@ -3147,7 +3141,7 @@ let incremental_mini_buffer frame ismap request default
   done;
   Keymap.add_binding ismap [NormalMap, XK.xk_BackSpace] 
     (fun mini_frame -> 
-      delete_backspace_char mini_frame;
+      Simple.delete_backspace_char mini_frame;
       incremental mini_frame);
   top_window.top_second_cursor <- Some frame;
   Minibuffer.create_return frame ismap request default
@@ -3172,7 +3166,7 @@ let select frame request history start completion_fun prefix_fun action =
       if not(!completion == !string) then
         let text = mini_frame.frm_buffer.buf_text in
         completions := completion_fun !string;
-        let suffix, n  = common_suffix
+        let suffix, n  = Utils.common_suffix
             !completions
             (prefix_fun !string) 
         in
@@ -3254,7 +3248,7 @@ let complete_filename frame good_file filename =
   then (* Parse_file.users *) failwith "Select.complete_filename: TODO"
   else
   let filename = string_to_filename filename in
-  let dirname = dirname frame filename in
+  let dirname = Simple.dirname frame filename in
   let file_list = Utils.file_list dirname in
   match file_list with
     a::b::_ -> 
@@ -3297,7 +3291,7 @@ let select_file frame request history start action =
           if len>0 && s.[len - 1] <> '/' then
             try
               let filename = string_to_filename s in
-              let dirname = dirname frame filename in
+              let dirname = Simple.dirname frame filename in
               let basename = Filename.basename filename in
               let stat = Unix.stat (Filename.concat dirname basename) in
               match stat.Unix.st_kind with
@@ -3334,32 +3328,32 @@ let select_file frame request history start action =
   Keymap.add_binding map [NormalMap, XK.xk_Prior]
     (fun frame ->
       let frame = find_completion_frame frame in
-      backward_screen frame);
+      Simple.backward_screen frame);
   Keymap.add_binding map [NormalMap, XK.xk_Next]
     (fun frame ->
       let frame = find_completion_frame frame in
-      forward_screen frame);
+      Simple.forward_screen frame);
   Keymap.add_binding map [NormalMap, Char.code '~']
     (fun frame ->
       let buf = frame.frm_buffer in
       let text = buf.buf_text in
       let point = frame.frm_point in
-      kill_bol buf point;
-      self_insert_command frame;      
-      string := to_string text
+      Simple.kill_bol buf point;
+      Simple.self_insert_command frame;      
+      string := Text.to_string text
   );
   Keymap.add_binding map [NormalMap, Char.code '/']
     (fun frame ->
       let buf = frame.frm_buffer in
       let text = buf.buf_text in
       let point = frame.frm_point in
-      if bmove_res text point 1 = 1 then
-        ( let c = get_char text point in
-          fmove text point 1;
+      if Text.bmove_res text point 1 = 1 then
+        ( let c = Text.get_char text point in
+          Text.fmove text point 1;
           if c = '/' then
-            kill_bol buf point);
-      self_insert_command frame;
-      string := to_string text            
+            Simple.kill_bol buf point);
+      Simple.self_insert_command frame;
+      string := Text.to_string text            
   );
   ()
 @
@@ -3396,7 +3390,7 @@ let buf_hist = ref []
 <<function Select.select_buffer>>=
 let select_buffer frame request default action =
   select frame (request^"(default :"^ default ^ ") ") buf_hist ""
-    (fun _ -> buffer_list frame) (fun s ->s) 
+    (fun _ -> Simple.buffer_list frame) (fun s ->s) 
   (fun str ->
       let str = 
         if str = "" then default else str in
@@ -3432,11 +3426,6 @@ let simple_select frame request action =
 <<copyright header2>>
 open Options
 open Efuns
-open Text
-open Simple
-open Top_window
-open Multi_frames
-open Utils
 
 (* pad: was using some other library before *)
 let string_to_filename str = 
@@ -3514,7 +3503,7 @@ let rec save_buffers_and_action frame buffers action =
     [] -> let () = action frame in ()
   | (_,buf) :: buffers ->
       let text = buf.buf_text in
-      if buf.buf_last_saved = version text  ||
+      if buf.buf_last_saved = Text.version text  ||
         buf.buf_name.[0] = '*'
       then
         save_buffers_and_action frame buffers action
@@ -3602,7 +3591,7 @@ let check_file frame =
             let time = get_local buf buf_mtime in
             set_local buf buf_mtime st.st_mtime;
             if time <> st.st_mtime then
-              ignore (select_yes_or_no frame 
+              ignore (Select.select_yes_or_no frame 
                   (Printf.sprintf 
                     "%s changed on disk; reload (y/n) ?" 
                     buf.buf_name) (fun bool ->
@@ -3653,9 +3642,9 @@ let color buf regexp strict attr =
       if not (strict && (buf.buf_syntax_table.(Char.code before) ||
             buf.buf_syntax_table.(Char.code after))) then
         begin
-          bmove text point len;
+          Text.bmove text point len;
           Text.set_attr text point len attr;
-          fmove text point len;
+          Text.fmove text point len;
           ()
         end
     done
@@ -3707,7 +3696,7 @@ let file_perm = Local.create "file_perm" string_of_int int_of_string
 
 <<function Complex.mkdir>>=
 let mkdir frame =
-  select_filename frame "Make directory: "
+  Select.select_filename frame "Make directory: "
     (fun str -> 
       let file_perm = try get_var frame.frm_buffer file_perm with _ -> 
             0x1ff land (lnot umask) in
@@ -3784,9 +3773,6 @@ let _ =
 open Unix
 open Utils
 open Efuns
-open Text
-open Simple
-open Select
 
 <<function Complex.save_buffers_and_action>>
 
@@ -4053,13 +4039,13 @@ let replace flag frame query str repl =
   let text = buf.buf_text in
   let point = frame.frm_point in
   let regexp = to_regexp flag str in
-  let session = start_session text in
+  let session = Text.start_session text in
   let n = ref 0 in
   try
     let last_pos = ref (Text.get_position text point) in
     match flag,query with
       Regexp, NoQuery ->
-        while not (check_abort frame) do
+        while not (Top_window.check_abort frame) do
           let len = Text.search_forward text regexp point in
           let pos = Text.get_position text point in
           if pos = !last_pos then 
@@ -4067,23 +4053,23 @@ let replace flag frame query str repl =
           else begin
               last_pos := pos;
               let result = Text.replace_matched text repl in
-              let (_,_matched) = delete_res text point len in
-              insert text point result;
-              fmove text point (String.length result);
+              let (_,_matched) = Text.delete_res text point len in
+              Text.insert text point result;
+              Text.fmove text point (String.length result);
               n := !n + 1
             end
         done
     | RegexpString, NoQuery ->
         let delta = String.length repl in
-        while not (check_abort frame) do
+        while not (Top_window.check_abort frame) do
           let len = Text.search_forward text regexp point in
           let pos = Text.get_position text point in
           if pos = !last_pos then 
             (if Text.fmove_res text point 1 = 0 then raise Exit)
           else begin
               last_pos := pos;
-              delete text point len;
-              insert text point repl;
+              Text.delete text point len;
+              Text.insert text point repl;
               Text.fmove text point delta;
               n := !n + 1
             end
@@ -4100,14 +4086,14 @@ let replace flag frame query str repl =
           else begin
               last_pos := pos;
               top_window.top_second_cursor <- Some frame;
-              let _ = select_yes_or_no frame request 
+              let _ = Select.select_yes_or_no frame request 
                   (fun yes ->
                     if yes then
                       begin
                         let result = Text.replace_matched text repl in
-                        let (_,_matched) = delete_res text point len in
-                        insert text point result;
-                        fmove text point (String.length result);
+                        let (_,_matched) = Text.delete_res text point len in
+                        Text.insert text point result;
+                        Text.fmove text point (String.length result);
                         n := !n + 1
                       end;
                     iter ()) in
@@ -4128,12 +4114,12 @@ let replace flag frame query str repl =
           else begin
               last_pos := pos;
               top_window.top_second_cursor <- Some frame;
-              let _ = select_yes_or_no frame request 
+              let _ = Select.select_yes_or_no frame request 
                   (fun yes ->
                     if yes then
                       begin
-                        delete text point len;
-                        insert text point repl;
+                        Text.delete text point len;
+                        Text.insert text point repl;
                         Text.fmove text point delta;
                         n := !n + 1
                       end;
@@ -4145,11 +4131,11 @@ let replace flag frame query str repl =
         iter ()
   with
     Not_found ->
-      commit_session text session;
+      Text.commit_session text session;
       Top_window.message top_window
         ("Replace "^(string_of_int !n)^" occurences")
   | _ ->
-      commit_session text session
+      Text.commit_session text session
 @
 
 <<function Search.no_query>>=
@@ -4160,7 +4146,7 @@ let no_query f = f true
 let query frame request f =
   let top_window = Window.top frame.frm_window in
   top_window.top_second_cursor <- Some frame;
-  select_yes_or_no frame request f |> ignore
+  Select.select_yes_or_no frame request f |> ignore
 @
 
 <<constant Search.string_history>>=
@@ -4169,7 +4155,7 @@ let string_history = ref []
 
 <<function Search.select_replace>>=
 let select_replace frame request action =
-  select_string frame request string_history "" action 
+  Select.select_string frame request string_history "" action 
 @
 
 
@@ -4184,8 +4170,8 @@ let library_file str =
 
 <<function Search.select_lib_filename>>=
 let select_lib_filename frame request action =
-  select frame request file_hist (current_dir frame)
-  (complete_filename frame library_file)
+  Select.select frame request Select.file_hist (Frame.current_dir frame)
+  (Select.complete_filename frame library_file)
   Filename.basename action
 @
 
@@ -4194,12 +4180,7 @@ let select_lib_filename frame request action =
 
 <<features/search.ml>>=
 <<copyright header2>>
-open Top_window
 open Efuns
-open Text
-open Frame
-open Simple
-open Select
     
 <<toplevel Search._1>>
 
@@ -4287,10 +4268,8 @@ deux fonctions principales:
     dans des tables associees au buffer (variable "abbrev_table") 
     (binding normal: un caractere de fin de mot (espace,newline,..))
 *)
-
 open Efuns
-open Text
-open Simple
+
 
 <<function Abbrevs.escaped>>
   
@@ -4432,14 +4411,14 @@ let set_compilation_buffer frame comp_buf cdir =
   let window =
     match !compilation_frame with
       None -> 
-        cut_frame frame
+        Multi_frames.cut_frame frame
     | Some (frame,point, _) ->
-        remove_point frame.frm_buffer.buf_text point;  
+        Text.remove_point frame.frm_buffer.buf_text point;  
         if frame.frm_killed 
-        then cut_frame frame 
+        then Multi_frames.cut_frame frame 
         else frame.frm_window
   in
-  let error_point = add_point comp_buf.buf_text in
+  let error_point = Text.add_point comp_buf.buf_text in
   let comp_frame = Frame.create window None comp_buf in
   compilation_frame := Some (comp_frame, error_point, cdir)
 @
@@ -4461,10 +4440,6 @@ let grep_hist = ref [""]
 <<copyright header2>>
 open Options
 open Efuns
-open Text
-open Frame
-open Select
-open Multi_frames  
 
 <<constant Compil.compilation_frame>>
 
@@ -4794,19 +4769,9 @@ open Efuns
 <<copyright header2>>
 open Utils
 open Options
-
-open Interactive
 open Efuns
-open Keymap
 open Simple
-open Search
-open Compil
-open Complexe
-open System
-open Multi_frames
-open Top_window
-(*open Eval*)
-  
+ 
 
 <<constant Std_efunsrc.grep_hist>>
 
@@ -5506,7 +5471,6 @@ let _ =
 
 <<minor_modes/accents_mode.ml>>=
 <<copyright header2>>
-open Text
 open Simple
 open Efuns
 open Top_window
@@ -5720,14 +5684,14 @@ let rules_color = define_option ["makefile_mode";"rules_color"] ""
 % font-lock-mode :)
 <<function Makefile_mode.makefile_color>>=
 let makefile_color buf =
-  color buf mkfile_rules false
-    (make_attr (get_color !!rules_color) 1 0 false);
-  color buf mkfile_target false 
-    (make_attr (get_color !!target_color) 1 0 false);
-  color buf mkfile_vars false 
-    (make_attr (get_color !!vars_color) 1 0 false);
-  color buf mkfile_comments false 
-    (make_attr (get_color !!comments_color) 1 0 false);
+  Simple.color buf mkfile_rules false
+    (Text.make_attr (Window.get_color !!rules_color) 1 0 false);
+  Simple.color buf mkfile_target false 
+    (Text.make_attr (Window.get_color !!target_color) 1 0 false);
+  Simple.color buf mkfile_vars false 
+    (Text.make_attr (Window.get_color !!vars_color) 1 0 false);
+  Simple.color buf mkfile_comments false 
+    (Text.make_attr (Window.get_color !!comments_color) 1 0 false);
   ()
 @
 
@@ -5750,7 +5714,7 @@ let c_c = (ControlMap,Char.code 'c')
 % its own configuration!
 <<constant Makefile_mode.local_map>>=
 let local_map = define_option ["makefile_mode"; "local_map"] ""
-    (list_option binding_option) []
+    (list_option Simple.binding_option) []
 @
 <<constant Makefile_mode.interactives_map>>=
 let interactives_map = define_option ["makefile_mode"; "interactives_map"] ""
@@ -5762,7 +5726,7 @@ let interactives_map = define_option ["makefile_mode"; "interactives_map"] ""
 
 <<toplevel Makefile_mode._2>>=
 let _ = 
-  define_action "makefile_mode.compile" (compile c_find_error);
+  define_action "makefile_mode.compile" (Compil.compile Compil.c_find_error);
   define_action "makefile_mode.color_buffer" 
     (fun frame -> makefile_color frame.frm_buffer);
   define_action "makefile_mode" makefile_mode;
@@ -5799,22 +5763,22 @@ let makefile_mode frame =
 <<toplevel Makefile_mode._3>>=
 let _ =
   let map = mode.maj_map in
-  List.iter (fun (keys, action) ->
+  !!local_map |> List.iter (fun (keys, action) ->
       try
         Keymap.add_binding map keys (execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
   
-  ) !!local_map;
-  List.iter (fun (name, action) ->
+  );
+  !!interactives_map |> List.iter (fun (name, action) ->
       try
-        add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
           
-  ) !!interactives_map;
+  );
   ()
 @
 
@@ -5824,10 +5788,10 @@ let _ =
   Efuns.add_start_hook (fun () ->
       let alist = get_global Ebuffer.modes_alist in
       set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
-      add_option_parameter vars_color;
-      add_option_parameter target_color;
-      add_option_parameter rules_color;
-      add_option_parameter comments_color;
+      Simple.add_option_parameter vars_color;
+      Simple.add_option_parameter target_color;
+      Simple.add_option_parameter rules_color;
+      Simple.add_option_parameter comments_color;
       )   
 @
 
@@ -5837,12 +5801,7 @@ let _ =
 <<prog_modes/makefile_mode.ml>>=
 <<copyright header2>>
 open Options
-open Text
-open Keymap
 open Efuns
-open Simple
-open Compil
-open Window
 
 <<constant Makefile_mode.mkfile_vars>>
 <<constant Makefile_mode.mkfile_target>>

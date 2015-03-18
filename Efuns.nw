@@ -629,7 +629,7 @@ let create name filename text local_map =
       buf_point = Text.add_point text;
       buf_start = Text.add_point text;
 
-      buf_last_saved = version text;
+      buf_last_saved = Text.version text;
       buf_modified = 0;
 
       buf_map = local_map;
@@ -1192,11 +1192,11 @@ let _ =
 %XXX
 <<misc actions>>=
 define_action "recenter"  recenter;
-define_action "revert_buffer" reload;
+define_action "revert_buffer" Complexe.reload;
 
-define_action "open_display" open_display;
+define_action "open_display" Complexe.open_display;
 (* C-x map *)
-define_action "change_font"  change_font;
+define_action "change_font"  Complexe.change_font;
 @  
 %(*  define_action "load_library" load_library;*)
 %(*  define_action "start_server" Server.start;  *)
@@ -1680,7 +1680,7 @@ let change_buffer_hooks = define_option ["change_buffer_hooks"] ""
 % use?
 
 <<misc actions>>=
-define_action "check_file" check_file;
+define_action "check_file" Complexe.check_file;
 @
 
 
@@ -2367,7 +2367,7 @@ let size tree =
 % seen Point type in core DS chapter with Buffer type.
 
 <<misc actions>>=
-define_action "get_position" get_pos;
+define_action "get_position" Complexe.get_pos;
 @
 
 <<function Complex.get_pos>>=
@@ -3009,9 +3009,9 @@ let color buf regexp strict attr =
       if not (strict && (buf.buf_syntax_table.(Char.code before) ||
             buf.buf_syntax_table.(Char.code after))) then
         begin
-          bmove text point len;
+          Text.bmove text point len;
           Text.set_attr text point len attr;
-          fmove text point len;
+          Text.fmove text point len;
           ()
         end
     done
@@ -3106,8 +3106,8 @@ let file_menu = define_option ["file_menu"] "" (list_option string2_option) []
 @
 
 <<[[Std_efunsrc]] file menu setup>>=
-if !!file_menu = [] then begin
-    file_menu =:=    [
+if !!Top_window.file_menu = [] then begin
+    Top_window.file_menu =:=    [
       "Open File", "load_buffer";
       "Save Buffer", "save_buffer";
       <<file menu entries>>
@@ -3128,15 +3128,15 @@ if !!file_menu = [] then begin
 @
 <<loading actions>>=
 (* C-x map *)
-define_action "load_buffer"  load_buffer;
+define_action "load_buffer"  Complexe.load_buffer;
 @
 
 
 % in Complex because requires select and minibuffer
 <<function Complex.load_buffer>>=
 let load_buffer frame = 
-  set_previous_frame frame;
-  select_filename frame "Find file: " (fun str -> 
+  Select.set_previous_frame frame;
+  Select.select_filename frame "Find file: " (fun str -> 
     Frame.load_file frame.frm_window str |> ignore
   )
 @
@@ -3162,14 +3162,14 @@ let load_file window filename =
 @
 <<loading actions>>=
 (* C-x map *)
-define_action "insert_file"  insert_file;
+define_action "insert_file"  Complexe.insert_file;
 @
 
 <<function Complex.insert_file>>=
 let insert_file frame =
-  select_filename frame "Insert file: " (fun str ->
+  Select.select_filename frame "Insert file: " (fun str ->
     let inc = open_in str in
-    insert_string frame (Utils.read_string inc);
+    Simple.insert_string frame (Utils.read_string inc);
     close_in inc
   )
 @
@@ -3224,7 +3224,7 @@ let insert_file frame =
 @
 <<saving actions>>=
 (* C-x map *)
-define_action "save_buffer"  save_buffer; 
+define_action "save_buffer"  Complexe.save_buffer; 
 @
 
 <<function Complex.save_buffer>>=
@@ -3252,7 +3252,7 @@ let save buf =
   let outc = open_out filename in
   Text.save buf.buf_text outc;
   close_out outc;
-  buf.buf_last_saved <- version buf.buf_text;
+  buf.buf_last_saved <- Text.version buf.buf_text;
 
   exec_named_buf_hooks !!saved_buffer_hooks buf
 @
@@ -3273,7 +3273,7 @@ let saved_buffer_hooks = define_option ["saved_buffer_hooks"] ""
 @
 
 <<misc actions>>=
-define_buffer_action "update_time" update_time;
+define_buffer_action "update_time" Complexe.update_time;
 @
 
 
@@ -3284,9 +3284,9 @@ define_buffer_action "update_time" update_time;
 @
 <<saving actions>>=
 (* C-x map *)
-define_action "save_some_buffers"  save_some_buffers;
+define_action "save_some_buffers"  Complexe.save_some_buffers;
 (* C-x map *)
-define_action "write_file"  write_buffer; 
+define_action "write_file"  Complexe.write_buffer; 
 @
 
 
@@ -3300,7 +3300,7 @@ let save_some_buffers frame =
 <<function Complex.write_buffer>>=
 let write_buffer frame = 
   let buf = frame.frm_buffer in
-  select_filename frame "Save file as: " (fun str -> 
+  Select.select_filename frame "Save file as: " (fun str -> 
       Ebuffer.change_name buf str;
       Ebuffer.save buf
   )
@@ -3323,7 +3323,7 @@ let save_buffer frame =
 @
 <<misc actions>>=
 (* C-x map *)
-define_action "exit"  exit_efuns; 
+define_action "exit"  Complexe.exit_efuns; 
 @
 
 <<function Complex.exit_efuns>>=
@@ -3345,8 +3345,8 @@ let edit_menu = define_option ["edit_menu"] "" (list_option string2_option) []
 @
 
 <<[[Std_efunsrc]] edit menu setup>>=
-if !!edit_menu = [] then begin
-    edit_menu =:= [ 
+if !!Top_window.edit_menu = [] then begin
+    Top_window.edit_menu =:= [ 
       "Cut",    "kill_region";
       "Paste",  "insert_killed";
 
@@ -3370,7 +3370,7 @@ let help_menu = ref ([| |]: (string * action) array)
 % this one is not configurable apparently
 
 <<[[Std_efunsrc]] help menu setup>>=
-help_menu := [|
+Top_window.help_menu := [|
   "Key Bindings", (fun frame ->
     Frame.change_buffer frame.frm_window "*bindings*"
   );
@@ -3651,10 +3651,10 @@ let update_table top_window frame =
 
   (* assert frame.frm_y_offset >= 0 *)
   let current_n = ref (point_line text start) in
-  let current_line = ref (compute_representation buf !current_n) in
+  let current_line = ref (Ebuffer.compute_representation buf !current_n) in
   while frame.frm_y_offset < 0 && !current_n > 0 do
     current_n := !current_n - 1;
-    current_line := compute_representation buf !current_n;
+    current_line := Ebuffer.compute_representation buf !current_n;
     let lines = !current_line.repr_len / frame.frm_cutline in
     frame.frm_y_offset <- frame.frm_y_offset + lines + 1;
   done;
@@ -3667,7 +3667,7 @@ let update_table top_window frame =
     frame.frm_y_offset <- frame.frm_y_offset - 
     (!current_line.repr_len / frame.frm_cutline) - 1;
     current_n := !current_n + 1;
-    current_line := compute_representation buf !current_n;
+    current_line := Ebuffer.compute_representation buf !current_n;
   done;
   if !current_n = nbre_lines text && 
     frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
@@ -3716,10 +3716,10 @@ let update_table top_window frame =
           else
             iter_repr x y n line tail
       | _ -> 
-          let line = compute_representation buf (n + 1) in
+          let line = Ebuffer.compute_representation buf (n + 1) in
           iter_line (y+1) (n+1) line
     else  
-    let line = compute_representation buf (n + 1) in
+    let line = Ebuffer.compute_representation buf (n + 1) in
     iter_line y (n+1) line
   in
   iter_line (- frame.frm_y_offset) !current_n !current_line
@@ -3904,7 +3904,7 @@ let status = {
     stat_line = -1;
     stat_col = -1;
     status_modified = true;
-    stat_modified = (buf.buf_last_saved = version buf.buf_text);
+    stat_modified = (buf.buf_last_saved = Text.version buf.buf_text);
 
     stat_modes = [];
     stat_mode = dummy_mode;
@@ -4115,7 +4115,7 @@ let buf_create text local_map =
     buf_name = "*Minibuffer*";
     buf_filename = None; (* no connected file! *)
 
-    buf_major_mode = fondamental_mode;
+    buf_major_mode = Ebuffer.fondamental_mode;
     buf_minor_modes = [];
 
     buf_charreprs = charreprs;
@@ -4124,7 +4124,7 @@ let buf_create text local_map =
     buf_syntax_table = Ebuffer.default_syntax_table;
 
     buf_modified = 0;
-    buf_last_saved = version text;
+    buf_last_saved = Text.version text;
 
     buf_point = Text.add_point text;
     buf_start = Text.add_point text;
@@ -4144,7 +4144,7 @@ let charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i))
 @
 <<toplevel Minibuffer._1>>=
 let _ =
-  charreprs.(9) <- String.make !tab_size ' '
+  charreprs.(9) <- String.make !Ebuffer.tab_size ' '
 @
 
 \subsection{Minibuffer display}
@@ -4174,7 +4174,7 @@ let clear_message top_window =
 [MetaMap, Char.code 'x'], "call_interactive";
 @
 <<meta actions>>=
-define_action "call_interactive"  call_interactive;
+define_action "call_interactive"  Interactive.call_interactive;
 @
 
 
@@ -4270,7 +4270,8 @@ if !!interactives_map = [] then begin
 <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
 !!interactives_map |> List.iter (fun (name, action) ->
   try
-    add_interactive (Efuns.location()).loc_map name (execute_action action)
+    Keymap.add_interactive (Efuns.location()).loc_map name 
+      (execute_action action)
   with e ->
     Log.printf "Error for action %s" action;
     Log.exn "%s\n" e;
@@ -4561,12 +4562,12 @@ Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
 <<function Simple.mouse_set_frame>>=
 let mouse_set_frame frame =
   let top_window = Window.top frame.frm_window in
-  let frame = mouse_set_active top_window in
+  let frame = Top_window.mouse_set_active top_window in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
   let mark = Ebuffer.get_mark buf point in
-  goto_point text mark point;
+  Text.goto_point text mark point;
   ()
 @
 
@@ -4715,8 +4716,8 @@ define_action "begin_of_file"  begin_of_file;
 define_action "end_of_file"  end_of_file;
 
 (* M-x *)
-define_action "goto_char" goto_char;
-define_action "goto_line" goto_line;
+define_action "goto_char" Complexe.goto_char;
+define_action "goto_line" Complexe.goto_line;
 @
 
 <<[[interactives_map]] initial entries>>=
@@ -4817,7 +4818,7 @@ let point_to_end frame =
 and backward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  if point_line text point > 0 then begin
+  if Text.point_line text point > 0 then begin
     let goal_col = goal_column frame in
     beginning_of_line frame;
     move_backward frame 1 |> ignore;
@@ -4838,7 +4839,7 @@ and backward_line frame =
 and forward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  if point_line text point < nbre_lines text then begin
+  if Text.point_line text point < Text.nbre_lines text then begin
     let goal_col = goal_column frame in
     end_of_line frame;
     move_forward frame 1 |> ignore;
@@ -4909,29 +4910,29 @@ and move_to_goal_column frame goal_col =
 <<function Simple.backward_paragraph>>=
 let backward_paragraph buf point =
   let text = buf.buf_text in
-  while bmove_res text point 1 = 1 && 
-    (let c = get_char text point
+  while Text.bmove_res text point 1 = 1 && 
+    (let c = Text.get_char text point
       in
       c = '\n' || c = ' ') 
   do () done;
   try
     Text.search_backward text (Str.regexp "\n *\n") point |> ignore;
-    fmove text point 1
-  with Not_found -> set_position text point 0
+    Text.fmove text point 1
+  with Not_found -> Text.set_position text point 0
 @
 
 <<function Simple.forward_paragraph>>=
 let forward_paragraph buf point =
   let text = buf.buf_text in
   while
-    (let c = get_char text point
+    (let c = Text.get_char text point
       in
       c = '\n' || c = ' ') 
-    && fmove_res text point 1 = 1 do () done;
+    && Text.fmove_res text point 1 = 1 do () done;
   try
     Text.search_forward text (Str.regexp "\n *\n") point |> ignore;
-    fmove text point 1
-  with Not_found -> set_position text point (Text.size text)
+    Text.fmove text point 1
+  with Not_found -> Text.set_position text point (Text.size text)
 @
 
 \subsection{Screens}
@@ -4975,7 +4976,7 @@ let goto_char frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  simple_select frame "goto-char:" (fun name ->
+  Select.simple_select frame "goto-char:" (fun name ->
     let char = int_of_string name in
     Text.set_position text point char
   )
@@ -4986,7 +4987,7 @@ let goto_line frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  simple_select frame "goto-line:" (fun name ->
+  Select.simple_select frame "goto-line:" (fun name ->
     let line = int_of_string name in
     Text.goto_line text point (line - 1)
   )
@@ -5139,20 +5140,20 @@ let delete_char frame =
 <<function Simple.delete_backward_word>>=
 let delete_backward_word buf point =
   let text = buf.buf_text in
-  let old_point = dup_point text point in
+  let old_point = Text.dup_point text point in
   backward_word buf point;
   Text.delete text point (Text.distance text point old_point) |> ignore;
-  remove_point text old_point;
+  Text.remove_point text old_point;
   ()
 @
 
 <<function Simple.delete_forward_word>>=
 let delete_forward_word buf point =
   let text = buf.buf_text in
-  let old_point = dup_point text point in
+  let old_point = Text.dup_point text point in
   forward_word buf point;
   let len = Text.distance text old_point point in
-  remove_point text old_point;
+  Text.remove_point text old_point;
   Text.bmove text point len;
   Text.delete text point len |> ignore
 @
@@ -5179,7 +5180,7 @@ let hungry_char c =
 let hungry_electric_delete frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  let session = start_session text in
+  let session = Text.start_session text in
   let c1 = previous_char frame in
   delete_backspace_char frame;
   let c2 = previous_char frame in
@@ -5197,7 +5198,7 @@ let hungry_electric_delete frame =
       with
         Not_found -> ()
   end;
-  commit_session text session
+  Text.commit_session text session
 @
 
 
@@ -5211,7 +5212,7 @@ let hungry_electric_delete frame =
 @
 
 <<moving actions>>=
-define_action "mark_at_point"  mark_at_point;
+define_action "mark_at_point"  Complexe.mark_at_point;
 define_action "kill_region"  kill_region;
 define_action "insert_killed"  insert_killed;
 define_action "insert_next_killed"  insert_next_killed;
@@ -5237,10 +5238,10 @@ let set_mark buf point =
   buf.buf_modified <- buf.buf_modified + 1;
   match buf.buf_mark with
     None ->
-      let mark = dup_point text point in
+      let mark = Text.dup_point text point in
       buf.buf_mark <- Some mark
   | Some mark ->
-      goto_point text mark point
+      Text.goto_point text mark point
 @
 
 
@@ -5261,7 +5262,7 @@ let remove_mark buf =
     None -> ()
   | Some mark ->
       buf.buf_mark <- None;
-      remove_point buf.buf_text mark;
+      Text.remove_point buf.buf_text mark;
       buf.buf_modified <- buf.buf_modified + 1
 @
 
@@ -5286,7 +5287,7 @@ let kill_region frame =
   let (start,term) = 
     if mark > point then (point,mark) else (mark,point)
   in
-  let _,region = Text.delete_res text start (distance text start term) in
+  let _,region = Text.delete_res text start (Text.distance text start term) in
   kill_string region
 @
 
@@ -5305,7 +5306,7 @@ let insert_killed frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
   let pos, len =  Text.insert_res text point kill_ring.(0) in
-  fmove text point len; 
+  Text.fmove text point len; 
   last_insert := Some(frame,pos,0,len)
 @
 
@@ -5320,12 +5321,12 @@ let insert_next_killed frame =
   let point = frame.frm_point in
   match !last_insert with
   |  Some (oldframe,oldpoint,n,len) when 
-    oldframe == frame && oldpoint + len = get_position text point ->
+    oldframe == frame && oldpoint + len = Text.get_position text point ->
       let n = if n = (min !kill_size kill_max) - 1 then 0 else n+1 in
-      bmove text point len;
+      Text.bmove text point len;
       Text.delete text point len |> ignore;
       let pos, len =  Text.insert_res text point kill_ring.(n) in
-      fmove text point len;
+      Text.fmove text point len;
       last_insert := Some(frame,pos,n,len)
   | _ -> ()
 @
@@ -5351,9 +5352,9 @@ let point_at_mark frame =
   let point = frame.frm_point in
 
   let mark = Ebuffer.get_mark buf point in
-  let pos = get_position text point in
-  goto_point text point mark;
-  set_position text mark pos
+  let pos = Text.get_position text point in
+  Text.goto_point text point mark;
+  Text.set_position text mark pos
 @
 
 \section{Undo}
@@ -5380,7 +5381,7 @@ let undo frame =
   let text = buf.buf_text in  
   let point = frame.frm_point in
   let action, at_point, len = Text.undo text in
-  frame.frm_last_text_updated <- version text - 1;
+  frame.frm_last_text_updated <- Text.version text - 1;
   Text.set_position text point at_point;
   Text.fmove text point len
 @
@@ -5462,10 +5463,10 @@ let undo tree =
 @
 
 <<searching actions>>=
-define_action "isearch_forward"  isearch_forward;
-define_action "isearch_backward"  isearch_backward;
-define_action "isearch_forward_regexp"  isearch_forward_regexp;
-define_action "isearch_backward_regexp"  isearch_backward_regexp;
+define_action "isearch_forward"  Search.isearch_forward;
+define_action "isearch_backward"  Search.isearch_backward;
+define_action "isearch_forward_regexp"  Search.isearch_forward_regexp;
+define_action "isearch_backward_regexp"  Search.isearch_backward_regexp;
 @
 
 <<type Efuns.sens>>=
@@ -5538,7 +5539,7 @@ let isearch to_regexp sens frame =
     let point = frame.frm_point in
     let buf = frame.frm_buffer in
     let text = buf.buf_text in
-    goto_point text point spoint;
+    Text.goto_point text point spoint;
     match !sens with
       Backward -> 
         Text.search_backward text regexp point |> ignore
@@ -5546,7 +5547,7 @@ let isearch to_regexp sens frame =
         let len = Text.search_forward text regexp point in
 (*        Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
         print_newline ();*)
-        fmove text point len; ()
+        Text.fmove text point len; ()
   in
   let set_last mini_frame =
     if !string = "" then
@@ -5574,7 +5575,7 @@ let isearch to_regexp sens frame =
       Minibuffer.update_request mini_frame (request ())
   );  
   let _mini_frame =
-    incremental_mini_buffer frame ismap (request ()) !string
+    Select.incremental_mini_buffer frame ismap (request ()) !string
       (fun frame str -> 
         string := str;
         isearch_s ()
@@ -5597,19 +5598,19 @@ let isearch to_regexp sens frame =
   Keymap.add_binding ismap [NormalMap, XK.xk_Left]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      move_backward frame 1 |> ignore
+      Simple.move_backward frame 1 |> ignore
      );  
   Keymap.add_binding ismap [NormalMap, XK.xk_Right]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      move_forward frame 1 |> ignore
+      Simple.move_forward frame 1 |> ignore
     );  
-  Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and forward_line);
-  Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and backward_line);
+  Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and Simple.forward_line);
+  Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and Simple.backward_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'a'] 
-    (kill_and beginning_of_line);
+    (kill_and Simple.beginning_of_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'e'] 
-    (kill_and end_of_line)
+    (kill_and Simple.end_of_line)
 @
 
 
@@ -5713,10 +5714,10 @@ let search_backward_groups tree regexp point groups =
 @
 
 <<replacing actions>>=
-define_action "replace_string" replace_string;
-define_action "replace_regexp" replace_regexp;
-define_action "query_replace_string" query_replace_string;
-define_action "query_replace_regexp" query_replace_regexp;
+define_action "replace_string" Search.replace_string;
+define_action "replace_regexp" Search.replace_regexp;
+define_action "query_replace_string" Search.query_replace_string;
+define_action "query_replace_regexp" Search.query_replace_regexp;
 @
 
 <<[[interactives_map]] initial entries>>=
@@ -5841,12 +5842,12 @@ let get_name filename =
 \section{Buffers menu}
 
 <<[[Std_efunsrc]] buffers menu setup>>=
-buffers_menu := (fun top_window button () ->
+Top_window.buffers_menu := (fun top_window button () ->
     let buffers = ref [] in
     let loc = Efuns.location() in
     Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
     let _desc = Array.map (fun name -> 
-          (name, wrap top_window (fun top_window ->
+          (name, Top_window.wrap top_window (fun top_window ->
                 let frame = top_window.top_active_frame in
                 let window = frame.frm_window in
                 Frame.change_buffer window name
@@ -5872,15 +5873,15 @@ buffers_menu := (fun top_window button () ->
 @
 <<buffer managment actions>>=
 (* C-x map *)
-define_action "change_buffer"  change_buffer;
+define_action "change_buffer"  Complexe.change_buffer;
 @
 
 
 <<function Complex.change_buffer>>=
 let change_buffer frame =
-  let default = get_previous_frame () in
-  set_previous_frame frame;
-  select_buffer frame " Switch to buffer: " default (fun str ->
+  let default = Select.get_previous_frame () in
+  Select.set_previous_frame frame;
+  Select.select_buffer frame " Switch to buffer: " default (fun str ->
     let window = frame.frm_window in
     Frame.change_buffer window str
   )
@@ -5955,35 +5956,35 @@ mutable buf_finalizers : (unit -> unit) list;
 
 <<buffer navigating actions>>=
 (* C-M map *)
-define_action "left_buffer"  left_buffer;
+define_action "left_buffer"  Complexe.left_buffer;
 (* C-M map *)
-define_action "right_buffer"  right_buffer;
+define_action "right_buffer"  Complexe.right_buffer;
 (* C-M map *)
-define_action "down_buffer"  down_buffer;
+define_action "down_buffer"  Complexe.down_buffer;
 (* C-M map *)
-define_action "up_buffer"  up_buffer;
+define_action "up_buffer"  Complexe.up_buffer;
 @
 
 <<function Complex.left_buffer>>=
 let left_buffer frame =
-  set_previous_frame frame;
+  Select.set_previous_frame frame;
   Frame.change_buffer frame.frm_window (
-    match !prev_buffers with
+    match !Select.prev_buffers with
       name :: buffer :: tail ->
-        prev_buffers := tail @ [name]; 
+        Select.prev_buffers := tail @ [name]; 
         buffer
     | _ -> raise Not_found)
 @
 
 <<function Complex.right_buffer>>=
 let right_buffer frame =
-  set_previous_frame frame;
-  Frame.change_buffer frame.frm_window (match !prev_buffers with
+  Select.set_previous_frame frame;
+  Frame.change_buffer frame.frm_window (match !Select.prev_buffers with
       name :: tail ->
         begin
           match List.rev tail with
             buffer :: tail ->
-              prev_buffers := name :: (List.rev tail);
+              Select.prev_buffers := name :: (List.rev tail);
               buffer
           | _ -> raise Not_found
         end
@@ -6002,7 +6003,7 @@ let down_buffer frame = up_buffer := frame.frm_buffer.buf_name
 <<function Complex.up_buffer>>=
 let up_buffer frame =
   if !up_buffer = "" then raise Not_found;
-  set_previous_frame frame;
+  Select.set_previous_frame frame;
   Frame.change_buffer frame.frm_window !up_buffer
 @
 
@@ -6037,9 +6038,9 @@ let iter f window =
 
 <<frame managment actions>>=
 (* C-x map *)
-define_action "vertical_cut_frame"  v_cut_frame;    
+define_action "vertical_cut_frame"  Multi_frames.v_cut_frame;    
 (* C-x map *)
-define_action "horizontal_cut_frame"  h_cut_frame;    
+define_action "horizontal_cut_frame"  Multi_frames.h_cut_frame;    
 @
 
 <<function Multi_frames.v_cut_frame>>=
@@ -6083,9 +6084,9 @@ let h_cut_frame frame =
 
 <<frame managment actions>>=
 (* C-x map *)
-define_action "one_frame"  one_frame;
+define_action "one_frame"  Multi_frames.one_frame;
 (* C-x map *)
-define_action "delete_frame"  delete_frame;
+define_action "delete_frame"  Multi_frames.delete_frame;
 @
 
 <<function Multi_frames.one_frame>>=
@@ -6141,7 +6142,7 @@ let kill frame =
 @
 <<frame navigation actions>>=
 (* C-x map *)
-define_action "next_frame"  next_frame;
+define_action "next_frame"  Multi_frames.next_frame;
 @
 
 <<function Multi_frames.next_frame>>=
@@ -6567,7 +6568,7 @@ iter buf.buf_minor_modes
 @
 
 <<external command actions>>=
-define_action "shell_command"  shell_command;
+define_action "shell_command"  System.shell_command;
 @
 
 <<function System.shell_command>>=
@@ -6589,11 +6590,11 @@ let shell_command frame =
 
 <<misc actions>>=
 (* C-x map *)
-define_action "next_error"  next_error;
+define_action "next_error"  Compil.next_error;
 @
 
 <<external command actions>>=
-define_action "grep" grep;
+define_action "grep" Compil.grep;
 (*  define_action "compile" (compile c_find_error); *)
 @
 
@@ -6611,7 +6612,7 @@ let grep_hist = ref ["grep -n "]
 <<function Compil.grep>>=
 let grep frame =
   let default = List.hd !grep_hist in
-  select_string frame (Printf.sprintf "Grep command: %s (default: %s) " !!grep_command default)
+  Select.select_string frame (Printf.sprintf "Grep command: %s (default: %s) " !!grep_command default)
   grep_hist ""
     (fun cmd -> 
       let cmd = if cmd = "" then default else cmd in
@@ -6619,12 +6620,12 @@ let grep frame =
       let cdir = Frame.current_dir frame in
       let comp_window =
         match !compilation_frame with
-          None -> cut_frame frame 
+          None -> Multi_frames.cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill new_frame.frm_buffer;
             if new_frame.frm_killed 
-            then cut_frame frame
+            then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
       Unix.chdir cdir;
@@ -6641,7 +6642,8 @@ let grep frame =
 
 <<function Std_efunsrc.compile>>=
 let compile frame =
-  exec_interactive (buf_interactives frame.frm_buffer) frame "compile"
+  Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
+   frame "compile"
 @
 
 <<misc actions>>=
@@ -6651,7 +6653,7 @@ define_action "compile" compile;
 <<function Compil.compile>>=
 let compile find_error_fun frame =
   let default = List.hd !make_hist in
-  select_string frame ("Compile command: (default :"^ default^") " )
+  Select.select_string frame ("Compile command: (default :"^ default^") " )
   make_hist ""
     (fun cmd -> 
       let cmd = 
@@ -6680,12 +6682,12 @@ let compile find_error_fun frame =
       in
       let comp_window =
         match !compilation_frame with
-          None -> cut_frame frame 
+          None -> Multi_frames.cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill new_frame.frm_buffer;
             if new_frame.frm_killed 
-            then cut_frame frame
+            then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
       Unix.chdir cdir;
@@ -6706,7 +6708,7 @@ let next_error top_frame =
     None -> Top_window.message top_window "No compilation started"
   | Some (frame, error_point, cdir) ->      
       if frame.frm_killed 
-      then unkill (cut_frame top_frame) frame;
+      then Frame.unkill (Multi_frames.cut_frame top_frame) frame;
       let buf = frame.frm_buffer in
       let find_error = try
           get_local buf find_error
@@ -6725,7 +6727,7 @@ let next_error top_frame =
           let buf = Ebuffer.read filename (Keymap.create ()) in
 (* new frame for error buffer *)
           let frame = 
-            try find_buffer_frame buf 
+            try Frame.find_buffer_frame buf 
             with Not_found ->
                 if frame == top_frame then
                   let new_window = Top_window.create ()
@@ -6766,7 +6768,7 @@ let eval_history = ref []
 
 <<function Complex.eval>>=
 let eval frame =
-  select_string frame "Eval:" eval_history "" 
+  Select.select_string frame "Eval:" eval_history "" 
     (fun str ->
       let top_window = Window.top frame.frm_window in
       (* This is not enough: the paths also may have changed. *)
@@ -6798,7 +6800,7 @@ let eval frame =
 <<toplevel Abbrevs._1>>=
 let _ =
   define_action "char_expand_abbrev" (fun frame ->
-      expand_sabbrev frame; self_insert_command frame);
+      expand_sabbrev frame; Simple.self_insert_command frame);
   define_action "dabbrev_expand" dabbrev_expand;
   ()
 @
@@ -6810,8 +6812,8 @@ let expand_sabbrev frame =
     let buf = frame.frm_buffer in
     let text = buf.buf_text in
     let abbrevs = get_local buf abbrev_table in
-    let mark = dup_point text point in
-    to_begin_of_word text point buf.buf_syntax_table;
+    let mark = Text.dup_point text point in
+    Simple.to_begin_of_word text point buf.buf_syntax_table;
     let str = Text.region text point mark in
     Text.remove_point text mark;
     let len = String.length str in
@@ -6819,9 +6821,9 @@ let expand_sabbrev frame =
       let repl = Hashtbl.find abbrevs str in
       Text.delete text point len;
       Text.insert text point repl;
-      fmove text point (String.length repl); ()
+      Text.fmove text point (String.length repl); ()
     with
-      Not_found -> fmove text point len; ()
+      Not_found -> Text.fmove text point len; ()
   with
     _ -> ()
 @
@@ -6836,66 +6838,65 @@ let dabbrev_expand frame =
   let s, buf, pos, history =
     match !dabbrev_buf with
       Some (s, for_frame, for_position, for_len,buf, pos, history) 
-      when frame == for_frame && for_position = get_position text point ->
-        bmove text point for_len;
+      when frame == for_frame && for_position = Text.get_position text point ->
+        Text.bmove text point for_len;
         Text.delete text point for_len;
         s, buf, pos, history
     | _ -> 
-        let str = beginning_of_word buf point in
+        let str = Simple.beginning_of_word buf point in
         str , buf, 
-        get_position text point - String.length str, []
+        Text.get_position text point - String.length str, []
   in
   let truelen = String.length s in
   let s = escaped s in
-  bmove text point truelen;
+  Text.bmove text point truelen;
   let regexp = Str.regexp s in
   let rec iter curr_buf pos =
     let curr_text = curr_buf.buf_text in
-    let mark = add_point curr_text in
-    set_position curr_text mark pos;
+    let mark = Text.add_point curr_text in
+    Text.set_position curr_text mark pos;
     try
       let rec restart () =
         let _len = Text.search_backward curr_text regexp mark in
         if curr_text == text && mark = point then
           raise Exit
         else
-          if bmove_res curr_text mark 1 <> 0 then
-            if syntax.(Char.code (get_char curr_text mark)) then
-              (fmove curr_text mark 1; restart ())
-            else
-              (fmove curr_text mark 1; ())
+          if Text.bmove_res curr_text mark 1 <> 0 then
+            if syntax.(Char.code (Text.get_char curr_text mark)) 
+            then begin Text.fmove curr_text mark 1; restart () end
+            else Text.fmove curr_text mark 1 |> ignore
           else
             ()
       in
       let rec first () =
         restart ();
-        fmove curr_text mark truelen;
-        let m = end_of_word curr_buf mark in
+        Text.fmove curr_text mark truelen;
+        let m = Simple.end_of_word curr_buf mark in
         if List.mem m history then
-          (bmove curr_text mark truelen; first ())
+          (Text.bmove curr_text mark truelen; first ())
         else
           begin
-            fmove text point truelen;
+            Text.fmove text point truelen;
             let _,len = Text.insert_res text point m in
-            fmove text point len;
-            dabbrev_buf := Some (s, frame, get_position text point, len, 
-              curr_buf, get_position curr_text mark, m :: history);
-            remove_point curr_text mark
+            Text.fmove text point len;
+            dabbrev_buf := Some (s, frame, Text.get_position text point, len, 
+              curr_buf, Text.get_position curr_text mark, m :: history);
+            Text.remove_point curr_text mark
           end
       in
       first ()
     with
       Not_found ->
-        remove_point curr_text mark;
-        let curr_buf = next_buffer curr_buf in
+        Text.remove_point curr_text mark;
+        let curr_buf = Simple.next_buffer curr_buf in
         if curr_buf == buf then
           if !loop then raise Not_found
           else
             loop := true; (* to avoid infinite loop *)
         iter curr_buf (Text.size curr_buf.buf_text) 
     | Exit ->
-        remove_point curr_text mark;
-        fmove text point truelen;
+        Text.remove_point curr_text mark;
+        Text.fmove text point truelen;
         dabbrev_buf := None;
         raise Not_found
   in
@@ -6981,13 +6982,13 @@ define_action "fill_paragraph" fill_paragraph;
 <<function Simple.transpose_chars>>=
 let transpose_chars buf point =
   let text = buf.buf_text in
-  let session = start_session text in
-  bmove text point 1;
+  let session = Text.start_session text in
+  Text.bmove text point 1;
   let pos,c1 = Text.delete_res text point 1 in
-  fmove text point 1;
+  Text.fmove text point 1;
   Text.insert text point c1 |> ignore;
-  commit_session text session;
-  fmove text point 1;
+  Text.commit_session text session;
+  Text.fmove text point 1;
   ()
 @
 
@@ -6997,40 +6998,40 @@ let transpose_chars buf point =
 <<function Simple.transpose_words>>=
 let transpose_words buf point =
   let text = buf.buf_text in
-  let session = start_session text in
+  let session = Text.start_session text in
   let syntax = buf.buf_syntax_table in
   in_prev_word text point syntax;
   to_begin_of_word text point syntax;
-  let pos1 = dup_point text point in
+  let pos1 = Text.dup_point text point in
   to_end_of_word text point syntax;
-  let _,word1 = Text.delete_res text pos1 (distance text pos1 point) in
-  goto_point text point pos1;
+  let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
+  Text.goto_point text point pos1;
   in_next_word text point syntax;
-  let pos2 = dup_point text point in
+  let pos2 = Text.dup_point text point in
   to_end_of_word text point syntax;
-  let _,word2 = Text.delete_res text pos2 (distance text pos2 point) in    
+  let _,word2 = Text.delete_res text pos2 (Text.distance text pos2 point) in    
   Text.insert text pos1 word2 |> ignore;
   Text.insert text pos2 word1 |> ignore;
-  fmove text point (String.length word1);
-  commit_session text session;
-  remove_point text pos1;
-  remove_point text pos2
+  Text.fmove text point (String.length word1);
+  Text.commit_session text session;
+  Text.remove_point text pos1;
+  Text.remove_point text pos2
 @
 
 <<function Simple.on_word>>=
 let on_word buf point f =
   let text = buf.buf_text in
-  let session = start_session text in
+  let session = Text.start_session text in
   let syntax = buf.buf_syntax_table in
   to_begin_of_word text point syntax;
-  let pos1 = dup_point text point in
+  let pos1 = Text.dup_point text point in
   to_end_of_word text point syntax;
-  let _,word1 = Text.delete_res text pos1 (distance text pos1 point) in
+  let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
   let w = f word1 in
   Text.insert text pos1 w |> ignore;
-  fmove text point (String.length w);
-  commit_session text session;
-  remove_point text pos1
+  Text.fmove text point (String.length w);
+  Text.commit_session text session;
+  Text.remove_point text pos1
 @
 
 \subsection{Filling}
@@ -7041,36 +7042,36 @@ let fill_paragraph frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let start = dup_point text point in
-  let session = start_session text in
+  let start = Text.dup_point text point in
+  let session = Text.start_session text in
   backward_paragraph buf start;
-  let fin = dup_point text start in
+  let fin = Text.dup_point text start in
   forward_paragraph buf fin;
   simplify text start fin;
-  insert text start "\n" |> ignore;
+  Text.insert text start "\n" |> ignore;
   let rec iter count last_space =
-    if compare text start fin < 0 then
-    if fmove_res text start 1 = 1 then 
-      let c = get_char text start in  
+    if Text.compare text start fin < 0 then
+    if Text.fmove_res text start 1 = 1 then 
+      let c = Text.get_char text start in  
         if c = ' ' then (* good, a new space *)
           iter (count+1) 0
       else
       if count > 75 && count <> last_space then 
           begin
-          bmove text start (last_space+1);
-          delete text start 1;
-          insert text start "\n";
-          fmove text start 1;
+          Text.bmove text start (last_space+1);
+          Text.delete text start 1;
+          Text.insert text start "\n";
+          Text.fmove text start 1;
           iter 0 0
           end
         else
           iter (count+1) (last_space+1)
   in
   iter 0 0;  
-  insert text fin "\n" |> ignore;
-  remove_point text start;
-  remove_point text fin;
-  commit_session text session
+  Text.insert text fin "\n" |> ignore;
+  Text.remove_point text start;
+  Text.remove_point text fin;
+  Text.commit_session text session
 @
 
 
@@ -7236,9 +7237,9 @@ let n_5 = (NormalMap, Char.code '5')
 
 <<window managment actions>>=
 (* C-x 5 map *)
-define_action "window_load_buffer"  window_load_buffer;
+define_action "window_load_buffer"  Complexe.window_load_buffer;
 (* C-x 5 map *)
-define_action "window_change_buffer"  window_change_buffer;
+define_action "window_change_buffer"  Complexe.window_change_buffer;
 (* C-x 5 map *)
 define_action "delete_window"  Top_window.delete_window;
 @
@@ -7246,7 +7247,7 @@ define_action "delete_window"  Top_window.delete_window;
 
 <<function Complex.window_load_buffer>>=
 let window_load_buffer frame = 
-  select_filename frame "Find file: " 
+  Select.select_filename frame "Find file: " 
     (fun str -> 
       let top_window = Top_window.create ()
           (*(Window.display top_window)*)
@@ -7257,8 +7258,8 @@ let window_load_buffer frame =
 
 <<function Complex.window_change_buffer>>=
 let window_change_buffer frame =
-  select_buffer frame "Switch to buffer in new frame: " 
-    (get_previous_frame ())
+  Select.select_buffer frame "Switch to buffer in new frame: " 
+    (Select.get_previous_frame ())
   (fun name ->
       let top_window = Top_window.create ()
            (*"TODO_Display"*) 
@@ -7578,7 +7579,7 @@ let input = set_input
 
 % interface
 <<[[Std_efunsrc._5]] start hooks options>>=
-add_option_parameter compile_find_makefile;
+add_option_parameter Compil.compile_find_makefile;
 add_option_parameter Text.add_amount;
 @
 
@@ -7644,9 +7645,9 @@ let parameters_hist = ref []
 
 <<function Complex.set_parameter>>=
 let set_parameter frame = 
-  let parameters = get_global parameters_var in
+  let parameters = get_global Simple.parameters_var in
   Select.select frame "set-parameter : " parameters_hist
-    "" (all_parameters frame) (fun s -> s) (fun variable ->
+    "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
           let (input,print,param) = List.assoc variable parameters
@@ -7656,9 +7657,9 @@ let set_parameter frame =
 
 <<function Complex.get_parameter>>=
 let get_parameter frame =
-  let parameters = get_global parameters_var in  
+  let parameters = get_global Simple.parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
-    "" (all_parameters frame) (fun s -> s) (fun variable ->
+    "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
         (Printf.sprintf "%s : %s" variable (
           let (input,print,param) = List.assoc variable parameters
