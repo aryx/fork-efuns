@@ -29,6 +29,11 @@ type world = {
   mutable height: int;
 }
 
+type metrics = {
+  font_width: float;
+  font_height: float;
+}
+
 (*****************************************************************************)
 (* Cairo helpers *)
 (*****************************************************************************)
@@ -121,29 +126,65 @@ let draw_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () =
 (*****************************************************************************)
 
 (* helper *)
-let move_to cr col line =
+let move_to cr pg col line =
+(*
    let extent = Cairo.font_extents cr in
    (* I thought extent.max_x_advance would be good for the width, but it's not,
     * extent2.text_width seems better.
     *)
    let extent2 = Cairo.text_extents cr "peh" in
    let (w,h) = extent2.Cairo.text_width / 3., extent.Cairo.font_height in
-   Cairo.move_to cr (w * col) (line * h + h - extent.Cairo.descent)
+   let descent = extent.Cairo.descent in
+*)
+  let (_, metrics) = pg in
+  let w = metrics.font_width in
+  let h = metrics.font_height in
+
+
+  Cairo.move_to cr (w * col) ((line * h) + h * 0.1)
 
 
 
-let clear_eol ?(color="DarkSlateGray") loc cr  col line len =
+let clear_eol ?(color="DarkSlateGray") loc cr pg  col line len =
 (*  pr2 (spf "WX_xterm.clear_eol: %.f %.f %d" col line len); *)
+
+(*
   let extent = Cairo.font_extents cr in
   let extent2 = Cairo.text_extents cr "peh" in
   let (w,h) = extent2.Cairo.text_width / 3., extent.Cairo.font_height in
-  let x, y = w * col, line * h in
+*)
+  let (_, metrics) = pg in
+  let w = metrics.font_width in
+  let h = metrics.font_height in
+
+  let x =  w * col +
+    if color = "DarkSlateGray"
+    then 0.
+    else w * 0.1
+
+  in
+  let y = line * h +
+    if color = "DarkSlateGray"
+    then 0.
+    else h * 0.2
+  in
+  let h = h *
+    if color = "DarkSlateGray"
+    then 1.04
+    else 0.8
+  in
+  let w = w * (float_of_int len) + w * 
+    (if color = "DarkSlateGray"
+     then 0.04 
+     else -. 0.1
+    )
+  in
   (* to debug use draw and pink color ! so get bounding clear box *)
-  (* draw_rectangle_xywh ~cr ~x ~y ~w:(w * (float_of_int len)) ~h ~color:"pink" (); *)
-  fill_rectangle_xywh ~cr ~x ~y ~w:(w * (float_of_int len)) ~h ~color ();
+(*  draw_rectangle_xywh ~cr ~x ~y ~w:(w * (float_of_int len)) ~h ~color:"pink" ();*)
+  fill_rectangle_xywh ~cr ~x ~y ~w ~h ~color (); 
   ()
 
-let draw_string loc cr   col line  str  offset len   attr =
+let draw_string loc cr pg   col line  str  offset len   attr =
   if !debug_graphics
   then pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
     col line str offset len attr);
@@ -151,14 +192,18 @@ let draw_string loc cr   col line  str  offset len   attr =
     let idx = (attr lsr 8) land 255 in
     loc.loc_colors_names.(idx)
   in
-  clear_eol ~color:bgcolor loc cr col line len;
-  move_to cr col line;
+  clear_eol ~color:bgcolor loc cr pg col line len;
+  move_to cr pg col line;
   let fgcolor = 
     let idx = (attr) land 255 in
     loc.loc_colors_names.(idx)
   in
   set_source_color ~cr ~color:fgcolor ();
-  show_text cr (String.sub str offset len);
+  let (ly, _) = pg in
+  Pango.Layout.set_text ly  (String.sub str offset len);
+  Pango_cairo.update_layout cr ly;
+  Pango_cairo.show_layout cr ly;
+(*  show_text cr (String.sub str offset len); *)
   ()
 
 let update_displays _loc _cr =
@@ -166,105 +211,16 @@ let update_displays _loc _cr =
   then pr2 ("WX_xterm.update_displays")
 
 
-let backend loc cr = 
+let backend loc cr pg = 
   let conv x = float_of_int x in
   { Xdraw. 
     clear_eol = (fun a b c -> 
-      clear_eol loc cr (conv a) (conv b) c); 
+      clear_eol loc cr pg (conv a) (conv b) c); 
     draw_string = (fun a b c d e f -> 
-      draw_string loc cr (conv a) (conv b) c d e f);
+      draw_string loc cr pg (conv a) (conv b) c d e f);
     update_displays = (fun () -> 
       update_displays loc cr);
   }
-
-
-(*****************************************************************************)
-(* Test cairo/gtk *)
-(*****************************************************************************)
-
-let width = 500
-let height = 500
-
-let test_draw cr =
-  (* [0,0][1,1] world scaled to a width x height screen *)
-(*  Cairo.scale cr (float_of_int width) (float_of_int height); *)
-
-  Cairo.set_source_rgba cr ~red:0.5 ~green:0.5 ~blue:0.5 ~alpha:0.5;
-  Cairo.set_line_width cr 0.001;
-
-  Cairo.move_to cr 0.5 0.5;
-  Cairo.line_to cr 0.6 0.6;
-  Cairo.stroke cr;
-
-(*
-  Cairo.select_font_face cr "monospace"
-    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_BOLD;
-*)
-  Cairo.select_font_face cr "fixed"
-    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
-
-  Cairo.set_font_size cr 0.05;
-
-  let _extent = Cairo.text_extents cr "peh" in
-  (* WEIRD: if Cairo.text_extents cr "d" create an Out_of_memory exn *)
-  (* related? https://github.com/diagrams/diagrams-cairo/issues/43
-  *)
-
-
-  Cairo.move_to cr 0.1 0.1;
-  Cairo.show_text cr "THIS IS SOME TEXT";
-  Cairo.move_to cr 0.1 0.2;
-  Cairo.show_text cr "THIS IS SOME TEXT";
-  Cairo.set_font_size cr 0.05;
-  Cairo.move_to cr 0.1 0.3;
-  Cairo.show_text cr "THIS IS SOME TEXT";
-
-  Cairo.set_source_rgb cr ~red:0.1 ~green:0.1 ~blue:0.1;
-  Cairo.move_to cr 0.1 0.1;
-  Cairo.line_to cr 0.1 0.2;
-  Cairo.stroke cr;
-
-  let start = ref 0.0 in
-
-  for _i = 0 to 3 do
-    let end_ = !start +. 0.5 in
-    Cairo.arc cr ~xc:0.5 ~yc:0.5 ~radius:0.3 ~angle1:!start
-      ~angle2:end_;
-    Cairo.stroke cr;
-    start := end_;
-  done;
-
-  let layout = Pango_cairo.create_layout cr in
-  Pango.Layout.set_text layout "let x = 1 in main () for x = 1 to 3!";
-  let desc = Pango.Font.from_string 
-(*
-    "Sans Bold 25" 
-    "Fixed Bold 32"
-*)
-    "b&h-Luxi Bold 23"
-  in
-  Pango.Layout.set_font_description layout desc;
-  Pango_cairo.update_layout cr layout;
-
-  Cairo.move_to cr 0.1 0.1;
-  Pango_cairo.show_layout cr layout;
-  pr2 (spf "font = %s" (Pango.Font.to_string desc));
-
-
-  ()
-
-let test_cairo () =
-  let _locale = GtkMain.Main.init () in
-  let w = GWindow.window ~title:"test" () in
-  (w#connect#destroy GMain.quit) +> ignore;
-  let px = GDraw.pixmap ~width ~height ~window:w () in
-  px#set_foreground `WHITE;
-  px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
-  let cr = Cairo_lablgtk.create px#pixmap in
-  test_draw cr;
-  (GMisc.pixmap px ~packing:w#add ()) +> ignore;
-  w#show ();
-  GMain.main()
 
 
 (*****************************************************************************)
@@ -287,8 +243,8 @@ let init2 init_files =
   let _locale = GtkMain.Main.init () in
   let location = Efuns.location () in
 
-  let width = 800 in
-  let height = 800 in
+  let width = 1320 in
+  let height = 1400 in
   let w = {
     model = location;
     width;
@@ -303,7 +259,7 @@ let init2 init_files =
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
   (*-------------------------------------------------------------------*)
 
-  location.loc_height <- 35;
+  location.loc_height <- 46;
   (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create () in
   (* the *bindings* buffer *)
@@ -318,7 +274,7 @@ let init2 init_files =
   (*-------------------------------------------------------------------*)
 
   let px = GDraw.pixmap ~width ~height ~window:win () in
-  px#set_foreground `WHITE;
+  px#set_foreground `BLACK;
   px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
 
   let cr = Cairo_lablgtk.create px#pixmap in
@@ -327,8 +283,39 @@ let init2 init_files =
     Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
   Cairo.set_font_size cr 20.;
 
+  let layout = Pango_cairo.create_layout cr in
+  let desc = Pango.Font.from_string 
+(*
+    "Sans Bold 25" 
+    "Fixed Bold 32"
+    "Monaco 16"
+*)
+    "Courier 19"
+  in
+  Pango.Font.set_weight desc `ULTRABOLD; 
+  Pango.Layout.set_font_description layout desc;
 
-  top_window.graphics <- Some (backend location cr); 
+
+  let ctx = Pango_cairo.FontMap.create_context 
+    (Pango_cairo.FontMap.get_default ()) in
+  Pango.Context.set_font_description ctx desc;
+  let metrics = 
+    Pango.Context.get_metrics ctx 
+      (Pango.Context.get_font_description ctx) None in
+  let width = 
+    float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
+  let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
+  let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
+  let height = ascent + descent in
+  let metrics = { 
+    font_width = width; 
+    font_height = height * 1.2;
+  } in
+  let pg = (layout, metrics) in
+
+  Pango_cairo.update_layout cr layout;
+
+  top_window.graphics <- Some (backend location cr pg); 
   paint w;
 
   win#event#connect#key_press ~callback:(fun key ->
@@ -395,6 +382,128 @@ let init2 init_files =
   win#connect#destroy ~callback:quit |> ignore;
   win#show ();
   GMain.main()
+
+
+
+
+
+
+
+
+
+
+(*****************************************************************************)
+(* Test cairo/gtk *)
+(*****************************************************************************)
+
+let width = 500
+let height = 500
+
+let test_draw cr =
+  (* [0,0][1,1] world scaled to a width x height screen *)
+(*  Cairo.scale cr (float_of_int width) (float_of_int height); *)
+
+  Cairo.set_source_rgba cr ~red:0.5 ~green:0.5 ~blue:0.5 ~alpha:0.5;
+  Cairo.set_line_width cr 0.001;
+
+  Cairo.move_to cr 0.5 0.5;
+  Cairo.line_to cr 0.6 0.6;
+  Cairo.stroke cr;
+
+(*
+  Cairo.select_font_face cr "monospace"
+    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_BOLD;
+*)
+  Cairo.select_font_face cr "fixed"
+    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
+
+  Cairo.set_font_size cr 0.05;
+
+  let _extent = Cairo.text_extents cr "peh" in
+  (* WEIRD: if Cairo.text_extents cr "d" create an Out_of_memory exn *)
+  (* related? https://github.com/diagrams/diagrams-cairo/issues/43
+  *)
+
+
+  Cairo.move_to cr 0.1 0.1;
+  Cairo.show_text cr "THIS IS SOME TEXT";
+  Cairo.move_to cr 0.1 0.2;
+  Cairo.show_text cr "THIS IS SOME TEXT";
+  Cairo.set_font_size cr 0.05;
+  Cairo.move_to cr 0.1 0.3;
+  Cairo.show_text cr "THIS IS SOME TEXT";
+
+  Cairo.set_source_rgb cr ~red:0.1 ~green:0.1 ~blue:0.1;
+  Cairo.move_to cr 0.1 0.1;
+  Cairo.line_to cr 0.1 0.2;
+  Cairo.stroke cr;
+
+  let start = ref 0.0 in
+
+  for _i = 0 to 3 do
+    let end_ = !start +. 0.5 in
+    Cairo.arc cr ~xc:0.5 ~yc:0.5 ~radius:0.3 ~angle1:!start
+      ~angle2:end_;
+    Cairo.stroke cr;
+    start := end_;
+  done;
+
+  let layout = Pango_cairo.create_layout cr in
+  let ctx = Pango_cairo.FontMap.create_context 
+    (Pango_cairo.FontMap.get_default ()) in
+
+
+  Pango.Layout.set_text layout "let x = 1 in main () for x = 1 to 3!";
+  let desc = Pango.Font.from_string 
+(*
+    "Sans Bold 25" 
+    "Fixed Bold 32"
+*)
+    "b&h-Luxi Bold 23"
+  in
+  Pango.Context.set_font_description ctx desc;
+  Pango.Layout.set_font_description layout desc;
+  Pango_cairo.update_layout cr layout;
+
+  Cairo.move_to cr 0. 0.;
+  Pango_cairo.show_layout cr layout;
+  pr2 (spf "font = %s" (Pango.Font.to_string desc));
+
+
+  let metrics = 
+    Pango.Context.get_metrics ctx 
+      (Pango.Context.get_font_description ctx) None in
+  let w = 
+    float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
+  let descent = 
+    float_of_int (Pango.Font.get_descent metrics) / 1024. in
+  let ascent = 
+    float_of_int (Pango.Font.get_ascent metrics) / 1024. in
+  let h = ascent + descent in
+  pr2_gen (w, h, ascent, descent);
+
+  Cairo.move_to cr 0. h;
+  Pango_cairo.show_layout cr layout;
+
+  ()
+
+
+
+let test_cairo () =
+  let _locale = GtkMain.Main.init () in
+  let w = GWindow.window ~title:"test" () in
+  (w#connect#destroy GMain.quit) +> ignore;
+  let px = GDraw.pixmap ~width ~height ~window:w () in
+  px#set_foreground `WHITE;
+  px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
+  let cr = Cairo_lablgtk.create px#pixmap in
+  test_draw cr;
+  (GMisc.pixmap px ~packing:w#add ()) +> ignore;
+  w#show ();
+  GMain.main()
+
+(*****************************************************************************)
+(*****************************************************************************)
 
 let init a =
   if !Efuns.check
