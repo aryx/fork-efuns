@@ -57,7 +57,7 @@ exception SigInt
 
 (*s: constants Main.xxx_opt *)
 let width_opt = ref None
-let height_opt = ref None
+let height_opt  = ref None
 let fg_opt = ref None
 let bg_opt = ref None
 let font_opt = ref None

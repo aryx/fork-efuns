@@ -108,7 +108,7 @@ let move_to cr pg col line =
   let (_, metrics) = pg in
   let w = metrics.font_width in
   let h = metrics.font_height in
-  Cairo.move_to cr (w * col) ((line * h) + h * 0.2)
+  Cairo.move_to cr (w * col) ((line * h) + h * 0.1)
 
 
 
@@ -245,8 +245,9 @@ let init2 init_files =
     "Fixed Bold 32"
     "Monaco 16"
     "Courier 19"
+    "Menlo 19"
 *)
-    "Courier 19"
+    "Menlo 18"
   in
   Pango.Font.set_weight desc `ULTRABOLD; 
   Pango.Layout.set_font_description layout desc;
@@ -265,7 +266,7 @@ let init2 init_files =
   let height = ascent + descent in
   let metrics = { 
     font_width = width; 
-    font_height = height * 1.2;
+    font_height = height * 1.1;
   } in
   let pg = (layout, metrics) in
 
