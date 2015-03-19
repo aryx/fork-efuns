@@ -187,7 +187,7 @@ let height = 500
 
 let test_draw cr =
   (* [0,0][1,1] world scaled to a width x height screen *)
-  Cairo.scale cr (float_of_int width) (float_of_int height);
+(*  Cairo.scale cr (float_of_int width) (float_of_int height); *)
 
   Cairo.set_source_rgba cr ~red:0.5 ~green:0.5 ~blue:0.5 ~alpha:0.5;
   Cairo.set_line_width cr 0.001;
@@ -203,7 +203,7 @@ let test_draw cr =
   Cairo.select_font_face cr "fixed"
     Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
 
-  Cairo.set_font_size cr 0.1;
+  Cairo.set_font_size cr 0.05;
 
   let _extent = Cairo.text_extents cr "peh" in
   (* WEIRD: if Cairo.text_extents cr "d" create an Out_of_memory exn *)
@@ -233,6 +233,23 @@ let test_draw cr =
     Cairo.stroke cr;
     start := end_;
   done;
+
+  let layout = Pango_cairo.create_layout cr in
+  Pango.Layout.set_text layout "let x = 1 in main () for x = 1 to 3!";
+  let desc = Pango.Font.from_string 
+(*
+    "Sans Bold 25" 
+    "Fixed Bold 32"
+*)
+    "b&h-Luxi Bold 23"
+  in
+  Pango.Layout.set_font_description layout desc;
+  Pango_cairo.update_layout cr layout;
+
+  Cairo.move_to cr 0.1 0.1;
+  Pango_cairo.show_layout cr layout;
+  pr2 (spf "font = %s" (Pango.Font.to_string desc));
+
 
   ()
 

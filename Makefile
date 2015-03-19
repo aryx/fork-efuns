@@ -11,7 +11,7 @@ TARGET=efuns
 
 BACKENDDIR=graphics/gtk_cairo
 GRAPHICSDIR=$(shell ocamlfind query lablgtk2) $(shell ocamlfind query cairo)
-OTHERSYSLIBS=lablgtk.cma cairo.cma cairo_lablgtk.cma 
+OTHERSYSLIBS=lablgtk.cma cairo.cma   cairo_lablgtk.cma pango_cairo.cma 
 GTKLOOP=gtkThread.cmo
 #alt:
 #BACKENDDIR=graphics/ocamlgraphics
