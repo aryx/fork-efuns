@@ -12,6 +12,12 @@ let string_color = define_option ["string_color"] ""
     string_option "green3"
 let comment_color = define_option ["comment_color"] ""
     string_option "gray"
+let number_color  = define_option ["number_color"] ""
+    string_option "yellow3"
+let punctuation_color  = define_option ["punctuation_color"] ""
+    string_option "cyan"
+let operator_color  = define_option ["operator_color"] ""
+    string_option "gold"
 
 let function_name_color = define_option ["function_name_color"] ""
     string_option "LightBlue2"
@@ -23,12 +29,34 @@ let module_color = define_option ["module_color"] ""
     string_option "DarkSlateGray4"
 let preprocessor_color = define_option ["preprocessor_color"] ""
     string_option "coral"
+let builtin_color = define_option ["builtin_color"] ""
+    string_option "coral"
+
+let common_functions_color = define_option ["common_functions_color"] ""
+    string_option "Violet"
+let syncweb_comment_color = define_option ["syncweb_comment_color"] ""
+    string_option "DimGray"
 
 let error_color = define_option ["error_color"] ""
     string_option "red"
 
+let color_buf_hook = Local.create_abstr "color_buf_hook"
+
+let color_number_and_punctuation buf =
+  Simple.color buf 
+    (Str.regexp ("\\b[0-9]+\\b")) false
+      (Text.make_attr (Window.get_color !!number_color) 1 0 false);
+  Simple.color buf 
+    (Str.regexp ("[|;(){}\\[\\]]")) false
+      (Text.make_attr (Window.get_color !!punctuation_color) 1 0 false);
+  ()
+
+
+  
+
 let _ =  
   Efuns.add_start_hook (fun () ->
+    Efuns.add_hook color_buf_hook color_number_and_punctuation;
 
     Simple.add_option_parameter keyword_color;
     Simple.add_option_parameter string_color;

@@ -184,8 +184,6 @@ let keyword_table =
     "as", AS;
     "assert", ASSERT;
     "begin", BEGIN;
-    "class", CLASS;
-    "constraint", CONSTRAINT;
     "do", DO;
     "done", DONE;
     "downto", DOWNTO;
@@ -197,25 +195,17 @@ let keyword_table =
     "for", FOR;
     "fun", FUN;
     "function", FUNCTION;
-    "functor", FUNCTOR;
     "if", IF;
     "in", IN;
-    "include", INCLUDE;
-    "inherit", INHERIT;
-    "initializer", INITIALIZER;
     "lazy", LAZY;
     "let", LET;
     "match", MATCH;
-    "method", METHOD;
     "module", MODULE;
     "mutable", MUTABLE;
     "new", NEW;
-    "object", OBJECT;
     "of", OF;
     "open", OPEN;
     "or", OR;
-    "parser", PARSER;
-    "private", PRIVATE;
     "rec", REC;
     "sig", SIG;
     "struct", STRUCT;
@@ -225,10 +215,10 @@ let keyword_table =
     "try", TRY;
     "type", TYPE;
     "val", VAL;
-    "virtual", VIRTUAL;
     "when", WHEN;
     "while", WHILE;
     "with", WITH;
+
     "mod", INFIXOP3;
     "land", INFIXOP3;
     "lor", INFIXOP3;
@@ -239,6 +229,20 @@ let keyword_table =
     (* for lexers *)
     "rule", RULE;
     "parse", PARSE;
+
+    "class", CLASS;
+    "constraint", CONSTRAINT;
+    "functor", FUNCTOR;
+    "inherit", INHERIT;
+    "initializer", INITIALIZER;
+    "method", METHOD;
+    "object", OBJECT;
+    "include", INCLUDE;
+    "parser", PARSER;
+    "private", PRIVATE;
+    "virtual", VIRTUAL;
+
+
   ];
   h
   
@@ -261,13 +265,6 @@ let store_string_char c =
   String.unsafe_set (!string_buff) (!string_index) c;
   incr string_index
 
-(*  
-  let get_stored_string () =
-    let s = String.sub (!string_buff) 0 (!string_index) in
-    string_buff := initial_string_buffer;
-    s
-*)
-
 (* To translate escape sequences *)
   
 let char_for_backslash =
@@ -283,9 +280,11 @@ let char_for_backslash =
   | x -> failwith "Lexer: unknown system type"
 
 let char_for_decimal_code lexbuf i =
-  let c = 100 * (Char.code(Lexing.lexeme_char lexbuf i) - 48) +
-      10 * (Char.code(Lexing.lexeme_char lexbuf (i+1)) - 48) +
-      (Char.code(Lexing.lexeme_char lexbuf (i+2)) - 48) in  
+  let c = 
+      100 * (Char.code(Lexing.lexeme_char lexbuf i) - 48) +
+      10 *  (Char.code(Lexing.lexeme_char lexbuf (i+1)) - 48) +
+            (Char.code(Lexing.lexeme_char lexbuf (i+2)) - 48) 
+  in  
   Char.chr(c land 0xFF)
 
 (* To store the position of the beginning of a string or comment *)
@@ -321,11 +320,9 @@ let float_literal =
           ['0'-'9']+ ('.' ['0'-'9']*)? (['e' 'E'] ['+' '-']? ['0'-'9']+)?
 
 rule token = parse
-    blank +
-    { token lexbuf }
-  | return { let (p,_) as pos = position lexbuf in pos, EOL p }
-  | "_"
-      { position lexbuf, UNDERSCORE }
+    blank +    { token lexbuf }
+  | return     { let (p,_) as pos = position lexbuf in pos, EOL p }
+  | "_"        { position lexbuf, UNDERSCORE }
   | lowercase identchar *
     { position lexbuf,
       let s = Lexing.lexeme lexbuf in
@@ -336,9 +333,9 @@ rule token = parse
   | uppercase identchar *
     { position lexbuf, UIDENT }       (* No capitalized keywords *)
   | decimal_literal | hex_literal | oct_literal | bin_literal
-      { position lexbuf, INT }
+    { position lexbuf, INT }
   | float_literal
-      { position lexbuf, FLOAT }
+    { position lexbuf, FLOAT }
   | "\""
       { reset_string_buffer();
       let string_start = Lexing.lexeme_start lexbuf in
@@ -476,12 +473,12 @@ and string = parse
 {
 (* val token : lexbuf -> token *)
 
-open Options
-open Efuns
-
 let lexing text start_point end_point =
   lexer_start := Text.get_position text start_point;
   Text.lexing text start_point end_point
+
+open Options
+open Efuns
 
 (***********************************************************************)
 (* Paths *)
@@ -556,19 +553,20 @@ let ocaml_color_buffer buf =
   let start_point = Text.new_point text in
   let end_point = Text.new_point text in
   Text.set_position text end_point (Text.size text);
+  let hooks = try get_global Pl_colors.color_buf_hook with Not_found -> [] in
+  exec_hooks hooks buf;
   ocaml_color_region buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point
 
 let ocaml_color frame =
   let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let start_point = Text.new_point text in
-  let end_point = Text.new_point text in
-  Text.set_position text end_point (Text.size text);
-  ocaml_color_region buf start_point end_point;
-  Text.remove_point text start_point;
-  Text.remove_point text end_point
+  (* I factorize code with ocaml_color_buffer; the only diff
+   * was that this function was not ding the unset_attr, but not
+   * sure it matters
+   *)
+  ocaml_color_buffer buf
+    
 
 (***********************************************************************)
 (************************  abbreviations ********************)

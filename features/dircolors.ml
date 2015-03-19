@@ -31,10 +31,10 @@ open Common
  *)
 
 (* less: could be some define_option *)
-let dir_color = "SkyBlue"
+let dir_color = "CornflowerBlue"
 
 let doc_color = "MediumTurquoise"
-let doc_org_color = "steel blue"
+let doc_org_color = "light sea green"
 let doc_doc_color = "turquoise"
 let doc_tex_color = "medium aquamarine"
 let literate_prog_color = "gold"
