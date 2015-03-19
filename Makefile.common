@@ -9,7 +9,7 @@
 #  - SRC
 #  - INCLUDEDIRS
 
-# For literate programming, also assumes a few variables:
+# For literate programming, this file also assumes a few more variables:
 #  - SRCNW
 #  - TEXMAIN
 #  - TEX
@@ -106,7 +106,7 @@ lpclean::
 	$(OCAMLC) -i $<
 
 clean::
-	rm -f *.cm[ioxa] *.o *.a *.cmxa *.annot *.cmt*
+	rm -f *.cm[ioxa] *.[oa] *.cmxa *.annot *.cmt*
 	rm -f *~ .*~ *.exe gmon.out #*#
 
 clean::

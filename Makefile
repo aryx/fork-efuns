@@ -63,8 +63,9 @@ SRC=\
  prog_modes/ocaml_mode.ml\
  prog_modes/c_mode.ml\
  prog_modes/lisp_mode.ml\
- prog_modes/tex_mode.ml\
- prog_modes/html_mode.ml\
+ \
+ text_modes/tex_mode.ml\
+ text_modes/html_mode.ml\
  \
  std_efunsrc.ml\
  $(BACKENDDIR)/graphics_efuns.ml \
@@ -88,7 +89,6 @@ CMIS=\
  features/simple.cmi\
  features/select.cmi\
  features/search.cmi\
- prog_modes/ocaml_mode.cmi\
 
 SYSLIBS=unix.cma str.cma threads.cma nums.cma bigarray.cma
 
@@ -96,7 +96,7 @@ INCLUDEDIRS=\
   commons\
   core features\
   graphics $(BACKENDDIR) $(GRAPHICSDIR) \
-  major_modes minor_modes prog_modes
+  major_modes minor_modes prog_modes text_modes
 
 ##############################################################################
 # Generic variables
@@ -123,16 +123,19 @@ $(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS)
 	$(OCAMLOPT) $(STATIC) -cclib -L/opt/X11/lib -o $@ \
       $(OTHERSYSLIBS:.cma=.cmxa) $(SYSLIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $^
 
+#clean::
+#	@rm -f $(OBJS) $(OBJS:.cmo=.cmi) $(OBJS:.cmo=.cmx) $(OBJS:.cmo=.o) \
+#       $(OBJS:.cmo=.annot) $(OBJS:.cmo=.cmt) $(OBJS:.cmo=.cmti)
 clean::
-	rm -f $(OBJS) $(OBJS:.cmo=.cmi) \
-       $(OBJS:.cmo=.annot) $(OBJS:.cmo=.cmt) $(OBJS:.cmo=.cmti)
+	rm -f */*.cm[ioxa] */*.[oa] */*.cmxa */*.annot */*.cmt*
+
 
 depend::
 	$(OCAMLDEP) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
 
 MODES= \
  prog_modes/ocaml_mode.ml prog_modes/c_mode.ml prog_modes/lisp_mode.ml \
- prog_modes/tex_mode.ml prog_modes/html_mode.ml
+ text_modes/tex_mode.ml text_modes/html_mode.ml
 
 beforedepend:: $(MODES)
 prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
@@ -141,9 +144,9 @@ prog_modes/c_mode.ml: prog_modes/c_mode.mll
 	ocamllex $^
 prog_modes/lisp_mode.ml: prog_modes/lisp_mode.mll
 	ocamllex $^
-prog_modes/tex_mode.ml: prog_modes/tex_mode.mll
+text_modes/tex_mode.ml: text_modes/tex_mode.mll
 	ocamllex $^
-prog_modes/html_mode.ml: prog_modes/html_mode.mll
+text_modes/html_mode.ml: text_modes/html_mode.mll
 	ocamllex $^
 
 clean:: 
