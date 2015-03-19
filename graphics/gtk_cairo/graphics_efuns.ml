@@ -78,28 +78,6 @@ let prepare_string s =
   end
 
 
-(* Text cairo API seems buggy, especially on MacOS X, see
- * https://github.com/diagrams/diagrams-cairo/issues/43
- * so I had to hack many things in move_to() by using different extents..
- * Indeed the main cairo documents says Cairo.text_xxx are a "toy text API"
- * http://cairographics.org/manual/cairo-text.html
- *)
-(* less: prepare_string thing *)
-let show_text cr s =
-  (* this 'if' is only for compatibility with old versions of cairo
-   * that returns some out_of_memory error when applied to empty strings
-   *)
-  if s = "" then () else 
-  try 
-    let s' = prepare_string s in
-    Cairo.show_text cr s'
-  with _exn ->
-    let status = Cairo.status cr in
-    let s2 = Cairo.string_of_status status in
-    failwith ("Cairo pb: " ^ s2 ^ " s = " ^ s)
-
-
-
 
 let fill_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () = 
   set_source_color ?alpha ~cr ~color ();
@@ -127,32 +105,15 @@ let draw_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () =
 
 (* helper *)
 let move_to cr pg col line =
-(*
-   let extent = Cairo.font_extents cr in
-   (* I thought extent.max_x_advance would be good for the width, but it's not,
-    * extent2.text_width seems better.
-    *)
-   let extent2 = Cairo.text_extents cr "peh" in
-   let (w,h) = extent2.Cairo.text_width / 3., extent.Cairo.font_height in
-   let descent = extent.Cairo.descent in
-*)
   let (_, metrics) = pg in
   let w = metrics.font_width in
   let h = metrics.font_height in
-
-
-  Cairo.move_to cr (w * col) ((line * h) + h * 0.1)
+  Cairo.move_to cr (w * col) ((line * h) + h * 0.2)
 
 
 
-let clear_eol ?(color="DarkSlateGray") loc cr pg  col line len =
+let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
 (*  pr2 (spf "WX_xterm.clear_eol: %.f %.f %d" col line len); *)
-
-(*
-  let extent = Cairo.font_extents cr in
-  let extent2 = Cairo.text_extents cr "peh" in
-  let (w,h) = extent2.Cairo.text_width / 3., extent.Cairo.font_height in
-*)
   let (_, metrics) = pg in
   let w = metrics.font_width in
   let h = metrics.font_height in
@@ -192,7 +153,7 @@ let draw_string loc cr pg   col line  str  offset len   attr =
     let idx = (attr lsr 8) land 255 in
     loc.loc_colors_names.(idx)
   in
-  clear_eol ~color:bgcolor loc cr pg col line len;
+  clear_eol ~color:bgcolor cr pg col line len;
   move_to cr pg col line;
   let fgcolor = 
     let idx = (attr) land 255 in
@@ -200,13 +161,12 @@ let draw_string loc cr pg   col line  str  offset len   attr =
   in
   set_source_color ~cr ~color:fgcolor ();
   let (ly, _) = pg in
-  Pango.Layout.set_text ly  (String.sub str offset len);
+  Pango.Layout.set_text ly  (prepare_string (String.sub str offset len));
   Pango_cairo.update_layout cr ly;
   Pango_cairo.show_layout cr ly;
-(*  show_text cr (String.sub str offset len); *)
   ()
 
-let update_displays _loc _cr =
+let update_displays _cr =
   if !debug_graphics
   then pr2 ("WX_xterm.update_displays")
 
@@ -215,11 +175,11 @@ let backend loc cr pg =
   let conv x = float_of_int x in
   { Xdraw. 
     clear_eol = (fun a b c -> 
-      clear_eol loc cr pg (conv a) (conv b) c); 
+      clear_eol cr pg (conv a) (conv b) c); 
     draw_string = (fun a b c d e f -> 
       draw_string loc cr pg (conv a) (conv b) c d e f);
     update_displays = (fun () -> 
-      update_displays loc cr);
+      update_displays cr);
   }
 
 
@@ -259,7 +219,7 @@ let init2 init_files =
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
   (*-------------------------------------------------------------------*)
 
-  location.loc_height <- 46;
+  location.loc_height <- 45;
   (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create () in
   (* the *bindings* buffer *)
@@ -278,17 +238,13 @@ let init2 init_files =
   px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
 
   let cr = Cairo_lablgtk.create px#pixmap in
-  (* Cairo.scale cr 1.0 1.0; *)
-  Cairo.select_font_face cr "fixed"
-    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
-  Cairo.set_font_size cr 20.;
-
   let layout = Pango_cairo.create_layout cr in
   let desc = Pango.Font.from_string 
 (*
     "Sans Bold 25" 
     "Fixed Bold 32"
     "Monaco 16"
+    "Courier 19"
 *)
     "Courier 19"
   in
@@ -316,6 +272,11 @@ let init2 init_files =
   Pango_cairo.update_layout cr layout;
 
   top_window.graphics <- Some (backend location cr pg); 
+
+  for i = 0 to (Efuns.location()).loc_height -.. 1 do
+    clear_eol cr pg 0. (float_of_int i) 80;
+  done;
+
   paint w;
 
   win#event#connect#key_press ~callback:(fun key ->
