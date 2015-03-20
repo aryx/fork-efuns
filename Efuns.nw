@@ -14,7 +14,7 @@
 %thx to LP, changed for the better a few things:
 % - better decomposition than simple.ml, complex.ml, good TOC
 % - removed deadcode (frm_force_point, frm_force_cursor, loc_counter, 
-%    resname)
+%    resname, buf_history)
 % - cleaner separation between point and position, no more
 %   let point = point.point uglyness
 % - use global for location instead of all those fields
@@ -458,7 +458,8 @@ let version tree =
   text.text_modified
 @
 %less: tree? because of wx_text stuff, could remove that no?
-
+%note that this goes up most of the time except when start to
+% do some undo operations
 
 
 
@@ -641,7 +642,6 @@ let create name filename text local_map =
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
 
-      buf_history = [];
       buf_sync = false;
       buf_mark = None;
       buf_shared = 0;
@@ -1203,9 +1203,7 @@ let _ =
 
 %XXX
 <<misc actions>>=
-define_action "recenter"  recenter;
 define_action "revert_buffer" Complexe.reload;
-
 define_action "open_display" Complexe.open_display;
 (* C-x map *)
 define_action "change_font"  Complexe.change_font;
@@ -1375,6 +1373,7 @@ let binding_option = tuple2_option (smalllist_option key_option, string_option)
 <<constant Simple.key_option>>=
 let key_option = define_option_class "Key" value_to_key key_to_value
 @
+% see configuration file library in appendix
 
 
 <<toplevel Std_efunsrc._2>>=
@@ -1492,8 +1491,6 @@ let c_c = (ControlMap, Char.code 'c')
 %XXX
 <<misc keys>>=
 [NormalMap, XK.xk_Insert], "overwrite_mode";
-[ControlMap, Char.code 'l'], "recenter";
-
 [c_x; NormalMap, Char.code 'F'], "change_font";
 @
 
@@ -1627,15 +1624,11 @@ define_action "get_variable"  Complexe.get_variable;
 % place where you can plug a customization at certain code points
 
 <<function Efuns.exec_hooks>>=
-let rec exec_hooks hooks arg =
-  match hooks with
-    [] -> ()
-  | f :: hooks -> 
-      (try f arg 
-       with exn -> 
-         error (spf "exn in hook: %s" (Common.exn_to_s exn))
-      );
-      exec_hooks hooks arg
+let exec_hooks hooks arg =
+  hooks |> List.iter (fun f ->
+    try f arg 
+    with exn -> error (spf "exn in hook: %s" (Common.exn_to_s exn))
+  )
 @
 
 <<function Efuns.add_hook>>=
@@ -1664,24 +1657,21 @@ exec_hooks hooks buf;
 
 
 <<function Frame.exec_named_hooks>>=
-let rec exec_named_hooks hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_hooks hooks frame;
-      try execute_action action frame with _ -> ()
+let exec_named_hooks hooks frame =
+  hooks |> List.rev |> List.iter (fun action -> 
+   try execute_action action frame with _ -> ()
+  )
 @
-
-<<function Frame.exec_named_hooks_with_abort>>=
-(*
-let rec exec_named_hooks_with_abort hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_hooks_with_abort hooks frame;
-      execute_action action frame
-*)
-@
+%<<function Frame.exec_named_hooks_with_abort>>=
+%(*
+%let rec exec_named_hooks_with_abort hooks frame =
+%  match hooks with
+%    [] -> ()
+%  | action :: hooks ->
+%      exec_named_hooks_with_abort hooks frame;
+%      execute_action action frame
+%*)
+%@
 
 % example:
 <<constant Frame.change_buffer_hooks>>=
@@ -1689,8 +1679,7 @@ let change_buffer_hooks = define_option ["change_buffer_hooks"] ""
     (list_option string_option)
   [ "check_file" ]
 @
-% use?
-
+% each time buffer change! -> <>
 <<misc actions>>=
 define_action "check_file" Complexe.check_file;
 @
@@ -1698,24 +1687,20 @@ define_action "check_file" Complexe.check_file;
 
 % ?? -> <>
 <<function Ebuffer.exec_named_buf_hooks>>=
-let rec exec_named_buf_hooks hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_buf_hooks hooks frame;
-      try execute_buffer_action action frame with _ -> ()
+let exec_named_buf_hooks hooks frame =
+  hooks |> List.iter |> List.iter (fun action ->
+    try execute_buffer_action action frame with _ -> ()
+  )
 @
 
 % ?? -> <>
 <<function Ebuffer.exec_named_buf_hooks_with_abort>>=
-let rec exec_named_buf_hooks_with_abort hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_buf_hooks_with_abort hooks frame;
-      execute_buffer_action action frame
+let  exec_named_buf_hooks_with_abort hooks frame =
+  hooks |> List.rev |> List.iter (fun action ->
+    execute_buffer_action action frame
+ )
 @
-
+% no try here
 
 % example:
 <<constant Ebuffer.save_buffer_hooks>>=
@@ -1843,9 +1828,9 @@ let font_opt = ref None
 <<[[main()]] command line options>>=
 "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
 "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
-"-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
-"-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
-"-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
+"-fg", Arg.String(fun s -> fg_opt := Some s), "<color>: Foreground color";
+"-bg", Arg.String(fun s -> bg_opt := Some s), "<color>: Background color";
+"-font", Arg.String(fun s -> font_opt := Some s), "<font>: Font name";
 @
 % gymnastic with intermediate xxx_opt because options filename
 % is set later because need first to process load_path
@@ -1931,19 +1916,11 @@ init_efuns location (* launch first hooks *);
 <<function Efuns.init>>=
 let init_efuns (location : location) =
   global_location := Some location;
-  let rec iter hooks =
-    match hooks with
-      [] -> ()
-    | (f : unit -> unit) :: hooks -> 
-        f ();
-        iter hooks
-  in
   let hooks = List.rev !Efuns.start_hooks in
   Efuns.start_hooks := [];
+  hooks |> List.iter (fun f -> f ());
   iter hooks
 @
-%less: why not using exec_hooks?
-%less: why not just List.iter (fun f -> f ()) hook?
 %old: used to be in efuns.ml, but better in main.ml
 
 
@@ -2381,6 +2358,9 @@ let size tree =
 <<misc actions>>=
 define_action "get_position" Complexe.get_pos;
 @
+<<[[interactives_map]] initial entries>>=
+"get_position";
+@
 
 <<function Complex.get_pos>>=
 let get_pos frame =
@@ -2587,10 +2567,10 @@ let low_insert tree point str =
   end;
   let gline = text.gpoint.line in
   text.text_points |> List.iter (fun p ->
-      if p.pos > gpos then
-          (* todo? why this extra condition?? BUG?? unit test? *)
-          if p.line = gline 
-          then p.line <- p.line + nbr_newlines;
+    if p.pos > gpos then
+      (* todo? why this extra condition?? BUG?? unit test? *)
+      if p.line = gline 
+      then p.line <- p.line + nbr_newlines;
 
   );
   text.gpoint <- { pos = gpos + strlen; line = gline + nbr_newlines };
@@ -3028,6 +3008,7 @@ let color buf regexp strict attr =
           ()
         end
     done
+  (* at some point Text.search_forward will return Not_found *)
   with Not_found -> 
     Text.remove_point text point;
     buf.buf_modified <- buf.buf_modified + 1
@@ -3314,8 +3295,8 @@ let save_some_buffers frame =
 let write_buffer frame = 
   let buf = frame.frm_buffer in
   Select.select_filename frame "Save file as: " (fun str -> 
-      Ebuffer.change_name buf str;
-      Ebuffer.save buf
+    Ebuffer.change_name buf str;
+    Ebuffer.save buf
   )
 @
 
@@ -3513,6 +3494,7 @@ mutable frm_last_buf_updated : int;
 (version text <> frame.frm_last_text_updated) ||
 (buf.buf_modified <> frame.frm_last_buf_updated) ||
 @
+% when the text can be modified?? when a buffer can be modified?
 
 <<[[Efuns.frame]] other fields>>=
 mutable frm_redraw : bool;    
@@ -3773,7 +3755,15 @@ end;
 @
 
 
+\subsubsection{Recenter}
 
+
+<<misc keys>>=
+[ControlMap, Char.code 'l'], "recenter";
+@
+<<misc actions>>=
+define_action "recenter"  recenter;
+@
 
 \subsection{Cursor}
 
@@ -3800,13 +3790,24 @@ let cursor_on top_window =
 % todo: aspectize second_cursor
 
 
+<<function Top_window.set_cursor_on>>=
+let set_cursor_on top_window frame = 
+  Frame.set_cursor frame;
+  if frame.frm_cursor.[0] <> '\000' then
+    let graphic = Window.backend top_window in
+    graphic.Xdraw.draw_string
+      (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
+      (frame.frm_ypos + frame.frm_cursor_y) 
+      frame.frm_cursor 0 1 Text.inverse_attr
+@
+
+
 %\subsection{[[Top_window.clean_display()]]}
 
 % event loop -> ... -> handle_key -> ...; <>; Top_window.update_display()
 <<function Top_window.clean_display>>=
 let clean_display () =
-  (Efuns.location()).top_windows |> List.iter (fun top_window -> 
-    cursor_off top_window) 
+  (Efuns.location()).top_windows |> List.iter cursor_off 
 @
 
 % update_display -> clean_display -> <>
@@ -3844,6 +3845,8 @@ let set_cursor_off top_window frame =
 %  ()
 %  );
 %@
+
+%todo: comment? need that?
 
 <<function Top_window.scroll_to_frame>>=
 let scroll_to_frame ady top_window =
@@ -4154,7 +4157,6 @@ let buf_create text local_map =
     buf_mark = None;
 
     buf_sync = false;
-    buf_history = [];
     buf_shared = 0;
     buf_finalizers = [];
 
@@ -4239,11 +4241,11 @@ let exec_interactive interactives frame name =
             ("you can run "^name^" by typing "^
               (Keymap.print_key_list key_list))
     end;
+    (* run it ! *)
     f frame
-  with
-    Not_found -> 
-      let top_window = Window.top frame.frm_window in
-      Top_window.message top_window ("No interactive command "^name)
+  with Not_found -> 
+    let top_window = Window.top frame.frm_window in
+    Top_window.message top_window ("No interactive command "^name)
 @
 
 
@@ -4279,10 +4281,10 @@ if !!interactives_map = [] then begin
   end    
 @
 
+
 <<[[interactives_map]] initial entries>>=
 "save_options";
 (*"load_library";*)
-"get_position";
 "open_display";
 "unset_attr";
 (*"start_server";*)
@@ -4317,7 +4319,6 @@ map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 
 % convenient to communicate info
 
-
 <<function Top_window.message>>=
 let message top_window msg =
   let graphic = Window.backend top_window in
@@ -4333,7 +4334,7 @@ let message top_window msg =
       (* let _ = Unix.select [] [] [] 0.2 in *)
       mini_buffer.frm_redraw <- true
 @
-
+%less: do a sleep 0.2?
 
 
 
@@ -4407,10 +4408,10 @@ let rec get_binding map keylist =
     frame.frm_prefix <- [];
 | Failure str -> message top_window str
 | e -> 
-  if !debug
-  then pr2 (spf "Uncaught exception %s" (Utils.printexn e));
-  message top_window 
-    (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
+    if !debug
+    then pr2 (spf "Uncaught exception %s" (Utils.printexn e));
+    message top_window 
+      (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
 @
 
 
@@ -4788,7 +4789,7 @@ let create_syntax_table ()  =
 <<constant Ebuffer.default_syntax_table>>=
 let default_syntax_table = create_syntax_table ()
 @
-
+% word consistuent? just a bool? emacs has more no?
 
 
 
@@ -4884,21 +4885,21 @@ and forward_line frame =
 %\subsubsection{Goal column}
 %pad: this was added by me! I get really confused
 % when I don't have the exact look&feel of emacs!
-% But I struggled to implement that :)  
 
 %history:
-% I first added a type Bol | Col of int | Eol, but in fact
-% emacs does not do that, when you do eol and up, you don't
-% want to go to the eol, you want to remain at the same column.
-% Then I added a old_col_pos_max but it's tricky to get right
-% because other moving commands must reset it, but that means
-% ensuring an invariant at every places we use a move command.
-% In the end I had a look in microemacs and found the lastcmd
-% trick. In fact in emacs they uses that to and check if
-% the last command was a next-line or back-line. In fact
-% if you use M-x next-line instead of down you'll see that
-% the goal column is maintained only for the arrow keys, not
-% for the interactive version.
+% I struggled to implement that :):
+% - I first added a type Bol | Col of int | Eol, but in fact
+%   emacs does not do that, when you do eol and up, you don't
+%   want to go to the eol, you want to remain at the same column.
+% - Then I added a old_col_pos_max but it's tricky to get right
+%   because other moving commands must reset it, but that means
+%   ensuring an invariant at every places we use a move command.
+% - In the end I had a look in microemacs and found the lastcmd
+%   trick. In fact in emacs they uses that to and check if
+%   the last command was a next-line or back-line. In fact
+%   if you use M-x next-line instead of down you'll see that
+%   the goal column is maintained only for the arrow keys, not
+%   for the interactive version.
 
 %emacs: 
 % "It is the column where point was at the start of the current run
@@ -4934,8 +4935,7 @@ and move_to_goal_column frame goal_col =
 let backward_paragraph buf point =
   let text = buf.buf_text in
   while Text.bmove_res text point 1 = 1 && 
-    (let c = Text.get_char text point
-      in
+    (let c = Text.get_char text point in
       c = '\n' || c = ' ') 
   do () done;
   try
@@ -4948,8 +4948,7 @@ let backward_paragraph buf point =
 let forward_paragraph buf point =
   let text = buf.buf_text in
   while
-    (let c = Text.get_char text point
-      in
+    (let c = Text.get_char text point in
       c = '\n' || c = ' ') 
     && Text.fmove_res text point 1 = 1 do () done;
   try
@@ -5052,18 +5051,16 @@ let point_to_bof tree point =
 
 <<function Text.point_to_lof>>=
 let point_to_lof text point n =
-  if n > 0 then
-    point_to_eof text point
-  else
-    point_to_bof text point
+  if n > 0 
+  then point_to_eof text point
+  else point_to_bof text point
 @
 
 <<function Text.point_to_lol>>=
 let point_to_lol text point n =
-  if n > 0 then
-    point_to_eol text point
-  else
-    point_to_bol text point
+  if n > 0 
+  then point_to_eol text point
+  else point_to_bol text point
 @
 
 <<function Text.point_to_line>>=
@@ -5082,12 +5079,13 @@ let point_to_line tree point line =
 <<function Text.goto_line>>=
 let goto_line tree point y =
   let text = tree.tree_text in      
-  if text.text_nlines - 1 <= y then  
-    set_position tree point (size tree)
-  else 
-  let line = text.text_newlines.(y) in
-  point.pos <- line.position;
-  point.line <- y
+  if text.text_nlines - 1 <= y 
+  then set_position tree point (size tree)
+  else begin
+    let line = text.text_newlines.(y) in
+    point.pos <- line.position;
+    point.line <- y
+  end
 @
 
 \section{Inserting}
@@ -5166,8 +5164,7 @@ let delete_backward_word buf point =
   let old_point = Text.dup_point text point in
   backward_word buf point;
   Text.delete text point (Text.distance text point old_point) |> ignore;
-  Text.remove_point text old_point;
-  ()
+  Text.remove_point text old_point
 @
 
 <<function Simple.delete_forward_word>>=
@@ -5245,8 +5242,8 @@ define_action "insert_next_killed"  insert_next_killed;
 
 <<function Complex.mark_at_point>>=
 let mark_at_point frame =
-  let top_window = Window.top frame.frm_window in
   Ebuffer.set_mark frame.frm_buffer frame.frm_point;
+  let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Mark set";
   ()
 @
@@ -5337,6 +5334,7 @@ let insert_killed frame =
 let last_insert = ref None
 @
 
+% M-y
 <<function Simple.insert_next_killed>>=
 let insert_next_killed frame =
   let buf = frame.frm_buffer in
@@ -5366,7 +5364,7 @@ define_action "point_at_mark"  point_at_mark;
 <<misc keys>>=
 [c_x; ControlMap, Char.code 'x'], "point_at_mark";
 @
-% I use C-u C-space for that?
+% I use C-u C-space for that? but I have a history of mark no?
 
 <<function Simple.point_at_mark>>=
 let point_at_mark frame =
@@ -5385,6 +5383,9 @@ let point_at_mark frame =
 <<undoing keys>>=
 [ControlMap, Char.code '_'], "undo";
 @
+<<undoing actions>>=
+define_action "undo"  undo;
+@
 
 \ifallcode
 <<undoing keys>>=
@@ -5392,10 +5393,6 @@ let point_at_mark frame =
 [ControlMap, Char.code '/'], "undo";
 @
 \fi
-
-<<undoing actions>>=
-define_action "undo"  undo;
-@
 
 
 <<function Simple.undo>>=
@@ -5409,13 +5406,6 @@ let undo frame =
   Text.fmove text point len
 @
 
-<<[[Text.text]] history fields>>=
-mutable text_history : action list;
-@
-
-<<[[Efuns.buffer]] history fields>>=
-mutable buf_history : (int * Text.action) list;
-@
 
 %\subsection{Helpers}
 
@@ -5424,16 +5414,9 @@ mutable buf_history : (int * Text.action) list;
 and action =
   Insertion of int * int * int
 | Deletion of int * string * int
-
-| Session of action list
+<<[[Text.action]] other cases>>
 @
-% for undo?
 
-
-<<type Text.session>>=
-type session = int
-@
-% used in .mly
 
 <<function Text.undo>>=
 let undo tree =
@@ -5442,7 +5425,7 @@ let undo tree =
     let gpos = text.gpoint.pos in
     let gsize = text.gsize in
     match action with
-      Insertion(point_pos, len, modified) ->
+    | Insertion(point_pos, len, modified) ->
         let point = if gpos < point_pos then point_pos + gsize else point_pos in
         let (pos,str,modif) = low_delete tree point len in
         text.text_modified <- modified;
@@ -5452,18 +5435,7 @@ let undo tree =
         let (pos,len,modif) = low_insert tree point str in
         text.text_modified <- modified;
         Insertion(pos,len,modif), point_pos, String.length str
-    | Session actions ->
-        let last_point = ref 0 in
-        let last_len = ref 0 in
-        let rev_actions =
-          List.fold_left (fun undos action -> 
-              let (rev_action,point,len) = undo action in
-              last_point := point;
-              last_len := len;
-              rev_action :: undos
-          ) [] actions
-        in
-        Session rev_actions, !last_point, !last_len
+    <<[[Text.undo()]] match action cases>>
   in
   match text.text_history with
     [] -> raise Not_found
@@ -5473,6 +5445,35 @@ let undo tree =
       rev_action
 @
 
+<<[[Text.text]] history fields>>=
+mutable text_history : action list;
+@
+
+
+
+<<[[Text.action]] other cases>>=
+| Session of action list
+@
+
+<<type Text.session>>=
+type session = int
+@
+% used in .mly
+
+<<[[Text.undo()]] match action cases>>=
+| Session actions ->
+    let last_point = ref 0 in
+    let last_len = ref 0 in
+    let rev_actions =
+      List.fold_left (fun undos action -> 
+          let (rev_action,point,len) = undo action in
+          last_point := point;
+          last_len := len;
+          rev_action :: undos
+      ) [] actions
+    in
+    Session rev_actions, !last_point, !last_len
+@
 
 \chapter{Search and Replace}
 
@@ -5503,7 +5504,6 @@ type sens =
 <<constant Search.isearch_forward>>=
 let isearch_forward = isearch RegexpString Forward
 @
-
 <<constant Search.isearch_backward>>=
 let isearch_backward = isearch RegexpString Backward
 @
@@ -5513,7 +5513,6 @@ let isearch_backward = isearch RegexpString Backward
 <<constant Search.isearch_forward_regexp>>=
 let isearch_forward_regexp = isearch Regexp Forward
 @
-
 <<constant Search.isearch_backward_regexp>>=
 let isearch_backward_regexp = isearch Regexp Backward 
 @
@@ -5522,6 +5521,11 @@ let isearch_backward_regexp = isearch Regexp Backward
 
 <<constant Search.last_search>>=
 let last_search = ref ""
+@
+
+% should be a buffer setting
+<<constant Search.case_fold>>=
+let case_fold = ref false
 @
 
 <<function Search.isearch>>=
@@ -5809,9 +5813,7 @@ let query_replace_regexp frame =
   select_replace frame "Replace regexp: " 
     (fun str ->
       select_replace frame "with string: " 
-        (replace Regexp frame 
-          (Query (frame, "Replace regexp ? (y/n)"))
-        str))
+        (replace Regexp frame (Query (frame, "Replace regexp ? (y/n)")) str))
 @
 
 \subsection{Helpers}
@@ -5822,6 +5824,119 @@ let replace_matched tree repl =
   Str2.replace_matched repl text.text_string
 @
 
+
+<<function Search.select_replace>>=
+let select_replace frame request action =
+  Select.select_string frame request string_history "" action 
+@
+
+
+
+<<function Search.replace>>=
+let replace flag frame query str repl =
+  let top_window = Window.top frame.frm_window in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let regexp = to_regexp flag str in
+  let session = Text.start_session text in
+  let n = ref 0 in
+  try
+    let last_pos = ref (Text.get_position text point) in
+    match flag,query with
+      Regexp, NoQuery ->
+        while not (Top_window.check_abort frame) do
+          let len = Text.search_forward text regexp point in
+          let pos = Text.get_position text point in
+          if pos = !last_pos then 
+            (if Text.fmove_res text point 1 = 0 then raise Exit)
+          else begin
+              last_pos := pos;
+              let result = Text.replace_matched text repl in
+              let (_,_matched) = Text.delete_res text point len in
+              Text.insert text point result;
+              Text.fmove text point (String.length result);
+              n := !n + 1
+            end
+        done
+    | RegexpString, NoQuery ->
+        let delta = String.length repl in
+        while not (Top_window.check_abort frame) do
+          let len = Text.search_forward text regexp point in
+          let pos = Text.get_position text point in
+          if pos = !last_pos then 
+            (if Text.fmove_res text point 1 = 0 then raise Exit)
+          else begin
+              last_pos := pos;
+              Text.delete text point len;
+              Text.insert text point repl;
+              Text.fmove text point delta;
+              n := !n + 1
+            end
+        done
+    | Regexp, Query (frame,request) ->
+        let top_window = Window.top frame.frm_window in
+        let rec iter () =
+          let len = Text.search_forward text regexp point in
+          let pos = Text.get_position text point in
+          if pos = !last_pos then begin
+              (if Text.fmove_res text point 1 = 0 then raise Exit);
+              iter ();
+            end
+          else begin
+              last_pos := pos;
+              top_window.top_second_cursor <- Some frame;
+              let _ = Select.select_yes_or_no frame request 
+                  (fun yes ->
+                    if yes then
+                      begin
+                        let result = Text.replace_matched text repl in
+                        let (_,_matched) = Text.delete_res text point len in
+                        Text.insert text point result;
+                        Text.fmove text point (String.length result);
+                        n := !n + 1
+                      end;
+                    iter ()) in
+              ()
+            end
+        in
+        iter ()
+    | RegexpString, Query (frame,request) ->
+        let delta = String.length repl in
+        let top_window = Window.top frame.frm_window in
+        let rec iter () =
+          let len = Text.search_forward text regexp point in
+          let pos = Text.get_position text point in
+          if pos = !last_pos then begin
+              (if Text.fmove_res text point 1 = 0 then raise Exit);
+              iter ();
+            end
+          else begin
+              last_pos := pos;
+              top_window.top_second_cursor <- Some frame;
+              let _ = Select.select_yes_or_no frame request 
+                  (fun yes ->
+                    if yes then
+                      begin
+                        Text.delete text point len;
+                        Text.insert text point repl;
+                        Text.fmove text point delta;
+                        n := !n + 1
+                      end;
+                    iter ()) 
+              in
+              ()
+            end
+        in
+        iter ()
+  with
+    Not_found ->
+      Text.commit_session text session;
+      Top_window.message top_window
+        ("Replace "^(string_of_int !n)^" occurences")
+  | _ ->
+      Text.commit_session text session
+@
 
 
 \chapter{Multi-Buffers}
@@ -5856,7 +5971,8 @@ let get_name filename =
     while true do
       let _ = Hashtbl.find (Efuns.location()).loc_buffers (compute_name ()) in 
       incr i
-    done; assert false
+    done; 
+    assert false
   with Not_found -> 
     compute_name ()
 @
@@ -5921,6 +6037,10 @@ let change_buffer window name =
 @
 
 
+% set_previous_frame is also used in load_buffer, each time
+% is close to switch to another buffer in the current frame.
+
+
 \section{Killing the buffer}
 
 <<file menu entries>>=
@@ -5950,12 +6070,9 @@ let kill_buffer frame =
 let kill buf =
   let location = Efuns.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
-  begin
-    match buf.buf_filename with
-      None -> ()
-    | Some filename ->
-        Hashtbl.remove location.loc_files filename
-  end;
+  buf.buf_filename |> Common.do_option (fun filename ->
+    Hashtbl.remove location.loc_files filename
+  );
   List.iter (fun f -> f () ) buf.buf_finalizers;
   Gc.compact ();
   buf.buf_shared <- -1
@@ -6025,7 +6142,8 @@ let down_buffer frame = up_buffer := frame.frm_buffer.buf_name
 
 <<function Complex.up_buffer>>=
 let up_buffer frame =
-  if !up_buffer = "" then raise Not_found;
+  if !up_buffer = "" 
+   then raise Not_found;
   Select.set_previous_frame frame;
   Frame.change_buffer frame.frm_window !up_buffer
 @
@@ -6080,11 +6198,11 @@ let h_cut_frame frame =
     if window.win_width > 10 then
       let wi = window.win_width / 2 in
       let w1 = Window.create false
-          (Window window) window.win_xpos window.win_ypos
-          wi window.win_height in
+                 (Window window) window.win_xpos window.win_ypos
+                 wi window.win_height in
       let w2 = Window.create false (Window window) (window.win_xpos + wi) 
-        window.win_ypos
-          (window.win_width - wi) window.win_height in
+                 window.win_ypos
+                 (window.win_width - wi) window.win_height in
       window.win_down <- HComb (w1,w2);
       Frame.install w1 frame;
       Frame.create w2 None frame.frm_buffer |> ignore
@@ -6178,19 +6296,17 @@ let next_frame frame =
 <<function Window.next>>=
 let rec next f window =
   match window.win_up with
-    TopWindow top_window -> first f top_window.window
+  | TopWindow top_window -> first f top_window.window
   | Window win ->
       match win.win_down with
         HComb (w1,w2) ->
-          if w2 == window then
-            next f win
-          else
-            first f w2
+          if w2 == window 
+          then next f win
+          else first f w2
       | VComb (w1,w2) ->
-          if w2 == window then
-            next f win
-          else
-            first f w2
+          if w2 == window 
+          then next f win
+          else first f w2
       | _ -> ()
 @
 
@@ -6230,22 +6346,19 @@ let rec prev f window =
   | Window win ->
       match win.win_down with
         HComb (w1,w2) ->
-          if w1 == window then
-            prev f win
-          else
-            last f w1
+          if w1 == window 
+          then prev f win
+          else last f w1
       | VComb (w1,w2) ->
-          if w1 == window then
-            prev f win
-          else
-            last f w1
+          if w1 == window 
+          then prev f win
+          else last f w1
       | _ -> ()
 @
 
 
 
 \chapter{Major Modes}
-
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_major_mode : major_mode;
@@ -6267,7 +6380,7 @@ and major_mode = {
   }
 @
 
-% toplevel fondemental_mode | every major modes  -> <>
+% toplevel fondamental_mode | every major modes  -> <>
 <<function Ebuffer.new_major_mode>>=
 let new_major_mode name hooks = {
     maj_name = name;
@@ -6296,7 +6409,6 @@ let set_major_mode buf mode =
 "fondamental_mode";
 @
 % it's fundamental-mode normally :) french :)
-
 <<major mode actions>>=
 define_action "fondamental_mode" fondamental_mode;
 @
@@ -6305,6 +6417,7 @@ define_action "fondamental_mode" fondamental_mode;
 let fondamental_mode frame =
   Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
 @
+
 
 <<constant Ebuffer.fondamental_mode>>=
 let fondamental_mode = new_major_mode "Fondamental" [] (* no hooks *)
@@ -6317,9 +6430,6 @@ let modes_alist = Local.create_abstr "modes_alist"
 @
 % but who sets it?
 
-<<constant Ebuffer.regexp_alist>>=
-let regexp_alist = ref []
-@
 
 <<constant Ebuffer.suffix_reg>>=
 let suffix_reg = Str.regexp "\\(.*\\)<[0-9]+>$"
@@ -6360,8 +6470,12 @@ let set_buffer_mode buf =
   with Exit -> ()
 @
 
+% opti, memo in regexp_alist
 <<constant Ebuffer.modes_old>>=
 let modes_old = ref []
+@
+<<constant Ebuffer.regexp_alist>>=
+let regexp_alist = ref []
 @
 
 <<toplevel Ebuffer._1>>=
@@ -6400,11 +6514,13 @@ let status_major_mode frame  =
 \section{Major mode variables and keys}
 
 <<function Efuns.set_major_var>>=
-let set_major_var maj var value = Local.set maj.maj_vars var value
+let set_major_var maj var value = 
+  Local.set maj.maj_vars var value
 @
 
 <<function Keymap.add_major_key>>=
-let add_major_key major = interactive major.maj_map 
+let add_major_key major = 
+  interactive major.maj_map 
 @
 
 
@@ -6421,6 +6537,8 @@ Local.get buf.buf_major_mode.maj_vars var
 @
 
 \section{Colors}
+
+% see section on colors in Text chapter
 
 \section{Indentation}
 
@@ -6483,14 +6601,14 @@ let set_minor_mode buf mode =
 <<function Ebuffer.del_minor_mode>>=
 let del_minor_mode buf minor =
   buf.buf_minor_modes <- 
-    List.fold_right 
-    (fun mode list -> 
+    List.fold_right (fun mode list -> 
       if mode == minor then
         begin
           buf.buf_modified <- buf.buf_modified + 1;
           list
         end
-      else (mode :: list)) buf.buf_minor_modes []
+      else (mode :: list)
+    ) buf.buf_minor_modes []
 @
 
 
@@ -6505,7 +6623,8 @@ let minor_mode_name = "my_minor"
 
 % empty install hook
 <<function Minor_mode_sample.install>>=
-let install buf = ()
+let install buf = 
+  ()
 @
 
 %!! that's what you will modify
@@ -6559,11 +6678,13 @@ let modep buf minor =
 \section{Minor mode variables and keys}
 
 <<function Efuns.set_minor_var>>=
-let set_minor_var min var value = Local.set min.min_vars var value
+let set_minor_var min var value = 
+  Local.set min.min_vars var value
 @
 
 <<function Keymap.add_minor_key>>=
-let add_minor_key minor = interactive minor.min_map 
+let add_minor_key minor = 
+  interactive minor.min_map 
 @
 
 
@@ -6581,7 +6702,7 @@ buf.buf_minor_modes |> List.iter (fun minor ->
 <<[[Efuns.get_var()]] try with minor mode variables>>=
 let rec iter list =
   match list with
-    [] -> raise Not_found
+  | [] -> raise Not_found
   | min :: list -> 
       try
         Local.get min.min_vars var
@@ -6616,24 +6737,24 @@ let shell_command frame =
 "Compile", "compile";
 @
 
-<<misc keys>>=
-[c_x;NormalMap, Char.code '`' ], "next_error";
+<<[[interactives_map]] initial entries>>=
+"compile";
+"grep";
 @
-
-<<misc actions>>=
-(* C-x map *)
-define_action "next_error"  Compil.next_error;
-@
-
 <<external command actions>>=
 define_action "grep" Compil.grep;
 (*  define_action "compile" (compile c_find_error); *)
 @
 
-<<[[interactives_map]] initial entries>>=
-"compile";
-"grep";
+<<misc keys>>=
+[c_x;NormalMap, Char.code '`' ], "next_error";
 @
+<<misc actions>>=
+(* C-x map *)
+define_action "next_error"  Compil.next_error;
+@
+
+
 
 \subsection{[[M-x grep]]}
 
@@ -6672,15 +6793,15 @@ let grep frame =
 
 \subsection{[[M-x compile]]}
 
+<<misc actions>>=
+define_action "compile" compile;
+@
 <<function Std_efunsrc.compile>>=
 let compile frame =
   Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
    frame "compile"
 @
 
-<<misc actions>>=
-define_action "compile" compile;
-@
 
 <<function Compil.compile>>=
 let compile find_error_fun frame =
@@ -6800,16 +6921,15 @@ let eval_history = ref []
 
 <<function Complex.eval>>=
 let eval frame =
-  Select.select_string frame "Eval:" eval_history "" 
-    (fun str ->
-      let top_window = Window.top frame.frm_window in
-      (* This is not enough: the paths also may have changed. *)
-      Top_window.message top_window 
-        (*(Dyneval.eval 
-          (let len = String.length str in
-          if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
-          str ^ " ;;"))
-        *)(failwith "Complex.eval: TODO")
+  Select.select_string frame "Eval:" eval_history "" (fun str ->
+    let top_window = Window.top frame.frm_window in
+    (* This is not enough: the paths also may have changed. *)
+    Top_window.message top_window 
+      (*(Dyneval.eval 
+        (let len = String.length str in
+        if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
+        str ^ " ;;"))
+      *)(failwith "Complex.eval: TODO")
     )
 @
 
@@ -6832,7 +6952,9 @@ let eval frame =
 <<toplevel Abbrevs._1>>=
 let _ =
   define_action "char_expand_abbrev" (fun frame ->
-      expand_sabbrev frame; Simple.self_insert_command frame);
+      expand_sabbrev frame; 
+      Simple.self_insert_command frame
+  );
   define_action "dabbrev_expand" dabbrev_expand;
   ()
 @
@@ -6856,8 +6978,7 @@ let expand_sabbrev frame =
       Text.fmove text point (String.length repl); ()
     with
       Not_found -> Text.fmove text point len; ()
-  with
-    _ -> ()
+  with _ -> ()
 @
 
 <<function Abbrevs.dabbrev_expand>>=
@@ -7350,8 +7471,9 @@ let init_frames = ref []
 \chapter{Error Managment}
 
 <<function Efuns.error>>=
-let error s =
-  print_string ("Error: "^s);
+let error f x =
+  print_string ("error: ");
+  Printf.printf f x;
   print_newline ()
 @
 
@@ -7368,6 +7490,8 @@ let message buf m =
 
 
 \chapter{Debugging}
+
+% can use ocamldebug! fantastic!
 
 <<constants Efuns.debug_xxx>>=
 let debug = ref false
@@ -7729,8 +7853,8 @@ let get_parameter frame =
 <<[[interactives_map]] initial entries>>=
 "makefile_mode";
 "ocaml_mode";
-"tex_mode";
 "c_mode";
+"tex_mode";
 @
 
 \section{Dired}
@@ -7743,11 +7867,12 @@ let get_parameter frame =
 "paren_mode";
 "abbrevs_mode";
 (*"accents_mode";*)
-"ocaml_minor_mode";
 "fill_mode";
-(*"ocaml_compiler_mode";*)
 "tab_mode";
 "overwrite_mode";
+
+(*"ocaml_compiler_mode";*)
+"ocaml_minor_mode";
 @
 
 \section{Abbrevs}

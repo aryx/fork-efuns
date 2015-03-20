@@ -88,19 +88,17 @@ let rec last f window =
 (*s: function Window.next *)
 let rec next f window =
   match window.win_up with
-    TopWindow top_window -> first f top_window.window
+  | TopWindow top_window -> first f top_window.window
   | Window win ->
       match win.win_down with
         HComb (w1,w2) ->
-          if w2 == window then
-            next f win
-          else
-            first f w2
+          if w2 == window 
+          then next f win
+          else first f w2
       | VComb (w1,w2) ->
-          if w2 == window then
-            next f win
-          else
-            first f w2
+          if w2 == window 
+          then next f win
+          else first f w2
       | _ -> ()
 (*e: function Window.next *)
       
@@ -114,15 +112,13 @@ let rec prev f window =
   | Window win ->
       match win.win_down with
         HComb (w1,w2) ->
-          if w1 == window then
-            prev f win
-          else
-            last f w1
+          if w1 == window 
+          then prev f win
+          else last f w1
       | VComb (w1,w2) ->
-          if w1 == window then
-            prev f win
-          else
-            last f w1
+          if w1 == window 
+          then prev f win
+          else last f w1
       | _ -> ()
 (*e: function Window.prev *)
 

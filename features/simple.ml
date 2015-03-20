@@ -599,8 +599,7 @@ let delete_backward_word buf point =
   let old_point = Text.dup_point text point in
   backward_word buf point;
   Text.delete text point (Text.distance text point old_point) |> ignore;
-  Text.remove_point text old_point;
-  ()
+  Text.remove_point text old_point
 (*e: function Simple.delete_backward_word *)
 
 (*s: function Simple.delete_forward_word *)
@@ -986,6 +985,7 @@ let color buf regexp strict attr =
           ()
         end
     done
+  (* at some point Text.search_forward will return Not_found *)
   with Not_found -> 
     Text.remove_point text point;
     buf.buf_modified <- buf.buf_modified + 1
@@ -1062,8 +1062,7 @@ let transpose_chars buf point =
 let backward_paragraph buf point =
   let text = buf.buf_text in
   while Text.bmove_res text point 1 = 1 && 
-    (let c = Text.get_char text point
-      in
+    (let c = Text.get_char text point in
       c = '\n' || c = ' ') 
   do () done;
   try
@@ -1076,8 +1075,7 @@ let backward_paragraph buf point =
 let forward_paragraph buf point =
   let text = buf.buf_text in
   while
-    (let c = Text.get_char text point
-      in
+    (let c = Text.get_char text point in
       c = '\n' || c = ' ') 
     && Text.fmove_res text point 1 = 1 do () done;
   try

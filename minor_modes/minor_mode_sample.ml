@@ -18,7 +18,8 @@ let minor_mode_name = "my_minor"
 (*e: constant Minor_mode_sample.minor_mode_name *)
 
 (*s: function Minor_mode_sample.install *)
-let install buf = ()
+let install buf = 
+  ()
 (*e: function Minor_mode_sample.install *)
 
 (*s: function Minor_mode_sample.minor_mode_fun *)

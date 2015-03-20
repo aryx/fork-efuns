@@ -158,14 +158,15 @@ let expand_sabbrev frame =
       Text.fmove text point (String.length repl); ()
     with
       Not_found -> Text.fmove text point len; ()
-  with
-    _ -> ()
+  with _ -> ()
 (*e: function Abbrevs.expand_sabbrev *)
 
 (*s: toplevel Abbrevs._1 *)
 let _ =
   define_action "char_expand_abbrev" (fun frame ->
-      expand_sabbrev frame; Simple.self_insert_command frame);
+      expand_sabbrev frame; 
+      Simple.self_insert_command frame
+  );
   define_action "dabbrev_expand" dabbrev_expand;
   ()
 (*e: toplevel Abbrevs._1 *)

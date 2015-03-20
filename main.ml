@@ -39,16 +39,10 @@ let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 (*s: function Efuns.init *)
 let init_efuns (location : location) =
   global_location := Some location;
-  let rec iter hooks =
-    match hooks with
-      [] -> ()
-    | (f : unit -> unit) :: hooks -> 
-        f ();
-        iter hooks
-  in
   let hooks = List.rev !Efuns.start_hooks in
   Efuns.start_hooks := [];
-  iter hooks
+  hooks |> List.iter (fun f -> f ())
+
 (*e: function Efuns.init *)
 
 (*s: exception Main.SigInt *)
@@ -101,9 +95,9 @@ let main () =
     (*x: [[main()]] command line options *)
     "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
     "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
-    "-fg", Arg.String(fun s -> fg_opt :=Some s), "<color>: Foreground color";
-    "-bg", Arg.String(fun s -> bg_opt :=Some s), "<color>: Background color";
-    "-font", Arg.String(fun s -> font_opt :=Some s), "<font>: Font name";
+    "-fg", Arg.String(fun s -> fg_opt := Some s), "<color>: Foreground color";
+    "-bg", Arg.String(fun s -> bg_opt := Some s), "<color>: Background color";
+    "-font", Arg.String(fun s -> font_opt := Some s), "<font>: Font name";
     (*x: [[main()]] command line options *)
     "-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
     "--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";

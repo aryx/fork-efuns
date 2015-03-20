@@ -675,24 +675,11 @@ let change_buffer_hooks = define_option ["change_buffer_hooks"] ""
 (*e: constant Frame.change_buffer_hooks *)
 
 (*s: function Frame.exec_named_hooks *)
-let rec exec_named_hooks hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_hooks hooks frame;
-      try execute_action action frame with _ -> ()
+let exec_named_hooks hooks frame =
+  hooks |> List.rev |> List.iter (fun action -> 
+   try execute_action action frame with _ -> ()
+  )
 (*e: function Frame.exec_named_hooks *)
-
-(*s: function Frame.exec_named_hooks_with_abort *)
-(*
-let rec exec_named_hooks_with_abort hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_hooks_with_abort hooks frame;
-      execute_action action frame
-*)
-(*e: function Frame.exec_named_hooks_with_abort *)
 
 (*s: function Frame.load_file *)
 let load_file window filename =

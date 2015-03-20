@@ -17,7 +17,6 @@ val save : Efuns.buffer -> unit
 
 val create_buf_hook : (Efuns.buffer -> unit) list Local.var
 
-val regexp_alist : (Str.regexp * Efuns.major_mode) list ref
 val modes_alist : (string * Efuns.major_mode) list Local.var
 
 val create_syntax_table : unit -> bool array
@@ -40,7 +39,6 @@ val del_minor_mode : Efuns.buffer -> Efuns.minor_mode -> unit
 
 val modep : Efuns.buffer -> Efuns.minor_mode -> bool
 
-val suffix_reg : Str.regexp
 val set_buffer_mode : Efuns.buffer -> unit
 
 val get_binding : Efuns.buffer -> Efuns.key list -> Efuns.binding
@@ -54,9 +52,13 @@ val read : string -> Efuns.map -> Efuns.buffer
 val compute_representation : Efuns.buffer -> int -> Text.line
 exception BufferAlreadyOpened
 
-
+(*
 val catch : 
   (string -> string, unit, string) format ->
   Efuns.buffer -> (unit -> unit) -> unit
+*)
+(*  
+val regexp_alist : (Str.regexp * Efuns.major_mode) list ref
+val suffix_reg : Str.regexp
 
-  
+*)

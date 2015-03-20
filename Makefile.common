@@ -35,8 +35,8 @@ OPTOBJS?= $(SRC:.ml=.cmx)
 #-44 allow shadow module identifier (TODO: fix them)
 #-48 allow eliminating optional arguments, unclear how to fix without wide
 #    changes
-#TODO temporary! 27 unused variables
-WARNING_FLAGS?=-w +A-4-29-6-45-41-44-48-27 -warn-error +a 
+#TODO temporary! 27 unused variables 32 dead code
+WARNING_FLAGS?=-w +A-4-29-6-45-41-44-48-27-32 -warn-error +a 
 
 # -w A
 #WARNING_FLAGS= -w -21

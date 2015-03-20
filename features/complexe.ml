@@ -155,8 +155,8 @@ let insert_file frame =
 let write_buffer frame = 
   let buf = frame.frm_buffer in
   Select.select_filename frame "Save file as: " (fun str -> 
-      Ebuffer.change_name buf str;
-      Ebuffer.save buf
+    Ebuffer.change_name buf str;
+    Ebuffer.save buf
   )
 (*e: function Complex.write_buffer *)
 
@@ -302,8 +302,8 @@ let get_pos frame =
 
 (*s: function Complex.mark_at_point *)
 let mark_at_point frame =
-  let top_window = Window.top frame.frm_window in
   Ebuffer.set_mark frame.frm_buffer frame.frm_point;
+  let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Mark set";
   ()
 (*e: function Complex.mark_at_point *)
@@ -332,16 +332,15 @@ let eval_history = ref []
 (*e: constant Complex.eval_history *)
 (*s: function Complex.eval *)
 let eval frame =
-  Select.select_string frame "Eval:" eval_history "" 
-    (fun str ->
-      let top_window = Window.top frame.frm_window in
-      (* This is not enough: the paths also may have changed. *)
-      Top_window.message top_window 
-        (*(Dyneval.eval 
-          (let len = String.length str in
-          if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
-          str ^ " ;;"))
-        *)(failwith "Complex.eval: TODO")
+  Select.select_string frame "Eval:" eval_history "" (fun str ->
+    let top_window = Window.top frame.frm_window in
+    (* This is not enough: the paths also may have changed. *)
+    Top_window.message top_window 
+      (*(Dyneval.eval 
+        (let len = String.length str in
+        if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
+        str ^ " ;;"))
+      *)(failwith "Complex.eval: TODO")
     )
 (*e: function Complex.eval *)
 
@@ -441,7 +440,8 @@ let down_buffer frame = up_buffer := frame.frm_buffer.buf_name
 (*e: function Complex.down_buffer *)
 (*s: function Complex.up_buffer *)
 let up_buffer frame =
-  if !up_buffer = "" then raise Not_found;
+  if !up_buffer = "" 
+   then raise Not_found;
   Select.set_previous_frame frame;
   Frame.change_buffer frame.frm_window !up_buffer
 (*e: function Complex.up_buffer *)

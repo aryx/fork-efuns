@@ -19,7 +19,7 @@
 - removed many opens
 - use global for location
 - reorg main.ml to use less toplevels and pack in a main() function
-
+- use more List.iter, Common.do_option, |>
 
 * Version 018:
 ===========

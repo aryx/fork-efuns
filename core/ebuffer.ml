@@ -60,7 +60,8 @@ let get_name filename =
     while true do
       let _ = Hashtbl.find (Efuns.location()).loc_buffers (compute_name ()) in 
       incr i
-    done; assert false
+    done; 
+    assert false
   with Not_found -> 
     compute_name ()
 (*e: function Ebuffer.get_name *)
@@ -116,7 +117,6 @@ let create name filename text local_map =
       buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
 
-      buf_history = [];
       buf_sync = false;
       buf_mark = None;
       buf_shared = 0;
@@ -145,12 +145,9 @@ let create name filename text local_map =
 let kill buf =
   let location = Efuns.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
-  begin
-    match buf.buf_filename with
-      None -> ()
-    | Some filename ->
-        Hashtbl.remove location.loc_files filename
-  end;
+  buf.buf_filename |> Common.do_option (fun filename ->
+    Hashtbl.remove location.loc_files filename
+  );
   List.iter (fun f -> f () ) buf.buf_finalizers;
   Gc.compact ();
   buf.buf_shared <- -1
@@ -173,21 +170,17 @@ let saved_buffer_hooks = define_option ["saved_buffer_hooks"] ""
 (*e: constant Ebuffer.saved_buffer_hooks *)
 
 (*s: function Ebuffer.exec_named_buf_hooks *)
-let rec exec_named_buf_hooks hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_buf_hooks hooks frame;
-      try execute_buffer_action action frame with _ -> ()
+let exec_named_buf_hooks hooks frame =
+  hooks |> List.rev |> List.iter (fun action ->
+    try execute_buffer_action action frame with _ -> ()
+  )
 (*e: function Ebuffer.exec_named_buf_hooks *)
 
 (*s: function Ebuffer.exec_named_buf_hooks_with_abort *)
-let rec exec_named_buf_hooks_with_abort hooks frame =
-  match hooks with
-    [] -> ()
-  | action :: hooks ->
-      exec_named_buf_hooks_with_abort hooks frame;
-      execute_buffer_action action frame
+let  exec_named_buf_hooks_with_abort hooks frame =
+  hooks |> List.rev |> List.iter (fun action ->
+    execute_buffer_action action frame
+ )
 (*e: function Ebuffer.exec_named_buf_hooks_with_abort *)
       
 (*s: function Ebuffer.save *)
@@ -346,14 +339,14 @@ let set_minor_mode buf mode =
 (*s: function Ebuffer.del_minor_mode *)
 let del_minor_mode buf minor =
   buf.buf_minor_modes <- 
-    List.fold_right 
-    (fun mode list -> 
+    List.fold_right (fun mode list -> 
       if mode == minor then
         begin
           buf.buf_modified <- buf.buf_modified + 1;
           list
         end
-      else (mode :: list)) buf.buf_minor_modes []
+      else (mode :: list)
+    ) buf.buf_minor_modes []
 (*e: function Ebuffer.del_minor_mode *)
   
 (*s: function Ebuffer.modep *)

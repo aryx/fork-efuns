@@ -56,11 +56,11 @@ let h_cut_frame frame =
     if window.win_width > 10 then
       let wi = window.win_width / 2 in
       let w1 = Window.create false
-          (Window window) window.win_xpos window.win_ypos
-          wi window.win_height in
+                 (Window window) window.win_xpos window.win_ypos
+                 wi window.win_height in
       let w2 = Window.create false (Window window) (window.win_xpos + wi) 
-        window.win_ypos
-          (window.win_width - wi) window.win_height in
+                 window.win_ypos
+                 (window.win_width - wi) window.win_height in
       window.win_down <- HComb (w1,w2);
       Frame.install w1 frame;
       Frame.create w2 None frame.frm_buffer |> ignore

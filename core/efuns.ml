@@ -16,13 +16,13 @@
 (*************************************************************************)
                (*      Types      *)
 (*************************************************************************)
-open Common
 open Utils
 open Local
 
 (*s: function Efuns.error *)
-let error s =
-  print_string ("Error: "^s);
+let error f x =
+  print_string ("error: ");
+  Printf.printf f x;
   print_newline ()
 (*e: function Efuns.error *)
   
@@ -96,8 +96,6 @@ and buffer =
     mutable buf_modified : int; (* version? *)
     (*x: [[Efuns.buffer]] history fields *)
     mutable buf_last_saved : int;
-    (*x: [[Efuns.buffer]] history fields *)
-    mutable buf_history : (int * Text.action) list;
     (*e: [[Efuns.buffer]] history fields *)
     (*s: [[Efuns.buffer]] other fields *)
     mutable buf_shared : int; (* number of frames for that buffer *)
@@ -421,7 +419,7 @@ let get_var buf var =
         (*s: [[Efuns.get_var()]] try with minor mode variables *)
         let rec iter list =
           match list with
-            [] -> raise Not_found
+          | [] -> raise Not_found
           | min :: list -> 
               try
                 Local.get min.min_vars var
@@ -443,22 +441,20 @@ let get_local buf var =
 (*e: function Efuns.get_local *)
   
 (*s: function Efuns.set_minor_var *)
-let set_minor_var min var value = Local.set min.min_vars var value
+let set_minor_var min var value = 
+  Local.set min.min_vars var value
 (*e: function Efuns.set_minor_var *)
 (*s: function Efuns.set_major_var *)
-let set_major_var maj var value = Local.set maj.maj_vars var value
+let set_major_var maj var value = 
+  Local.set maj.maj_vars var value
 (*e: function Efuns.set_major_var *)
   
 (*s: function Efuns.exec_hooks *)
-let rec exec_hooks hooks arg =
-  match hooks with
-    [] -> ()
-  | f :: hooks -> 
-      (try f arg 
-       with exn -> 
-         error (spf "exn in hook: %s" (Common.exn_to_s exn))
-      );
-      exec_hooks hooks arg
+let exec_hooks hooks arg =
+  hooks |> List.iter (fun f ->
+    try f arg 
+    with exn -> error "exn in hook: %s" (Common.exn_to_s exn)
+  )
 (*e: function Efuns.exec_hooks *)
 
 (*s: function Efuns.add_hook *)
@@ -567,7 +563,7 @@ let define_action action_name action_fun =
   (*s: sanity check action defined twice *)
   (try 
       Hashtbl.find actions action_name |> ignore;
-      error (spf "action \"%s\" defined twice" action_name);
+      error "action \"%s\" defined twice" action_name;
     with _ -> ());
   (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (FrameAction action_fun)
@@ -578,7 +574,7 @@ let define_buffer_action action_name action_fun =
   (*s: sanity check action defined twice *)
   (try 
       Hashtbl.find actions action_name |> ignore;
-      error (spf "action \"%s\" defined twice" action_name);
+      error "action \"%s\" defined twice" action_name;
     with _ -> ());
   (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (BufferAction action_fun)
@@ -588,7 +584,7 @@ let define_buffer_action action_name action_fun =
 let get_action action =
   try Hashtbl.find actions action 
   with Not_found ->
-    error (spf "Could not find action %s. Forgot define_action()?" action);
+    error "Could not find action %s. Forgot define_action()?" action;
     BufferAction (fun _ -> ())
 (*e: function Efuns.get_action *)
 
@@ -604,7 +600,7 @@ let execute_buffer_action action buf =
   match (get_action action) with
     BufferAction f -> f buf
   | FrameAction _f -> 
-      error (spf "Can't apply action %s on buffer" action)
+      error "Can't apply action %s on buffer" action
 (*e: function Efuns.execute_buffer_action *)
       
 (*s: function Efuns.string_to_regex *)

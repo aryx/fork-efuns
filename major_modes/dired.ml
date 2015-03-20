@@ -192,13 +192,13 @@ let unzip_and_view frame filename =
     
 (*s: toplevel Dired._1 *)
 let _ = 
-  interactive map [NormalMap, XK.xk_Return] "dired_open_file" open_file;
-  interactive map [NormalMap, Char.code 'g'] "dired_update" 
+  Keymap.interactive map [NormalMap, XK.xk_Return] "dired_open_file" open_file;
+  Keymap.interactive map [NormalMap, Char.code 'g'] "dired_update" 
   (fun frame -> update frame.frm_buffer);  
-  interactive map [NormalMap, Char.code 'v'] "dired_view_file" open_view;  
-  interactive map [NormalMap, Char.code '+'] "dired_make_directory" 
+  Keymap.interactive map [NormalMap, Char.code 'v'] "dired_view_file" open_view;  
+  Keymap.interactive map [NormalMap, Char.code '+'] "dired_make_directory" 
     mkdir;  
-  interactive map [NormalMap, Char.code '-'] "dired_remove_entry" 
+  Keymap.interactive map [NormalMap, Char.code '-'] "dired_remove_entry" 
     remove;  
   
   view_list := [

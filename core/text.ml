@@ -148,8 +148,9 @@ type text = {
 and action =
   Insertion of int * int * int
 | Deletion of int * string * int
-
+(*s: [[Text.action]] other cases *)
 | Session of action list
+(*e: [[Text.action]] other cases *)
 (*e: type Text.action *)
 
 
@@ -485,10 +486,10 @@ let low_insert tree point str =
   end;
   let gline = text.gpoint.line in
   text.text_points |> List.iter (fun p ->
-      if p.pos > gpos then
-          (* todo? why this extra condition?? BUG?? unit test? *)
-          if p.line = gline 
-          then p.line <- p.line + nbr_newlines;
+    if p.pos > gpos then
+      (* todo? why this extra condition?? BUG?? unit test? *)
+      if p.line = gline 
+      then p.line <- p.line + nbr_newlines;
 
   );
   text.gpoint <- { pos = gpos + strlen; line = gline + nbr_newlines };
@@ -552,7 +553,7 @@ let undo tree =
     let gpos = text.gpoint.pos in
     let gsize = text.gsize in
     match action with
-      Insertion(point_pos, len, modified) ->
+    | Insertion(point_pos, len, modified) ->
         let point = if gpos < point_pos then point_pos + gsize else point_pos in
         let (pos,str,modif) = low_delete tree point len in
         text.text_modified <- modified;
@@ -562,6 +563,7 @@ let undo tree =
         let (pos,len,modif) = low_insert tree point str in
         text.text_modified <- modified;
         Insertion(pos,len,modif), point_pos, String.length str
+    (*s: [[Text.undo()]] match action cases *)
     | Session actions ->
         let last_point = ref 0 in
         let last_len = ref 0 in
@@ -574,6 +576,7 @@ let undo tree =
           ) [] actions
         in
         Session rev_actions, !last_point, !last_len
+    (*e: [[Text.undo()]] match action cases *)
   in
   match text.text_history with
     [] -> raise Not_found
@@ -1415,18 +1418,16 @@ let move text point n =
 
 (*s: function Text.point_to_lof *)
 let point_to_lof text point n =
-  if n > 0 then
-    point_to_eof text point
-  else
-    point_to_bof text point
+  if n > 0 
+  then point_to_eof text point
+  else point_to_bof text point
 (*e: function Text.point_to_lof *)
 
 (*s: function Text.point_to_lol *)
 let point_to_lol text point n =
-  if n > 0 then
-    point_to_eol text point
-  else
-    point_to_bol text point
+  if n > 0 
+  then point_to_eol text point
+  else point_to_bol text point
 (*e: function Text.point_to_lol *)
 
 (*s: function Text.point_to_line *)
@@ -1458,12 +1459,13 @@ let point_line _text point =
 (*s: function Text.goto_line *)
 let goto_line tree point y =
   let text = tree.tree_text in      
-  if text.text_nlines - 1 <= y then  
-    set_position tree point (size tree)
-  else 
-  let line = text.text_newlines.(y) in
-  point.pos <- line.position;
-  point.line <- y
+  if text.text_nlines - 1 <= y 
+  then set_position tree point (size tree)
+  else begin
+    let line = text.text_newlines.(y) in
+    point.pos <- line.position;
+    point.line <- y
+  end
 (*e: function Text.goto_line *)
 
 

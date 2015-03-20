@@ -182,10 +182,12 @@ let add_local_key buf =
   interactive buf.buf_map 
 (*e: function Keymap.add_local_key *)
 (*s: function Keymap.add_minor_key *)
-let add_minor_key minor = interactive minor.min_map 
+let add_minor_key minor = 
+  interactive minor.min_map 
 (*e: function Keymap.add_minor_key *)
 (*s: function Keymap.add_major_key *)
-let add_major_key major = interactive major.maj_map 
+let add_major_key major = 
+  interactive major.maj_map 
 (*e: function Keymap.add_major_key *)
   
 (*e: core/keymap.ml *)

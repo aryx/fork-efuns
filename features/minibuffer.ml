@@ -45,7 +45,6 @@ let buf_create text local_map =
     buf_mark = None;
 
     buf_sync = false;
-    buf_history = [];
     buf_shared = 0;
     buf_finalizers = [];
 

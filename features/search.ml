@@ -196,9 +196,7 @@ let query_replace_regexp frame =
   select_replace frame "Replace regexp: " 
     (fun str ->
       select_replace frame "with string: " 
-        (replace Regexp frame 
-          (Query (frame, "Replace regexp ? (y/n)"))
-        str))
+        (replace Regexp frame (Query (frame, "Replace regexp ? (y/n)")) str))
 (*e: function Search.query_replace_regexp *)
 
 (*s: constant Search.library_regexp *)

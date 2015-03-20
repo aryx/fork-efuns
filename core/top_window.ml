@@ -94,8 +94,8 @@ let set_cursor_on top_window frame =
     let graphic = Window.backend top_window in
     graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
-    (frame.frm_ypos + frame.frm_cursor_y) 
-    frame.frm_cursor 0 1 Text.inverse_attr
+      (frame.frm_ypos + frame.frm_cursor_y) 
+      frame.frm_cursor 0 1 Text.inverse_attr
 (*e: function Top_window.set_cursor_on *)
 
 (*s: function Top_window.set_cursor_off *)
@@ -151,8 +151,7 @@ let update_display () =
 
 (*s: function Top_window.clean_display *)
 let clean_display () =
-  (Efuns.location()).top_windows |> List.iter (fun top_window -> 
-    cursor_off top_window) 
+  (Efuns.location()).top_windows |> List.iter cursor_off 
 (*e: function Top_window.clean_display *)
 
 (*s: function Top_window.resize_window *)
@@ -278,10 +277,10 @@ let handle_key top_window modifiers keysym =
         frame.frm_prefix <- [];
     | Failure str -> message top_window str
     | e -> 
-      if !debug
-      then pr2 (spf "Uncaught exception %s" (Utils.printexn e));
-      message top_window 
-        (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
+        if !debug
+        then pr2 (spf "Uncaught exception %s" (Utils.printexn e));
+        message top_window 
+          (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
     (*e: [[Top_window.handle_key()]] handle exception of try_map *)
   end;
 

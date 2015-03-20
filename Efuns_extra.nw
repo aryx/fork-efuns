@@ -1924,8 +1924,6 @@ open Text
 
 <<function Frame.exec_named_hooks>>
 
-<<function Frame.exec_named_hooks_with_abort>>
-
 <<function Frame.load_file>>
 
   
@@ -4002,9 +4000,6 @@ open Multi_frames
 (*let _ = Time.init ()*)
 @
 
-<<constant Search.case_fold>>=
-let case_fold = ref false
-@
 
 <<function Search.to_regexp>>=
 let to_regexp flag str =
@@ -4025,111 +4020,6 @@ let to_regexp flag str =
 type query = NoQuery | Query of frame * string
 @
 
-<<function Search.replace>>=
-let replace flag frame query str repl =
-  let top_window = Window.top frame.frm_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let regexp = to_regexp flag str in
-  let session = Text.start_session text in
-  let n = ref 0 in
-  try
-    let last_pos = ref (Text.get_position text point) in
-    match flag,query with
-      Regexp, NoQuery ->
-        while not (Top_window.check_abort frame) do
-          let len = Text.search_forward text regexp point in
-          let pos = Text.get_position text point in
-          if pos = !last_pos then 
-            (if Text.fmove_res text point 1 = 0 then raise Exit)
-          else begin
-              last_pos := pos;
-              let result = Text.replace_matched text repl in
-              let (_,_matched) = Text.delete_res text point len in
-              Text.insert text point result;
-              Text.fmove text point (String.length result);
-              n := !n + 1
-            end
-        done
-    | RegexpString, NoQuery ->
-        let delta = String.length repl in
-        while not (Top_window.check_abort frame) do
-          let len = Text.search_forward text regexp point in
-          let pos = Text.get_position text point in
-          if pos = !last_pos then 
-            (if Text.fmove_res text point 1 = 0 then raise Exit)
-          else begin
-              last_pos := pos;
-              Text.delete text point len;
-              Text.insert text point repl;
-              Text.fmove text point delta;
-              n := !n + 1
-            end
-        done
-    | Regexp, Query (frame,request) ->
-        let top_window = Window.top frame.frm_window in
-        let rec iter () =
-          let len = Text.search_forward text regexp point in
-          let pos = Text.get_position text point in
-          if pos = !last_pos then begin
-              (if Text.fmove_res text point 1 = 0 then raise Exit);
-              iter ();
-            end
-          else begin
-              last_pos := pos;
-              top_window.top_second_cursor <- Some frame;
-              let _ = Select.select_yes_or_no frame request 
-                  (fun yes ->
-                    if yes then
-                      begin
-                        let result = Text.replace_matched text repl in
-                        let (_,_matched) = Text.delete_res text point len in
-                        Text.insert text point result;
-                        Text.fmove text point (String.length result);
-                        n := !n + 1
-                      end;
-                    iter ()) in
-              ()
-            end
-        in
-        iter ()
-    | RegexpString, Query (frame,request) ->
-        let delta = String.length repl in
-        let top_window = Window.top frame.frm_window in
-        let rec iter () =
-          let len = Text.search_forward text regexp point in
-          let pos = Text.get_position text point in
-          if pos = !last_pos then begin
-              (if Text.fmove_res text point 1 = 0 then raise Exit);
-              iter ();
-            end
-          else begin
-              last_pos := pos;
-              top_window.top_second_cursor <- Some frame;
-              let _ = Select.select_yes_or_no frame request 
-                  (fun yes ->
-                    if yes then
-                      begin
-                        Text.delete text point len;
-                        Text.insert text point repl;
-                        Text.fmove text point delta;
-                        n := !n + 1
-                      end;
-                    iter ()) 
-              in
-              ()
-            end
-        in
-        iter ()
-  with
-    Not_found ->
-      Text.commit_session text session;
-      Top_window.message top_window
-        ("Replace "^(string_of_int !n)^" occurences")
-  | _ ->
-      Text.commit_session text session
-@
 
 <<function Search.no_query>>=
 let no_query f = f true
@@ -4146,10 +4036,6 @@ let query frame request f =
 let string_history = ref []
 @
 
-<<function Search.select_replace>>=
-let select_replace frame request action =
-  Select.select_string frame request string_history "" action 
-@
 
 
 <<constant Search.library_regexp>>=
@@ -4491,16 +4377,6 @@ frame.frm_repeat_action <-
 
 
 
-<<function Top_window.set_cursor_on>>=
-let set_cursor_on top_window frame = 
-  Frame.set_cursor frame;
-  if frame.frm_cursor.[0] <> '\000' then
-    let graphic = Window.backend top_window in
-    graphic.Xdraw.draw_string
-      (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
-    (frame.frm_ypos + frame.frm_cursor_y) 
-    frame.frm_cursor 0 1 Text.inverse_attr
-@
 
 
 
@@ -5042,13 +4918,13 @@ let unzip_and_view frame filename =
 
 <<toplevel Dired._1>>=
 let _ = 
-  interactive map [NormalMap, XK.xk_Return] "dired_open_file" open_file;
-  interactive map [NormalMap, Char.code 'g'] "dired_update" 
+  Keymap.interactive map [NormalMap, XK.xk_Return] "dired_open_file" open_file;
+  Keymap.interactive map [NormalMap, Char.code 'g'] "dired_update" 
   (fun frame -> update frame.frm_buffer);  
-  interactive map [NormalMap, Char.code 'v'] "dired_view_file" open_view;  
-  interactive map [NormalMap, Char.code '+'] "dired_make_directory" 
+  Keymap.interactive map [NormalMap, Char.code 'v'] "dired_view_file" open_view;  
+  Keymap.interactive map [NormalMap, Char.code '+'] "dired_make_directory" 
     mkdir;  
-  interactive map [NormalMap, Char.code '-'] "dired_remove_entry" 
+  Keymap.interactive map [NormalMap, Char.code '-'] "dired_remove_entry" 
     remove;  
   
   view_list := [

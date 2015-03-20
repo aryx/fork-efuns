@@ -49,11 +49,11 @@ let exec_interactive interactives frame name =
             ("you can run "^name^" by typing "^
               (Keymap.print_key_list key_list))
     end;
+    (* run it ! *)
     f frame
-  with
-    Not_found -> 
-      let top_window = Window.top frame.frm_window in
-      Top_window.message top_window ("No interactive command "^name)
+  with Not_found -> 
+    let top_window = Window.top frame.frm_window in
+    Top_window.message top_window ("No interactive command "^name)
 (*e: function Interactive.exec_interactive *)
       
 (*s: function Interactive.call_interactive *)

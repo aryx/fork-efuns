@@ -237,9 +237,7 @@ let _ =
   (* Misc *)
   (* ----------------------------------------------------------- *)
   (*s: misc actions *)
-  define_action "recenter"  recenter;
   define_action "revert_buffer" Complexe.reload;
-
   define_action "open_display" Complexe.open_display;
   (* C-x map *)
   define_action "change_font"  Complexe.change_font;
@@ -258,6 +256,8 @@ let _ =
   (*x: misc actions *)
   (* C-x map *)
   define_action "exit"  Complexe.exit_efuns; 
+  (*x: misc actions *)
+  define_action "recenter"  recenter;
   (*x: misc actions *)
   (* C-h map *)
   define_action "help_bindings"  Frame.bindings_help;
@@ -482,13 +482,13 @@ let _ =
         (* -------------------------------------------------------- *)
         (*s: misc keys *)
         [NormalMap, XK.xk_Insert], "overwrite_mode";
-        [ControlMap, Char.code 'l'], "recenter";
-
         [c_x; NormalMap, Char.code 'F'], "change_font";
         (*x: misc keys *)
         [c_h; NormalMap, Char.code 'v'], "get_variable";
         (*x: misc keys *)
         [c_x; ControlMap, Char.code 'c'], "exit"; 
+        (*x: misc keys *)
+        [ControlMap, Char.code 'l'], "recenter";
         (*x: misc keys *)
         [c_h; NormalMap, Char.code 'K'], "help_bindings";
         (*x: misc keys *)
@@ -514,9 +514,10 @@ let _ =
   if !!interactives_map = [] then begin
       interactives_map =:= List.map (fun x -> x, x ) [
         (*s: [[interactives_map]] initial entries *)
+        "get_position";
+        (*x: [[interactives_map]] initial entries *)
         "save_options";
         (*"load_library";*)
-        "get_position";
         "open_display";
         "unset_attr";
         (*"start_server";*)
@@ -538,17 +539,18 @@ let _ =
         (*x: [[interactives_map]] initial entries *)
         "makefile_mode";
         "ocaml_mode";
-        "tex_mode";
         "c_mode";
+        "tex_mode";
         (*x: [[interactives_map]] initial entries *)
         "paren_mode";
         "abbrevs_mode";
         (*"accents_mode";*)
-        "ocaml_minor_mode";
         "fill_mode";
-        (*"ocaml_compiler_mode";*)
         "tab_mode";
         "overwrite_mode";
+
+        (*"ocaml_compiler_mode";*)
+        "ocaml_minor_mode";
         (*e: [[interactives_map]] initial entries *)
       ]
     end    
