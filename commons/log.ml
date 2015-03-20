@@ -46,16 +46,18 @@ let outc () =
   | Some outc -> outc
       
 let printf f x = 
-  if !logp then
+  if !logp then begin
     let oc = outc () in
     Printf.fprintf oc f x;
     flush oc
+  end
     
 let exn f e =
-  if !logp then
-  let oc = outc () in
-  Printf.fprintf oc f (Utils.printexn e);
-  flush oc
+  if !logp then begin
+    let oc = outc () in
+    Printf.fprintf oc f (Utils.printexn e);
+    flush oc
+  end
 
 let catch format f =
   try f () with e -> exn format e
