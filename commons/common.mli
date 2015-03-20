@@ -1,6 +1,4 @@
 
-val (+>) : 'a -> ('a -> 'b) -> 'b
-
 val (=|=) : int    -> int    -> bool
 val (=<=) : char   -> char   -> bool
 val (=$=) : string -> string -> bool
@@ -239,4 +237,3 @@ val main_boilerplate : (unit -> unit) -> unit
 (* type of maps from string to `a *)
 module SMap : Map.S with type key = String.t
 type 'a smap = 'a SMap.t
-
