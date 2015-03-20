@@ -225,7 +225,7 @@ let init2 init_files =
   (* the *bindings* buffer *)
   Interactive.create_bindings () |> ignore;
   (* open the first buffers *)
-  init_files +> List.iter (fun name ->
+  init_files |> List.iter (fun name ->
     Frame.load_file top_window.window name |> ignore
   );
 
@@ -454,13 +454,13 @@ let test_draw cr =
 let test_cairo () =
   let _locale = GtkMain.Main.init () in
   let w = GWindow.window ~title:"test" () in
-  (w#connect#destroy GMain.quit) +> ignore;
+  (w#connect#destroy GMain.quit) |> ignore;
   let px = GDraw.pixmap ~width ~height ~window:w () in
   px#set_foreground `WHITE;
   px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
   let cr = Cairo_lablgtk.create px#pixmap in
   test_draw cr;
-  (GMisc.pixmap px ~packing:w#add ()) +> ignore;
+  (GMisc.pixmap px ~packing:w#add ()) |> ignore;
   w#show ();
   GMain.main()
 
