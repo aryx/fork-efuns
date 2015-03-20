@@ -172,7 +172,8 @@ let saved_buffer_hooks = define_option ["saved_buffer_hooks"] ""
 (*s: function Ebuffer.exec_named_buf_hooks *)
 let exec_named_buf_hooks hooks frame =
   hooks |> List.rev |> List.iter (fun action ->
-    try execute_buffer_action action frame with _ -> ()
+    try execute_buffer_action action frame 
+    with exn -> error "exec_named_buf_hooks: exn = %s" (Common.exn_to_s exn)
   )
 (*e: function Ebuffer.exec_named_buf_hooks *)
 
@@ -326,14 +327,20 @@ let set_major_mode buf mode =
   then pr2 (spf "setting %s major mode" mode.maj_name);
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
-  mode.maj_hooks |> List.iter (fun f -> try f buf with _ -> ())
+  mode.maj_hooks |> List.iter (fun f -> 
+    try f buf 
+    with exn -> error "set_major_mode: exn = %s" (Common.exn_to_s exn)
+  )
 (*e: function Ebuffer.set_major_mode *)
 
 (*s: function Ebuffer.set_minor_mode *)
 let set_minor_mode buf mode =
   buf.buf_minor_modes <- mode :: buf.buf_minor_modes;
   buf.buf_modified <- buf.buf_modified + 1;
-  List.iter (fun f -> try f buf with _ -> ()) mode.min_hooks
+  mode.min_hooks |> List.iter (fun f -> 
+    try f buf 
+    with exn -> error "set_minor_mode: exn = %s" (Common.exn_to_s exn)
+  ) 
 (*e: function Ebuffer.set_minor_mode *)
 
 (*s: function Ebuffer.del_minor_mode *)
@@ -367,7 +374,9 @@ let set_buffer_mode buf =
            if Str.string_match suffix_reg buf.buf_name 0 
            then Str.matched_group 1 buf.buf_name 
            else buf.buf_name 
-         with _ -> buf.buf_name
+         with exn -> 
+           error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
+           buf.buf_name
          )
     | Some file_name -> file_name 
   in 
@@ -386,7 +395,11 @@ let set_buffer_mode buf =
         try
           set_major_mode buf major;
           raise Exit
-        with _ -> raise Exit
+        with 
+        | Exit -> raise Exit
+        | exn -> 
+            error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
+            raise Exit
     ) 
   with Exit -> ()
 (*e: function Ebuffer.set_buffer_mode *)

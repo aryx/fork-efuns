@@ -10,15 +10,8 @@ TOP=$(shell pwd)
 TARGET=efuns
 
 BACKENDDIR=graphics/gtk_cairo
-GRAPHICSDIR=$(shell ocamlfind query lablgtk2) $(shell ocamlfind query cairo)
-OTHERSYSLIBS=lablgtk.cma cairo.cma   cairo_lablgtk.cma pango_cairo.cma 
-GTKLOOP=gtkThread.cmo
-#alt:
-#BACKENDDIR=graphics/ocamlgraphics
-#OTHERSYSLIBS=graphics.cma
 
 SRC=\
- commons/common.ml\
  commons/simple_color.ml\
  \
  commons/utils.ml commons/str2.ml\
@@ -64,6 +57,8 @@ SRC=\
  prog_modes/c_mode.ml\
  prog_modes/lisp_mode.ml\
  \
+ pfff_modes/caml_mode.ml\
+ \
  text_modes/tex_mode.ml\
  text_modes/html_mode.ml\
  \
@@ -78,7 +73,6 @@ SRC=\
 # misc/efuns_xxx.ml
 
 CMIS=\
- commons/common.cmi\
  commons/simple_color.cmi\
  commons/utils.cmi\
  commons/options.cmi\
@@ -90,12 +84,52 @@ CMIS=\
  features/select.cmi\
  features/search.cmi\
 
+#------------------------------------------------------------------------------
+#package dependencies
+#------------------------------------------------------------------------------
+
+LIBROOT=/Users/pad/.opam/4.01.0/lib/
+
+GRAPHICSDIRS=$(LIBROOT)/lablgtk2 $(LIBROOT)/cairo
+GRAPHICSLIBS=lablgtk.cma cairo.cma   cairo_lablgtk.cma pango_cairo.cma
+GTKLOOP=gtkThread.cmo
+#alt:
+#BACKENDDIR=graphics/ocamlgraphics
+#OTHERSYSLIBS=graphics.cma
+#$(shell ocamlfind query cairo)
+
+
+
+COMMONDIR=$(LIBROOT)/pfff-commons
+COMMONCMA=$(LIBROOT)/pfff-commons/lib.cma
+
+
+# many dirs are here just because of -linkall
+PFFF_LIBS=\
+ config\
+ external-jsonwheel\
+ h_files-format\
+ h_program-lang \
+ matcher\
+ lang_ml lang_ml-visual \
+
+PFFFDIRS=$(PFFF_LIBS:%=$(LIBROOT)/pfff-%/)
+PFFFCMAS=$(PFFFDIRS:%=%/lib.cma)
+
+
+#------------------------------------------------------------------------------
+# Main variables
+#------------------------------------------------------------------------------
+
 SYSLIBS=unix.cma str.cma threads.cma nums.cma bigarray.cma
 
+LIBS=$(SYSLIBS) $(COMMONCMA) $(PFFFCMAS) $(GRAPHICSLIBS) 
+
 INCLUDEDIRS=\
+  $(COMMONDIR) \
   commons\
   core features\
-  graphics $(BACKENDDIR) $(GRAPHICSDIR) \
+  graphics $(BACKENDDIR) $(GRAPHICSDIRS) $(PFFFDIRS) \
   major_modes minor_modes prog_modes text_modes
 
 ##############################################################################
@@ -115,13 +149,13 @@ opt:
 	$(MAKE) $(TARGET).opt
 
 # need -linkall!
-$(TARGET): $(LIBS) $(OBJS)
+$(TARGET): $(OBJS)
 	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ \
-      $(OTHERSYSLIBS) $(SYSLIBS) $(GTKLOOP) $^
+      $(LIBS) $(GTKLOOP) $(OBJS)
 
-$(TARGET).opt: $(LIBS:.cma=.cmxa) $(OPTOBJS) 
+$(TARGET).opt: $(OPTOBJS) 
 	$(OCAMLOPT) $(STATIC) -cclib -L/opt/X11/lib -o $@ \
-      $(OTHERSYSLIBS:.cma=.cmxa) $(SYSLIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $^
+      $(LIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $(OPTOBJS)
 
 #clean::
 #	@rm -f $(OBJS) $(OBJS:.cmo=.cmi) $(OBJS:.cmo=.cmx) $(OBJS:.cmo=.o) \

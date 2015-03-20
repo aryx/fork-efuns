@@ -24,8 +24,7 @@ let mkfile_target= Str.regexp "^.*:"
 let mkfile_rules= Str.regexp "^\t.*$"
 (*e: constant Makefile_mode.mkfile_rules *)
 
-(* todo: this causes some Out of Memory in cairo, hmmm *)
-let mkfile_comments= Str.regexp "^abcd#.*$"
+let mkfile_comments= Str.regexp "^#.*$"
 
 (*s: constant Makefile_mode.rules_color *)
 let rules_color = define_option ["makefile_mode";"rules_color"] "" 

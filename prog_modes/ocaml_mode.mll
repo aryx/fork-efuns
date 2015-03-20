@@ -558,14 +558,6 @@ let ocaml_color_buffer buf =
   ocaml_color_region buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point
-
-let ocaml_color frame =
-  let buf = frame.frm_buffer in
-  (* I factorize code with ocaml_color_buffer; the only diff
-   * was that this function was not ding the unset_attr, but not
-   * sure it matters
-   *)
-  ocaml_color_buffer buf
     
 
 (***********************************************************************)
@@ -1324,14 +1316,18 @@ let ocaml_hooks = define_option ["ocaml_mode"; "hooks"] ""
   
 let install buf =
   ocaml_color_buffer buf; 
+
   let syntax = !!syntax in
   for i = 0 to String.length syntax - 1 do
     buf.buf_syntax_table.(Char.code syntax.[i]) <- true;
   done;
+
   let abbrevs = Hashtbl.create 11 in
   set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs !!abbreviations;
+
   Simple.install_structures buf !!structures;
+
   !!ocaml_hooks |> List.iter (fun action ->
       try execute_buffer_action action buf with _ -> ()
   )
@@ -1415,18 +1411,19 @@ let setup () =
 
 
 let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
-    (list_option string_option) [".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)"]
+    (list_option string_option) 
+    [(*".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)"*)]
   
 let _ =  
   Efuns.add_start_hook (fun () ->
-      let alist = get_global Ebuffer.modes_alist in
-      set_global Ebuffer.modes_alist 
-        ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
+    let alist = get_global Ebuffer.modes_alist in
+    set_global Ebuffer.modes_alist 
+      ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
+    
+    Simple.add_option_parameter ocaml_path;
+    Simple.add_option_parameter indentation;
 
-      Simple.add_option_parameter ocaml_path;
-      Simple.add_option_parameter indentation;
-
-      setup ()
+    setup ()
   )  
 
 (*** Ocaml minor mode (for Makefiles (!)) ***)
@@ -1441,10 +1438,10 @@ let _ =
   define_action "ocaml_minor_mode" 
     (fun frame -> 
       let buf = frame.frm_buffer in
-      if Ebuffer.modep buf minor_mode then begin
-          Ebuffer.del_minor_mode buf minor_mode
-        end else
-        Ebuffer.set_minor_mode buf minor_mode)
+      if Ebuffer.modep buf minor_mode 
+      then Ebuffer.del_minor_mode buf minor_mode
+      else Ebuffer.set_minor_mode buf minor_mode
+    )
    )
 
 } 
