@@ -42,7 +42,11 @@ let color_of_categ categ =
   )
 
 let colorize buf file =
-  let (astopt,toks), _stat = Parse_ml.parse file in
+  let (astopt,toks), _stat = 
+    Common.save_excursion Flag_parsing_ml.error_recovery true (fun()->
+      Parse_ml.parse file 
+    )
+  in
   let prefs = Highlight_code.default_highlighter_preferences in
 
   let text = buf.buf_text in
@@ -67,7 +71,18 @@ let caml_color_region buf start_point end_point =
 
 let caml_color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  Common2.with_tmp_file ~str:s ~ext:"ml" (fun file ->
+  (* we need to keep the extension because Parse_ml.parse behaves
+   * differently on ml and mli files
+   *)
+  let ext =
+    match buf.buf_filename with
+    | None -> "ml"
+    | Some file -> 
+        let (_,_, e) = Common2.dbe_of_filename file in
+        e
+  in
+      
+  Common2.with_tmp_file ~str:s ~ext (fun file ->
     colorize buf file
   )
 
