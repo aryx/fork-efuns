@@ -1,4 +1,4 @@
 Fabrice Lefessant
 
 With contributions from:
- - Yoann Padioleau (goal column, dircolors?)
+ - Yoann Padioleau (goal column, dircolors, buffer_menu, pfff-based modes)

@@ -2,9 +2,12 @@
 
 * 0.19 (Q1 2015)
 
-** factorize color in pl_colors.ml
-
 ** a new Dircolors module
+
+** a new Buffer_menu module
+
+** new programming language major modes using pfff for parsing
+for ocaml, TODO C, C++, Java,  Html, Css, Js, PHP,  TeX
 
 ** Simple
 - maintain a "goal column" when goes up and down in a file, similar to emacs
@@ -20,6 +23,7 @@
 - use global for location
 - reorg main.ml to use less toplevels and pack in a main() function
 - use more List.iter, Common.do_option, |>
+- factorize color in pl_colors.ml
 
 * Version 018:
 ===========

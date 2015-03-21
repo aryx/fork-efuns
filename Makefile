@@ -36,6 +36,7 @@ SRC=\
  features/multi_frames.ml\
  features/select.ml\
  features/interactive.ml\
+ features/multi_buffers.ml\
  features/complexe.ml\
  features/abbrevs.ml\
  features/system.ml\
@@ -50,6 +51,7 @@ SRC=\
  minor_modes/tab_mode.ml\
  \
  major_modes/dired.ml\
+ major_modes/buffer_menu.ml\
  \
  prog_modes/pl_colors.ml\
  prog_modes/makefile_mode.ml\
@@ -223,6 +225,7 @@ SRC_VIEWS= \
   features/select.ml\
   features/search.ml\
   features/interactive.ml\
+  features/multi_buffers.ml\
   features/multi_frames.ml\
   features/abbrevs.ml\
   features/compil.ml\
