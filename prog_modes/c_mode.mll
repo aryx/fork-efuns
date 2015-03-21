@@ -803,6 +803,7 @@ let install buf =
   *)
   c_color_buffer buf; 
   buf.buf_syntax_table.(Char.code '_') <- true;
+
   let abbrevs =
     try
       get_local (buf) Abbrevs.abbrev_table
@@ -824,7 +825,7 @@ let c_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
   
 let mode_regexp = define_option ["c_mode"; "mode_regexp"] ""
     (list_option string_option) [ 
-    ".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$"
+    (*".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$"*)
   ]
   
 let local_map = define_option ["c_mode"; "local_map"] ""

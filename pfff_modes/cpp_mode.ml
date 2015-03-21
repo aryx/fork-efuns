@@ -21,7 +21,7 @@ module PI = Parse_info
 (* Prelude *)
 (*****************************************************************************)
 (*
- * Using the OCaml parser and highlighters in pfff (used for codemap)
+ * Using the C/cpp/C++ parser and highlighters in pfff (used for codemap)
  * for efuns.
  *)
 
@@ -42,18 +42,18 @@ let color_of_categ categ =
   )
 
 let colorize buf file =
-  let (astopt,toks), _stat = 
-    Common.save_excursion Flag_parsing_ml.error_recovery true (fun()->
-      Parse_ml.parse file 
-    )
-  in
+
+  let (ast2, _stat) = Parse_cpp.parse file in
+  let ast = Parse_cpp.program_of_program2 ast2 in
+  (* work by side effect on ast2 too *)
+  Check_variables_cpp.check_and_annotate_program ast;
+
   let prefs = Highlight_code.default_highlighter_preferences in
 
   let text = buf.buf_text in
   let cursor = Text.new_point text in
 
-  let ast = astopt ||| [] in
-  (ast, toks) |> Highlight_ml.visit_program ~tag_hook:(fun info categ ->
+  ast2 |> List.iter (Highlight_cpp.visit_toplevel ~tag_hook:(fun info categ ->
     let color = color_of_categ categ in
 
     let pos = PI.pos_of_info info in
@@ -62,27 +62,16 @@ let colorize buf file =
     let str = PI.str_of_info info in
     let len = String.length str in
     Text.set_attr text cursor len attr
-  ) prefs 
+  ) prefs )
   
   
 
-let caml_color_region buf start_point end_point =
+let cpp_color_region buf start_point end_point =
   raise Todo
 
-let caml_color_buffer buf =
+let cpp_color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  (* we need to keep the extension because Parse_ml.parse behaves
-   * differently on ml and mli files
-   *)
-  let ext =
-    match buf.buf_filename with
-    | None -> "ml"
-    | Some file -> 
-        let (_,_, e) = Common2.dbe_of_filename file in
-        e
-  in
-      
-  Common2.with_tmp_file ~str:s ~ext (fun file ->
+  Common2.with_tmp_file ~str:s ~ext:"c" (fun file ->
     colorize buf file
   )
 
@@ -92,13 +81,13 @@ let caml_color_buffer buf =
 (*****************************************************************************)
 
 let install buf =
-  caml_color_buffer buf; 
+  cpp_color_buffer buf; 
   buf.buf_syntax_table.(Char.code '_') <- true;
   ()
 
 
-let mode =  Ebuffer.new_major_mode "Caml" [install]
-let caml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
+let mode =  Ebuffer.new_major_mode "C" [install]
+let cpp_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 
 
 (*****************************************************************************)
@@ -106,14 +95,14 @@ let caml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 (*****************************************************************************)
 
 let setup () = 
-  define_action "caml_mode" caml_mode;
-  define_action "caml_mode.color_buffer" (fun frame -> 
-    caml_color_buffer frame.frm_buffer
+  define_action "cpp_mode" cpp_mode;
+  define_action "cpp_mode.color_buffer" (fun frame -> 
+    cpp_color_buffer frame.frm_buffer
   );
   ()
 
 let mode_regexp =
-  [".*\\.\\(ml\\|mli\\|mll\\|mly\\)"]
+  [".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$"]
 
 let _ =
   Efuns.add_start_hook (fun () ->

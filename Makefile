@@ -60,6 +60,7 @@ SRC=\
  prog_modes/lisp_mode.ml\
  \
  pfff_modes/caml_mode.ml\
+ pfff_modes/cpp_mode.ml\
  \
  text_modes/tex_mode.ml\
  text_modes/html_mode.ml\
@@ -114,6 +115,7 @@ PFFF_LIBS=\
  h_program-lang \
  matcher\
  lang_ml lang_ml-visual \
+ lang_cpp lang_cpp-analyze \
 
 PFFFDIRS=$(PFFF_LIBS:%=$(LIBROOT)/pfff-%/)
 PFFFCMAS=$(PFFFDIRS:%=%/lib.cma)
