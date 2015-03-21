@@ -1070,7 +1070,7 @@ let define_buffer_action action_name action_fun =
 <<sanity check action defined twice>>=
 (try 
     Hashtbl.find actions action_name |> ignore;
-    error (spf "action \"%s\" defined twice" action_name);
+    error "action \"%s\" defined twice" action_name;
   with _ -> ());
 @
 %old had a sepater print_newline() but useless I think
@@ -1082,7 +1082,7 @@ let define_buffer_action action_name action_fun =
 let get_action action =
   try Hashtbl.find actions action 
   with Not_found ->
-    error (spf "Could not find action %s. Forgot define_action()?" action);
+    error "Could not find action %s. Forgot define_action()?" action;
     BufferAction (fun _ -> ())
 @
 
@@ -1105,7 +1105,7 @@ let execute_buffer_action action buf =
   match (get_action action) with
     BufferAction f -> f buf
   | FrameAction _f -> 
-      error (spf "Can't apply action %s on buffer" action)
+      error "Can't apply action %s on buffer" action
 @
 
 
@@ -1627,7 +1627,7 @@ define_action "get_variable"  Complexe.get_variable;
 let exec_hooks hooks arg =
   hooks |> List.iter (fun f ->
     try f arg 
-    with exn -> error (spf "exn in hook: %s" (Common.exn_to_s exn))
+    with exn -> error "exn in hook: %s" (Common.exn_to_s exn)
   )
 @
 
@@ -1688,8 +1688,9 @@ define_action "check_file" Complexe.check_file;
 % ?? -> <>
 <<function Ebuffer.exec_named_buf_hooks>>=
 let exec_named_buf_hooks hooks frame =
-  hooks |> List.iter |> List.iter (fun action ->
-    try execute_buffer_action action frame with _ -> ()
+  hooks |> List.rev |> List.iter (fun action ->
+    try execute_buffer_action action frame 
+    with exn -> error "exec_named_buf_hooks: exn = %s" (Common.exn_to_s exn)
   )
 @
 
@@ -1918,8 +1919,8 @@ let init_efuns (location : location) =
   global_location := Some location;
   let hooks = List.rev !Efuns.start_hooks in
   Efuns.start_hooks := [];
-  hooks |> List.iter (fun f -> f ());
-  iter hooks
+  hooks |> List.iter (fun f -> f ())
+
 @
 %old: used to be in efuns.ml, but better in main.ml
 
@@ -6398,7 +6399,10 @@ let set_major_mode buf mode =
   then pr2 (spf "setting %s major mode" mode.maj_name);
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
-  mode.maj_hooks |> List.iter (fun f -> try f buf with _ -> ())
+  mode.maj_hooks |> List.iter (fun f -> 
+    try f buf 
+    with exn -> error "set_major_mode: exn = %s" (Common.exn_to_s exn)
+  )
 @
 
 
@@ -6446,7 +6450,9 @@ let set_buffer_mode buf =
            if Str.string_match suffix_reg buf.buf_name 0 
            then Str.matched_group 1 buf.buf_name 
            else buf.buf_name 
-         with _ -> buf.buf_name
+         with exn -> 
+           error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
+           buf.buf_name
          )
     | Some file_name -> file_name 
   in 
@@ -6465,7 +6471,11 @@ let set_buffer_mode buf =
         try
           set_major_mode buf major;
           raise Exit
-        with _ -> raise Exit
+        with 
+        | Exit -> raise Exit
+        | exn -> 
+            error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
+            raise Exit
     ) 
   with Exit -> ()
 @
@@ -6595,7 +6605,10 @@ let new_minor_mode name hooks  = {
 let set_minor_mode buf mode =
   buf.buf_minor_modes <- mode :: buf.buf_minor_modes;
   buf.buf_modified <- buf.buf_modified + 1;
-  List.iter (fun f -> try f buf with _ -> ()) mode.min_hooks
+  mode.min_hooks |> List.iter (fun f -> 
+    try f buf 
+    with exn -> error "set_minor_mode: exn = %s" (Common.exn_to_s exn)
+  ) 
 @
 
 <<function Ebuffer.del_minor_mode>>=

@@ -81,7 +81,6 @@ external id : 'a -> 'a = "%identity"
 (*************************************************************************)
                (*      Types      *)
 (*************************************************************************)
-open Common
 open Utils
 open Local
 
@@ -3837,15 +3836,6 @@ open Options
   
 <<function Complex.get_parameter>>
 
-<<constant Complex.up_buffer>>
-  
-<<function Complex.down_buffer>>
-<<function Complex.up_buffer>>
-  
-<<function Complex.left_buffer>>
-
-<<function Complex.right_buffer>>
-  
   
 <<toplevel Complex._1>>
   
@@ -4163,6 +4153,30 @@ open Efuns
   
 @
 
+
+\subsection*{[[features/multi_buffers.ml]]}
+
+
+%-------------------------------------------------------------
+
+<<features/multi_buffers.ml>>=
+<<copyright header2>>
+open Efuns
+
+<<constant Complex.up_buffer>>
+
+
+  
+<<function Complex.down_buffer>>
+
+<<function Complex.up_buffer>>
+  
+<<function Complex.left_buffer>>
+
+<<function Complex.right_buffer>>
+  
+
+@
 
 \subsection*{[[features/multi_frames.ml]]}
 
@@ -5664,8 +5678,7 @@ open Efuns
 <<constant Makefile_mode.mkfile_target>>
 <<constant Makefile_mode.mkfile_rules>>
 
-(* todo: this causes some Out of Memory in cairo, hmmm *)
-let mkfile_comments= Str.regexp "^abcd#.*$"
+let mkfile_comments= Str.regexp "^#.*$"
 
 <<constant Makefile_mode.rules_color>>
 <<constant Makefile_mode.target_color>>
