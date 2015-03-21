@@ -48,6 +48,7 @@ val move_point : Efuns.frame -> Text.point -> int -> int -> unit
 val current_dir : Efuns.frame -> string
 
 exception FoundFrame of Efuns.frame
+
 val find_buffer_frame : Efuns.buffer -> Efuns.frame
 
 val load_file : Efuns.window -> string -> Efuns.frame

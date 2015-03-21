@@ -15,6 +15,7 @@ type t
 val create : string -> t
 val to_string : t -> string
 val clear : t -> unit
+val update : t -> string -> unit
 val insert_at_end : t -> string -> unit
 
 val read : in_channel -> t
@@ -107,7 +108,6 @@ val nbre_lines : t -> int
 val size : t -> int
 
 val region : t -> point -> point -> string
-val update : t -> string -> unit
 
 val lexing : t -> point -> point -> Lexing.lexbuf
 

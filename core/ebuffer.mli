@@ -17,7 +17,6 @@ val save : Efuns.buffer -> unit
 
 val create_buf_hook : (Efuns.buffer -> unit) list Local.var
 
-val modes_alist : (string * Efuns.major_mode) list Local.var
 
 val create_syntax_table : unit -> bool array
 val default_syntax_table : bool array
@@ -32,13 +31,15 @@ val get_mark : Efuns.buffer -> Text.point -> Text.point
 val remove_mark : Efuns.buffer -> unit
 
 val new_major_mode : string -> (Efuns.buffer -> unit) list ->  Efuns.major_mode
-val new_minor_mode : string ->  (Efuns.buffer -> unit) list -> Efuns.minor_mode
 val set_major_mode : Efuns.buffer -> Efuns.major_mode -> unit
+
+val new_minor_mode : string ->  (Efuns.buffer -> unit) list -> Efuns.minor_mode
 val set_minor_mode : Efuns.buffer -> Efuns.minor_mode -> unit
 val del_minor_mode : Efuns.buffer -> Efuns.minor_mode -> unit
-
 val modep : Efuns.buffer -> Efuns.minor_mode -> bool
 
+val modes_alist : (string * Efuns.major_mode) list Local.var
+(* use alist *)
 val set_buffer_mode : Efuns.buffer -> unit
 
 val get_binding : Efuns.buffer -> Efuns.key list -> Efuns.binding
