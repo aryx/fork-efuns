@@ -180,14 +180,17 @@ let _ =
   (*e: buffer managment actions *)
   (*s: buffer navigating actions *)
   (* C-M map *)
-  define_action "left_buffer"  Complexe.left_buffer;
+  define_action "left_buffer"  Multi_buffers.left_buffer;
   (* C-M map *)
-  define_action "right_buffer"  Complexe.right_buffer;
+  define_action "right_buffer"  Multi_buffers.right_buffer;
   (* C-M map *)
-  define_action "down_buffer"  Complexe.down_buffer;
+  define_action "down_buffer"  Multi_buffers.down_buffer;
   (* C-M map *)
-  define_action "up_buffer"  Complexe.up_buffer;
+  define_action "up_buffer"  Multi_buffers.up_buffer;
   (*e: buffer navigating actions *)
+
+  define_action "buffer_menu"  Buffer_menu.menu;
+
   (*s: frame managment actions *)
   (* C-x map *)
   define_action "vertical_cut_frame"  Multi_frames.v_cut_frame;    
@@ -443,6 +446,8 @@ let _ =
         (*x: buffer managment keys *)
         [c_x; NormalMap, Char.code 'k'], "kill_buffer";
         (*e: buffer managment keys *)
+        [ControlMetaMap, XK.xk_Tab], "buffer_menu";
+
         (*s: buffer navigating keys *)
         [ControlMetaMap, XK.xk_Left], "left_buffer";
         [ControlMetaMap, XK.xk_Right], "right_buffer";
