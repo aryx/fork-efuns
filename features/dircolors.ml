@@ -134,18 +134,18 @@ let extensions = [
 
 let color buf = 
   Simple.color buf 
-    (Str.regexp ("[a-zA-Z_]*/")) false
+    (Str.regexp ("[a-zA-Z_-]*/")) false
     (Text.make_attr (Window.get_color dir_color) 1 0 false);
 
   extensions |> List.iter (fun (exts, color) ->
     exts |> List.iter (function
       | E ext ->
           Simple.color buf 
-            (Str.regexp (spf "\\b[a-zA-Z_]*\\.%s\\b" ext)) false
+            (Str.regexp (spf "\\b[a-zA-Z_-]*\\.%s\\b" ext)) false
             (Text.make_attr (Window.get_color color) 1 0 false);
       | Reg re ->
           Simple.color buf 
-            (Str.regexp (spf "\\b[a-zA-Z_]*%s[a-zA-Z_]*\\b" re)) false
+            (Str.regexp (spf "\\b[a-zA-Z_-]*%s[a-zA-Z_-]*\\b" re)) false
             (Text.make_attr (Window.get_color color) 1 0 false);
     )
   )
