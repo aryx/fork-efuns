@@ -245,9 +245,9 @@ let init2 init_files =
     "Fixed Bold 32"
     "Monaco 16"
     "Menlo 19"
-    "Menlo 18"
-*)
     "Courier 19"
+*)
+    "Menlo 18"
   in
   Pango.Font.set_weight desc `ULTRABOLD; 
   Pango.Layout.set_font_description layout desc;

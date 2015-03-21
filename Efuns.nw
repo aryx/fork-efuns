@@ -1176,6 +1176,9 @@ let _ =
 (* ----------------------------------------------------------- *)
 <<buffer managment actions>>
 <<buffer navigating actions>>
+
+define_action "buffer_menu"  Buffer_menu.menu;
+
 <<frame managment actions>>
 <<frame navigation actions>>
 
@@ -1468,6 +1471,8 @@ let c_c = (ControlMap, Char.code 'c')
 (* Buffers/windows/frames *)
 (* -------------------------------------------------------- *)
 <<buffer managment keys>>
+[ControlMetaMap, XK.xk_Tab], "buffer_menu";
+
 <<buffer navigating keys>>
 <<frame managment keys>>
 <<frame navigation keys>>
@@ -6097,13 +6102,13 @@ mutable buf_finalizers : (unit -> unit) list;
 
 <<buffer navigating actions>>=
 (* C-M map *)
-define_action "left_buffer"  Complexe.left_buffer;
+define_action "left_buffer"  Multi_buffers.left_buffer;
 (* C-M map *)
-define_action "right_buffer"  Complexe.right_buffer;
+define_action "right_buffer"  Multi_buffers.right_buffer;
 (* C-M map *)
-define_action "down_buffer"  Complexe.down_buffer;
+define_action "down_buffer"  Multi_buffers.down_buffer;
 (* C-M map *)
-define_action "up_buffer"  Complexe.up_buffer;
+define_action "up_buffer"  Multi_buffers.up_buffer;
 @
 
 <<function Complex.left_buffer>>=
@@ -6111,7 +6116,7 @@ let left_buffer frame =
   Select.set_previous_frame frame;
   Frame.change_buffer frame.frm_window (
     match !Select.prev_buffers with
-      name :: buffer :: tail ->
+    | name :: buffer :: tail ->
         Select.prev_buffers := tail @ [name]; 
         buffer
     | _ -> raise Not_found)
@@ -6138,13 +6143,14 @@ let up_buffer = ref ""
 @
 
 <<function Complex.down_buffer>>=
-let down_buffer frame = up_buffer := frame.frm_buffer.buf_name
+let down_buffer frame = 
+  up_buffer := frame.frm_buffer.buf_name
 @
 
 <<function Complex.up_buffer>>=
 let up_buffer frame =
   if !up_buffer = "" 
-   then raise Not_found;
+  then raise Not_found;
   Select.set_previous_frame frame;
   Frame.change_buffer frame.frm_window !up_buffer
 @

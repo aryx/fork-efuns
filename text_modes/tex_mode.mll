@@ -635,9 +635,7 @@ let setup_maps () =
   
 let mode_regexp = define_option ["tex_mode"; "mode_regexp"] ""
     (list_option string_option) 
-     [".*\\.tex"; ".*\\.cls"; ".*\\.sty";
-      ".*\\.nw"
-     ]
+     [".*\\.tex"; ".*\\.cls"; ".*\\.sty";]
 
 
 let _ =  

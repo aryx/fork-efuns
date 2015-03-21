@@ -7,9 +7,9 @@
 ** a new Buffer_menu module
 
 ** new programming language major modes using pfff for parsing
-for ocaml, TODO C, C++, Java,  Html, Css, Js, PHP,  TeX
+for Caml, C/C++, and TeX/Noweb
 
-** Simple
+** adjustments to emacs behavior
 - maintain a "goal column" when goes up and down in a file, similar to emacs
 
 ** port to gtk/cairo
