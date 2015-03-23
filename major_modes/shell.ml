@@ -27,32 +27,85 @@ open Efuns
 (* Helpers *)
 (*****************************************************************************)
 
-let prompt () =
-  (* todo: use the dirname of the file in current frame 
-     Frame.current_dir?
-  *)
-  let pwd = (Efuns.location ()).loc_dirname in
-  spf "%s $ " pwd
+let pwd_var = Local.create_string ""
+
+let pwd buf =
+  Efuns.get_local buf pwd_var
+  
+  
+
+let prompt buf =
+  spf "%s $ " (pwd buf)
+
+let display_prompt buf =
+  Text.insert_at_end buf.buf_text (prompt buf)
 
 (*****************************************************************************)
 (* Builtins *)
 (*****************************************************************************)
 
-let builtin_ls frame =
-  pr2 "LS"
+let builtin_ls buf =
+  let dir = pwd buf in
+  let files = Utils.file_list dir in
 
-let builtin_cd frame s =
-  pr2 "CD"
+  (* similar to Select.complete_filename *)
+  let files = files |> List.map (fun file ->
+    let path = Filename.concat dir file in
+    try 
+      let stat = Unix.stat path in
+      match stat.Unix.st_kind with
+      | Unix.S_DIR -> file ^ "/"
+      | _ -> file
+    with exn -> 
+      pr2 (spf "builtin_ls: exn = %s" (Common.exn_to_s exn));
+      file
+  )
+  in
+
+  (* similar to Select.display_completions *)
+  let rec iter list s =
+    match list with
+    | [] -> s
+    | [f] -> Printf.sprintf "%s\n%s" s f
+    | f1::f2::tail  ->
+      iter tail (Printf.sprintf "%s\n%-40s%s" s f1 f2)
+  in
+  Text.insert_at_end buf.buf_text "\n";
+  Text.insert_at_end buf.buf_text (iter files "");
+  Text.insert_at_end buf.buf_text "\n";
+  display_prompt buf
+
+let builtin_cd buf s =
+  Efuns.set_local buf pwd_var s;
+  builtin_ls buf
+
+(*****************************************************************************)
+(* Colors *)
+(*****************************************************************************)
+
+let prompt_color = "coral"
+
+let colorize buf =
+  Dircolors.colorize buf;
+  Simple.color buf 
+    (Str.regexp ("^/.* \\$")) false
+      (Text.make_attr (Window.get_color prompt_color) 1 0 false);
+  ()
+  
 
 (*****************************************************************************)
 (* Interpreter *)
 (*****************************************************************************)
 let interpret frame s =
-  match s with
-  | "ls" -> builtin_ls frame
-  | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
+  let buf = frame.frm_buffer in
+  (match s with
+  | "ls" -> builtin_ls buf
+  | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd buf (Common.matched1 s)
   | cmd ->
       raise Todo
+  );
+  colorize buf
+  
 
 
 (*****************************************************************************)
@@ -60,6 +113,15 @@ let interpret frame s =
 (*****************************************************************************)
 
 let install buf =
+  Efuns.set_local buf pwd_var 
+  (* todo: use the dirname of the file in current frame 
+     Frame.current_dir?
+  *)
+    (Efuns.location()).loc_dirname;
+  (* !!! *)
+  buf.buf_sync <- true;
+  display_prompt buf;
+  colorize buf;
   ()
 
 let mode =  Ebuffer.new_major_mode "Shell" [install]
@@ -68,14 +130,7 @@ let shell_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 let eshell frame =
   let buf_name = "*Shell*" in
   let text = Text.create "" in
-  let cursor = Text.new_point text in
   let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
-  (* !!! *)
-  buf.buf_sync <- true;
-
-  let str = prompt () in
-  Text.insert text cursor str;
-  buf.buf_modified <- buf.buf_modified +1;
   Ebuffer.set_major_mode buf mode;
   Frame.change_buffer frame.frm_window buf.buf_name;
   ()
@@ -87,7 +142,7 @@ let key_return frame =
     let delta = Text.search_backward text (Str.regexp " \\$ ") point in
     Text.fmove text point delta;
     let s = Text.region text frame.frm_point point in
-    interpret buf s
+    interpret frame s
   )
 
 
