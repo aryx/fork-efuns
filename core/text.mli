@@ -33,6 +33,7 @@ type point = {
 
 val new_point : t -> point
 val dup_point : t -> point -> point
+val with_dup_point: t -> point -> (point -> 'a) -> 'a
 
 (* point deletion *)
 
@@ -119,12 +120,14 @@ val set_char_attr : t -> point -> attribute -> unit
 (* search *)
 
 val search_forward : t -> Str.regexp -> point -> delta
-val search_forward_matched : t -> Str.regexp -> point -> string
 val search_backward : t -> Str.regexp -> point -> delta
+
 val search_forward_groups :
   t -> Str.regexp -> point -> int -> string array
 val search_backward_groups :
   t -> Str.regexp -> point -> int -> string array
+
+val search_forward_matched : t -> Str.regexp -> point -> string
 val replace_matched : t -> string -> string
 
 (* misc *)

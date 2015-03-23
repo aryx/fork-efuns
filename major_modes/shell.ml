@@ -34,6 +34,26 @@ let prompt () =
   let pwd = (Efuns.location ()).loc_dirname in
   spf "%s $ " pwd
 
+(*****************************************************************************)
+(* Builtins *)
+(*****************************************************************************)
+
+let builtin_ls frame =
+  pr2 "LS"
+
+let builtin_cd frame s =
+  pr2 "CD"
+
+(*****************************************************************************)
+(* Interpreter *)
+(*****************************************************************************)
+let interpret frame s =
+  match s with
+  | "ls" -> builtin_ls frame
+  | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
+  | cmd ->
+      raise Todo
+
 
 (*****************************************************************************)
 (* Install *)
@@ -61,7 +81,14 @@ let eshell frame =
   ()
 
 let key_return frame =
-  pr2 "RET"
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  Text.with_dup_point text frame.frm_point (fun point ->
+    let delta = Text.search_backward text (Str.regexp " \\$ ") point in
+    Text.fmove text point delta;
+    let s = Text.region text frame.frm_point point in
+    interpret buf s
+  )
 
 
 (*****************************************************************************)

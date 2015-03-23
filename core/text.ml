@@ -758,6 +758,11 @@ let remove_point tree p =
     []
 (*e: function Text.remove_point *)
 
+let with_dup_point text point f =
+  let p = dup_point text point in
+  Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+
+
 (*s: function Text.read *)
 let read inc =
   create (read_string inc)
