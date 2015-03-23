@@ -178,7 +178,7 @@ let exec_named_buf_hooks hooks frame =
 (*e: function Ebuffer.exec_named_buf_hooks *)
 
 (*s: function Ebuffer.exec_named_buf_hooks_with_abort *)
-let  exec_named_buf_hooks_with_abort hooks frame =
+let exec_named_buf_hooks_with_abort hooks frame =
   hooks |> List.rev |> List.iter (fun action ->
     execute_buffer_action action frame
  )
@@ -347,12 +347,10 @@ let set_minor_mode buf mode =
 let del_minor_mode buf minor =
   buf.buf_minor_modes <- 
     List.fold_right (fun mode list -> 
-      if mode == minor then
-        begin
-          buf.buf_modified <- buf.buf_modified + 1;
-          list
-        end
-      else (mode :: list)
+      if mode == minor then begin
+        buf.buf_modified <- buf.buf_modified + 1;
+        list
+      end else (mode :: list)
     ) buf.buf_minor_modes []
 (*e: function Ebuffer.del_minor_mode *)
   
@@ -380,7 +378,7 @@ let set_buffer_mode buf =
          )
     | Some file_name -> file_name 
   in 
-  let modes_alist = get_var buf modes_alist in
+  let modes_alist = Efuns.get_var buf modes_alist in
   (* must use != here, because modes_alist contain functional values *)
   if (!modes_old != modes_alist) then begin
     regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->

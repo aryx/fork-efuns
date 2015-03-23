@@ -100,9 +100,8 @@ let next_error top_frame =
           Text.point_to_line text point error.err_line;
           Text.fmove text point error.err_begin;
           Frame.active frame
-      with
-        Not_found ->
-          Top_window.message top_window "No more errors"
+      with Not_found ->
+        Top_window.message top_window "No more errors"
 (*e: function Compil.next_error *)
 
 (*s: constant Compil.compile_find_makefile *)
@@ -121,13 +120,11 @@ let make_hist = ref [!!make_command]
 (*s: function Compil.compile *)
 let compile find_error_fun frame =
   let default = List.hd !make_hist in
-  Select.select_string frame ("Compile command: (default :"^ default^") " )
-  make_hist ""
+  Select.select_string frame 
+    ("Compile command: (default :"^ default^") " )
+    make_hist ""
     (fun cmd -> 
-      let cmd = 
-        if cmd = "" then default else
-          cmd 
-      in
+      let cmd = if cmd = "" then default else cmd in
       let cdir = Frame.current_dir frame in
       let cdir = 
         if !!compile_find_makefile then
@@ -144,8 +141,7 @@ let compile find_error_fun frame =
               if newdir = dir then cdir else iter newdir
             in
             iter cdir
-          else
-            cdir
+          else cdir
         else cdir
       in
       let comp_window =
@@ -197,15 +193,16 @@ let grep_hist = ref [""]
 (*s: function Compil.grep *)
 let grep frame =
   let default = List.hd !grep_hist in
-  Select.select_string frame (Printf.sprintf "Grep command: %s (default: %s) " !!grep_command default)
-  grep_hist ""
+  Select.select_string frame 
+    (Printf.sprintf "Grep command: %s (default: %s) " !!grep_command default)
+    grep_hist ""
     (fun cmd -> 
       let cmd = if cmd = "" then default else cmd in
       let cmd = !!grep_command ^ " " ^ cmd in
       let cdir = Frame.current_dir frame in
       let comp_window =
         match !compilation_frame with
-          None -> Multi_frames.cut_frame frame 
+        | None -> Multi_frames.cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill new_frame.frm_buffer;

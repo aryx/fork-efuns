@@ -166,37 +166,35 @@ let select_replace frame request action =
 
 (*s: function Search.replace_string *)
 let replace_string frame =
-  select_replace frame "Replace string: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace RegexpString frame NoQuery str))
+  select_replace frame "Replace string: " (fun str ->
+  select_replace frame "with string: "    (fun str2 ->
+    replace RegexpString frame NoQuery str str2
+  ))
 (*e: function Search.replace_string *)
 
 (*s: function Search.query_replace_string *)
 let query_replace_string frame =
-  select_replace frame "Replace string: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace RegexpString frame 
-          (Query ( frame, "Replace string ? (y/n)"))
-        str)
-  )
+  select_replace frame "Replace string: " (fun str ->
+  select_replace frame "with string: "    (fun str2 ->
+    replace RegexpString frame (Query ( frame, "Replace string ? (y/n)"))
+        str str2
+  ))
 (*e: function Search.query_replace_string *)
 
 (*s: function Search.replace_regexp *)
 let replace_regexp frame =
-  select_replace frame "Replace Regexp: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace Regexp frame NoQuery str))
+  select_replace frame "Replace Regexp: " (fun str ->
+  select_replace frame "with string: " (fun str2 ->
+    replace Regexp frame NoQuery str str2
+  ))
 (*e: function Search.replace_regexp *)
 
 (*s: function Search.query_replace_regexp *)
 let query_replace_regexp frame =
-  select_replace frame "Replace regexp: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace Regexp frame (Query (frame, "Replace regexp ? (y/n)")) str))
+  select_replace frame "Replace regexp: " (fun str ->
+  select_replace frame "with string: "    (fun str2 ->
+    replace Regexp frame (Query (frame, "Replace regexp ? (y/n)")) str str2
+  ))
 (*e: function Search.query_replace_regexp *)
 
 (*s: constant Search.library_regexp *)
@@ -227,6 +225,7 @@ let isearch to_regexp sens frame =
   let sens = ref sens in
   let to_regexp = ref to_regexp in
   let ismap = Keymap.create () in
+
   let request () =
     "isearch-"^
       (match !sens with
@@ -274,6 +273,8 @@ let isearch to_regexp sens frame =
       Text.fmove text point (String.length !last_search);
       string := !last_search
   in
+
+  (*s: [[Search.isearch()]] key bindings *)
   Keymap.add_binding ismap [ControlMap, Char.code 's'] 
     (fun mini_frame ->
       set_last mini_frame;      
@@ -327,6 +328,7 @@ let isearch to_regexp sens frame =
     (kill_and Simple.beginning_of_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'e'] 
     (kill_and Simple.end_of_line)
+  (*e: [[Search.isearch()]] key bindings *)
 (*e: function Search.isearch *)
 
 

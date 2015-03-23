@@ -12,8 +12,6 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Efuns
-open Select
-
   
 (*s: function Interactive.create_bindings *)
 let create_bindings () =
@@ -40,15 +38,16 @@ let buf_interactives buf =
 let exec_interactive interactives frame name =
   try
     let f, key = List.assoc name interactives in
-    begin
-      match key with
-        None -> ()
-      | Some key_list ->
-          let top_window = Window.top frame.frm_window in
-          Top_window.message top_window
-            ("you can run "^name^" by typing "^
-              (Keymap.print_key_list key_list))
-    end;
+    (*s: [[Interactive.exec_interactive()]] display if has a keybinding *)
+    (match key with
+    | None -> ()
+    | Some key_list ->
+        let top_window = Window.top frame.frm_window in
+        Top_window.message top_window
+          ("you can run "^name^" by typing "^
+            (Keymap.print_key_list key_list))
+    );
+    (*e: [[Interactive.exec_interactive()]] display if has a keybinding *)
     (* run it ! *)
     f frame
   with Not_found -> 
@@ -60,7 +59,7 @@ let exec_interactive interactives frame name =
 let call_interactive frame =
   let buf = frame.frm_buffer in
   let interactives = buf_interactives buf in
-  select frame "M-x " meta_hist "" 
+  Select.select frame "M-x " meta_hist "" 
     (fun _ -> List.map fst interactives)
     (fun s -> s) 
     (exec_interactive interactives frame)

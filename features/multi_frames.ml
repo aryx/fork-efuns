@@ -37,7 +37,7 @@ let remove_frame frame =
   if frame.frm_mini_buffer = None then
     let window = frame.frm_window in
     match window.win_up with
-      TopWindow _ -> ()
+    | TopWindow _ -> ()
     | Window upwin ->
         Window.prev (Frame.install upwin) window
 (*e: function Multi_frames.remove_frame *)
@@ -53,7 +53,7 @@ let h_cut_frame frame =
   if frame.frm_mini_buffer = None 
   then
     let window = frame.frm_window in
-    if window.win_width > 10 then
+    if window.win_width > 10 then begin
       let wi = window.win_width / 2 in
       let w1 = Window.create false
                  (Window window) window.win_xpos window.win_ypos
@@ -64,6 +64,7 @@ let h_cut_frame frame =
       window.win_down <- HComb (w1,w2);
       Frame.install w1 frame;
       Frame.create w2 None frame.frm_buffer |> ignore
+    end
 (*e: function Multi_frames.h_cut_frame *)
 
 (*s: function Multi_frames.delete_frame *)

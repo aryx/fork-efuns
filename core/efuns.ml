@@ -110,15 +110,15 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_mark : Text.point option;
     (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_finalizers : (unit -> unit) list;
-    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_major_mode : major_mode;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_minor_modes : minor_mode list;
     (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_charreprs : string array; (* 256 array *)
+    mutable buf_finalizers : (unit -> unit) list;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_sync : bool;
+    (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_charreprs : string array; (* 256 array *)
     (*e: [[Efuns.buffer]] other fields *)
   } 
 (*e: type Efuns.buffer *)
@@ -343,8 +343,6 @@ type location =
     mutable loc_font : string;
 
     (*s: [[Efuns.location]] other fields *)
-    loc_mutex : Mutex.t;
-    (*x: [[Efuns.location]] other fields *)
     loc_map : map;
     (*x: [[Efuns.location]] other fields *)
     loc_vars : Local.vars;
@@ -356,6 +354,8 @@ type location =
     loc_fonts : (string,int) Hashtbl.t;
     loc_fonts_names : string array;
     mutable loc_fonts_n : int;
+    (*x: [[Efuns.location]] other fields *)
+    loc_mutex : Mutex.t;
     (*e: [[Efuns.location]] other fields *)
   } 
 (*e: type Efuns.location *)

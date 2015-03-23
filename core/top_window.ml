@@ -20,10 +20,12 @@ open Efuns
 let message top_window msg =
   let graphic = Window.backend top_window in
   let len = String.length msg in
+
   graphic.Xdraw.draw_string 0 (top_window.top_height - 1)
     msg 0 len Text.direct_attr;
   graphic.Xdraw.clear_eol len (top_window.top_height - 1)
     (top_window.top_width - len);
+
   match top_window.top_mini_buffers with
     [] -> (* No mini-buffer ... *) ()
   | mini_buffer :: _ -> (* one mini-buffer is active *)
@@ -142,8 +144,7 @@ let update_display () =
       );
       (match top_window.top_mini_buffers with
        | [] -> ()
-       | frame :: _ -> 
-           Frame.update top_window frame
+       | frm :: _ -> Frame.update top_window frm
       );
       cursor_on top_window;
   ) 

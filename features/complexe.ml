@@ -67,9 +67,8 @@ let update_time buf =
       None -> ()
     | Some file ->
         let st = Unix.lstat file in
-        if st.st_kind = S_REG then begin
-            set_local buf buf_mtime st.st_mtime;
-          end
+        if st.st_kind = S_REG 
+        then Efuns.set_local buf buf_mtime st.st_mtime;
   with _ -> ()
 (*e: function Complex.update_time *)
       
@@ -184,8 +183,7 @@ let change_buffer frame =
   let default = Select.get_previous_frame () in
   Select.set_previous_frame frame;
   Select.select_buffer frame " Switch to buffer: " default (fun str ->
-    let window = frame.frm_window in
-    Frame.change_buffer window str
+    Frame.change_buffer frame.frm_window str
   )
 (*e: function Complex.change_buffer *)
 

@@ -35,27 +35,29 @@ let up_buffer frame =
 (*s: function Complex.left_buffer *)
 let left_buffer frame =
   Select.set_previous_frame frame;
-  Frame.change_buffer frame.frm_window (
-    match !Select.prev_buffers with
+  Frame.change_buffer frame.frm_window 
+    (match !Select.prev_buffers with
     | name :: buffer :: tail ->
         Select.prev_buffers := tail @ [name]; 
         buffer
-    | _ -> raise Not_found)
+    | _ -> raise Not_found
+    )
 (*e: function Complex.left_buffer *)
 
 (*s: function Complex.right_buffer *)
 let right_buffer frame =
   Select.set_previous_frame frame;
-  Frame.change_buffer frame.frm_window (match !Select.prev_buffers with
-      name :: tail ->
-        begin
-          match List.rev tail with
-            buffer :: tail ->
-              Select.prev_buffers := name :: (List.rev tail);
-              buffer
-          | _ -> raise Not_found
-        end
-    | _ -> raise Not_found)
+  Frame.change_buffer frame.frm_window 
+    (match !Select.prev_buffers with
+    | name :: tail ->
+        (match List.rev tail with
+        | buffer :: tail ->
+            Select.prev_buffers := name :: (List.rev tail);
+            buffer
+        | _ -> raise Not_found
+        )
+    | _ -> raise Not_found
+    )
 (*e: function Complex.right_buffer *)
   
 

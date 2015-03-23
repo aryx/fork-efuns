@@ -268,10 +268,10 @@ let _ =
   (* C-x map *)
   define_action "point_at_mark"  point_at_mark;
   (*x: misc actions *)
+  define_action "compile" compile;
+  (*x: misc actions *)
   (* C-x map *)
   define_action "next_error"  Compil.next_error;
-  (*x: misc actions *)
-  define_action "compile" compile;
   (*x: misc actions *)
   (*s: window managment actions *)
   (* C-x 5 map *)
