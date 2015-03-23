@@ -2175,18 +2175,7 @@ let format_to_string () =
   string
 @
 
-<<function Simple.in_next_word>>=
-let in_next_word text mark syntax =
-  while (not syntax.(Char.code (Text.get_char text mark))) &&
-    Text.fmove_res text mark 1 = 1 do () done
-@
 
-<<function Simple.in_prev_word>>=
-let in_prev_word text mark syntax =
-  while Text.bmove_res text mark 1 = 1 &&
-    (not syntax.(Char.code (Text.get_char text mark)))
-  do () done
-@
 
 <<function Simple.to_begin_of_word>>=
 let to_begin_of_word text mark syntax =
@@ -2272,15 +2261,6 @@ let scroll_line frame n =
   frame.frm_y_offset <- frame.frm_y_offset + n
 @
 
-<<function Simple.recenter>>=
-let recenter frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  frame.frm_force_start <- true;
-  frame.frm_redraw <- true;
-  Text.goto_point text frame.frm_start frame.frm_point;
-  frame.frm_y_offset <- - frame.frm_height/2
-@
 
 
 
@@ -3528,23 +3508,7 @@ let rec save_buffers_and_action frame buffers action =
       Minibuffer.create frame map request |> ignore
 @
 
-<<constant Complex.buf_mtime>>=
-let buf_mtime = Local.create "buf_mtime" string_of_float float_of_string
-@
-% why not create_float then?
 
-<<function Complex.update_time>>=
-let update_time buf =
-  try
-    match buf.buf_filename with
-      None -> ()
-    | Some file ->
-        let st = Unix.lstat file in
-        if st.st_kind = S_REG then begin
-            set_local buf buf_mtime st.st_mtime;
-          end
-  with _ -> ()
-@
 
 <<function Complex.reload>>=
 let reload frame = 
@@ -3844,121 +3808,8 @@ open Options
 
 \subsection*{[[features/system.ml]]}
 
-<<function System.open_process>>=
-let open_process cmd =
-  let (in_read, in_write) = pipe() in
-  let (out_read, out_write) = pipe() in
-  let inchan = in_channel_of_descr in_read in
-  let outchan = out_channel_of_descr out_write in
-  match fork() with
-    0 ->
-      if out_read <> stdin then begin
-          dup2 out_read stdin; close out_read end;
-      if in_write <> Unix.stdout ||  in_write <> Unix.stderr then begin
-          if in_write <> Unix.stdout then dup2 in_write stdout;
-          if in_write <> Unix.stderr then dup2 in_write stderr; 
-          close in_write end;
-      List.iter close [in_read;out_write];
-      execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
-      (*      exit 127 *)
-  | pid -> 
-      Unix.close out_read;
-      Unix.close in_write;
-      (pid,inchan, outchan)
-@
 
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_sync : bool;
-@
 
-<<[[Frame.update()]] if buf sync>>=
-if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
-then Text.set_position text point (Text.size text); 
-@
-
-<<function System.system>>=
-let system buf_name cmd end_action =
-  let (pid,inc,outc) = open_process cmd in
-  let text = Text.create "" in
-  let curseur = Text.new_point text in
-  let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
-  buf.buf_sync <- true;
-  let _ins = Unix.descr_of_in_channel inc in
-  let _tampon = String.create 1000 in
-  let active = ref true in
-(*
-  Thread.add_reader ins
-    (function () ->
-        let pos,str = Text.delete_res text curseur
-            (Text.point_to_eof text curseur) in
-        let len = input inc tampon 0 1000 in
-        Mutex.lock location.loc_mutex;
-        if len = 0 then
-          let pid,status = waitpid [WNOHANG] pid in
-          begin
-            match status with 
-              WEXITED s -> Text.insert_at_end text 
-                  (Printf.sprintf "Exited with status %d\n" s); 
-                close_in inc;
-                close_out outc;
-                (try end_action buf s with _ -> ())
-            | _ -> Text.insert_at_end text "Broken pipe" 
-          end;
-          Text.set_position text curseur (Text.size text);
-          active := false;
-          (* redraw screen *)
-          update_display ();
-          WX_xterm.update_displays ();
-          Mutex.unlock location.loc_mutex;
-          Thread.remove_reader ins; (* Kill self *)
-        else
-          Text.insert_at_end text (String.sub tampon 0 len);
-        Text.set_position text curseur (Text.size text);
-        Text.insert text curseur str;
-        buf.buf_modified <- buf.buf_modified +1;
-        (* redraw screen *)
-        update_display ();
-        WX_xterm.update_displays ();
-        Mutex.unlock location.loc_mutex
-  );
-*)
-  if true then failwith "System.system: TODO";
-  let lmap = buf.buf_map in
-  Keymap.add_binding lmap [NormalMap, XK.xk_Return]
-    (fun frame ->
-      let point = frame.frm_point in
-      Text.insert text point "\n";
-      Text.fmove text point 1;
-      if !active then (* to avoid a segmentation fault in Ocaml *)
-        let str = Text.sub text curseur 
-            (Text.point_to_eof text curseur) in
-        Text.set_position text curseur (Text.size text);
-          (* synchronize viewpoint *)
-        output outc str 0 (String.length str);
-        flush outc
-  );
-  buf.buf_finalizers <- 
-    (fun () -> 
-      (try 
-          Unix.kill pid Sys.sigkill;
-          let _,_ = waitpid [] pid in ()
-        with _ -> ());
-      (*Concur.Thread.remove_reader ins*) failwith "System.system: TODO 2"
-    )
-  :: buf.buf_finalizers;
-  buf
-@
-
-<<function System.start_command>>=
-let start_command buf_name window cmd =
-  let buf = system buf_name cmd (fun buf status -> ()) in
-  let frame = Frame.create window None buf in
-  frame
-@
-
-<<constant System.shell_hist>>=
-let shell_hist = ref []
-@
 
 
 
@@ -4179,34 +4030,6 @@ open Efuns
 @
 
 \subsection*{[[features/multi_frames.ml]]}
-
-<<function Multi_frames.cut_frame>>=
-let cut_frame frame =
-  let window = frame.frm_window in
-  if window.win_height > 3 then
-    let h = window.win_height / 2 in
-    let w1 = Window.create false
-        (Window window) window.win_xpos window.win_ypos
-        window.win_width h in
-    let w2 = Window.create false (Window window) window.win_xpos 
-        (window.win_ypos + h) 
-      window.win_width (window.win_height - h) in
-    window.win_down <- VComb (w1,w2);
-    Frame.install w1 frame;
-    w2 
-  else
-    window
-@
-
-<<function Multi_frames.remove_frame>>=
-let remove_frame frame =
-  if frame.frm_mini_buffer = None then
-    let window = frame.frm_window in
-    match window.win_up with
-      TopWindow _ -> ()
-    | Window upwin ->
-        Window.prev (Frame.install upwin) window
-@
 
 
 %-------------------------------------------------------------

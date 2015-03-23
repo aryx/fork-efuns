@@ -161,7 +161,8 @@ a text editor.
 Why? Because I think it makes you a better programmer if
 you fully understand how things work under the hood.
 
-% chose efuns, simple, elegant. Also different language than previous books.
+% chose efuns, an emacs clone, simple, elegant. Also different language
+% than previous books.
 % Written in ocaml! more high level, and while
 % you want to write a kernel in C, it makes more sense for an app 
 % to use a higher level language like ocaml!
@@ -179,6 +180,9 @@ Here are other candidates that were considered but ultimately discarded:
 % size?
 \end{itemize}
 
+%mg, micro gnu emacs, 20 000 LOC
+%http://homepage.boetes.org/software/mg/
+
 % see Editor.nw for more choices
 
 % vs emacs:
@@ -191,6 +195,7 @@ Here are other candidates that were considered but ultimately discarded:
 %    in emacs case I usually do it via modifying my .emacs and
 %    very often reloading my emacs (buy maybe I'm not a good dynamic
 %    programmer)
+%  - see also http://www.emacswiki.org/emacs/EfunsEditor
 
 % see also other ocaml editors?
 %  - https://github.com/diml/zed (seems just an "engine")
@@ -279,6 +284,13 @@ the main author of Efuns.
 
 % specialised "major" modes: color!, font, indentation, navigating
 %todo: semantic editing/visualizing!
+
+% "everything is a buffer" need to implement a shell/terminal, well
+% a lot of what a terminal does is managing input, let user edit
+% the line, and this is for free in a buffer! want to move around
+% at the end of the line, bol, again, free or have all the building blocks!
+% also everything is a buffer with a customizable keymap! so can
+% have TAB, return, C-a, etc means different things in different modes!
 
 %emacs:
 % extensible => open source, external commands
@@ -380,6 +392,11 @@ Options:
 % try_map, find right map
 % action (e.g. RETURN), effect
 % rerendering!
+
+% so if do M->, this has for effect to change the point to the end,
+% and after the event loop it will trigger a display() for all
+% frames that then will realize it needs to redraw itself
+% because the point is now far away.
 
 
 %###############################################################################
@@ -993,10 +1010,6 @@ Hashtbl.add (Efuns.location()).loc_buffers name buf;
 % globals so much, but I don't need jocaml or this feature.
 
 
-<<[[Efuns.location]] other fields>>=
-loc_mutex : Mutex.t;
-@
-% have multiple threads? need mutual exclusion?
 
 
 
@@ -1026,6 +1039,7 @@ and action = frame -> unit
 %less: could instead use a string here? that would remove
 % some mutual recursivity, and may also help for other things
 % such as -debug, or the 'lastcmd' trick.
+%note: it will be the active frame, the one with the cursor
 
 % actions will be called from the keyboard event dispatcher.
 % the only thing passed is the frame/window where the event
@@ -1613,6 +1627,7 @@ let get_variable frame =
 <<misc actions>>=
 define_action "get_variable"  Complexe.get_variable;
 @
+%less: rename? describe_variable?
 
 \section{Hooks}
 % essentially a set of list refs
@@ -1655,7 +1670,8 @@ let create_buf_hook = Local.create_abstr "create_buf_hook"
 let hooks = try get_global create_buf_hook with Not_found -> [] in
 exec_hooks hooks buf;
 @
-
+% will be set to set_buffer_mode, which use the alist to automatically
+% set the major mode!
 
 
 
@@ -1701,7 +1717,7 @@ let exec_named_buf_hooks hooks frame =
 
 % ?? -> <>
 <<function Ebuffer.exec_named_buf_hooks_with_abort>>=
-let  exec_named_buf_hooks_with_abort hooks frame =
+let exec_named_buf_hooks_with_abort hooks frame =
   hooks |> List.rev |> List.iter (fun action ->
     execute_buffer_action action frame
  )
@@ -1725,8 +1741,10 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 
 
 \chapter{[[main()]]}
+
 % there is actually no really main() in ocaml, instead
 % a list of toplevels doing stuff (in the order of the linking)
+%update: but I reorged the code to gather stuff in a main(), more readable
 
 <<toplevel Main._>>=
 let _ =
@@ -1740,6 +1758,7 @@ let _ =
 let init_files = ref []
 @
 % should be used in Graphic.init
+% efuns is a multi-file editor!
 
 <<function Main.main>>=
 let main () =
@@ -2129,6 +2148,7 @@ let create_at_top xpos ypos width height =
 
 \subsection{[[Top_window.update_display()]]}
 
+% Graphics_xxx.init | (event loop -> handle_key) -> <>
 <<function Top_window.update_display>>=
 let update_display () =
   (Efuns.location()).top_windows |> List.iter (fun top_window ->
@@ -2137,8 +2157,7 @@ let update_display () =
       );
       (match top_window.top_mini_buffers with
        | [] -> ()
-       | frame :: _ -> 
-           Frame.update top_window frame
+       | frm :: _ -> Frame.update top_window frm
       );
       cursor_on top_window;
   ) 
@@ -2174,6 +2193,9 @@ let update_display () =
 
 \subsection{[[Top_window.handler()]]}
 
+% will see later why need mutex, when use threads
+% for external process (e.g. M-!) in which case
+% we must ensure exclusive access to the shared data
 
 <<function Top_window.handler>>=
 let handler top_window event =
@@ -2460,6 +2482,7 @@ let move_point_to tree point p =
 let point_line _text point = 
   point.line
 @
+%less: rename? line_of_point?
 
 % status line display the co of the cursor -> <>
 <<function Text.point_col>>=
@@ -2539,7 +2562,7 @@ and item_attr =
 | Foreground of color
 | Background of color
 @
-
+% need that?
 
 
 \section{Inserting characters}
@@ -2924,6 +2947,7 @@ let unset_attr tree =
 define_action "unset_attr" unset_attr;
 @
 
+% -> <> ?? why need that? 
 <<function Simple.unset_attr>>=
 let unset_attr frame =
   let buf = frame.frm_buffer in
@@ -3022,6 +3046,8 @@ let color buf regexp strict attr =
 % not really incremental as font-lock-mode.
 % but can be a simple starting point!
 
+% todo: have also a region variant, start/end
+
 \section{Fonts}
 % with an 's'?
 
@@ -3054,6 +3080,7 @@ let get_font font_name =
 Window.get_font !!font |> ignore;
 @
 
+%todo: variable sized font?
 
 
 \chapter{Main Window}
@@ -3274,6 +3301,25 @@ let saved_buffer_hooks = define_option ["saved_buffer_hooks"] ""
 
 <<misc actions>>=
 define_buffer_action "update_time" Complexe.update_time;
+@
+
+
+<<constant Complex.buf_mtime>>=
+let buf_mtime = Local.create "buf_mtime" string_of_float float_of_string
+@
+% why not create_float then?
+% who uses this local var?
+
+<<function Complex.update_time>>=
+let update_time buf =
+  try
+    match buf.buf_filename with
+      None -> ()
+    | Some file ->
+        let st = Unix.lstat file in
+        if st.st_kind = S_REG 
+        then Efuns.set_local buf buf_mtime st.st_mtime;
+  with _ -> ()
 @
 
 
@@ -3763,12 +3809,21 @@ end;
 
 \subsubsection{Recenter}
 
-
 <<misc keys>>=
 [ControlMap, Char.code 'l'], "recenter";
 @
 <<misc actions>>=
 define_action "recenter"  recenter;
+@
+
+<<function Simple.recenter>>=
+let recenter frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  frame.frm_force_start <- true;
+  frame.frm_redraw <- true;
+  Text.goto_point text frame.frm_start frame.frm_point;
+  frame.frm_y_offset <- - frame.frm_height/2
 @
 
 \subsection{Cursor}
@@ -4217,7 +4272,7 @@ let meta_hist = ref []
 let call_interactive frame =
   let buf = frame.frm_buffer in
   let interactives = buf_interactives buf in
-  select frame "M-x " meta_hist "" 
+  Select.select frame "M-x " meta_hist "" 
     (fun _ -> List.map fst interactives)
     (fun s -> s) 
     (exec_interactive interactives frame)
@@ -4238,15 +4293,7 @@ let buf_interactives buf =
 let exec_interactive interactives frame name =
   try
     let f, key = List.assoc name interactives in
-    begin
-      match key with
-        None -> ()
-      | Some key_list ->
-          let top_window = Window.top frame.frm_window in
-          Top_window.message top_window
-            ("you can run "^name^" by typing "^
-              (Keymap.print_key_list key_list))
-    end;
+    <<[[Interactive.exec_interactive()]] display if has a keybinding>>
     (* run it ! *)
     f frame
   with Not_found -> 
@@ -4254,6 +4301,17 @@ let exec_interactive interactives frame name =
     Top_window.message top_window ("No interactive command "^name)
 @
 
+
+<<[[Interactive.exec_interactive()]] display if has a keybinding>>=
+(match key with
+| None -> ()
+| Some key_list ->
+    let top_window = Window.top frame.frm_window in
+    Top_window.message top_window
+      ("you can run "^name^" by typing "^
+        (Keymap.print_key_list key_list))
+);
+@
 
 
 \subsection{Adding interactive functions}
@@ -4329,10 +4387,12 @@ map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 let message top_window msg =
   let graphic = Window.backend top_window in
   let len = String.length msg in
+
   graphic.Xdraw.draw_string 0 (top_window.top_height - 1)
     msg 0 len Text.direct_attr;
   graphic.Xdraw.clear_eol len (top_window.top_height - 1)
     (top_window.top_width - len);
+
   match top_window.top_mini_buffers with
     [] -> (* No mini-buffer ... *) ()
   | mini_buffer :: _ -> (* one mini-buffer is active *)
@@ -4766,6 +4826,10 @@ let move_backward frame delta =
 let move_forward frame delta =
   Text.fmove frame.frm_buffer.buf_text frame.frm_point delta
 @
+% Note that there is no mention of redisplay, or of adjusting
+% the cursor. This is done automatically each time based on
+% the new value for frame.frm_point.
+
 
 \subsection{Words and the syntax table}
 
@@ -4808,12 +4872,26 @@ let backward_word buf point =
   to_begin_of_word text point syntax
 @
 
+<<function Simple.in_prev_word>>=
+let in_prev_word text mark syntax =
+  while Text.bmove_res text mark 1 = 1 &&
+    (not syntax.(Char.code (Text.get_char text mark)))
+  do () done
+@
+
+
 <<function Simple.forward_word>>=
 let forward_word buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
   in_next_word text point syntax;
   to_end_of_word text point syntax
+@
+
+<<function Simple.in_next_word>>=
+let in_next_word text mark syntax =
+  while (not syntax.(Char.code (Text.get_char text mark))) &&
+    Text.fmove_res text mark 1 = 1 do () done
 @
 
 
@@ -5021,6 +5099,18 @@ let goto_line frame =
   )
 @
 
+<<function Text.goto_line>>=
+let goto_line tree point y =
+  let text = tree.tree_text in      
+  if text.text_nlines - 1 <= y 
+  then set_position tree point (size tree)
+  else begin
+    let line = text.text_newlines.(y) in
+    point.pos <- line.position;
+    point.line <- y
+  end
+@
+
 
 
 %\subsection{Helpers}
@@ -5082,17 +5172,6 @@ let point_to_line tree point line =
 
 
 
-<<function Text.goto_line>>=
-let goto_line tree point y =
-  let text = tree.tree_text in      
-  if text.text_nlines - 1 <= y 
-  then set_position tree point (size tree)
-  else begin
-    let line = text.text_newlines.(y) in
-    point.pos <- line.position;
-    point.line <- y
-  end
-@
 
 \section{Inserting}
 
@@ -5112,6 +5191,7 @@ let insert_return frame =
 <<constant Simple.single_char>>=
 let single_char = String.make 1 ' '
 @
+% thread-safe?
 
 <<function Simple.insert_char>>=
 let insert_char frame char =
@@ -5422,7 +5502,8 @@ and action =
 | Deletion of int * string * int
 <<[[Text.action]] other cases>>
 @
-
+% who generates that? the very low-level basic text operations!
+% we rely on that! otherwise undo complicated.
 
 <<function Text.undo>>=
 let undo tree =
@@ -5544,6 +5625,7 @@ let isearch to_regexp sens frame =
   let sens = ref sens in
   let to_regexp = ref to_regexp in
   let ismap = Keymap.create () in
+
   let request () =
     "isearch-"^
       (match !sens with
@@ -5591,62 +5673,67 @@ let isearch to_regexp sens frame =
       Text.fmove text point (String.length !last_search);
       string := !last_search
   in
-  Keymap.add_binding ismap [ControlMap, Char.code 's'] 
-    (fun mini_frame ->
-      set_last mini_frame;      
-      Text.goto_point text spoint point;
-      sens := Forward;
-      isearch_s ();
-      Minibuffer.update_request mini_frame (request ())
-  );    
-  Keymap.add_binding ismap [ControlMap, Char.code 'r']
-    (fun mini_frame ->
-      set_last mini_frame;      
-      Text.goto_point text spoint point;
-      sens := Backward;
-      isearch_s ();
-      Minibuffer.update_request mini_frame (request ())
-  );  
-  let _mini_frame =
-    Select.incremental_mini_buffer frame ismap (request ()) !string
-      (fun frame str -> 
-        string := str;
-        isearch_s ()
-    )
-    (fun frame str -> 
-        last_search := str;
-        Text.remove_point text spoint
-    )
-  in
-  let kill_and f mini_frame =
-    last_search := Text.to_string mini_frame.frm_buffer.buf_text;
-    Minibuffer.kill mini_frame frame;
-    f frame
-  in
-  Keymap.add_binding ismap [ControlMap, Char.code 'g']
-    (fun mini_frame  ->
-      Minibuffer.kill mini_frame frame;
-      Text.set_position frame.frm_buffer.buf_text frame.frm_point orig
-  );
-  Keymap.add_binding ismap [NormalMap, XK.xk_Left]
-    (fun mini_frame  ->
-      Minibuffer.kill mini_frame frame;
-      Simple.move_backward frame 1 |> ignore
-     );  
-  Keymap.add_binding ismap [NormalMap, XK.xk_Right]
-    (fun mini_frame  ->
-      Minibuffer.kill mini_frame frame;
-      Simple.move_forward frame 1 |> ignore
-    );  
-  Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and Simple.forward_line);
-  Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and Simple.backward_line);
-  Keymap.add_binding ismap [ControlMap, Char.code 'a'] 
-    (kill_and Simple.beginning_of_line);
-  Keymap.add_binding ismap [ControlMap, Char.code 'e'] 
-    (kill_and Simple.end_of_line)
+
+  <<[[Search.isearch()]] key bindings>>
 @
 
 
+
+<<[[Search.isearch()]] key bindings>>=
+Keymap.add_binding ismap [ControlMap, Char.code 's'] 
+  (fun mini_frame ->
+    set_last mini_frame;      
+    Text.goto_point text spoint point;
+    sens := Forward;
+    isearch_s ();
+    Minibuffer.update_request mini_frame (request ())
+);    
+Keymap.add_binding ismap [ControlMap, Char.code 'r']
+  (fun mini_frame ->
+    set_last mini_frame;      
+    Text.goto_point text spoint point;
+    sens := Backward;
+    isearch_s ();
+    Minibuffer.update_request mini_frame (request ())
+);  
+let _mini_frame =
+  Select.incremental_mini_buffer frame ismap (request ()) !string
+    (fun frame str -> 
+      string := str;
+      isearch_s ()
+  )
+  (fun frame str -> 
+      last_search := str;
+      Text.remove_point text spoint
+  )
+in
+let kill_and f mini_frame =
+  last_search := Text.to_string mini_frame.frm_buffer.buf_text;
+  Minibuffer.kill mini_frame frame;
+  f frame
+in
+Keymap.add_binding ismap [ControlMap, Char.code 'g']
+  (fun mini_frame  ->
+    Minibuffer.kill mini_frame frame;
+    Text.set_position frame.frm_buffer.buf_text frame.frm_point orig
+);
+Keymap.add_binding ismap [NormalMap, XK.xk_Left]
+  (fun mini_frame  ->
+    Minibuffer.kill mini_frame frame;
+    Simple.move_backward frame 1 |> ignore
+   );  
+Keymap.add_binding ismap [NormalMap, XK.xk_Right]
+  (fun mini_frame  ->
+    Minibuffer.kill mini_frame frame;
+    Simple.move_forward frame 1 |> ignore
+  );  
+Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and Simple.forward_line);
+Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and Simple.backward_line);
+Keymap.add_binding ismap [ControlMap, Char.code 'a'] 
+  (kill_and Simple.beginning_of_line);
+Keymap.add_binding ismap [ControlMap, Char.code 'e'] 
+  (kill_and Simple.end_of_line)
+@
 
 
 <<function Text.search_forward>>=
@@ -5787,39 +5874,37 @@ let regexp_option = define_option_class "Regexp"
 
 <<function Search.replace_string>>=
 let replace_string frame =
-  select_replace frame "Replace string: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace RegexpString frame NoQuery str))
+  select_replace frame "Replace string: " (fun str ->
+  select_replace frame "with string: "    (fun str2 ->
+    replace RegexpString frame NoQuery str str2
+  ))
 @
 
 <<function Search.query_replace_string>>=
 let query_replace_string frame =
-  select_replace frame "Replace string: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace RegexpString frame 
-          (Query ( frame, "Replace string ? (y/n)"))
-        str)
-  )
+  select_replace frame "Replace string: " (fun str ->
+  select_replace frame "with string: "    (fun str2 ->
+    replace RegexpString frame (Query ( frame, "Replace string ? (y/n)"))
+        str str2
+  ))
 @
 
 \subsection{Regexps}
 
 <<function Search.replace_regexp>>=
 let replace_regexp frame =
-  select_replace frame "Replace Regexp: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace Regexp frame NoQuery str))
+  select_replace frame "Replace Regexp: " (fun str ->
+  select_replace frame "with string: " (fun str2 ->
+    replace Regexp frame NoQuery str str2
+  ))
 @
 
 <<function Search.query_replace_regexp>>=
 let query_replace_regexp frame =
-  select_replace frame "Replace regexp: " 
-    (fun str ->
-      select_replace frame "with string: " 
-        (replace Regexp frame (Query (frame, "Replace regexp ? (y/n)")) str))
+  select_replace frame "Replace regexp: " (fun str ->
+  select_replace frame "with string: "    (fun str2 ->
+    replace Regexp frame (Query (frame, "Replace regexp ? (y/n)")) str str2
+  ))
 @
 
 \subsection{Helpers}
@@ -6027,8 +6112,7 @@ let change_buffer frame =
   let default = Select.get_previous_frame () in
   Select.set_previous_frame frame;
   Select.select_buffer frame " Switch to buffer: " default (fun str ->
-    let window = frame.frm_window in
-    Frame.change_buffer window str
+    Frame.change_buffer frame.frm_window str
   )
 @
 
@@ -6084,10 +6168,6 @@ let kill buf =
   buf.buf_shared <- -1
 @
 
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_finalizers : (unit -> unit) list;
-@
-
 
 
 \section{Cycling buffers}
@@ -6114,27 +6194,29 @@ define_action "up_buffer"  Multi_buffers.up_buffer;
 <<function Complex.left_buffer>>=
 let left_buffer frame =
   Select.set_previous_frame frame;
-  Frame.change_buffer frame.frm_window (
-    match !Select.prev_buffers with
+  Frame.change_buffer frame.frm_window 
+    (match !Select.prev_buffers with
     | name :: buffer :: tail ->
         Select.prev_buffers := tail @ [name]; 
         buffer
-    | _ -> raise Not_found)
+    | _ -> raise Not_found
+    )
 @
 
 <<function Complex.right_buffer>>=
 let right_buffer frame =
   Select.set_previous_frame frame;
-  Frame.change_buffer frame.frm_window (match !Select.prev_buffers with
-      name :: tail ->
-        begin
-          match List.rev tail with
-            buffer :: tail ->
-              Select.prev_buffers := name :: (List.rev tail);
-              buffer
-          | _ -> raise Not_found
-        end
-    | _ -> raise Not_found)
+  Frame.change_buffer frame.frm_window 
+    (match !Select.prev_buffers with
+    | name :: tail ->
+        (match List.rev tail with
+        | buffer :: tail ->
+            Select.prev_buffers := name :: (List.rev tail);
+            buffer
+        | _ -> raise Not_found
+        )
+    | _ -> raise Not_found
+    )
 @
 
 
@@ -6202,7 +6284,7 @@ let h_cut_frame frame =
   if frame.frm_mini_buffer = None 
   then
     let window = frame.frm_window in
-    if window.win_width > 10 then
+    if window.win_width > 10 then begin
       let wi = window.win_width / 2 in
       let w1 = Window.create false
                  (Window window) window.win_xpos window.win_ypos
@@ -6213,8 +6295,32 @@ let h_cut_frame frame =
       window.win_down <- HComb (w1,w2);
       Frame.install w1 frame;
       Frame.create w2 None frame.frm_buffer |> ignore
+    end
 @
 
+% usually create also subwindows when run certain commands,
+% like M-!, in which case the code usually looks like
+% let newwin = Multi_frames.cut_frame frame in 
+% Frame.create buf newwin ...
+
+
+<<function Multi_frames.cut_frame>>=
+let cut_frame frame =
+  let window = frame.frm_window in
+  if window.win_height > 3 then
+    let h = window.win_height / 2 in
+    let w1 = Window.create false
+        (Window window) window.win_xpos window.win_ypos
+        window.win_width h in
+    let w2 = Window.create false (Window window) window.win_xpos 
+        (window.win_ypos + h) 
+      window.win_width (window.win_height - h) in
+    window.win_down <- VComb (w1,w2);
+    Frame.install w1 frame;
+    w2 
+  else
+    window
+@
 
 \section{Deleting sub windows}
 
@@ -6223,8 +6329,6 @@ let h_cut_frame frame =
 "Delete Frame", "delete_frame";
 @
 %bug? not sure v_cut_frame will work!
-
-
 <<frame managment keys>>=
 [c_x; NormalMap, Char.code '1'], "one_frame";
 [c_x; NormalMap, Char.code '0'], "delete_frame";
@@ -6281,6 +6385,17 @@ let kill frame =
   Text.remove_point text buf.buf_start;
   buf.buf_point <- frame.frm_point;
   buf.buf_start <- frame.frm_start
+@
+
+% ??? -> <>
+<<function Multi_frames.remove_frame>>=
+let remove_frame frame =
+  if frame.frm_mini_buffer = None then
+    let window = frame.frm_window in
+    match window.win_up with
+    | TopWindow _ -> ()
+    | Window upwin ->
+        Window.prev (Frame.install upwin) window
 @
 
 \section{Navigating windows}
@@ -6398,7 +6513,7 @@ let new_major_mode name hooks = {
 @
 
 
-
+% set_buffer_mode -> <>
 <<function Ebuffer.set_major_mode>>=
 let set_major_mode buf mode =
   if !debug
@@ -6462,7 +6577,7 @@ let set_buffer_mode buf =
          )
     | Some file_name -> file_name 
   in 
-  let modes_alist = get_var buf modes_alist in
+  let modes_alist = Efuns.get_var buf modes_alist in
   (* must use != here, because modes_alist contain functional values *)
   if (!modes_old != modes_alist) then begin
     regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
@@ -6485,6 +6600,7 @@ let set_buffer_mode buf =
     ) 
   with Exit -> ()
 @
+% ugly those raise Exit
 
 % opti, memo in regexp_alist
 <<constant Ebuffer.modes_old>>=
@@ -6501,6 +6617,7 @@ let _ =
     set_global modes_alist []
   )
 @
+% important hook!!
 
 
 \section{Status line}
@@ -6621,12 +6738,10 @@ let set_minor_mode buf mode =
 let del_minor_mode buf minor =
   buf.buf_minor_modes <- 
     List.fold_right (fun mode list -> 
-      if mode == minor then
-        begin
-          buf.buf_modified <- buf.buf_modified + 1;
-          list
-        end
-      else (mode :: list)
+      if mode == minor then begin
+        buf.buf_modified <- buf.buf_modified + 1;
+        list
+      end else (mode :: list)
     ) buf.buf_minor_modes []
 @
 
@@ -6731,23 +6846,184 @@ iter buf.buf_minor_modes
 @
 
 
+
+
+
 \chapter{Extra Features}
 
-\section{External commands}
+\section{Running external commands}
+
+% and get result in a buffer! "everything is a buffer"
+% so can then use all the tools in emacs to manipulate the output
+% of this external command
 
 <<external commands keys>>=
 [MetaMap, Char.code '!'], "shell_command";
 @
-
 <<external command actions>>=
 define_action "shell_command"  System.shell_command;
 @
 
 <<function System.shell_command>>=
 let shell_command frame =
-  select_string frame "Run command:" shell_hist ""
-    (fun cmd -> start_command "*Command*" (cut_frame frame) cmd |> ignore)
+  Select.select_string frame "Run command:" shell_hist "" (fun cmd -> 
+    start_command "*Command*" (Multi_frames.cut_frame frame) cmd |> ignore)
 @
+
+<<constant System.shell_hist>>=
+let shell_hist = ref []
+@
+
+<<function System.start_command>>=
+let start_command buf_name window cmd =
+  let buf = system buf_name cmd (fun _buf _status -> ()) in
+  let frame = Frame.create window None buf in
+  frame
+@
+
+
+
+<<function System.system>>=
+let system buf_name cmd end_action =
+  let (pid,inc,outc) = open_process cmd in
+  let text = Text.create "" in
+  let curseur = Text.new_point text in
+  let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
+  (* !!! *)
+  buf.buf_sync <- true;
+
+  let _ins = Unix.descr_of_in_channel inc in
+  let _tampon = String.create 1000 in
+  let active = ref true in
+(*
+  Thread.add_reader ins
+    (function () ->
+        let pos,str = Text.delete_res text curseur
+            (Text.point_to_eof text curseur) in
+        let len = input inc tampon 0 1000 in
+        Mutex.lock location.loc_mutex;
+        if len = 0 then
+          let pid,status = waitpid [WNOHANG] pid in
+          begin
+            match status with 
+              WEXITED s -> Text.insert_at_end text 
+                  (Printf.sprintf "Exited with status %d\n" s); 
+                close_in inc;
+                close_out outc;
+                (try end_action buf s with _ -> ())
+            | _ -> Text.insert_at_end text "Broken pipe" 
+          end;
+          Text.set_position text curseur (Text.size text);
+          active := false;
+          (* redraw screen *)
+          update_display ();
+          WX_xterm.update_displays ();
+
+          Mutex.unlock location.loc_mutex;
+          Thread.remove_reader ins; (* Kill self *)
+        else
+          Text.insert_at_end text (String.sub tampon 0 len);
+
+        Text.set_position text curseur (Text.size text);
+        Text.insert text curseur str;
+        buf.buf_modified <- buf.buf_modified +1;
+
+        (* redraw screen *)
+        update_display ();
+        WX_xterm.update_displays ();
+        Mutex.unlock location.loc_mutex
+  );
+*)
+  if true 
+  then failwith "System.system: TODO";
+
+  let lmap = buf.buf_map in
+  Keymap.add_binding lmap [NormalMap, XK.xk_Return]
+    (fun frame ->
+      let point = frame.frm_point in
+      Text.insert text point "\n";
+      Text.fmove text point 1;
+      if !active then (* to avoid a segmentation fault in Ocaml *)
+        let str = Text.sub text curseur 
+            (Text.point_to_eof text curseur) in
+        Text.set_position text curseur (Text.size text);
+        (* synchronize viewpoint *)
+        output outc str 0 (String.length str);
+        flush outc
+  );
+
+  <<[[System.system()]] set finalizer, to intercept killed frame>>
+
+  buf
+@
+
+
+<<function System.open_process>>=
+let open_process cmd =
+  let (in_read, in_write) = pipe() in
+  let (out_read, out_write) = pipe() in
+  let inchan = in_channel_of_descr in_read in
+  let outchan = out_channel_of_descr out_write in
+  match fork() with
+    0 ->
+      if out_read <> stdin then begin
+          dup2 out_read stdin; 
+          close out_read 
+      end;
+      if in_write <> Unix.stdout ||  in_write <> Unix.stderr then begin
+          if in_write <> Unix.stdout then dup2 in_write stdout;
+          if in_write <> Unix.stderr then dup2 in_write stderr; 
+          close in_write 
+      end;
+      List.iter close [in_read;out_write];
+      execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
+      (*      exit 127 *)
+  | pid -> 
+      Unix.close out_read;
+      Unix.close in_write;
+      (pid, inchan, outchan)
+@
+
+\subsection{Threads and mutex}
+
+<<[[Efuns.location]] other fields>>=
+loc_mutex : Mutex.t;
+@
+% have multiple threads? need mutual exclusion?
+
+\subsection{Finalizers}
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_finalizers : (unit -> unit) list;
+@
+% when need that? if attached to a process?
+
+<<[[System.system()]] set finalizer, to intercept killed frame>>=
+buf.buf_finalizers <- (fun () -> 
+    (try 
+        Unix.kill pid Sys.sigkill;
+        let _,_ = waitpid [] pid in
+        ()
+      with _ -> ());
+    (*Concur.Thread.remove_reader ins*) failwith "System.system: TODO 2"
+  )
+:: buf.buf_finalizers;
+@
+
+
+
+\subsection{Synchronous buffers}
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_sync : bool;
+@
+
+<<[[Frame.update()]] if buf sync>>=
+if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
+then Text.set_position text point (Text.size text); 
+@
+% go at the end automatically even if no action was made
+%todo: except if start to mv? in which case remove the buf_sync?
 
 
 \section{Compilation and grep mode}
@@ -6765,15 +7041,6 @@ define_action "grep" Compil.grep;
 (*  define_action "compile" (compile c_find_error); *)
 @
 
-<<misc keys>>=
-[c_x;NormalMap, Char.code '`' ], "next_error";
-@
-<<misc actions>>=
-(* C-x map *)
-define_action "next_error"  Compil.next_error;
-@
-
-
 
 \subsection{[[M-x grep]]}
 
@@ -6784,15 +7051,16 @@ let grep_hist = ref ["grep -n "]
 <<function Compil.grep>>=
 let grep frame =
   let default = List.hd !grep_hist in
-  Select.select_string frame (Printf.sprintf "Grep command: %s (default: %s) " !!grep_command default)
-  grep_hist ""
+  Select.select_string frame 
+    (Printf.sprintf "Grep command: %s (default: %s) " !!grep_command default)
+    grep_hist ""
     (fun cmd -> 
       let cmd = if cmd = "" then default else cmd in
       let cmd = !!grep_command ^ " " ^ cmd in
       let cdir = Frame.current_dir frame in
       let comp_window =
         match !compilation_frame with
-          None -> Multi_frames.cut_frame frame 
+        | None -> Multi_frames.cut_frame frame 
         | Some (new_frame,error_point, _) ->
             Text.remove_point new_frame.frm_buffer.buf_text error_point;
             Ebuffer.kill new_frame.frm_buffer;
@@ -6820,18 +7088,16 @@ let compile frame =
   Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
    frame "compile"
 @
-
+% ???
 
 <<function Compil.compile>>=
 let compile find_error_fun frame =
   let default = List.hd !make_hist in
-  Select.select_string frame ("Compile command: (default :"^ default^") " )
-  make_hist ""
+  Select.select_string frame 
+    ("Compile command: (default :"^ default^") " )
+    make_hist ""
     (fun cmd -> 
-      let cmd = 
-        if cmd = "" then default else
-          cmd 
-      in
+      let cmd = if cmd = "" then default else cmd in
       let cdir = Frame.current_dir frame in
       let cdir = 
         if !!compile_find_makefile then
@@ -6848,8 +7114,7 @@ let compile find_error_fun frame =
               if newdir = dir then cdir else iter newdir
             in
             iter cdir
-          else
-            cdir
+          else cdir
         else cdir
       in
       let comp_window =
@@ -6871,6 +7136,17 @@ let compile find_error_fun frame =
       set_local buf find_error find_error_fun
   )
 @
+
+\subsection{Go to next error}
+
+<<misc keys>>=
+[c_x;NormalMap, Char.code '`' ], "next_error";
+@
+<<misc actions>>=
+(* C-x map *)
+define_action "next_error"  Compil.next_error;
+@
+%pad: C-n
 
 
 <<function Compil.next_error>>=
@@ -6914,10 +7190,11 @@ let next_error top_frame =
           Text.point_to_line text point error.err_line;
           Text.fmove text point error.err_begin;
           Frame.active frame
-      with
-        Not_found ->
-          Top_window.message top_window "No more errors"
+      with Not_found ->
+        Top_window.message top_window "No more errors"
 @
+
+\section{Shell mode}
 
 \section{Efuns server and client}
 
@@ -7117,6 +7394,10 @@ let escaped s =
   done;
   ss
 @
+
+\section{Colored files and directories}
+
+\section{Buffers menu}
 
 \section{Transforming}
 % maybe move in extra features?
