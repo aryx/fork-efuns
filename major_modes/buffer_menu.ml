@@ -44,7 +44,7 @@ let menu frame =
          | Some s -> s
          ));
   );
-  Dircolors.color buf;
+  Dircolors.colorize buf;
   (*  Text.toggle_readonly text; *)
   Frame.change_buffer frame.frm_window "*Buffer List*";
   ()

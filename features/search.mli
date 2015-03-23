@@ -1,13 +1,3 @@
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____________                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
 
 val case_fold : bool ref
 type query = NoQuery | Query of Efuns.frame * string

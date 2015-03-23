@@ -24,10 +24,10 @@ open Common
  * 
  * ;;; dircolors.el -- provide the same facility of ls --color inside emacs
  * ;;; Goal
- * ; try to colorize the buffers of emacs as ls --color do in a terminal
- * ;  so if you try C-x b TAB or C-x C-f, you will see directory in blue
- * ;  c source file in yellow, object file in gray, ....
- * ;  it helps a lot to find the file you want to open
+ * ; Try to colorize the buffers of emacs as ls --color do in a terminal
+ * ; so if you try C-x b TAB or C-x C-f, you will see directories in blue
+ * ; c source files in yellow, object files in gray, ....
+ * ; It helps to visually find the file you want to open.
  *)
 
 (* less: could be some define_option *)
@@ -132,11 +132,12 @@ let extensions = [
   ([ E"gz"], compress_color);
 ]
 
-let color buf = 
+let colorize buf = 
   Simple.color buf 
     (Str.regexp ("[a-zA-Z_-]*/")) false
     (Text.make_attr (Window.get_color dir_color) 1 0 false);
 
+  (* a bit brute force, but seems fast enough *)
   extensions |> List.iter (fun (exts, color) ->
     exts |> List.iter (function
       | E ext ->
@@ -153,5 +154,5 @@ let color buf =
 
 let _ = 
   Efuns.add_start_hook (fun () ->
-    Efuns.add_hook Select.completions_buf_hook color;
+    Efuns.add_hook Select.completions_buf_hook colorize;
   )

@@ -1,24 +1,34 @@
 
+(* creation *)
+
 val create : unit -> Efuns.top_window
+
+(* display *)
+
 val update_display : unit -> unit
+
+(* event handler *)
+
 val handler : Efuns.top_window -> Xtypes.event -> unit
-
-
-val message : Efuns.top_window -> string -> unit
-val mini_message : Efuns.frame -> string -> unit
-val clear_message : Efuns.top_window -> unit
 
 val handle_key_start_hook : (unit -> unit) list Local.var
 val handle_key_end_hook : (unit -> unit) list Local.var
 
 val keypressed : Efuns.keySym ref
-val mouse_set_active : Efuns.top_window -> Efuns.frame
+
+(* menu *)
 
 val file_menu : (string * string) list Options.option_record
 val edit_menu : (string * string) list Options.option_record
 val help_menu : (string * Efuns.action) array ref
 val buffers_menu : (Efuns.top_window -> unit -> unit -> unit) ref
 
+(* misc *)
+
+val message : Efuns.top_window -> string -> unit
+val mini_message : Efuns.frame -> string -> unit
+val clear_message : Efuns.top_window -> unit
+val mouse_set_active : Efuns.top_window -> Efuns.frame
 val wrap : Efuns.top_window -> (Efuns.top_window -> unit) -> unit -> unit
 val check_abort : 'a -> 'b
 val delete_window : 'a -> 'b

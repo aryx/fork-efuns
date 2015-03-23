@@ -1,16 +1,5 @@
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____________                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
 
 val select_yes_or_no : Efuns.frame -> string -> (bool -> unit) -> Efuns.frame
-
 
 val completions_buf_hook: (Efuns.buffer -> unit) list Local.var
 val display_completions : Efuns.frame -> string list -> unit
