@@ -14,8 +14,6 @@
 open Utils
 open Options
 open Efuns
-open Simple
- 
 
 (*s: constant Std_efunsrc.grep_hist *)
 let grep_hist = ref ["grep -n "]
@@ -54,26 +52,26 @@ let _ =
   (* Navigating (in the file) *)
   (* ----------------------------------------------------------- *)
   (*s: navigating actions *)
-  define_action "move_backward"  (fun frame -> ignore (move_backward frame 1));
-  define_action "move_forward"   (fun frame -> ignore (move_forward frame 1));
+  define_action "move_backward"  (fun frame -> ignore (Simple.move_backward frame 1));
+  define_action "move_forward"   (fun frame -> ignore (Simple.move_forward frame 1));
 
-  define_action "backward_word"  (to_frame backward_word);
-  define_action "forward_word"  (to_frame forward_word);  
+  define_action "backward_word"  (Simple.to_frame Simple.backward_word);
+  define_action "forward_word"  (Simple.to_frame Simple.forward_word);  
 
-  define_action "beginning_of_line"  beginning_of_line;
-  define_action "end_of_line"  end_of_line;
+  define_action "beginning_of_line"  Simple.beginning_of_line;
+  define_action "end_of_line"  Simple.end_of_line;
 
-  define_action "backward_line"  backward_line;
-  define_action "forward_line"  forward_line;  
+  define_action "backward_line"  Simple.backward_line;
+  define_action "forward_line"  Simple.forward_line;  
 
-  define_action "backward_paragraph"  (to_frame backward_paragraph);
-  define_action "forward_paragraph"  (to_frame forward_paragraph);  
+  define_action "backward_paragraph"  (Simple.to_frame Simple.backward_paragraph);
+  define_action "forward_paragraph"  (Simple.to_frame Simple.forward_paragraph);  
 
-  define_action "backward_screen"  backward_screen;
-  define_action "forward_screen"  forward_screen;
+  define_action "backward_screen"  Simple.backward_screen;
+  define_action "forward_screen"  Simple.forward_screen;
 
-  define_action "begin_of_file"  begin_of_file;
-  define_action "end_of_file"  end_of_file;
+  define_action "begin_of_file"  Simple.begin_of_file;
+  define_action "end_of_file"  Simple.end_of_file;
 
   (* M-x *)
   define_action "goto_char" Complexe.goto_char;
@@ -87,49 +85,49 @@ let _ =
   (* Inserting *)
   (* ------------------------- *)
   (*s: inserting actions *)
-  define_action "insert_return"  insert_return;
+  define_action "insert_return"  Simple.insert_return;
   (*e: inserting actions *)
   (* ------------------------- *)
   (* Deleting *)
   (* ------------------------- *)
   (*s: deleting actions *)
-  define_action "delete_before_point"  delete_backspace_char;
-  define_action "delete_at_point"  delete_char;
+  define_action "delete_before_point"  Simple.delete_backspace_char;
+  define_action "delete_at_point"  Simple.delete_char;
 
-  define_action "delete_forward_word"  (to_frame delete_forward_word);
-  define_action "delete_backward_word"  (to_frame delete_backward_word);
+  define_action "delete_forward_word"  (Simple.to_frame Simple.delete_forward_word);
+  define_action "delete_backward_word"  (Simple.to_frame Simple.delete_backward_word);
 
-  define_action "hungry_electric_delete"  hungry_electric_delete;
-  define_action "kill_end_of_line"  kill_end_of_line;
+  define_action "hungry_electric_delete"  Simple.hungry_electric_delete;
+  define_action "kill_end_of_line"  Simple.kill_end_of_line;
   (*e: deleting actions *)
   (* ------------------------- *)
   (* Moving (Cut, copy, paste) *)
   (* ------------------------- *)
   (*s: moving actions *)
   define_action "mark_at_point"  Complexe.mark_at_point;
-  define_action "kill_region"  kill_region;
-  define_action "insert_killed"  insert_killed;
-  define_action "insert_next_killed"  insert_next_killed;
+  define_action "kill_region"  Simple.kill_region;
+  define_action "insert_killed"  Simple.insert_killed;
+  define_action "insert_next_killed"  Simple.insert_next_killed;
   (*e: moving actions *)
   (* ------------------------- *)
   (* Transforming *)
   (* ------------------------- *)
   (*s: transforming actions *)
-  define_action "transpose_chars"  (to_frame transpose_chars);
+  define_action "transpose_chars"  (Simple.to_frame Simple.transpose_chars);
 
-  define_action "transpose_words"  (to_frame transpose_words);
+  define_action "transpose_words"  (Simple.to_frame Simple.transpose_words);
   define_action "lowercase_word" (fun frame ->
     let buf = frame.frm_buffer in
     let point = frame.frm_point in
-    on_word buf point String.lowercase
+    Simple.on_word buf point String.lowercase
   );
   define_action "uppercase_word" (fun frame ->
     let buf = frame.frm_buffer in
     let point = frame.frm_point in
-    on_word buf point String.uppercase
+    Simple.on_word buf point String.uppercase
   );
 
-  define_action "fill_paragraph" fill_paragraph;
+  define_action "fill_paragraph" Simple.fill_paragraph;
   (*e: transforming actions *)
   (* ------------------------- *)
   (* Replacing *)
@@ -155,7 +153,7 @@ let _ =
   (* Undoing *)
   (* ----------------------------------------------------------- *)
   (*s: undoing actions *)
-  define_action "undo"  undo;
+  define_action "undo"  Simple.undo;
   (*e: undoing actions *)
 
   (* ----------------------------------------------------------- *)
@@ -176,7 +174,7 @@ let _ =
   define_action "change_buffer"  Complexe.change_buffer;
   (*x: buffer managment actions *)
   (* C-x map *)
-  define_action "kill_buffer"  kill_buffer;
+  define_action "kill_buffer"  Simple.kill_buffer;
   (*e: buffer managment actions *)
   (*s: buffer navigating actions *)
   (* C-M map *)
@@ -253,20 +251,20 @@ let _ =
   (*x: misc actions *)
   define_action "get_position" Complexe.get_pos;
   (*x: misc actions *)
-  define_action "unset_attr" unset_attr;
+  define_action "unset_attr" Simple.unset_attr;
   (*x: misc actions *)
   define_buffer_action "update_time" Complexe.update_time;
   (*x: misc actions *)
   (* C-x map *)
   define_action "exit"  Complexe.exit_efuns; 
   (*x: misc actions *)
-  define_action "recenter"  recenter;
+  define_action "recenter"  Simple.recenter;
   (*x: misc actions *)
   (* C-h map *)
   define_action "help_bindings"  Frame.bindings_help;
   (*x: misc actions *)
   (* C-x map *)
-  define_action "point_at_mark"  point_at_mark;
+  define_action "point_at_mark"  Simple.point_at_mark;
   (*x: misc actions *)
   define_action "compile" compile;
   (*x: misc actions *)
@@ -283,7 +281,7 @@ let _ =
   (*e: window managment actions *)
   (*x: misc actions *)
   (* C-M map *)
-  define_action "next_hole" next_hole;
+  define_action "next_hole" Simple.next_hole;
   (*e: misc actions *)
   (*e: actions definitions *)
   ()
@@ -291,7 +289,8 @@ let _ =
   
   
 (*s: constant Std_efunsrc.global_map *)
-let global_map = define_option ["global_map"] "" (list_option binding_option) []
+let global_map = define_option ["global_map"] "" 
+  (list_option Simple.binding_option) []
 (*e: constant Std_efunsrc.global_map *)
 (*s: constant Std_efunsrc.interactives_map *)
 let interactives_map = define_option ["interactives_map"] ""
@@ -588,11 +587,11 @@ let init_global_map () =
   (* Mouse *)
   (*s: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
-    "set_active_frame" mouse_set_frame;
+    "set_active_frame" Simple.mouse_set_frame;
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
-    "insert_at_point" mouse_yank_at_click;
+    "insert_at_point" Simple.mouse_yank_at_click;
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
-    "mouse_save_then_kill" mouse_save_then_kill;
+    "mouse_save_then_kill" Simple.mouse_save_then_kill;
   (*e: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   ()
 (*e: function Std_efunsrc.init_global_map *)
@@ -679,8 +678,8 @@ let _ =
 let _ =
   Efuns.add_start_hook (fun () ->
     (*s: [[Std_efunsrc._5]] start hooks options *)
-    add_option_parameter Compil.compile_find_makefile;
-    add_option_parameter Text.add_amount;
+    Simple.add_option_parameter Compil.compile_find_makefile;
+    Simple.add_option_parameter Text.add_amount;
     (*e: [[Std_efunsrc._5]] start hooks options *)
     init_global_map ()
   )

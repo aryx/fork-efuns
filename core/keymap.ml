@@ -189,5 +189,9 @@ let add_minor_key minor =
 let add_major_key major = 
   interactive major.maj_map 
 (*e: function Keymap.add_major_key *)
-  
+
+let define_interactive_action action_name action_fun =
+  Efuns.define_action action_name action_fun;
+  let map = (Efuns.location()).loc_map in
+  add_interactive map action_name action_fun
 (*e: core/keymap.ml *)
