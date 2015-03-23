@@ -233,10 +233,6 @@ let cancel_repr text point n =
 
 
 
-
-
-
-
 <<function Text.insert_at_end>>=
 let insert_at_end tree str =
   let text = tree.tree_text in
@@ -245,40 +241,11 @@ let insert_at_end tree str =
   text.text_modified <- text.text_modified + 1
 @
 
-<<function Text.insert_res>>=
-let insert_res tree point str =
-  let text = tree.tree_text in
-  let (pos,len,modif) = low_insert tree point.pos str in
-  text.text_history <- Insertion(pos,len,modif) :: text.text_history;
-  text.text_modified <- text.text_modified + 1;
-  pos, len
-@
 
-<<function Text.insert>>=
-let insert text point str = 
-   insert_res text point str |> ignore
-@
 
 <<type Text.delta>>=
 type delta = int
 @
-
-<<function Text.delete_res>>=
-let delete_res tree point len =
-  let text = tree.tree_text in  
-  let (pos,str,modif) = low_delete tree point.pos len in
-  text.text_history <- Deletion(pos,str,modif) :: text.text_history;
-  text.text_modified <- text.text_modified + 1;
-  pos, str
-@
-
-<<function Text.delete>>=
-let delete text point len = 
-  delete_res text point len |> ignore
-@
-
-
-
 
 <<function Text.find_xy>>=
 let find_xy text point line pos =
@@ -896,28 +863,6 @@ let start_session tree =
   text.text_modified
 @
 
-<<function Text.commit_session>>=
-let commit_session tree session_date =
-  let text = tree.tree_text in      
-  if text.text_modified > session_date then
-    let rec iter session history =
-      match history with
-        [] -> assert false
-      | action :: history ->
-          let date =
-            match action with
-              Session _ -> failwith "Can not commit nested sessions"
-            | Insertion (_,_,date) -> date
-            | Deletion (_,_,date) -> date
-          in
-          if date = session_date then
-            text.text_history <- (Session (List.rev (action::session)))
-            :: history
-          else
-            iter (action::session) history
-    in
-    iter [] text.text_history
-@
 
 
 %-------------------------------------------------------------

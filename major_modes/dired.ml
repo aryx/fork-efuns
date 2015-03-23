@@ -32,10 +32,9 @@ let file_reg = Str.regexp ".* \\([^ ]+\\)$"
   
 (*s: function Dired.get_file_line *)
 let get_file_line frame =
-  (match frame.frm_buffer.buf_filename with
-      None -> ()
-    | Some filename -> 
-        (Efuns.location()).loc_dirname <- Filename.dirname filename);
+  frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
+    (Efuns.location()).loc_dirname <- Filename.dirname filename;
+  );
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
@@ -50,10 +49,11 @@ let get_file_line frame =
     
 (*s: function Dired.select_file *)
 let select_file line =
-  if line.[0] = ' ' then
-    if Str.string_match file_reg line 0 then
-      Str.matched_group 1 line else
-      String.sub line 60 (String.length line - 60)
+  if line.[0] = ' ' 
+  then
+    if Str.string_match file_reg line 0 
+    then Str.matched_group 1 line 
+    else String.sub line 60 (String.length line - 60)
   else
     failwith "Dired: not a file line"
 (*e: function Dired.select_file *)
@@ -82,13 +82,11 @@ let open_file frame =
 let remove frame =
   let line = get_file_line frame in   
   let filename = select_file line in
-  let _ = 
-    Select.select_yes_or_no frame (Printf.sprintf "Remove %s ? (y/n)" filename)
+  Select.select_yes_or_no frame (Printf.sprintf "Remove %s ? (y/n)" filename)
     (fun b -> if b then
           if line.[1] = 'd' then Unix.rmdir filename else
           Unix.unlink filename;
-        update frame.frm_buffer) in
-  ()
+        update frame.frm_buffer) |> ignore
 (*e: function Dired.remove *)
 
 (*s: constant Dired.view_list *)

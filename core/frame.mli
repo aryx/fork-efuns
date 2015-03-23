@@ -1,17 +1,10 @@
-(***********************************************************************)
-(*                                                                     *)
-(*                             ____________                            *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
 
-val create : Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
+val create : 
+  Efuns.window -> string option -> Efuns.buffer -> 
+  Efuns.frame
 val create_without_top :
-   Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
+  Efuns.window -> string option -> Efuns.buffer -> 
+  Efuns.frame
 val create_inactive : Efuns.window -> Efuns.buffer -> Efuns.frame
 
 val kill : Efuns.frame -> unit
@@ -22,6 +15,7 @@ val unkill : Efuns.window -> Efuns.frame -> unit
 val install : Efuns.window -> Efuns.frame -> unit
 val resize : Efuns.frame -> unit
 val update : Efuns.top_window -> Efuns.frame -> unit
+
 val update_line : Efuns.top_window -> Efuns.frame -> string -> int -> unit
 val update_table : 'a -> Efuns.frame -> unit
 

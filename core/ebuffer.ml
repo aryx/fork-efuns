@@ -262,18 +262,17 @@ exception BufferAlreadyOpened
 let change_name buf filename =
   let location = Efuns.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
-  (match buf.buf_filename with
-      None -> ()
-    | Some filename ->
-        Hashtbl.remove location.loc_files filename);
+  buf.buf_filename |> Common.do_option (fun filename ->
+    Hashtbl.remove location.loc_files filename
+  );
   let filename = 
     if Filename.is_relative filename then
       Filename.concat location.loc_dirname filename
     else
       filename
   in
-  if hashtbl_mem location.loc_files filename then
-    raise BufferAlreadyOpened;
+  if hashtbl_mem location.loc_files filename 
+  then raise BufferAlreadyOpened;
   let filename = Utils.normal_name location.loc_dirname filename in
   let name = get_name filename in
   Hashtbl.add location.loc_buffers name buf;

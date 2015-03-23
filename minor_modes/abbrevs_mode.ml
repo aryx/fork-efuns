@@ -68,10 +68,10 @@ let _ =
   define_action "abbrevs_mode" 
     (fun frame -> 
       let buf = frame.frm_buffer in
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode)
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+    )
 (*e: toplevel Abbrevs_mode._3 *)
 
 (*e: minor_modes/abbrevs_mode.ml *)

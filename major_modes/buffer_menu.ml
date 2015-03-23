@@ -18,10 +18,8 @@ open Efuns
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-
-(* A port of my buffer-menu from emacs to efuns.
+(* A port of my (colorized) buffer-menu from emacs to efuns.
 *)
-
 
 (*****************************************************************************)
 (* Entry point *)
@@ -47,9 +45,8 @@ let menu frame =
          ));
   );
   Dircolors.color buf;
-(*  Text.toggle_readonly text; *)
+  (*  Text.toggle_readonly text; *)
   Frame.change_buffer frame.frm_window "*Buffer List*";
-
   ()
 
 

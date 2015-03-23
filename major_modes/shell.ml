@@ -32,6 +32,7 @@ open Efuns
 (* Install *)
 (*****************************************************************************)
 
+
 let install buf =
   ()
 
@@ -39,14 +40,22 @@ let mode =  Ebuffer.new_major_mode "Shell" [install]
 let shell_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 
 let eshell frame =
-  let buf = Ebuffer.default "*Shell*" in
-  let text = buf.buf_text in
-  let loc = Efuns.location () in
-  let str = spf "%s $ " loc.loc_dirname in
-  Text.update text str;
-  Frame.change_buffer frame.frm_window "*Shell*";
-  Text.set_position text frame.frm_point (Text.size text);
-  shell_mode frame;
+  let buf_name = "*Shell*" in
+  (* todo: use the dirname of the file in current frame 
+     Frame.current_dir?
+  *)
+  let pwd = (Efuns.location ()).loc_dirname in
+  let text = Text.create "" in
+  let cursor = Text.new_point text in
+  let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
+  (* !!! *)
+  buf.buf_sync <- true;
+
+ let str = spf "%s $ " pwd in
+  Text.insert text cursor str;
+  buf.buf_modified <- buf.buf_modified +1;
+  Ebuffer.set_major_mode buf mode;
+  Frame.change_buffer frame.frm_window buf.buf_name;
   ()
 
 
@@ -58,5 +67,8 @@ let _ =
   Efuns.add_start_hook (fun () ->
     Keymap.define_interactive_action "eshell" eshell;
     Keymap.define_interactive_action "shell" eshell;
+
+    let _map = mode.maj_map in
+    ()
   )
 

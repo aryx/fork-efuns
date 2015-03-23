@@ -54,6 +54,8 @@ and key = mod_ident * keySym
 and action = frame -> unit
 (*e: type Efuns.action *)
 
+and action_name = string
+
 (*s: type Efuns.generic_action *)
 and generic_action =
   BufferAction of (buffer -> unit)
@@ -67,6 +69,8 @@ and mod_ident =
 | MetaMap
 | ControlMetaMap
 (*e: type Efuns.mod_ident *)
+
+and keys = key list
 
 (*s: type Efuns.prefix *)
 and prefix = key list
@@ -554,7 +558,7 @@ let _ =
   
 
 (*s: global Efuns.actions *)
-let (actions : (string, generic_action) Hashtbl.t) = 
+let (actions : (action_name, generic_action) Hashtbl.t) = 
   Hashtbl.create 63
 (*e: global Efuns.actions *)
 
