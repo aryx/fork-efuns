@@ -18,6 +18,7 @@ SRC=\
  commons/log.ml\
  commons/options.ml\
  commons/local.ml\
+ commons/concur.ml\
  \
  graphics/xtypes.ml\
  graphics/xdraw.ml\

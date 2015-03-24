@@ -39,50 +39,44 @@ let system buf_name cmd end_action =
   (* !!! *)
   buf.buf_sync <- true;
 
-  let _ins = Unix.descr_of_in_channel inc in
-  let _tampon = String.create 1000 in
+  let ins = Unix.descr_of_in_channel inc in
+  let tampon = String.create 1000 in
   let active = ref true in
-(*
-  Thread.add_reader ins
-    (function () ->
-        let pos,str = Text.delete_res text curseur
-            (Text.point_to_eof text curseur) in
-        let len = input inc tampon 0 1000 in
-        Mutex.lock location.loc_mutex;
-        if len = 0 then
-          let pid,status = waitpid [WNOHANG] pid in
-          begin
-            match status with 
-              WEXITED s -> Text.insert_at_end text 
-                  (Printf.sprintf "Exited with status %d\n" s); 
-                close_in inc;
-                close_out outc;
-                (try end_action buf s with _ -> ())
-            | _ -> Text.insert_at_end text "Broken pipe" 
-          end;
-          Text.set_position text curseur (Text.size text);
-          active := false;
-          (* redraw screen *)
-          update_display ();
-          WX_xterm.update_displays ();
+  let location = Efuns.location () in
+  Concur.Thread.add_reader ins (fun () ->
+    let pos,str = Text.delete_res text curseur
+        (Text.point_to_eof text curseur) in
+    let len = input inc tampon 0 1000 in
+    Mutex.lock location.loc_mutex;
+    if len = 0 then begin
+      let pid,status = waitpid [WNOHANG] pid in
+      (match status with 
+      | WEXITED s -> Text.insert_at_end text 
+              (Printf.sprintf "Exited with status %d\n" s); 
+            close_in inc;
+            close_out outc;
+            (try end_action buf s with _ -> ())
+      | _ -> Text.insert_at_end text "Broken pipe" 
+      );
+      Text.set_position text curseur (Text.size text);
+      active := false;
+      (* redraw screen *)
+      Top_window.update_display ();
 
-          Mutex.unlock location.loc_mutex;
-          Thread.remove_reader ins; (* Kill self *)
-        else
-          Text.insert_at_end text (String.sub tampon 0 len);
+      Mutex.unlock location.loc_mutex;
+      Concur.Thread.remove_reader ins; (* Kill self *)
+    end
+    else
+      Text.insert_at_end text (String.sub tampon 0 len);
 
-        Text.set_position text curseur (Text.size text);
-        Text.insert text curseur str;
-        buf.buf_modified <- buf.buf_modified +1;
+    Text.set_position text curseur (Text.size text);
+    Text.insert text curseur str;
+    buf.buf_modified <- buf.buf_modified +1;
 
-        (* redraw screen *)
-        update_display ();
-        WX_xterm.update_displays ();
-        Mutex.unlock location.loc_mutex
+    (* redraw screen *)
+    Top_window.update_display ();
+    Mutex.unlock location.loc_mutex
   );
-*)
-  if true 
-  then failwith "System.system: TODO";
 
   let lmap = buf.buf_map in
   Keymap.add_binding lmap [NormalMap, XK.xk_Return]

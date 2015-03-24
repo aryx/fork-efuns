@@ -6,6 +6,8 @@
 
 ** a new Buffer_menu module
 
+** a new (eshell inspired) Shell module
+
 ** new programming language major modes using pfff for parsing
 for Caml, C/C++, and TeX/Noweb
 

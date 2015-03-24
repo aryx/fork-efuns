@@ -11,7 +11,6 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header *)
-open Keymap
 open Efuns
 
 
@@ -23,6 +22,8 @@ let update buf =
   let s = Utils.load_directory filename in
   let text = buf.buf_text in
   Text.update text s;
+  (* pad extension *)
+  Dircolors.colorize buf;
   buf.buf_last_saved <- Text.version text
 (*e: function Dired.update *)
 
@@ -190,10 +191,12 @@ let unzip_and_view frame filename =
     
 (*s: toplevel Dired._1 *)
 let _ = 
-  Keymap.interactive map [NormalMap, XK.xk_Return] "dired_open_file" open_file;
+  Keymap.interactive map [NormalMap, XK.xk_Return] "dired_open_file" 
+    open_file;
   Keymap.interactive map [NormalMap, Char.code 'g'] "dired_update" 
-  (fun frame -> update frame.frm_buffer);  
-  Keymap.interactive map [NormalMap, Char.code 'v'] "dired_view_file" open_view;  
+    (fun frame -> update frame.frm_buffer);  
+  Keymap.interactive map [NormalMap, Char.code 'v'] "dired_view_file" 
+    open_view;  
   Keymap.interactive map [NormalMap, Char.code '+'] "dired_make_directory" 
     mkdir;  
   Keymap.interactive map [NormalMap, Char.code '-'] "dired_remove_entry" 
@@ -210,11 +213,11 @@ let _ =
     ];
   
   Efuns.add_start_hook (fun () ->
-    add_interactive ((Efuns.location()).loc_map) "dired_mode" 
+    Keymap.add_interactive ((Efuns.location()).loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
-    set_global Ebuffer.modes_alist 
-      ((".*/$",mode) :: (get_global Ebuffer.modes_alist));
+    Efuns.set_global Ebuffer.modes_alist 
+      ((".*/$",mode) :: (Efuns.get_global Ebuffer.modes_alist));
   )   
 (*e: toplevel Dired._1 *)
 (*e: major_modes/dired.ml *)

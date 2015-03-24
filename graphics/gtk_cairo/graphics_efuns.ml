@@ -148,7 +148,7 @@ let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
 let draw_string loc cr pg   col line  str  offset len   attr =
   if !debug_graphics
   then pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
-    col line str offset len attr);
+              col line str offset len attr);
   let bgcolor = 
     let idx = (attr lsr 8) land 255 in
     loc.loc_colors_names.(idx)
@@ -166,20 +166,19 @@ let draw_string loc cr pg   col line  str  offset len   attr =
   Pango_cairo.show_layout cr ly;
   ()
 
-let update_displays _cr =
-  if !debug_graphics
-  then pr2 ("WX_xterm.update_displays")
 
-
-let backend loc cr pg = 
+let backend loc cr pg win = 
   let conv x = float_of_int x in
   { Xdraw. 
     clear_eol = (fun a b c -> 
       clear_eol cr pg (conv a) (conv b) c); 
     draw_string = (fun a b c d e f -> 
       draw_string loc cr pg (conv a) (conv b) c d e f);
-    update_displays = (fun () -> 
-      update_displays cr);
+    update_display = (fun () -> 
+      if !debug_graphics
+      then pr2 ("WX_xterm.update_displays");
+      GtkBase.Widget.queue_draw win#as_widget;
+    );
   }
 
 
@@ -219,7 +218,7 @@ let init2 init_files =
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
   (*-------------------------------------------------------------------*)
 
-  location.loc_height <- 45;
+  location.loc_height <- 25;
   (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create () in
   (* the *bindings* buffer *)
@@ -272,7 +271,7 @@ let init2 init_files =
 
   Pango_cairo.update_layout cr layout;
 
-  top_window.graphics <- Some (backend location cr pg); 
+  top_window.graphics <- Some (backend location cr pg win); 
 
   for i = 0 to (Efuns.location()).loc_height -.. 1 do
     clear_eol cr pg 0. (float_of_int i) 80;
@@ -311,7 +310,6 @@ let init2 init_files =
     code_opt |> Common.do_option (fun code ->
       let evt = Xtypes.XTKeyPress (!modifiers, GdkEvent.Key.string key, code) in
       Top_window.handler top_window evt;
-      GtkBase.Widget.queue_draw win#as_widget;
     );
     true
   ) |> ignore;

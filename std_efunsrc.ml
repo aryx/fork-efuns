@@ -121,6 +121,7 @@ let _ =
     let point = frame.frm_point in
     Simple.on_word buf point String.lowercase
   );
+
   define_action "uppercase_word" (fun frame ->
     let buf = frame.frm_buffer in
     let point = frame.frm_point in

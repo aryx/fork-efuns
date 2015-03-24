@@ -29,7 +29,7 @@ let message top_window msg =
   match top_window.top_mini_buffers with
     [] -> (* No mini-buffer ... *) ()
   | mini_buffer :: _ -> (* one mini-buffer is active *)
-      graphic.Xdraw.update_displays ();
+      graphic.Xdraw.update_display ();
       (* let _ = Unix.select [] [] [] 0.2 in *)
       mini_buffer.frm_redraw <- true
 (*e: function Top_window.message *)
@@ -147,6 +147,8 @@ let update_display () =
        | frm :: _ -> Frame.update top_window frm
       );
       cursor_on top_window;
+      let graphic = Window.backend top_window in
+      graphic.Xdraw.update_display();
   ) 
 (*e: function Top_window.update_display *)
 
@@ -309,8 +311,6 @@ let wrap top_window f () =
   end;
   exec_hooks (try get_global handle_key_end_hook with _ -> []) ();    
   update_display ();
-  let graphic = Window.backend top_window in
-  graphic.Xdraw.update_displays ();
   Mutex.unlock location.loc_mutex
 (*e: function Top_window.wrap *)
 

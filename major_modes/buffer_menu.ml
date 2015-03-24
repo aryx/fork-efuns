@@ -35,7 +35,7 @@ let menu frame =
   Simple.buffer_list frame |> List.iter (fun name ->
     let buf = Ebuffer.default name in
     Text.insert_at_end text 
-      (spf " ** %-17s%4d  %-14s%-s\n"
+      (spf "    %-17s%4d  %-14s%-s\n"
          buf.buf_name
          (Text.size buf.buf_text)
          buf.buf_major_mode.maj_name

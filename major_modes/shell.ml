@@ -37,14 +37,30 @@ let pwd buf =
 let prompt buf =
   spf "%s $ " (pwd buf)
 
-let display_prompt buf =
-  Text.insert_at_end buf.buf_text (prompt buf)
+
+(*****************************************************************************)
+(* Colors *)
+(*****************************************************************************)
+
+let prompt_color = "coral"
+
+let colorize buf =
+  Dircolors.colorize buf;
+  Simple.color buf 
+    (Str.regexp ("^/.* \\$")) false
+      (Text.make_attr (Window.get_color prompt_color) 1 0 false);
+  ()
 
 (*****************************************************************************)
 (* Builtins *)
 (*****************************************************************************)
 
-let builtin_ls buf =
+let display_prompt buf =
+  Text.insert_at_end buf.buf_text (prompt buf);
+  colorize buf
+
+let builtin_ls frame =
+  let buf = frame.frm_buffer in
   let dir = pwd buf in
   let files = Utils.file_list dir in
 
@@ -75,36 +91,71 @@ let builtin_ls buf =
   Text.insert_at_end buf.buf_text "\n";
   display_prompt buf
 
-let builtin_cd buf s =
+let builtin_cd frame s =
+  let buf = frame.frm_buffer in
   Efuns.set_local buf pwd_var s;
-  builtin_ls buf
+  builtin_ls frame
 
-(*****************************************************************************)
-(* Colors *)
-(*****************************************************************************)
-
-let prompt_color = "coral"
-
-let colorize buf =
-  Dircolors.colorize buf;
-  Simple.color buf 
-    (Str.regexp ("^/.* \\$")) false
-      (Text.make_attr (Window.get_color prompt_color) 1 0 false);
-  ()
+let builtin_v frame s =
+  let buf = frame.frm_buffer in
+  Text.insert_at_end buf.buf_text "\n";
+  display_prompt buf;
+  Frame.load_file frame.frm_window s |> ignore
   
 
 (*****************************************************************************)
 (* Interpreter *)
 (*****************************************************************************)
-let interpret frame s =
+
+let run_cmd frame cmd =
   let buf = frame.frm_buffer in
+  let (pid,inc,outc) = System.open_process cmd in
+  let location = Efuns.location () in
+  let text = buf.buf_text in
+  Text.insert_at_end text "\n";
+
+  let end_action buf _s = 
+    display_prompt buf 
+  in
+  
+
+  Thread.create (fun () ->
+    let tampon = String.create 1000 in
+
+    let finished = ref false in
+    while not !finished do
+      let len = input inc tampon 0 1000 in
+      Mutex.lock location.loc_mutex;
+      if len = 0 then begin
+        let pid, status = Unix.waitpid [Unix.WNOHANG] pid in
+        (match status with 
+        | Unix.WEXITED s -> 
+            Text.insert_at_end text (spf "Exited with status %d\n" s); 
+            close_in inc;
+            close_out outc;
+            (try end_action buf s with _ -> ())
+        | _ -> Text.insert_at_end text "Broken pipe" 
+        );
+        finished := true;
+      end
+      else Text.insert_at_end text (String.sub tampon 0 len);
+
+      Mutex.unlock location.loc_mutex;
+      (* redraw screen *)
+      Top_window.update_display ();
+    done
+  ) () |> ignore;
+  Thread.delay 0.2;
+  ()
+
+let interpret frame s =
   (match s with
-  | "ls" -> builtin_ls buf
-  | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd buf (Common.matched1 s)
-  | cmd ->
-      raise Todo
-  );
-  colorize buf
+  | "ls" -> builtin_ls frame
+  | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
+  | _ when s =~ "v[ ]+\\(.*\\)" -> builtin_v frame (Common.matched1 s)
+  | cmd -> run_cmd frame cmd
+  )
+
   
 
 
@@ -121,7 +172,6 @@ let install buf =
   (* !!! *)
   buf.buf_sync <- true;
   display_prompt buf;
-  colorize buf;
   ()
 
 let mode =  Ebuffer.new_major_mode "Shell" [install]
