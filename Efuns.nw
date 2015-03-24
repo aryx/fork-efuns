@@ -2233,19 +2233,6 @@ let handler top_window event =
 %  *)
 
 
-<<constant Top_window.keypressed>>=
-let keypressed = ref 0
-@
-% who uses that?
-
-<<constant Top_window.handle_key_start_hook>>=
-let handle_key_start_hook = Local.create_abstr "handle_key_start_hook"
-@
-<<constant Top_window.handle_key_end_hook>>=
-let handle_key_end_hook = Local.create_abstr "handle_key_end_hook"
-@
-% who uses that?
-
 <<function Top_window.handle_key>>=
 let handle_key top_window modifiers keysym =
   keypressed := keysym;
@@ -2274,6 +2261,22 @@ let handle_key top_window modifiers keysym =
 @
 % update_display() again!! each key down trigger a redisplay action
 % will see try_map() later in keyboard section
+
+
+<<constant Top_window.keypressed>>=
+let keypressed = ref 0
+@
+% who uses that? self_insert_command. Convenient otherwise
+% will have to define 26 action strings and 26 functions
+% to handle all the alphabet keys.
+
+<<constant Top_window.handle_key_start_hook>>=
+let handle_key_start_hook = Local.create_abstr "handle_key_start_hook"
+@
+<<constant Top_window.handle_key_end_hook>>=
+let handle_key_end_hook = Local.create_abstr "handle_key_end_hook"
+@
+% who uses that?
 
 
 <<constant Top_window.meta>>=
@@ -7594,16 +7597,27 @@ let fill_paragraph frame =
 
 \subsection{Read-only}
 
+% useful for instance for special major mode like
+% buffer_menu, completion, etc, where don't want 
+% edition at all.
+
 <<[[Text.text]] other fields>>=
 mutable text_readonly : bool;
 @
 
+<<[[Text.low_insert()]] fail if readonly buffer>>=
+if text.text_readonly 
+then failwith "Buffer is read-only";
+@
+
+
+%getter
 <<function Text.readonly>>=
 let readonly tree = 
   let text = tree.tree_text in    
   text.text_readonly
 @
-
+%setter
 % dead since not one calls it and it's not an action
 <<function Text.toggle_readonly>>=
 let toggle_readonly tree = 
@@ -7611,10 +7625,6 @@ let toggle_readonly tree =
   text.text_readonly <- not text.text_readonly
 @
 
-<<[[Text.low_insert()]] fail if readonly buffer>>=
-if text.text_readonly 
-then failwith "Buffer is read-only";
-@
 
 \chapter{Advanced Topics}
 
@@ -7850,6 +7860,9 @@ let message buf m =
 @
 
 
+%todo: there is a giant try somewhere?
+% if do some failwith in the code, e.g. failwith "Buffer is read-only",
+% then catched? and displayed nicely?
 
 \chapter{Debugging}
 
@@ -7899,6 +7912,8 @@ then begin
 end;
 @
 
+\section{Graphics commands trace, [[-debug_graphics]]}
+
 \chapter{Profiling}
 
 \chapter{Heterogeneous Collection Library}
@@ -7908,8 +7923,8 @@ end;
 % variables in the buffer, but each of those variables have
 % different types. It's like you want a list of things or,
 % an assoc, but each element value has a different type.
-% Ould do via Variant encapsulation, but annoying.
-% Enters the heterogeneous map using type tricks!
+% Could do via Variant encapsulation, but annoying.
+% Enters the heterogeneous map using phantom type tricks!
 
 \section{Interface}
 
@@ -8104,7 +8119,7 @@ let input = set_input
 \chapter{Configuration File Library}
 
 % options.ml
-% quite important, you want the editor to be customizable!
+% quite important again, you want the editor to be customizable!
 
 \section{Adding options}
 
@@ -8263,8 +8278,8 @@ let get_parameter frame =
 \label{sec:glossary}
 
 \begin{verbatim}
-BOL Beginning Of Line
-EOL End Of Line
+BOL  = Beginning Of Line
+EOL  = End Of Line
 \end{verbatim}
 
 \chapter*{Indexes}
