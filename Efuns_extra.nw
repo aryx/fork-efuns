@@ -1781,7 +1781,8 @@ let find_buffer_frame buf =
   try
     (Efuns.location()).top_windows |> List.iter (fun top_window ->
       top_window.window |> Window.iter (fun frame -> 
-        if frame.frm_buffer == buf then raise (FoundFrame frame)
+        if frame.frm_buffer == buf 
+        then raise (FoundFrame frame)
       )
     );
     raise Not_found
