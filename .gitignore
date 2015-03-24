@@ -10,6 +10,7 @@
 *.opt
 *.byte
 
+external/stdlib/*
 
 # pfff and tools
 /TAGS

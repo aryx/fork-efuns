@@ -95,6 +95,27 @@ let builtin_ls ?(show_dotfiles=false) frame =
   Text.insert_at_end buf.buf_text (iter files "");
   display_prompt buf
 
+let builtin_l frame =
+  let buf = frame.frm_buffer in
+  let dir = pwd buf in
+  let files = Utils.file_list dir in
+
+  files |> List.iter (fun file ->
+    let path = Filename.concat dir file in
+    try 
+      let stat = Unix.stat path in
+      
+      Text.insert_at_end buf.buf_text 
+        (spf "%20d %s\n" 
+           stat.Unix.st_size
+           file);
+
+    with exn -> 
+      pr2 (spf "builtin_ls: exn = %s" (Common.exn_to_s exn))
+  );
+  display_prompt buf
+
+
 let builtin_cd frame s =
   let buf = frame.frm_buffer in
   let olddir = Efuns.get_local buf pwd_var in
@@ -112,8 +133,15 @@ let builtin_cd frame s =
 
 let builtin_v frame s =
   let buf = frame.frm_buffer in
+
+  let dir = pwd buf in
+  let file = 
+    if Filename.is_relative s
+    then Filename.concat dir s
+    else s
+  in
   display_prompt buf;
-  Frame.load_file frame.frm_window s |> ignore
+  Frame.load_file frame.frm_window file |> ignore
   
 
 (*****************************************************************************)
@@ -163,11 +191,16 @@ let run_cmd frame cmd =
 
 let interpret frame s =
   (match s with
+
   | "ls" -> builtin_ls ~show_dotfiles:true frame
   | "f" -> builtin_ls ~show_dotfiles:false frame
-  | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
+  | "l" -> builtin_l frame
+
   | "s" -> builtin_cd frame ".."
+  | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
+
   | _ when s =~ "v[ ]+\\(.*\\)" -> builtin_v frame (Common.matched1 s)
+  (* general case *)
   | cmd -> run_cmd frame cmd
   )
 
@@ -232,5 +265,7 @@ let _ =
 
     Keymap.add_major_key mode [(NormalMap, XK.xk_Return)]
       "key_return" key_return;
+    Keymap.add_major_key mode [(NormalMap, XK.xk_Tab)] 
+      "dabbrev_expand" Abbrevs.dabbrev_expand;
   )
 

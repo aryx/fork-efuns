@@ -205,7 +205,7 @@ graph:
 	~/pfff/codegraph -lang cmt -build .
 
 check:
-	~/pfff/scheck -with_graph_code graph_code.marshall -filter 3 .
+	~/pfff/scheck -with_graph_code graph_code.marshall -filter 3 . 2>&1 | grep -v stdlib | grep -v commons/ | grep Function
 
 ##############################################################################
 # Literate Programming rules

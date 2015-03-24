@@ -476,6 +476,9 @@ let _ =
         [c_x; NormalMap, Char.code 'o'], "next_frame";
         (*e: frame navigation keys *)
 
+        (* pad: *)
+        [ControlMetaMap, Char.code 'l'], "other_buffer";
+
         (* -------------------------------------------------------- *)
         (* Meta *)
         (* -------------------------------------------------------- *)
