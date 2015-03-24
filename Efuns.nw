@@ -3689,8 +3689,6 @@ let update_line top_window frame repr_string y =
 mutable frm_x_offset : int;
 (* offset(+/-) of screen-lines after frm_start *)
 mutable frm_y_offset : int;
-(* ?? *)
-mutable frm_cutline : int; (* max_int for no, else length *)
 @
 
 
@@ -3814,6 +3812,13 @@ if start_c > 0 then begin
 end;
 @
 
+
+\subsubsection{Overflowing lines}
+
+<<[[Efuns.frame]] other fields>>=
+(* ?? *)
+mutable frm_cutline : int; (* max_int for no, else length *)
+@
 
 \subsubsection{Recenter}
 
