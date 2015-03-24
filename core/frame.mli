@@ -13,12 +13,16 @@ val create_inactive :
 val load_file : Efuns.window -> string -> Efuns.frame
 val change_buffer : Efuns.window -> string -> unit
 val save_buffer : Efuns.frame -> unit
-val find_buffer_frame : Efuns.buffer -> Efuns.frame
 
 val kill : Efuns.frame -> unit
 val kill_all : Efuns.window -> unit
 exception BufferKilled
 val unkill : Efuns.window -> Efuns.frame -> unit
+
+(* find *)
+
+val find_buffer_frame : Efuns.buffer -> Efuns.frame
+
 
 (* ?? *)
 val install : Efuns.window -> Efuns.frame -> unit
