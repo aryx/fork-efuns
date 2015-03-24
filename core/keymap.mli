@@ -1,4 +1,6 @@
 
+(* see Efuns.map, Efuns.keys, Efuns.action types *)
+
 (* creation *)
 
 val create: unit -> Efuns.map

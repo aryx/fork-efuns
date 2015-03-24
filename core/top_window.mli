@@ -1,4 +1,6 @@
 
+(* see Efuns.top_window type *)
+
 (* creation *)
 
 val create : unit -> Efuns.top_window

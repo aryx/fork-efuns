@@ -1,3 +1,4 @@
+(* see Efuns.frame, Efuns.status types *)
 
 (* creation *)
 

@@ -1,4 +1,6 @@
 
+(* see Efuns.window type *)
+
 (* creation *)
 
 val create :
