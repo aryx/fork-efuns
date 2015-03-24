@@ -6,17 +6,21 @@ val create :
   Efuns.buffer
 val create_buf_hook : (Efuns.buffer -> unit) list Local.var
 
-(* create or switch to existing one *)
-val default : string -> Efuns.buffer
+val read : string -> Efuns.map -> Efuns.buffer
 
 (* load/save/kill *)
 
 val kill : Efuns.buffer -> unit
 val save : Efuns.buffer -> unit
 
+(* find *)
+
+val find_buffer_opt: string -> Efuns.buffer option
+(* create or find existing one *)
+val default : string -> Efuns.buffer
+
 (* getters/setters *)
 
-val get_name : string -> string
 exception BufferAlreadyOpened
 val change_name : Efuns.buffer -> string -> unit
 
@@ -31,7 +35,7 @@ val tab_size : int ref
 
 (* major modes *)
 
-val new_major_mode : string -> (Efuns.buffer -> unit) list ->  Efuns.major_mode
+val new_major_mode : string -> (Efuns.buffer -> unit) list -> Efuns.major_mode
 val set_major_mode : Efuns.buffer -> Efuns.major_mode -> unit
 val fondamental_mode : Efuns.major_mode
 
@@ -49,13 +53,11 @@ val modep : Efuns.buffer -> Efuns.minor_mode -> bool
 (* display *)
 val compute_representation : Efuns.buffer -> int -> Text.line
 
-(* misc *)
-
+(* input *)
 val get_binding : Efuns.buffer -> Efuns.key list -> Efuns.binding
-val message : Efuns.buffer -> string -> unit
-exception Found of Efuns.buffer
-val read : string -> Efuns.map -> Efuns.buffer
 
+(* misc *)
+val message : Efuns.buffer -> string -> unit
 
 (*
 val catch : 
@@ -63,4 +65,5 @@ val catch :
   Efuns.buffer -> (unit -> unit) -> unit
 val regexp_alist : (Str.regexp * Efuns.major_mode) list ref
 val suffix_reg : Str.regexp
+val get_name : string -> string
 *)

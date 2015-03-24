@@ -12,7 +12,6 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Common
-open Utils
 open Efuns
 
 (*s: constant Ebuffer.create_buf_hook *)
@@ -203,32 +202,32 @@ let save buf =
 
 
 (*s: exception Ebuffer.Found *)
-exception Found of buffer
 (*e: exception Ebuffer.Found *)
 
   
 (*s: function Ebuffer.read *)
 let read filename local_map =
   let location = Efuns.location() in
+  let filename = Utils.normal_name location.loc_dirname filename in
   try
-    let filename = Utils.normal_name location.loc_dirname filename in
-    try
-      Hashtbl.find location.loc_files filename
-    with Not_found ->
-      let text =
-        try
-          let inc = open_in filename in
-          let text = Text.read inc in         
-          close_in inc; 
-          text
-        with
-          _ -> Text.create ""
-      in
-      let buf = create filename (Some filename) text local_map in
-      Hashtbl.add location.loc_files filename buf;
-      buf
-  with Found buf -> buf
+    Hashtbl.find location.loc_files filename
+  with Not_found ->
+    let text =
+      try
+        let inc = open_in filename in
+        let text = Text.read inc in         
+        close_in inc; 
+        text
+      with _ -> Text.create ""
+    in
+    let buf = create filename (Some filename) text local_map in
+    Hashtbl.add location.loc_files filename buf;
+    buf
 (*e: function Ebuffer.read *)
+
+let find_buffer_opt name =
+  try Some (Hashtbl.find (Efuns.location()).loc_buffers name)
+  with Not_found -> None
 
 (*s: function Ebuffer.default *)
 let default name =
@@ -271,7 +270,7 @@ let change_name buf filename =
     else
       filename
   in
-  if hashtbl_mem location.loc_files filename 
+  if Utils.hashtbl_mem location.loc_files filename 
   then raise BufferAlreadyOpened;
   let filename = Utils.normal_name location.loc_dirname filename in
   let name = get_name filename in
