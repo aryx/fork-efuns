@@ -212,34 +212,6 @@ let change_font frame =
 (*e: function Complex.change_font *)
 
 (*s: function Complex.color *)
-let color buf regexp strict attr =
-  let text = buf.buf_text in
-  let point = Text.new_point text in
-  try
-    while true do
-      let len = Text.search_forward text regexp point in
-      let before =
-        if Text.bmove_res text point 1 = 1 then
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1);c)
-        else
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1); c)
-      in
-      let after = Text.get_char text point in
-      if not (strict && (buf.buf_syntax_table.(Char.code before) ||
-            buf.buf_syntax_table.(Char.code after))) then
-        begin
-          Text.bmove text point len;
-          Text.set_attr text point len attr;
-          Text.fmove text point len;
-          ()
-        end
-    done
-  with
-    Not_found -> 
-      Text.remove_point text point;
-      buf.buf_modified <- buf.buf_modified + 1
 (*e: function Complex.color *)
 
 (*s: constant Complex.display_hist *)

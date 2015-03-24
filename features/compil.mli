@@ -6,13 +6,13 @@ type error = {
   err_end : int;
   err_msg : int;
 }
+type find_error_fun = Text.t -> Text.point -> error
 
-val compile : (Text.t -> Text.point -> error) -> Efuns.frame -> unit
+val compile : find_error_fun -> Efuns.action
+val grep : Efuns.action
+val next_error : Efuns.action
 
-val grep : Efuns.frame -> unit
-
-val next_error : Efuns.frame -> unit
-val c_find_error : Text.t -> Text.point -> error
+val c_find_error : find_error_fun
 
 val compile_find_makefile : bool Options.option_record
 

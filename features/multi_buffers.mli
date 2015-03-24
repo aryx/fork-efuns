@@ -1,5 +1,5 @@
 
-val down_buffer : Efuns.frame -> unit
-val up_buffer : Efuns.frame -> unit
-val left_buffer : Efuns.frame -> unit
-val right_buffer : Efuns.frame -> unit
+val down_buffer  : Efuns.action
+val up_buffer    : Efuns.action
+val left_buffer  : Efuns.action
+val right_buffer : Efuns.action

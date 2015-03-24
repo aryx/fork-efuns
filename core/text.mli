@@ -48,7 +48,7 @@ val goto_point : t -> point -> point -> unit
 val point_line : t -> point -> int
 val point_col : t -> point -> int
 
-(* point begin/end line/file distante to point *)
+(* point begin/end line/file distance to point *)
 
 val point_to_bol : t -> point -> int
 val point_to_eol : t -> point -> int

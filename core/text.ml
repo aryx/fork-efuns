@@ -421,7 +421,7 @@ let extend_gap text amount =
 *)
 
 (*s: function Text.low_insert *)
-let low_insert tree point str =
+let low_insert tree pos str =
   let text = tree.tree_text in
   let strlen = String.length str in
   (*s: [[Text.low_insert()]] fail if readonly buffer *)
@@ -430,7 +430,7 @@ let low_insert tree point str =
   (*e: [[Text.low_insert()]] fail if readonly buffer *)
 
   (*s: [[Text.low_insert()]] move gap to point *)
-  move_gpoint_to text point;
+  move_gpoint_to text pos;
   (*e: [[Text.low_insert()]] move gap to point *)
   (* subtle: don't move those 'let' earlier, because moving the gap do side
    * effects on the position and line of the gpoint. 
@@ -498,7 +498,7 @@ let low_insert tree point str =
 (*e: function Text.low_insert *)
 
 (*s: function Text.low_delete *)
-let low_delete tree point len =
+let low_delete tree pos len =
   let text = tree.tree_text in      
   (*s: [[Text.low_insert()]] fail if readonly buffer *)
   if text.text_readonly 
@@ -506,7 +506,7 @@ let low_delete tree point len =
   (*e: [[Text.low_insert()]] fail if readonly buffer *)
 
   (*s: [[Text.low_insert()]] move gap to point *)
-  move_gpoint_to text point;
+  move_gpoint_to text pos;
   (*e: [[Text.low_insert()]] move gap to point *)
   (* subtle: don't move those 'let' earlier, because moving the gap do side
    * effects on the position and line of the gpoint. 

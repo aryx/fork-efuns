@@ -8,10 +8,9 @@ val create :
   Efuns.buffer
 val create_buf_hook : (Efuns.buffer -> unit) list Local.var
 
-val read : string -> Efuns.map -> Efuns.buffer
-
 (* load/save/kill *)
 
+val read : string -> Efuns.map -> Efuns.buffer
 val kill : Efuns.buffer -> unit
 val save : Efuns.buffer -> unit
 

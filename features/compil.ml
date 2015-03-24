@@ -30,6 +30,8 @@ type error = {
   }
 (*e: type Compil.error *)
 
+type find_error_fun = Text.t -> Text.point -> error
+
 (*s: constant Compil.c_error_regexp *)
 let c_error_regexp = define_option ["compil"; "error_regexp"] "" regexp_option
   (string_to_regex "^\\([^:\n]+\\):\\([0-9]+\\):.*$")

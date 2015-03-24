@@ -1,36 +1,26 @@
-(***********************************************************************)
-(*                                                                     *)
-(*                             Efuns                                   *)
-(*                                                                     *)
-(*       Fabrice Le Fessant, projet Para/SOR, INRIA Rocquencourt       *)
-(*                                                                     *)
-(*  Copyright 1999 Institut National de Recherche en Informatique et   *)
-(*  Automatique.  Distributed only by permission.                      *)
-(*                                                                     *)
-(***********************************************************************)
 
 (* insertion *)
 
 val insert_char : Efuns.frame -> char -> unit
 val insert_string : Efuns.frame -> string -> unit
-val insert_return : Efuns.frame -> unit
+val insert_return : Efuns.action
 
-val self_insert_command : Efuns.frame -> unit
-val insert_special_char : Efuns.frame -> unit
+val self_insert_command : Efuns.action
+val insert_special_char : Efuns.action
 
 (* diff?*)
 val insert_at_place : Efuns.frame -> char -> unit
-val char_insert_command : char -> Efuns.frame -> unit
+val char_insert_command : char -> Efuns.action
 
-val electric_insert_space : Efuns.frame -> unit
+val electric_insert_space : Efuns.action
 
 (* deletion *)
 
-val delete_char : Efuns.frame -> unit
-val delete_backspace_char : Efuns.frame -> unit
+val delete_char : Efuns.action
+val delete_backspace_char : Efuns.action
 
 val hungry_char : char -> bool
-val hungry_electric_delete : Efuns.frame -> unit
+val hungry_electric_delete : Efuns.action
 
 (* characters *)
 
@@ -68,40 +58,40 @@ val line_size : Efuns.frame -> int
 val begin_to_point : Efuns.frame -> int
 val point_to_end : Efuns.frame -> int
 
-val beginning_of_line : Efuns.frame -> unit
-val end_of_line : Efuns.frame -> unit
+val beginning_of_line : Efuns.action
+val end_of_line : Efuns.action
 
-val forward_line : Efuns.frame -> unit
-val backward_line : Efuns.frame -> unit
+val forward_line : Efuns.action
+val backward_line : Efuns.action
 
 (* paragraph *)
 
 val backward_paragraph : Efuns.buffer -> Text.point -> unit
 val forward_paragraph : Efuns.buffer -> Text.point -> unit
 
-val fill_paragraph : Efuns.frame -> unit
+val fill_paragraph : Efuns.action
 
 (* screen *)
 
-val forward_screen : Efuns.frame -> unit
-val backward_screen : Efuns.frame -> unit
+val forward_screen : Efuns.action
+val backward_screen : Efuns.action
 
 val scroll_line : Efuns.frame -> int -> unit
-val recenter : Efuns.frame -> unit
+val recenter : Efuns.action
 
 (* file *)
 
-val end_of_file : Efuns.frame -> unit
-val begin_of_file : Efuns.frame -> unit
+val end_of_file : Efuns.action
+val begin_of_file : Efuns.action
 
 
 (* cut/copy/paste *)
 
-val point_at_mark : Efuns.frame -> unit
+val point_at_mark : Efuns.action
 
 val kill_string : string -> unit
 val kill_text : Text.t -> Text.point -> Text.delta -> unit
-val kill_end_of_line : Efuns.frame -> unit
+val kill_end_of_line : Efuns.action
 val kill_eol : Efuns.buffer -> Text.point -> unit
 val kill_bol : Efuns.buffer -> Text.point -> unit
 
@@ -112,18 +102,18 @@ val kill_ring : string array
 val last_kill : (Text.t * Text.position) option ref
 val last_insert : (Efuns.frame * Text.position * int * Text.delta) option ref
 
-val insert_killed : Efuns.frame -> unit
-val insert_next_killed : Efuns.frame -> unit
+val insert_killed : Efuns.action
+val insert_next_killed : Efuns.action
 
-val kill_region : Efuns.frame -> unit
+val kill_region : Efuns.action
 
 (* undo *)
 
-val undo : Efuns.frame -> unit
+val undo : Efuns.action
 
 (* attributes *)
 
-val unset_attr : Efuns.frame -> unit
+val unset_attr : Efuns.action
 
 val color : Efuns.buffer -> Str.regexp -> bool -> Text.attribute -> unit
 
@@ -137,29 +127,29 @@ val hightlight_region :
   Efuns.buffer -> Text.position -> Text.position -> unit
 val highlighted_chars : (Efuns.buffer * Text.point * Text.attribute) list ref
 val unhightlight : unit -> unit
-val highlight : Efuns.frame -> unit
+val highlight : Efuns.action
 
 (* paren mode *)
 
 val is_paren_end : char -> bool
 val is_paren_begin : char -> bool
 
-val highlight_paren : Efuns.frame -> unit
+val highlight_paren : Efuns.action
 
 (* mouse *)
 
-val mouse_set_frame : Efuns.frame -> unit
+val mouse_set_frame : Efuns.action
 
-val mouse_drag_region : Efuns.frame -> unit
-val mouse_yank_at_click : Efuns.frame -> unit
-val mouse_save_then_kill : Efuns.frame -> unit
+val mouse_drag_region : Efuns.action
+val mouse_yank_at_click : Efuns.action
+val mouse_save_then_kill : Efuns.action
 
 (* buffers *)
 
 val buffer_list : Efuns.frame -> string list
 
 val next_buffer : Efuns.buffer -> Efuns.buffer
-val kill_buffer : Efuns.frame -> unit
+val kill_buffer : Efuns.action
 
 (* indentation *)
 
@@ -167,7 +157,7 @@ val set_indent : Text.t -> Text.point -> int -> unit
 
 (* structures *)
 
-val insert_structure : string -> Efuns.frame -> unit
+val insert_structure : string -> Efuns.action
 val install_structures :
   Efuns.buffer -> (Efuns.key list * string) list -> unit
 
@@ -192,13 +182,13 @@ val add_bool_parameter : Efuns.location -> string -> bool ref -> unit
 
 (* misc *)
 
-val format_to : Efuns.frame -> unit
+val format_to : Efuns.action
 val format_to_string : unit -> string ref
 
 val to_frame : (Efuns.buffer -> Text.point -> 'a) -> Efuns.frame -> 'a
 val htmlp : bool ref
 val simplify : Text.t -> Text.point -> Text.point -> unit
-val next_hole : Efuns.frame -> unit
+val next_hole : Efuns.action
 val line_comment : string Local.var
 val binding_option :
   ((Efuns.mod_ident * int) list * string) Options.option_class

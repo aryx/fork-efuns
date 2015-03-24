@@ -20,9 +20,10 @@ val iter : (Efuns.frame -> unit) -> Efuns.window -> unit
 
 (* display *)
 
+(* why here?? mv in top_window? *)
 val backend : Efuns.top_window -> Xdraw.graphics_backend
 
-(* why here?? *)
+(* why here?? mv in efuns? *)
 val get_color : string -> int
 val get_font : string -> int
 

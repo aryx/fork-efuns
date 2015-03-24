@@ -1,59 +1,74 @@
 
+(* load/save/kill *)
+
 val save_buffers_and_action :
   Efuns.frame -> ('a * Efuns.buffer) list -> (Efuns.frame -> unit) -> unit
+val save_some_buffers : Efuns.action
+
+val exit_efuns : Efuns.action
+
+(* buffers *)
+
+val load_buffer : Efuns.action
+val insert_file : Efuns.action
+
+val write_buffer : Efuns.action
+val save_buffer : Efuns.action
+
+val window_load_buffer : Efuns.action
+
+val change_buffer : Efuns.action
+
+val window_change_buffer : Efuns.action
+
+(* time *)
 
 val buf_mtime : float Local.var
 val update_time : Efuns.buffer -> unit
 
-val reload : Efuns.frame -> unit
+(* colors/fonts *)
 
-val check_file : Efuns.frame -> unit
+val change_font : Efuns.action
 
-val exit_efuns : Efuns.frame -> unit
+(* variables *)
 
-val save_some_buffers : Efuns.frame -> unit
+val set_local_variable : Efuns.action
+val set_global_variable : Efuns.action
+val get_variable : Efuns.action
 
-val load_buffer : Efuns.frame -> unit
-val insert_file : Efuns.frame -> unit
+val all_variables : Efuns.frame -> 'a -> string list
 
-val write_buffer : Efuns.frame -> unit
-val save_buffer : Efuns.frame -> unit
+(* parameters *)
 
-val window_load_buffer : Efuns.frame -> unit
+val set_parameter : Efuns.action
+val get_parameter : Efuns.action
 
-val change_buffer : Efuns.frame -> unit
+(* misc *)
 
-val window_change_buffer : Efuns.frame -> unit
-
-val change_font : Efuns.frame -> unit
-val color : Efuns.buffer -> Str.regexp -> bool -> Text.attribute -> unit
+val reload : Efuns.action
+val check_file : Efuns.action
 
 val open_display : 'a -> 'b
 
-val goto_line : Efuns.frame -> unit
-val goto_char : Efuns.frame -> unit
+val goto_line : Efuns.action
+val goto_char : Efuns.action
 
-val get_pos : Efuns.frame -> unit
+val get_pos : Efuns.action
 
-val mark_at_point : Efuns.frame -> unit
+val mark_at_point : Efuns.action
 
 val umask : int
 val file_perm : Unix.file_perm Local.var
-val mkdir : Efuns.frame -> unit
+val mkdir : Efuns.action
 
-val eval_history : string list ref
-val eval : Efuns.frame -> unit
+val eval : Efuns.action
 
-val variable_hist : string list ref
-val value_hist : string list ref
-
+(*
 val all_vars : (Efuns.frame * string list) option ref
-val all_variables : Efuns.frame -> 'a -> string list
-
-val set_local_variable : Efuns.frame -> unit
-val set_global_variable : Efuns.frame -> unit
-val get_variable : Efuns.frame -> unit
 
 val parameters_hist : string list ref
-val set_parameter : Efuns.frame -> unit
-val get_parameter : Efuns.frame -> unit
+val variable_hist : string list ref
+val value_hist : string list ref
+val eval_history : string list ref
+
+*)

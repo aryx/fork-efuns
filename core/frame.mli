@@ -24,7 +24,6 @@ val unkill : Efuns.window -> Efuns.frame -> unit
 
 val find_buffer_frame : Efuns.buffer -> Efuns.frame
 
-
 (* ?? *)
 val install : Efuns.window -> Efuns.frame -> unit
 (* ?? *)
@@ -51,6 +50,8 @@ val set_cursor : Efuns.frame -> unit
 val point_to_cursor : Efuns.buffer -> Text.point -> int
 val cursor_to_point : Efuns.frame -> int -> int -> int * int
 
+val move_point : Efuns.frame -> Text.point -> int -> int -> unit
+
 (* getters/setters *)
 
 val current_dir : Efuns.frame -> string
@@ -59,7 +60,6 @@ val current_dir : Efuns.frame -> string
 
 val editname : string
 val active : Efuns.frame -> unit
-val move_point : Efuns.frame -> Text.point -> int -> int -> unit
 exception FoundFrame of Efuns.frame
 
 val print_list : string list -> string
