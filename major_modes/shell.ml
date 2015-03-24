@@ -56,13 +56,19 @@ let colorize buf =
 (*****************************************************************************)
 
 let display_prompt buf =
+  Text.insert_at_end buf.buf_text "\n";
   Text.insert_at_end buf.buf_text (prompt buf);
   colorize buf
 
-let builtin_ls frame =
+let builtin_ls ?(show_dotfiles=false) frame =
   let buf = frame.frm_buffer in
   let dir = pwd buf in
   let files = Utils.file_list dir in
+  let files =
+    if show_dotfiles
+    then files
+    else files |> Common.exclude (fun s -> s =~ "^\\.")
+  in
 
   (* similar to Select.complete_filename *)
   let files = files |> List.map (fun file ->
@@ -86,19 +92,26 @@ let builtin_ls frame =
     | f1::f2::tail  ->
       iter tail (Printf.sprintf "%s\n%-40s%s" s f1 f2)
   in
-  Text.insert_at_end buf.buf_text "\n";
   Text.insert_at_end buf.buf_text (iter files "");
-  Text.insert_at_end buf.buf_text "\n";
   display_prompt buf
 
 let builtin_cd frame s =
   let buf = frame.frm_buffer in
-  Efuns.set_local buf pwd_var s;
-  builtin_ls frame
+  let olddir = Efuns.get_local buf pwd_var in
+  let newdir =
+    if Filename.is_relative s
+    then Filename.concat olddir s |> Common.realpath
+    else s
+  in
+  let stat = Unix.stat newdir in
+  match stat.Unix.st_kind with
+  | Unix.S_DIR -> 
+      Efuns.set_local buf pwd_var newdir;
+      builtin_ls frame
+  | _ -> failwith (spf "%s is not a directory" newdir)
 
 let builtin_v frame s =
   let buf = frame.frm_buffer in
-  Text.insert_at_end buf.buf_text "\n";
   display_prompt buf;
   Frame.load_file frame.frm_window s |> ignore
   
@@ -130,7 +143,7 @@ let run_cmd frame cmd =
         let pid, status = Unix.waitpid [Unix.WNOHANG] pid in
         (match status with 
         | Unix.WEXITED s -> 
-            Text.insert_at_end text (spf "Exited with status %d\n" s); 
+            Text.insert_at_end text (spf "Exited with status %d" s); 
             close_in inc;
             close_out outc;
             (try end_action buf s with _ -> ())
@@ -150,8 +163,10 @@ let run_cmd frame cmd =
 
 let interpret frame s =
   (match s with
-  | "ls" -> builtin_ls frame
+  | "ls" -> builtin_ls ~show_dotfiles:true frame
+  | "f" -> builtin_ls ~show_dotfiles:false frame
   | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
+  | "s" -> builtin_cd frame ".."
   | _ when s =~ "v[ ]+\\(.*\\)" -> builtin_v frame (Common.matched1 s)
   | cmd -> run_cmd frame cmd
   )
@@ -177,8 +192,7 @@ let install buf =
 let mode =  Ebuffer.new_major_mode "Shell" [install]
 let shell_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 
-let eshell frame =
-  let buf_name = "*Shell*" in
+let eshell buf_name frame =
   let text = Text.create "" in
   let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
   Ebuffer.set_major_mode buf mode;
@@ -195,6 +209,16 @@ let key_return frame =
     interpret frame s
   )
 
+let eshell_num frame =
+  let char = Char.chr !Top_window.keypressed in
+  let buf_name = spf "*Shell-%c*" char in
+  match Ebuffer.find_buffer_opt buf_name with
+  | None -> eshell buf_name frame
+  | Some buf -> Frame.change_buffer frame.frm_window buf.buf_name
+
+      
+  
+  
 
 (*****************************************************************************)
 (* Setup *)
@@ -202,8 +226,9 @@ let key_return frame =
 
 let _ = 
   Efuns.add_start_hook (fun () ->
-    Keymap.define_interactive_action "eshell" eshell;
-    Keymap.define_interactive_action "shell" eshell;
+    Keymap.define_interactive_action "eshell" (eshell "*Shell*");
+    Keymap.define_interactive_action "shell" (eshell "*Shell*");
+    Keymap.define_interactive_action "eshell_num" eshell_num;
 
     Keymap.add_major_key mode [(NormalMap, XK.xk_Return)]
       "key_return" key_return;

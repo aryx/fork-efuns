@@ -438,6 +438,17 @@ let _ =
         [MetaMap, Char.code '!'], "shell_command";
         (*e: external commands keys *)
 
+        (* pad: *)
+        [MetaMap, Char.code '1'], "eshell_num";
+        [MetaMap, Char.code '2'], "eshell_num";
+        [MetaMap, Char.code '3'], "eshell_num";
+        [MetaMap, Char.code '4'], "eshell_num";
+        [MetaMap, Char.code '5'], "eshell_num";
+        [MetaMap, Char.code '9'], "eshell_num";
+        [MetaMap, Char.code '0'], "eshell_num";
+        [MetaMap, Char.code '-'], "eshell_num";
+        [MetaMap, Char.code '='], "eshell_num";
+
         (* -------------------------------------------------------- *)
         (* Buffers/windows/frames *)
         (* -------------------------------------------------------- *)
