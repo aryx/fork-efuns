@@ -31,7 +31,7 @@ let fondamental_mode frame =
 (*s: function Std_efunsrc.compile *)
 let compile frame =
   Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
-   frame "compile"
+    frame "compile"
 (*e: function Std_efunsrc.compile *)
 
 (*s: toplevel Std_efunsrc._1 *)
