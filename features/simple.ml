@@ -703,7 +703,7 @@ let highlighted_chars = ref []
 (*e: constant Simple.highlighted_chars *)
 
 (*s: function Simple.unhightlight *)
-let unhightlight () =
+let unhightlight _frame =
   !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
       let text = buf.buf_text in
       Text.set_char_attr text curseur attr;
@@ -1300,7 +1300,7 @@ let _ =
       let location = Efuns.location () in
       let gmap = location.loc_map in
       (* unhightlight region *)
-      add_hook Top_window.handle_key_start_hook unhightlight;      
+      Efuns.add_hook Top_window.handle_key_start_hook unhightlight;      
       (* standard chars *)
       for key = 32 to 127 do
         Keymap.add_binding gmap [NormalMap, key] self_insert_command

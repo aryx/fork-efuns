@@ -249,11 +249,12 @@ let meta = ref Xtypes.mod1Mask
 let handle_key top_window modifiers keysym =
   keypressed := keysym;
   let frame = top_window.top_active_frame in
+  let buf = frame.frm_buffer in
 
   clean_display ();
   clear_message top_window;
 
-  exec_hooks (try get_global handle_key_start_hook with _ -> []) ();
+  exec_hooks (try Efuns.get_var buf handle_key_start_hook with _ -> []) frame;
 
   let mod_ = 
     (*s: [[Top_window.handle_key()]] compute mod *)
@@ -303,7 +304,8 @@ let wrap top_window f () =
   clean_display ();    
   clear_message top_window;
   keypressed := XK.xk_Menu;
-  exec_hooks (try get_global handle_key_start_hook with _ -> []) ();    
+  let frame = top_window.top_active_frame in
+  exec_hooks (try get_global handle_key_start_hook with _ -> []) frame;    
   begin
     try f top_window 
     with e -> message top_window (Printf.sprintf "Uncaught exception %s" 

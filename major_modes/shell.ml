@@ -28,15 +28,28 @@ open Efuns
 (*****************************************************************************)
 
 let pwd_var = Local.create_string ""
-
 let pwd buf =
   Efuns.get_local buf pwd_var
-  
-  
 
 let prompt buf =
   spf "%s $ " (pwd buf)
 
+
+(*****************************************************************************)
+(* Scrolling *)
+(*****************************************************************************)
+
+let scroll_to_end frame =
+  let height = frame.frm_height in
+  let y = frame.frm_y_offset in
+  pr2_gen (height, y);
+  ()
+
+let scroll_until_not_pass_prompt frame =
+  let height = frame.frm_height in
+  let y = frame.frm_y_offset in
+  pr2_gen (height, y);
+  ()
 
 (*****************************************************************************)
 (* Colors *)
@@ -150,10 +163,10 @@ let builtin_v frame s =
 
 let run_cmd frame cmd =
   let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+
   let (pid,inc,outc) = System.open_process cmd in
   let location = Efuns.location () in
-  let text = buf.buf_text in
-  Text.insert_at_end text "\n";
 
   let end_action buf _s = 
     display_prompt buf 
@@ -182,6 +195,7 @@ let run_cmd frame cmd =
       else Text.insert_at_end text (String.sub tampon 0 len);
 
       Mutex.unlock location.loc_mutex;
+      scroll_until_not_pass_prompt frame;
       (* redraw screen *)
       Top_window.update_display ();
     done
@@ -218,8 +232,9 @@ let install buf =
   *)
     (Efuns.location()).loc_dirname;
   (* !!! *)
-  buf.buf_sync <- true;
   display_prompt buf;
+  let text = buf.buf_text in
+  Text.set_position text buf.buf_point (Text.size text);
   ()
 
 let mode =  Ebuffer.new_major_mode "Shell" [install]
@@ -235,12 +250,14 @@ let eshell buf_name frame =
 let key_return frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+  Text.insert_at_end text "\n";
   Text.with_dup_point text frame.frm_point (fun point ->
     let delta = Text.search_backward text (Str.regexp " \\$ ") point in
     Text.fmove text point delta;
     let s = Text.region text frame.frm_point point in
     interpret frame s
   )
+
 
 let eshell_num frame =
   let char = Char.chr !Top_window.keypressed in
@@ -263,9 +280,19 @@ let _ =
     Keymap.define_interactive_action "shell" (eshell "*Shell*");
     Keymap.define_interactive_action "eshell_num" eshell_num;
 
-    Keymap.add_major_key mode [(NormalMap, XK.xk_Return)]
-      "key_return" key_return;
-    Keymap.add_major_key mode [(NormalMap, XK.xk_Tab)] 
-      "dabbrev_expand" Abbrevs.dabbrev_expand;
+    
+    Efuns.set_major_var mode Top_window.handle_key_start_hook [(fun frame ->
+      Simple.end_of_file frame;
+    )];
+
+    let map = mode.maj_map in
+    Keymap.add_binding map [(NormalMap, XK.xk_Return)] key_return;
+    Keymap.add_binding map [(NormalMap, XK.xk_Tab)] Abbrevs.dabbrev_expand;
+    Keymap.add_binding map [(MetaMap, Char.code '>')] (fun frame ->
+      Simple.end_of_file frame;
+      scroll_to_end frame;
+    );
+
+
   )
 
