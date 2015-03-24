@@ -754,8 +754,10 @@ let remove_point tree p =
   let text = tree.tree_text in      
   text.text_points <- 
     text.text_points |> List.fold_left (fun points point ->
-        if point == p then points else point :: points) 
-    []
+        if point == p 
+        then points 
+        else point :: points
+    ) []
 (*e: function Text.remove_point *)
 
 let with_dup_point text point f =
