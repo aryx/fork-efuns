@@ -2588,11 +2588,6 @@ repr_pos : int;  (* pos of repbox in representation string *)
 
 \subsection{[[Text.compute_representation()]]}
 
-<<function Ebuffer.compute_representation>>=
-let compute_representation buf n =
-  Text.compute_representation buf.buf_text buf.buf_charreprs n
-@
-
 
 <<function Text.compute_representation>>=
 (* On devrait reprendre la representation la ou elle est ... *)
@@ -2614,36 +2609,23 @@ mutable line_modified : int; (* first modified position *)
 
 
 
-<<[[Text.compure_representation()]] locals>>=
-let line_curs = ref (line.position + next_pos) in
-@
-
-
-
-
 <<[[Text.compure_representation()]] if line modified, update line flds>>=
-let end_pos = text.text_newlines.(n+1).position - 1 in
-
 let (repr_tail, next_pos, repr_pos) = 
   next_pos_xxx line line.representation 
 in
-
-<<[[Text.compure_representation()]] locals>>
-
 let gpos = text.gpoint.pos in
 let gsize = text.gsize in
+let end_pos = text.text_newlines.(n+1).position - 1 in
+
+let line_curs = ref (line.position + next_pos) in
+<<[[Text.compure_representation()]] locals>>
 
 <<[[Text.compure_representation()]] adjust line_curs if in gap>>
-
 while !line_curs < end_pos do
   <<[[Text.compure_representation()]] loop line_curs to end_pos>>
 done;
-
 <<[[Text.compure_representation()]] adjust line fields after loop>>
 
-(* once we have computed the simple representation, we can add more
- * complicated things, such as highlighting ... 
- *)
 <<[[Text.compure_representation()]] handle highlighting>>
 @    
 
@@ -2748,92 +2730,7 @@ line.repr_string <- !repr_string;
 
 
 
-<<[[Text.compure_representation()]] handle highlighting>>=
-(match line.line_hlt with
-| 0 -> ()
-| x when x > 0 ->
-    (* the line is hightlighted from the beginning to pos the
-     * line.line_hlt char 
-     *)
-      <<[[Text.compure_representation()]] if line_hlt is positive>>
-| x when x < 0 ->
-  (* the line is hightlighted from then end to pos line.line_hlt *)
-      <<[[Text.compure_representation()]] if line_hlt is negative>>
-| _ -> raise Impossible
-);
-@
 
-
-
-<<[[Text.compure_representation()]] if line_hlt is positive>>=
-let first = line.line_hlt - 1 in
-let rec iter list tail =
-  match list with
-  | [] -> List.rev tail 
-  | repr :: list_r ->
-      if repr.box_pos > first 
-      then iter list_r (repr :: tail)
-      else
-        let len = first - repr.box_pos + 1 in
-        (List.rev tail) @
-          (let before, after = 
-             if len = repr.box_len 
-             then [], list
-             else [ 
-              { repr with
-                box_pos = repr.box_pos + len;
-                box_len = repr.box_len - len;
-                box_size = repr.box_charsize * (repr.box_len - len);
-                repr_pos = repr.repr_pos + (len*repr.box_charsize)
-              }
-              ], ({ repr with
-                    box_len = len;
-                    box_size = repr.box_charsize * len;
-                   } :: list_r)
-        in
-        after |> List.iter (fun repr ->
-          repr.box_attr <- repr.box_attr lor (1 lsl 24)
-        );
-        before @ after
-      )
-in
-line.representation <- iter line.representation []
-@
-
-<<[[Text.compure_representation()]] if line_hlt is negative>>=
-let first = line.line_hlt - 1 in
-let rec iter list tail =
-  match list with
-  | [] -> List.rev tail 
-  | repr :: list_r ->
-      if repr.box_pos > first 
-      then iter list_r (repr :: tail)
-      else
-        let len = first - repr.box_pos + 1 in
-        (List.rev tail) @
-          (let before, after = 
-             if len = repr.box_len 
-             then [], list
-             else [ 
-              { repr with 
-                box_pos = repr.box_pos+len;
-                box_len = repr.box_len - len;
-                box_size = repr.box_charsize * (repr.box_len - len);
-                repr_pos = repr.repr_pos + (len * repr.box_charsize)
-              }
-              ], ({ repr with
-                    box_len = len;
-                    box_size = repr.box_charsize * len;
-                  } :: list_r)
-        in
-        after |> List.iter (fun repr ->
-          repr.box_attr <- repr.box_attr lor (1 lsl 24)
-        );
-        before @ after
-       )
-in
-line.representation <- iter line.representation []
-@
 
 <<constant Text.dummy_line>>=
 let (dummy_line : line) = 
@@ -2852,6 +2749,13 @@ if n >= text.text_nlines - 1 then begin
     dummy_line.position <- text.text_size;
     dummy_line
 end
+@
+
+
+
+<<function Ebuffer.compute_representation>>=
+let compute_representation buf n =
+  Text.compute_representation buf.buf_text buf.buf_charreprs n
 @
 
 \subsection{[[Text.cancel_repr()]]}
@@ -3167,6 +3071,7 @@ let inverse_attr =  make_attr 1 0 0 false
 @
 % let no_attr = 0?
 
+% dead: highlight bit? just use inverse_attr?
 
 
 <<function Text.get_attr>>=
@@ -3377,6 +3282,107 @@ Window.get_font !!font |> ignore;
 @
 
 %todo: variable sized font?
+
+
+\section{Highlighting}
+
+
+<<[[Text.line]] other fields>>=
+mutable line_hlt : int; (* highlighting *)
+@
+%dead? seems never set. subsumed by color attribute?
+
+
+<<[[Text.compure_representation()]] handle highlighting>>=
+(* once we have computed the simple representation, we can add more
+ * complicated things, such as highlighting ... 
+ *)
+(match line.line_hlt with
+| 0 -> ()
+| x when x > 0 ->
+    (* the line is hightlighted from the beginning to pos the
+     * line.line_hlt char 
+     *)
+      <<[[Text.compure_representation()]] if line_hlt is positive>>
+| x when x < 0 ->
+  (* the line is hightlighted from then end to pos line.line_hlt *)
+      <<[[Text.compure_representation()]] if line_hlt is negative>>
+| _ -> raise Impossible
+);
+@
+
+
+
+<<[[Text.compure_representation()]] if line_hlt is positive>>=
+let first = line.line_hlt - 1 in
+let rec iter list tail =
+  match list with
+  | [] -> List.rev tail 
+  | repr :: list_r ->
+      if repr.box_pos > first 
+      then iter list_r (repr :: tail)
+      else
+        let len = first - repr.box_pos + 1 in
+        (List.rev tail) @
+          (let before, after = 
+             if len = repr.box_len 
+             then [], list
+             else [ 
+              { repr with
+                box_pos = repr.box_pos + len;
+                box_len = repr.box_len - len;
+                box_size = repr.box_charsize * (repr.box_len - len);
+                repr_pos = repr.repr_pos + (len*repr.box_charsize)
+              }
+              ], ({ repr with
+                    box_len = len;
+                    box_size = repr.box_charsize * len;
+                   } :: list_r)
+        in
+        after |> List.iter (fun repr ->
+          repr.box_attr <- repr.box_attr lor (1 lsl 24)
+        );
+        before @ after
+      )
+in
+line.representation <- iter line.representation []
+@
+
+<<[[Text.compure_representation()]] if line_hlt is negative>>=
+let first = line.line_hlt - 1 in
+let rec iter list tail =
+  match list with
+  | [] -> List.rev tail 
+  | repr :: list_r ->
+      if repr.box_pos > first 
+      then iter list_r (repr :: tail)
+      else
+        let len = first - repr.box_pos + 1 in
+        (List.rev tail) @
+          (let before, after = 
+             if len = repr.box_len 
+             then [], list
+             else [ 
+              { repr with 
+                box_pos = repr.box_pos+len;
+                box_len = repr.box_len - len;
+                box_size = repr.box_charsize * (repr.box_len - len);
+                repr_pos = repr.repr_pos + (len * repr.box_charsize)
+              }
+              ], ({ repr with
+                    box_len = len;
+                    box_size = repr.box_charsize * len;
+                  } :: list_r)
+        in
+        after |> List.iter (fun repr ->
+          repr.box_attr <- repr.box_attr lor (1 lsl 24)
+        );
+        before @ after
+       )
+in
+line.representation <- iter line.representation []
+@
+
 
 
 \chapter{Main Window}
@@ -7942,6 +7948,26 @@ let toggle_readonly tree =
 \chapter{Advanced Topics}
 
 \section{Tabs}
+
+% This should not exist I think. It complicates stuff.
+% Which is why I put it in advanced topics
+
+<<constant Text.tabreprs>>=
+let tabreprs = [|
+    "         ";
+    "        ";
+    "       ";
+    "      ";
+    "     ";
+    "    ";
+    "   ";
+    "  ";
+    " ";
+    ""
+  |]
+@
+% 8 columns tab!
+
 
 \section{Unicode}
 

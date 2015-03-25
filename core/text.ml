@@ -1181,15 +1181,15 @@ let compute_representation tree charreprs n =
     let line = text.text_newlines.(n) in
     if line.line_modified >= 0 then begin
       (*s: [[Text.compure_representation()]] if line modified, update line flds *)
-      let end_pos = text.text_newlines.(n+1).position - 1 in
-
       let (repr_tail, next_pos, repr_pos) = 
         next_pos_xxx line line.representation 
       in
+      let gpos = text.gpoint.pos in
+      let gsize = text.gsize in
+      let end_pos = text.text_newlines.(n+1).position - 1 in
 
-      (*s: [[Text.compure_representation()]] locals *)
       let line_curs = ref (line.position + next_pos) in
-      (*x: [[Text.compure_representation()]] locals *)
+      (*s: [[Text.compure_representation()]] locals *)
       let repr_tail = ref repr_tail in
       let line_start = ref next_pos in
       let repr_curs = ref repr_pos in
@@ -1202,14 +1202,10 @@ let compute_representation tree charreprs n =
       repr_size := String.length line.repr_string;
       (*e: [[Text.compure_representation()]] locals *)
 
-      let gpos = text.gpoint.pos in
-      let gsize = text.gsize in
-
       (*s: [[Text.compure_representation()]] adjust line_curs if in gap *)
       if !line_curs >= gpos && !line_curs < gpos + gsize 
       then line_curs := !line_curs + gsize;
       (*e: [[Text.compure_representation()]] adjust line_curs if in gap *)
-
       while !line_curs < end_pos do
         (*s: [[Text.compure_representation()]] loop line_curs to end_pos *)
         let charattr = text.text_attrs.(!line_curs) in
@@ -1270,7 +1266,6 @@ let compute_representation tree charreprs n =
         repr_tail := box :: !repr_tail;
         (*e: [[Text.compure_representation()]] loop line_curs to end_pos *)
       done;
-
       (*s: [[Text.compure_representation()]] adjust line fields after loop *)
       line.representation <- !repr_tail;
       line.line_modified <- -1;
@@ -1278,10 +1273,10 @@ let compute_representation tree charreprs n =
       line.repr_string <- !repr_string;
       (*e: [[Text.compure_representation()]] adjust line fields after loop *)
 
+      (*s: [[Text.compure_representation()]] handle highlighting *)
       (* once we have computed the simple representation, we can add more
        * complicated things, such as highlighting ... 
        *)
-      (*s: [[Text.compure_representation()]] handle highlighting *)
       (match line.line_hlt with
       | 0 -> ()
       | x when x > 0 ->

@@ -525,20 +525,6 @@ let sub text point len =
 
 
 
-<<constant Text.tabreprs>>=
-let tabreprs = [|
-    "         ";
-    "        ";
-    "       ";
-    "      ";
-    "     ";
-    "    ";
-    "   ";
-    "  ";
-    " ";
-    ""
-  |]
-@
 
 
 <<[[Efuns.buffer]] other fields>>=
@@ -556,10 +542,6 @@ buf.buf_charreprs.(9) <- String.make !tab_size ' ';
 @
 
 
-<<[[Text.line]] other fields>>=
-mutable line_hlt : int; (* highlighting *)
-@
-%dead? seems never set. subsumed by color attribute?
 
 
 
