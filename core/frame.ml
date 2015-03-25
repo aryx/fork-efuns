@@ -142,7 +142,7 @@ let install window frame =
   then frame.frm_cutline <- window.win_width - 1;
   frame.frm_table <- (Array.init window.win_height (fun i -> 
         {
-          repr_line = Text.dummy_line;
+          frm_text_line = Text.dummy_line;
           repr_y = 0;
           repr_x = 0;
           repr_offset = 0;
@@ -352,7 +352,7 @@ let set_cursor frame =
   try
     for i = 0 to frame.frm_height - 1 do
       let line_repr = frame.frm_table.(i) in
-      if line_repr.repr_line == line then
+      if line_repr.frm_text_line == line then
         let x,y =
           if x = 0 then 0,i
           else
@@ -431,7 +431,7 @@ let update_table top_window frame =
       if y >= 0 then
         begin
           let line_repr = frame.frm_table.(y) in
-          line_repr.repr_line <- line;
+          line_repr.frm_text_line <- line;
           line_repr.repr_y <- n;
           line_repr.repr_x <- 0;
           line_repr.repr_offset <- 0;
@@ -454,7 +454,7 @@ let update_table top_window frame =
                 if y>= 0 then
                   begin
                     let line_repr = frame.frm_table.(y) in
-                    line_repr.repr_line <- line;
+                    line_repr.frm_text_line <- line;
                     line_repr.repr_y <- n;
                     line_repr.repr_x <- repr.repr_pos;
                     line_repr.repr_offset <- x - repr.repr_pos;
@@ -581,7 +581,7 @@ let update top_window frame =
           frm_line.repr_prev_reprs <- frm_line.repr_reprs;
           frm_line.repr_prev_offset <- frm_line.repr_offset;
 
-          update_line top_window frame frm_line.repr_line.repr_string y;
+          update_line top_window frame frm_line.frm_text_line.repr_string y;
         end;
       (*e: [[Frame.update()]] redraw, draw line y if line changed *)
     done;

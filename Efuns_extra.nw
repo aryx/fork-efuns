@@ -902,10 +902,6 @@ ici.
 open Options
 open Utils
 
-<<type Text.item>>
-<<type Text.item_attr>>
-
-
 <<type Text.position>>
 <<type Text.version>>
 
@@ -1607,7 +1603,7 @@ let install window frame =
   then frame.frm_cutline <- window.win_width - 1;
   frame.frm_table <- (Array.init window.win_height (fun i -> 
         {
-          repr_line = Text.dummy_line;
+          frm_text_line = Text.dummy_line;
           repr_y = 0;
           repr_x = 0;
           repr_offset = 0;
@@ -1715,7 +1711,7 @@ let set_cursor frame =
   try
     for i = 0 to frame.frm_height - 1 do
       let line_repr = frame.frm_table.(i) in
-      if line_repr.repr_line == line then
+      if line_repr.frm_text_line == line then
         let x,y =
           if x = 0 then 0,i
           else

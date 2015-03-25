@@ -29,12 +29,6 @@ ici.
 open Options
 open Utils
 
-(*s: type Text.item *)
-(*e: type Text.item *)
-(*s: type Text.item_attr *)
-(*e: type Text.item_attr *)
-
-
 (*s: type Text.position *)
 type position = int
 (*e: type Text.position *)
@@ -64,8 +58,6 @@ and line = {
     (*x: [[Text.line]] representation fields *)
     mutable repr_string : string;
     (*e: [[Text.line]] representation fields *)
-    (*s: [[Text.line]] attribute fields *)
-    (*e: [[Text.line]] attribute fields *)
     (*s: [[Text.line]] other fields *)
     mutable line_modified : int; (* first modified position *)
     (*x: [[Text.line]] other fields *)

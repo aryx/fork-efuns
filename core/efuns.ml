@@ -255,7 +255,7 @@ and status =
 (*s: type Efuns.line_repr *)
 and frm_line =
   { 
-    mutable repr_line : Text.line;
+    mutable frm_text_line : Text.line;
     mutable repr_y : int;
     mutable repr_x : int;
 

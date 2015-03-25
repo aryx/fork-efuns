@@ -454,7 +454,6 @@ and line = {
     mutable position : position; (* bol (beginning of line) *)
 
     <<[[Text.line]] representation fields>>
-    <<[[Text.line]] attribute fields>>
     <<[[Text.line]] other fields>>
   } 
 @
@@ -2535,7 +2534,8 @@ let point_col tree point =
 @
 
 
-\subsection{Line cached representation}
+\subsection{Line boxes}
+% (cached) representation
 
 % text.text_newlines is array of Text.line, where have seen
 % already the line.position which is the bol pos.
@@ -2579,22 +2579,6 @@ repr_size : int;
 %TODO: put cancel_repr here
 
 
-\subsection{Line attributes}
-
-<<[[Text.line]] attribute fields>>=
-@
-
-%less: delete? this was for WX_Text and WX_XTERM? Don't need that?
-
-%XXX? diff?
-%(* from WX_text *)
-<<type Text.item>>=
-@
-%(*| Widget of contained array*)
-
-<<type Text.item_attr>>=
-@
-% need that?
 
 
 \section{Inserting characters}
@@ -3633,7 +3617,7 @@ mutable frm_table : frm_line array;
 <<type Efuns.line_repr>>=
 and frm_line =
   { 
-    mutable repr_line : Text.line;
+    mutable frm_text_line : Text.line;
     mutable repr_y : int;
     mutable repr_x : int;
 
@@ -3647,8 +3631,8 @@ and frm_line =
   } 
 @
 % argh, again repr_line that is actually a line.
-%todo: maybe rename just line again?
-% rename this frm_table_line?
+%old: was repr_line, but there was also line_repr, so better
+% rename this frm_line.
 % otherwise have line_repr.repr_line.representation.box_pos, hmmm
 
 \subsubsection{[[Frame.update_line()]]}
@@ -3663,7 +3647,7 @@ then
     frm_line.repr_prev_reprs <- frm_line.repr_reprs;
     frm_line.repr_prev_offset <- frm_line.repr_offset;
 
-    update_line top_window frame frm_line.repr_line.repr_string y;
+    update_line top_window frame frm_line.frm_text_line.repr_string y;
   end;
 @
 %todo: old: was line.repr_line.repr_string, ugly
@@ -3752,7 +3736,7 @@ let update_table top_window frame =
       if y >= 0 then
         begin
           let line_repr = frame.frm_table.(y) in
-          line_repr.repr_line <- line;
+          line_repr.frm_text_line <- line;
           line_repr.repr_y <- n;
           line_repr.repr_x <- 0;
           line_repr.repr_offset <- 0;
@@ -3775,7 +3759,7 @@ let update_table top_window frame =
                 if y>= 0 then
                   begin
                     let line_repr = frame.frm_table.(y) in
-                    line_repr.repr_line <- line;
+                    line_repr.frm_text_line <- line;
                     line_repr.repr_y <- n;
                     line_repr.repr_x <- repr.repr_pos;
                     line_repr.repr_offset <- x - repr.repr_pos;
