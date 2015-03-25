@@ -28,24 +28,10 @@ ici.
 
 open Options
 open Utils
-(*
-open WX_types
-open WX_text
-*)
-(* from WX_types *)
-type font = string
-type color = string
 
 (*s: type Text.item *)
-type item =
-  String     of item_attr list * int
-| RealString of item_attr list * string
 (*e: type Text.item *)
 (*s: type Text.item_attr *)
-and item_attr =
-  Font of font
-| Foreground of color
-| Background of color
 (*e: type Text.item_attr *)
 
 
@@ -79,11 +65,6 @@ and line = {
     mutable repr_string : string;
     (*e: [[Text.line]] representation fields *)
     (*s: [[Text.line]] attribute fields *)
-    (* hightlighting on the line:
-    0 => no hightlighting
-    n => chars are hightlighted from the beginning of the line until pos n
-    *)
-    mutable items : item array;
     (*e: [[Text.line]] attribute fields *)
     (*s: [[Text.line]] other fields *)
     mutable line_modified : int; (* first modified position *)
@@ -288,7 +269,6 @@ let mk_line_with_pos pos =
 
    line_modified = 0; 
    line_hlt = 0; 
-   items = [||]; 
   }
 (*e: function Text.mk_line_with_pos *)
 
@@ -1166,7 +1146,6 @@ let (dummy_line : line) =
     repr_len = 0;
     repr_string = "";
     line_hlt = 0;
-    items = [||];
   } 
 (*e: constant Text.dummy_line *)
   

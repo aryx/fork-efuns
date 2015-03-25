@@ -569,7 +569,6 @@ let (dummy_line : line) =
     repr_len = 0;
     repr_string = "";
     line_hlt = 0;
-    items = [||];
   } 
 @
 
@@ -902,13 +901,6 @@ ici.
 
 open Options
 open Utils
-(*
-open WX_types
-open WX_text
-*)
-(* from WX_types *)
-type font = string
-type color = string
 
 <<type Text.item>>
 <<type Text.item_attr>>

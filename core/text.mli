@@ -142,17 +142,12 @@ val toggle_readonly : t -> unit
 val add_amount : int Options.option_record
 val compare : t -> point -> point -> int
 
-(* todelete: from WX *)
-type font = string
-type color = string
-
 type line =
   { 
     mutable position : int;
     mutable representation : box list;
     mutable repr_len : int;
     mutable repr_string : string;
-    mutable items : (*WX_text.*)item array;
     mutable line_modified : int; (* first modified position *)
     mutable line_hlt : int;
   }
@@ -168,15 +163,6 @@ type line =
     repr_size : int;
    }
   
-  and item =
-    String of item_attr list * int
-  | RealString of item_attr list * string
-  
-     and item_attr =
-       Font of font
-     | Foreground of color
-     | Background of color
-
 val dummy_line : line
 
 (* display *)

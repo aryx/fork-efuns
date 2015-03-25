@@ -561,7 +561,6 @@ let mk_line_with_pos pos =
 
    line_modified = 0; 
    line_hlt = 0; 
-   items = [||]; 
   }
 @
 % will see those fields later
@@ -2583,11 +2582,6 @@ repr_size : int;
 \subsection{Line attributes}
 
 <<[[Text.line]] attribute fields>>=
-(* hightlighting on the line:
-0 => no hightlighting
-n => chars are hightlighted from the beginning of the line until pos n
-*)
-mutable items : item array;
 @
 
 %less: delete? this was for WX_Text and WX_XTERM? Don't need that?
@@ -2595,17 +2589,10 @@ mutable items : item array;
 %XXX? diff?
 %(* from WX_text *)
 <<type Text.item>>=
-type item =
-  String     of item_attr list * int
-| RealString of item_attr list * string
 @
 %(*| Widget of contained array*)
 
 <<type Text.item_attr>>=
-and item_attr =
-  Font of font
-| Foreground of color
-| Background of color
 @
 % need that?
 
