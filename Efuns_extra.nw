@@ -613,7 +613,7 @@ let compute_representation tree charreprs n =
           repr :: tail ->
             let next_pos = repr.box_pos + repr.box_len in
             if next_pos < line.line_modified then
-              repr_list, next_pos, repr.repr_pos + repr.repr_size
+              repr_list, next_pos, repr.repr_pos + repr.box_size
             else
               iter tail
         | [] ->
@@ -677,8 +677,8 @@ let compute_representation tree charreprs n =
             
             box_attr = charattr;
             box_charsize = charsize;
-            
-            repr_size = !line_len * charsize;
+            box_size = !line_len * charsize;
+
             repr_pos = !repr_start;
           } in
         repr_start := !repr_curs;
@@ -717,7 +717,7 @@ let compute_representation tree charreprs n =
                             box_charsize = repr.box_charsize;
                             box_pos = repr.box_pos+len;
                             box_len = repr.box_len - len;
-                            repr_size = repr.box_charsize * (repr.box_len - len);
+                            box_size = repr.box_charsize * (repr.box_len - len);
                             repr_pos = repr.repr_pos + (len * repr.box_charsize)
                           }
                         ], (
@@ -727,7 +727,7 @@ let compute_representation tree charreprs n =
                             box_pos = repr.box_pos;
                             repr_pos = repr.repr_pos;
                             box_len = len;
-                            repr_size = repr.box_charsize * len;
+                            box_size = repr.box_charsize * len;
                           }
                             :: list_r)
                     in
@@ -761,7 +761,7 @@ let compute_representation tree charreprs n =
                             box_charsize = repr.box_charsize;
                             box_pos = repr.box_pos+len;
                             box_len = repr.box_len - len;
-                            repr_size = repr.box_charsize * (repr.box_len - len);
+                            box_size = repr.box_charsize * (repr.box_len - len);
                             repr_pos = repr.repr_pos + (len * repr.box_charsize)
                           }
                         ], (
@@ -771,7 +771,7 @@ let compute_representation tree charreprs n =
                             box_pos = repr.box_pos;
                             repr_pos = repr.repr_pos;
                             box_len = len;
-                            repr_size = repr.box_charsize * len;
+                            box_size = repr.box_charsize * len;
                           }
                             :: list_r)
                     in
@@ -1607,8 +1607,8 @@ let install window frame =
           repr_y = 0;
           repr_x = 0;
           repr_offset = 0;
-          repr_reprs = [];
-          repr_prev_reprs = [];
+          frmline_boxes = [];
+          prev_frmline_boxes = [];
           repr_prev_offset = 0;
         } ));
   frame.frm_redraw <- true
@@ -1678,14 +1678,14 @@ let cursor_to_point frame x y =
     match reprs with
       [] -> default
     | repr :: tail -> 
-        if repr.repr_size > x then
+        if repr.box_size > x then
           repr.box_pos + x / repr.box_charsize
         else
-          iter (x - repr.repr_size) tail 
+          iter (x - repr.box_size) tail 
             (repr.box_pos + repr.box_len)
   in
   let x = iter (x+frame.frm_x_offset+line_repr.repr_offset) 
-    line_repr.repr_reprs 0 in
+    line_repr.frmline_boxes 0 in
   x , y
 @
 
@@ -1745,7 +1745,7 @@ let set_cursor frame =
       in
       let repr_line = frame.frm_table.(frame.frm_cursor_y)
       in
-      iter repr_line.repr_reprs
+      iter repr_line.frmline_boxes
 @
 
 
@@ -1857,14 +1857,14 @@ open Text
 <<function Frame.cursor_to_point>>
 
 
-<<function Frame.update_line>>
+<<function Frame.display_line>>
 
 <<function Frame.set_cursor>>
 
 <<function Frame.update_table>>
 
 
-<<function Frame.update>>
+<<function Frame.display>>
 
 <<exception Frame.BufferKilled>>
 <<function Frame.unkill>>

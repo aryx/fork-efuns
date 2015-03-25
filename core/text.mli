@@ -159,8 +159,9 @@ type line =
     mutable box_attr : int;    (* common attribute *)
     box_charsize : int; (* common size *)
 
+    box_size : int;
+
     repr_pos : int;  (* pos of repbox in representation string *)
-    repr_size : int;
    }
   
 val dummy_line : line

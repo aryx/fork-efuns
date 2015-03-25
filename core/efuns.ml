@@ -256,16 +256,19 @@ and status =
 and frm_line =
   { 
     mutable frm_text_line : Text.line;
+
+    (*s: [[Efuns.frm_line]] other fields *)
     mutable repr_y : int;
     mutable repr_x : int;
 
-    mutable repr_offset : int;
-    mutable repr_reprs : Text.box list;
 
+    mutable repr_offset : int;
+    mutable frmline_boxes : Text.box list;
+    (*x: [[Efuns.frm_line]] other fields *)
     (* previous values, so can check if the line changed *)
     mutable repr_prev_offset : int;
-    mutable repr_prev_reprs : Text.box list;
-
+    mutable prev_frmline_boxes : Text.box list;
+    (*e: [[Efuns.frm_line]] other fields *)
   } 
 (*e: type Efuns.line_repr *)
 

@@ -81,10 +81,10 @@ and box =
 
     mutable box_attr : int;    (* common attribute *)
     box_charsize : int; (* common size *)
+    box_size : int;
 
     (*s: [[Text.box]] other fields *)
     repr_pos : int;  (* pos of repbox in representation string *)
-    repr_size : int;
     (*e: [[Text.box]] other fields *)
   } 
 (*e: type Text.repr *)
@@ -1175,7 +1175,7 @@ let compute_representation tree charreprs n =
           repr :: tail ->
             let next_pos = repr.box_pos + repr.box_len in
             if next_pos < line.line_modified then
-              repr_list, next_pos, repr.repr_pos + repr.repr_size
+              repr_list, next_pos, repr.repr_pos + repr.box_size
             else
               iter tail
         | [] ->
@@ -1239,8 +1239,8 @@ let compute_representation tree charreprs n =
             
             box_attr = charattr;
             box_charsize = charsize;
-            
-            repr_size = !line_len * charsize;
+            box_size = !line_len * charsize;
+
             repr_pos = !repr_start;
           } in
         repr_start := !repr_curs;
@@ -1279,7 +1279,7 @@ let compute_representation tree charreprs n =
                             box_charsize = repr.box_charsize;
                             box_pos = repr.box_pos+len;
                             box_len = repr.box_len - len;
-                            repr_size = repr.box_charsize * (repr.box_len - len);
+                            box_size = repr.box_charsize * (repr.box_len - len);
                             repr_pos = repr.repr_pos + (len * repr.box_charsize)
                           }
                         ], (
@@ -1289,7 +1289,7 @@ let compute_representation tree charreprs n =
                             box_pos = repr.box_pos;
                             repr_pos = repr.repr_pos;
                             box_len = len;
-                            repr_size = repr.box_charsize * len;
+                            box_size = repr.box_charsize * len;
                           }
                             :: list_r)
                     in
@@ -1323,7 +1323,7 @@ let compute_representation tree charreprs n =
                             box_charsize = repr.box_charsize;
                             box_pos = repr.box_pos+len;
                             box_len = repr.box_len - len;
-                            repr_size = repr.box_charsize * (repr.box_len - len);
+                            box_size = repr.box_charsize * (repr.box_len - len);
                             repr_pos = repr.repr_pos + (len * repr.box_charsize)
                           }
                         ], (
@@ -1333,7 +1333,7 @@ let compute_representation tree charreprs n =
                             box_pos = repr.box_pos;
                             repr_pos = repr.repr_pos;
                             box_len = len;
-                            repr_size = repr.box_charsize * len;
+                            box_size = repr.box_charsize * len;
                           }
                             :: list_r)
                     in

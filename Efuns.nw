@@ -2183,11 +2183,11 @@ let create_at_top xpos ypos width height =
 let update_display () =
   (Efuns.location()).top_windows |> List.iter (fun top_window ->
      top_window.window |> Window.iter (fun frm -> 
-       Frame.update top_window frm
+       Frame.display top_window frm
      );
      (match top_window.top_mini_buffers with
       | [] -> ()
-      | frm :: _ -> Frame.update top_window frm
+      | frm :: _ -> Frame.display top_window frm
      );
      cursor_on top_window;
      let graphic = Window.backend top_window in
@@ -2197,14 +2197,14 @@ let update_display () =
 % Why have a list of top_windows? because of Emacs "Frames" supported by
 %  efuns?
 % Why have a list for minibuffer?
-% and Frame.update only the first minibuffer? 
+% and Frame.display only the first minibuffer? 
 %still?: get rid of top_windows, just have one?
 
 % minibuffer is a frame!
 % status line? it's attached to a frame actually
 % (and minibuffer is a frame, but special without a status line, hmm)
 
-% will see Frame.update() later
+% will see Frame.display() later
 % will see cursor_on() later
 
 % we call the graphic backend update_display so it knows
@@ -2323,7 +2323,7 @@ match () with
 @
 % I don't handle Esc-x for now.
 
-% so for now remains Frame.update(), and Top_window.try_map()
+% so for now remains Frame.display(), and Top_window.try_map()
 % which are big pieces to understand that we have not seen.
 
 
@@ -2556,6 +2556,7 @@ and box =
 
     mutable box_attr : int;    (* common attribute *)
     box_charsize : int; (* common size *)
+    box_size : int;
 
     <<[[Text.box]] other fields>>
   } 
@@ -2572,7 +2573,6 @@ mutable repr_string : string;
 
 <<[[Text.box]] other fields>>=
 repr_pos : int;  (* pos of repbox in representation string *)
-repr_size : int;
 @
 
 
@@ -3464,12 +3464,12 @@ Top_window.help_menu := [|
 
 % the redisplay function!!!
 
-\subsubsection{[[Frame.update()]]}
+\subsubsection{[[Frame.display()]]}
 
 % (main -> Graphics.init | event loop -> ...) -> Top_window.update_display -> <>
 % called for each frame (including the minibuffer's frame when in use)
-<<function Frame.update>>=
-let update top_window frame =
+<<function Frame.display>>=
+let display top_window frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
@@ -3478,14 +3478,17 @@ let update top_window frame =
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
-  <<[[Frame.update()]] if buf sync goto end of text>>
+  <<[[Frame.display()]] if buf sync goto end of text>>
   if
-    <<[[Frame.update()]] conditions for redraw>>
+    <<[[Frame.display()]] conditions for redraw>>
   then begin
-    <<[[Frame.update()]] redraw>>
+    <<[[Frame.display()]] redraw>>
   end;
-  <<[[Frame.update()]] draw status line or minibuffer>>
+  <<[[Frame.display()]] draw status line or minibuffer>>
 @
+% was called Frame.update, but I prefer Frame.display,
+% to avoid all those update_xxx that are not in the same category
+% (e.g.  update_line, update_table, etc)
 
 \subsubsection{Frame decorations display}
 
@@ -3504,13 +3507,13 @@ mutable frm_mini_buffer : string option;
 % we don't want status line
 %less: redundant frm_has_status_line?
 
-<<[[Frame.update()]] draw status line or minibuffer>>=
+<<[[Frame.display()]] draw status line or minibuffer>>=
 let graphic = Window.backend top_window in
 match frame.frm_mini_buffer with
 | None -> 
-    <<[[Frame.update()]] draw status line>>
+    <<[[Frame.display()]] draw status line>>
 | Some request ->
-    <<[[Frame.update()]] draw minibuffer request string>>
+    <<[[Frame.display()]] draw minibuffer request string>>
 @
 % hmm but if minibuffer, it will also redraw its content?
 % no cos minibuffer is one line? so does not move?
@@ -3518,10 +3521,10 @@ match frame.frm_mini_buffer with
 
 \subsubsection{Conditions for redraw}
 
-<<[[Frame.update()]] conditions for redraw>>=
-<<[[Frame.update()]] conditions for redraw, point outside frame>>
-<<[[Frame.update()]] conditions for redraw, buffer modified>>
-<<[[Frame.update()]] conditions for redraw, forced redraw>>
+<<[[Frame.display()]] conditions for redraw>>=
+<<[[Frame.display()]] conditions for redraw, point outside frame>>
+<<[[Frame.display()]] conditions for redraw, buffer modified>>
+<<[[Frame.display()]] conditions for redraw, forced redraw>>
 @
 
 % a frame is a view over a buffer, from line x to line y
@@ -3535,7 +3538,7 @@ mutable frm_end : Text.point;
 @
 
 
-<<[[Frame.update()]] conditions for redraw, point outside frame>>=
+<<[[Frame.display()]] conditions for redraw, point outside frame>>=
 (point > frame.frm_end)  || 
 (point < frame.frm_start) ||
 @
@@ -3550,7 +3553,7 @@ mutable frm_last_buf_updated : int;
 % frm_last_text_updated actually seems to decrement in undo
 % and seems used only there
 
-<<[[Frame.update()]] conditions for redraw, buffer modified>>=
+<<[[Frame.display()]] conditions for redraw, buffer modified>>=
 (version text <> frame.frm_last_text_updated) ||
 (buf.buf_modified <> frame.frm_last_buf_updated) ||
 @
@@ -3565,36 +3568,36 @@ mutable frm_redraw : bool;
 % need to redraw the other lines. But if we end up scrolling,
 % then we want to redraw all the lines.
 
-<<[[Frame.update()]] conditions for redraw, forced redraw>>=
+<<[[Frame.display()]] conditions for redraw, forced redraw>>=
 frame.frm_redraw
 @
 
 
 \subsubsection{Redraw}
 
-<<[[Frame.update()]] redraw>>=
+<<[[Frame.display()]] redraw>>=
 if !debug_display
 then pr2 "redraw";
-<<[[Frame.update()]] redraw, possibly update frm_y_offset>>
-<<[[Frame.update()]] redraw, possibly update frm_x_offset>>
+<<[[Frame.display()]] redraw, possibly update frm_y_offset>>
+<<[[Frame.display()]] redraw, possibly update frm_x_offset>>
 update_table top_window frame;
 
 if (point > frame.frm_end) || (point < start) then begin
-    <<[[Frame.update()]] redraw, if frm_force_restart>>
+    <<[[Frame.display()]] redraw, if frm_force_restart>>
     else begin
       Text.goto_point text start point;
-      <<[[Frame.update()]] redraw, update frm_y_offset again>>
+      <<[[Frame.display()]] redraw, update frm_y_offset again>>
       update_table top_window frame;
    end
 end;
 
-<<[[Frame.update()]] redraw, scrollbar adjustments>>
+<<[[Frame.display()]] redraw, scrollbar adjustments>>
 
 frame.frm_last_text_updated <- version text;
 frame.frm_last_buf_updated <- buf.buf_modified;
 
 for y = 0 to height - 1 do
-  <<[[Frame.update()]] redraw, draw line y if line changed>>
+  <<[[Frame.display()]] redraw, draw line y if line changed>>
 done;
 frame.frm_redraw <- false
 @
@@ -3614,20 +3617,14 @@ mutable frm_table : frm_line array;
 % so this table is a slice of the original buffer text,
 % (that also manages the overflow lines? so not exactly a slice then?)
 
+% diff with frm.frm_buffer.buf_text.newlines?
+
 <<type Efuns.line_repr>>=
 and frm_line =
   { 
     mutable frm_text_line : Text.line;
-    mutable repr_y : int;
-    mutable repr_x : int;
 
-    mutable repr_offset : int;
-    mutable repr_reprs : Text.box list;
-
-    (* previous values, so can check if the line changed *)
-    mutable repr_prev_offset : int;
-    mutable repr_prev_reprs : Text.box list;
-
+    <<[[Efuns.frm_line]] other fields>>   
   } 
 @
 % argh, again repr_line that is actually a line.
@@ -3635,53 +3632,72 @@ and frm_line =
 % rename this frm_line.
 % otherwise have line_repr.repr_line.representation.box_pos, hmmm
 
-\subsubsection{[[Frame.update_line()]]}
 
-<<[[Frame.update()]] redraw, draw line y if line changed>>=
+%XXXX
+<<[[Efuns.frm_line]] other fields>>=
+mutable repr_y : int;
+mutable repr_x : int;
+
+
+mutable repr_offset : int;
+mutable frmline_boxes : Text.box list;
+@
+% why need frmline_boxes? why not use frm_text_line.repr_reprs instead?
+% because it could have changed in the mean time?
+
+\subsubsection{[[Frame.display_line()]]}
+
+% good name? as opposed to update_table, here it's more
+% about the display that updating some internal structure.
+
+<<[[Frame.display()]] redraw, draw line y if line changed>>=
 let frm_line = frame.frm_table.(y) in
-if not ((frm_line.repr_prev_reprs == frm_line.repr_reprs) &&
+if not ((frm_line.prev_frmline_boxes == frm_line.frmline_boxes) &&
         (frm_line.repr_prev_offset == frm_line.repr_offset)) 
    || frame.frm_redraw
 then
   begin
-    frm_line.repr_prev_reprs <- frm_line.repr_reprs;
+    frm_line.prev_frmline_boxes <- frm_line.frmline_boxes;
     frm_line.repr_prev_offset <- frm_line.repr_offset;
 
-    update_line top_window frame frm_line.frm_text_line.repr_string y;
+    display_line top_window frame frm_line.frm_text_line.repr_string y;
   end;
 @
 %todo: old: was line.repr_line.repr_string, ugly
 
+<<[[Efuns.frm_line]] other fields>>=
+(* previous values, so can check if the line changed *)
+mutable repr_prev_offset : int;
+mutable prev_frmline_boxes : Text.box list;
+@
+% it's an opti, not sure it's that useful
 
 % finally reach the graphic backend!
 
-<<function Frame.update_line>>=
-let update_line top_window frame repr_string y = 
-  let line_repr = frame.frm_table.(y) in
+<<function Frame.display_line>>=
+let display_line top_window frame repr_string y = 
+  let frm_line = frame.frm_table.(y) in
   let graphic = Window.backend top_window in
 
-  let rec iter x offset reprs =
-    if frame.frm_width > x then
-      match reprs with
-        [] -> 
-          graphic.Xdraw.clear_eol 
-            (x+frame.frm_xpos) (y+frame.frm_ypos)
+  let rec iter x offset boxes =
+    if x < frame.frm_width then
+      match boxes with
+      | [] -> 
+          graphic.Xdraw.clear_eol (x+frame.frm_xpos) (y+frame.frm_ypos)
             (frame.frm_width - x)
-      | repr :: tail ->
-          let len = min (frame.frm_width-x) (repr.repr_size - offset) in
-          graphic.Xdraw.draw_string
-            (x+frame.frm_xpos) (y+frame.frm_ypos)
-            repr_string (repr.repr_pos+offset) len
-            repr.box_attr;
+      | box :: tail ->
+          let len = min (frame.frm_width-x) (box.box_size - offset) in
+          graphic.Xdraw.draw_string (x+frame.frm_xpos) (y+frame.frm_ypos)
+            repr_string (box.repr_pos+offset) len
+            box.box_attr;
           iter (x+len) 0 tail
     else
-        graphic.Xdraw.draw_string 
-           (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
-           "/" 0 1 Text.direct_attr
+      <<[[Frame.display_line()]] line overflow frm_width>>
   in
-  iter 0 (line_repr.repr_offset+frame.frm_x_offset) line_repr.repr_reprs
+  iter 0 (frm_line.repr_offset+frame.frm_x_offset) frm_line.frmline_boxes
 @
-
+%old: was called update_line, but confusing with update_table
+% which is quite different.
 
 \subsubsection{[[Frame.update_table()]]}
 
@@ -3693,7 +3709,7 @@ mutable frm_y_offset : int;
 @
 
 
-% Top_window.update_display -> Frame.update -> <>
+% Top_window.update_display -> Frame.display -> <>
 <<function Frame.update_table>>=
 let update_table top_window frame =
   let buf =  frame.frm_buffer in
@@ -3740,7 +3756,7 @@ let update_table top_window frame =
           line_repr.repr_y <- n;
           line_repr.repr_x <- 0;
           line_repr.repr_offset <- 0;
-          line_repr.repr_reprs <- reprs;
+          line_repr.frmline_boxes <- reprs;
         end;
       iter_repr frame.frm_cutline (y+1) n line reprs
     else
@@ -3751,7 +3767,7 @@ let update_table top_window frame =
       match reprs with
       | repr :: tail ->
           if repr.repr_pos <= x && 
-            repr.repr_pos + repr.repr_size > x then
+            repr.repr_pos + repr.box_size > x then
             if y = height then
               goto_line text frame.frm_end n 
             else
@@ -3763,7 +3779,7 @@ let update_table top_window frame =
                     line_repr.repr_y <- n;
                     line_repr.repr_x <- repr.repr_pos;
                     line_repr.repr_offset <- x - repr.repr_pos;
-                    line_repr.repr_reprs <- reprs;
+                    line_repr.frmline_boxes <- reprs;
                   end;
                 iter_repr (x+frame.frm_cutline) (y+1) n line reprs
               end
@@ -3782,7 +3798,7 @@ let update_table top_window frame =
 
 
 
-<<[[Frame.update()]] redraw, possibly update frm_y_offset>>=
+<<[[Frame.display()]] redraw, possibly update frm_y_offset>>=
 let start = frame.frm_start in
 let start_c = point_to_cursor buf start in
 if start_c > 0 then begin
@@ -3791,7 +3807,7 @@ if start_c > 0 then begin
 end;
 @
 
-<<[[Frame.update()]] redraw, possibly update frm_x_offset>>=
+<<[[Frame.display()]] redraw, possibly update frm_x_offset>>=
 let point_c = point_to_cursor buf point in
 if point_c < frame.frm_x_offset then begin
     frame.frm_x_offset <- max (point_c - width / 2) 0;
@@ -3804,7 +3820,7 @@ end else if frame.frm_cutline = max_int &&
 end;
 @
 
-<<[[Frame.update()]] redraw, update frm_y_offset again>>=
+<<[[Frame.display()]] redraw, update frm_y_offset again>>=
 frame.frm_y_offset <- - height / 2;
 let start_c = point_to_cursor buf start in
 if start_c > 0 then begin
@@ -3816,10 +3832,18 @@ end;
 
 \subsubsection{Overflowing lines}
 
+<<[[Frame.display_line()]] line overflow frm_width>>=
+graphic.Xdraw.draw_string 
+   (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
+   "/" 0 1 Text.direct_attr
+@
+% the / at the end of the line!
+
 <<[[Efuns.frame]] other fields>>=
 (* ?? *)
 mutable frm_cutline : int; (* max_int for no, else length *)
 @
+
 
 \subsubsection{Recenter}
 
@@ -3850,16 +3874,15 @@ let recenter frame =
 let cursor_on top_window =
   let frame = top_window.top_active_frame in
   let name = frame.frm_buffer.buf_name in
-  if not (name == top_window.top_name) then
-    begin
-      Common.pr2_once "Top_window.top_apply#setWM_NAME";
-      (* top_window.top_appli#setWM_NAME name; *)
-      top_window.top_name <- name
-    end;
+  if not (name == top_window.top_name) then begin
+    Common.pr2_once "Top_window.top_apply#setWM_NAME";
+    (* top_window.top_appli#setWM_NAME name; *)
+    top_window.top_name <- name
+  end;
   set_cursor_on top_window frame;
-  match top_window.top_second_cursor with
-    None -> ()
-  | Some frame -> set_cursor_on top_window frame
+  top_window.top_second_cursor |> Common.do_option (fun frame ->
+    set_cursor_on top_window frame
+  )
 @
 % when can have second_cursor??
 % todo: aspectize second_cursor
@@ -3890,9 +3913,9 @@ let clean_display () =
 let cursor_off top_window =
   let frame = top_window.top_active_frame in
   set_cursor_off top_window frame;
-  match top_window.top_second_cursor with
-    None -> ()
-  | Some frame -> set_cursor_off top_window frame
+  top_window.top_second_cursor |> Common.do_option (fun frame ->
+    set_cursor_off top_window frame
+  )
 @
 
 <<function Top_window.set_cursor_off>>=
@@ -3950,7 +3973,7 @@ let scroll_to_frame ady top_window =
 mutable frm_force_start : bool;
 @
 
-<<[[Frame.update()]] redraw, if frm_force_restart>>=
+<<[[Frame.display()]] redraw, if frm_force_restart>>=
 if frame.frm_force_start then begin
   let x,y = 
     cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
@@ -3960,13 +3983,13 @@ if frame.frm_force_start then begin
 end 
 @
 
-<<[[Frame.update()]] redraw, scrollbar adjustments>>=
+<<[[Frame.display()]] redraw, scrollbar adjustments>>=
 if frame == top_window.top_active_frame then begin
   frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
   let _pos_start = get_position text frame.frm_start in
   let _pos_end   = get_position text frame.frm_end in
 
-  Common.pr2_once "Frame.update: TODO scrollbar";
+  Common.pr2_once "Frame.display: TODO scrollbar";
   (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
      (size text);
    *)
@@ -3974,7 +3997,7 @@ end;
 frame.frm_force_start <- false;
 @
 %todo: how frm_force_start can ever be true? it's true only temporarily
-% so I don't get how the flow can go two times in Frame.update?
+% so I don't get how the flow can go two times in Frame.display?
 
 \section{[[Status]] Line}
 
@@ -4088,7 +4111,7 @@ mutable status_string : string;
 
 \subsection{[[Frame.status_xxx()]]}
 
-% Frame.update -> <>
+% Frame.display -> <>
 <<function Frame.status_modified>>=
 let status_modified frame modified =
   let status = frame.frm_status in
@@ -4099,7 +4122,7 @@ let status_modified frame modified =
     end
 @
 
-% Frame.update -> <>
+% Frame.display -> <>
 <<function Frame.status_line>>=
 let status_line frame line =
   let status = frame.frm_status in
@@ -4111,7 +4134,7 @@ let status_line frame line =
 @
 % note the +1
 
-% Frame.update -> <>
+% Frame.display -> <>
 <<function Frame.status_col>>=
 let status_col frame col =
   let status = frame.frm_status in
@@ -4137,7 +4160,7 @@ let status_col frame col =
 
 \subsection{Status line display}
 
-<<[[Frame.update()]] draw status line>>=
+<<[[Frame.display()]] draw status line>>=
 let status = frame.frm_status in
 
 status_modified frame (version text <> buf.buf_last_saved);
@@ -4249,7 +4272,7 @@ let _ =
 
 \subsection{Minibuffer display}
 
-<<[[Frame.update()]] draw minibuffer request string>>=
+<<[[Frame.display()]] draw minibuffer request string>>=
 graphic.Xdraw.draw_string
  0 (top_window.top_height-1)  
  request 
@@ -6313,7 +6336,7 @@ let up_buffer frame =
 % recall window_down type!
 
 % rendering:
-% Top_window.update_display -> <> -> Frame.update
+% Top_window.update_display -> <> -> Frame.display
 <<function Window.iter>>=
 let iter f window = 
   let rec iter1 window =
@@ -7085,7 +7108,7 @@ buf.buf_finalizers <- (fun () ->
 mutable buf_sync : bool;
 @
 
-<<[[Frame.update()]] if buf sync goto end of text>>=
+<<[[Frame.display()]] if buf sync goto end of text>>=
 if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
 then Text.set_position text point (Text.size text); 
 @

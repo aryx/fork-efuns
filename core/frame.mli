@@ -31,7 +31,7 @@ val resize : Efuns.frame -> unit
 
 (* display *)
 
-val update : Efuns.top_window -> Efuns.frame -> unit
+val display : Efuns.top_window -> Efuns.frame -> unit
 
 (* status line *)
 
@@ -66,6 +66,6 @@ val print_list : string list -> string
 val bindings_help : Efuns.frame -> unit
 
 (*
-val update_line : Efuns.top_window -> Efuns.frame -> string -> int -> unit
+val display_line : Efuns.top_window -> Efuns.frame -> string -> int -> unit
 val update_table : 'a -> Efuns.frame -> unit
 *)

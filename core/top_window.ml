@@ -114,25 +114,24 @@ let set_cursor_off top_window frame =
 let cursor_on top_window =
   let frame = top_window.top_active_frame in
   let name = frame.frm_buffer.buf_name in
-  if not (name == top_window.top_name) then
-    begin
-      Common.pr2_once "Top_window.top_apply#setWM_NAME";
-      (* top_window.top_appli#setWM_NAME name; *)
-      top_window.top_name <- name
-    end;
+  if not (name == top_window.top_name) then begin
+    Common.pr2_once "Top_window.top_apply#setWM_NAME";
+    (* top_window.top_appli#setWM_NAME name; *)
+    top_window.top_name <- name
+  end;
   set_cursor_on top_window frame;
-  match top_window.top_second_cursor with
-    None -> ()
-  | Some frame -> set_cursor_on top_window frame
+  top_window.top_second_cursor |> Common.do_option (fun frame ->
+    set_cursor_on top_window frame
+  )
 (*e: function Top_window.cursor_on *)
 
 (*s: function Top_window.cursor_off *)
 let cursor_off top_window =
   let frame = top_window.top_active_frame in
   set_cursor_off top_window frame;
-  match top_window.top_second_cursor with
-    None -> ()
-  | Some frame -> set_cursor_off top_window frame
+  top_window.top_second_cursor |> Common.do_option (fun frame ->
+    set_cursor_off top_window frame
+  )
 (*e: function Top_window.cursor_off *)
 
 
@@ -140,11 +139,11 @@ let cursor_off top_window =
 let update_display () =
   (Efuns.location()).top_windows |> List.iter (fun top_window ->
      top_window.window |> Window.iter (fun frm -> 
-       Frame.update top_window frm
+       Frame.display top_window frm
      );
      (match top_window.top_mini_buffers with
       | [] -> ()
-      | frm :: _ -> Frame.update top_window frm
+      | frm :: _ -> Frame.display top_window frm
      );
      cursor_on top_window;
      let graphic = Window.backend top_window in

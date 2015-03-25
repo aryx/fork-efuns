@@ -146,8 +146,8 @@ let install window frame =
           repr_y = 0;
           repr_x = 0;
           repr_offset = 0;
-          repr_reprs = [];
-          repr_prev_reprs = [];
+          frmline_boxes = [];
+          prev_frmline_boxes = [];
           repr_prev_offset = 0;
         } ));
   frame.frm_redraw <- true
@@ -302,44 +302,44 @@ let cursor_to_point frame x y =
     match reprs with
       [] -> default
     | repr :: tail -> 
-        if repr.repr_size > x then
+        if repr.box_size > x then
           repr.box_pos + x / repr.box_charsize
         else
-          iter (x - repr.repr_size) tail 
+          iter (x - repr.box_size) tail 
             (repr.box_pos + repr.box_len)
   in
   let x = iter (x+frame.frm_x_offset+line_repr.repr_offset) 
-    line_repr.repr_reprs 0 in
+    line_repr.frmline_boxes 0 in
   x , y
 (*e: function Frame.cursor_to_point *)
 
 
-(*s: function Frame.update_line *)
-let update_line top_window frame repr_string y = 
-  let line_repr = frame.frm_table.(y) in
+(*s: function Frame.display_line *)
+let display_line top_window frame repr_string y = 
+  let frm_line = frame.frm_table.(y) in
   let graphic = Window.backend top_window in
 
-  let rec iter x offset reprs =
-    if frame.frm_width > x then
-      match reprs with
-        [] -> 
-          graphic.Xdraw.clear_eol 
-            (x+frame.frm_xpos) (y+frame.frm_ypos)
+  let rec iter x offset boxes =
+    if x < frame.frm_width then
+      match boxes with
+      | [] -> 
+          graphic.Xdraw.clear_eol (x+frame.frm_xpos) (y+frame.frm_ypos)
             (frame.frm_width - x)
-      | repr :: tail ->
-          let len = min (frame.frm_width-x) (repr.repr_size - offset) in
-          graphic.Xdraw.draw_string
-            (x+frame.frm_xpos) (y+frame.frm_ypos)
-            repr_string (repr.repr_pos+offset) len
-            repr.box_attr;
+      | box :: tail ->
+          let len = min (frame.frm_width-x) (box.box_size - offset) in
+          graphic.Xdraw.draw_string (x+frame.frm_xpos) (y+frame.frm_ypos)
+            repr_string (box.repr_pos+offset) len
+            box.box_attr;
           iter (x+len) 0 tail
     else
-        graphic.Xdraw.draw_string 
-           (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
-           "/" 0 1 Text.direct_attr
+      (*s: [[Frame.display_line()]] line overflow frm_width *)
+      graphic.Xdraw.draw_string 
+         (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
+         "/" 0 1 Text.direct_attr
+      (*e: [[Frame.display_line()]] line overflow frm_width *)
   in
-  iter 0 (line_repr.repr_offset+frame.frm_x_offset) line_repr.repr_reprs
-(*e: function Frame.update_line *)
+  iter 0 (frm_line.repr_offset+frame.frm_x_offset) frm_line.frmline_boxes
+(*e: function Frame.display_line *)
 
 (*s: function Frame.set_cursor *)
 let set_cursor frame =
@@ -386,7 +386,7 @@ let set_cursor frame =
       in
       let repr_line = frame.frm_table.(frame.frm_cursor_y)
       in
-      iter repr_line.repr_reprs
+      iter repr_line.frmline_boxes
 (*e: function Frame.set_cursor *)
 
 (*s: function Frame.update_table *)
@@ -435,7 +435,7 @@ let update_table top_window frame =
           line_repr.repr_y <- n;
           line_repr.repr_x <- 0;
           line_repr.repr_offset <- 0;
-          line_repr.repr_reprs <- reprs;
+          line_repr.frmline_boxes <- reprs;
         end;
       iter_repr frame.frm_cutline (y+1) n line reprs
     else
@@ -446,7 +446,7 @@ let update_table top_window frame =
       match reprs with
       | repr :: tail ->
           if repr.repr_pos <= x && 
-            repr.repr_pos + repr.repr_size > x then
+            repr.repr_pos + repr.box_size > x then
             if y = height then
               goto_line text frame.frm_end n 
             else
@@ -458,7 +458,7 @@ let update_table top_window frame =
                     line_repr.repr_y <- n;
                     line_repr.repr_x <- repr.repr_pos;
                     line_repr.repr_offset <- x - repr.repr_pos;
-                    line_repr.repr_reprs <- reprs;
+                    line_repr.frmline_boxes <- reprs;
                   end;
                 iter_repr (x+frame.frm_cutline) (y+1) n line reprs
               end
@@ -475,8 +475,8 @@ let update_table top_window frame =
 (*e: function Frame.update_table *)
 
 
-(*s: function Frame.update *)
-let update top_window frame =
+(*s: function Frame.display *)
+let display top_window frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
@@ -485,37 +485,37 @@ let update top_window frame =
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
-  (*s: [[Frame.update()]] if buf sync goto end of text *)
+  (*s: [[Frame.display()]] if buf sync goto end of text *)
   if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
   then Text.set_position text point (Text.size text); 
-  (*e: [[Frame.update()]] if buf sync goto end of text *)
+  (*e: [[Frame.display()]] if buf sync goto end of text *)
   if
-    (*s: [[Frame.update()]] conditions for redraw *)
-    (*s: [[Frame.update()]] conditions for redraw, point outside frame *)
+    (*s: [[Frame.display()]] conditions for redraw *)
+    (*s: [[Frame.display()]] conditions for redraw, point outside frame *)
     (point > frame.frm_end)  || 
     (point < frame.frm_start) ||
-    (*e: [[Frame.update()]] conditions for redraw, point outside frame *)
-    (*s: [[Frame.update()]] conditions for redraw, buffer modified *)
+    (*e: [[Frame.display()]] conditions for redraw, point outside frame *)
+    (*s: [[Frame.display()]] conditions for redraw, buffer modified *)
     (version text <> frame.frm_last_text_updated) ||
     (buf.buf_modified <> frame.frm_last_buf_updated) ||
-    (*e: [[Frame.update()]] conditions for redraw, buffer modified *)
-    (*s: [[Frame.update()]] conditions for redraw, forced redraw *)
+    (*e: [[Frame.display()]] conditions for redraw, buffer modified *)
+    (*s: [[Frame.display()]] conditions for redraw, forced redraw *)
     frame.frm_redraw
-    (*e: [[Frame.update()]] conditions for redraw, forced redraw *)
-    (*e: [[Frame.update()]] conditions for redraw *)
+    (*e: [[Frame.display()]] conditions for redraw, forced redraw *)
+    (*e: [[Frame.display()]] conditions for redraw *)
   then begin
-    (*s: [[Frame.update()]] redraw *)
+    (*s: [[Frame.display()]] redraw *)
     if !debug_display
     then pr2 "redraw";
-    (*s: [[Frame.update()]] redraw, possibly update frm_y_offset *)
+    (*s: [[Frame.display()]] redraw, possibly update frm_y_offset *)
     let start = frame.frm_start in
     let start_c = point_to_cursor buf start in
     if start_c > 0 then begin
       frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
       Text.bmove text start start_c |> ignore
     end;
-    (*e: [[Frame.update()]] redraw, possibly update frm_y_offset *)
-    (*s: [[Frame.update()]] redraw, possibly update frm_x_offset *)
+    (*e: [[Frame.display()]] redraw, possibly update frm_y_offset *)
+    (*s: [[Frame.display()]] redraw, possibly update frm_x_offset *)
     let point_c = point_to_cursor buf point in
     if point_c < frame.frm_x_offset then begin
         frame.frm_x_offset <- max (point_c - width / 2) 0;
@@ -526,11 +526,11 @@ let update top_window frame =
         frame.frm_x_offset <- point_c - (width / 2);
         frame.frm_redraw <- true;
     end;
-    (*e: [[Frame.update()]] redraw, possibly update frm_x_offset *)
+    (*e: [[Frame.display()]] redraw, possibly update frm_x_offset *)
     update_table top_window frame;
 
     if (point > frame.frm_end) || (point < start) then begin
-        (*s: [[Frame.update()]] redraw, if frm_force_restart *)
+        (*s: [[Frame.display()]] redraw, if frm_force_restart *)
         if frame.frm_force_start then begin
           let x,y = 
             cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
@@ -538,61 +538,61 @@ let update top_window frame =
           goto_line text frame.frm_point y;
           Text.fmove text frame.frm_point x |> ignore
         end 
-        (*e: [[Frame.update()]] redraw, if frm_force_restart *)
+        (*e: [[Frame.display()]] redraw, if frm_force_restart *)
         else begin
           Text.goto_point text start point;
-          (*s: [[Frame.update()]] redraw, update frm_y_offset again *)
+          (*s: [[Frame.display()]] redraw, update frm_y_offset again *)
           frame.frm_y_offset <- - height / 2;
           let start_c = point_to_cursor buf start in
           if start_c > 0 then begin
             frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
             Text.bmove text start start_c |> ignore
           end;
-          (*e: [[Frame.update()]] redraw, update frm_y_offset again *)
+          (*e: [[Frame.display()]] redraw, update frm_y_offset again *)
           update_table top_window frame;
        end
     end;
 
-    (*s: [[Frame.update()]] redraw, scrollbar adjustments *)
+    (*s: [[Frame.display()]] redraw, scrollbar adjustments *)
     if frame == top_window.top_active_frame then begin
       frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
       let _pos_start = get_position text frame.frm_start in
       let _pos_end   = get_position text frame.frm_end in
 
-      Common.pr2_once "Frame.update: TODO scrollbar";
+      Common.pr2_once "Frame.display: TODO scrollbar";
       (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
          (size text);
        *)
     end;
     frame.frm_force_start <- false;
-    (*e: [[Frame.update()]] redraw, scrollbar adjustments *)
+    (*e: [[Frame.display()]] redraw, scrollbar adjustments *)
 
     frame.frm_last_text_updated <- version text;
     frame.frm_last_buf_updated <- buf.buf_modified;
 
     for y = 0 to height - 1 do
-      (*s: [[Frame.update()]] redraw, draw line y if line changed *)
+      (*s: [[Frame.display()]] redraw, draw line y if line changed *)
       let frm_line = frame.frm_table.(y) in
-      if not ((frm_line.repr_prev_reprs == frm_line.repr_reprs) &&
+      if not ((frm_line.prev_frmline_boxes == frm_line.frmline_boxes) &&
               (frm_line.repr_prev_offset == frm_line.repr_offset)) 
          || frame.frm_redraw
       then
         begin
-          frm_line.repr_prev_reprs <- frm_line.repr_reprs;
+          frm_line.prev_frmline_boxes <- frm_line.frmline_boxes;
           frm_line.repr_prev_offset <- frm_line.repr_offset;
 
-          update_line top_window frame frm_line.frm_text_line.repr_string y;
+          display_line top_window frame frm_line.frm_text_line.repr_string y;
         end;
-      (*e: [[Frame.update()]] redraw, draw line y if line changed *)
+      (*e: [[Frame.display()]] redraw, draw line y if line changed *)
     done;
     frame.frm_redraw <- false
-    (*e: [[Frame.update()]] redraw *)
+    (*e: [[Frame.display()]] redraw *)
   end;
-  (*s: [[Frame.update()]] draw status line or minibuffer *)
+  (*s: [[Frame.display()]] draw status line or minibuffer *)
   let graphic = Window.backend top_window in
   match frame.frm_mini_buffer with
   | None -> 
-      (*s: [[Frame.update()]] draw status line *)
+      (*s: [[Frame.display()]] draw status line *)
       let status = frame.frm_status in
 
       status_modified frame (version text <> buf.buf_last_saved);
@@ -607,16 +607,16 @@ let update top_window frame =
           frame.frm_xpos (frame.frm_ypos + frame.frm_height - 1)
           status.status_string 
           0 width Text.inverse_attr
-      (*e: [[Frame.update()]] draw status line *)
+      (*e: [[Frame.display()]] draw status line *)
   | Some request ->
-      (*s: [[Frame.update()]] draw minibuffer request string *)
+      (*s: [[Frame.display()]] draw minibuffer request string *)
       graphic.Xdraw.draw_string
        0 (top_window.top_height-1)  
        request 
        0 (String.length request) Text.direct_attr
-      (*e: [[Frame.update()]] draw minibuffer request string *)
-  (*e: [[Frame.update()]] draw status line or minibuffer *)
-(*e: function Frame.update *)
+      (*e: [[Frame.display()]] draw minibuffer request string *)
+  (*e: [[Frame.display()]] draw status line or minibuffer *)
+(*e: function Frame.display *)
 
 (*s: exception Frame.BufferKilled *)
 exception BufferKilled
