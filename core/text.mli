@@ -67,6 +67,8 @@ val move_res : t -> point -> int -> int
 
 val move : t -> point -> int -> unit
 
+val goto_line : t -> point -> int -> unit
+
 (* relative move *)
 
 type delta = int
@@ -133,7 +135,6 @@ val replace_matched : t -> string -> string
 (* misc *)
 
 val find_xy : t -> int -> int -> int -> int * int
-val goto_line : t -> point -> int -> unit
 val version : t -> int
 val lexing : t -> point -> point -> Lexing.lexbuf
 val readonly : t -> bool

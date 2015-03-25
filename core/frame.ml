@@ -484,10 +484,10 @@ let update top_window frame =
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
-  (*s: [[Frame.update()]] if buf sync *)
+  (*s: [[Frame.update()]] if buf sync goto end of text *)
   if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
   then Text.set_position text point (Text.size text); 
-  (*e: [[Frame.update()]] if buf sync *)
+  (*e: [[Frame.update()]] if buf sync goto end of text *)
   if
     (*s: [[Frame.update()]] conditions for redraw *)
     (*s: [[Frame.update()]] conditions for redraw, point outside frame *)
@@ -661,7 +661,8 @@ let find_buffer_frame buf =
   try
     (Efuns.location()).top_windows |> List.iter (fun top_window ->
       top_window.window |> Window.iter (fun frame -> 
-        if frame.frm_buffer == buf then raise (FoundFrame frame)
+        if frame.frm_buffer == buf 
+        then raise (FoundFrame frame)
       )
     );
     raise Not_found

@@ -1064,7 +1064,7 @@ and generic_action =
 % A frame is more temporary
 
 <<global Efuns.actions>>=
-let (actions : (string, generic_action) Hashtbl.t) = 
+let (actions : (action_name, generic_action) Hashtbl.t) = 
   Hashtbl.create 63
 @
 % global!!
@@ -1386,7 +1386,8 @@ let interactive map =
 
 
 <<constant Std_efunsrc.global_map>>=
-let global_map = define_option ["global_map"] "" (list_option binding_option) []
+let global_map = define_option ["global_map"] "" 
+  (list_option Simple.binding_option) []
 @
 
 <<constant Simple.binding_option>>=
@@ -1486,6 +1487,17 @@ let c_c = (ControlMap, Char.code 'c')
 (* -------------------------------------------------------- *)
 <<external commands keys>>
 
+(* pad: *)
+[MetaMap, Char.code '1'], "eshell_num";
+[MetaMap, Char.code '2'], "eshell_num";
+[MetaMap, Char.code '3'], "eshell_num";
+[MetaMap, Char.code '4'], "eshell_num";
+[MetaMap, Char.code '5'], "eshell_num";
+[MetaMap, Char.code '9'], "eshell_num";
+[MetaMap, Char.code '0'], "eshell_num";
+[MetaMap, Char.code '-'], "eshell_num";
+[MetaMap, Char.code '='], "eshell_num";
+
 (* -------------------------------------------------------- *)
 (* Buffers/windows/frames *)
 (* -------------------------------------------------------- *)
@@ -1495,6 +1507,9 @@ let c_c = (ControlMap, Char.code 'c')
 <<buffer navigating keys>>
 <<frame managment keys>>
 <<frame navigation keys>>
+
+(* pad: *)
+[ControlMetaMap, Char.code 'l'], "other_buffer";
 
 (* -------------------------------------------------------- *)
 (* Meta *)
@@ -2165,6 +2180,8 @@ let update_display () =
        | frm :: _ -> Frame.update top_window frm
       );
       cursor_on top_window;
+      let graphic = Window.backend top_window in
+      graphic.Xdraw.update_display();
   ) 
 @
 % Why have a list of top_windows? because of Emacs "Frames" supported by
@@ -2237,11 +2254,12 @@ let handler top_window event =
 let handle_key top_window modifiers keysym =
   keypressed := keysym;
   let frame = top_window.top_active_frame in
+  let buf = frame.frm_buffer in
 
   clean_display ();
   clear_message top_window;
 
-  exec_hooks (try get_global handle_key_start_hook with _ -> []) ();
+  exec_hooks (try Efuns.get_var buf handle_key_start_hook with _ -> []) frame;
 
   let mod_ = 
     <<[[Top_window.handle_key()]] compute mod>>
@@ -2456,8 +2474,10 @@ let remove_point tree p =
   let text = tree.tree_text in      
   text.text_points <- 
     text.text_points |> List.fold_left (fun points point ->
-        if point == p then points else point :: points) 
-    []
+        if point == p 
+        then points 
+        else point :: points
+    ) []
 @
 
 
@@ -2577,7 +2597,7 @@ and item_attr =
 
 % -> <>
 <<function Text.low_insert>>=
-let low_insert tree point str =
+let low_insert tree pos str =
   let text = tree.tree_text in
   let strlen = String.length str in
   <<[[Text.low_insert()]] fail if readonly buffer>>
@@ -2623,7 +2643,7 @@ let low_insert tree point str =
 \subsection{Moving the gap}
 
 <<[[Text.low_insert()]] move gap to point>>=
-move_gpoint_to text point;
+move_gpoint_to text pos;
 @
 
 
@@ -2792,7 +2812,7 @@ text.text_newlines <- new_cache;
 
 % ??? -> <>
 <<function Text.low_delete>>=
-let low_delete tree point len =
+let low_delete tree pos len =
   let text = tree.tree_text in      
   <<[[Text.low_insert()]] fail if readonly buffer>>
 
@@ -2952,7 +2972,7 @@ let unset_attr tree =
 @
 
 <<misc actions>>=
-define_action "unset_attr" unset_attr;
+define_action "unset_attr" Simple.unset_attr;
 @
 
 % -> <> ?? why need that? 
@@ -3478,7 +3498,7 @@ let update top_window frame =
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
-  <<[[Frame.update()]] if buf sync>>
+  <<[[Frame.update()]] if buf sync goto end of text>>
   if
     <<[[Frame.update()]] conditions for redraw>>
   then begin
@@ -3611,7 +3631,8 @@ frame.frm_redraw <- false
 mutable frm_table : line_repr array;
 @
 % line 0 is the line that you see in the frame,
-% so this table is really a slice of the original buffer text.
+% so this table is a slice of the original buffer text,
+% (that also manages the overflow lines? so not exactly a slice then?)
 
 <<type Efuns.line_repr>>=
 and line_repr =
@@ -3826,7 +3847,7 @@ mutable frm_cutline : int; (* max_int for no, else length *)
 [ControlMap, Char.code 'l'], "recenter";
 @
 <<misc actions>>=
-define_action "recenter"  recenter;
+define_action "recenter"  Simple.recenter;
 @
 
 <<function Simple.recenter>>=
@@ -4409,7 +4430,7 @@ let message top_window msg =
   match top_window.top_mini_buffers with
     [] -> (* No mini-buffer ... *) ()
   | mini_buffer :: _ -> (* one mini-buffer is active *)
-      graphic.Xdraw.update_displays ();
+      graphic.Xdraw.update_display ();
       (* let _ = Unix.select [] [] [] 0.2 in *)
       mini_buffer.frm_redraw <- true
 @
@@ -4655,11 +4676,11 @@ let mouse_y = ref 0
 
 <<[[Std_efunsrc.init_global_map()]] mouse keys setup>>=
 Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
-  "set_active_frame" mouse_set_frame;
+  "set_active_frame" Simple.mouse_set_frame;
 Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
-  "insert_at_point" mouse_yank_at_click;
+  "insert_at_point" Simple.mouse_yank_at_click;
 Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
-  "mouse_save_then_kill" mouse_save_then_kill;
+  "mouse_save_then_kill" Simple.mouse_save_then_kill;
 @
 
 <<function Simple.mouse_set_frame>>=
@@ -4797,26 +4818,26 @@ let mouse_save_then_kill frame =
 \fi
 
 <<navigating actions>>=
-define_action "move_backward"  (fun frame -> ignore (move_backward frame 1));
-define_action "move_forward"   (fun frame -> ignore (move_forward frame 1));
+define_action "move_backward"  (fun frame -> ignore (Simple.move_backward frame 1));
+define_action "move_forward"   (fun frame -> ignore (Simple.move_forward frame 1));
 
-define_action "backward_word"  (to_frame backward_word);
-define_action "forward_word"  (to_frame forward_word);  
+define_action "backward_word"  (Simple.to_frame Simple.backward_word);
+define_action "forward_word"  (Simple.to_frame Simple.forward_word);  
 
-define_action "beginning_of_line"  beginning_of_line;
-define_action "end_of_line"  end_of_line;
+define_action "beginning_of_line"  Simple.beginning_of_line;
+define_action "end_of_line"  Simple.end_of_line;
 
-define_action "backward_line"  backward_line;
-define_action "forward_line"  forward_line;  
+define_action "backward_line"  Simple.backward_line;
+define_action "forward_line"  Simple.forward_line;  
 
-define_action "backward_paragraph"  (to_frame backward_paragraph);
-define_action "forward_paragraph"  (to_frame forward_paragraph);  
+define_action "backward_paragraph"  (Simple.to_frame Simple.backward_paragraph);
+define_action "forward_paragraph"  (Simple.to_frame Simple.forward_paragraph);  
 
-define_action "backward_screen"  backward_screen;
-define_action "forward_screen"  forward_screen;
+define_action "backward_screen"  Simple.backward_screen;
+define_action "forward_screen"  Simple.forward_screen;
 
-define_action "begin_of_file"  begin_of_file;
-define_action "end_of_file"  end_of_file;
+define_action "begin_of_file"  Simple.begin_of_file;
+define_action "end_of_file"  Simple.end_of_file;
 
 (* M-x *)
 define_action "goto_char" Complexe.goto_char;
@@ -5192,7 +5213,7 @@ let point_to_line tree point line =
 [NormalMap, XK.xk_Return], "insert_return"; 
 @
 <<inserting actions>>=
-define_action "insert_return"  insert_return;
+define_action "insert_return"  Simple.insert_return;
 @
 
 <<function Simple.insert_return>>=
@@ -5247,14 +5268,14 @@ let insert_res tree point str =
 @
 
 <<deleting actions>>=
-define_action "delete_before_point"  delete_backspace_char;
-define_action "delete_at_point"  delete_char;
+define_action "delete_before_point"  Simple.delete_backspace_char;
+define_action "delete_at_point"  Simple.delete_char;
 
-define_action "delete_forward_word"  (to_frame delete_forward_word);
-define_action "delete_backward_word"  (to_frame delete_backward_word);
+define_action "delete_forward_word"  (Simple.to_frame Simple.delete_forward_word);
+define_action "delete_backward_word"  (Simple.to_frame Simple.delete_backward_word);
 
-define_action "hungry_electric_delete"  hungry_electric_delete;
-define_action "kill_end_of_line"  kill_end_of_line;
+define_action "hungry_electric_delete"  Simple.hungry_electric_delete;
+define_action "kill_end_of_line"  Simple.kill_end_of_line;
 @
 
 \subsection{Characters}
@@ -5365,9 +5386,9 @@ let hungry_electric_delete frame =
 
 <<moving actions>>=
 define_action "mark_at_point"  Complexe.mark_at_point;
-define_action "kill_region"  kill_region;
-define_action "insert_killed"  insert_killed;
-define_action "insert_next_killed"  insert_next_killed;
+define_action "kill_region"  Simple.kill_region;
+define_action "insert_killed"  Simple.insert_killed;
+define_action "insert_next_killed"  Simple.insert_next_killed;
 @
 
 \subsection{Mark}
@@ -5490,7 +5511,7 @@ let insert_next_killed frame =
 
 <<misc actions>>=
 (* C-x map *)
-define_action "point_at_mark"  point_at_mark;
+define_action "point_at_mark"  Simple.point_at_mark;
 @
 
 <<misc keys>>=
@@ -5516,7 +5537,7 @@ let point_at_mark frame =
 [ControlMap, Char.code '_'], "undo";
 @
 <<undoing actions>>=
-define_action "undo"  undo;
+define_action "undo"  Simple.undo;
 @
 
 \ifallcode
@@ -6212,7 +6233,7 @@ let change_buffer window name =
 @
 <<buffer managment actions>>=
 (* C-x map *)
-define_action "kill_buffer"  kill_buffer;
+define_action "kill_buffer"  Simple.kill_buffer;
 @
 
 <<function Simple.kill_buffer>>=
@@ -6962,50 +6983,44 @@ let system buf_name cmd end_action =
   (* !!! *)
   buf.buf_sync <- true;
 
-  let _ins = Unix.descr_of_in_channel inc in
-  let _tampon = String.create 1000 in
+  let ins = Unix.descr_of_in_channel inc in
+  let tampon = String.create 1000 in
   let active = ref true in
-(*
-  Thread.add_reader ins
-    (function () ->
-        let pos,str = Text.delete_res text curseur
-            (Text.point_to_eof text curseur) in
-        let len = input inc tampon 0 1000 in
-        Mutex.lock location.loc_mutex;
-        if len = 0 then
-          let pid,status = waitpid [WNOHANG] pid in
-          begin
-            match status with 
-              WEXITED s -> Text.insert_at_end text 
-                  (Printf.sprintf "Exited with status %d\n" s); 
-                close_in inc;
-                close_out outc;
-                (try end_action buf s with _ -> ())
-            | _ -> Text.insert_at_end text "Broken pipe" 
-          end;
-          Text.set_position text curseur (Text.size text);
-          active := false;
-          (* redraw screen *)
-          update_display ();
-          WX_xterm.update_displays ();
+  let location = Efuns.location () in
+  Concur.Thread.add_reader ins (fun () ->
+    let pos,str = Text.delete_res text curseur
+        (Text.point_to_eof text curseur) in
+    let len = input inc tampon 0 1000 in
+    Mutex.lock location.loc_mutex;
+    if len = 0 then begin
+      let pid,status = waitpid [WNOHANG] pid in
+      (match status with 
+      | WEXITED s -> Text.insert_at_end text 
+              (Printf.sprintf "Exited with status %d\n" s); 
+            close_in inc;
+            close_out outc;
+            (try end_action buf s with _ -> ())
+      | _ -> Text.insert_at_end text "Broken pipe" 
+      );
+      Text.set_position text curseur (Text.size text);
+      active := false;
+      (* redraw screen *)
+      Top_window.update_display ();
 
-          Mutex.unlock location.loc_mutex;
-          Thread.remove_reader ins; (* Kill self *)
-        else
-          Text.insert_at_end text (String.sub tampon 0 len);
+      Mutex.unlock location.loc_mutex;
+      Concur.Thread.remove_reader ins; (* Kill self *)
+    end
+    else
+      Text.insert_at_end text (String.sub tampon 0 len);
 
-        Text.set_position text curseur (Text.size text);
-        Text.insert text curseur str;
-        buf.buf_modified <- buf.buf_modified +1;
+    Text.set_position text curseur (Text.size text);
+    Text.insert text curseur str;
+    buf.buf_modified <- buf.buf_modified +1;
 
-        (* redraw screen *)
-        update_display ();
-        WX_xterm.update_displays ();
-        Mutex.unlock location.loc_mutex
+    (* redraw screen *)
+    Top_window.update_display ();
+    Mutex.unlock location.loc_mutex
   );
-*)
-  if true 
-  then failwith "System.system: TODO";
 
   let lmap = buf.buf_map in
   Keymap.add_binding lmap [NormalMap, XK.xk_Return]
@@ -7088,7 +7103,7 @@ buf.buf_finalizers <- (fun () ->
 mutable buf_sync : bool;
 @
 
-<<[[Frame.update()]] if buf sync>>=
+<<[[Frame.update()]] if buf sync goto end of text>>=
 if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
 then Text.set_position text point (Text.size text); 
 @
@@ -7156,7 +7171,7 @@ define_action "compile" compile;
 <<function Std_efunsrc.compile>>=
 let compile frame =
   Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
-   frame "compile"
+    frame "compile"
 @
 % ???
 
@@ -7483,21 +7498,22 @@ let escaped s =
 @
 
 <<transforming actions>>=
-define_action "transpose_chars"  (to_frame transpose_chars);
+define_action "transpose_chars"  (Simple.to_frame Simple.transpose_chars);
 
-define_action "transpose_words"  (to_frame transpose_words);
+define_action "transpose_words"  (Simple.to_frame Simple.transpose_words);
 define_action "lowercase_word" (fun frame ->
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
-  on_word buf point String.lowercase
+  Simple.on_word buf point String.lowercase
 );
+
 define_action "uppercase_word" (fun frame ->
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
-  on_word buf point String.uppercase
+  Simple.on_word buf point String.uppercase
 );
 
-define_action "fill_paragraph" fill_paragraph;
+define_action "fill_paragraph" Simple.fill_paragraph;
 @
 
 \subsection{Characters}
@@ -8130,8 +8146,8 @@ let input = set_input
 
 % interface
 <<[[Std_efunsrc._5]] start hooks options>>=
-add_option_parameter Compil.compile_find_makefile;
-add_option_parameter Text.add_amount;
+Simple.add_option_parameter Compil.compile_find_makefile;
+Simple.add_option_parameter Text.add_amount;
 @
 
 

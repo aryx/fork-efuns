@@ -94,9 +94,13 @@ open Local
 
 <<type Efuns.action>>
 
+and action_name = string
+
 <<type Efuns.generic_action>>
 
 <<type Efuns.mod_ident>>
+
+and keys = key list
 
 <<type Efuns.prefix>>
 
@@ -1080,6 +1084,11 @@ let print_newlines text =
 
 <<function Text.remove_point>>
 
+let with_dup_point text point f =
+  let p = dup_point text point in
+  Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+
+
 <<function Text.read>>
 
 <<function Text.save>>
@@ -1205,30 +1214,26 @@ let tab_size = ref 9
 
 
 <<exception Ebuffer.Found>>=
-exception Found of buffer
 @
 
 <<function Ebuffer.read>>=
 let read filename local_map =
   let location = Efuns.location() in
+  let filename = Utils.normal_name location.loc_dirname filename in
   try
-    let filename = Utils.normal_name location.loc_dirname filename in
-    try
-      Hashtbl.find location.loc_files filename
-    with Not_found ->
-      let text =
-        try
-          let inc = open_in filename in
-          let text = Text.read inc in         
-          close_in inc; 
-          text
-        with
-          _ -> Text.create ""
-      in
-      let buf = create filename (Some filename) text local_map in
-      Hashtbl.add location.loc_files filename buf;
-      buf
-  with Found buf -> buf
+    Hashtbl.find location.loc_files filename
+  with Not_found ->
+    let text =
+      try
+        let inc = open_in filename in
+        let text = Text.read inc in         
+        close_in inc; 
+        text
+      with _ -> Text.create ""
+    in
+    let buf = create filename (Some filename) text local_map in
+    Hashtbl.add location.loc_files filename buf;
+    buf
 @
 
 
@@ -1245,18 +1250,17 @@ exception BufferAlreadyOpened
 let change_name buf filename =
   let location = Efuns.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
-  (match buf.buf_filename with
-      None -> ()
-    | Some filename ->
-        Hashtbl.remove location.loc_files filename);
+  buf.buf_filename |> Common.do_option (fun filename ->
+    Hashtbl.remove location.loc_files filename
+  );
   let filename = 
     if Filename.is_relative filename then
       Filename.concat location.loc_dirname filename
     else
       filename
   in
-  if hashtbl_mem location.loc_files filename then
-    raise BufferAlreadyOpened;
+  if Utils.hashtbl_mem location.loc_files filename 
+  then raise BufferAlreadyOpened;
   let filename = Utils.normal_name location.loc_dirname filename in
   let name = get_name filename in
   Hashtbl.add location.loc_buffers name buf;
@@ -1291,7 +1295,6 @@ let catch format buf f =
 <<core/ebuffer.ml>>=
 <<copyright header2>>
 open Common
-open Utils
 open Efuns
 
 <<constant Ebuffer.create_buf_hook>>
@@ -1332,6 +1335,10 @@ open Options
 
   
 <<function Ebuffer.read>>
+
+let find_buffer_opt name =
+  try Some (Hashtbl.find (Efuns.location()).loc_buffers name)
+  with Not_found -> None
 
 <<function Ebuffer.default>>
       
@@ -1440,7 +1447,11 @@ open Efuns
 <<function Keymap.add_local_key>>
 <<function Keymap.add_minor_key>>
 <<function Keymap.add_major_key>>
-  
+
+let define_interactive_action action_name action_fun =
+  Efuns.define_action action_name action_fun;
+  let map = (Efuns.location()).loc_map in
+  add_interactive map action_name action_fun
 @
 
 
@@ -2263,7 +2274,7 @@ let highlighted_chars = ref []
 @
 
 <<function Simple.unhightlight>>=
-let unhightlight () =
+let unhightlight _frame =
   !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
       let text = buf.buf_text in
       Text.set_char_attr text curseur attr;
@@ -2554,7 +2565,7 @@ let insert_special_char frame =
 
 <<misc actions>>=
 (* C-M map *)
-define_action "next_hole" next_hole;
+define_action "next_hole" Simple.next_hole;
 @
 
 % Simple.insert_structure -> <>
@@ -2609,7 +2620,7 @@ let _ =
       let location = Efuns.location () in
       let gmap = location.loc_map in
       (* unhightlight region *)
-      add_hook Top_window.handle_key_start_hook unhightlight;      
+      Efuns.add_hook Top_window.handle_key_start_hook unhightlight;      
       (* standard chars *)
       for key = 32 to 127 do
         Keymap.add_binding gmap [NormalMap, key] self_insert_command
@@ -3524,34 +3535,6 @@ let change_font frame =
 @
 
 <<function Complex.color>>=
-let color buf regexp strict attr =
-  let text = buf.buf_text in
-  let point = Text.new_point text in
-  try
-    while true do
-      let len = Text.search_forward text regexp point in
-      let before =
-        if Text.bmove_res text point 1 = 1 then
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1);c)
-        else
-          (let c = Text.get_char text point in
-            Text.fmove text point (len+1); c)
-      in
-      let after = Text.get_char text point in
-      if not (strict && (buf.buf_syntax_table.(Char.code before) ||
-            buf.buf_syntax_table.(Char.code after))) then
-        begin
-          Text.bmove text point len;
-          Text.set_attr text point len attr;
-          Text.fmove text point len;
-          ()
-        end
-    done
-  with
-    Not_found -> 
-      Text.remove_point text point;
-      buf.buf_modified <- buf.buf_modified + 1
 @
 
 <<constant Complex.display_hist>>=
@@ -3766,8 +3749,6 @@ open Efuns
 open Unix
 (*open Concur*)
 (*open ThreadUnix*)
-open Select
-open Multi_frames
 
 <<function System.open_process>>
 
@@ -3904,8 +3885,6 @@ open Efuns
 <<features/interactive.ml>>=
 <<copyright header2>>
 open Efuns
-open Select
-
   
 <<function Interactive.create_bindings>>
 
@@ -4107,6 +4086,8 @@ open Efuns
 
 <<type Compil.error>>
 
+type find_error_fun = Text.t -> Text.point -> error
+
 <<constant Compil.c_error_regexp>>
 
 <<function Compil.c_find_error>>
@@ -4243,7 +4224,8 @@ let wrap top_window f () =
   clean_display ();    
   clear_message top_window;
   keypressed := XK.xk_Menu;
-  exec_hooks (try get_global handle_key_start_hook with _ -> []) ();    
+  let frame = top_window.top_active_frame in
+  exec_hooks (try get_global handle_key_start_hook with _ -> []) frame;    
   begin
     try f top_window 
     with e -> message top_window (Printf.sprintf "Uncaught exception %s" 
@@ -4251,8 +4233,6 @@ let wrap top_window f () =
   end;
   exec_hooks (try get_global handle_key_end_hook with _ -> []) ();    
   update_display ();
-  let graphic = Window.backend top_window in
-  graphic.Xdraw.update_displays ();
   Mutex.unlock location.loc_mutex
 @
 
@@ -4413,8 +4393,6 @@ open Efuns
 open Utils
 open Options
 open Efuns
-open Simple
- 
 
 <<constant Std_efunsrc.grep_hist>>
 
@@ -4530,6 +4508,8 @@ let update buf =
   let s = Utils.load_directory filename in
   let text = buf.buf_text in
   Text.update text s;
+  (* pad extension *)
+  Dircolors.colorize buf;
   buf.buf_last_saved <- Text.version text
 @
 
@@ -4540,10 +4520,9 @@ let file_reg = Str.regexp ".* \\([^ ]+\\)$"
 
 <<function Dired.get_file_line>>=
 let get_file_line frame =
-  (match frame.frm_buffer.buf_filename with
-      None -> ()
-    | Some filename -> 
-        (Efuns.location()).loc_dirname <- Filename.dirname filename);
+  frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
+    (Efuns.location()).loc_dirname <- Filename.dirname filename;
+  );
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
@@ -4558,10 +4537,11 @@ let get_file_line frame =
 
 <<function Dired.select_file>>=
 let select_file line =
-  if line.[0] = ' ' then
-    if Str.string_match file_reg line 0 then
-      Str.matched_group 1 line else
-      String.sub line 60 (String.length line - 60)
+  if line.[0] = ' ' 
+  then
+    if Str.string_match file_reg line 0 
+    then Str.matched_group 1 line 
+    else String.sub line 60 (String.length line - 60)
   else
     failwith "Dired: not a file line"
 @
@@ -4590,13 +4570,11 @@ let open_file frame =
 let remove frame =
   let line = get_file_line frame in   
   let filename = select_file line in
-  let _ = 
-    Select.select_yes_or_no frame (Printf.sprintf "Remove %s ? (y/n)" filename)
+  Select.select_yes_or_no frame (Printf.sprintf "Remove %s ? (y/n)" filename)
     (fun b -> if b then
           if line.[1] = 'd' then Unix.rmdir filename else
           Unix.unlink filename;
-        update frame.frm_buffer) in
-  ()
+        update frame.frm_buffer) |> ignore
 @
 
 <<constant Dired.view_list>>=
@@ -4701,10 +4679,12 @@ let unzip_and_view frame filename =
 
 <<toplevel Dired._1>>=
 let _ = 
-  Keymap.interactive map [NormalMap, XK.xk_Return] "dired_open_file" open_file;
+  Keymap.interactive map [NormalMap, XK.xk_Return] "dired_open_file" 
+    open_file;
   Keymap.interactive map [NormalMap, Char.code 'g'] "dired_update" 
-  (fun frame -> update frame.frm_buffer);  
-  Keymap.interactive map [NormalMap, Char.code 'v'] "dired_view_file" open_view;  
+    (fun frame -> update frame.frm_buffer);  
+  Keymap.interactive map [NormalMap, Char.code 'v'] "dired_view_file" 
+    open_view;  
   Keymap.interactive map [NormalMap, Char.code '+'] "dired_make_directory" 
     mkdir;  
   Keymap.interactive map [NormalMap, Char.code '-'] "dired_remove_entry" 
@@ -4721,11 +4701,11 @@ let _ =
     ];
   
   Efuns.add_start_hook (fun () ->
-    add_interactive ((Efuns.location()).loc_map) "dired_mode" 
+    Keymap.add_interactive ((Efuns.location()).loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
-    set_global Ebuffer.modes_alist 
-      ((".*/$",mode) :: (get_global Ebuffer.modes_alist));
+    Efuns.set_global Ebuffer.modes_alist 
+      ((".*/$",mode) :: (Efuns.get_global Ebuffer.modes_alist));
   )   
 @
 %$
@@ -4735,7 +4715,6 @@ let _ =
 
 <<major_modes/dired.ml>>=
 <<copyright header>>
-open Keymap
 open Efuns
 
 
@@ -4863,10 +4842,10 @@ let _ =
   define_action "abbrevs_mode" 
     (fun frame -> 
       let buf = frame.frm_buffer in
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode)
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+    )
 @
 
 

@@ -40,10 +40,25 @@ let prompt buf =
 (*****************************************************************************)
 
 let scroll_to_end frame =
-  let height = frame.frm_height in
-  let y = frame.frm_y_offset in
-  pr2_gen (height, y);
-  ()
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+
+  let height = frame.frm_height - frame.frm_has_status_line in
+  let nlines = Text.nbre_lines text in
+
+  let point = frame.frm_point in
+
+  frame.frm_redraw <- true;
+
+  if nlines > height then begin
+    let current_line = Text.point_line text point in
+    let start_line = current_line - height in
+    pr2_gen (current_line, start_line);
+    Text.goto_line text frame.frm_start start_line;
+    pr2_gen frame.frm_start;
+    frame.frm_force_start <- true;
+    frame.frm_y_offset <- 2;
+  end
 
 let scroll_until_not_pass_prompt frame =
   let height = frame.frm_height in
@@ -211,12 +226,17 @@ let interpret frame s =
   | "l" -> builtin_l frame
 
   | "s" -> builtin_cd frame ".."
+  | "cd" -> builtin_cd frame "/home/pad"
   | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
 
   | _ when s =~ "v[ ]+\\(.*\\)" -> builtin_v frame (Common.matched1 s)
   (* general case *)
   | cmd -> run_cmd frame cmd
-  )
+  );
+  Simple.end_of_file frame;
+  scroll_to_end frame;
+  ()
+
 
   
 
@@ -226,12 +246,13 @@ let interpret frame s =
 (*****************************************************************************)
 
 let install buf =
-  Efuns.set_local buf pwd_var 
-  (* todo: use the dirname of the file in current frame 
+  Efuns.set_local buf pwd_var
+    (* todo: use the dirname of the file in current frame 
      Frame.current_dir?
-  *)
-    (Efuns.location()).loc_dirname;
-  (* !!! *)
+    *)
+     (Efuns.location()).loc_dirname;
+  buf.buf_syntax_table.(Char.code '_') <- true;
+  buf.buf_syntax_table.(Char.code '-') <- true;
   display_prompt buf;
   let text = buf.buf_text in
   Text.set_position text buf.buf_point (Text.size text);
@@ -282,7 +303,12 @@ let _ =
 
     
     Efuns.set_major_var mode Top_window.handle_key_start_hook [(fun frame ->
-      Simple.end_of_file frame;
+(* buggy, does not handle C-e, need something better
+      let keysym = !Top_window.keypressed in
+      if Char.code 'A' <= keysym && keysym <= Char.code 'z'
+      then Simple.end_of_file frame;
+*)
+      ()
     )];
 
     let map = mode.maj_map in

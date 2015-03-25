@@ -196,6 +196,7 @@ and frame  =
     mutable frm_x_offset : int;
     (* offset(+/-) of screen-lines after frm_start *)
     mutable frm_y_offset : int;
+    (*x: [[Efuns.frame]] other fields *)
     (* ?? *)
     mutable frm_cutline : int; (* max_int for no, else length *)
     (*x: [[Efuns.frame]] other fields *)
