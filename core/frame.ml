@@ -395,11 +395,10 @@ let update_table top_window frame =
   let text = buf.buf_text in
 
   let start = frame.frm_start in
-
   let height = frame.frm_height - frame.frm_has_status_line in
 
   (* assert frame.frm_y_offset >= 0 *)
-  let current_n = ref (point_line text start) in
+  let current_n = ref (Text.point_line text start) in
   let current_line = ref (Ebuffer.compute_representation buf !current_n) in
   while frame.frm_y_offset < 0 && !current_n > 0 do
     current_n := !current_n - 1;
@@ -492,8 +491,8 @@ let display top_window frame =
   if
     (*s: [[Frame.display()]] conditions for redraw *)
     (*s: [[Frame.display()]] conditions for redraw, point outside frame *)
-    (point > frame.frm_end)  || 
     (point < frame.frm_start) ||
+    (point > frame.frm_end)  || 
     (*e: [[Frame.display()]] conditions for redraw, point outside frame *)
     (*s: [[Frame.display()]] conditions for redraw, buffer modified *)
     (version text <> frame.frm_last_text_updated) ||

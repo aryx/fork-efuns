@@ -2553,16 +2553,23 @@ and box =
   { 
     box_pos : position;   (* pos of box in Text.t string *)
     box_len : int;   (* len of box in Text.t string *)
-
     mutable box_attr : int;    (* common attribute *)
-    box_charsize : int; (* common size *)
-    box_size : int;
 
     <<[[Text.box]] other fields>>
   } 
 @
 %old: I renamed things, clearer, there was too many line_repr or repr_line
 % so repr -> box, repr_line_pos -> box_pos, repr_line_len -> box_len, etc
+
+
+%XXX
+<<[[Text.box]] other fields>>=
+box_charsize : int; (* common size *)
+box_size : int;
+@
+% for unicode stuff? for tabs?
+
+
 
 
 <<[[Text.line]] representation fields>>=
@@ -2578,6 +2585,287 @@ repr_pos : int;  (* pos of repbox in representation string *)
 
 %TODO: put cancel_repr here
 
+
+\subsection{[[Text.compute_representation()]]}
+
+<<function Ebuffer.compute_representation>>=
+let compute_representation buf n =
+  Text.compute_representation buf.buf_text buf.buf_charreprs n
+@
+
+
+<<function Text.compute_representation>>=
+(* On devrait reprendre la representation la ou elle est ... *)
+let compute_representation tree charreprs n =
+  let text = tree.tree_text in      
+  <<[[Text.compure_representation]] if line n is too big, return dummy line>>
+  else
+    let line = text.text_newlines.(n) in
+    if line.line_modified >= 0 then begin
+      <<[[Text.compure_representation()]] if line modified, update line flds>>
+    end;
+    line
+@
+
+<<[[Text.line]] other fields>>=
+mutable line_modified : int; (* first modified position *)
+@
+% -1 if not modified since last time, see cancel_repr
+
+
+
+<<[[Text.compure_representation()]] locals>>=
+let line_curs = ref (line.position + next_pos) in
+@
+
+
+
+
+<<[[Text.compure_representation()]] if line modified, update line flds>>=
+let end_pos = text.text_newlines.(n+1).position - 1 in
+
+let (repr_tail, next_pos, repr_pos) = 
+  next_pos_xxx line line.representation 
+in
+
+<<[[Text.compure_representation()]] locals>>
+
+let gpos = text.gpoint.pos in
+let gsize = text.gsize in
+
+<<[[Text.compure_representation()]] adjust line_curs if in gap>>
+
+while !line_curs < end_pos do
+  <<[[Text.compure_representation()]] loop line_curs to end_pos>>
+done;
+
+<<[[Text.compure_representation()]] adjust line fields after loop>>
+
+(* once we have computed the simple representation, we can add more
+ * complicated things, such as highlighting ... 
+ *)
+<<[[Text.compure_representation()]] handle highlighting>>
+@    
+
+
+
+
+
+<<[[Text.compure_representation()]] loop line_curs to end_pos>>=
+let charattr = text.text_attrs.(!line_curs) in
+let charrepr =
+  let char = Char.code text.text_string.[!line_curs] in      
+  if char = 9 
+  then tabreprs.(!repr_curs mod 9)
+  else charreprs.(char) 
+in
+let charsize = String.length charrepr in
+let line_len = ref 0 in
+(* for J.G. Malecki: tabs have a different representation depending
+ * their position in the text (as in xterms) 
+ *)
+
+while !line_curs < end_pos && 
+  begin
+    let char = Char.code text.text_string.[!line_curs] in
+    char_repr := 
+       if char = 9 
+       then tabreprs.(!repr_curs mod 9)
+       else charreprs.(char)
+    ;
+    char_size := String.length !char_repr;
+
+    !char_size == charsize && charattr == text.text_attrs.(!line_curs)
+  end
+do
+  if !repr_curs + charsize >= !repr_size then begin
+      (* find a better heuristic to realloc the line string *)
+      let new_len = !repr_size + 
+          (low_distance text end_pos !line_curs) + charsize * 2 
+      in
+      let new_repr = String.create new_len in
+      String.blit !repr_string 0 new_repr 0 !repr_curs;
+      repr_string := new_repr;
+      repr_size := new_len;
+  end;
+  String.blit !char_repr 0 !repr_string !repr_curs charsize;
+  repr_curs := !repr_curs + charsize;
+  line_curs := !line_curs + 1;
+  line_len := !line_len +1;
+  if !line_curs = gpos 
+  then line_curs := gpos + gsize;
+done;
+let box = {
+  box_pos = !line_start;
+  box_len = !line_len;
+    
+  box_attr = charattr;
+  box_charsize = charsize;
+  box_size = !line_len * charsize;
+
+  repr_pos = !repr_start;
+} in
+repr_start := !repr_curs;
+line_start := !line_start + !line_len;
+repr_tail := box :: !repr_tail;
+@
+
+
+<<[[Text.compure_representation()]] locals>>=
+let repr_tail = ref repr_tail in
+let line_start = ref next_pos in
+let repr_curs = ref repr_pos in
+let repr_start = ref repr_pos in
+
+let char_repr = ref "" in
+let char_size = ref 0 in
+
+repr_string := line.repr_string;
+repr_size := String.length line.repr_string;
+@
+
+<<constant Text.repr_string>>=
+let repr_string = ref ""
+@
+<<constant Text.repr_size>>=
+let repr_size = ref 0
+@
+
+
+
+<<[[Text.compure_representation()]] adjust line_curs if in gap>>=
+if !line_curs >= gpos && !line_curs < gpos + gsize 
+then line_curs := !line_curs + gsize;
+@
+
+
+<<[[Text.compure_representation()]] adjust line fields after loop>>=
+line.representation <- !repr_tail;
+line.line_modified <- -1;
+line.repr_len <- !repr_curs;
+line.repr_string <- !repr_string;
+@
+
+
+
+<<[[Text.compure_representation()]] handle highlighting>>=
+(match line.line_hlt with
+| 0 -> ()
+| x when x > 0 ->
+    (* the line is hightlighted from the beginning to pos the
+     * line.line_hlt char 
+     *)
+      <<[[Text.compure_representation()]] if line_hlt is positive>>
+| x when x < 0 ->
+  (* the line is hightlighted from then end to pos line.line_hlt *)
+      <<[[Text.compure_representation()]] if line_hlt is negative>>
+| _ -> raise Impossible
+);
+@
+
+
+
+<<[[Text.compure_representation()]] if line_hlt is positive>>=
+let first = line.line_hlt - 1 in
+let rec iter list tail =
+  match list with
+  | [] -> List.rev tail 
+  | repr :: list_r ->
+      if repr.box_pos > first 
+      then iter list_r (repr :: tail)
+      else
+        let len = first - repr.box_pos + 1 in
+        (List.rev tail) @
+          (let before, after = 
+             if len = repr.box_len 
+             then [], list
+             else [ 
+              { repr with
+                box_pos = repr.box_pos + len;
+                box_len = repr.box_len - len;
+                box_size = repr.box_charsize * (repr.box_len - len);
+                repr_pos = repr.repr_pos + (len*repr.box_charsize)
+              }
+              ], ({ repr with
+                    box_len = len;
+                    box_size = repr.box_charsize * len;
+                   } :: list_r)
+        in
+        after |> List.iter (fun repr ->
+          repr.box_attr <- repr.box_attr lor (1 lsl 24)
+        );
+        before @ after
+      )
+in
+line.representation <- iter line.representation []
+@
+
+<<[[Text.compure_representation()]] if line_hlt is negative>>=
+let first = line.line_hlt - 1 in
+let rec iter list tail =
+  match list with
+  | [] -> List.rev tail 
+  | repr :: list_r ->
+      if repr.box_pos > first 
+      then iter list_r (repr :: tail)
+      else
+        let len = first - repr.box_pos + 1 in
+        (List.rev tail) @
+          (let before, after = 
+             if len = repr.box_len 
+             then [], list
+             else [ 
+              { repr with 
+                box_pos = repr.box_pos+len;
+                box_len = repr.box_len - len;
+                box_size = repr.box_charsize * (repr.box_len - len);
+                repr_pos = repr.repr_pos + (len * repr.box_charsize)
+              }
+              ], ({ repr with
+                    box_len = len;
+                    box_size = repr.box_charsize * len;
+                  } :: list_r)
+        in
+        after |> List.iter (fun repr ->
+          repr.box_attr <- repr.box_attr lor (1 lsl 24)
+        );
+        before @ after
+       )
+in
+line.representation <- iter line.representation []
+@
+
+<<constant Text.dummy_line>>=
+let (dummy_line : line) = 
+  {
+    position = max_int;
+    representation = [];
+    line_modified = 0;
+    repr_len = 0;
+    repr_string = "";
+    line_hlt = 0;
+  } 
+@
+
+<<[[Text.compure_representation]] if line n is too big, return dummy line>>=
+if n >= text.text_nlines - 1 then begin
+    dummy_line.position <- text.text_size;
+    dummy_line
+end
+@
+
+\subsection{[[Text.cancel_repr()]]}
+
+<<function Text.cancel_repr>>=
+let cancel_repr text point n =
+  let line = text.text_newlines.(n) in
+  let pos =  point - line.position in
+  line.line_modified <- 
+    (if line.line_modified < 0
+    then pos
+    else min line.line_modified pos
+    )
+@
 
 
 
@@ -3539,8 +3827,8 @@ mutable frm_end : Text.point;
 
 
 <<[[Frame.display()]] conditions for redraw, point outside frame>>=
-(point > frame.frm_end)  || 
 (point < frame.frm_start) ||
+(point > frame.frm_end)  || 
 @
 % > ?? because use the first field anyway?
 
@@ -3624,7 +3912,7 @@ and frm_line =
   { 
     mutable frm_text_line : Text.line;
 
-    <<[[Efuns.frm_line]] other fields>>   
+    <<[[Efuns.frm_line]] other fields>>
   } 
 @
 % argh, again repr_line that is actually a line.
@@ -3645,60 +3933,6 @@ mutable frmline_boxes : Text.box list;
 % why need frmline_boxes? why not use frm_text_line.repr_reprs instead?
 % because it could have changed in the mean time?
 
-\subsubsection{[[Frame.display_line()]]}
-
-% good name? as opposed to update_table, here it's more
-% about the display that updating some internal structure.
-
-<<[[Frame.display()]] redraw, draw line y if line changed>>=
-let frm_line = frame.frm_table.(y) in
-if not ((frm_line.prev_frmline_boxes == frm_line.frmline_boxes) &&
-        (frm_line.repr_prev_offset == frm_line.repr_offset)) 
-   || frame.frm_redraw
-then
-  begin
-    frm_line.prev_frmline_boxes <- frm_line.frmline_boxes;
-    frm_line.repr_prev_offset <- frm_line.repr_offset;
-
-    display_line top_window frame frm_line.frm_text_line.repr_string y;
-  end;
-@
-%todo: old: was line.repr_line.repr_string, ugly
-
-<<[[Efuns.frm_line]] other fields>>=
-(* previous values, so can check if the line changed *)
-mutable repr_prev_offset : int;
-mutable prev_frmline_boxes : Text.box list;
-@
-% it's an opti, not sure it's that useful
-
-% finally reach the graphic backend!
-
-<<function Frame.display_line>>=
-let display_line top_window frame repr_string y = 
-  let frm_line = frame.frm_table.(y) in
-  let graphic = Window.backend top_window in
-
-  let rec iter x offset boxes =
-    if x < frame.frm_width then
-      match boxes with
-      | [] -> 
-          graphic.Xdraw.clear_eol (x+frame.frm_xpos) (y+frame.frm_ypos)
-            (frame.frm_width - x)
-      | box :: tail ->
-          let len = min (frame.frm_width-x) (box.box_size - offset) in
-          graphic.Xdraw.draw_string (x+frame.frm_xpos) (y+frame.frm_ypos)
-            repr_string (box.repr_pos+offset) len
-            box.box_attr;
-          iter (x+len) 0 tail
-    else
-      <<[[Frame.display_line()]] line overflow frm_width>>
-  in
-  iter 0 (frm_line.repr_offset+frame.frm_x_offset) frm_line.frmline_boxes
-@
-%old: was called update_line, but confusing with update_table
-% which is quite different.
-
 \subsubsection{[[Frame.update_table()]]}
 
 <<[[Efuns.frame]] other fields>>=
@@ -3716,11 +3950,10 @@ let update_table top_window frame =
   let text = buf.buf_text in
 
   let start = frame.frm_start in
-
   let height = frame.frm_height - frame.frm_has_status_line in
 
   (* assert frame.frm_y_offset >= 0 *)
-  let current_n = ref (point_line text start) in
+  let current_n = ref (Text.point_line text start) in
   let current_line = ref (Ebuffer.compute_representation buf !current_n) in
   while frame.frm_y_offset < 0 && !current_n > 0 do
     current_n := !current_n - 1;
@@ -3829,6 +4062,60 @@ if start_c > 0 then begin
 end;
 @
 
+
+\subsubsection{[[Frame.display_line()]]}
+
+% good name? as opposed to update_table, here it's more
+% about the display that updating some internal structure.
+
+<<[[Frame.display()]] redraw, draw line y if line changed>>=
+let frm_line = frame.frm_table.(y) in
+if not ((frm_line.prev_frmline_boxes == frm_line.frmline_boxes) &&
+        (frm_line.repr_prev_offset == frm_line.repr_offset)) 
+   || frame.frm_redraw
+then
+  begin
+    frm_line.prev_frmline_boxes <- frm_line.frmline_boxes;
+    frm_line.repr_prev_offset <- frm_line.repr_offset;
+
+    display_line top_window frame frm_line.frm_text_line.repr_string y;
+  end;
+@
+%todo: old: was line.repr_line.repr_string, ugly
+
+<<[[Efuns.frm_line]] other fields>>=
+(* previous values, so can check if the line changed *)
+mutable repr_prev_offset : int;
+mutable prev_frmline_boxes : Text.box list;
+@
+% it's an opti, not sure it's that useful
+
+% finally reach the graphic backend!
+
+<<function Frame.display_line>>=
+let display_line top_window frame repr_string y = 
+  let frm_line = frame.frm_table.(y) in
+  let graphic = Window.backend top_window in
+
+  let rec iter x offset boxes =
+    if x < frame.frm_width then
+      match boxes with
+      | [] -> 
+          graphic.Xdraw.clear_eol (x+frame.frm_xpos) (y+frame.frm_ypos)
+            (frame.frm_width - x)
+      | box :: tail ->
+          let len = min (frame.frm_width-x) (box.box_size - offset) in
+          graphic.Xdraw.draw_string (x+frame.frm_xpos) (y+frame.frm_ypos)
+            repr_string (box.repr_pos+offset) len
+            box.box_attr;
+          iter (x+len) 0 tail
+    else
+      <<[[Frame.display_line()]] line overflow frm_width>>
+  in
+  iter 0 (frm_line.repr_offset+frame.frm_x_offset) frm_line.frmline_boxes
+@
+%old: was called update_line, but confusing with update_table
+% which is quite different.
 
 \subsubsection{Overflowing lines}
 
@@ -7653,6 +7940,12 @@ let toggle_readonly tree =
 
 
 \chapter{Advanced Topics}
+
+\section{Tabs}
+
+\section{Unicode}
+
+% charreprs?
 
 \section{Signals}
 

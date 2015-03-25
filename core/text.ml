@@ -25,6 +25,7 @@ Il doit aussi utiliser la structure un peu particuliere de l'arbre utiliser
 ici.
   
 *)
+open Common
 
 open Options
 open Utils
@@ -78,12 +79,12 @@ and box =
   { 
     box_pos : position;   (* pos of box in Text.t string *)
     box_len : int;   (* len of box in Text.t string *)
-
     mutable box_attr : int;    (* common attribute *)
-    box_charsize : int; (* common size *)
-    box_size : int;
 
     (*s: [[Text.box]] other fields *)
+    box_charsize : int; (* common size *)
+    box_size : int;
+    (*x: [[Text.box]] other fields *)
     repr_pos : int;  (* pos of repbox in representation string *)
     (*e: [[Text.box]] other fields *)
   } 
@@ -1155,70 +1156,90 @@ let tabreprs = [|
     ""
   |]
 (*e: constant Text.tabreprs *)
+
+let rec next_pos_xxx line boxes =
+  match boxes with
+  | box :: tail ->
+      let next_pos = box.box_pos + box.box_len in
+      if next_pos < line.line_modified 
+      then boxes, next_pos, box.repr_pos + box.box_size
+      else next_pos_xxx line tail
+  | [] -> [], 0, 0
+
       
 (*s: function Text.compute_representation *)
 (* On devrait reprendre la representation la ou elle est ... *)
 let compute_representation tree charreprs n =
   let text = tree.tree_text in      
-  if n >= text.text_nlines - 1 then 
-    begin
+  (*s: [[Text.compure_representation]] if line n is too big, return dummy line *)
+  if n >= text.text_nlines - 1 then begin
       dummy_line.position <- text.text_size;
       dummy_line
-    end
+  end
+  (*e: [[Text.compure_representation]] if line n is too big, return dummy line *)
   else
-  let line = text.text_newlines.(n) in
-  if line.line_modified >= 0 then
-    begin
+    let line = text.text_newlines.(n) in
+    if line.line_modified >= 0 then begin
+      (*s: [[Text.compure_representation()]] if line modified, update line flds *)
       let end_pos = text.text_newlines.(n+1).position - 1 in
-      let rec iter repr_list =
-        match repr_list with
-          repr :: tail ->
-            let next_pos = repr.box_pos + repr.box_len in
-            if next_pos < line.line_modified then
-              repr_list, next_pos, repr.repr_pos + repr.box_size
-            else
-              iter tail
-        | [] ->
-            [], 0, 0
+
+      let (repr_tail, next_pos, repr_pos) = 
+        next_pos_xxx line line.representation 
       in
-      let (repr_tail, next_pos, repr_pos) = iter line.representation in
-      let repr_tail = ref repr_tail in
+
+      (*s: [[Text.compure_representation()]] locals *)
       let line_curs = ref (line.position + next_pos) in
+      (*x: [[Text.compure_representation()]] locals *)
+      let repr_tail = ref repr_tail in
       let line_start = ref next_pos in
       let repr_curs = ref repr_pos in
       let repr_start = ref repr_pos in
-      let gpos = text.gpoint.pos in
-      let gsize = text.gsize in
+
       let char_repr = ref "" in
       let char_size = ref 0 in
+
       repr_string := line.repr_string;
       repr_size := String.length line.repr_string;
-      if !line_curs >= gpos && 
-        !line_curs < gpos + gsize then 
-        line_curs := !line_curs + gsize;
+      (*e: [[Text.compure_representation()]] locals *)
+
+      let gpos = text.gpoint.pos in
+      let gsize = text.gsize in
+
+      (*s: [[Text.compure_representation()]] adjust line_curs if in gap *)
+      if !line_curs >= gpos && !line_curs < gpos + gsize 
+      then line_curs := !line_curs + gsize;
+      (*e: [[Text.compure_representation()]] adjust line_curs if in gap *)
+
       while !line_curs < end_pos do
+        (*s: [[Text.compure_representation()]] loop line_curs to end_pos *)
         let charattr = text.text_attrs.(!line_curs) in
         let charrepr =
           let char = Char.code text.text_string.[!line_curs] in      
-          if char = 9 then tabreprs.(!repr_curs mod 9)
-          else charreprs.(char) in
+          if char = 9 
+          then tabreprs.(!repr_curs mod 9)
+          else charreprs.(char) 
+        in
         let charsize = String.length charrepr in
         let line_len = ref 0 in
         (* for J.G. Malecki: tabs have a different representation depending
-  on their position in the text (as in xterms) *)
-        
+         * their position in the text (as in xterms) 
+         *)
+
         while !line_curs < end_pos && 
-          (
+          begin
+            let char = Char.code text.text_string.[!line_curs] in
             char_repr := 
-            (let char = Char.code text.text_string.[!line_curs] in      
-              if char = 9 then tabreprs.(!repr_curs mod 9)
-              else charreprs.(char));
+               if char = 9 
+               then tabreprs.(!repr_curs mod 9)
+               else charreprs.(char)
+            ;
             char_size := String.length !char_repr;
-            !char_size == charsize && 
-            charattr == text.text_attrs.(!line_curs)) do
-          if !repr_curs + charsize >= !repr_size then
-            begin
-(* find a better heuristic to realloc the line string *)
+
+            !char_size == charsize && charattr == text.text_attrs.(!line_curs)
+          end
+        do
+          if !repr_curs + charsize >= !repr_size then begin
+              (* find a better heuristic to realloc the line string *)
               let new_len = !repr_size + 
                   (low_distance text end_pos !line_curs) + charsize * 2 
               in
@@ -1226,128 +1247,123 @@ let compute_representation tree charreprs n =
               String.blit !repr_string 0 new_repr 0 !repr_curs;
               repr_string := new_repr;
               repr_size := new_len;
-            end;
+          end;
           String.blit !char_repr 0 !repr_string !repr_curs charsize;
           repr_curs := !repr_curs + charsize;
           line_curs := !line_curs + 1;
           line_len := !line_len +1;
-          if !line_curs = gpos then line_curs := gpos + gsize;
+          if !line_curs = gpos 
+          then line_curs := gpos + gsize;
         done;
-        let repr = {
-            box_pos = !line_start;
-            box_len = !line_len;
-            
-            box_attr = charattr;
-            box_charsize = charsize;
-            box_size = !line_len * charsize;
+        let box = {
+          box_pos = !line_start;
+          box_len = !line_len;
+    
+          box_attr = charattr;
+          box_charsize = charsize;
+          box_size = !line_len * charsize;
 
-            repr_pos = !repr_start;
-          } in
+          repr_pos = !repr_start;
+        } in
         repr_start := !repr_curs;
         line_start := !line_start + !line_len;
-        repr_tail := repr :: !repr_tail;
+        repr_tail := box :: !repr_tail;
+        (*e: [[Text.compure_representation()]] loop line_curs to end_pos *)
       done;
+
+      (*s: [[Text.compure_representation()]] adjust line fields after loop *)
       line.representation <- !repr_tail;
       line.line_modified <- -1;
       line.repr_len <- !repr_curs;
       line.repr_string <- !repr_string;
+      (*e: [[Text.compure_representation()]] adjust line fields after loop *)
 
       (* once we have computed the simple representation, we can add more
-      complicated things, such as highlighting ... *)
-      if line.line_hlt <> 0 then
-        if line.line_hlt > 0 then
+       * complicated things, such as highlighting ... 
+       *)
+      (*s: [[Text.compure_representation()]] handle highlighting *)
+      (match line.line_hlt with
+      | 0 -> ()
+      | x when x > 0 ->
           (* the line is hightlighted from the beginning to pos the
-            line.line_hlt char *)
-          begin
+           * line.line_hlt char 
+           *)
+            (*s: [[Text.compure_representation()]] if line_hlt is positive *)
             let first = line.line_hlt - 1 in
             let rec iter list tail =
               match list with
-                [] -> List.rev tail 
+              | [] -> List.rev tail 
               | repr :: list_r ->
-                  if repr.box_pos > first then
-                    iter list_r (repr :: tail)
+                  if repr.box_pos > first 
+                  then iter list_r (repr :: tail)
                   else
-                  let len = first - repr.box_pos + 1 in
-                  (List.rev tail) @
-                    (let before, after = 
-                      if len = repr.box_len then
-                        [], list
-                      else
-                        [ 
-                          { 
-                            box_attr = repr.box_attr;
-                            box_charsize = repr.box_charsize;
-                            box_pos = repr.box_pos+len;
+                    let len = first - repr.box_pos + 1 in
+                    (List.rev tail) @
+                      (let before, after = 
+                         if len = repr.box_len 
+                         then [], list
+                         else [ 
+                          { repr with
+                            box_pos = repr.box_pos + len;
                             box_len = repr.box_len - len;
                             box_size = repr.box_charsize * (repr.box_len - len);
-                            repr_pos = repr.repr_pos + (len * repr.box_charsize)
+                            repr_pos = repr.repr_pos + (len*repr.box_charsize)
                           }
-                        ], (
-                          { 
-                            box_attr = repr.box_attr;
-                            box_charsize = repr.box_charsize;
-                            box_pos = repr.box_pos;
-                            repr_pos = repr.repr_pos;
-                            box_len = len;
-                            box_size = repr.box_charsize * len;
-                          }
-                            :: list_r)
+                          ], ({ repr with
+                                box_len = len;
+                                box_size = repr.box_charsize * len;
+                               } :: list_r)
                     in
-                    List.iter 
-                      (fun repr ->
-                        repr.box_attr <- repr.box_attr lor (1 lsl 24))
-                    after;
-                    before @ after)
+                    after |> List.iter (fun repr ->
+                      repr.box_attr <- repr.box_attr lor (1 lsl 24)
+                    );
+                    before @ after
+                  )
             in
             line.representation <- iter line.representation []
-          end
-        else
+            (*e: [[Text.compure_representation()]] if line_hlt is positive *)
+      | x when x < 0 ->
         (* the line is hightlighted from then end to pos line.line_hlt *)
-          begin
+            (*s: [[Text.compure_representation()]] if line_hlt is negative *)
             let first = line.line_hlt - 1 in
             let rec iter list tail =
               match list with
-                [] -> List.rev tail 
+              | [] -> List.rev tail 
               | repr :: list_r ->
-                  if repr.box_pos > first then
-                    iter list_r (repr :: tail)
+                  if repr.box_pos > first 
+                  then iter list_r (repr :: tail)
                   else
-                  let len = first - repr.box_pos + 1 in
-                  (List.rev tail) @
-                    (let before, after = 
-                      if len = repr.box_len then
-                        [], list
-                      else
-                        [ 
-                          {box_attr = repr.box_attr;
-                            box_charsize = repr.box_charsize;
+                    let len = first - repr.box_pos + 1 in
+                    (List.rev tail) @
+                      (let before, after = 
+                         if len = repr.box_len 
+                         then [], list
+                         else [ 
+                          { repr with 
                             box_pos = repr.box_pos+len;
                             box_len = repr.box_len - len;
                             box_size = repr.box_charsize * (repr.box_len - len);
                             repr_pos = repr.repr_pos + (len * repr.box_charsize)
                           }
-                        ], (
-                          { 
-                             box_attr = repr.box_attr;
-                            box_charsize = repr.box_charsize;
-                            box_pos = repr.box_pos;
-                            repr_pos = repr.repr_pos;
-                            box_len = len;
-                            box_size = repr.box_charsize * len;
-                          }
-                            :: list_r)
+                          ], ({ repr with
+                                box_len = len;
+                                box_size = repr.box_charsize * len;
+                              } :: list_r)
                     in
-                    List.iter 
-                      (fun repr ->
-                        repr.box_attr <- repr.box_attr lor (1 lsl 24))
-                    after;
-                    before @ after)
+                    after |> List.iter (fun repr ->
+                      repr.box_attr <- repr.box_attr lor (1 lsl 24)
+                    );
+                    before @ after
+                   )
             in
             line.representation <- iter line.representation []
-          end;
-    
+            (*e: [[Text.compure_representation()]] if line_hlt is negative *)
+      | _ -> raise Impossible
+      );
+      (*e: [[Text.compure_representation()]] handle highlighting *)
+      (*e: [[Text.compure_representation()]] if line modified, update line flds *)
     end;
-  line
+    line
 (*e: function Text.compute_representation *)
 
 
