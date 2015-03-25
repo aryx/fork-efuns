@@ -73,7 +73,7 @@ and line = {
     mutable position : position; (* bol (beginning of line) *)
 
     (*s: [[Text.line]] representation fields *)
-    mutable representation : repr list;
+    mutable representation : box list;
     mutable repr_len : int;
     (*x: [[Text.line]] representation fields *)
     mutable repr_string : string;
@@ -101,16 +101,18 @@ and point = {
 (*e: type Text.point *)
 
 (*s: type Text.repr *)
-and repr = 
+and box = 
   { 
-    repr_line_pos : position;   (* pos of repr in Text.t string *)
-    repr_line_len : int;   (* len of repr in Text.t string *)
-    
-    repr_pos : int;  (* pos of repr in representation string *)
-    repr_size : int;
+    box_pos : position;   (* pos of box in Text.t string *)
+    box_len : int;   (* len of box in Text.t string *)
 
-    mutable repr_attr : int;    (* common attribute *)
-    repr_charsize : int; (* common size *)
+    mutable box_attr : int;    (* common attribute *)
+    box_charsize : int; (* common size *)
+
+    (*s: [[Text.box]] other fields *)
+    repr_pos : int;  (* pos of repbox in representation string *)
+    repr_size : int;
+    (*e: [[Text.box]] other fields *)
   } 
 (*e: type Text.repr *)
 
@@ -1200,7 +1202,7 @@ let compute_representation tree charreprs n =
       let rec iter repr_list =
         match repr_list with
           repr :: tail ->
-            let next_pos = repr.repr_line_pos + repr.repr_line_len in
+            let next_pos = repr.box_pos + repr.box_len in
             if next_pos < line.line_modified then
               repr_list, next_pos, repr.repr_pos + repr.repr_size
             else
@@ -1261,11 +1263,11 @@ let compute_representation tree charreprs n =
           if !line_curs = gpos then line_curs := gpos + gsize;
         done;
         let repr = {
-            repr_line_pos = !line_start;
-            repr_line_len = !line_len;
+            box_pos = !line_start;
+            box_len = !line_len;
             
-            repr_attr = charattr;
-            repr_charsize = charsize;
+            box_attr = charattr;
+            box_charsize = charsize;
             
             repr_size = !line_len * charsize;
             repr_pos = !repr_start;
@@ -1291,38 +1293,38 @@ let compute_representation tree charreprs n =
               match list with
                 [] -> List.rev tail 
               | repr :: list_r ->
-                  if repr.repr_line_pos > first then
+                  if repr.box_pos > first then
                     iter list_r (repr :: tail)
                   else
-                  let len = first - repr.repr_line_pos + 1 in
+                  let len = first - repr.box_pos + 1 in
                   (List.rev tail) @
                     (let before, after = 
-                      if len = repr.repr_line_len then
+                      if len = repr.box_len then
                         [], list
                       else
                         [ 
                           { 
-                            repr_attr = repr.repr_attr;
-                            repr_charsize = repr.repr_charsize;
-                            repr_line_pos = repr.repr_line_pos+len;
-                            repr_line_len = repr.repr_line_len - len;
-                            repr_size = repr.repr_charsize * (repr.repr_line_len - len);
-                            repr_pos = repr.repr_pos + (len * repr.repr_charsize)
+                            box_attr = repr.box_attr;
+                            box_charsize = repr.box_charsize;
+                            box_pos = repr.box_pos+len;
+                            box_len = repr.box_len - len;
+                            repr_size = repr.box_charsize * (repr.box_len - len);
+                            repr_pos = repr.repr_pos + (len * repr.box_charsize)
                           }
                         ], (
                           { 
-                            repr_attr = repr.repr_attr;
-                            repr_charsize = repr.repr_charsize;
-                            repr_line_pos = repr.repr_line_pos;
+                            box_attr = repr.box_attr;
+                            box_charsize = repr.box_charsize;
+                            box_pos = repr.box_pos;
                             repr_pos = repr.repr_pos;
-                            repr_line_len = len;
-                            repr_size = repr.repr_charsize * len;
+                            box_len = len;
+                            repr_size = repr.box_charsize * len;
                           }
                             :: list_r)
                     in
                     List.iter 
                       (fun repr ->
-                        repr.repr_attr <- repr.repr_attr lor (1 lsl 24))
+                        repr.box_attr <- repr.box_attr lor (1 lsl 24))
                     after;
                     before @ after)
             in
@@ -1336,37 +1338,37 @@ let compute_representation tree charreprs n =
               match list with
                 [] -> List.rev tail 
               | repr :: list_r ->
-                  if repr.repr_line_pos > first then
+                  if repr.box_pos > first then
                     iter list_r (repr :: tail)
                   else
-                  let len = first - repr.repr_line_pos + 1 in
+                  let len = first - repr.box_pos + 1 in
                   (List.rev tail) @
                     (let before, after = 
-                      if len = repr.repr_line_len then
+                      if len = repr.box_len then
                         [], list
                       else
                         [ 
-                          {repr_attr = repr.repr_attr;
-                            repr_charsize = repr.repr_charsize;
-                            repr_line_pos = repr.repr_line_pos+len;
-                            repr_line_len = repr.repr_line_len - len;
-                            repr_size = repr.repr_charsize * (repr.repr_line_len - len);
-                            repr_pos = repr.repr_pos + (len * repr.repr_charsize)
+                          {box_attr = repr.box_attr;
+                            box_charsize = repr.box_charsize;
+                            box_pos = repr.box_pos+len;
+                            box_len = repr.box_len - len;
+                            repr_size = repr.box_charsize * (repr.box_len - len);
+                            repr_pos = repr.repr_pos + (len * repr.box_charsize)
                           }
                         ], (
                           { 
-                             repr_attr = repr.repr_attr;
-                            repr_charsize = repr.repr_charsize;
-                            repr_line_pos = repr.repr_line_pos;
+                             box_attr = repr.box_attr;
+                            box_charsize = repr.box_charsize;
+                            box_pos = repr.box_pos;
                             repr_pos = repr.repr_pos;
-                            repr_line_len = len;
-                            repr_size = repr.repr_charsize * len;
+                            box_len = len;
+                            repr_size = repr.box_charsize * len;
                           }
                             :: list_r)
                     in
                     List.iter 
                       (fun repr ->
-                        repr.repr_attr <- repr.repr_attr lor (1 lsl 24))
+                        repr.box_attr <- repr.box_attr lor (1 lsl 24))
                     after;
                     before @ after)
             in

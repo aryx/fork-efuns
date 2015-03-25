@@ -1863,7 +1863,7 @@ let background= define_option ["background"] "" string_option "DarkSlateGray"
 
 % used in some major modes
 <<constant Efuns.font>>=
-let font = define_option ["font"] "" string_option ""Menlo 18"
+let font = define_option ["font"] "" string_option "Menlo 18"
 @
 %pad: was fixed
 
@@ -2513,6 +2513,7 @@ let move_point_to tree point p =
 
 % already seen Text.text_newlines, Text.text_nlines, and Text.line type
 
+\subsection{Line and column}
 
 % status line display the line of the cursor -> <>
 <<function Text.point_line>>=
@@ -2535,17 +2536,13 @@ let point_col tree point =
 @
 
 
-
-
-
-
-\subsection{Line internal representation}
+\subsection{Line cached representation}
 
 % text.text_newlines is array of Text.line, where have seen
 % already the line.position which is the bol pos.
 
 <<[[Text.line]] representation fields>>=
-mutable representation : repr list;
+mutable representation : box list;
 mutable repr_len : int;
 @
 % this a cache? because at the beginning it's empty, see
@@ -2553,24 +2550,31 @@ mutable repr_len : int;
 
 %XXX?
 <<type Text.repr>>=
-and repr = 
+and box = 
   { 
-    repr_line_pos : position;   (* pos of repr in Text.t string *)
-    repr_line_len : int;   (* len of repr in Text.t string *)
-    
-    repr_pos : int;  (* pos of repr in representation string *)
-    repr_size : int;
+    box_pos : position;   (* pos of box in Text.t string *)
+    box_len : int;   (* len of box in Text.t string *)
 
-    mutable repr_attr : int;    (* common attribute *)
-    repr_charsize : int; (* common size *)
+    mutable box_attr : int;    (* common attribute *)
+    box_charsize : int; (* common size *)
+
+    <<[[Text.box]] other fields>>
   } 
 @
-% rename? box_repr ?
+%old: I renamed things, clearer, there was too many line_repr or repr_line
+% so repr -> box, repr_line_pos -> box_pos, repr_line_len -> box_len, etc
+
 
 <<[[Text.line]] representation fields>>=
 mutable repr_string : string;
 @
 % this a cache of the cache :)
+%less: but why need that? we have all we need with the index above no?
+
+<<[[Text.box]] other fields>>=
+repr_pos : int;  (* pos of repbox in representation string *)
+repr_size : int;
+@
 
 
 %TODO: put cancel_repr here
@@ -3607,7 +3611,7 @@ update_table top_window frame;
 if (point > frame.frm_end) || (point < start) then begin
     <<[[Frame.update()]] redraw, if frm_force_restart>>
     else begin
-      goto_point text start point;
+      Text.goto_point text start point;
       <<[[Frame.update()]] redraw, update frm_y_offset again>>
       update_table top_window frame;
    end
@@ -3633,32 +3637,32 @@ frame.frm_redraw <- false
 %[[Frame.update_table()]]
 
 <<[[Efuns.frame]] other fields>>=
-mutable frm_table : line_repr array;
+mutable frm_table : frm_line array;
 @
 % line 0 is the line that you see in the frame,
 % so this table is a slice of the original buffer text,
 % (that also manages the overflow lines? so not exactly a slice then?)
 
 <<type Efuns.line_repr>>=
-and line_repr =
+and frm_line =
   { 
     mutable repr_line : Text.line;
     mutable repr_y : int;
     mutable repr_x : int;
 
     mutable repr_offset : int;
-    mutable repr_reprs : Text.repr list;
+    mutable repr_reprs : Text.box list;
 
     (* previous values, so can check if the line changed *)
     mutable repr_prev_offset : int;
-    mutable repr_prev_reprs : Text.repr list;
+    mutable repr_prev_reprs : Text.box list;
 
   } 
 @
 % argh, again repr_line that is actually a line.
 %todo: maybe rename just line again?
 % rename this frm_table_line?
-% otherwise have line_repr.repr_line.representation.repr_line_pos, hmmm
+% otherwise have line_repr.repr_line.representation.box_pos, hmmm
 
 \subsubsection{[[Frame.update_line()]]}
 
@@ -3697,7 +3701,7 @@ let update_line top_window frame repr_string y =
           graphic.Xdraw.draw_string
             (x+frame.frm_xpos) (y+frame.frm_ypos)
             repr_string (repr.repr_pos+offset) len
-            repr.repr_attr;
+            repr.box_attr;
           iter (x+len) 0 tail
     else
         graphic.Xdraw.draw_string 

@@ -149,7 +149,7 @@ type color = string
 type line =
   { 
     mutable position : int;
-    mutable representation : repr list;
+    mutable representation : box list;
     mutable repr_len : int;
     mutable repr_string : string;
     mutable items : (*WX_text.*)item array;
@@ -157,14 +157,16 @@ type line =
     mutable line_hlt : int;
   }
 
-  and repr =
-    { repr_line_pos: int;
-      repr_line_len: int;
-      repr_pos: int;
-      repr_size: int;
-      mutable repr_attr: attribute;
-      repr_charsize: int;
-     }
+  and box = { 
+    box_pos : position;   (* pos of box in Text.t string *)
+    box_len : int;   (* len of box in Text.t string *)
+
+    mutable box_attr : int;    (* common attribute *)
+    box_charsize : int; (* common size *)
+
+    repr_pos : int;  (* pos of repbox in representation string *)
+    repr_size : int;
+   }
   
   and item =
     String of item_attr list * int

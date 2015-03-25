@@ -281,11 +281,11 @@ let point_to_cursor buf point =
     match reprs with
       [] -> 0
     | repr :: tail ->
-        if repr.Text.repr_line_pos > xpos then
+        if repr.Text.box_pos > xpos then
           iter tail
         else
-          repr.Text.repr_pos + repr.Text.repr_charsize * 
-            (xpos - repr.Text.repr_line_pos)
+          repr.Text.repr_pos + repr.Text.box_charsize * 
+            (xpos - repr.Text.box_pos)
   in
   iter line.Text.representation
 (*e: function Frame.point_to_cursor *)
@@ -303,10 +303,10 @@ let cursor_to_point frame x y =
       [] -> default
     | repr :: tail -> 
         if repr.repr_size > x then
-          repr.repr_line_pos + x / repr.repr_charsize
+          repr.box_pos + x / repr.box_charsize
         else
           iter (x - repr.repr_size) tail 
-            (repr.repr_line_pos + repr.repr_line_len)
+            (repr.box_pos + repr.box_len)
   in
   let x = iter (x+frame.frm_x_offset+line_repr.repr_offset) 
     line_repr.repr_reprs 0 in
@@ -331,7 +331,7 @@ let update_line top_window frame repr_string y =
           graphic.Xdraw.draw_string
             (x+frame.frm_xpos) (y+frame.frm_ypos)
             repr_string (repr.repr_pos+offset) len
-            repr.repr_attr;
+            repr.box_attr;
           iter (x+len) 0 tail
     else
         graphic.Xdraw.draw_string 
@@ -373,14 +373,14 @@ let set_cursor frame =
             frame.frm_cursor.[0] <- ' '
         | repr :: tail ->
             let point_x = point_col text point in
-            if repr.repr_line_pos <= point_x &&
-              repr.repr_line_pos + repr.repr_line_len > point_x then
+            if repr.box_pos <= point_x &&
+              repr.box_pos + repr.box_len > point_x then
               let pos =
-                repr.repr_pos + repr.repr_charsize * 
-                (point_x - repr.repr_line_pos)
+                repr.repr_pos + repr.box_charsize * 
+                (point_x - repr.box_pos)
               in
               frame.frm_cursor.[0] <- line.repr_string.[pos];
-              frame.frm_cursor_attr <- repr.repr_attr;
+              frame.frm_cursor_attr <- repr.box_attr;
             else
               iter tail
       in
@@ -540,7 +540,7 @@ let update top_window frame =
         end 
         (*e: [[Frame.update()]] redraw, if frm_force_restart *)
         else begin
-          goto_point text start point;
+          Text.goto_point text start point;
           (*s: [[Frame.update()]] redraw, update frm_y_offset again *)
           frame.frm_y_offset <- - height / 2;
           let start_c = point_to_cursor buf start in

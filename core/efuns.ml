@@ -190,7 +190,7 @@ and frame  =
     (*s: [[Efuns.frame]] other fields *)
     mutable frm_redraw : bool;    
     (*x: [[Efuns.frame]] other fields *)
-    mutable frm_table : line_repr array;
+    mutable frm_table : frm_line array;
     (*x: [[Efuns.frame]] other fields *)
     (* ?? *)
     mutable frm_x_offset : int;
@@ -253,18 +253,18 @@ and status =
 (*e: type Efuns.status *)
 
 (*s: type Efuns.line_repr *)
-and line_repr =
+and frm_line =
   { 
     mutable repr_line : Text.line;
     mutable repr_y : int;
     mutable repr_x : int;
 
     mutable repr_offset : int;
-    mutable repr_reprs : Text.repr list;
+    mutable repr_reprs : Text.box list;
 
     (* previous values, so can check if the line changed *)
     mutable repr_prev_offset : int;
-    mutable repr_prev_reprs : Text.repr list;
+    mutable repr_prev_reprs : Text.box list;
 
   } 
 (*e: type Efuns.line_repr *)
