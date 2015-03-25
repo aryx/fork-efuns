@@ -229,6 +229,16 @@ let find_buffer_opt name =
   try Some (Hashtbl.find (Efuns.location()).loc_buffers name)
   with Not_found -> None
 
+(*s: constant Ebuffer.help_buffer_content *)
+let help_buffer_content = 
+"Welcome to Efuns, a small demo editor written in Ocaml.
+
+Fabrice Le Fessant
+PARA/SOR Project
+INRIA Rocquencourt
+"
+(*e: constant Ebuffer.help_buffer_content *)
+
 (*s: function Ebuffer.default *)
 let default name =
   try
@@ -236,12 +246,7 @@ let default name =
   with Not_found ->
     let str = 
       if name = "*help*" 
-      then "Welcome to Efuns, a small demo editor written in Ocaml.
-
-Fabrice Le Fessant
-PARA/SOR Project
-INRIA Rocquencourt
-"
+      then help_buffer_content
       else ""
     in
     create name None (Text.create str) (Keymap.create ())
@@ -436,8 +441,7 @@ let get_binding buf keylist =
       );
     (*e: [[Ebuffer.get_binding()]] if partial map *)
     !binding
-  with
-    Exit -> !binding
+  with Exit -> !binding
 (*e: function Ebuffer.get_binding *)
 
 (*s: function Ebuffer.message *)

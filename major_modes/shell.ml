@@ -226,7 +226,7 @@ let interpret frame s =
   | "l" -> builtin_l frame
 
   | "s" -> builtin_cd frame ".."
-  | "cd" -> builtin_cd frame "/home/pad"
+  | "cd" -> builtin_cd frame Utils.homedir
   | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
 
   | _ when s =~ "v[ ]+\\(.*\\)" -> builtin_v frame (Common.matched1 s)

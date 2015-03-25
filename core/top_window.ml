@@ -139,16 +139,16 @@ let cursor_off top_window =
 (*s: function Top_window.update_display *)
 let update_display () =
   (Efuns.location()).top_windows |> List.iter (fun top_window ->
-      top_window.window |> Window.iter (fun frm -> 
-        Frame.update top_window frm
-      );
-      (match top_window.top_mini_buffers with
-       | [] -> ()
-       | frm :: _ -> Frame.update top_window frm
-      );
-      cursor_on top_window;
-      let graphic = Window.backend top_window in
-      graphic.Xdraw.update_display();
+     top_window.window |> Window.iter (fun frm -> 
+       Frame.update top_window frm
+     );
+     (match top_window.top_mini_buffers with
+      | [] -> ()
+      | frm :: _ -> Frame.update top_window frm
+     );
+     cursor_on top_window;
+     let graphic = Window.backend top_window in
+     graphic.Xdraw.update_display();
   ) 
 (*e: function Top_window.update_display *)
 
@@ -323,10 +323,8 @@ let wrap_item top_window (n,f) =
         
 (*s: function Top_window.handler *)
 let handler top_window event =
-  let location = Efuns.location() in
-  Mutex.lock location.loc_mutex;
-  try
-    (match event with
+  Efuns.with_lock (fun () ->
+    match event with
     (*s: [[Top_window.handler()]] match event cases *)
     | Xtypes.XTKeyPress (modifiers, _s, keysym) ->
         handle_key top_window modifiers keysym
@@ -354,11 +352,7 @@ let handler top_window event =
         clear_message top_window;
         update_display ()
     (*e: [[Top_window.handler()]] match event cases *)
-    );
-    Mutex.unlock location.loc_mutex;
-  with e ->   
-    Mutex.unlock location.loc_mutex;
-    raise e
+  )
 (*e: function Top_window.handler *)
 
 

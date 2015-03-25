@@ -46,13 +46,10 @@ let create mini up_window xpos ypos width height =
 (*e: function Window.create *)
 
 (*s: function Window.top *)
-let top window = 
-  let rec iter window =
-    match window.win_up with
-      TopWindow top_window -> top_window
-    | Window window -> iter window
-  in
-  iter window
+let rec top window = 
+  match window.win_up with
+  | TopWindow top_window -> top_window
+  | Window window -> top window
 (*e: function Window.top *)
 
 (*s: function Window.iter *)

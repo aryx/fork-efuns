@@ -58,8 +58,8 @@ and action_name = string
 
 (*s: type Efuns.generic_action *)
 and generic_action =
-  BufferAction of (buffer -> unit)
 | FrameAction of action
+| BufferAction of (buffer -> unit)
 (*e: type Efuns.generic_action *)
 
 (*s: type Efuns.mod_ident *)
@@ -157,7 +157,7 @@ and frame  =
     mutable frm_ypos : int;
     
     mutable frm_width : int;
-    mutable frm_height : int;
+    mutable frm_height : int; (* including status line *)
 
     (*s: [[Efuns.frame]] current position fields *)
     (* insert point *)
@@ -276,7 +276,7 @@ and top_window =
     mutable top_name : string;
 
     mutable top_width : int;
-    mutable top_height : int;
+    mutable top_height : int; (* including minibuffer line *)
 
     mutable window : window;
 
@@ -299,7 +299,7 @@ and window =
     mutable win_ypos : int;
 
     mutable win_width : int;
-    mutable win_height : int;
+    mutable win_height : int; (* including status line *)
 
     (*s: [[Efuns.window]] other fields *)
     mutable win_down : window_down;
@@ -467,6 +467,11 @@ let add_hook hook_var hook =
   let tail = try get_global hook_var with _ -> [] in
   set_global hook_var (hook :: tail)
 (*e: function Efuns.add_hook *)
+
+let with_lock f =
+  let loc = location () in
+  Mutex.lock loc.loc_mutex;
+  Common.finalize f (fun () -> Mutex.unlock loc.loc_mutex)
   
 (*************************************************************************)
                (*      Initialization      *)
@@ -515,7 +520,7 @@ let _ =
 
 (* used in some major mode *)
 (*s: constant Efuns.font *)
-let font = define_option ["font"] "" string_option "fixed"
+let font = define_option ["font"] "" string_option "Menlo 18"
 (*e: constant Efuns.font *)
 
   
@@ -569,7 +574,8 @@ let define_action action_name action_fun =
   (try 
       Hashtbl.find actions action_name |> ignore;
       error "action \"%s\" defined twice" action_name;
-    with _ -> ());
+   with _ -> ()
+  );
   (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (FrameAction action_fun)
 (*e: function Efuns.define_action *)
@@ -580,7 +586,8 @@ let define_buffer_action action_name action_fun =
   (try 
       Hashtbl.find actions action_name |> ignore;
       error "action \"%s\" defined twice" action_name;
-    with _ -> ());
+   with _ -> ()
+  );
   (*e: sanity check action defined twice *)
   Hashtbl.add actions action_name (BufferAction action_fun)
 (*e: function Efuns.define_buffer_action *)
@@ -596,8 +603,8 @@ let get_action action =
 (*s: function Efuns.execute_action *)
 let execute_action action = 
   match (get_action action) with
-    BufferAction f -> (fun frame -> f frame.frm_buffer)
   | FrameAction f -> f 
+  | BufferAction f -> (fun frame -> f frame.frm_buffer)
 (*e: function Efuns.execute_action *)
 
 (*s: function Efuns.execute_buffer_action *)

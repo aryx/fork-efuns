@@ -15,7 +15,7 @@ open Options
 open Efuns
 
 (*s: constant Efuns.init_files *)
-let init_files = ref []
+let initial_files = ref []
 (*e: constant Efuns.init_files *)
 (*s: constant Efuns.init_frames *)
 let init_frames = ref []
@@ -23,12 +23,9 @@ let init_frames = ref []
 (*s: constant Efuns.displayname *)
 let displayname = ref ""
 (*e: constant Efuns.displayname *)
-(*s: constant Efuns.no_init *)
-let no_init = ref false
-(*e: constant Efuns.no_init *)
 (*s: constants Main options *)
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 25
+let height = define_option ["height"] "" int_option 45
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 (*e: constants Main options *)
@@ -91,15 +88,13 @@ let main () =
 
   Arg.parse [
     (*s: [[main()]] command line options *)
-      "-q", Arg.Set no_init,": Don't load init files";
+    "-width"  , Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
+    "-height" , Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+    "-fg"     , Arg.String(fun s -> fg_opt := Some s), "<color>: Foreground color";
+    "-bg"     , Arg.String(fun s -> bg_opt := Some s), "<color>: Background color";
+    "-font"   , Arg.String(fun s -> font_opt := Some s), "<font>: Font name";
     (*x: [[main()]] command line options *)
-    "-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
-    "-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
-    "-fg", Arg.String(fun s -> fg_opt := Some s), "<color>: Foreground color";
-    "-bg", Arg.String(fun s -> bg_opt := Some s), "<color>: Background color";
-    "-font", Arg.String(fun s -> font_opt := Some s), "<font>: Font name";
-    (*x: [[main()]] command line options *)
-    "-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+    "-d",        Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
     "--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
     (*x: [[main()]] command line options *)
     "-check", Arg.Set check, ": only for testing";
@@ -123,7 +118,7 @@ let main () =
     ), " for debugging";
     (*e: [[main()]] command line options *)
    ]
-   (fun name -> init_files := name :: !init_files) 
+   (fun name -> initial_files := name :: !initial_files) 
    usage_str;
   (*s: [[main()]] set options *)
   (*s: [[main()]] set options filename *)
@@ -131,14 +126,16 @@ let main () =
     (try Utils.find_in_path (Utils.homedir :: !!Efuns.load_path) ".efunsrc" 
      with _ -> Filename.concat Utils.homedir ".efunsrc"
     );
-  (try Options.init () with _ -> ());
+  (try Options.init () 
+   with exn -> Efuns.error "init error, exn = %s" (Common.exn_to_s exn)
+  );
   (*e: [[main()]] set options filename *)
   (*s: [[main()]] adjust options *)
-  (match !width_opt with None -> () | Some color -> width =:= color);
+  (match !width_opt  with None -> () | Some color -> width =:= color);
   (match !height_opt with None -> () | Some color -> height =:= color);
-  (match !fg_opt with None -> () | Some color -> foreground =:= color);
-  (match !bg_opt with None -> () | Some color -> background =:= color);
-  (match !font_opt with None -> () | Some color -> font =:= color);
+  (match !fg_opt     with None -> () | Some color -> foreground =:= color);
+  (match !bg_opt     with None -> () | Some color -> background =:= color);
+  (match !font_opt   with None -> () | Some color -> font =:= color);
   (*e: [[main()]] adjust options *)
   (*e: [[main()]] set options *)
 
@@ -187,7 +184,7 @@ let main () =
   (*e: [[main()]] misc initializations *)
 
   (*s: [[main()]] run the UI *)
-  Graphics_efuns.init !init_files;
+  Graphics_efuns.init !initial_files;
   (*e: [[main()]] run the UI *)
   ()
 (*e: function Main.main *)

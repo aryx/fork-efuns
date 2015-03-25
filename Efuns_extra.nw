@@ -159,6 +159,11 @@ and keys = key list
 <<function Efuns.exec_hooks>>
 
 <<function Efuns.add_hook>>
+
+let with_lock f =
+  let loc = location () in
+  Mutex.lock loc.loc_mutex;
+  Common.finalize f (fun () -> Mutex.unlock loc.loc_mutex)
   
 (*************************************************************************)
                (*      Initialization      *)
@@ -475,7 +480,7 @@ let to_string tree =
   end
 @
 
-
+% ?? -> <>
 <<function Text.clean_text>>=
 let clean_text text =
   if not text.text_clean then
@@ -486,6 +491,13 @@ let clean_text text =
     String.fill string (size - gsize) gsize '\000';
     text.text_clean <- true
 @
+
+<<[[Text.text]] other fields>>=
+mutable text_clean : bool;
+@
+% useful for?
+
+
 
 <<function Text.blit>>=
 let blit str tree point len =
@@ -1339,6 +1351,8 @@ open Options
 let find_buffer_opt name =
   try Some (Hashtbl.find (Efuns.location()).loc_buffers name)
   with Not_found -> None
+
+<<constant Ebuffer.help_buffer_content>>
 
 <<function Ebuffer.default>>
       
@@ -4407,11 +4421,6 @@ open Efuns
 <<constant Std_efunsrc.global_map>>
 <<constant Std_efunsrc.interactives_map>>
 
-<<constant Std_efunsrc.c_h>>
-<<constant Std_efunsrc.c_x>>
-<<constant Std_efunsrc.c_c>>
-<<constant Std_efunsrc.n_5>>
-
 <<toplevel Std_efunsrc._2>>
     
 <<function Std_efunsrc.init_global_map>>
@@ -4477,7 +4486,6 @@ open Efuns
 <<constant Efuns.init_files>>
 <<constant Efuns.init_frames>>
 <<constant Efuns.displayname>>
-<<constant Efuns.no_init>>
 <<constants Main options>>
 <<constant Main.highlight_color>>
 

@@ -24,7 +24,7 @@ for Caml, C/C++, and TeX/Noweb
 - removed many opens
 - use global for location
 - reorg main.ml to use less toplevels and pack in a main() function
-- use more List.iter, Common.do_option, |>
+- use more List.iter, Common.do_option, |>, Common.with_lock
 - factorize color in pl_colors.ml
 
 * Version 018:

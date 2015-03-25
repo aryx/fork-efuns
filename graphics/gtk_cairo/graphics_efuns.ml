@@ -218,7 +218,7 @@ let init2 init_files =
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
   (*-------------------------------------------------------------------*)
 
-  location.loc_height <- 45;
+  (* location.loc_height <- 45; *)
   (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create () in
   (* the *bindings* buffer *)
@@ -238,15 +238,15 @@ let init2 init_files =
 
   let cr = Cairo_lablgtk.create px#pixmap in
   let layout = Pango_cairo.create_layout cr in
-  let desc = Pango.Font.from_string 
+  let desc = Pango.Font.from_string location.loc_font
 (*
     "Sans Bold 25" 
     "Fixed Bold 32"
     "Monaco 16"
     "Menlo 19"
     "Courier 19"
-*)
     "Menlo 18"
+*)
   in
   Pango.Font.set_weight desc `ULTRABOLD; 
   Pango.Layout.set_font_description layout desc;

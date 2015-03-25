@@ -34,4 +34,7 @@ val print_key: Efuns.key -> string
 val all_bindings: unit -> string
 
 (* common prefixes *)
+val c_x: Efuns.key
 val c_c: Efuns.key
+val c_h: Efuns.key
+val n_5: Efuns.key

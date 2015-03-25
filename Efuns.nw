@@ -178,10 +178,10 @@ Here are other candidates that were considered but ultimately discarded:
 % uemacs, on of them, used by torvalds, is 20 000 LOC so not bad
 \item qemacs
 % size?
-\end{itemize}
-
+\item mg
 %mg, micro gnu emacs, 20 000 LOC
 %http://homepage.boetes.org/software/mg/
+\end{itemize}
 
 % see Editor.nw for more choices
 
@@ -264,20 +264,17 @@ the main author of Efuns.
 
 \section{Text editor principles}
 
-% "Emacs is the extensible, customizable, self-documenting real-time
-% display editor."
-
 % as opposed to ed, can actually see the content! and update it
 % and get feedback in real-time. wysiwyg!
 
 % navigating in file (fast, different granularities), random access!
 % editing (inserting/deleting/moving/cut-copy-paste/transposing)
-% searching, replacing
+% search/replace
 
 % efficient keyboard! combination of keys, macros! M-x, C-x o
 % everything with keyboard!
 
-% undo! multi steps undo! redo! sessions so macro-level undo
+% undo! multi steps undo! redo! sessions so have also "macro-level" undo
 % multi files/buffers, opening/saving/killing switching
 % multi windows (a kind of window manager!) so can see different parts at
 %  the same time
@@ -285,11 +282,16 @@ the main author of Efuns.
 % specialised "major" modes: color!, font, indentation, navigating
 %todo: semantic editing/visualizing!
 
-% "everything is a buffer" need to implement a shell/terminal, well
+% "Emacs is the extensible, customizable, self-documenting real-time
+% display editor."
+
+% "everything is a buffer!"
+% When I needed to implement a shell/terminal, well
 % a lot of what a terminal does is managing input, let user edit
 % the line, and this is for free in a buffer! want to move around
 % at the end of the line, bol, again, free or have all the building blocks!
-% also everything is a buffer with a customizable keymap! so can
+% Want completion, can reuse dabbrev!
+% Also everything is a buffer with a customizable keymap! so can
 % have TAB, return, C-a, etc means different things in different modes!
 
 %emacs:
@@ -332,7 +334,7 @@ Options:
 %top_window.ml: Communication with the Xterm widget
 %keymap.ml: Functions to handle keyboard mappings
 %minibuffer.ml: Minibuffer functions
-%misc.ml: Useful functions
+%%NOMORE misc.ml: Useful functions
 %str2.ml: Addons to the Str module (replace_matched)
 %
 %Functions:
@@ -353,8 +355,8 @@ Options:
 %
 %Major modes:
 %ocaml_mode.mll: The Ocaml mode
-%  ocamlc.ml:  Functions to read .cmi data from the Ocaml compiler
-%  printtyp.ml: The type pretty printer from the Ocaml compiler
+%?? WHERE? ocamlc.ml:  Functions to read .cmi data from the Ocaml compiler
+%?? WHERE?  printtyp.ml: The type pretty printer from the Ocaml compiler
 %tex_mode.mll: The TeX mode
 %c_mode.mll: The C mode
 %lisp_mode.ml: The Lisp mode (is this really useful ? yes, I use GWM as
@@ -373,6 +375,7 @@ Options:
 
 %TODO: figure: show graphical window first! so can see concepts
 % of frames, status line, minibuffer (which don't have status lines), etc!
+% can actually show 2 windows, so can see 2 status line.
 
 % the world (Location) that encapsulates
 %  Windows/Frames, with then Buffers, with then Text inside
@@ -381,6 +384,7 @@ Options:
 % right focused frame, taking itself the frame in parameter
 %
 % redisplay engine (actually incremental line oriented display)
+% triggered after each event.
 
 \section{Trace of a file loading}
 
@@ -397,6 +401,8 @@ Options:
 % and after the event loop it will trigger a display() for all
 % frames that then will realize it needs to redraw itself
 % because the point is now far away.
+% Cool thing is that the code of M->  just has to care about
+% moving a point, the rest is then automatic!
 
 
 %###############################################################################
@@ -542,7 +548,7 @@ let nbre_lines tree =
   let text = tree.tree_text in
   text.text_nlines - 2
 @
-
+%less: rename? french name?
 
 <<function Text.mk_line_with_pos>>=
 let mk_line_with_pos pos = 
@@ -696,7 +702,7 @@ and frame  =
     mutable frm_ypos : int;
     
     mutable frm_width : int;
-    mutable frm_height : int;
+    mutable frm_height : int; (* including status line *)
 
     <<[[Efuns.frame]] current position fields>>
     <<[[Efuns.frame]] window fields>>
@@ -732,10 +738,11 @@ mutable buf_shared : int; (* number of frames for that buffer *)
 
 <<function Frame.create_without_top>>=
 let create_without_top window mini buf =
+  let text = buf.buf_text in
 
-  let frm_start = Text.dup_point buf.buf_text buf.buf_start in
-  let point     = Text.dup_point buf.buf_text buf.buf_point in
-  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in (* ?? *)
+  let frm_start = Text.dup_point text buf.buf_start in
+  let point     = Text.dup_point text buf.buf_point in
+  let frm_end   = Text.dup_point text buf.buf_start in (* ?? *)
 
   buf.buf_shared <- buf.buf_shared + 1;
 
@@ -806,7 +813,7 @@ and window =
     mutable win_ypos : int;
 
     mutable win_width : int;
-    mutable win_height : int;
+    mutable win_height : int; (* including status line *)
 
     <<[[Efuns.window]] other fields>>
   } 
@@ -822,13 +829,13 @@ mutable frm_window : window;
 mutable win_down : window_down;
 mutable win_up : window_up;
 @
-%subtle: up is to allow access to upper window, was used
+%subtle: up is to allow access to upper window; it was used
 % for access top_location (but now I use a global), but
 % I think it's still useful for Window.next to know
-% what is upper and do things. Also in a multiple toplevel windows
-% context, we need that I think because we can't use
+% what is up and do things. Also in a multiple toplevel windows
+% context, we need that I think, because we can't use
 % a single top_window global.
-% we will see later than the action type takes a frame as a parameter, and
+% We will see later than the action type takes a frame as a parameter, and
 % so each action must be able from a frame to access all 
 % necessary information, hence the win_up field too.
 
@@ -853,13 +860,10 @@ and window_up =
 
 
 <<function Window.top>>=
-let top window = 
-  let rec iter window =
-    match window.win_up with
-      TopWindow top_window -> top_window
-    | Window window -> iter window
-  in
-  iter window
+let rec top window = 
+  match window.win_up with
+  | TopWindow top_window -> top_window
+  | Window window -> top window
 @
 % often used then to access the location, but
 % not sure why you need that since the location
@@ -901,14 +905,13 @@ and top_window =
     mutable top_name : string;
 
     mutable top_width : int;
-    mutable top_height : int;
+    mutable top_height : int; (* including minibuffer line *)
 
     mutable window : window;
 
     <<[[Efuns.top_window]] other fields>>
   } 
 @
-% top_height includes minibuffer line.
 % diff with window? no xpos, ypos here
 % old: used to have a top_windows with an 's' but a bit weird,
 %  and also to use top_windows where really it's windows,
@@ -941,8 +944,9 @@ mutable top_active_frame : frame;
 %The location grants access to all other structures inside the editor. This
 %is done to easily save the editor state after a session (or to move it
 %from one editor to another)."
-
-% called location in LeFessant's terminology. Why? jocaml ancestry?
+% called location in LeFessant's terminology. Why? jocaml ancestry I think.
+% There is a "loc" keyword in jocaml, and efuns was originally a demo
+% for jocaml.
 
 
 %(* the world *)
@@ -976,6 +980,7 @@ type location =
 % *)  
 %dead: mutable loc_counter : int;
 %old: was loc_windows, but it's really top_windows
+%todo: put buffer_order stack here?
 
 % head of list is current?
 
@@ -1020,13 +1025,13 @@ Hashtbl.add (Efuns.location()).loc_buffers name buf;
 %TODO: figure: showing relations between all of that.
 % it's a bit complicated because of many fields that
 % introduce cycles (mutually recursive data structures, e.g.
-% with location pointers, top_window pointer),
+% with top_window pointer, with map with action),
 % so does not only go down, it also can go back up.
 % but maybe can restrict to the down path.
 
-% not that it's hard to remove the recursion.
-% for instance the keybinding have an action which takes a frame
-% as a parameter, so binding and frame are mutually recursive, as
+% note that it's hard to remove the recursion.
+% For instance the keybinding have an action which takes a frame
+% as a parameter, so bindings and frames are mutually recursive, as
 % well as with buffer, window, and even top_window we
 % need to go up sometimes. and a top window needs to know
 % the active frame.
@@ -1036,8 +1041,8 @@ Hashtbl.add (Efuns.location()).loc_buffers name buf;
 <<type Efuns.action>>=
 and action = frame -> unit
 @
-% is made abstract in .mli
-% this actually causes many types to be mutually recursive, 
+% Is abstract in the .mli.
+% This actually causes many types to be mutually recursive, 
 % because the keyboard handling stuff depends on frame and buffers
 % and vice versa.
 %less: could instead use a string here? that would remove
@@ -1047,7 +1052,8 @@ and action = frame -> unit
 
 % actions will be called from the keyboard event dispatcher.
 % the only thing passed is the frame/window where the event
-% occured, but sometimes an action then need to have globa
+% occured (the active frame with the cursor), but sometimes an action
+% then need to have global
 % effects (in which case it can use location()), or the upper
 % frames/windows, which means we need from the frame to be able
 % to access lots of information, hence the introduction of
@@ -1055,13 +1061,13 @@ and action = frame -> unit
 
 <<type Efuns.generic_action>>=
 and generic_action =
-  BufferAction of (buffer -> unit)
 | FrameAction of action
+| BufferAction of (buffer -> unit)
 @
 % really need this BufferAction subtelity?
 % We need a buffer action when something is done only once, e.g.
 % setting up the major mode is a buffer operation and buffer property!
-% A frame is more temporary
+% A frame is more temporary.
 
 <<global Efuns.actions>>=
 let (actions : (action_name, generic_action) Hashtbl.t) = 
@@ -1089,7 +1095,8 @@ let define_buffer_action action_name action_fun =
 (try 
     Hashtbl.find actions action_name |> ignore;
     error "action \"%s\" defined twice" action_name;
-  with _ -> ());
+ with _ -> ()
+);
 @
 %old had a sepater print_newline() but useless I think
 
@@ -1109,8 +1116,8 @@ let get_action action =
 <<function Efuns.execute_action>>=
 let execute_action action = 
   match (get_action action) with
-    BufferAction f -> (fun frame -> f frame.frm_buffer)
   | FrameAction f -> f 
+  | BufferAction f -> (fun frame -> f frame.frm_buffer)
 @
 %note: it used to be let execute_action action frame = ...
 % but then with that execute action return a closure each time,
@@ -1132,6 +1139,8 @@ let dummy_action frame = ()
 @
 
 
+%todo: I think we can merge this with the keyboard definitions
+% at least add to interactive here.
 <<toplevel Std_efunsrc._1>>=
 let _ =
   <<actions definitions>>
@@ -1226,7 +1235,6 @@ define_action "buffer_menu"  Buffer_menu.menu;
 <<misc actions>>=
 define_action "revert_buffer" Complexe.reload;
 define_action "open_display" Complexe.open_display;
-(* C-x map *)
 define_action "change_font"  Complexe.change_font;
 @  
 %(*  define_action "load_library" load_library;*)
@@ -1284,6 +1292,7 @@ and mod_ident =
 | MetaMap
 | ControlMetaMap
 @
+% enough I think
 
 %(*Xtypes.*)
 <<type Efuns.keySym>>=
@@ -1316,7 +1325,7 @@ buf_map : map;
 <<[[Efuns.location]] other fields>>=
 loc_map : map;
 @
-
+% will see 2 other maps later, for major and minor modes.
 
 <<function Ebuffer.get_binding>>=
 let get_binding buf keylist =
@@ -1332,8 +1341,7 @@ let get_binding buf keylist =
     );
     <<[[Ebuffer.get_binding()]] if partial map>>
     !binding
-  with
-    Exit -> !binding
+  with Exit -> !binding
 @
 % see Keymap.get_binding later *)
 
@@ -1354,7 +1362,8 @@ if buf.buf_map_partial then
 @
 
 
-
+%less: maybe there are too many way to define key,
+% add_binding, add_global_key, interactive, etc.
 
 
 <<function Keymap.add_global_key>>=
@@ -1365,10 +1374,13 @@ let add_global_key = fun prefix string action ->
 let add_local_key buf = 
   interactive buf.buf_map 
 @
-% each major mode can then use those primitives to offer
-% a specialized experience!
+% each major mode can also use that to offer a specialized experience!
+% (or use add_major_key).
 
-% add_local_key | add_global_key | ...-> <>?
+% what about add_major_key? add_minor_key? will see later.
+
+
+% add_local_key | add_global_key | add_major_key | add_minor_key -> <>?
 <<function Keymap.interactive>>=
 let interactive map =
  fun keylist name f ->
@@ -1424,18 +1436,6 @@ let c_x = (ControlMap, Char.code 'x')
 let c_c = (ControlMap, Char.code 'c')
 @
 
-\ifallcode
-%less: delete, redundant
-<<constant Std_efunsrc.c_h>>=
-let c_h = (ControlMap, Char.code 'h')
-@
-<<constant Std_efunsrc.c_x>>=
-let c_x = (ControlMap, Char.code 'x') 
-@
-<<constant Std_efunsrc.c_c>>=
-let c_c = (ControlMap, Char.code 'c') 
-@
-\fi
 
 <<[[global_map]] initial entries>>=
 (* -------------------------------------------------------- *)
@@ -1451,6 +1451,7 @@ let c_c = (ControlMap, Char.code 'c')
 (* -------------------------------------------------------- *)
 (* Editing *)
 (* -------------------------------------------------------- *)
+
 (* ------------- *)
 (* Inserting *)
 (* ------------- *)
@@ -1467,15 +1468,12 @@ let c_c = (ControlMap, Char.code 'c')
 (* Transforming *)
 (* ---------------------- *)
 <<transforming keys>>
-(* ---------------------- *)
-(* Replacing *)
-(* ---------------------- *)
-<<replacing keys>>
 
 (* -------------------------------------------------------- *)
-(* Searching *)
+(* Search/replace *)
 (* -------------------------------------------------------- *)
 <<searching keys>>
+<<replacing keys>>
 
 (* -------------------------------------------------------- *)
 (* Undoing *)
@@ -1536,7 +1534,6 @@ let c_c = (ControlMap, Char.code 'c')
 
 
 
-
 % main -> Efuns.init -> List.iter f start_hooks -> <> 
 %  (as ?? ?<- add_start_hook(<>) <- Std_efunsrc._5)
 <<function Std_efunsrc.init_global_map>>=
@@ -1565,13 +1562,14 @@ let init_global_map () =
 
 \section{[[Vars]]}
 
-% actually have polymorphic variables!
-% trick using phantom types.
+% actually have polymorphic variables! trick using phantom types.
 % See appendix (or put more of local.ml here?)
 
 % why need variables in emacs? to configure things! e.g. level
 % of indentation for this major mode. You can overwrite also
-% global settings. Configurable editor!
+% global settings. Configurable editor! Easy way to add
+% properties to buffers. Otherwise we would have to have
+% a huge efuns.ml with too many fields in buffer, frame, etc.
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_vars : Local.vars;
@@ -1584,7 +1582,7 @@ loc_vars : Local.vars;
 % does not read good, looks like local variables when really
 % it's global variables here, loc = location, and Local = ???
 
-% different scopes:
+% different scopes again:
 % - global
 % - buffer
 % - major mode
@@ -1626,12 +1624,12 @@ let get_var buf var =
 
 % was not there originally
 <<misc keys>>=
-[c_h; NormalMap, Char.code 'v'], "get_variable";
+[c_h; NormalMap, Char.code 'v'], "describe_variable";
 @
 
 % can't understand yet everything (so move it later??)
 <<function Complex.get_variable>>=
-let get_variable frame = 
+let describe_variable frame = 
   Select.select frame "get_variable : " variable_hist "" 
     (all_variables frame)
     (fun s -> s) 
@@ -1645,23 +1643,25 @@ let get_variable frame =
             Local.print (Efuns.location()).loc_vars variable)))
 @
 <<misc actions>>=
-define_action "get_variable"  Complexe.get_variable;
+define_action "describe_variable"  Complexe.describe_variable;
 @
-%less: rename? describe_variable?
+% was called get_variable
 
 \section{Hooks}
 % essentially a set of list refs
 
 % different kind of hooks:
+% - variable hook, below, use variables that we've just seen above.
 % - startup hooks (add_start_hook() and start_hooks[] and Efuns.init())
 %    will see in main chapter.
-% - variable hook, below
 % - named hooks, for frame a buffer actions, so take a string (action name)
 %   for parameter. why not does not take the action function directly?
 %   because want to possibly save such hooks configuration in a file
 
 % again, configurable editor spirit so hooks to customize things,
 % place where you can plug a customization at certain code points
+
+\subsection{Variable hooks}
 
 <<function Efuns.exec_hooks>>=
 let exec_hooks hooks arg =
@@ -1676,7 +1676,6 @@ let add_hook hook_var hook =
   let tail = try get_global hook_var with _ -> [] in
   set_global hook_var (hook :: tail)
 @
-
 
 
 % example:
@@ -1695,7 +1694,8 @@ exec_hooks hooks buf;
 
 
 
-
+\subsection{Named action hooks}
+% named so can be put in configuration file
 
 <<function Frame.exec_named_hooks>>=
 let exec_named_hooks hooks frame =
@@ -1760,11 +1760,13 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 
 
 
+\subsection{Startup hooks}
+
 \chapter{[[main()]]}
 
 % there is actually no really main() in ocaml, instead
 % a list of toplevels doing stuff (in the order of the linking)
-%update: but I reorged the code to gather stuff in a main(), more readable
+%update: but I reorged the code to gather stuff in a main(), more readable.
 
 <<toplevel Main._>>=
 let _ =
@@ -1775,7 +1777,7 @@ let _ =
 % init files are not the .efunsrc, but the first set of files to open
 % so when do efuns foo.c => init_files = ref ["foo.c"]
 <<constant Efuns.init_files>>=
-let init_files = ref []
+let initial_files = ref []
 @
 % should be used in Graphic.init
 % efuns is a multi-file editor!
@@ -1787,7 +1789,7 @@ let main () =
   Arg.parse [
     <<[[main()]] command line options>>
    ]
-   (fun name -> init_files := name :: !init_files) 
+   (fun name -> initial_files := name :: !initial_files) 
    usage_str;
   <<[[main()]] set options>>
 
@@ -1816,7 +1818,9 @@ Options.filename :=
   (try Utils.find_in_path (Utils.homedir :: !!Efuns.load_path) ".efunsrc" 
    with _ -> Filename.concat Utils.homedir ".efunsrc"
   );
-(try Options.init () with _ -> ());
+(try Options.init () 
+ with exn -> Efuns.error "init error, exn = %s" (Common.exn_to_s exn)
+);
 @
 
 
@@ -1830,13 +1834,13 @@ let save_options frame =
 
 
 
-<<constant Efuns.no_init>>=
-let no_init = ref false
-@
-% dead?
-<<[[main()]] command line options>>=
-  "-q", Arg.Set no_init,": Don't load init files";
-@
+%<<constant Efuns.no_init>>=
+%let no_init = ref false
+%@
+%% dead?
+%<<[[main()]] command line options>>=
+%  "-q", Arg.Set no_init,": Don't load init files";
+%@
 
 \section{Arguments processing}
 
@@ -1845,10 +1849,11 @@ let no_init = ref false
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 25
+let height = define_option ["height"] "" int_option 45
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
+%pad: was 25 for height
 %pad: was white
 %pad: was black
 %<<constant Efuns.height>>=
@@ -1858,8 +1863,9 @@ let background= define_option ["background"] "" string_option "DarkSlateGray"
 
 % used in some major modes
 <<constant Efuns.font>>=
-let font = define_option ["font"] "" string_option "fixed"
+let font = define_option ["font"] "" string_option ""Menlo 18"
 @
+%pad: was fixed
 
 
 <<constants Main.xxx_opt>>=
@@ -1871,11 +1877,11 @@ let font_opt = ref None
 @
 
 <<[[main()]] command line options>>=
-"-width", Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
-"-height", Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
-"-fg", Arg.String(fun s -> fg_opt := Some s), "<color>: Foreground color";
-"-bg", Arg.String(fun s -> bg_opt := Some s), "<color>: Background color";
-"-font", Arg.String(fun s -> font_opt := Some s), "<font>: Font name";
+"-width"  , Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
+"-height" , Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
+"-fg"     , Arg.String(fun s -> fg_opt := Some s), "<color>: Foreground color";
+"-bg"     , Arg.String(fun s -> bg_opt := Some s), "<color>: Background color";
+"-font"   , Arg.String(fun s -> font_opt := Some s), "<font>: Font name";
 @
 % gymnastic with intermediate xxx_opt because options filename
 % is set later because need first to process load_path
@@ -1883,11 +1889,11 @@ let font_opt = ref None
 % the values passed by the command line, hence this intermediate
 
 <<[[main()]] adjust options>>=
-(match !width_opt with None -> () | Some color -> width =:= color);
+(match !width_opt  with None -> () | Some color -> width =:= color);
 (match !height_opt with None -> () | Some color -> height =:= color);
-(match !fg_opt with None -> () | Some color -> foreground =:= color);
-(match !bg_opt with None -> () | Some color -> background =:= color);
-(match !font_opt with None -> () | Some color -> font =:= color);
+(match !fg_opt     with None -> () | Some color -> foreground =:= color);
+(match !bg_opt     with None -> () | Some color -> background =:= color);
+(match !font_opt   with None -> () | Some color -> font =:= color);
 @
 
 
@@ -1898,7 +1904,7 @@ let font_opt = ref None
 let displayname = ref ""
 @
 <<[[main()]] command line options>>=
-"-d", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+"-d",        Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
 "--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
 @
 
@@ -1966,6 +1972,7 @@ let init_efuns (location : location) =
   hooks |> List.iter (fun f -> f ())
 
 @
+% List.rev because add_hooks add in head, see below
 %old: used to be in efuns.ml, but better in main.ml
 
 
@@ -1994,7 +2001,7 @@ let _ =
 \section{The graphical window}
 
 <<[[main()]] run the UI>>=
-Graphics_efuns.init !init_files;
+Graphics_efuns.init !initial_files;
 @
 %less: could just take ()
 
@@ -2005,18 +2012,18 @@ Graphics_efuns.init !init_files;
 % <<function Graphics_efuns.init>>=
 %  Graphics_xxx.open_graphics
 %  ...
-%  let top_window = Top_window.create location display in
+%  let top_window = Top_window.create display in
 %  ...
-%  top_window.graphics <- Some (backend location Graphic_xxx.context); 
+%  top_window.graphics <- Some (backend Graphic_xxx.context ...); 
 %  ...
-%  Top_window.update_display location;
+%  Top_window.update_display ();
 %  ...
 %  event loop
 %    ...
 %    Top_window.handler top_window () evt
 %    ...
 % @
-
+% where the handler also call at some point Top_window.update_display;
 
 % will see main functions called from init below
 
@@ -2054,6 +2061,7 @@ let create () =
   top_window
 @
 % a few notes:
+% - top_active_frame!
 % - loc_height -1 for the minibuffer.
 % - top_mini_buffers is empty at first, the minibuffer is created
 %   on the fly when do M-x, but before that it does not really
@@ -2084,12 +2092,7 @@ let default name =
   with Not_found ->
     let str = 
       if name = "*help*" 
-      then "Welcome to Efuns, a small demo editor written in Ocaml.
-
-Fabrice Le Fessant
-PARA/SOR Project
-INRIA Rocquencourt
-"
+      then help_buffer_content
       else ""
     in
     create name None (Text.create str) (Keymap.create ())
@@ -2111,6 +2114,15 @@ INRIA Rocquencourt
 %"
 %*)
 
+<<constant Ebuffer.help_buffer_content>>=
+let help_buffer_content = 
+"Welcome to Efuns, a small demo editor written in Ocaml.
+
+Fabrice Le Fessant
+PARA/SOR Project
+INRIA Rocquencourt
+"
+@
 
 
 % Top_window.create -> ()
@@ -2172,23 +2184,23 @@ let create_at_top xpos ypos width height =
 <<function Top_window.update_display>>=
 let update_display () =
   (Efuns.location()).top_windows |> List.iter (fun top_window ->
-      top_window.window |> Window.iter (fun frm -> 
-        Frame.update top_window frm
-      );
-      (match top_window.top_mini_buffers with
-       | [] -> ()
-       | frm :: _ -> Frame.update top_window frm
-      );
-      cursor_on top_window;
-      let graphic = Window.backend top_window in
-      graphic.Xdraw.update_display();
+     top_window.window |> Window.iter (fun frm -> 
+       Frame.update top_window frm
+     );
+     (match top_window.top_mini_buffers with
+      | [] -> ()
+      | frm :: _ -> Frame.update top_window frm
+     );
+     cursor_on top_window;
+     let graphic = Window.backend top_window in
+     graphic.Xdraw.update_display();
   ) 
 @
 % Why have a list of top_windows? because of Emacs "Frames" supported by
 %  efuns?
-%less: get rid of top_windows, just have one
 % Why have a list for minibuffer?
 % and Frame.update only the first minibuffer? 
+%still?: get rid of top_windows, just have one?
 
 % minibuffer is a frame!
 % status line? it's attached to a frame actually
@@ -2196,6 +2208,9 @@ let update_display () =
 
 % will see Frame.update() later
 % will see cursor_on() later
+
+% we call the graphic backend update_display so it knows
+% things need to be refreshed (queue the pixmap widget)
 
 \section{The event loop}
 
@@ -2221,21 +2236,14 @@ let update_display () =
 
 <<function Top_window.handler>>=
 let handler top_window event =
-  let location = Efuns.location() in
-  Mutex.lock location.loc_mutex;
-  try
-    (match event with
+  Efuns.with_lock (fun () ->
+    match event with
     <<[[Top_window.handler()]] match event cases>>
-    );
-    Mutex.unlock location.loc_mutex;
-  with e ->   
-    Mutex.unlock location.loc_mutex;
-    raise e
+  )
 @
 %old: was using top_window.top_location.loc_mutex in 2 cases of 3
 % more consistent to always use the same form
-%less: could do with_lock () instead of this style
-
+%pad: I factorized code with with_lock
 
 
 \subsection{[[Top_window.handle_key()]]}
@@ -2277,8 +2285,12 @@ let handle_key top_window modifiers keysym =
 
   update_display ()
 @
+% seen top_active_frame buffer!
 % update_display() again!! each key down trigger a redisplay action
 % will see try_map() later in keyboard section
+%old: the handle_key_start used to take unit, but now it takes a frame,
+% so can do more complex stuff, e.g. in eshell to try to go
+% to the end of the buffer if type regular key
 
 
 <<constant Top_window.keypressed>>=
@@ -2294,7 +2306,7 @@ let handle_key_start_hook = Local.create_abstr "handle_key_start_hook"
 <<constant Top_window.handle_key_end_hook>>=
 let handle_key_end_hook = Local.create_abstr "handle_key_end_hook"
 @
-% who uses that?
+% who uses that? handle_key_start_hook can be used by eshell
 
 
 <<constant Top_window.meta>>=
@@ -2311,8 +2323,7 @@ match () with
 | _ when diff = !meta -> MetaMap
 | _ -> ControlMetaMap
 @
-
-
+% I don't handle Esc-x for now.
 
 % so for now remains Frame.update(), and Top_window.try_map()
 % which are big pieces to understand that we have not seen.
@@ -2325,16 +2336,16 @@ match () with
 %Text.representation text line --> string (buffer or copy) * int (position)
 %Text.items line -> item array
 
+%old:
 %module Text = struct
 %    type t = text
 %    type text = t
 %    type l = line
 %    type line = l
-%      
 %    let representation tree line = line.repr_string, line.position
 %    let items tree line = line.items
 %  end
-%todo: delete all the preceding stuff, legacy WX_Text stuff
+%todo: but can delete all the preceding stuff, legacy WX_Text stuff
 
 \section{Gap buffer}
 
@@ -2381,9 +2392,6 @@ match () with
 
 % already seen Text.text_size, Text.text_string in core DS chapter
 
-% let gap_end = gpoint.pos + text.gsize in
-
-
 
 
 <<[[Text.text]] gap fields>>=
@@ -2394,6 +2402,9 @@ mutable gsize : int;
 %old: used to have gpoint and gline fields, but it was confusing.
 % better to merge in a gpoint that is actually a Text.gpoint.
 % A gpoint should be a point ... not a position.
+
+% code looks like that then:
+% let gap_end = gpoint.pos + text.gsize in
 
 <<function Text.size>>=
 let size tree = 
@@ -2409,21 +2420,21 @@ let size tree =
 
 % seen Point type in core DS chapter with Buffer type.
 
+% they are used as "cursors" that goes through the text.
+
 <<misc actions>>=
-define_action "get_position" Complexe.get_pos;
+define_action "describe_position" Complexe.describe_position;
 @
 <<[[interactives_map]] initial entries>>=
-"get_position";
+"describe_position";
 @
 
 <<function Complex.get_pos>>=
-let get_pos frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  let top_window = Window.top frame.frm_window in
-  Top_window.message top_window 
-    (Printf.sprintf "Char position %d" (Text.get_position text point))
+let describe_position frame =
+  Top_window.message 
+    (Window.top frame.frm_window)
+    (Printf.sprintf "Char position %d" 
+       (Text.get_position frame.frm_buffer.buf_text frame.frm_point))
 @
 
 <<function Text.get_position>>=
@@ -2456,15 +2467,12 @@ let new_point tree =
   text.text_points <- p :: text.text_points;
   p
 @
-% rename new_point?
+%old: was called add_point, but clearer new_point
 
 <<function Text.dup_point>>=
 let dup_point tree point =
   let text = tree.tree_text in      
-  let p = {
-      pos = point.pos;
-      line = point.line
-    } in
+  let p = { pos = point.pos; line = point.line } in
   text.text_points <- p :: text.text_points;
   p
 @
@@ -2479,14 +2487,14 @@ let remove_point tree p =
         else point :: points
     ) []
 @
-
+%note: use of == not =
 
 <<function Text.goto_point>>=
 let goto_point _text p1 p2 =
   p1.pos <- p2.pos;
   p1.line <- p2.line
 @
-
+% order of argument is not super good, not very readable.
 
 %\section{The gap}
 
@@ -2499,6 +2507,7 @@ let move_point_to tree point p =
   point.line <- y
 @
 % find_xy???
+%less: rename move_point_to_pos
 
 \section{Lines}
 
@@ -2532,6 +2541,8 @@ let point_col tree point =
 
 \subsection{Line internal representation}
 
+% text.text_newlines is array of Text.line, where have seen
+% already the line.position which is the bol pos.
 
 <<[[Text.line]] representation fields>>=
 mutable representation : repr list;
@@ -2554,6 +2565,7 @@ and repr =
     repr_charsize : int; (* common size *)
   } 
 @
+% rename? box_repr ?
 
 <<[[Text.line]] representation fields>>=
 mutable repr_string : string;
@@ -2561,6 +2573,7 @@ mutable repr_string : string;
 % this a cache of the cache :)
 
 
+%TODO: put cancel_repr here
 
 
 \subsection{Line attributes}
@@ -2647,7 +2660,6 @@ move_gpoint_to text pos;
 @
 
 
-
 % low_insert | low_delete | clean_text  -> <>
 <<function Text.move_gpoint_to>>=
 let move_gpoint_to text pos =
@@ -2664,7 +2676,7 @@ let move_gpoint_to text pos =
       <<[[Text.move_gpoint_to()]] when pos is after gpos>>
     end
 @
-
+%text_clean? see clean_text()
 
 
 <<[[Text.move_gpoint_to()]] when pos is before gpos>>=
@@ -2674,8 +2686,7 @@ let (delta_line,_) =
 String.blit  text.text_string pos   text.text_string (pos + gsize)   delta;
 Array.blit   text.text_attrs  pos   text.text_attrs  (pos + gsize)   delta;
 for i = gline - delta_line + 1 to gline do
-  text.text_newlines.(i).position
-    <- text.text_newlines.(i).position + gsize 
+  text.text_newlines.(i).position <- text.text_newlines.(i).position + gsize 
 done;
 text.text_points |> List.iter (fun p -> 
   if p.pos > pos && p.pos <= gpos 
@@ -2693,8 +2704,7 @@ let (delta_line,_) =
 String.blit  text.text_string gap_end   text.text_string gpos   delta;
 Array.blit   text.text_attrs  gap_end   text.text_attrs  gpos   delta;
 for i = gline + 1 to gline + delta_line do
-  text.text_newlines.(i).position
-    <- text.text_newlines.(i).position - gsize
+  text.text_newlines.(i).position <- text.text_newlines.(i).position - gsize
 done;
 text.text_points |> List.iter (fun p -> 
     if p.pos >= gap_end && p.pos <= pos 
@@ -2709,10 +2719,6 @@ text.gpoint <- { pos = pos - gsize; line = gline + delta_line }
 
 
 
-<<[[Text.text]] other fields>>=
-mutable text_clean : bool;
-@
-% useful for?
 
 \subsection{extending the gap}
 
@@ -2802,7 +2808,7 @@ in
 Array.blit 
   text.text_newlines 0 
   new_cache 0 
- old_size;
+  old_size;
 text.text_newlines <- new_cache;
 @
 % not sure needs this subtle line_modified = - 1 
@@ -2831,9 +2837,8 @@ let low_delete tree pos len =
   let str = String.sub text.text_string gap_end len in
 
   let (nbr_newlines, _nbr_chars) = Utils.count_char str '\n' in
-  if nbr_newlines > 0 then 
-  begin
-      <<[[Text.low_delete()]] adjust newlines when str contained newlines>>
+  if nbr_newlines > 0 then begin
+    <<[[Text.low_delete()]] adjust newlines when str contained newlines>>
   end;
   text.text_points |> List.iter (fun p -> 
       if p.pos > gap_end + len 
@@ -2852,7 +2857,7 @@ let low_delete tree pos len =
 %            p.point_x <- (p.point_x - nbr_chars) + 
 %              (if nbr_newlines > 0 then gchars else 0);*)
 %         (* p.pos_x <- gchars; *)
-
+% no need extend the gap this time.
 
 <<[[Text.low_delete()]] adjust newlines when str contained newlines>>=
 Array.blit 
@@ -2931,7 +2936,7 @@ let set_char_attr tree point attr =
     text.text_attrs.(pos) <- attr
   end
 @
-% cancel_repr? a cache?
+% cancel_repr? a cache.
 
 
 <<function Text.set_attr>>=
@@ -3162,13 +3167,13 @@ let file_menu = define_option ["file_menu"] "" (list_option string2_option) []
 
 <<[[Std_efunsrc]] file menu setup>>=
 if !!Top_window.file_menu = [] then begin
-    Top_window.file_menu =:=    [
-      "Open File", "load_buffer";
-      "Save Buffer", "save_buffer";
-      <<file menu entries>>
-      "", "";
-      "Quit", "exit";
-    ]
+  Top_window.file_menu =:=    [
+    "Open File", "load_buffer";
+    "Save Buffer", "save_buffer";
+    <<file menu entries>>
+    "", "";
+    "Quit", "exit";
+  ]
   end;
 @
 % cool, everything is configurable :)
@@ -3490,7 +3495,7 @@ Top_window.help_menu := [|
 % called for each frame (including the minibuffer's frame when in use)
 <<function Frame.update>>=
 let update top_window frame =
-  let buf =  frame.frm_buffer in
+  let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
   let point = frame.frm_point in
@@ -6345,6 +6350,8 @@ let iter f window =
   in
   iter1 window
 @
+
+% the active window??
 
 \section{Creating sub windows}
 

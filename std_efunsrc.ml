@@ -241,16 +241,15 @@ let _ =
   (*s: misc actions *)
   define_action "revert_buffer" Complexe.reload;
   define_action "open_display" Complexe.open_display;
-  (* C-x map *)
   define_action "change_font"  Complexe.change_font;
   (*x: misc actions *)
-  define_action "get_variable"  Complexe.get_variable;
+  define_action "describe_variable"  Complexe.describe_variable;
   (*x: misc actions *)
   define_action "check_file" Complexe.check_file;
   (*x: misc actions *)
   define_action "save_options" save_options;
   (*x: misc actions *)
-  define_action "get_position" Complexe.get_pos;
+  define_action "describe_position" Complexe.describe_position;
   (*x: misc actions *)
   define_action "unset_attr" Simple.unset_attr;
   (*x: misc actions *)
@@ -299,18 +298,7 @@ let interactives_map = define_option ["interactives_map"] ""
   []
 (*e: constant Std_efunsrc.interactives_map *)
 
-(*s: constant Std_efunsrc.c_h *)
-let c_h = (ControlMap, Char.code 'h')
-(*e: constant Std_efunsrc.c_h *)
-(*s: constant Std_efunsrc.c_x *)
-let c_x = (ControlMap, Char.code 'x') 
-(*e: constant Std_efunsrc.c_x *)
-(*s: constant Std_efunsrc.c_c *)
-let c_c = (ControlMap, Char.code 'c') 
-(*e: constant Std_efunsrc.c_c *)
-(*s: constant Std_efunsrc.n_5 *)
-let n_5 = (NormalMap, Char.code '5') 
-(*e: constant Std_efunsrc.n_5 *)
+open Keymap (* c_xxx *)
 
 (*s: toplevel Std_efunsrc._2 *)
 let _ = 
@@ -363,6 +351,7 @@ let _ =
         (* -------------------------------------------------------- *)
         (* Editing *)
         (* -------------------------------------------------------- *)
+
         (* ------------- *)
         (* Inserting *)
         (* ------------- *)
@@ -404,15 +393,9 @@ let _ =
 
         [MetaMap, XK.xk_q], "fill_paragraph";
         (*e: transforming keys *)
-        (* ---------------------- *)
-        (* Replacing *)
-        (* ---------------------- *)
-        (*s: replacing keys *)
-        [MetaMap, Char.code '%'], "query_replace_string";
-        (*e: replacing keys *)
 
         (* -------------------------------------------------------- *)
-        (* Searching *)
+        (* Search/replace *)
         (* -------------------------------------------------------- *)
         (*s: searching keys *)
         [ControlMap, Char.code 's'], "isearch_forward";
@@ -420,6 +403,9 @@ let _ =
         [MetaMap, Char.code 's'], "isearch_forward_regexp";
         [MetaMap, Char.code 'r'], "isearch_backward_regexp";
         (*e: searching keys *)
+        (*s: replacing keys *)
+        [MetaMap, Char.code '%'], "query_replace_string";
+        (*e: replacing keys *)
 
         (* -------------------------------------------------------- *)
         (* Undoing *)
@@ -503,7 +489,7 @@ let _ =
         [NormalMap, XK.xk_Insert], "overwrite_mode";
         [c_x; NormalMap, Char.code 'F'], "change_font";
         (*x: misc keys *)
-        [c_h; NormalMap, Char.code 'v'], "get_variable";
+        [c_h; NormalMap, Char.code 'v'], "describe_variable";
         (*x: misc keys *)
         [c_x; ControlMap, Char.code 'c'], "exit"; 
         (*x: misc keys *)
@@ -533,7 +519,7 @@ let _ =
   if !!interactives_map = [] then begin
       interactives_map =:= List.map (fun x -> x, x ) [
         (*s: [[interactives_map]] initial entries *)
-        "get_position";
+        "describe_position";
         (*x: [[interactives_map]] initial entries *)
         "save_options";
         (*"load_library";*)
@@ -617,17 +603,17 @@ let init_global_map () =
 let _ =
   (*s: [[Std_efunsrc]] file menu setup *)
   if !!Top_window.file_menu = [] then begin
-      Top_window.file_menu =:=    [
-        "Open File", "load_buffer";
-        "Save Buffer", "save_buffer";
-        (*s: file menu entries *)
-        "Kill Buffer", "kill_buffer";
-        (*x: file menu entries *)
-        "Compile", "compile";
-        (*e: file menu entries *)
-        "", "";
-        "Quit", "exit";
-      ]
+    Top_window.file_menu =:=    [
+      "Open File", "load_buffer";
+      "Save Buffer", "save_buffer";
+      (*s: file menu entries *)
+      "Kill Buffer", "kill_buffer";
+      (*x: file menu entries *)
+      "Compile", "compile";
+      (*e: file menu entries *)
+      "", "";
+      "Quit", "exit";
+    ]
     end;
   (*e: [[Std_efunsrc]] file menu setup *)
   (*s: [[Std_efunsrc]] edit menu setup *)

@@ -261,13 +261,11 @@ let goto_char frame =
 
 
 (*s: function Complex.get_pos *)
-let get_pos frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  let top_window = Window.top frame.frm_window in
-  Top_window.message top_window 
-    (Printf.sprintf "Char position %d" (Text.get_position text point))
+let describe_position frame =
+  Top_window.message 
+    (Window.top frame.frm_window)
+    (Printf.sprintf "Char position %d" 
+       (Text.get_position frame.frm_buffer.buf_text frame.frm_point))
 (*e: function Complex.get_pos *)
 
 (*s: function Complex.mark_at_point *)
@@ -357,7 +355,7 @@ let set_global_variable frame =
 (*e: function Complex.set_global_variable *)
   
 (*s: function Complex.get_variable *)
-let get_variable frame = 
+let describe_variable frame = 
   Select.select frame "get_variable : " variable_hist "" 
     (all_variables frame)
     (fun s -> s) 

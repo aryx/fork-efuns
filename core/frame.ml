@@ -167,10 +167,11 @@ let dummy_mode = Ebuffer.new_major_mode "" []
   
 (*s: function Frame.create_without_top *)
 let create_without_top window mini buf =
+  let text = buf.buf_text in
 
-  let frm_start = Text.dup_point buf.buf_text buf.buf_start in
-  let point     = Text.dup_point buf.buf_text buf.buf_point in
-  let frm_end   = Text.dup_point buf.buf_text buf.buf_start in (* ?? *)
+  let frm_start = Text.dup_point text buf.buf_start in
+  let point     = Text.dup_point text buf.buf_point in
+  let frm_end   = Text.dup_point text buf.buf_start in (* ?? *)
 
   buf.buf_shared <- buf.buf_shared + 1;
 
@@ -476,7 +477,7 @@ let update_table top_window frame =
 
 (*s: function Frame.update *)
 let update top_window frame =
-  let buf =  frame.frm_buffer in
+  let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
   let point = frame.frm_point in

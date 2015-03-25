@@ -34,7 +34,7 @@ val change_font : Efuns.action
 
 val set_local_variable : Efuns.action
 val set_global_variable : Efuns.action
-val get_variable : Efuns.action
+val describe_variable : Efuns.action
 
 val all_variables : Efuns.frame -> 'a -> string list
 
@@ -53,7 +53,7 @@ val open_display : 'a -> 'b
 val goto_line : Efuns.action
 val goto_char : Efuns.action
 
-val get_pos : Efuns.action
+val describe_position : Efuns.action
 
 val mark_at_point : Efuns.action
 

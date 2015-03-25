@@ -137,9 +137,9 @@ type text = {
     (*s: [[Text.text]] other fields *)
     mutable text_points : point list;
     (*x: [[Text.text]] other fields *)
-    mutable text_clean : bool;
-    (*x: [[Text.text]] other fields *)
     mutable text_readonly : bool;
+    (*x: [[Text.text]] other fields *)
+    mutable text_clean : bool;
     (*e: [[Text.text]] other fields *)
   } 
 (*e: type Text.text *)
@@ -308,8 +308,7 @@ let move_gpoint_to text pos =
       String.blit  text.text_string pos   text.text_string (pos + gsize)   delta;
       Array.blit   text.text_attrs  pos   text.text_attrs  (pos + gsize)   delta;
       for i = gline - delta_line + 1 to gline do
-        text.text_newlines.(i).position
-          <- text.text_newlines.(i).position + gsize 
+        text.text_newlines.(i).position <- text.text_newlines.(i).position + gsize 
       done;
       text.text_points |> List.iter (fun p -> 
         if p.pos > pos && p.pos <= gpos 
@@ -325,8 +324,7 @@ let move_gpoint_to text pos =
       String.blit  text.text_string gap_end   text.text_string gpos   delta;
       Array.blit   text.text_attrs  gap_end   text.text_attrs  gpos   delta;
       for i = gline + 1 to gline + delta_line do
-        text.text_newlines.(i).position
-          <- text.text_newlines.(i).position - gsize
+        text.text_newlines.(i).position <- text.text_newlines.(i).position - gsize
       done;
       text.text_points |> List.iter (fun p -> 
           if p.pos >= gap_end && p.pos <= pos 
@@ -463,7 +461,7 @@ let low_insert tree pos str =
         Array.blit 
           text.text_newlines 0 
           new_cache 0 
-         old_size;
+          old_size;
         text.text_newlines <- new_cache;
         (*e: [[Text.low_insert()]] grow newlines *)
       end;
@@ -522,15 +520,14 @@ let low_delete tree pos len =
   let str = String.sub text.text_string gap_end len in
 
   let (nbr_newlines, _nbr_chars) = Utils.count_char str '\n' in
-  if nbr_newlines > 0 then 
-  begin
-      (*s: [[Text.low_delete()]] adjust newlines when str contained newlines *)
-      Array.blit 
-        text.text_newlines (gline + nbr_newlines + 1)
-        text.text_newlines (gline + 1) 
-       (text.text_nlines - gline - nbr_newlines - 1);
-      text.text_nlines <- text.text_nlines - nbr_newlines;
-      (*e: [[Text.low_delete()]] adjust newlines when str contained newlines *)
+  if nbr_newlines > 0 then begin
+    (*s: [[Text.low_delete()]] adjust newlines when str contained newlines *)
+    Array.blit 
+      text.text_newlines (gline + nbr_newlines + 1)
+      text.text_newlines (gline + 1) 
+     (text.text_nlines - gline - nbr_newlines - 1);
+    text.text_nlines <- text.text_nlines - nbr_newlines;
+    (*e: [[Text.low_delete()]] adjust newlines when str contained newlines *)
   end;
   text.text_points |> List.iter (fun p -> 
       if p.pos > gap_end + len 
@@ -727,10 +724,7 @@ let new_point tree =
 (*s: function Text.dup_point *)
 let dup_point tree point =
   let text = tree.tree_text in      
-  let p = {
-      pos = point.pos;
-      line = point.line
-    } in
+  let p = { pos = point.pos; line = point.line } in
   text.text_points <- p :: text.text_points;
   p
 (*e: function Text.dup_point *)
