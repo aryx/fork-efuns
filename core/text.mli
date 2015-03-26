@@ -145,7 +145,7 @@ val compare : t -> point -> point -> int
 type line =
   { 
     mutable position : int;
-    mutable representation : box list;
+    mutable boxes : box list;
     mutable repr_string : string;
     mutable repr_len : int;
     mutable line_modified : int; (* first modified position *)
@@ -154,13 +154,11 @@ type line =
   and box = { 
     box_pos : position;   (* pos of box in Text.t string *)
     box_len : int;   (* len of box in Text.t string *)
-
     mutable box_attr : int;    (* common attribute *)
+
     box_charsize : int; (* common size *)
-
     box_size : int;
-
-    repr_pos : int;  (* pos of repbox in representation string *)
+    box_pos_repr : int;  (* pos of repbox in representation string *)
    }
   
 val dummy_line : line

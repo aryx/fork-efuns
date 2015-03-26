@@ -284,10 +284,10 @@ let point_to_cursor buf point =
         if repr.Text.box_pos > xpos then
           iter tail
         else
-          repr.Text.repr_pos + repr.Text.box_charsize * 
+          repr.Text.box_pos_repr + repr.Text.box_charsize * 
             (xpos - repr.Text.box_pos)
   in
-  iter line.Text.representation
+  iter line.Text.boxes
 (*e: function Frame.point_to_cursor *)
 
 (*s: function Frame.cursor_to_point *)
@@ -328,7 +328,7 @@ let display_line top_window frame repr_string y =
       | box :: tail ->
           let len = min (frame.frm_width-x) (box.box_size - offset) in
           graphic.Xdraw.draw_string (x+frame.frm_xpos) (y+frame.frm_ypos)
-            repr_string (box.repr_pos+offset) len
+            repr_string (box.box_pos_repr+offset) len
             box.box_attr;
           iter (x+len) 0 tail
     else
@@ -376,7 +376,7 @@ let set_cursor frame =
             if repr.box_pos <= point_x &&
               repr.box_pos + repr.box_len > point_x then
               let pos =
-                repr.repr_pos + repr.box_charsize * 
+                repr.box_pos_repr + repr.box_charsize * 
                 (point_x - repr.box_pos)
               in
               frame.frm_cursor.[0] <- line.repr_string.[pos];
@@ -426,7 +426,7 @@ let update_table top_window frame =
   (* update frame representation *)
   let rec iter_line y n line =
     if y < height then
-      let reprs = List.rev line.representation in
+      let reprs = List.rev line.boxes in
       if y >= 0 then
         begin
           let line_repr = frame.frm_table.(y) in
@@ -444,8 +444,8 @@ let update_table top_window frame =
     if x < line.repr_len then
       match reprs with
       | repr :: tail ->
-          if repr.repr_pos <= x && 
-            repr.repr_pos + repr.box_size > x then
+          if repr.box_pos_repr <= x && 
+            repr.box_pos_repr + repr.box_size > x then
             if y = height then
               goto_line text frame.frm_end n 
             else
@@ -455,8 +455,8 @@ let update_table top_window frame =
                     let line_repr = frame.frm_table.(y) in
                     line_repr.frm_text_line <- line;
                     line_repr.repr_y <- n;
-                    line_repr.repr_x <- repr.repr_pos;
-                    line_repr.repr_offset <- x - repr.repr_pos;
+                    line_repr.repr_x <- repr.box_pos_repr;
+                    line_repr.repr_offset <- x - repr.box_pos_repr;
                     line_repr.frmline_boxes <- reprs;
                   end;
                 iter_repr (x+frame.frm_cutline) (y+1) n line reprs

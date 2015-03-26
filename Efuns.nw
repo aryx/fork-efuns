@@ -14,13 +14,16 @@
 %thx to LP, changed for the better a few things:
 % - better decomposition than simple.ml, complex.ml, good TOC
 % - removed deadcode (frm_force_point, frm_force_cursor, loc_counter, 
-%    resname, buf_history, line_hlt)
-% - cleaner separation between point and position, no more
+%    resname, buf_history, line_hlt and its huge compute_representation code)
+% - cleaner conventions and field names between point and position, no more
 %   let point = point.point uglyness
 % - use global for location instead of all those fields
+% - removed useless opti around representation, and rename line_repr, 
+%   repr_line; use boxes instead. representation was used for too many
+%   things.
 
 %thx to codemap/codegraph/scheck:
-% - TODO use cg to reduce backward deps, introduce globals.c, utils.c,
+% - SEMI use cg to reduce backward deps, introduce globals.c, utils.c,
 %   (harder to understand non layered code)
 % - SEMI use scheck to remove deadcode, dead prototypes, useless export
 %   or mv as forward decl
@@ -32,6 +35,7 @@
 %thx to this manual, better understand Emacs:
 % - the minibuffer is really a buffer/frame like the other :)
 % - the modeline is actually associated with each window
+% - representation string vs original string, tabs and ^M display handling
 % - TODO how the mark get changed when you do big move?
 % - TODO the global vs local variables, I always get confused about
 %    local variables
@@ -161,10 +165,9 @@ a text editor.
 Why? Because I think it makes you a better programmer if
 you fully understand how things work under the hood.
 
-% chose efuns, an emacs clone, simple, elegant. Also different language
-% than previous books.
-% Written in ocaml! more high level, and while
-% you want to write a kernel in C, it makes more sense for an app 
+% I chose efuns, an emacs clone, simple, elegant. Also different language
+% than previous books. Written in ocaml! more high level than C, and while
+% you want to write a kernel in C, it makes more sense for an app
 % to use a higher level language like ocaml!
 
 Here are other candidates that were considered but ultimately discarded:
@@ -175,9 +178,9 @@ Here are other candidates that were considered but ultimately discarded:
 %todo: look at emacs lisp manual, and emacs manual to see the concepts
 \item microemacs
 % the source of many forks apparently, so maybe the code is cleaner?
-% uemacs, on of them, used by torvalds, is 20 000 LOC so not bad
+% uemacs, one of them, used by torvalds, is 20 000 LOC so not bad
 \item qemacs
-% size?
+% size? unicode support! complex html/css visualization, multi fonts
 \item mg
 %mg, micro gnu emacs, 20 000 LOC
 %http://homepage.boetes.org/software/mg/
@@ -438,7 +441,7 @@ type text = {
 %todo: actually the real question is why you need text_string?
 % because the line will not contain the content? they will just
 % be indexed over text_string? except for repr_string but this
-% is only used as a cache for what is displayed on the screen?
+% is only used as a "cache" for what is displayed on the screen.
 
 
 <<type Text.position>>=
@@ -556,9 +559,9 @@ let mk_line_with_pos pos =
   {
    position = pos; 
 
-   representation = []; 
-   repr_len = 0; 
+   boxes = []; 
    repr_string = ""; 
+   repr_len = 0; 
    line_modified = 0; 
   }
 @
@@ -1753,13 +1756,13 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 @
 % use
 
-
-
-
-
-
-
 \subsection{Startup hooks}
+
+% will see them soon, below.
+
+
+
+
 
 \chapter{[[main()]]}
 
@@ -2263,7 +2266,7 @@ let handle_key top_window modifiers keysym =
   let frame = top_window.top_active_frame in
   let buf = frame.frm_buffer in
 
-  clean_display ();
+  clean_display (); (* set cursor off *)
   clear_message top_window;
 
   exec_hooks (try Efuns.get_var buf handle_key_start_hook with _ -> []) frame;
@@ -2332,19 +2335,7 @@ match () with
 
 \chapter{Text Managment}
 
-%Text.representation text line --> string (buffer or copy) * int (position)
-%Text.items line -> item array
-
-%old:
-%module Text = struct
-%    type t = text
-%    type text = t
-%    type l = line
-%    type line = l
-%    let representation tree line = line.repr_string, line.position
-%    let items tree line = line.items
-%  end
-%todo: but can delete all the preceding stuff, legacy WX_Text stuff
+% text.ml
 
 \section{Gap buffer}
 
@@ -2540,15 +2531,22 @@ let point_col tree point =
 
 % text.text_newlines is array of Text.line, where have seen
 % already the line.position which is the bol pos.
+% here is another field:
 
 <<[[Text.line]] representation fields>>=
-mutable representation : box list;
+mutable boxes : box list;
 @
+%old: the field was called representation, and box was called line_repr 
+% (or repr_line), but I prefer to keep the representation term
+%  for the actual repr_string!
 % this a cache? because at the beginning it's empty, see
-% mk_line_with_pos.
+% mk_line_with_pos(). It's not a cache really, but it's computed
+% on demand for the line we actually want to display (in which case
+% we need the line "representation").
 
 % why need that? opti? to avoid sending too many graphic
 % commands? can put every chars using the same attribute together?
+% well we need anyway the repr_string at least, for ^M special display.
 
 <<type Text.repr>>=
 and box = 
@@ -2564,48 +2562,28 @@ and box =
 % so repr -> box, repr_line_pos -> box_pos, repr_line_len -> box_len, etc
 
 
-%XXX
-<<[[Text.box]] other fields>>=
-box_charsize : int; (* common size *)
-box_size : int;
-@
-% for tabs, but also to display special chars like ^M with two
-% chars.
-% for unicode stuff? 
-
-
-
-\subsection{Line representation}
-
-<<[[Text.line]] representation fields>>=
-mutable repr_string : string;
-mutable repr_len : int;
-@
-% this a cache of the cache :)
-%less: but why need that? we have all we need with the index above no?
-% no! this is useful for tabs, ^M, etc
-
-
-
-<<[[Text.box]] other fields>>=
-repr_pos : int;  (* pos of box in representation string *)
-@
-
-
-%TODO: put cancel_repr here
-
-
 \subsection{Characters representation}
+
+% text.text_string is a string, an array of chars where
+% a char is a byte. But while some chars
+% take one "char" space in the display, some special chars
+% have no direct representation, and so to represent them
+% we "cheat", and display them like ^M. Same for tabs (see advanced topics).
+% in which case they take 2 chars!
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_charreprs : string array; (* 256 array *)
 @
+% not char array!
 
 <<[[Ebuffer.create()]] buffer other fields setup>>=
 buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
 @
 
-% 26 letters of the alphabet?
+%less: when need special values? why keep that a buffer property?
+% could share at least?
+
+% 26 letters of the alphabet, but for special chars!
 <<[[Ebuffer.create()]] adjust charreprs>>=
 for i=0 to 25 do
   let s = String.make 2 '^' in
@@ -2614,7 +2592,7 @@ for i=0 to 25 do
 done;
 @
 % ^M, ^R, etc
-
+% 97 = Char.code 'A' ?
 
 <<function Ebuffer.compute_representation>>=
 let compute_representation buf n =
@@ -2622,8 +2600,39 @@ let compute_representation buf n =
 @
 
 
+\subsection{Line string representation}
+
+% really "representation" this time.
+
+<<[[Text.line]] representation fields>>=
+mutable repr_string : string;
+mutable repr_len : int;
+@
+% this is how the line will be represented as a string, which
+% is slighly different than the slice of text_string.
+% this is useful for tabs, ^M, etc
+
+
+
+<<[[Text.box]] other fields>>=
+box_charsize : int; (* common size *)
+box_size : int;
+@
+% for tabs, but also to display special chars like ^M with two chars.
+%later: could be used for unicode stuff? hmmm need to change 
+% how text_string is indexed too then. At least for unicode
+% will see the characters?
+
+<<[[Text.box]] other fields>>=
+box_pos_repr : int;  (* pos of box in representation string *)
+@
+
 
 \subsection{[[Text.compute_representation()]]}
+
+% most important is computing repr_string, and then the boxes
+% which contain the appropriate colors for the different subparts
+% of repr_string.
 
 <<function Text.compute_representation>>=
 (* On devrait reprendre la representation la ou elle est ... *)
@@ -2634,7 +2643,7 @@ let compute_representation tree charreprs n =
     let line = text.text_newlines.(n) in
     if line.line_modified >= 0 then begin
       let (repr_tail, next_pos, repr_pos) = 
-        next_pos_xxx line.line_modified line.representation 
+        next_pos_xxx line.line_modified line.boxes 
       in
       let end_pos = text.text_newlines.(n+1).position - 1 in
       let line_curs = ref (line.position + next_pos) in
@@ -2642,13 +2651,13 @@ let compute_representation tree charreprs n =
       let gpos = text.gpoint.pos in
       let gsize = text.gsize in
       
-      <<[[Text.compure_representation()]] locals>>
+      <<[[Text.compute_representation()]] locals>>
       
-      <<[[Text.compure_representation()]] adjust line_curs if in gap>>
+      <<[[Text.compute_representation()]] adjust line_curs if in gap>>
       while !line_curs < end_pos do
-        <<[[Text.compure_representation()]] loop line_curs to end_pos>>
+        <<[[Text.compute_representation()]] loop line_curs to end_pos>>
       done;
-      <<[[Text.compure_representation()]] adjust line fields after loop>>
+      <<[[Text.compute_representation()]] adjust line fields after loop>>
     end;
     line
 @
@@ -2670,11 +2679,11 @@ let rec next_pos_xxx line_modified boxes =
 
 
 
-<<[[Text.compure_representation()]] loop line_curs to end_pos>>=
+<<[[Text.compute_representation()]] loop line_curs to end_pos>>=
 let charattr = text.text_attrs.(!line_curs) in
 let charrepr =
   let char = Char.code text.text_string.[!line_curs] in
-  <<[[Text.compure_representation()]] compute charrepr, special char>>
+  <<[[Text.compute_representation()]] compute charrepr, special char>>
   else charreprs.(char) 
 in
 let charsize = String.length charrepr in
@@ -2684,19 +2693,19 @@ while !line_curs < end_pos &&
   begin
     let char = Char.code text.text_string.[!line_curs] in
     char_repr := 
-       <<[[Text.compure_representation()]] compute charrepr, special char>>
+       <<[[Text.compute_representation()]] compute charrepr, special char>>
        else charreprs.(char);
     char_size := String.length !char_repr;
 
     !char_size = charsize && charattr = text.text_attrs.(!line_curs)
   end
 do
-  <<[[Text.compure_representation()]] grow repr_string if needed>>
+  <<[[Text.compute_representation()]] grow repr_string if needed>>
   String.blit !char_repr 0 !repr_string !repr_curs charsize;
   repr_curs := !repr_curs + charsize;
   line_curs := !line_curs + 1;
   line_len := !line_len +1;
-  <<[[Text.compure_representation()]] adjust line_curs if reach gap>>
+  <<[[Text.compute_representation()]] adjust line_curs if reach gap>>
 done;
 
 let box = {
@@ -2707,7 +2716,7 @@ let box = {
   box_charsize = charsize;
   box_size = !line_len * charsize;
 
-  repr_pos = !repr_start;
+  box_pos_repr = !repr_start;
 } in
 repr_start := !repr_curs;
 line_start := !line_start + !line_len;
@@ -2718,7 +2727,7 @@ repr_tail := box :: !repr_tail;
 %    !char_size == charsize && charattr == text.text_attrs.(!line_curs)
 
 
-<<[[Text.compure_representation()]] locals>>=
+<<[[Text.compute_representation()]] locals>>=
 let repr_tail = ref repr_tail in
 let line_start = ref next_pos in
 let repr_curs = ref repr_pos in
@@ -2738,7 +2747,7 @@ let repr_string = ref ""
 let repr_size = ref 0
 @
 
-<<[[Text.compure_representation()]] grow repr_string if needed>>=
+<<[[Text.compute_representation()]] grow repr_string if needed>>=
 if !repr_curs + charsize >= !repr_size then begin
     (* find a better heuristic to realloc the line string *)
     let new_len = !repr_size + 
@@ -2757,8 +2766,8 @@ end;
 
 
 
-<<[[Text.compure_representation()]] adjust line fields after loop>>=
-line.representation <- !repr_tail;
+<<[[Text.compute_representation()]] adjust line fields after loop>>=
+line.boxes <- !repr_tail;
 line.line_modified <- -1;
 line.repr_len <- !repr_curs;
 line.repr_string <- !repr_string;
@@ -2767,12 +2776,12 @@ line.repr_string <- !repr_string;
 
 \subsubsection{Gap managment}
 
-<<[[Text.compure_representation()]] adjust line_curs if in gap>>=
+<<[[Text.compute_representation()]] adjust line_curs if in gap>>=
 if !line_curs >= gpos && !line_curs < gpos + gsize 
 then line_curs := !line_curs + gsize;
 @
 
-<<[[Text.compure_representation()]] adjust line_curs if reach gap>>=
+<<[[Text.compute_representation()]] adjust line_curs if reach gap>>=
 if !line_curs = gpos 
 then line_curs := gpos + gsize;
 @
@@ -2814,7 +2823,7 @@ mutable line_modified : int; (* first modified position *)
 | box :: tail ->
     let next_pos = box.box_pos + box.box_len in
     if next_pos < line_modified 
-    then boxes, next_pos, box.repr_pos + box.box_size
+    then boxes, next_pos, box.box_pos_repr + box.box_size
     else next_pos_xxx line_modified tail
 @
 
@@ -3352,7 +3361,7 @@ Window.get_font !!font |> ignore;
 %%dead? seems never set. subsumed by color attribute?
 %
 %
-%<<[[Text.compure_representation()]] handle highlighting>>=
+%<<[[Text.compute_representation()]] handle highlighting>>=
 %(* once we have computed the simple representation, we can add more
 % * complicated things, such as highlighting ... 
 % *)
@@ -3362,17 +3371,17 @@ Window.get_font !!font |> ignore;
 %    (* the line is hightlighted from the beginning to pos the
 %     * line.line_hlt char 
 %     *)
-%      <<[[Text.compure_representation()]] if line_hlt is positive>>
+%      <<[[Text.compute_representation()]] if line_hlt is positive>>
 %| x when x < 0 ->
 %  (* the line is hightlighted from then end to pos line.line_hlt *)
-%      <<[[Text.compure_representation()]] if line_hlt is negative>>
+%      <<[[Text.compute_representation()]] if line_hlt is negative>>
 %| _ -> raise Impossible
 %);
 %@
 %
 %
 %
-%<<[[Text.compure_representation()]] if line_hlt is positive>>=
+%<<[[Text.compute_representation()]] if line_hlt is positive>>=
 %let first = line.line_hlt - 1 in
 %let rec iter list tail =
 %  match list with
@@ -3391,7 +3400,7 @@ Window.get_font !!font |> ignore;
 %                box_pos = repr.box_pos + len;
 %                box_len = repr.box_len - len;
 %                box_size = repr.box_charsize * (repr.box_len - len);
-%                repr_pos = repr.repr_pos + (len*repr.box_charsize)
+%                box_pos_repr = repr.box_pos_repr + (len*repr.box_charsize)
 %              }
 %              ], ({ repr with
 %                    box_len = len;
@@ -3404,10 +3413,10 @@ Window.get_font !!font |> ignore;
 %        before @ after
 %      )
 %in
-%line.representation <- iter line.representation []
+%line.boxes <- iter line.boxes []
 %@
 %
-%<<[[Text.compure_representation()]] if line_hlt is negative>>=
+%<<[[Text.compute_representation()]] if line_hlt is negative>>=
 %let first = line.line_hlt - 1 in
 %let rec iter list tail =
 %  match list with
@@ -3426,7 +3435,7 @@ Window.get_font !!font |> ignore;
 %                box_pos = repr.box_pos+len;
 %                box_len = repr.box_len - len;
 %                box_size = repr.box_charsize * (repr.box_len - len);
-%                repr_pos = repr.repr_pos + (len * repr.box_charsize)
+%                box_pos_repr = repr.box_pos_repr + (len * repr.box_charsize)
 %              }
 %              ], ({ repr with
 %                    box_len = len;
@@ -3439,7 +3448,7 @@ Window.get_font !!font |> ignore;
 %        before @ after
 %       )
 %in
-%line.representation <- iter line.representation []
+%line.boxes <- iter line.boxes []
 %@
 
 
@@ -3983,7 +3992,7 @@ and frm_line =
 % argh, again repr_line that is actually a line.
 %old: was repr_line, but there was also line_repr, so better
 % rename this frm_line.
-% otherwise have line_repr.repr_line.representation.box_pos, hmmm
+% otherwise have line_repr.repr_line.boxes.box_pos, hmmm
 
 
 %XXXX
@@ -4046,7 +4055,7 @@ let update_table top_window frame =
   (* update frame representation *)
   let rec iter_line y n line =
     if y < height then
-      let reprs = List.rev line.representation in
+      let reprs = List.rev line.boxes in
       if y >= 0 then
         begin
           let line_repr = frame.frm_table.(y) in
@@ -4064,8 +4073,8 @@ let update_table top_window frame =
     if x < line.repr_len then
       match reprs with
       | repr :: tail ->
-          if repr.repr_pos <= x && 
-            repr.repr_pos + repr.box_size > x then
+          if repr.box_pos_repr <= x && 
+            repr.box_pos_repr + repr.box_size > x then
             if y = height then
               goto_line text frame.frm_end n 
             else
@@ -4075,8 +4084,8 @@ let update_table top_window frame =
                     let line_repr = frame.frm_table.(y) in
                     line_repr.frm_text_line <- line;
                     line_repr.repr_y <- n;
-                    line_repr.repr_x <- repr.repr_pos;
-                    line_repr.repr_offset <- x - repr.repr_pos;
+                    line_repr.repr_x <- repr.box_pos_repr;
+                    line_repr.repr_offset <- x - repr.box_pos_repr;
                     line_repr.frmline_boxes <- reprs;
                   end;
                 iter_repr (x+frame.frm_cutline) (y+1) n line reprs
@@ -4171,7 +4180,7 @@ let display_line top_window frame repr_string y =
       | box :: tail ->
           let len = min (frame.frm_width-x) (box.box_size - offset) in
           graphic.Xdraw.draw_string (x+frame.frm_xpos) (y+frame.frm_ypos)
-            repr_string (box.repr_pos+offset) len
+            repr_string (box.box_pos_repr+offset) len
             box.box_attr;
           iter (x+len) 0 tail
     else
@@ -8021,7 +8030,7 @@ let tab_size = ref 9
 @
 
 
-<<[[Text.compure_representation()]] compute charrepr, special char>>=
+<<[[Text.compute_representation()]] compute charrepr, special char>>=
 if char = 9 
 then tabreprs.(!repr_curs mod 9)
 @

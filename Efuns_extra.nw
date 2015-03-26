@@ -1395,10 +1395,10 @@ let point_to_cursor buf point =
         if repr.Text.box_pos > xpos then
           iter tail
         else
-          repr.Text.repr_pos + repr.Text.box_charsize * 
+          repr.Text.box_pos_repr + repr.Text.box_charsize * 
             (xpos - repr.Text.box_pos)
   in
-  iter line.Text.representation
+  iter line.Text.boxes
 @
 
 <<function Frame.cursor_to_point>>=
@@ -1470,7 +1470,7 @@ let set_cursor frame =
             if repr.box_pos <= point_x &&
               repr.box_pos + repr.box_len > point_x then
               let pos =
-                repr.repr_pos + repr.box_charsize * 
+                repr.box_pos_repr + repr.box_charsize * 
                 (point_x - repr.box_pos)
               in
               frame.frm_cursor.[0] <- line.repr_string.[pos];

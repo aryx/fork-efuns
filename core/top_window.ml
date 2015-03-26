@@ -250,7 +250,7 @@ let handle_key top_window modifiers keysym =
   let frame = top_window.top_active_frame in
   let buf = frame.frm_buffer in
 
-  clean_display ();
+  clean_display (); (* set cursor off *)
   clear_message top_window;
 
   exec_hooks (try Efuns.get_var buf handle_key_start_hook with _ -> []) frame;
