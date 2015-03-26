@@ -1315,35 +1315,6 @@ let rec print_list list =
 @
 
 
-% Frame.create_without_top | one_frame | v_cut | ... -> <>
-<<function Frame.install>>=
-let install window frame =
-  if window.win_mini = (frame.frm_mini_buffer = None) 
-  then (kill frame; failwith "Cannot install in minibuffer");
-
-  window |> Window.iter (fun f -> if not (f == frame) then kill f);
-  window.win_down <- WFrame frame;
-
-  frame.frm_xpos <- window.win_xpos;
-  frame.frm_ypos <- window.win_ypos;
-  frame.frm_width <- window.win_width;
-  frame.frm_height <- window.win_height;
-  frame.frm_window <- window;
-
-  if frame.frm_cutline < max_int 
-  then frame.frm_cutline <- window.win_width - 1;
-  frame.frm_table <- (Array.init window.win_height (fun i -> 
-        {
-          frm_text_line = Text.dummy_line;
-          repr_y = 0;
-          repr_x = 0;
-          repr_offset = 0;
-          frmline_boxes = [];
-          prev_frmline_boxes = [];
-          repr_prev_offset = 0;
-        } ));
-  frame.frm_redraw <- true
-@
 
 <<function Frame.resize>>=
 let resize frame =
@@ -1542,6 +1513,7 @@ let find_buffer_frame buf =
 <<copyright header2>>
 open Common
 open Options
+
 open Efuns
 open Text
 

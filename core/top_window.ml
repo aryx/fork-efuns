@@ -340,12 +340,12 @@ let handler top_window event =
     (*x: [[Top_window.handler()]] match event cases *)
     | Xtypes.XTResize (new_width, new_height) ->
         resize_window top_window.window 0 0 new_width (new_height - 1);
-        List.iter
-          (fun frame -> 
-            let window = frame.frm_window in
-            window.win_ypos <- new_height - 1;
-            window.win_width <- new_width;
-            Frame.install window frame) top_window.top_mini_buffers;
+        top_window.top_mini_buffers |> List.iter (fun frame -> 
+          let window = frame.frm_window in
+          window.win_ypos <- new_height - 1;
+          window.win_width <- new_width;
+          Frame.install window frame
+        );
         top_window.top_width <- new_width;
         top_window.top_height <- new_height;
         clear_message top_window;

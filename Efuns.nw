@@ -3865,7 +3865,50 @@ Top_window.help_menu := [|
 
 \subsection{Frames and windows creation}
 
-% see later
+% have see create_without_top() in core DS chapter.
+% will see later some functions to create frames.
+
+% let's see Frame.install though.
+
+
+% Frame.create_without_top | one_frame | v_cut | ... -> <>
+<<function Frame.install>>=
+let install window frame =
+  if window.win_mini = (frame.frm_mini_buffer = None) 
+  then begin 
+    kill frame; 
+    failwith "Cannot install in minibuffer"
+  end;
+
+  window |> Window.iter (fun f -> if (f != frame) then kill f);
+  window.win_down <- WFrame frame;
+
+  frame.frm_xpos <- window.win_xpos;
+  frame.frm_ypos <- window.win_ypos;
+  frame.frm_width <- window.win_width;
+  frame.frm_height <- window.win_height;
+  frame.frm_window <- window;
+
+  if frame.frm_cutline < max_int 
+  then frame.frm_cutline <- window.win_width - 1;
+
+  frame.frm_table <- (Array.init window.win_height (fun i -> 
+     {
+       frm_text_line = Text.dummy_line;
+       repr_y = 0;
+       repr_x = 0;
+
+       repr_offset = 0;
+       frmline_boxes = [];
+
+       repr_prev_offset = 0;
+       prev_frmline_boxes = [];
+     } 
+  ));
+  frame.frm_redraw <- true
+@
+
+
 
 \subsection{Frame display}
 
@@ -3884,6 +3927,8 @@ let display top_window frame =
 
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
+
+  let graphic = Window.backend top_window in
 
   <<[[Frame.display()]] if buf sync goto end of text>>
   if
@@ -3915,7 +3960,6 @@ mutable frm_mini_buffer : string option;
 %less: redundant frm_has_status_line?
 
 <<[[Frame.display()]] draw status line or minibuffer>>=
-let graphic = Window.backend top_window in
 match frame.frm_mini_buffer with
 | None -> 
     <<[[Frame.display()]] draw status line>>
@@ -3990,14 +4034,14 @@ if !debug_display
 then pr2 "redraw";
 <<[[Frame.display()]] redraw, possibly update frm_y_offset>>
 <<[[Frame.display()]] redraw, possibly update frm_x_offset>>
-update_table top_window frame;
+update_table frame;
 
 if (point > frame.frm_end) || (point < start) then begin
     <<[[Frame.display()]] redraw, if frm_force_restart>>
     else begin
       Text.goto_point text start point;
       <<[[Frame.display()]] redraw, update frm_y_offset again>>
-      update_table top_window frame;
+      update_table frame;
    end
 end;
 
@@ -4066,7 +4110,7 @@ mutable frm_y_offset : int;
 
 % Top_window.update_display -> Frame.display -> <>
 <<function Frame.update_table>>=
-let update_table top_window frame =
+let update_table frame =
   let buf =  frame.frm_buffer in
   let text = buf.buf_text in
 
@@ -4201,7 +4245,7 @@ then
     frm_line.prev_frmline_boxes <- frm_line.frmline_boxes;
     frm_line.repr_prev_offset <- frm_line.repr_offset;
 
-    display_line top_window frame frm_line.frm_text_line.repr_string y;
+    display_line graphic frame frm_line.frm_text_line.repr_string y;
   end;
 @
 %todo: old: was line.repr_line.repr_string, ugly
@@ -4216,9 +4260,8 @@ mutable prev_frmline_boxes : Text.box list;
 % finally reach the graphic backend!
 
 <<function Frame.display_line>>=
-let display_line top_window frame repr_string y = 
+let display_line graphic frame repr_string y = 
   let frm_line = frame.frm_table.(y) in
-  let graphic = Window.backend top_window in
 
   let rec iter x offset boxes =
     if x < frame.frm_width then
@@ -4461,11 +4504,10 @@ status_name frame buf.buf_name;
 <<function Frame.status_name>>=
 let status_name frame name =
   let status = frame.frm_status in
-  if status.stat_name <> name then
-    begin
-      status.stat_name <- name;
-      status_print status name StatName
-    end
+  if status.stat_name <> name then begin
+    status.stat_name <- name;
+    status_print status name StatName
+  end
 @
 
 \subsection{Status line format}
@@ -4509,8 +4551,7 @@ let status_print status str stat_type =
     let len = min (String.length str) maxlen in
     String.blit str 0 status.status_string pos len;
     String.fill status.status_string (pos + len) (maxlen - len) ' '
-  with
-    Not_found -> ()
+  with Not_found -> ()
 @
 
 <<[[Efuns.status]] other fields>>=
@@ -4525,22 +4566,20 @@ mutable status_string : string;
 <<function Frame.status_modified>>=
 let status_modified frame modified =
   let status = frame.frm_status in
-  if status.stat_modified <> modified then
-    begin
-      status_print status (if modified then "**" else "--") StatModified;
-      status.stat_modified <- modified
-    end
+  if status.stat_modified <> modified then begin
+    status_print status (if modified then "**" else "--") StatModified;
+    status.stat_modified <- modified
+  end
 @
 
 % Frame.display -> <>
 <<function Frame.status_line>>=
 let status_line frame line =
   let status = frame.frm_status in
-  if status.stat_line <> line then
-    begin
-      status.stat_line <- line;
-      status_print status (Printf.sprintf "L%d" (line+1)) StatLine
-    end
+  if status.stat_line <> line then begin
+    status.stat_line <- line;
+    status_print status (Printf.sprintf "L%d" (line+1)) StatLine
+  end
 @
 % note the +1
 
@@ -4548,11 +4587,10 @@ let status_line frame line =
 <<function Frame.status_col>>=
 let status_col frame col =
   let status = frame.frm_status in
-  if status.stat_col <> col then
-    begin
-      status.stat_col <- col;
-      status_print status (Printf.sprintf "C%d" (col+1)) StatCol
-    end
+  if status.stat_col <> col then begin
+    status.stat_col <- col;
+    status_print status (Printf.sprintf "C%d" (col+1)) StatCol
+  end
 @
 % note the +1
 
@@ -5168,12 +5206,12 @@ let mouse_save_then_kill frame =
 <<[[Top_window.handler()]] match event cases>>=
 | Xtypes.XTResize (new_width, new_height) ->
     resize_window top_window.window 0 0 new_width (new_height - 1);
-    List.iter
-      (fun frame -> 
-        let window = frame.frm_window in
-        window.win_ypos <- new_height - 1;
-        window.win_width <- new_width;
-        Frame.install window frame) top_window.top_mini_buffers;
+    top_window.top_mini_buffers |> List.iter (fun frame -> 
+      let window = frame.frm_window in
+      window.win_ypos <- new_height - 1;
+      window.win_width <- new_width;
+      Frame.install window frame
+    );
     top_window.top_width <- new_width;
     top_window.top_height <- new_height;
     clear_message top_window;

@@ -13,6 +13,7 @@
 (*e: copyright header2 *)
 open Common
 open Options
+
 open Efuns
 open Text
 
@@ -35,29 +36,26 @@ let status_print status str stat_type =
     let len = min (String.length str) maxlen in
     String.blit str 0 status.status_string pos len;
     String.fill status.status_string (pos + len) (maxlen - len) ' '
-  with
-    Not_found -> ()
+  with Not_found -> ()
 (*e: function Frame.status_print *)
 
 
 (*s: function Frame.status_modified *)
 let status_modified frame modified =
   let status = frame.frm_status in
-  if status.stat_modified <> modified then
-    begin
-      status_print status (if modified then "**" else "--") StatModified;
-      status.stat_modified <- modified
-    end
+  if status.stat_modified <> modified then begin
+    status_print status (if modified then "**" else "--") StatModified;
+    status.stat_modified <- modified
+  end
 (*e: function Frame.status_modified *)
 
 (*s: function Frame.status_col *)
 let status_col frame col =
   let status = frame.frm_status in
-  if status.stat_col <> col then
-    begin
-      status.stat_col <- col;
-      status_print status (Printf.sprintf "C%d" (col+1)) StatCol
-    end
+  if status.stat_col <> col then begin
+    status.stat_col <- col;
+    status_print status (Printf.sprintf "C%d" (col+1)) StatCol
+  end
 (*e: function Frame.status_col *)
 
 (*s: function Frame.print_list *)
@@ -90,21 +88,19 @@ let status_major_mode frame  =
 (*s: function Frame.status_line *)
 let status_line frame line =
   let status = frame.frm_status in
-  if status.stat_line <> line then
-    begin
-      status.stat_line <- line;
-      status_print status (Printf.sprintf "L%d" (line+1)) StatLine
-    end
+  if status.stat_line <> line then begin
+    status.stat_line <- line;
+    status_print status (Printf.sprintf "L%d" (line+1)) StatLine
+  end
 (*e: function Frame.status_line *)
 
 (*s: function Frame.status_name *)
 let status_name frame name =
   let status = frame.frm_status in
-  if status.stat_name <> name then
-    begin
-      status.stat_name <- name;
-      status_print status name StatName
-    end
+  if status.stat_name <> name then begin
+    status.stat_name <- name;
+    status_print status name StatName
+  end
 (*e: function Frame.status_name *)
 
 (*s: function Frame.kill *)
@@ -127,9 +123,12 @@ let kill_all window =
 (*s: function Frame.install *)
 let install window frame =
   if window.win_mini = (frame.frm_mini_buffer = None) 
-  then (kill frame; failwith "Cannot install in minibuffer");
+  then begin 
+    kill frame; 
+    failwith "Cannot install in minibuffer"
+  end;
 
-  window |> Window.iter (fun f -> if not (f == frame) then kill f);
+  window |> Window.iter (fun f -> if (f != frame) then kill f);
   window.win_down <- WFrame frame;
 
   frame.frm_xpos <- window.win_xpos;
@@ -140,16 +139,20 @@ let install window frame =
 
   if frame.frm_cutline < max_int 
   then frame.frm_cutline <- window.win_width - 1;
+
   frame.frm_table <- (Array.init window.win_height (fun i -> 
-        {
-          frm_text_line = Text.dummy_line;
-          repr_y = 0;
-          repr_x = 0;
-          repr_offset = 0;
-          frmline_boxes = [];
-          prev_frmline_boxes = [];
-          repr_prev_offset = 0;
-        } ));
+     {
+       frm_text_line = Text.dummy_line;
+       repr_y = 0;
+       repr_x = 0;
+
+       repr_offset = 0;
+       frmline_boxes = [];
+
+       repr_prev_offset = 0;
+       prev_frmline_boxes = [];
+     } 
+  ));
   frame.frm_redraw <- true
 (*e: function Frame.install *)
 
@@ -315,9 +318,8 @@ let cursor_to_point frame x y =
 
 
 (*s: function Frame.display_line *)
-let display_line top_window frame repr_string y = 
+let display_line graphic frame repr_string y = 
   let frm_line = frame.frm_table.(y) in
-  let graphic = Window.backend top_window in
 
   let rec iter x offset boxes =
     if x < frame.frm_width then
@@ -390,7 +392,7 @@ let set_cursor frame =
 (*e: function Frame.set_cursor *)
 
 (*s: function Frame.update_table *)
-let update_table top_window frame =
+let update_table frame =
   let buf =  frame.frm_buffer in
   let text = buf.buf_text in
 
@@ -484,6 +486,8 @@ let display top_window frame =
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
+  let graphic = Window.backend top_window in
+
   (*s: [[Frame.display()]] if buf sync goto end of text *)
   if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
   then Text.set_position text point (Text.size text); 
@@ -526,7 +530,7 @@ let display top_window frame =
         frame.frm_redraw <- true;
     end;
     (*e: [[Frame.display()]] redraw, possibly update frm_x_offset *)
-    update_table top_window frame;
+    update_table frame;
 
     if (point > frame.frm_end) || (point < start) then begin
         (*s: [[Frame.display()]] redraw, if frm_force_restart *)
@@ -548,7 +552,7 @@ let display top_window frame =
             Text.bmove text start start_c |> ignore
           end;
           (*e: [[Frame.display()]] redraw, update frm_y_offset again *)
-          update_table top_window frame;
+          update_table frame;
        end
     end;
 
@@ -580,7 +584,7 @@ let display top_window frame =
           frm_line.prev_frmline_boxes <- frm_line.frmline_boxes;
           frm_line.repr_prev_offset <- frm_line.repr_offset;
 
-          display_line top_window frame frm_line.frm_text_line.repr_string y;
+          display_line graphic frame frm_line.frm_text_line.repr_string y;
         end;
       (*e: [[Frame.display()]] redraw, draw line y if line changed *)
     done;
@@ -588,7 +592,6 @@ let display top_window frame =
     (*e: [[Frame.display()]] redraw *)
   end;
   (*s: [[Frame.display()]] draw status line or minibuffer *)
-  let graphic = Window.backend top_window in
   match frame.frm_mini_buffer with
   | None -> 
       (*s: [[Frame.display()]] draw status line *)
