@@ -14,7 +14,7 @@
 %thx to LP, changed for the better a few things:
 % - better decomposition than simple.ml, complex.ml, good TOC
 % - removed deadcode (frm_force_point, frm_force_cursor, loc_counter, 
-%    resname, buf_history)
+%    resname, buf_history, line_hlt)
 % - cleaner separation between point and position, no more
 %   let point = point.point uglyness
 % - use global for location instead of all those fields
@@ -413,8 +413,8 @@ Options:
 
 \section{[[Text]]}
 
-% text -> string | lines -> ... repr | item
-% with attrs at each level (text_attr, attr, item_attr)
+% text -> string | lines -> ... box
+% with attrs at different level (text_attr, box_attr)
 
 <<type Text.text>>=
 type text = {
@@ -557,7 +557,6 @@ let mk_line_with_pos pos =
    representation = []; 
    repr_len = 0; 
    repr_string = ""; 
-
    line_modified = 0; 
   }
 @
@@ -2734,9 +2733,9 @@ let (dummy_line : line) =
   {
     position = max_int;
     representation = [];
-    line_modified = 0;
     repr_len = 0;
     repr_string = "";
+    line_modified = 0;
   } 
 @
 
