@@ -18,9 +18,8 @@
 % - cleaner conventions and field names between point and position, no more
 %   let point = point.point uglyness
 % - use global for location instead of all those fields
-% - removed useless opti around representation, and rename line_repr, 
-%   repr_line; use boxes instead. representation was used for too many
-%   things.
+% - removed useless opti around representation, and rename line_repr,
+%   repr_line; use boxes instead. repr was used for too many things.
 
 %thx to codemap/codegraph/scheck:
 % - SEMI use cg to reduce backward deps, introduce globals.c, utils.c,
@@ -562,9 +561,10 @@ let mk_line_with_pos pos =
    boxes = []; 
    repr_string = ""; 
    repr_len = 0; 
-   line_modified = 0; 
+   line_modified = true; 
   }
 @
+% was line_modified = 0
 % will see those fields later
 
 
@@ -2642,17 +2642,16 @@ let compute_representation tree charreprs n =
   <<[[Text.compute_representation]] if n is too big, return dummy line>>
   else
     let line = text.text_newlines.(n) in
-    if line.line_modified >= 0 then begin
+    if line.line_modified then begin
 
       repr_string := line.repr_string;
       repr_len    := String.length line.repr_string;
+      let boxes = ref [] in
 
-      let (repr_tail, next_pos, repr_pos) = 
-        next_pos_xxx line.line_modified line.boxes 
-      in
+      let text_cursor = ref line.position in
+      let repr_cursor = ref 0 in
+
       let end_pos = text.text_newlines.(n+1).position - 1 in
-      let text_cursor = ref (line.position + next_pos) in
-      let repr_cursor = ref repr_pos in
 
       <<[[Text.compute_representation()]] locals>>
       
@@ -2670,7 +2669,11 @@ let compute_representation tree charreprs n =
 
 
 
-
+<<[[Text.line]] other fields>>=
+mutable line_modified : bool;
+@
+%old: was int before, see commented Optimisation section below,
+% but I changed it to bool; simpler code.
 
 
 
@@ -2709,16 +2712,15 @@ done;
 let box = {
   box_pos = !line_start;
   box_len = !box_len;
-    
   box_attr = charattr;
+
   box_charsize = charsize;
   box_size = !box_len * charsize;
-
   box_pos_repr = !repr_start;
 } in
 repr_start := !repr_cursor;
 line_start := !line_start + !box_len;
-repr_tail := box :: !repr_tail;
+boxes := box :: !boxes;
 @
 
 %old: was using ==, not sure you need that
@@ -2726,9 +2728,8 @@ repr_tail := box :: !repr_tail;
 
 
 <<[[Text.compute_representation()]] locals>>=
-let line_start = ref next_pos in
-let repr_start = ref repr_pos in
-let repr_tail = ref repr_tail in
+let line_start = ref 0 in
+let repr_start = ref 0 in
 
 let char_repr = ref "" in
 let char_size = ref 0 in
@@ -2759,12 +2760,13 @@ end;
 
 
 <<[[Text.compute_representation()]] adjust line fields after loop>>=
-line.boxes <- !repr_tail;
+line.boxes <- !boxes;
 line.repr_string <- !repr_string;
 line.repr_len <- !repr_cursor;
-line.line_modified <- -1;
+line.line_modified <- false;
 @
-% maybe be smaller than !repr_len ?
+% was line_modified <- -1; which now is false
+% !repr_cursor maybe be smaller than !repr_len ?
 
 \subsubsection{Gap managment}
 
@@ -2794,9 +2796,10 @@ let (dummy_line : line) =
     boxes = [];
     repr_len = 0;
     repr_string = "";
-    line_modified = 0;
+    line_modified = true;
   } 
 @
+% was line_modified = 0;, but it should not be -1? (and so now false)
 
 <<[[Text.compute_representation]] if n is too big, return dummy line>>=
 if n >= text.text_nlines - 1 then begin
@@ -2807,62 +2810,74 @@ end
 
 
 
-\subsubsection{Optimisations}
-
-%old:
-%    if line.line_modified >= 0 then begin
+%\subsubsection{Optimisations}
 %
-%      repr_string := line.repr_string;
-%      repr_len    := String.length line.repr_string;
+%% useless opti I think; it complicates the code; I removed it.
 %
-%      let (repr_tail, next_pos, repr_pos) = 
-%        next_pos_xxx line.line_modified line.boxes 
-%      in
-%      let end_pos = text.text_newlines.(n+1).position - 1 in
-%      let text_cursor = ref (line.position + next_pos) in
-%      let repr_cursor = ref repr_pos in
+%%old:
+%%    if line.line_modified >= 0 then begin
+%%
+%%      repr_string := line.repr_string;
+%%      repr_len    := String.length line.repr_string;
+%%
+%%      let (repr_tail, next_pos, repr_pos) = 
+%%        next_pos_xxx line.line_modified line.boxes 
+%%      in
+%%      let end_pos = text.text_newlines.(n+1).position - 1 in
+%%      let text_cursor = ref (line.position + next_pos) in
+%%      let repr_cursor = ref repr_pos in
+%
+%
+%<<[[Text.line]] other fields>>=
+%mutable line_modified : int; (* first modified position *)
+%@
+%% -1 if not modified since last time (=~ false), see cancel_repr.
+%% this is an opti, we could simply do line_modified: bool;
+%% that force a (not so expensive) recomputation.
+%
+%
+%<<function Text.next_pos_xxx>>=
+%let rec next_pos_xxx line_modified boxes =
+%  match boxes with
+%  | [] -> [], 0, 0
+%  <<[[Text.next_pos_xxx()]] if had some boxes already>>
+%@
+%% at the beginning there is no boxes at all, so next_pos and repr_pos
+%% is really 0, 0
+%
+%
+%<<[[Text.next_pos_xxx()]] if had some boxes already>>=
+%| box :: tail ->
+%    let next_pos = box.box_pos + box.box_len in
+%    if next_pos < line_modified 
+%    then boxes, next_pos, box.box_pos_repr + box.box_size
+%    else next_pos_xxx line_modified tail
+%@
+%% the boxes are sorted in reverse! so the head is the last box
+%% hence the code above
+%
+%let line_start = ref next_pos in
+%let repr_start = ref repr_pos in
+%let repr_tail = ref repr_tail in
 
-
-<<[[Text.line]] other fields>>=
-mutable line_modified : int; (* first modified position *)
-@
-% -1 if not modified since last time, see cancel_repr.
-% this is an opti, we could simply do line_modified: bool;
-% that force a (not so expensive) recomputation.
-
-
-<<function Text.next_pos_xxx>>=
-let rec next_pos_xxx line_modified boxes =
-  match boxes with
-  | [] -> [], 0, 0
-  <<[[Text.next_pos_xxx()]] if had some boxes already>>
-@
-% at the beginning there is no boxes at all, so next_pos and repr_pos
-% is really 0, 0
-
-
-<<[[Text.next_pos_xxx()]] if had some boxes already>>=
-| box :: tail ->
-    let next_pos = box.box_pos + box.box_len in
-    if next_pos < line_modified 
-    then boxes, next_pos, box.box_pos_repr + box.box_size
-    else next_pos_xxx line_modified tail
-@
-% the boxes are sorted in reverse! so the head is the last box
-% hence the code above
 
 \subsection{[[Text.cancel_repr()]]}
 
 <<function Text.cancel_repr>>=
-let cancel_repr text point n =
+let cancel_repr text _point n =
   let line = text.text_newlines.(n) in
-  let pos =  point - line.position in
-  line.line_modified <- 
-    (if line.line_modified < 0
-    then pos
-    else min line.line_modified pos
-    )
+  line.line_modified <- true
 @
+
+%old: when had line_modified: int
+%let cancel_repr text point n =
+%  let line = text.text_newlines.(n) in
+%  let pos =  point - line.position in
+%  line.line_modified <- 
+%    (if line.line_modified < 0
+%    then pos
+%    else min line.line_modified pos
+%    )
 
 
 

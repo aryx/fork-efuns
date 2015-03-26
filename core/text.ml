@@ -58,7 +58,7 @@ and line = {
     mutable repr_len : int;
     (*e: [[Text.line]] representation fields *)
     (*s: [[Text.line]] other fields *)
-    mutable line_modified : int; (* first modified position *)
+    mutable line_modified : bool;
     (*e: [[Text.line]] other fields *)
   } 
 (*e: type Text.line *)
@@ -255,7 +255,7 @@ let mk_line_with_pos pos =
    boxes = []; 
    repr_string = ""; 
    repr_len = 0; 
-   line_modified = 0; 
+   line_modified = true; 
   }
 (*e: function Text.mk_line_with_pos *)
 
@@ -305,14 +305,9 @@ let move_gpoint_to text pos =
 (*e: function Text.move_gpoint_to *)
 
 (*s: function Text.cancel_repr *)
-let cancel_repr text point n =
+let cancel_repr text _point n =
   let line = text.text_newlines.(n) in
-  let pos =  point - line.position in
-  line.line_modified <- 
-    (if line.line_modified < 0
-    then pos
-    else min line.line_modified pos
-    )
+  line.line_modified <- true
 (*e: function Text.cancel_repr *)
 
 (*s: constant Text.add_amount *)
@@ -425,7 +420,7 @@ let low_insert tree pos str =
         (*s: [[Text.low_insert()]] grow newlines *)
         let old_size = text.text_nlines in
         let new_cache = Array.create (old_size + (max 20 nbr_newlines)) 
-          { (mk_line_with_pos (-1)) with line_modified = -1 }
+          { (mk_line_with_pos (-1)) with line_modified = false }
         in
         Array.blit 
           text.text_newlines 0 
@@ -748,7 +743,7 @@ let save tree outc =
 let unset_attr tree =
   let text = tree.tree_text in  
   Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
-  Array.iter (fun line -> line.line_modified <- 0) text.text_newlines
+  text.text_newlines |> Array.iter (fun line -> line.line_modified <- true)
 (*e: function Text.unset_attr *)
 
 (*s: function Text.set_attr *)
@@ -1131,7 +1126,7 @@ let (dummy_line : line) =
     boxes = [];
     repr_len = 0;
     repr_string = "";
-    line_modified = 0;
+    line_modified = true;
   } 
 (*e: constant Text.dummy_line *)
   
@@ -1150,21 +1145,6 @@ let tabreprs = [|
   |]
 (*e: constant Text.tabreprs *)
 
-(*s: function Text.next_pos_xxx *)
-let rec next_pos_xxx line_modified boxes =
-  match boxes with
-  | [] -> [], 0, 0
-  (*s: [[Text.next_pos_xxx()]] if had some boxes already *)
-  | box :: tail ->
-      let next_pos = box.box_pos + box.box_len in
-      if next_pos < line_modified 
-      then boxes, next_pos, box.box_pos_repr + box.box_size
-      else next_pos_xxx line_modified tail
-  (*e: [[Text.next_pos_xxx()]] if had some boxes already *)
-(*e: function Text.next_pos_xxx *)
-
-
-      
 (*s: function Text.compute_representation *)
 (* On devrait reprendre la representation la ou elle est ... *)
 let compute_representation tree charreprs n =
@@ -1177,22 +1157,20 @@ let compute_representation tree charreprs n =
   (*e: [[Text.compute_representation]] if n is too big, return dummy line *)
   else
     let line = text.text_newlines.(n) in
-    if line.line_modified >= 0 then begin
+    if line.line_modified then begin
 
       repr_string := line.repr_string;
       repr_len    := String.length line.repr_string;
+      let boxes = ref [] in
 
-      let (repr_tail, next_pos, repr_pos) = 
-        next_pos_xxx line.line_modified line.boxes 
-      in
+      let text_cursor = ref line.position in
+      let repr_cursor = ref 0 in
+
       let end_pos = text.text_newlines.(n+1).position - 1 in
-      let text_cursor = ref (line.position + next_pos) in
-      let repr_cursor = ref repr_pos in
 
       (*s: [[Text.compute_representation()]] locals *)
-      let line_start = ref next_pos in
-      let repr_start = ref repr_pos in
-      let repr_tail = ref repr_tail in
+      let line_start = ref 0 in
+      let repr_start = ref 0 in
 
       let char_repr = ref "" in
       let char_size = ref 0 in
@@ -1260,23 +1238,22 @@ let compute_representation tree charreprs n =
         let box = {
           box_pos = !line_start;
           box_len = !box_len;
-    
           box_attr = charattr;
+
           box_charsize = charsize;
           box_size = !box_len * charsize;
-
           box_pos_repr = !repr_start;
         } in
         repr_start := !repr_cursor;
         line_start := !line_start + !box_len;
-        repr_tail := box :: !repr_tail;
+        boxes := box :: !boxes;
         (*e: [[Text.compute_representation()]] loop text_cursor to end_pos *)
       done;
       (*s: [[Text.compute_representation()]] adjust line fields after loop *)
-      line.boxes <- !repr_tail;
+      line.boxes <- !boxes;
       line.repr_string <- !repr_string;
       line.repr_len <- !repr_cursor;
-      line.line_modified <- -1;
+      line.line_modified <- false;
       (*e: [[Text.compute_representation()]] adjust line fields after loop *)
     end;
     line

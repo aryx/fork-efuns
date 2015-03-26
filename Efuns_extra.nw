@@ -901,10 +901,6 @@ let with_dup_point text point f =
   
 <<constant Text.tabreprs>>
 
-<<function Text.next_pos_xxx>>
-
-
-      
 <<function Text.compute_representation>>
 
 
