@@ -538,9 +538,11 @@ let compute_newlines string =
 % - even if the string has no newline we still need a array[1] at least
 % - we count the EOF has its own newline, a sentinel? maybe simpler
 %   that way indeed, I remember I had many Commons.line_xxx functions
-%   to handle those special cases
-% so an empty file will have first empty line, and then second
-% line with just EOF.
+%   to handle those special cases.
+%   For instance in compute_representation one can do:
+%     let end_pos = text.text_newlines.(n+1).position - 1 in
+%   without being scared of an array out of bound exception
+% so an empty file will have first empty line, and then a line with just EOF.
 
 <<function Text.nbre_lines>>=
 let nbre_lines tree = 
@@ -654,7 +656,6 @@ let create name filename text local_map =
 
       buf_map = local_map;
 
-      buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
       buf_syntax_table = default_syntax_table;
       buf_map_partial = true;
       buf_vars = Local.vars ();
@@ -665,6 +666,8 @@ let create name filename text local_map =
       buf_mark = None;
       buf_shared = 0;
       buf_finalizers = [];
+
+      <<[[Ebuffer.create()]] buffer other fields setup>>
 
     } in
   <<[[Ebuffer.create()]] adjust location global fields>>
@@ -1845,7 +1848,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 45
+let height = define_option ["height"] "" int_option 25
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -2540,17 +2543,18 @@ let point_col tree point =
 
 <<[[Text.line]] representation fields>>=
 mutable representation : box list;
-mutable repr_len : int;
 @
 % this a cache? because at the beginning it's empty, see
-% mk_line_with_pos
+% mk_line_with_pos.
 
-%XXX?
+% why need that? opti? to avoid sending too many graphic
+% commands? can put every chars using the same attribute together?
+
 <<type Text.repr>>=
 and box = 
   { 
     box_pos : position;   (* pos of box in Text.t string *)
-    box_len : int;   (* len of box in Text.t string *)
+    box_len : int;        (* len of box in Text.t string *)
     mutable box_attr : int;    (* common attribute *)
 
     <<[[Text.box]] other fields>>
@@ -2565,65 +2569,102 @@ and box =
 box_charsize : int; (* common size *)
 box_size : int;
 @
-% for unicode stuff? for tabs?
+% for tabs, but also to display special chars like ^M with two
+% chars.
+% for unicode stuff? 
 
 
 
+\subsection{Line representation}
 
 <<[[Text.line]] representation fields>>=
 mutable repr_string : string;
+mutable repr_len : int;
 @
 % this a cache of the cache :)
 %less: but why need that? we have all we need with the index above no?
+% no! this is useful for tabs, ^M, etc
+
+
 
 <<[[Text.box]] other fields>>=
-repr_pos : int;  (* pos of repbox in representation string *)
+repr_pos : int;  (* pos of box in representation string *)
 @
 
 
 %TODO: put cancel_repr here
 
 
-\subsection{[[Text.compute_representation()]]}
+\subsection{Characters representation}
 
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_charreprs : string array; (* 256 array *)
+@
+
+<<[[Ebuffer.create()]] buffer other fields setup>>=
+buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
+@
+
+% 26 letters of the alphabet?
+<<[[Ebuffer.create()]] adjust charreprs>>=
+for i=0 to 25 do
+  let s = String.make 2 '^' in
+  s.[1] <- Char.chr (97+i);    
+  buf.buf_charreprs.(i) <- s
+done;
+@
+% ^M, ^R, etc
+
+
+<<function Ebuffer.compute_representation>>=
+let compute_representation buf n =
+  Text.compute_representation buf.buf_text buf.buf_charreprs n
+@
+
+
+
+\subsection{[[Text.compute_representation()]]}
 
 <<function Text.compute_representation>>=
 (* On devrait reprendre la representation la ou elle est ... *)
 let compute_representation tree charreprs n =
   let text = tree.tree_text in      
-  <<[[Text.compure_representation]] if line n is too big, return dummy line>>
+  <<[[Text.compute_representation]] if n is too big, return dummy line>>
   else
     let line = text.text_newlines.(n) in
     if line.line_modified >= 0 then begin
-      <<[[Text.compure_representation()]] if line modified, update line flds>>
+      let (repr_tail, next_pos, repr_pos) = 
+        next_pos_xxx line.line_modified line.representation 
+      in
+      let end_pos = text.text_newlines.(n+1).position - 1 in
+      let line_curs = ref (line.position + next_pos) in
+
+      let gpos = text.gpoint.pos in
+      let gsize = text.gsize in
+      
+      <<[[Text.compure_representation()]] locals>>
+      
+      <<[[Text.compure_representation()]] adjust line_curs if in gap>>
+      while !line_curs < end_pos do
+        <<[[Text.compure_representation()]] loop line_curs to end_pos>>
+      done;
+      <<[[Text.compure_representation()]] adjust line fields after loop>>
     end;
     line
 @
+%TODO FIGURE where see the different kind of pos. it's too complicated.
+%line_curs = line cursor?
 
-<<[[Text.line]] other fields>>=
-mutable line_modified : int; (* first modified position *)
+
+
+<<function Text.next_pos_xxx>>=
+let rec next_pos_xxx line_modified boxes =
+  match boxes with
+  | [] -> [], 0, 0
+  <<[[Text.next_pos_xxx()]] if had some boxes already>>
 @
-% -1 if not modified since last time, see cancel_repr
-
-
-
-<<[[Text.compure_representation()]] if line modified, update line flds>>=
-let (repr_tail, next_pos, repr_pos) = 
-  next_pos_xxx line line.representation 
-in
-let gpos = text.gpoint.pos in
-let gsize = text.gsize in
-let end_pos = text.text_newlines.(n+1).position - 1 in
-
-let line_curs = ref (line.position + next_pos) in
-<<[[Text.compure_representation()]] locals>>
-
-<<[[Text.compure_representation()]] adjust line_curs if in gap>>
-while !line_curs < end_pos do
-  <<[[Text.compure_representation()]] loop line_curs to end_pos>>
-done;
-<<[[Text.compure_representation()]] adjust line fields after loop>>
-@    
+% at the beginning there is no boxes at all, so next_pos and repr_pos
+% is really 0, 0
 
 
 
@@ -2632,47 +2673,32 @@ done;
 <<[[Text.compure_representation()]] loop line_curs to end_pos>>=
 let charattr = text.text_attrs.(!line_curs) in
 let charrepr =
-  let char = Char.code text.text_string.[!line_curs] in      
-  if char = 9 
-  then tabreprs.(!repr_curs mod 9)
+  let char = Char.code text.text_string.[!line_curs] in
+  <<[[Text.compure_representation()]] compute charrepr, special char>>
   else charreprs.(char) 
 in
 let charsize = String.length charrepr in
 let line_len = ref 0 in
-(* for J.G. Malecki: tabs have a different representation depending
- * their position in the text (as in xterms) 
- *)
 
 while !line_curs < end_pos && 
   begin
     let char = Char.code text.text_string.[!line_curs] in
     char_repr := 
-       if char = 9 
-       then tabreprs.(!repr_curs mod 9)
-       else charreprs.(char)
-    ;
+       <<[[Text.compure_representation()]] compute charrepr, special char>>
+       else charreprs.(char);
     char_size := String.length !char_repr;
 
-    !char_size == charsize && charattr == text.text_attrs.(!line_curs)
+    !char_size = charsize && charattr = text.text_attrs.(!line_curs)
   end
 do
-  if !repr_curs + charsize >= !repr_size then begin
-      (* find a better heuristic to realloc the line string *)
-      let new_len = !repr_size + 
-          (low_distance text end_pos !line_curs) + charsize * 2 
-      in
-      let new_repr = String.create new_len in
-      String.blit !repr_string 0 new_repr 0 !repr_curs;
-      repr_string := new_repr;
-      repr_size := new_len;
-  end;
+  <<[[Text.compure_representation()]] grow repr_string if needed>>
   String.blit !char_repr 0 !repr_string !repr_curs charsize;
   repr_curs := !repr_curs + charsize;
   line_curs := !line_curs + 1;
   line_len := !line_len +1;
-  if !line_curs = gpos 
-  then line_curs := gpos + gsize;
+  <<[[Text.compure_representation()]] adjust line_curs if reach gap>>
 done;
+
 let box = {
   box_pos = !line_start;
   box_len = !line_len;
@@ -2687,6 +2713,9 @@ repr_start := !repr_curs;
 line_start := !line_start + !line_len;
 repr_tail := box :: !repr_tail;
 @
+
+%old: was using ==, not sure you need that
+%    !char_size == charsize && charattr == text.text_attrs.(!line_curs)
 
 
 <<[[Text.compure_representation()]] locals>>=
@@ -2709,12 +2738,23 @@ let repr_string = ref ""
 let repr_size = ref 0
 @
 
-
-
-<<[[Text.compure_representation()]] adjust line_curs if in gap>>=
-if !line_curs >= gpos && !line_curs < gpos + gsize 
-then line_curs := !line_curs + gsize;
+<<[[Text.compure_representation()]] grow repr_string if needed>>=
+if !repr_curs + charsize >= !repr_size then begin
+    (* find a better heuristic to realloc the line string *)
+    let new_len = !repr_size + 
+        (low_distance text end_pos !line_curs) + charsize * 2 
+    in
+    let new_repr = String.create new_len in
+    String.blit !repr_string 0 new_repr 0 !repr_curs;
+    repr_string := new_repr;
+    repr_size := new_len;
+end;
 @
+
+
+
+
+
 
 
 <<[[Text.compure_representation()]] adjust line fields after loop>>=
@@ -2725,8 +2765,21 @@ line.repr_string <- !repr_string;
 @
 
 
+\subsubsection{Gap managment}
+
+<<[[Text.compure_representation()]] adjust line_curs if in gap>>=
+if !line_curs >= gpos && !line_curs < gpos + gsize 
+then line_curs := !line_curs + gsize;
+@
+
+<<[[Text.compure_representation()]] adjust line_curs if reach gap>>=
+if !line_curs = gpos 
+then line_curs := gpos + gsize;
+@
 
 
+
+\subsubsection{Dummy lines}
 
 <<constant Text.dummy_line>>=
 let (dummy_line : line) = 
@@ -2739,7 +2792,7 @@ let (dummy_line : line) =
   } 
 @
 
-<<[[Text.compure_representation]] if line n is too big, return dummy line>>=
+<<[[Text.compute_representation]] if n is too big, return dummy line>>=
 if n >= text.text_nlines - 1 then begin
     dummy_line.position <- text.text_size;
     dummy_line
@@ -2748,9 +2801,21 @@ end
 
 
 
-<<function Ebuffer.compute_representation>>=
-let compute_representation buf n =
-  Text.compute_representation buf.buf_text buf.buf_charreprs n
+\subsubsection{Optimisations}
+
+<<[[Text.line]] other fields>>=
+mutable line_modified : int; (* first modified position *)
+@
+% -1 if not modified since last time, see cancel_repr
+% this is an opti, we could simply do line_modified: bool;
+% that force a recomputation.
+
+<<[[Text.next_pos_xxx()]] if had some boxes already>>=
+| box :: tail ->
+    let next_pos = box.box_pos + box.box_len in
+    if next_pos < line_modified 
+    then boxes, next_pos, box.repr_pos + box.box_size
+    else next_pos_xxx line_modified tail
 @
 
 \subsection{[[Text.cancel_repr()]]}
@@ -7942,6 +8007,24 @@ let toggle_readonly tree =
 \chapter{Advanced Topics}
 
 \section{Tabs}
+
+%(* for J.G. Malecki: tabs have a different representation depending
+% * their position in the text (as in xterms) 
+% *)
+
+<<[[Ebuffer.create()]] adjust charreprs>>=
+buf.buf_charreprs.(9) <- String.make !tab_size ' ';
+@
+
+<<constant Ebuffer.tab_size>>=
+let tab_size = ref 9
+@
+
+
+<<[[Text.compure_representation()]] compute charrepr, special char>>=
+if char = 9 
+then tabreprs.(!repr_curs mod 9)
+@
 
 % This should not exist I think. It complicates stuff.
 % Which is why I put it in advanced topics

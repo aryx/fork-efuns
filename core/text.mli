@@ -146,8 +146,8 @@ type line =
   { 
     mutable position : int;
     mutable representation : box list;
-    mutable repr_len : int;
     mutable repr_string : string;
+    mutable repr_len : int;
     mutable line_modified : int; (* first modified position *)
   }
 

@@ -25,7 +25,7 @@ let displayname = ref ""
 (*e: constant Efuns.displayname *)
 (*s: constants Main options *)
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 45
+let height = define_option ["height"] "" int_option 25
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 (*e: constants Main options *)

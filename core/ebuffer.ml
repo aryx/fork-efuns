@@ -109,7 +109,6 @@ let create name filename text local_map =
 
       buf_map = local_map;
 
-      buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
       buf_syntax_table = default_syntax_table;
       buf_map_partial = true;
       buf_vars = Local.vars ();
@@ -121,6 +120,10 @@ let create name filename text local_map =
       buf_shared = 0;
       buf_finalizers = [];
 
+      (*s: [[Ebuffer.create()]] buffer other fields setup *)
+      buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
+      (*e: [[Ebuffer.create()]] buffer other fields setup *)
+
     } in
   (*s: [[Ebuffer.create()]] adjust location global fields *)
   Hashtbl.add (Efuns.location()).loc_buffers name buf;
@@ -131,6 +134,7 @@ let create name filename text local_map =
     s.[1] <- Char.chr (97+i);    
     buf.buf_charreprs.(i) <- s
   done;
+  (*x: [[Ebuffer.create()]] adjust charreprs *)
   buf.buf_charreprs.(9) <- String.make !tab_size ' ';
   (*e: [[Ebuffer.create()]] adjust charreprs *)
   (*s: [[Ebuffer.create()]] run hooks *)
@@ -201,10 +205,7 @@ let save buf =
 (*e: function Ebuffer.save *)
 
 
-(*s: exception Ebuffer.Found *)
-(*e: exception Ebuffer.Found *)
-
-  
+ 
 (*s: function Ebuffer.read *)
 let read filename local_map =
   let location = Efuns.location() in

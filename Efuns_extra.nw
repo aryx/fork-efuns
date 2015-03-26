@@ -527,19 +527,7 @@ let sub text point len =
 
 
 
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_charreprs : string array; (* 256 array *)
-@
 
-% 26 letters of the alphabet?
-<<[[Ebuffer.create()]] adjust charreprs>>=
-for i=0 to 25 do
-  let s = String.make 2 '^' in
-  s.[1] <- Char.chr (97+i);    
-  buf.buf_charreprs.(i) <- s
-done;
-buf.buf_charreprs.(9) <- String.make !tab_size ' ';
-@
 
 
 
@@ -913,14 +901,8 @@ let with_dup_point text point f =
   
 <<constant Text.tabreprs>>
 
-let rec next_pos_xxx line boxes =
-  match boxes with
-  | box :: tail ->
-      let next_pos = box.box_pos + box.box_len in
-      if next_pos < line.line_modified 
-      then boxes, next_pos, box.repr_pos + box.box_size
-      else next_pos_xxx line tail
-  | [] -> [], 0, 0
+<<function Text.next_pos_xxx>>
+
 
       
 <<function Text.compute_representation>>
@@ -974,14 +956,6 @@ let rec next_pos_xxx line boxes =
 
 \subsection*{[[core/ebuffer.ml]]}
 
-
-<<constant Ebuffer.tab_size>>=
-let tab_size = ref 9
-@
-
-
-<<exception Ebuffer.Found>>=
-@
 
 <<function Ebuffer.read>>=
 let read filename local_map =
@@ -1094,9 +1068,7 @@ open Options
 <<function Ebuffer.save>>
 
 
-<<exception Ebuffer.Found>>
-
-  
+ 
 <<function Ebuffer.read>>
 
 let find_buffer_opt name =

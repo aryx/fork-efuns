@@ -110,6 +110,8 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_vars : Local.vars;
     (*x: [[Efuns.buffer]] other fields *)
+    mutable buf_charreprs : string array; (* 256 array *)
+    (*x: [[Efuns.buffer]] other fields *)
     mutable buf_syntax_table : bool array;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_mark : Text.point option;
@@ -121,8 +123,6 @@ and buffer =
     mutable buf_finalizers : (unit -> unit) list;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_sync : bool;
-    (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_charreprs : string array; (* 256 array *)
     (*e: [[Efuns.buffer]] other fields *)
   } 
 (*e: type Efuns.buffer *)

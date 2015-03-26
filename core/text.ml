@@ -53,9 +53,9 @@ and line = {
 
     (*s: [[Text.line]] representation fields *)
     mutable representation : box list;
-    mutable repr_len : int;
     (*x: [[Text.line]] representation fields *)
     mutable repr_string : string;
+    mutable repr_len : int;
     (*e: [[Text.line]] representation fields *)
     (*s: [[Text.line]] other fields *)
     mutable line_modified : int; (* first modified position *)
@@ -74,14 +74,14 @@ and point = {
 and box = 
   { 
     box_pos : position;   (* pos of box in Text.t string *)
-    box_len : int;   (* len of box in Text.t string *)
+    box_len : int;        (* len of box in Text.t string *)
     mutable box_attr : int;    (* common attribute *)
 
     (*s: [[Text.box]] other fields *)
     box_charsize : int; (* common size *)
     box_size : int;
     (*x: [[Text.box]] other fields *)
-    repr_pos : int;  (* pos of repbox in representation string *)
+    repr_pos : int;  (* pos of box in representation string *)
     (*e: [[Text.box]] other fields *)
   } 
 (*e: type Text.repr *)
@@ -255,7 +255,6 @@ let mk_line_with_pos pos =
    representation = []; 
    repr_len = 0; 
    repr_string = ""; 
-
    line_modified = 0; 
   }
 (*e: function Text.mk_line_with_pos *)
@@ -1130,9 +1129,9 @@ let (dummy_line : line) =
   {
     position = max_int;
     representation = [];
-    line_modified = 0;
     repr_len = 0;
     repr_string = "";
+    line_modified = 0;
   } 
 (*e: constant Text.dummy_line *)
   
@@ -1151,38 +1150,43 @@ let tabreprs = [|
   |]
 (*e: constant Text.tabreprs *)
 
-let rec next_pos_xxx line boxes =
+(*s: function Text.next_pos_xxx *)
+let rec next_pos_xxx line_modified boxes =
   match boxes with
+  | [] -> [], 0, 0
+  (*s: [[Text.next_pos_xxx()]] if had some boxes already *)
   | box :: tail ->
       let next_pos = box.box_pos + box.box_len in
-      if next_pos < line.line_modified 
+      if next_pos < line_modified 
       then boxes, next_pos, box.repr_pos + box.box_size
-      else next_pos_xxx line tail
-  | [] -> [], 0, 0
+      else next_pos_xxx line_modified tail
+  (*e: [[Text.next_pos_xxx()]] if had some boxes already *)
+(*e: function Text.next_pos_xxx *)
+
 
       
 (*s: function Text.compute_representation *)
 (* On devrait reprendre la representation la ou elle est ... *)
 let compute_representation tree charreprs n =
   let text = tree.tree_text in      
-  (*s: [[Text.compure_representation]] if line n is too big, return dummy line *)
+  (*s: [[Text.compute_representation]] if n is too big, return dummy line *)
   if n >= text.text_nlines - 1 then begin
       dummy_line.position <- text.text_size;
       dummy_line
   end
-  (*e: [[Text.compure_representation]] if line n is too big, return dummy line *)
+  (*e: [[Text.compute_representation]] if n is too big, return dummy line *)
   else
     let line = text.text_newlines.(n) in
     if line.line_modified >= 0 then begin
-      (*s: [[Text.compure_representation()]] if line modified, update line flds *)
       let (repr_tail, next_pos, repr_pos) = 
-        next_pos_xxx line line.representation 
+        next_pos_xxx line.line_modified line.representation 
       in
+      let end_pos = text.text_newlines.(n+1).position - 1 in
+      let line_curs = ref (line.position + next_pos) in
+
       let gpos = text.gpoint.pos in
       let gsize = text.gsize in
-      let end_pos = text.text_newlines.(n+1).position - 1 in
-
-      let line_curs = ref (line.position + next_pos) in
+      
       (*s: [[Text.compure_representation()]] locals *)
       let repr_tail = ref repr_tail in
       let line_start = ref next_pos in
@@ -1195,7 +1199,7 @@ let compute_representation tree charreprs n =
       repr_string := line.repr_string;
       repr_size := String.length line.repr_string;
       (*e: [[Text.compure_representation()]] locals *)
-
+      
       (*s: [[Text.compure_representation()]] adjust line_curs if in gap *)
       if !line_curs >= gpos && !line_curs < gpos + gsize 
       then line_curs := !line_curs + gsize;
@@ -1204,30 +1208,31 @@ let compute_representation tree charreprs n =
         (*s: [[Text.compure_representation()]] loop line_curs to end_pos *)
         let charattr = text.text_attrs.(!line_curs) in
         let charrepr =
-          let char = Char.code text.text_string.[!line_curs] in      
+          let char = Char.code text.text_string.[!line_curs] in
+          (*s: [[Text.compure_representation()]] compute charrepr, special char *)
           if char = 9 
           then tabreprs.(!repr_curs mod 9)
+          (*e: [[Text.compure_representation()]] compute charrepr, special char *)
           else charreprs.(char) 
         in
         let charsize = String.length charrepr in
         let line_len = ref 0 in
-        (* for J.G. Malecki: tabs have a different representation depending
-         * their position in the text (as in xterms) 
-         *)
 
         while !line_curs < end_pos && 
           begin
             let char = Char.code text.text_string.[!line_curs] in
             char_repr := 
+               (*s: [[Text.compure_representation()]] compute charrepr, special char *)
                if char = 9 
                then tabreprs.(!repr_curs mod 9)
-               else charreprs.(char)
-            ;
+               (*e: [[Text.compure_representation()]] compute charrepr, special char *)
+               else charreprs.(char);
             char_size := String.length !char_repr;
 
-            !char_size == charsize && charattr == text.text_attrs.(!line_curs)
+            !char_size = charsize && charattr = text.text_attrs.(!line_curs)
           end
         do
+          (*s: [[Text.compure_representation()]] grow repr_string if needed *)
           if !repr_curs + charsize >= !repr_size then begin
               (* find a better heuristic to realloc the line string *)
               let new_len = !repr_size + 
@@ -1238,13 +1243,17 @@ let compute_representation tree charreprs n =
               repr_string := new_repr;
               repr_size := new_len;
           end;
+          (*e: [[Text.compure_representation()]] grow repr_string if needed *)
           String.blit !char_repr 0 !repr_string !repr_curs charsize;
           repr_curs := !repr_curs + charsize;
           line_curs := !line_curs + 1;
           line_len := !line_len +1;
+          (*s: [[Text.compure_representation()]] adjust line_curs if reach gap *)
           if !line_curs = gpos 
           then line_curs := gpos + gsize;
+          (*e: [[Text.compure_representation()]] adjust line_curs if reach gap *)
         done;
+
         let box = {
           box_pos = !line_start;
           box_len = !line_len;
@@ -1266,7 +1275,6 @@ let compute_representation tree charreprs n =
       line.repr_len <- !repr_curs;
       line.repr_string <- !repr_string;
       (*e: [[Text.compure_representation()]] adjust line fields after loop *)
-      (*e: [[Text.compure_representation()]] if line modified, update line flds *)
     end;
     line
 (*e: function Text.compute_representation *)
