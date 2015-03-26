@@ -52,7 +52,7 @@ and line = {
     mutable position : position; (* bol (beginning of line) *)
 
     (*s: [[Text.line]] representation fields *)
-    mutable boxes : box list;
+    mutable boxes : box list; (* sorted in reverse; head is last box on the line *)
     (*x: [[Text.line]] representation fields *)
     mutable repr_string : string;
     mutable repr_len : int;
@@ -1121,7 +1121,7 @@ let search_backward_groups tree regexp point groups =
 let repr_string = ref ""
 (*e: constant Text.repr_string *)
 (*s: constant Text.repr_size *)
-let repr_size = ref 0
+let repr_len = ref 0
 (*e: constant Text.repr_size *)
 
 (*s: constant Text.dummy_line *)
@@ -1178,102 +1178,105 @@ let compute_representation tree charreprs n =
   else
     let line = text.text_newlines.(n) in
     if line.line_modified >= 0 then begin
+
+      repr_string := line.repr_string;
+      repr_len    := String.length line.repr_string;
+
       let (repr_tail, next_pos, repr_pos) = 
         next_pos_xxx line.line_modified line.boxes 
       in
       let end_pos = text.text_newlines.(n+1).position - 1 in
-      let line_curs = ref (line.position + next_pos) in
+      let text_cursor = ref (line.position + next_pos) in
+      let repr_cursor = ref repr_pos in
 
-      let gpos = text.gpoint.pos in
-      let gsize = text.gsize in
-      
       (*s: [[Text.compute_representation()]] locals *)
-      let repr_tail = ref repr_tail in
       let line_start = ref next_pos in
-      let repr_curs = ref repr_pos in
       let repr_start = ref repr_pos in
+      let repr_tail = ref repr_tail in
 
       let char_repr = ref "" in
       let char_size = ref 0 in
-
-      repr_string := line.repr_string;
-      repr_size := String.length line.repr_string;
+      (*x: [[Text.compute_representation()]] locals *)
+      let gpos = text.gpoint.pos in
+      let gsize = text.gsize in
       (*e: [[Text.compute_representation()]] locals *)
       
-      (*s: [[Text.compute_representation()]] adjust line_curs if in gap *)
-      if !line_curs >= gpos && !line_curs < gpos + gsize 
-      then line_curs := !line_curs + gsize;
-      (*e: [[Text.compute_representation()]] adjust line_curs if in gap *)
-      while !line_curs < end_pos do
-        (*s: [[Text.compute_representation()]] loop line_curs to end_pos *)
-        let charattr = text.text_attrs.(!line_curs) in
+      (*s: [[Text.compute_representation()]] adjust text_cursor if in gap *)
+      if !text_cursor >= gpos && !text_cursor < gpos + gsize 
+      then text_cursor := !text_cursor + gsize;
+      (*e: [[Text.compute_representation()]] adjust text_cursor if in gap *)
+      while !text_cursor < end_pos do
+        (*s: [[Text.compute_representation()]] loop text_cursor to end_pos *)
+        let charcode = Char.code text.text_string.[!text_cursor] in
+        let charattr = text.text_attrs.(!text_cursor) in
         let charrepr =
-          let char = Char.code text.text_string.[!line_curs] in
           (*s: [[Text.compute_representation()]] compute charrepr, special char *)
-          if char = 9 
-          then tabreprs.(!repr_curs mod 9)
+          if charcode = 9 
+          then tabreprs.(!repr_cursor mod 9)
           (*e: [[Text.compute_representation()]] compute charrepr, special char *)
-          else charreprs.(char) 
+          else charreprs.(charcode) 
         in
         let charsize = String.length charrepr in
-        let line_len = ref 0 in
 
-        while !line_curs < end_pos && 
+        let box_len = ref 0 in
+
+        while !text_cursor < end_pos && 
           begin
-            let char = Char.code text.text_string.[!line_curs] in
+            let char_code = Char.code text.text_string.[!text_cursor] in
+            let char_attr = text.text_attrs.(!text_cursor) in
             char_repr := 
                (*s: [[Text.compute_representation()]] compute charrepr, special char *)
-               if char = 9 
-               then tabreprs.(!repr_curs mod 9)
+               if charcode = 9 
+               then tabreprs.(!repr_cursor mod 9)
                (*e: [[Text.compute_representation()]] compute charrepr, special char *)
-               else charreprs.(char);
+               else charreprs.(char_code);
             char_size := String.length !char_repr;
 
-            !char_size = charsize && charattr = text.text_attrs.(!line_curs)
+            !char_size = charsize && char_attr = charattr
           end
         do
           (*s: [[Text.compute_representation()]] grow repr_string if needed *)
-          if !repr_curs + charsize >= !repr_size then begin
+          if !repr_cursor + charsize >= !repr_len then begin
               (* find a better heuristic to realloc the line string *)
-              let new_len = !repr_size + 
-                  (low_distance text end_pos !line_curs) + charsize * 2 
+              let new_len = !repr_len + 
+                  (low_distance text end_pos !text_cursor) + charsize * 2 
               in
               let new_repr = String.create new_len in
-              String.blit !repr_string 0 new_repr 0 !repr_curs;
+              String.blit !repr_string 0 new_repr 0 !repr_cursor;
               repr_string := new_repr;
-              repr_size := new_len;
+              repr_len := new_len;
           end;
           (*e: [[Text.compute_representation()]] grow repr_string if needed *)
-          String.blit !char_repr 0 !repr_string !repr_curs charsize;
-          repr_curs := !repr_curs + charsize;
-          line_curs := !line_curs + 1;
-          line_len := !line_len +1;
-          (*s: [[Text.compute_representation()]] adjust line_curs if reach gap *)
-          if !line_curs = gpos 
-          then line_curs := gpos + gsize;
-          (*e: [[Text.compute_representation()]] adjust line_curs if reach gap *)
+          String.blit !char_repr 0 !repr_string !repr_cursor charsize;
+          repr_cursor := !repr_cursor + charsize;
+          text_cursor := !text_cursor + 1;
+          box_len := !box_len +1;
+          (*s: [[Text.compute_representation()]] adjust text_cursor if reach gap *)
+          if !text_cursor = gpos 
+          then text_cursor := gpos + gsize;
+          (*e: [[Text.compute_representation()]] adjust text_cursor if reach gap *)
         done;
 
         let box = {
           box_pos = !line_start;
-          box_len = !line_len;
+          box_len = !box_len;
     
           box_attr = charattr;
           box_charsize = charsize;
-          box_size = !line_len * charsize;
+          box_size = !box_len * charsize;
 
           box_pos_repr = !repr_start;
         } in
-        repr_start := !repr_curs;
-        line_start := !line_start + !line_len;
+        repr_start := !repr_cursor;
+        line_start := !line_start + !box_len;
         repr_tail := box :: !repr_tail;
-        (*e: [[Text.compute_representation()]] loop line_curs to end_pos *)
+        (*e: [[Text.compute_representation()]] loop text_cursor to end_pos *)
       done;
       (*s: [[Text.compute_representation()]] adjust line fields after loop *)
       line.boxes <- !repr_tail;
-      line.line_modified <- -1;
-      line.repr_len <- !repr_curs;
       line.repr_string <- !repr_string;
+      line.repr_len <- !repr_cursor;
+      line.line_modified <- -1;
       (*e: [[Text.compute_representation()]] adjust line fields after loop *)
     end;
     line
