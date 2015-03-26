@@ -149,7 +149,6 @@ type line =
     mutable repr_len : int;
     mutable repr_string : string;
     mutable line_modified : int; (* first modified position *)
-    mutable line_hlt : int;
   }
 
   and box = { 

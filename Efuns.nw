@@ -559,7 +559,6 @@ let mk_line_with_pos pos =
    repr_string = ""; 
 
    line_modified = 0; 
-   line_hlt = 0; 
   }
 @
 % will see those fields later
@@ -2625,8 +2624,6 @@ while !line_curs < end_pos do
   <<[[Text.compure_representation()]] loop line_curs to end_pos>>
 done;
 <<[[Text.compure_representation()]] adjust line fields after loop>>
-
-<<[[Text.compure_representation()]] handle highlighting>>
 @    
 
 
@@ -2740,7 +2737,6 @@ let (dummy_line : line) =
     line_modified = 0;
     repr_len = 0;
     repr_string = "";
-    line_hlt = 0;
   } 
 @
 
@@ -3284,104 +3280,103 @@ Window.get_font !!font |> ignore;
 %todo: variable sized font?
 
 
-\section{Highlighting}
-
-
-<<[[Text.line]] other fields>>=
-mutable line_hlt : int; (* highlighting *)
-@
-%dead? seems never set. subsumed by color attribute?
-
-
-<<[[Text.compure_representation()]] handle highlighting>>=
-(* once we have computed the simple representation, we can add more
- * complicated things, such as highlighting ... 
- *)
-(match line.line_hlt with
-| 0 -> ()
-| x when x > 0 ->
-    (* the line is hightlighted from the beginning to pos the
-     * line.line_hlt char 
-     *)
-      <<[[Text.compure_representation()]] if line_hlt is positive>>
-| x when x < 0 ->
-  (* the line is hightlighted from then end to pos line.line_hlt *)
-      <<[[Text.compure_representation()]] if line_hlt is negative>>
-| _ -> raise Impossible
-);
-@
-
-
-
-<<[[Text.compure_representation()]] if line_hlt is positive>>=
-let first = line.line_hlt - 1 in
-let rec iter list tail =
-  match list with
-  | [] -> List.rev tail 
-  | repr :: list_r ->
-      if repr.box_pos > first 
-      then iter list_r (repr :: tail)
-      else
-        let len = first - repr.box_pos + 1 in
-        (List.rev tail) @
-          (let before, after = 
-             if len = repr.box_len 
-             then [], list
-             else [ 
-              { repr with
-                box_pos = repr.box_pos + len;
-                box_len = repr.box_len - len;
-                box_size = repr.box_charsize * (repr.box_len - len);
-                repr_pos = repr.repr_pos + (len*repr.box_charsize)
-              }
-              ], ({ repr with
-                    box_len = len;
-                    box_size = repr.box_charsize * len;
-                   } :: list_r)
-        in
-        after |> List.iter (fun repr ->
-          repr.box_attr <- repr.box_attr lor (1 lsl 24)
-        );
-        before @ after
-      )
-in
-line.representation <- iter line.representation []
-@
-
-<<[[Text.compure_representation()]] if line_hlt is negative>>=
-let first = line.line_hlt - 1 in
-let rec iter list tail =
-  match list with
-  | [] -> List.rev tail 
-  | repr :: list_r ->
-      if repr.box_pos > first 
-      then iter list_r (repr :: tail)
-      else
-        let len = first - repr.box_pos + 1 in
-        (List.rev tail) @
-          (let before, after = 
-             if len = repr.box_len 
-             then [], list
-             else [ 
-              { repr with 
-                box_pos = repr.box_pos+len;
-                box_len = repr.box_len - len;
-                box_size = repr.box_charsize * (repr.box_len - len);
-                repr_pos = repr.repr_pos + (len * repr.box_charsize)
-              }
-              ], ({ repr with
-                    box_len = len;
-                    box_size = repr.box_charsize * len;
-                  } :: list_r)
-        in
-        after |> List.iter (fun repr ->
-          repr.box_attr <- repr.box_attr lor (1 lsl 24)
-        );
-        before @ after
-       )
-in
-line.representation <- iter line.representation []
-@
+%\section{Highlighting}
+%
+%<<[[Text.line]] other fields>>=
+%mutable line_hlt : int; (* highlighting *)
+%@
+%%dead? seems never set. subsumed by color attribute?
+%
+%
+%<<[[Text.compure_representation()]] handle highlighting>>=
+%(* once we have computed the simple representation, we can add more
+% * complicated things, such as highlighting ... 
+% *)
+%(match line.line_hlt with
+%| 0 -> ()
+%| x when x > 0 ->
+%    (* the line is hightlighted from the beginning to pos the
+%     * line.line_hlt char 
+%     *)
+%      <<[[Text.compure_representation()]] if line_hlt is positive>>
+%| x when x < 0 ->
+%  (* the line is hightlighted from then end to pos line.line_hlt *)
+%      <<[[Text.compure_representation()]] if line_hlt is negative>>
+%| _ -> raise Impossible
+%);
+%@
+%
+%
+%
+%<<[[Text.compure_representation()]] if line_hlt is positive>>=
+%let first = line.line_hlt - 1 in
+%let rec iter list tail =
+%  match list with
+%  | [] -> List.rev tail 
+%  | repr :: list_r ->
+%      if repr.box_pos > first 
+%      then iter list_r (repr :: tail)
+%      else
+%        let len = first - repr.box_pos + 1 in
+%        (List.rev tail) @
+%          (let before, after = 
+%             if len = repr.box_len 
+%             then [], list
+%             else [ 
+%              { repr with
+%                box_pos = repr.box_pos + len;
+%                box_len = repr.box_len - len;
+%                box_size = repr.box_charsize * (repr.box_len - len);
+%                repr_pos = repr.repr_pos + (len*repr.box_charsize)
+%              }
+%              ], ({ repr with
+%                    box_len = len;
+%                    box_size = repr.box_charsize * len;
+%                   } :: list_r)
+%        in
+%        after |> List.iter (fun repr ->
+%          repr.box_attr <- repr.box_attr lor (1 lsl 24)
+%        );
+%        before @ after
+%      )
+%in
+%line.representation <- iter line.representation []
+%@
+%
+%<<[[Text.compure_representation()]] if line_hlt is negative>>=
+%let first = line.line_hlt - 1 in
+%let rec iter list tail =
+%  match list with
+%  | [] -> List.rev tail 
+%  | repr :: list_r ->
+%      if repr.box_pos > first 
+%      then iter list_r (repr :: tail)
+%      else
+%        let len = first - repr.box_pos + 1 in
+%        (List.rev tail) @
+%          (let before, after = 
+%             if len = repr.box_len 
+%             then [], list
+%             else [ 
+%              { repr with 
+%                box_pos = repr.box_pos+len;
+%                box_len = repr.box_len - len;
+%                box_size = repr.box_charsize * (repr.box_len - len);
+%                repr_pos = repr.repr_pos + (len * repr.box_charsize)
+%              }
+%              ], ({ repr with
+%                    box_len = len;
+%                    box_size = repr.box_charsize * len;
+%                  } :: list_r)
+%        in
+%        after |> List.iter (fun repr ->
+%          repr.box_attr <- repr.box_attr lor (1 lsl 24)
+%        );
+%        before @ after
+%       )
+%in
+%line.representation <- iter line.representation []
+%@
 
 
 

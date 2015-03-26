@@ -656,8 +656,6 @@ Il doit aussi utiliser la structure un peu particuliere de l'arbre utiliser
 ici.
   
 *)
-open Common
-
 open Options
 open Utils
 
