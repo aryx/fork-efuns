@@ -77,7 +77,7 @@ let prepare_string s =
     done;
     s
   end
-
+(* TODO use charreprs instead? *)
 
 
 let fill_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () = 
@@ -111,7 +111,9 @@ let move_to cr pg col line =
   let h = metrics.font_height in
   Cairo.move_to cr (w * col) ((line * h) + h * 0.1)
 
-
+(* ugly hacks below but had many graphic glitches; cairo 
+ * floats are imprecise?
+ *)
 
 let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
 (*  pr2 (spf "WX_xterm.clear_eol: %.f %.f %d" col line len); *)
@@ -177,7 +179,7 @@ let backend loc cr pg win =
       draw_string loc cr pg (conv a) (conv b) c d e f);
     update_display = (fun () -> 
       if !debug_graphics
-      then pr2 ("WX_xterm.update_displays");
+      then pr2 ("backend.update_display()");
       GtkBase.Widget.queue_draw win#as_widget;
     );
   }
@@ -236,6 +238,9 @@ let init2 init_files =
 
   let vbox = GPack.vbox ~packing:win#add () in
 
+    (* not necessary, can even be distracting, but can be useful
+     * for beginners to have at least an help menu.
+     *)
     let menubar = GMenu.menu_bar ~packing:vbox#add () in
       let factory = new GMenu.factory menubar in
 
