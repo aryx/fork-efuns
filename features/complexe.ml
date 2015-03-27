@@ -63,12 +63,11 @@ let buf_mtime = Local.create "buf_mtime" string_of_float float_of_string
 (*s: function Complex.update_time *)
 let update_time buf =
   try
-    match buf.buf_filename with
-      None -> ()
-    | Some file ->
-        let st = Unix.lstat file in
-        if st.st_kind = S_REG 
-        then Efuns.set_local buf buf_mtime st.st_mtime;
+    buf.buf_filename |> Common.do_option (fun file ->
+      let st = Unix.lstat file in
+      if st.st_kind = S_REG 
+      then Efuns.set_local buf buf_mtime st.st_mtime;
+    )
   with _ -> ()
 (*e: function Complex.update_time *)
       
@@ -97,24 +96,23 @@ let reload frame =
 let check_file frame =
   try
     let buf = frame.frm_buffer in
-    match buf.buf_filename with
-      None -> ()
-    | Some file ->
-        let st = Unix.lstat file in
-        if st.st_kind = S_REG then
-          try
-            let time = get_local buf buf_mtime in
-            set_local buf buf_mtime st.st_mtime;
-            if time <> st.st_mtime then
-              ignore (Select.select_yes_or_no frame 
-                  (Printf.sprintf 
-                    "%s changed on disk; reload (y/n) ?" 
-                    buf.buf_name) (fun bool ->
-                    if bool then reload frame else
-                      Frame.status_modified frame true
-                      ))
-          with _ -> 
-              set_local buf buf_mtime st.st_mtime
+    buf.buf_filename |> Common.do_option (fun file ->
+      let st = Unix.lstat file in
+      if st.st_kind = S_REG then
+        try
+          let time = Efuns.get_local buf buf_mtime in
+          Efuns.set_local buf buf_mtime st.st_mtime;
+          if time <> st.st_mtime then
+            (Select.select_yes_or_no frame 
+               (Printf.sprintf "%s changed on disk; reload (y/n) ?" 
+                    buf.buf_name) 
+                (fun bool ->
+                   if bool 
+                   then reload frame 
+                   else Frame.status_modified frame true
+                 )) |> ignore
+       with _ -> Efuns.set_local buf buf_mtime st.st_mtime
+    )
   with _ -> ()
 (*e: function Complex.check_file *)
     

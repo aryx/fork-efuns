@@ -134,6 +134,8 @@ val replace_matched : t -> string -> string
 
 (* misc *)
 
+type version = int
+
 val find_xy : t -> int -> int -> int -> int * int
 val version : t -> int
 val lexing : t -> point -> point -> Lexing.lexbuf

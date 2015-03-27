@@ -603,7 +603,7 @@ let init_global_map () =
 let _ =
   (*s: [[Std_efunsrc]] file menu setup *)
   if !!Top_window.file_menu = [] then begin
-    Top_window.file_menu =:=    [
+    Top_window.file_menu =:= [
       "Open File", "load_buffer";
       "Save Buffer", "save_buffer";
       (*s: file menu entries *)
@@ -648,7 +648,6 @@ let _ =
       *)
       failwith "Std_xxx.menu changes: TODO"
     );
-
   |];
   (*e: [[Std_efunsrc]] help menu setup *)
   (*s: [[Std_efunsrc]] buffers menu setup *)

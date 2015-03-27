@@ -1368,38 +1368,9 @@ let point_to_cursor buf point =
   iter line.Text.boxes
 @
 
-<<function Frame.cursor_to_point>>=
-let cursor_to_point frame x y =
-  if (y < 0) || (x<0) ||
-    (y >= frame.frm_height-1) || (x>frame.frm_cutline) then 
-    raise Not_found
-  else
-  let line_repr = frame.frm_table.(y) in
-  let y = line_repr.repr_y in
-  let rec iter x reprs default =
-    match reprs with
-      [] -> default
-    | repr :: tail -> 
-        if repr.box_size > x then
-          repr.box_pos + x / repr.box_charsize
-        else
-          iter (x - repr.box_size) tail 
-            (repr.box_pos + repr.box_len)
-  in
-  let x = iter (x+frame.frm_x_offset+line_repr.repr_offset) 
-    line_repr.frmline_boxes 0 in
-  x , y
-@
 
 
 
-<<[[Efuns.frame]] other fields>>=
-mutable frm_cursor_x : int;
-mutable frm_cursor_y : int;
-mutable frm_cursor : string;
-mutable frm_cursor_attr : Text.attribute;
-@
-% a frame has a cursor!
 
 
 <<function Frame.set_cursor>>=
@@ -3193,31 +3164,6 @@ let reload frame =
       Frame.status_modified frame false 
 @
 
-% it's in a hook somewhere?
-<<function Complex.check_file>>=
-let check_file frame =
-  try
-    let buf = frame.frm_buffer in
-    match buf.buf_filename with
-      None -> ()
-    | Some file ->
-        let st = Unix.lstat file in
-        if st.st_kind = S_REG then
-          try
-            let time = get_local buf buf_mtime in
-            set_local buf buf_mtime st.st_mtime;
-            if time <> st.st_mtime then
-              ignore (Select.select_yes_or_no frame 
-                  (Printf.sprintf 
-                    "%s changed on disk; reload (y/n) ?" 
-                    buf.buf_name) (fun bool ->
-                    if bool then reload frame else
-                      Frame.status_modified frame true
-                      ))
-          with _ -> 
-              set_local buf buf_mtime st.st_mtime
-  with _ -> ()
-@
 
 
 

@@ -122,13 +122,17 @@ let kill_all window =
 
 (*s: function Frame.install *)
 let install window frame =
-  if window.win_mini = (frame.frm_mini_buffer = None) 
-  then begin 
+  (*s: [[Frame.install()]] sanity check frame is not a minibuffer *)
+  if window.win_mini = (frame.frm_mini_buffer = None) then begin 
     kill frame; 
     failwith "Cannot install in minibuffer"
   end;
+  (*e: [[Frame.install()]] sanity check frame is not a minibuffer *)
 
-  window |> Window.iter (fun f -> if (f != frame) then kill f);
+  window |> Window.iter (fun f -> 
+     if (f != frame) 
+     then kill f
+  );
   window.win_down <- WFrame frame;
 
   frame.frm_xpos <- window.win_xpos;
@@ -137,22 +141,25 @@ let install window frame =
   frame.frm_height <- window.win_height;
   frame.frm_window <- window;
 
+  (*s: [[Frame.install()]] adjust frm_cutline *)
   if frame.frm_cutline < max_int 
   then frame.frm_cutline <- window.win_width - 1;
-
+  (*e: [[Frame.install()]] adjust frm_cutline *)
+  (*s: [[Frame.install()]] set frm_table *)
   frame.frm_table <- (Array.init window.win_height (fun i -> 
      {
        frm_text_line = Text.dummy_line;
+       frmline_boxes = [];
+
        repr_y = 0;
        repr_x = 0;
-
        repr_offset = 0;
-       frmline_boxes = [];
 
        repr_prev_offset = 0;
        prev_frmline_boxes = [];
      } 
   ));
+  (*e: [[Frame.install()]] set frm_table *)
   frame.frm_redraw <- true
 (*e: function Frame.install *)
 
@@ -295,12 +302,12 @@ let point_to_cursor buf point =
 
 (*s: function Frame.cursor_to_point *)
 let cursor_to_point frame x y =
-  if (y < 0) || (x<0) ||
-    (y >= frame.frm_height-1) || (x>frame.frm_cutline) then 
-    raise Not_found
-  else
-  let line_repr = frame.frm_table.(y) in
-  let y = line_repr.repr_y in
+  (*s: [[Frame.cursor_to_point()]] sanity check parameters in range *)
+  if (y < 0) || (x<0) || (y >= frame.frm_height-1) || (x>frame.frm_cutline) 
+  then raise Not_found;
+  (*e: [[Frame.cursor_to_point()]] sanity check parameters in range *)
+  let frm_line = frame.frm_table.(y) in
+  let y = frm_line.repr_y in
   let rec iter x reprs default =
     match reprs with
       [] -> default
@@ -311,8 +318,8 @@ let cursor_to_point frame x y =
           iter (x - repr.box_size) tail 
             (repr.box_pos + repr.box_len)
   in
-  let x = iter (x+frame.frm_x_offset+line_repr.repr_offset) 
-    line_repr.frmline_boxes 0 in
+  let x = iter (x+frame.frm_x_offset+frm_line.repr_offset) 
+    frm_line.frmline_boxes 0 in
   x , y
 (*e: function Frame.cursor_to_point *)
 
@@ -399,79 +406,92 @@ let update_table frame =
   let start = frame.frm_start in
   let height = frame.frm_height - frame.frm_has_status_line in
 
-  (* assert frame.frm_y_offset >= 0 *)
   let current_n = ref (Text.point_line text start) in
   let current_line = ref (Ebuffer.compute_representation buf !current_n) in
+
+  (*s: [[Frame.update_table()]] adjust current line when frm_y_offset negative *)
+  (* assert frame.frm_y_offset >= 0 *)
+
   while frame.frm_y_offset < 0 && !current_n > 0 do
     current_n := !current_n - 1;
     current_line := Ebuffer.compute_representation buf !current_n;
     let lines = !current_line.repr_len / frame.frm_cutline in
     frame.frm_y_offset <- frame.frm_y_offset + lines + 1;
   done;
-  if !current_n = 0 && frame.frm_y_offset <0 then
-    frame.frm_y_offset <- 0;
+  if !current_n = 0 && frame.frm_y_offset <0 
+  then frame.frm_y_offset <- 0;
+  (*e: [[Frame.update_table()]] adjust current line when frm_y_offset negative *)
+
+  (*s: [[Frame.update_table()]] adjust current line when frm_y_offset positive *)
   (* assert current_line is the first line *)
+
   while frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
       && !current_n < nbre_lines text
   do
     frame.frm_y_offset <- frame.frm_y_offset - 
-    (!current_line.repr_len / frame.frm_cutline) - 1;
+      (!current_line.repr_len / frame.frm_cutline) - 1;
     current_n := !current_n + 1;
     current_line := Ebuffer.compute_representation buf !current_n;
   done;
+
   if !current_n = nbre_lines text && 
-    frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
-  then
-    frame.frm_y_offset <- !current_line.repr_len / frame.frm_cutline;
+     frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
+  then frame.frm_y_offset <- !current_line.repr_len / frame.frm_cutline;
+  (*e: [[Frame.update_table()]] adjust current line when frm_y_offset positive *)
+
   (* update frame.frm_start *)
-  goto_line text start !current_n; 
+  Text.goto_line text start !current_n; 
+
   (* update frame representation *)
+  (*s: function Frame.update_table.iter_line *)
   let rec iter_line y n line =
-    if y < height then
+    if y < height then begin
       let reprs = List.rev line.boxes in
-      if y >= 0 then
-        begin
-          let line_repr = frame.frm_table.(y) in
-          line_repr.frm_text_line <- line;
-          line_repr.repr_y <- n;
-          line_repr.repr_x <- 0;
-          line_repr.repr_offset <- 0;
-          line_repr.frmline_boxes <- reprs;
-        end;
+      if y >= 0 then begin
+          let frm_line = frame.frm_table.(y) in
+          frm_line.frm_text_line <- line;
+          frm_line.frmline_boxes <- reprs;
+          frm_line.repr_y <- n;
+          frm_line.repr_x <- 0;
+          frm_line.repr_offset <- 0;
+      end;
       iter_repr frame.frm_cutline (y+1) n line reprs
-    else
-      goto_line text frame.frm_end (n-1)
-  
-  and iter_repr x y n line reprs =
-    if x < line.repr_len then
+    end
+    else Text.goto_line text frame.frm_end (n-1)
+  (*e: function Frame.update_table.iter_line *)
+  (*s: function Frame.update_table.iter_repr *)
+  and iter_repr xcutline y n line reprs =
+    (*s: [[Frame.update_table.iter_repr()]] if line too big *)
+    if line.repr_len > xcutline then
       match reprs with
       | repr :: tail ->
-          if repr.box_pos_repr <= x && 
-            repr.box_pos_repr + repr.box_size > x then
-            if y = height then
-              goto_line text frame.frm_end n 
-            else
-              begin
-                if y>= 0 then
-                  begin
-                    let line_repr = frame.frm_table.(y) in
-                    line_repr.frm_text_line <- line;
-                    line_repr.repr_y <- n;
-                    line_repr.repr_x <- repr.box_pos_repr;
-                    line_repr.repr_offset <- x - repr.box_pos_repr;
-                    line_repr.frmline_boxes <- reprs;
-                  end;
-                iter_repr (x+frame.frm_cutline) (y+1) n line reprs
-              end
-          else
-            iter_repr x y n line tail
-      | _ -> 
+          if repr.box_pos_repr <= xcutline && 
+             repr.box_pos_repr + repr.box_size > xcutline
+          then
+            if y = height 
+            then Text.goto_line text frame.frm_end n 
+            else begin
+                if y>= 0 then begin
+                  let frm_line = frame.frm_table.(y) in
+                  frm_line.frm_text_line <- line;
+                  frm_line.repr_y <- n;
+                  frm_line.repr_x <- repr.box_pos_repr;
+                  frm_line.repr_offset <- xcutline - repr.box_pos_repr;
+                  frm_line.frmline_boxes <- reprs;
+                end;
+                iter_repr (xcutline+frame.frm_cutline) (y+1) n line reprs
+            end
+          else iter_repr xcutline y n line tail
+      | [] -> 
           let line = Ebuffer.compute_representation buf (n + 1) in
           iter_line (y+1) (n+1) line
+    (*e: [[Frame.update_table.iter_repr()]] if line too big *)
     else  
-    let line = Ebuffer.compute_representation buf (n + 1) in
-    iter_line y (n+1) line
+      let line = Ebuffer.compute_representation buf (n+1) in
+      iter_line y (n+1) line
   in
+  (*e: function Frame.update_table.iter_repr *)
+
   iter_line (- frame.frm_y_offset) !current_n !current_line
 (*e: function Frame.update_table *)
 
@@ -538,7 +558,7 @@ let display top_window frame =
           let x,y = 
             cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
           in
-          goto_line text frame.frm_point y;
+          Text.goto_line text frame.frm_point y;
           Text.fmove text frame.frm_point x |> ignore
         end 
         (*e: [[Frame.display()]] redraw, if frm_force_restart *)

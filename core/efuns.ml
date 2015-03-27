@@ -99,7 +99,7 @@ and buffer =
     (*s: [[Efuns.buffer]] history fields *)
     mutable buf_modified : int; (* version? *)
     (*x: [[Efuns.buffer]] history fields *)
-    mutable buf_last_saved : int;
+    mutable buf_last_saved : Text.version;
     (*e: [[Efuns.buffer]] history fields *)
     (*s: [[Efuns.buffer]] other fields *)
     mutable buf_shared : int; (* number of frames for that buffer *)
@@ -190,26 +190,26 @@ and frame  =
     (*s: [[Efuns.frame]] other fields *)
     mutable frm_redraw : bool;    
     (*x: [[Efuns.frame]] other fields *)
+    (* where do we put a \ for overflowing lines *)
+    mutable frm_cutline : int; (* max_int for no, else length *)
+    (*x: [[Efuns.frame]] other fields *)
     mutable frm_table : frm_line array;
+    (*x: [[Efuns.frame]] other fields *)
+    mutable frm_cursor_x : int;
+    mutable frm_cursor_y : int;
+    mutable frm_cursor : string;
+    mutable frm_cursor_attr : Text.attribute;
     (*x: [[Efuns.frame]] other fields *)
     (* ?? *)
     mutable frm_x_offset : int;
     (* offset(+/-) of screen-lines after frm_start *)
     mutable frm_y_offset : int;
     (*x: [[Efuns.frame]] other fields *)
-    (* ?? *)
-    mutable frm_cutline : int; (* max_int for no, else length *)
-    (*x: [[Efuns.frame]] other fields *)
     mutable frm_force_start : bool;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_last_action : action;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_killed : bool;
-    (*x: [[Efuns.frame]] other fields *)
-    mutable frm_cursor_x : int;
-    mutable frm_cursor_y : int;
-    mutable frm_cursor : string;
-    mutable frm_cursor_attr : Text.attribute;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_prefix : key list;
     (*x: [[Efuns.frame]] other fields *)
@@ -257,13 +257,14 @@ and frm_line =
   { 
     mutable frm_text_line : Text.line;
 
+   (* sorted normally, head = first box in line *)
+   mutable frmline_boxes : Text.box list; 
+
     (*s: [[Efuns.frm_line]] other fields *)
     mutable repr_y : int;
     mutable repr_x : int;
 
-
     mutable repr_offset : int;
-    mutable frmline_boxes : Text.box list;
     (*x: [[Efuns.frm_line]] other fields *)
     (* previous values, so can check if the line changed *)
     mutable repr_prev_offset : int;

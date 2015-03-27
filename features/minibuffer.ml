@@ -15,7 +15,7 @@ open Efuns
 
 
 (*s: constant Minibuffer.charreprs *)
-let charreprs = Array.init 256 (fun i ->   String.make 1 (Char.chr i))
+let charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i))
 (*e: constant Minibuffer.charreprs *)
 (*s: toplevel Minibuffer._1 *)
 let _ =
