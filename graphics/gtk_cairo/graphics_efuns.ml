@@ -13,6 +13,7 @@
  * license.txt for more details.
  *)
 open Common
+open Options
 module Color = Simple_color
 
 open Efuns
@@ -232,9 +233,62 @@ let init2 init_files =
   (* Layout *)
   (*-------------------------------------------------------------------*)
 
-  let px = GDraw.pixmap ~width ~height ~window:win () in
-  px#set_foreground `BLACK;
-  px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
+
+  let vbox = GPack.vbox ~packing:win#add () in
+
+    let menubar = GMenu.menu_bar ~packing:vbox#add () in
+      let factory = new GMenu.factory menubar in
+
+      factory#add_submenu "_File" |> (fun menu -> 
+        GToolbox.build_menu menu ~entries:
+          (!!Top_window.file_menu |> List.map (fun (str, action) ->
+            if str = "" 
+            then `S
+            else `I (str, (fun () -> 
+              let frame = top_window.top_active_frame in
+              execute_action action frame;
+              paint w
+            ))))
+      ) |> ignore;
+      factory#add_submenu "_Edit" |> (fun menu -> 
+        GToolbox.build_menu menu ~entries:
+          (!!Top_window.edit_menu |> List.map (fun (str, action_name) ->
+            match str with
+            | "" -> `S
+            | _ -> `I (str, (fun () -> 
+              let frame = top_window.top_active_frame in
+              execute_action action_name frame;
+              paint w;
+            ))
+           ))
+      ) |> ignore;
+
+      factory#add_submenu "_Buffers" |> (fun menu -> 
+        (* TODO *)
+        ()
+      );
+      factory#add_submenu "_Help" |> (fun menu -> 
+        GToolbox.build_menu menu ~entries:
+          (!Top_window.help_menu 
+           |> Array.to_list 
+           |> List.map (fun (str, action) ->
+                `I (str, (fun () -> 
+                  let frame = top_window.top_active_frame in
+                  action frame;
+                  paint w;
+                ))))
+      ) |> ignore;
+
+    let px = GDraw.pixmap ~width ~height ~window:win () in
+    px#set_foreground `BLACK;
+    px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
+    GMisc.pixmap px ~packing:vbox#add () |> ignore;
+
+    let _statusbar = GMisc.statusbar ~packing:vbox#add () in
+
+  (*-------------------------------------------------------------------*)
+  (* Cairo/pango setup *)
+  (*-------------------------------------------------------------------*)
 
   let cr = Cairo_lablgtk.create px#pixmap in
   let layout = Pango_cairo.create_layout cr in
@@ -276,8 +330,11 @@ let init2 init_files =
   for i = 0 to (Efuns.location()).loc_height -.. 1 do
     clear_eol cr pg 0. (float_of_int i) 80;
   done;
-
   paint w;
+
+  (*-------------------------------------------------------------------*)
+  (* Events *)
+  (*-------------------------------------------------------------------*)
 
   win#event#connect#key_press ~callback:(fun key ->
     if !debug
@@ -313,6 +370,7 @@ let init2 init_files =
     );
     true
   ) |> ignore;
+
   win#event#connect#key_release ~callback:(fun key ->
     (match GdkEvent.Key.keyval key with
     | 65507 -> modifiers := !modifiers land (lnot Xtypes.controlMask)
@@ -321,8 +379,6 @@ let init2 init_files =
     );
     true
   ) |> ignore;
-
-  (GMisc.pixmap px ~packing:win#add ()) |> ignore;
 
   (*-------------------------------------------------------------------*)
   (* End *)

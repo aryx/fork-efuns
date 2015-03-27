@@ -259,12 +259,10 @@ and frm_line =
 
    (* sorted normally, head = first box in line *)
    mutable frmline_boxes : Text.box list; 
+   mutable first_box_extra_offset : int;
 
     (*s: [[Efuns.frm_line]] other fields *)
-    mutable repr_y : int;
-    mutable repr_x : int;
-
-    mutable repr_offset : int;
+    mutable lineidx_in_text : int;
     (*x: [[Efuns.frm_line]] other fields *)
     (* previous values, so can check if the line changed *)
     mutable repr_prev_offset : int;

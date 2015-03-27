@@ -625,7 +625,7 @@ let _ =
         "Undo",    "undo";
         "", "";
         (*s: [[edit_menu]] entries *)
-        "Cut Frame", "v_cut_frame";
+        "Cut Frame", "vertical_cut_frame";
         (*x: [[edit_menu]] entries *)
         "One Frame", "one_frame";
         "Delete Frame", "delete_frame";
