@@ -1350,23 +1350,6 @@ let create_inactive window buf =
   create_without_top window None buf
 @
 
-<<function Frame.point_to_cursor>>=
-let point_to_cursor buf point =
-  let text = buf.buf_text in
-  let line = Ebuffer.compute_representation buf (Text.point_line text point) in
-  let xpos = Text.point_col text point in
-  let rec iter reprs =
-    match reprs with
-      [] -> 0
-    | repr :: tail ->
-        if repr.Text.box_pos > xpos then
-          iter tail
-        else
-          repr.Text.box_pos_repr + repr.Text.box_charsize * 
-            (xpos - repr.Text.box_pos)
-  in
-  iter line.Text.boxes
-@
 
 
 

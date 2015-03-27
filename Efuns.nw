@@ -14,7 +14,8 @@
 %thx to LP, changed for the better a few things:
 % - better decomposition than simple.ml, complex.ml, good TOC
 % - removed deadcode (frm_force_point, frm_force_cursor, loc_counter, 
-%    resname, buf_history, line_hlt and its huge compute_representation code)
+%    resname, buf_history, line_hlt and its huge compute_representation code,
+%    repr_x)
 % - cleaner conventions and field names between point and position, no more
 %   let point = point.point uglyness
 % - use global for location instead of all those fields
@@ -3783,9 +3784,10 @@ let check_file frame =
                 (fun bool ->
                    if bool 
                    then reload frame 
-                   elseFrame.status_modified frame true
+                   else Frame.status_modified frame true
                  )) |> ignore
        with _ -> Efuns.set_local buf buf_mtime st.st_mtime
+    )
   with _ -> ()
 @
 
@@ -3882,6 +3884,7 @@ if !!Top_window.edit_menu = [] then begin
 let help_menu = ref ([| |]: (string * action) array)
 @
 % this one is not configurable apparently, and so use ref instead of option
+% was an array, need an array?
 
 <<[[Std_efunsrc]] help menu setup>>=
 Top_window.help_menu := [|
@@ -3924,7 +3927,7 @@ Top_window.help_menu := [|
 % let's see Frame.install though.
 
 
-% ((Top_window.create | ...) -> Frame.create_without_top) | one_frame | v_cut | ... -> <>
+% ((Top_window.create | ...) -> Frame.create_without_top) | v_cut | ... -> <>
 <<function Frame.install>>=
 let install window frame =
   <<[[Frame.install()]] sanity check frame is not a minibuffer>>
@@ -4077,7 +4080,7 @@ then pr2 "redraw";
 update_table frame;
 
 if (point > frame.frm_end) || (point < start) then begin
-    <<[[Frame.display()]] redraw, if frm_force_restart>>
+    <<[[Frame.display()]] redraw, if frm_force_start>>
     else begin
       Text.goto_point text start point;
       <<[[Frame.display()]] redraw, update frm_y_offset again>>
@@ -4100,7 +4103,13 @@ frame.frm_redraw <- false
 % it's because of some past (wrong) refactoring,
 % because before it was 'if (frame.frm_end < point)  || (start > point)'
 
+% need to do the first update_table when point outside <frm_start,frm_end>?
+% seems unecessary. Then we could have a proper if then else with
+% the second update_table.
+
 \subsection{Line display}
+
+% text -> x,y display (and cursor below is the reverse)
 
 % data -> text_string -> 
 % text_newlines -> 
@@ -4133,8 +4142,8 @@ then frame.frm_cutline <- window.win_width - 1;
 mutable frm_table : frm_line array;
 @
 % line 0 is the line that you see in the frame,
-% so this table is a sort of slice of the original buffer text.
-% But it  also manages the overflow lines! so not exactly a slice then!
+% so this table is a sort of slice of the original text_newlines.
+% But it also manages the overflow lines! so it's not exactly a slice!
 
 % diff with frm.frm_buffer.buf_text.newlines? well it handles overflow
 % some some Text.line corresponds sometimes to 2 frm_line, but
@@ -4147,24 +4156,32 @@ and frm_line =
 
    (* sorted normally, head = first box in line *)
    mutable frmline_boxes : Text.box list; 
+   mutable first_box_extra_offset : int;
 
     <<[[Efuns.frm_line]] other fields>>
   } 
 @
 %old: was repr_line, but there was also line_repr, so better
 % rename this frm_line. otherwise had line_repr.repr_line.boxes.box_pos, hmmm
+%old: was repr_y, repr_x, repr_offset, but again, there was
+% too many repr_xxx where actually you don't know what they reference
+% (text_string? text_newlines? repr_string? frm_table?)
+%dead: repr_x, was not used.
 %why need frmline_boxes? why not use frm_text_line.repr_reprs instead?
-% because it could have changed in the mean time? or is it for
-% the overflow in which case the boxes are different?
+% because it could have changed in the mean time? 
+% it is mainly for the overflow I think, in which case the boxes are 
+% actually different!
+%why need frm_text_line then? just for the repr_string it contains?
+% then why not replace frm_text_line by that then? It's used for ==
+% another line in set_cursor, so maybe it's needed.
 
 
-%XXXX
 <<[[Efuns.frm_line]] other fields>>=
-mutable repr_y : int;
-mutable repr_x : int;
-
-mutable repr_offset : int;
+mutable lineidx_in_text : int;
 @
+% why need that? frm_text_line not enough?
+% for cursor_to_point?
+
 
 <<[[Frame.install()]] set frm_table>>=
 frame.frm_table <- (Array.init window.win_height (fun i -> 
@@ -4172,9 +4189,8 @@ frame.frm_table <- (Array.init window.win_height (fun i ->
      frm_text_line = Text.dummy_line;
      frmline_boxes = [];
 
-     repr_y = 0;
-     repr_x = 0;
-     repr_offset = 0;
+     lineidx_in_text = 0;
+     first_box_extra_offset = 0;
 
      repr_prev_offset = 0;
      prev_frmline_boxes = [];
@@ -4184,6 +4200,8 @@ frame.frm_table <- (Array.init window.win_height (fun i ->
 
 \subsubsection{[[Frame.update_table()]]}
 
+% y goes from 0 to height below, which are the entries
+% for frm_table that we need to fill.
 
 % Top_window.update_display -> Frame.display -> <>
 <<function Frame.update_table>>=
@@ -4220,9 +4238,8 @@ let rec iter_line y n line =
         let frm_line = frame.frm_table.(y) in
         frm_line.frm_text_line <- line;
         frm_line.frmline_boxes <- reprs;
-        frm_line.repr_y <- n;
-        frm_line.repr_x <- 0;
-        frm_line.repr_offset <- 0;
+        frm_line.lineidx_in_text <- n;
+        frm_line.first_box_extra_offset <- 0;
     end;
     iter_repr frame.frm_cutline (y+1) n line reprs
   end
@@ -4248,13 +4265,14 @@ in
 
 <<[[Frame.display()]] redraw, draw line y if line changed>>=
 let frm_line = frame.frm_table.(y) in
+
 if not ((frm_line.prev_frmline_boxes == frm_line.frmline_boxes) &&
-        (frm_line.repr_prev_offset == frm_line.repr_offset)) 
+        (frm_line.repr_prev_offset == frm_line.first_box_extra_offset)) 
    || frame.frm_redraw
 then
   begin
     frm_line.prev_frmline_boxes <- frm_line.frmline_boxes;
-    frm_line.repr_prev_offset <- frm_line.repr_offset;
+    frm_line.repr_prev_offset <- frm_line.first_box_extra_offset;
 
     display_line graphic frame frm_line.frm_text_line.repr_string y;
   end;
@@ -4287,9 +4305,9 @@ let display_line graphic frame repr_string y =
             box.box_attr;
           iter (x+len) 0 tail
     else
-      <<[[Frame.display_line()]] line overflow frm_width>>
+      <<[[Frame.display_line()]] in iter, line overflow frm_width>>
   in
-  iter 0 (frm_line.repr_offset+frame.frm_x_offset) frm_line.frmline_boxes
+  iter 0 (frm_line.first_box_extra_offset + frame.frm_x_offset) frm_line.frmline_boxes
 @
 %old: was called update_line, but confusing with update_table
 % which is quite different.
@@ -4297,6 +4315,7 @@ let display_line graphic frame repr_string y =
 \subsubsection{Overflowing lines}
 
 
+% xcutline is originally frm_cutline = frm_width - 1
 <<[[Frame.update_table.iter_repr()]] if line too big>>=
 if line.repr_len > xcutline then
   match reprs with
@@ -4310,9 +4329,8 @@ if line.repr_len > xcutline then
             if y>= 0 then begin
               let frm_line = frame.frm_table.(y) in
               frm_line.frm_text_line <- line;
-              frm_line.repr_y <- n;
-              frm_line.repr_x <- repr.box_pos_repr;
-              frm_line.repr_offset <- xcutline - repr.box_pos_repr;
+              frm_line.lineidx_in_text <- n;
+              frm_line.first_box_extra_offset <- xcutline - repr.box_pos_repr;
               frm_line.frmline_boxes <- reprs;
             end;
             iter_repr (xcutline+frame.frm_cutline) (y+1) n line reprs
@@ -4322,10 +4340,14 @@ if line.repr_len > xcutline then
       let line = Ebuffer.compute_representation buf (n + 1) in
       iter_line (y+1) (n+1) line
 @
+% generate multi frm_line for one text_newline
+%old: frm_line.repr_x <- repr.box_pos_repr;
 
+%FIGURE again, where see skip the first few boxes, because
+% they are handled by the previous line, and will not overflow
+% because of the code below:
 
-
-<<[[Frame.display_line()]] line overflow frm_width>>=
+<<[[Frame.display_line()]] in iter, line overflow frm_width>>=
 graphic.Xdraw.draw_string 
    (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
    "/" 0 1 Text.direct_attr
@@ -4335,25 +4357,46 @@ graphic.Xdraw.draw_string
 
 \subsection{Cursor}
 
+% x,y display -> text (reverse of display_line stuff)
+
+% why not return an actual point then? it's more a (line x col) actually
 <<function Frame.cursor_to_point>>=
 let cursor_to_point frame x y =
   <<[[Frame.cursor_to_point()]] sanity check parameters in range>>
   let frm_line = frame.frm_table.(y) in
-  let y = frm_line.repr_y in
-  let rec iter x reprs default =
-    match reprs with
+  let line = frm_line.lineidx_in_text in
+  let rec iter x boxes default =
+    match boxes with
       [] -> default
-    | repr :: tail -> 
-        if repr.box_size > x then
-          repr.box_pos + x / repr.box_charsize
-        else
-          iter (x - repr.box_size) tail 
-            (repr.box_pos + repr.box_len)
+    | box :: tail -> 
+        if x < box.box_size
+        then box.box_pos + x / box.box_charsize
+        else iter (x - box.box_size) tail (box.box_pos + box.box_len)
   in
-  let x = iter (x+frame.frm_x_offset+frm_line.repr_offset) 
-    frm_line.frmline_boxes 0 in
-  x , y
+  let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
+    frm_line.frmline_boxes 0 
+  in
+  col , line
 @
+% useful for? the mouse?
+
+<<function Frame.point_to_cursor>>=
+let point_to_cursor buf point =
+  let text = buf.buf_text in
+  let line = Ebuffer.compute_representation buf (Text.point_line text point) in
+  let xpos = Text.point_col text point in
+  let rec iter reprs =
+    match reprs with
+    | [] -> 0
+    | repr :: tail ->
+        if repr.box_pos > xpos 
+        then iter tail
+        else repr.box_pos_repr + repr.box_charsize *  (xpos - repr.box_pos)
+  in
+  iter line.Text.boxes
+@
+
+
 
 <<[[Frame.cursor_to_point()]] sanity check parameters in range>>=
 if (y < 0) || (x<0) || (y >= frame.frm_height-1) || (x>frame.frm_cutline) 
@@ -4367,6 +4410,11 @@ mutable frm_cursor : string;
 mutable frm_cursor_attr : Text.attribute;
 @
 % a frame has a cursor!
+% x and y here are coordinates in the frame, not top_window coordinates,
+% and not text_string coordinates.
+
+
+
 
 
 
@@ -4445,25 +4493,17 @@ mutable frm_y_offset : int;
 @
 
 
+
+
+
+\subsubsection{Y offset}
+
 <<[[Frame.display()]] redraw, possibly update frm_y_offset>>=
 let start = frame.frm_start in
 let start_c = point_to_cursor buf start in
 if start_c > 0 then begin
   frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
   Text.bmove text start start_c |> ignore
-end;
-@
-
-<<[[Frame.display()]] redraw, possibly update frm_x_offset>>=
-let point_c = point_to_cursor buf point in
-if point_c < frame.frm_x_offset then begin
-    frame.frm_x_offset <- max (point_c - width / 2) 0;
-    frame.frm_redraw <- true;
-end else if frame.frm_cutline = max_int && 
-            (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
-  then begin
-    frame.frm_x_offset <- point_c - (width / 2);
-    frame.frm_redraw <- true;
 end;
 @
 
@@ -4510,6 +4550,21 @@ if !current_n = 0 && frame.frm_y_offset <0
 then frame.frm_y_offset <- 0;
 @
 
+\subsubsection{X offset}
+
+<<[[Frame.display()]] redraw, possibly update frm_x_offset>>=
+let point_c = point_to_cursor buf point in
+if point_c < frame.frm_x_offset then begin
+    frame.frm_x_offset <- max (point_c - width / 2) 0;
+    frame.frm_redraw <- true;
+end else if frame.frm_cutline = max_int && 
+            (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
+  then begin
+    frame.frm_x_offset <- point_c - (width / 2);
+    frame.frm_redraw <- true;
+end;
+@
+
 \subsubsection{Recenter}
 
 <<misc keys>>=
@@ -4529,10 +4584,27 @@ let recenter frame =
   frame.frm_y_offset <- - frame.frm_height/2
 @
 
+% not sure it's related only to scrollbar thing
+<<[[Efuns.frame]] other fields>>=
+mutable frm_force_start : bool;
+@
+
+<<[[Frame.display()]] redraw, if frm_force_start>>=
+if frame.frm_force_start then begin
+  let x,y = 
+    cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
+  in
+  Text.goto_line text frame.frm_point y;
+  Text.fmove text frame.frm_point x |> ignore
+end 
+@
+
 \subsection{Scrollbar}
 
 %later: can have sublime style toolbar actually!
 % or firefox style
+% https://atom.io/packages/minimap
+% codemap spirit!
 
 %<<[[Top_window.create()]] optional scrollbar setup>>=
 %(* ady#add_subject (fun () -> *) (
@@ -4570,20 +4642,6 @@ let scroll_to_frame ady top_window =
 
 
 
-% not sure it's related only to scrollbar thing
-<<[[Efuns.frame]] other fields>>=
-mutable frm_force_start : bool;
-@
-
-<<[[Frame.display()]] redraw, if frm_force_restart>>=
-if frame.frm_force_start then begin
-  let x,y = 
-    cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
-  in
-  Text.goto_line text frame.frm_point y;
-  Text.fmove text frame.frm_point x |> ignore
-end 
-@
 
 <<[[Frame.display()]] redraw, scrollbar adjustments>>=
 if frame == top_window.top_active_frame then begin
@@ -6954,7 +7012,7 @@ let iter f window =
 \section{Creating sub windows}
 
 <<[[edit_menu]] entries>>=
-"Cut Frame", "v_cut_frame";
+"Cut Frame", "vertical_cut_frame";
 @
 
 <<frame managment keys>>=

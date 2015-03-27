@@ -20,6 +20,10 @@ open Efuns
 (*****************************************************************************)
 
 (* An eshell inspired shell/terminal for efuns.
+ *
+ * todo: have syntax for more complex stuff inspired by scsh? more
+ * regular. I always get confused about order of redirection, 
+ * the lack of nestedness, etc.
 *)
 
 

@@ -151,9 +151,8 @@ let install window frame =
        frm_text_line = Text.dummy_line;
        frmline_boxes = [];
 
-       repr_y = 0;
-       repr_x = 0;
-       repr_offset = 0;
+       lineidx_in_text = 0;
+       first_box_extra_offset = 0;
 
        repr_prev_offset = 0;
        prev_frmline_boxes = [];
@@ -289,13 +288,11 @@ let point_to_cursor buf point =
   let xpos = Text.point_col text point in
   let rec iter reprs =
     match reprs with
-      [] -> 0
+    | [] -> 0
     | repr :: tail ->
-        if repr.Text.box_pos > xpos then
-          iter tail
-        else
-          repr.Text.box_pos_repr + repr.Text.box_charsize * 
-            (xpos - repr.Text.box_pos)
+        if repr.box_pos > xpos 
+        then iter tail
+        else repr.box_pos_repr + repr.box_charsize *  (xpos - repr.box_pos)
   in
   iter line.Text.boxes
 (*e: function Frame.point_to_cursor *)
@@ -307,20 +304,19 @@ let cursor_to_point frame x y =
   then raise Not_found;
   (*e: [[Frame.cursor_to_point()]] sanity check parameters in range *)
   let frm_line = frame.frm_table.(y) in
-  let y = frm_line.repr_y in
-  let rec iter x reprs default =
-    match reprs with
+  let line = frm_line.lineidx_in_text in
+  let rec iter x boxes default =
+    match boxes with
       [] -> default
-    | repr :: tail -> 
-        if repr.box_size > x then
-          repr.box_pos + x / repr.box_charsize
-        else
-          iter (x - repr.box_size) tail 
-            (repr.box_pos + repr.box_len)
+    | box :: tail -> 
+        if x < box.box_size
+        then box.box_pos + x / box.box_charsize
+        else iter (x - box.box_size) tail (box.box_pos + box.box_len)
   in
-  let x = iter (x+frame.frm_x_offset+frm_line.repr_offset) 
-    frm_line.frmline_boxes 0 in
-  x , y
+  let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
+    frm_line.frmline_boxes 0 
+  in
+  col , line
 (*e: function Frame.cursor_to_point *)
 
 
@@ -341,13 +337,13 @@ let display_line graphic frame repr_string y =
             box.box_attr;
           iter (x+len) 0 tail
     else
-      (*s: [[Frame.display_line()]] line overflow frm_width *)
+      (*s: [[Frame.display_line()]] in iter, line overflow frm_width *)
       graphic.Xdraw.draw_string 
          (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
          "/" 0 1 Text.direct_attr
-      (*e: [[Frame.display_line()]] line overflow frm_width *)
+      (*e: [[Frame.display_line()]] in iter, line overflow frm_width *)
   in
-  iter 0 (frm_line.repr_offset+frame.frm_x_offset) frm_line.frmline_boxes
+  iter 0 (frm_line.first_box_extra_offset + frame.frm_x_offset) frm_line.frmline_boxes
 (*e: function Frame.display_line *)
 
 (*s: function Frame.set_cursor *)
@@ -451,9 +447,8 @@ let update_table frame =
           let frm_line = frame.frm_table.(y) in
           frm_line.frm_text_line <- line;
           frm_line.frmline_boxes <- reprs;
-          frm_line.repr_y <- n;
-          frm_line.repr_x <- 0;
-          frm_line.repr_offset <- 0;
+          frm_line.lineidx_in_text <- n;
+          frm_line.first_box_extra_offset <- 0;
       end;
       iter_repr frame.frm_cutline (y+1) n line reprs
     end
@@ -474,9 +469,8 @@ let update_table frame =
                 if y>= 0 then begin
                   let frm_line = frame.frm_table.(y) in
                   frm_line.frm_text_line <- line;
-                  frm_line.repr_y <- n;
-                  frm_line.repr_x <- repr.box_pos_repr;
-                  frm_line.repr_offset <- xcutline - repr.box_pos_repr;
+                  frm_line.lineidx_in_text <- n;
+                  frm_line.first_box_extra_offset <- xcutline - repr.box_pos_repr;
                   frm_line.frmline_boxes <- reprs;
                 end;
                 iter_repr (xcutline+frame.frm_cutline) (y+1) n line reprs
@@ -553,7 +547,7 @@ let display top_window frame =
     update_table frame;
 
     if (point > frame.frm_end) || (point < start) then begin
-        (*s: [[Frame.display()]] redraw, if frm_force_restart *)
+        (*s: [[Frame.display()]] redraw, if frm_force_start *)
         if frame.frm_force_start then begin
           let x,y = 
             cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
@@ -561,7 +555,7 @@ let display top_window frame =
           Text.goto_line text frame.frm_point y;
           Text.fmove text frame.frm_point x |> ignore
         end 
-        (*e: [[Frame.display()]] redraw, if frm_force_restart *)
+        (*e: [[Frame.display()]] redraw, if frm_force_start *)
         else begin
           Text.goto_point text start point;
           (*s: [[Frame.display()]] redraw, update frm_y_offset again *)
@@ -596,13 +590,14 @@ let display top_window frame =
     for y = 0 to height - 1 do
       (*s: [[Frame.display()]] redraw, draw line y if line changed *)
       let frm_line = frame.frm_table.(y) in
+
       if not ((frm_line.prev_frmline_boxes == frm_line.frmline_boxes) &&
-              (frm_line.repr_prev_offset == frm_line.repr_offset)) 
+              (frm_line.repr_prev_offset == frm_line.first_box_extra_offset)) 
          || frame.frm_redraw
       then
         begin
           frm_line.prev_frmline_boxes <- frm_line.frmline_boxes;
-          frm_line.repr_prev_offset <- frm_line.repr_offset;
+          frm_line.repr_prev_offset <- frm_line.first_box_extra_offset;
 
           display_line graphic frame frm_line.frm_text_line.repr_string y;
         end;
