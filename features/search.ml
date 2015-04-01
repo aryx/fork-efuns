@@ -18,21 +18,22 @@ open Efuns
 (*e: toplevel Search._1 *)
 
 (*s: constant Search.case_fold *)
+(* todo: this should be a buffer variable, not a global *)
 let case_fold = ref false
 (*e: constant Search.case_fold *)
 (*s: function Search.to_regexp *)
 let to_regexp flag str =
   match flag with
-    Regexp ->
-      (if !case_fold then
-          Str.regexp_case_fold 
-        else
-          Str.regexp) str
+  | Regexp ->
+      (if !case_fold 
+       then Str.regexp_case_fold 
+       else Str.regexp
+      ) str
   | RegexpString ->
-      (if !case_fold then
-          Str.regexp_string_case_fold
-        else
-          Str.regexp_string) str
+      (if !case_fold 
+       then Str.regexp_string_case_fold
+       else Str.regexp_string
+      ) str
 (*e: function Search.to_regexp *)
 
 (*s: type Search.query *)
@@ -136,8 +137,8 @@ let replace flag frame query str repl =
             end
         in
         iter ()
-  with
-    Not_found ->
+  with 
+  | Not_found ->
       Text.commit_session text session;
       Top_window.message top_window
         ("Replace "^(string_of_int !n)^" occurences")
@@ -219,9 +220,11 @@ let last_search = ref ""
 let isearch to_regexp sens frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+
   let point = frame.frm_point in
   let spoint = Text.dup_point text point in
   let orig = Text.get_position text point in
+
   let sens = ref sens in
   let to_regexp = ref to_regexp in
   let ismap = Keymap.create () in
@@ -291,6 +294,7 @@ let isearch to_regexp sens frame =
       isearch_s ();
       Minibuffer.update_request mini_frame (request ())
   );  
+
   let _mini_frame =
     Select.incremental_mini_buffer frame ismap (request ()) !string
       (fun frame str -> 
