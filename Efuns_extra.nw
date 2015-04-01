@@ -2931,20 +2931,11 @@ let select_filename frame request action =
   select_file frame request file_hist (Utils.filename_to_string curdir) action
 @
 
-<<constant Select.prev_buffers>>=
-let prev_buffers = ref []
-@
 
 <<constant Select.next_default>>=
 let next_default = ref ""
 @
 
-<<function Select.set_previous_frame>>=
-let set_previous_frame frame = 
-  let name = frame.frm_buffer.buf_name in
-  next_default := name;
-  prev_buffers := name :: (Utils.list_removeq !prev_buffers name)
-@
 
 <<function Select.get_previous_frame>>=
 let get_previous_frame () = !next_default

@@ -12,7 +12,10 @@ val create_inactive :
 (* load/save/kill *)
 
 val load_file : Efuns.window -> string -> Efuns.frame
+
 val change_buffer : Efuns.window -> string -> unit
+val change_buffer_hooks: Efuns.action_name list Options.option_record
+
 val save_buffer : Efuns.frame -> unit
 
 val kill : Efuns.frame -> unit

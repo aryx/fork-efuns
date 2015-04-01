@@ -306,14 +306,14 @@ let _ =
     Keymap.define_interactive_action "eshell_num" eshell_num;
 
     
-    Efuns.set_major_var mode Top_window.handle_key_start_hook [(fun frame ->
 (* buggy, does not handle C-e, need something better
+    Efuns.set_major_var mode Top_window.handle_key_start_hook [(fun frame ->
       let keysym = !Top_window.keypressed in
       if Char.code 'A' <= keysym && keysym <= Char.code 'z'
       then Simple.end_of_file frame;
-*)
       ()
     )];
+*)
 
     let map = mode.maj_map in
     Keymap.add_binding map [(NormalMap, XK.xk_Return)] key_return;

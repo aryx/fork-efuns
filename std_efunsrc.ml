@@ -443,6 +443,7 @@ let _ =
         (*x: buffer managment keys *)
         [c_x; NormalMap, Char.code 'k'], "kill_buffer";
         (*e: buffer managment keys *)
+        (* pad: *)
         [ControlMetaMap, XK.xk_Tab], "buffer_menu";
 
         (*s: buffer navigating keys *)

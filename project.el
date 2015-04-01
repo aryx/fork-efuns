@@ -6,6 +6,7 @@
   "commons core features graphics
    major_modes minor_modes prog_modes
    graphics/gtk_cairo
+   external/pfff-commons
   "
   )
  pad-ocaml-project-toplevel "pfff.top"
@@ -21,7 +22,7 @@
    (case 1
      
      (0 "/home/pad/github/fork-efuns/changes.txt")
-     (1 "/home/pad/github/fork-efuns/main.ml")
+     (1 "/home/pad/github/fork-efuns/main.ml /home/pad/github/fork-efuns/std_efunsrc.ml")
      
      )
    ))

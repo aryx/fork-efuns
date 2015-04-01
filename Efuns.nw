@@ -2526,6 +2526,8 @@ let move_point_to tree point p =
 let point_line _text point = 
   point.line
 @
+% note that it's 0 based! status_line displays it as starting
+% at line 1, but internally it's 0 based.
 %less: rename? line_of_point?
 
 % status line display the co of the cursor -> <>
@@ -6925,6 +6927,8 @@ let kill buf =
 \section{Cycling buffers}
 % of frame?
 
+% lefessant specific?
+
 <<buffer navigating keys>>=
 [ControlMetaMap, XK.xk_Left], "left_buffer";
 [ControlMetaMap, XK.xk_Right], "right_buffer";
@@ -6941,6 +6945,11 @@ define_action "right_buffer"  Multi_buffers.right_buffer;
 define_action "down_buffer"  Multi_buffers.down_buffer;
 (* C-M map *)
 define_action "up_buffer"  Multi_buffers.up_buffer;
+@
+
+
+<<constant Select.prev_buffers>>=
+let prev_buffers = ref []
 @
 
 <<function Complex.left_buffer>>=
@@ -6969,6 +6978,14 @@ let right_buffer frame =
         )
     | _ -> raise Not_found
     )
+@
+
+
+<<function Select.set_previous_frame>>=
+let set_previous_frame frame = 
+  let name = frame.frm_buffer.buf_name in
+  next_default := name;
+  prev_buffers := name :: (Utils.list_removeq !prev_buffers name)
 @
 
 
@@ -8523,7 +8540,7 @@ let window_load_buffer frame =
 let window_change_buffer frame =
   Select.select_buffer frame "Switch to buffer in new frame: " 
     (Select.get_previous_frame ())
-  (fun name ->
+    (fun name ->
       let top_window = Top_window.create ()
            (*"TODO_Display"*) 
       in

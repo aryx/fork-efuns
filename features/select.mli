@@ -38,17 +38,18 @@ val select_file :
 val select_filename : Efuns.frame -> string -> (string -> unit) -> unit
 
 val next_default : string ref
+val prev_buffers : string list ref
 val set_previous_frame : Efuns.frame -> unit
 val get_previous_frame : unit -> string
 
 val buf_hist : string list ref
-
 val select_buffer : 
   Efuns.frame -> string -> string -> (string -> unit) -> unit
+
+
 val select_string :
   Efuns.frame ->
   string -> string list ref -> string -> (string -> unit) -> unit
 val simple_select : 
   Efuns.frame -> string -> (string -> unit) -> unit
 
-val prev_buffers : string list ref
