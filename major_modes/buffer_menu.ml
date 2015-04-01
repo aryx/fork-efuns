@@ -51,6 +51,7 @@ let mode =  Ebuffer.new_major_mode "Buffer List" [install]
 
 (* bounded to C-M-Tab in std_efunsrc.ml  *)
 let menu frame =
+
   let buf = Ebuffer.default buflist_name in
   Ebuffer.set_major_mode buf mode;
 
@@ -61,7 +62,12 @@ let menu frame =
   Text.insert_at_end text " -- ------             ----  ----         ----\n";
 
   let current = frame.frm_buffer.buf_name in
-  let list = Utils.list_removeq !list current in
+  let all = Simple.buffer_list frame in
+  let hall = all |> Common.hashset_of_list in
+  list := !list |> List.filter (fun str -> Hashtbl.mem hall str);
+  let history = !list in
+
+  let list = Utils.list_removeq history current in
   let list =
     if current <> buflist_name
     then current :: list
@@ -69,8 +75,9 @@ let menu frame =
   in
   let list =
     list @ 
-    (Simple.buffer_list frame |> Common.exclude (fun str ->List.mem str list))
+    (all |> Common.exclude (fun str -> List.mem str list))
   in
+
   Efuns.set_local buf buflist_array (Array.of_list list);
 
   list |> List.iter (fun name ->
@@ -89,6 +96,7 @@ let menu frame =
   Dircolors.colorize buf;
   (*  Text.toggle_readonly text; *)
   Text.goto_line text buf.buf_point 2;
+  Select.set_previous_frame frame;
   Frame.change_buffer frame.frm_window "*Buffer List*";
 
   ()
