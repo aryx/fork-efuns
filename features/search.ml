@@ -220,6 +220,7 @@ let last_search = ref ""
 let isearch to_regexp sens frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+  let ismap = Keymap.create () in
 
   let point = frame.frm_point in
   let spoint = Text.dup_point text point in
@@ -227,7 +228,6 @@ let isearch to_regexp sens frame =
 
   let sens = ref sens in
   let to_regexp = ref to_regexp in
-  let ismap = Keymap.create () in
 
   let request () =
     "isearch-"^
@@ -240,41 +240,35 @@ let isearch to_regexp sens frame =
       | RegexpString -> " :"
     )
   in
+
   let string = ref "" in
   let isearch_s () =
     last_search := !string;
-    let regexp, delta =       
-      if !case_fold then
-        match !to_regexp with
-          Regexp -> Str.regexp_case_fold !string, 0
-        | RegexpString -> Str.regexp_string_case_fold
-              !string, String.length !string
-      else
-      match !to_regexp with
-        Regexp -> Str.regexp !string, 0
-      | RegexpString -> Str.regexp_string !string, String.length !string
+    let regexp, delta =
+      match !to_regexp, !case_fold with
+      | Regexp, true  -> Str.regexp_case_fold !string, 0
+      | Regexp, false -> Str.regexp !string, 0
+      | RegexpString, true -> Str.regexp_string_case_fold !string, String.length !string
+      | RegexpString, false -> Str.regexp_string !string, String.length !string
     in  
-    let point = frame.frm_point in
-    let buf = frame.frm_buffer in
-    let text = buf.buf_text in
     Text.goto_point text point spoint;
     match !sens with
-      Backward -> 
-        Text.search_backward text regexp point |> ignore
+    | Backward -> Text.search_backward text regexp point |> ignore
     | Forward ->  
         let len = Text.search_forward text regexp point in
-(*        Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
+     (* Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
         print_newline ();*)
-        Text.fmove text point len; ()
+        Text.fmove text point len |> ignore
   in
   let set_last mini_frame =
-    if !string = "" then
+    if !string = "" then begin
       let buf = mini_frame.frm_buffer in
       let text = buf.buf_text in
       let point = mini_frame.frm_point in
       Text.insert text point !last_search;
       Text.fmove text point (String.length !last_search);
       string := !last_search
+    end
   in
 
   (*s: [[Search.isearch()]] key bindings *)
@@ -294,6 +288,17 @@ let isearch to_regexp sens frame =
       isearch_s ();
       Minibuffer.update_request mini_frame (request ())
   );  
+
+  Keymap.add_binding ismap [ControlMap, Char.code 'w']
+    (fun mini_frame ->
+(*      set_last mini_frame;       *)
+      Text.goto_point text spoint point;
+      let end_current_word = Simple.end_of_word buf point in
+      string := !string ^ end_current_word;
+      Simple.insert_string mini_frame end_current_word;
+      isearch_s ();
+      Minibuffer.update_request mini_frame (request ())
+    );
 
   let _mini_frame =
     Select.incremental_mini_buffer frame ismap (request ()) !string

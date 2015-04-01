@@ -4444,7 +4444,8 @@ let cursor_on top_window =
     set_cursor_on top_window frame
   )
 @
-% when can have second_cursor??
+% when can have second_cursor? for C-s! you edit in mini_frame
+%  but the cursor is on the searched frame
 % todo: aspectize second_cursor
 
 
@@ -4844,9 +4845,11 @@ then
 
 \section{Minibuffer}
 
+% way to ask for user input (that is different from the text user input).
+
 \subsection{Minubuffer creation}
 
-% when it's created? each type enter M-x?
+% when it's created? each time enter M-x?
 
 <<[[Efuns.top_window]] other fields>>=
 mutable top_mini_buffers : frame list;
@@ -4954,130 +4957,6 @@ let clear_message top_window =
   | _ -> ()
 @
 
-\subsection{[[M-x foo]], [[call_interactive()]]}
-
-<<meta keys>>=
-[MetaMap, Char.code 'x'], "call_interactive";
-@
-<<meta actions>>=
-define_action "call_interactive"  Interactive.call_interactive;
-@
-
-
-<<constant Interactive.meta_hist>>=
-let meta_hist = ref []
-@
-
-<<function Interactive.call_interactive>>=
-let call_interactive frame =
-  let buf = frame.frm_buffer in
-  let interactives = buf_interactives buf in
-  Select.select frame "M-x " meta_hist "" 
-    (fun _ -> List.map fst interactives)
-    (fun s -> s) 
-    (exec_interactive interactives frame)
-@
-
-<<function Interactive.buf_interactives>>=
-let buf_interactives buf =
-  let interactives = 
-    buf.buf_major_mode.maj_map.interactives @
-    (Efuns.location()).loc_map.interactives 
-  in
-  List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
-   interactives buf.buf_minor_modes 
-@
-
-
-<<function Interactive.exec_interactive>>=
-let exec_interactive interactives frame name =
-  try
-    let f, key = List.assoc name interactives in
-    <<[[Interactive.exec_interactive()]] display if has a keybinding>>
-    (* run it ! *)
-    f frame
-  with Not_found -> 
-    let top_window = Window.top frame.frm_window in
-    Top_window.message top_window ("No interactive command "^name)
-@
-
-
-<<[[Interactive.exec_interactive()]] display if has a keybinding>>=
-(match key with
-| None -> ()
-| Some key_list ->
-    let top_window = Window.top frame.frm_window in
-    Top_window.message top_window
-      ("you can run "^name^" by typing "^
-        (Keymap.print_key_list key_list))
-);
-@
-
-
-\subsection{Adding interactive functions}
-
-%subsubsection{[[Map.interactives]]}
-
-% in addition to char_map and complex_binding
-
-<<[[Efuns.map]] other fields>>=
-mutable interactives : (string * (action * prefix option)) list;
-@
-% record key so useful so can display the list of bindings?
-
-<<type Efuns.prefix>>=
-and prefix = key list
-@
-
-%\subsection{[[interactives_map]]}
-
-<<constant Std_efunsrc.interactives_map>>=
-let interactives_map = define_option ["interactives_map"] ""
-    (list_option string2_option) 
-  []
-@
-
-<<[[Std_efunsrc.toplevel]] set interactives_map>>=
-if !!interactives_map = [] then begin
-    interactives_map =:= List.map (fun x -> x, x ) [
-      <<[[interactives_map]] initial entries>>
-    ]
-  end    
-@
-
-
-<<[[interactives_map]] initial entries>>=
-"save_options";
-(*"load_library";*)
-"open_display";
-"unset_attr";
-(*"start_server";*)
-@      
-% a big ugly. An ocaml attribute would be better
-% that then auto generate the list of interactive functions.
-
-<<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
-!!interactives_map |> List.iter (fun (name, action) ->
-  try
-    Keymap.add_interactive (Efuns.location()).loc_map name 
-      (execute_action action)
-  with e ->
-    Log.printf "Error for action %s" action;
-    Log.exn "%s\n" e;
-);
-@
-
-<<function Keymap.add_interactive>>=
-let add_interactive map name f =
-    map.interactives <- (name, (f, None)) :: map.interactives
-@
-%less: should look for duplicates
-
-% so each global key and their associated func is accessible!
-<<[[Keymap.interactive()]] add keylist and name to interactives list>>=
-map.interactives <- (name, (f, Some keylist)) :: map.interactives;
-@
-%less: should look for duplicates
 
 \subsection{[[Top_window.message()]]}
 
@@ -5101,7 +4980,6 @@ let message top_window msg =
       mini_buffer.frm_redraw <- true
 @
 %less: do a sleep 0.2?
-
 
 
 
@@ -5438,8 +5316,161 @@ let mouse_save_then_kill frame =
 % here?
 
 
+\subsection{[[M-x foo]], [[call_interactive()]]}
+
+<<meta keys>>=
+[MetaMap, Char.code 'x'], "call_interactive";
+@
+<<meta actions>>=
+define_action "call_interactive"  Interactive.call_interactive;
+@
 
 
+<<constant Interactive.meta_hist>>=
+let meta_hist = ref []
+@
+
+<<function Interactive.call_interactive>>=
+let call_interactive frame =
+  let buf = frame.frm_buffer in
+  let interactives = buf_interactives buf in
+  Select.select frame "M-x " meta_hist "" 
+    (fun _ -> List.map fst interactives)
+    (fun s -> s) 
+    (exec_interactive interactives frame)
+@
+
+<<function Interactive.buf_interactives>>=
+let buf_interactives buf =
+  let interactives = 
+    buf.buf_major_mode.maj_map.interactives @
+    (Efuns.location()).loc_map.interactives 
+  in
+  List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
+   interactives buf.buf_minor_modes 
+@
+
+
+<<function Interactive.exec_interactive>>=
+let exec_interactive interactives frame name =
+  try
+    let f, key = List.assoc name interactives in
+    <<[[Interactive.exec_interactive()]] display if has a keybinding>>
+    (* run it ! *)
+    f frame
+  with Not_found -> 
+    let top_window = Window.top frame.frm_window in
+    Top_window.message top_window ("No interactive command "^name)
+@
+
+
+<<[[Interactive.exec_interactive()]] display if has a keybinding>>=
+(match key with
+| None -> ()
+| Some key_list ->
+    let top_window = Window.top frame.frm_window in
+    Top_window.message top_window
+      ("you can run "^name^" by typing "^
+        (Keymap.print_key_list key_list))
+);
+@
+
+
+\subsection{Adding interactive functions}
+
+%subsubsection{[[Map.interactives]]}
+
+% in addition to char_map and complex_binding
+
+<<[[Efuns.map]] other fields>>=
+mutable interactives : (string * (action * prefix option)) list;
+@
+% record key so useful so can display the list of bindings?
+
+<<type Efuns.prefix>>=
+and prefix = key list
+@
+
+%\subsection{[[interactives_map]]}
+
+<<constant Std_efunsrc.interactives_map>>=
+let interactives_map = define_option ["interactives_map"] ""
+    (list_option string2_option) 
+  []
+@
+
+<<[[Std_efunsrc.toplevel]] set interactives_map>>=
+if !!interactives_map = [] then begin
+    interactives_map =:= List.map (fun x -> x, x ) [
+      <<[[interactives_map]] initial entries>>
+    ]
+  end    
+@
+
+
+<<[[interactives_map]] initial entries>>=
+"save_options";
+(*"load_library";*)
+"open_display";
+"unset_attr";
+(*"start_server";*)
+@      
+% a big ugly. An ocaml attribute would be better
+% that then auto generate the list of interactive functions.
+
+<<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
+!!interactives_map |> List.iter (fun (name, action) ->
+  try
+    Keymap.add_interactive (Efuns.location()).loc_map name 
+      (execute_action action)
+  with e ->
+    Log.printf "Error for action %s" action;
+    Log.exn "%s\n" e;
+);
+@
+
+<<function Keymap.add_interactive>>=
+let add_interactive map name f =
+    map.interactives <- (name, (f, None)) :: map.interactives
+@
+%less: should look for duplicates
+
+% so each global key and their associated func is accessible!
+<<[[Keymap.interactive()]] add keylist and name to interactives list>>=
+map.interactives <- (name, (f, Some keylist)) :: map.interactives;
+@
+%less: should look for duplicates
+
+
+\subsection{Incremental mini buffer}
+% for select (and so completion), for search, replace.
+% each time ask input to user.
+
+
+<<function Select.incremental_mini_buffer>>=
+let incremental_mini_buffer 
+ frame ismap request default incremental_action end_action =
+  let top_window = Window.top frame.frm_window in
+  let incremental mini_frame =
+    incremental_action frame (Text.to_string mini_frame.frm_buffer.buf_text)
+  in
+  let incremental_insert mini_frame =
+    Simple.self_insert_command mini_frame;
+    incremental mini_frame
+  in
+  for key = 32 to 127 do
+    Keymap.add_binding ismap [NormalMap, key] incremental_insert
+  done;
+  Keymap.add_binding ismap [NormalMap, XK.xk_BackSpace] (fun mini_frame -> 
+    Simple.delete_backspace_char mini_frame;
+    incremental mini_frame
+  );
+  top_window.top_second_cursor <- Some frame;
+  Minibuffer.create_return frame ismap request default (fun frame str -> 
+    top_window.top_second_cursor <- None;
+    end_action frame str
+  )
+@
 
 
 
@@ -5527,8 +5558,8 @@ let move_forward frame delta =
   Text.fmove frame.frm_buffer.buf_text frame.frm_point delta
 @
 % Note that there is no mention of redisplay, or of adjusting
-% the cursor. This is done automatically each time based on
-% the new value for frame.frm_point.
+% the cursor. This is done automatically each time, based on
+% the new value of frame.frm_point.
 
 
 \subsection{Words and the syntax table}
@@ -5575,9 +5606,23 @@ let backward_word buf point =
 <<function Simple.in_prev_word>>=
 let in_prev_word text mark syntax =
   while Text.bmove_res text mark 1 = 1 &&
-    (not syntax.(Char.code (Text.get_char text mark)))
+        (not syntax.(Char.code (Text.get_char text mark)))
   do () done
 @
+
+<<function Simple.to_begin_of_word>>=
+let to_begin_of_word text mark syntax =
+  if Text.bmove_res text mark 1 = 1 then
+    begin
+      while syntax.(Char.code (Text.get_char text mark)) &&
+            (Text.bmove_res text mark 1) <> 0 
+      do () done;
+      if not syntax.(Char.code (Text.get_char text mark)) 
+      then (Text.fmove text mark 1)
+    end
+@
+
+
 
 
 <<function Simple.forward_word>>=
@@ -5591,11 +5636,41 @@ let forward_word buf point =
 <<function Simple.in_next_word>>=
 let in_next_word text mark syntax =
   while (not syntax.(Char.code (Text.get_char text mark))) &&
-    Text.fmove_res text mark 1 = 1 do () done
+        Text.fmove_res text mark 1 = 1 
+  do () done
+@
+
+<<function Simple.to_end_of_word>>=
+let to_end_of_word text mark syntax =
+  while syntax.(Char.code (Text.get_char text mark)) &&
+       (Text.fmove_res text mark 1) <> 0 
+  do () done
 @
 
 
+% helpers for writing his own functions, e.g. C-s C-w uses that
 
+<<function Simple.end_of_word>>=
+let end_of_word  buf point =
+  let text = buf.buf_text in
+  let syntax = buf.buf_syntax_table in
+  let mark = Text.dup_point text point in
+  to_end_of_word text mark syntax;
+  let s = Text.region text point mark in
+  Text.remove_point text mark;
+  s
+@
+
+<<function Simple.beginning_of_word>>=
+let beginning_of_word buf point =
+  let text = buf.buf_text in
+  let syntax = buf.buf_syntax_table in
+  let mark = Text.dup_point text point in
+  to_begin_of_word text mark syntax;
+  let s = Text.region text mark point in
+  Text.remove_point text mark;
+  s
+@
 
 
 \subsection{Lines}
@@ -5719,8 +5794,7 @@ and move_to_goal_column frame goal_col =
 let backward_paragraph buf point =
   let text = buf.buf_text in
   while Text.bmove_res text point 1 = 1 && 
-    (let c = Text.get_char text point in
-      c = '\n' || c = ' ') 
+        (let c = Text.get_char text point in c = '\n' || c = ' ')
   do () done;
   try
     Text.search_backward text (Str.regexp "\n *\n") point |> ignore;
@@ -5731,10 +5805,9 @@ let backward_paragraph buf point =
 <<function Simple.forward_paragraph>>=
 let forward_paragraph buf point =
   let text = buf.buf_text in
-  while
-    (let c = Text.get_char text point in
-      c = '\n' || c = ' ') 
-    && Text.fmove_res text point 1 = 1 do () done;
+  while (let c = Text.get_char text point in c = '\n' || c = ' ') &&
+         Text.fmove_res text point 1 = 1 
+  do () done;
   try
     Text.search_forward text (Str.regexp "\n *\n") point |> ignore;
     Text.fmove text point 1
@@ -5779,23 +5852,17 @@ let end_of_file frame =
 
 <<function Complex.goto_char>>=
 let goto_char frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
   Select.simple_select frame "goto-char:" (fun name ->
     let char = int_of_string name in
-    Text.set_position text point char
+    Text.set_position frame.frm_buffer.buf_text frame.frm_point char
   )
 @
 
 <<function Complex.goto_line>>=
 let goto_line frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
   Select.simple_select frame "goto-line:" (fun name ->
     let line = int_of_string name in
-    Text.goto_line text point (line - 1)
+    Text.goto_line frame.frm_buffer.buf_text frame.frm_point (line - 1)
   )
 @
 
@@ -5904,6 +5971,7 @@ let insert_char frame char =
 
 
 
+
 <<function Text.insert>>=
 let insert text point str = 
    insert_res text point str |> ignore
@@ -5918,6 +5986,17 @@ let insert_res tree point str =
 @
 
 % Insertion! For undo!
+
+
+
+<<function Simple.self_insert_command>>=
+let self_insert_command frame =
+  let char = Char.chr !Top_window.keypressed in
+  let buf = frame.frm_buffer in
+  if Ebuffer.modep buf overwrite_mode 
+  then insert_at_place frame char
+  else insert_char frame char
+@
 
 \section{Deleting}
 
@@ -6362,6 +6441,16 @@ let isearch_forward_regexp = isearch Regexp Forward
 @
 <<constant Search.isearch_backward_regexp>>=
 let isearch_backward_regexp = isearch Regexp Backward 
+@
+
+\subsection{Search mini frame }
+
+% use incremental_mini_buffer function
+
+\subsection{Secondary cursor}
+
+<<[[Efuns.top_window]] other fields>>=
+mutable top_second_cursor : frame option;
 @
 
 \subsection{Helpers}

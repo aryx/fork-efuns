@@ -1686,14 +1686,6 @@ let insert_at_place frame char =
 let overwrite_mode = Ebuffer.new_minor_mode "Over" []
 @
 
-<<function Simple.self_insert_command>>=
-let self_insert_command frame =
-  let char = Char.chr !Top_window.keypressed in
-  let buf = frame.frm_buffer in
-  if Ebuffer.modep buf overwrite_mode 
-  then insert_at_place frame char
-  else insert_char frame char
-@
 
 <<function Simple.char_insert_command>>=
 let char_insert_command char frame =
@@ -1793,24 +1785,7 @@ let format_to_string () =
 
 
 
-<<function Simple.to_begin_of_word>>=
-let to_begin_of_word text mark syntax =
-  if Text.bmove_res text mark 1 = 1 then
-    begin
-      while syntax.(Char.code (Text.get_char text mark)) &&
-        (Text.bmove_res text mark 1) <> 0 do ()
-      done;
-      if not syntax.(Char.code (Text.get_char text mark)) then
-        (Text.fmove text mark 1)
-    end
-@
 
-<<function Simple.to_end_of_word>>=
-let to_end_of_word text mark syntax =
-  while syntax.(Char.code (Text.get_char text mark)) &&
-    (Text.fmove_res text mark 1) <> 0 do ()
-  done
-@
 
 <<function Simple.to_frame>>=
 let to_frame f frame =
@@ -1818,27 +1793,7 @@ let to_frame f frame =
 @
 
 
-<<function Simple.beginning_of_word>>=
-let beginning_of_word buf point =
-  let text = buf.buf_text in
-  let syntax = buf.buf_syntax_table in
-  let mark = Text.dup_point text point in
-  to_begin_of_word text mark syntax;
-  let s = Text.region text mark point in
-  Text.remove_point text mark;
-  s
-@
 
-<<function Simple.end_of_word>>=
-let end_of_word  buf point =
-  let text = buf.buf_text in
-  let syntax = buf.buf_syntax_table in
-  let mark = Text.dup_point text point in
-  to_end_of_word text mark syntax;
-  let s = Text.region text point mark in
-  Text.remove_point text mark;
-  s
-@
 
 <<function Simple.current_word>>=
 (*
@@ -2588,9 +2543,6 @@ open Options
 
 \subsection*{[[features/select.ml]]}
 
-<<[[Efuns.top_window]] other fields>>=
-mutable top_second_cursor : frame option;
-@
 
 <<function Select.select_yes_or_no>>=
 let select_yes_or_no frame request action =
@@ -2685,30 +2637,6 @@ let set_history map string history =
   )
 @
 
-<<function Select.incremental_mini_buffer>>=
-let incremental_mini_buffer 
- frame ismap request default incremental_action action =
-  let top_window = Window.top frame.frm_window in
-  let incremental mini_frame =
-    incremental_action frame (Text.to_string mini_frame.frm_buffer.buf_text)
-  in
-  let incremental_insert mini_frame =
-    Simple.self_insert_command mini_frame;
-    incremental mini_frame
-  in
-  for key = 32 to 127 do
-    Keymap.add_binding ismap [NormalMap, key] incremental_insert
-  done;
-  Keymap.add_binding ismap [NormalMap, XK.xk_BackSpace] (fun mini_frame -> 
-    Simple.delete_backspace_char mini_frame;
-    incremental mini_frame
-  );
-  top_window.top_second_cursor <- Some frame;
-  Minibuffer.create_return frame ismap request default (fun frame str -> 
-    top_window.top_second_cursor <- None;
-    action frame str
-  )
-@
 
 <<function Select.select>>=
 let select frame request history start completion_fun prefix_fun action =
