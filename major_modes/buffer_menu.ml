@@ -40,7 +40,7 @@ let change_buffer_record frame =
 let buflist_array = Local.create_abstr "buffer_menu_buflist"
 
 (*****************************************************************************)
-(* Entry point *)
+(* Entry points *)
 (*****************************************************************************)
 
 let install buf =
@@ -116,6 +116,8 @@ let key_return frame =
     Top_window.message 
       (Window.top frame.frm_window)
       (spf "not valid entry in buffer list, exn = %s" (Common.exn_to_s exn))
+
+
 
     
   

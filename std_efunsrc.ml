@@ -189,6 +189,7 @@ let _ =
   (*e: buffer navigating actions *)
 
   define_action "buffer_menu"  Buffer_menu.menu;
+  define_action "switch_to_other_buffer"  Multi_buffers.switch_to_other_buffer;
 
   (*s: frame managment actions *)
   (* C-x map *)
@@ -464,7 +465,7 @@ let _ =
         (*e: frame navigation keys *)
 
         (* pad: *)
-        [ControlMetaMap, Char.code 'l'], "other_buffer";
+        [ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
 
         (* -------------------------------------------------------- *)
         (* Meta *)

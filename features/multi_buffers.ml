@@ -59,6 +59,11 @@ let right_buffer frame =
     | _ -> raise Not_found
     )
 (*e: function Complex.right_buffer *)
+
+let switch_to_other_buffer frame =
+  let default = Select.get_previous_frame () in
+  Select.set_previous_frame frame;
+  Frame.change_buffer frame.frm_window default
   
 
 (*e: features/multi_buffers.ml *)
