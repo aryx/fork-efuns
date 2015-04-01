@@ -28,14 +28,15 @@ open Efuns
 let menu frame =
   let buf = Ebuffer.default "*Buffer List*" in
   let text = buf.buf_text in
-  let str = " MR Buffer           Size  Mode         File\n" in
+  let str = " MR Buffer             Size  Mode         File\n" in
+  (* M = Modified, R = Read-only? *)
   Text.update text str;
-  Text.insert_at_end text " -- ------           ----  ----         ----\n";
+  Text.insert_at_end text " -- ------             ----  ----         ----\n";
 
   Simple.buffer_list frame |> List.iter (fun name ->
     let buf = Ebuffer.default name in
     Text.insert_at_end text 
-      (spf " %s  %-17s%4d  %-14s%s\n"
+      (spf " %s  %-17s%6d  %-13s%s\n"
          (if (buf.buf_last_saved = Text.version buf.buf_text) then " " else "*")
          buf.buf_name
          (Text.size buf.buf_text)
