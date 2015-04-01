@@ -13,35 +13,41 @@
  * license.txt for more details.
  *)
 open Common
-
 open Efuns
+
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
 
-(* An eshell inspired shell/terminal for efuns.
+(* An eshell-inspired shell/terminal for efuns.
  *
- * todo: have syntax for more complex stuff inspired by scsh? more
- * regular. I always get confused about order of redirection, 
- * the lack of nestedness, etc.
-*)
+ * todo:
+ *  - fix scroll_to_end to handle when have overflow lines
+ *  - typing a key should go to the prompt (but do via
+ *    handle_key_before is tricky, do only for regular keys without
+ *    modifiers)
+ *  - M-backspace should not delete the prompt ... and C-a should
+ *    not pass the prompt.
+ *  - later: have syntax for more complex stuff inspired by scsh? more
+ *    regular. I always get confused about order of redirection, 
+ *    the lack of nestedness, etc.
+ *  - look at Shell.nw?
+ *)
 
 
 (*****************************************************************************)
 (* Helpers *)
 (*****************************************************************************)
 
-let pwd_var = Local.create_string ""
+let pwd_var = Local.create_string "pwd_var"
 let pwd buf =
   Efuns.get_local buf pwd_var
 
 let prompt buf =
   spf "%s $ " (pwd buf)
 
-
+(* for builtin_ls *)
 let columnize width xs =
-  (* don't want to use the last char *)
-
   let maxlen = xs |> List.map String.length |> Common2.maximum in
   (* need to account for extra spaces between columns *)
   let maxlen = maxlen + 2 in
@@ -80,6 +86,13 @@ let columnize width xs =
 (* Scrolling *)
 (*****************************************************************************)
 
+(* for eshell we don't want to have the cursor centered in the frame,
+ * we want the cursor at the end so we can see as much as possible
+ * output from previous command.
+ * later: do like in rc/eshell and scroll until can
+ *)
+
+(* todo: this is buggy when have overflow lines *)
 let scroll_to_end frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -124,9 +137,14 @@ let colorize buf =
 (* Builtins *)
 (*****************************************************************************)
 
+(* assumes other commands don't output their final newline *)
 let display_prompt buf =
   Text.insert_at_end buf.buf_text "\n";
   Text.insert_at_end buf.buf_text (prompt buf);
+  (* less: it recolorize everything, so might be expensive if we don't
+   * limit the nblines of the buffer. A colorize_region would
+   * be better
+   *)
   colorize buf
 
 let builtin_ls ?(show_dotfiles=false) frame =
@@ -148,6 +166,7 @@ let builtin_ls ?(show_dotfiles=false) frame =
     try 
       let stat = Unix.stat path in
       match stat.Unix.st_kind with
+      (* eshell does not do that, but my Dircolors.colorize needs that *)
       | Unix.S_DIR -> file ^ "/"
       | _ -> file
     with exn -> 
@@ -168,7 +187,6 @@ let builtin_l frame =
     let path = Filename.concat dir file in
     try 
       let stat = Unix.stat path in
-      
       Text.insert_at_end buf.buf_text 
         (spf "%20d %s\n" 
            stat.Unix.st_size
@@ -180,6 +198,7 @@ let builtin_l frame =
   display_prompt buf
 
 
+(* later: handle cd - *)
 let builtin_cd frame s =
   let buf = frame.frm_buffer in
   let olddir = Efuns.get_local buf pwd_var in
@@ -223,7 +242,6 @@ let run_cmd frame cmd =
     display_prompt buf 
   in
   
-
   Thread.create (fun () ->
     let tampon = String.create 1000 in
 
@@ -250,22 +268,25 @@ let run_cmd frame cmd =
       (* redraw screen *)
       Top_window.update_display ();
     done
-  ) () |> ignore;
-  Thread.delay 0.2;
-  ()
+  ) () |> ignore
 
 let interpret frame s =
+  (* very rudimentary parsing, hmm *)
   (match s with
 
+  (* dir listing *)
   | "ls" -> builtin_ls ~show_dotfiles:true frame
   | "f" -> builtin_ls ~show_dotfiles:false frame
   | "l" -> builtin_l frame
 
+  (* dir navig *)
   | "s" -> builtin_cd frame ".."
   | "cd" -> builtin_cd frame Utils.homedir
   | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
 
+  (* file editing *)
   | _ when s =~ "v[ ]+\\(.*\\)" -> builtin_v frame (Common.matched1 s)
+
   (* general case *)
   | cmd -> run_cmd frame cmd
   );
@@ -273,37 +294,11 @@ let interpret frame s =
   scroll_to_end frame;
   ()
 
-
-  
-
-
 (*****************************************************************************)
-(* Install *)
+(* Keys *)
 (*****************************************************************************)
 
-let install buf =
-  Efuns.set_local buf pwd_var
-    (* todo: use the dirname of the file in current frame 
-     Frame.current_dir?
-    *)
-     (Efuns.location()).loc_dirname;
-  buf.buf_syntax_table.(Char.code '_') <- true;
-  buf.buf_syntax_table.(Char.code '-') <- true;
-  display_prompt buf;
-  let text = buf.buf_text in
-  Text.set_position text buf.buf_point (Text.size text);
-  ()
-
-let mode =  Ebuffer.new_major_mode "Shell" [install]
-let shell_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
-
-let eshell buf_name frame =
-  let text = Text.create "" in
-  let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
-  Ebuffer.set_major_mode buf mode;
-  Frame.change_buffer frame.frm_window buf.buf_name;
-  ()
-
+(* initiate the interpreter *)
 let key_return frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -315,6 +310,31 @@ let key_return frame =
     interpret frame s
   )
 
+(*****************************************************************************)
+(* Install *)
+(*****************************************************************************)
+
+let install buf =
+  Efuns.set_local buf pwd_var
+    (* todo: use the dirname of the file in current frame 
+       Frame.current_dir?
+    *)
+     (Efuns.location()).loc_dirname;
+  buf.buf_syntax_table.(Char.code '_') <- true;
+  buf.buf_syntax_table.(Char.code '-') <- true;
+  display_prompt buf;
+  let text = buf.buf_text in
+  Text.set_position text buf.buf_point (Text.size text);
+  ()
+
+let mode =  Ebuffer.new_major_mode "Shell" [install]
+
+let eshell buf_name frame =
+  let text = Text.create "" in
+  let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
+  Ebuffer.set_major_mode buf mode;
+  Frame.change_buffer frame.frm_window buf.buf_name;
+  ()
 
 let eshell_num frame =
   let char = Char.chr !Top_window.keypressed in
@@ -322,10 +342,6 @@ let eshell_num frame =
   match Ebuffer.find_buffer_opt buf_name with
   | None -> eshell buf_name frame
   | Some buf -> Frame.change_buffer frame.frm_window buf.buf_name
-
-      
-  
-  
 
 (*****************************************************************************)
 (* Setup *)
@@ -335,8 +351,8 @@ let _ =
   Efuns.add_start_hook (fun () ->
     Keymap.define_interactive_action "eshell" (eshell "*Shell*");
     Keymap.define_interactive_action "shell" (eshell "*Shell*");
+    (* use Top_window.keypressed *)
     Keymap.define_interactive_action "eshell_num" eshell_num;
-
     
 (* buggy, does not handle C-e, need something better
     Efuns.set_major_var mode Top_window.handle_key_start_hook [(fun frame ->
@@ -349,12 +365,10 @@ let _ =
 
     let map = mode.maj_map in
     Keymap.add_binding map [(NormalMap, XK.xk_Return)] key_return;
+    (* not too bad completion for free *)
     Keymap.add_binding map [(NormalMap, XK.xk_Tab)] Abbrevs.dabbrev_expand;
     Keymap.add_binding map [(MetaMap, Char.code '>')] (fun frame ->
       Simple.end_of_file frame;
       scroll_to_end frame;
     );
-
-
   )
-
