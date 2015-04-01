@@ -15,6 +15,10 @@ open Options
 open Xtypes
 open Efuns
 
+(*****************************************************************************)
+(* Keys *)
+(*****************************************************************************)
+
 (*s: function Simple.string_to_modifier *)
 let string_to_modifier s =  
   let mask = ref 0 in
@@ -108,6 +112,10 @@ let key_option = define_option_class "Key" value_to_key key_to_value
 let binding_option = tuple2_option (smalllist_option key_option, string_option)
 (*e: constant Simple.binding_option *)
 
+(*****************************************************************************)
+(* Insertion *)
+(*****************************************************************************)
+
 (*s: function Simple.insert_string *)
 let insert_string frame str =
   let text = frame.frm_buffer.buf_text in
@@ -190,6 +198,10 @@ let char_insert_command char frame =
   then insert_at_place frame char
   else insert_char frame char
 (*e: function Simple.char_insert_command *)
+
+(*****************************************************************************)
+(* Move *)
+(*****************************************************************************)
 
 (*s: function Simple.move_backward *)
 let move_backward frame delta =
@@ -275,6 +287,10 @@ and backward_line frame =
   end
 (*e: function Simple.backward_line *)
 
+
+(*****************************************************************************)
+(* Kill *)
+(*****************************************************************************)
 
 (*s: constant Simple.kill_size *)
 let kill_size = ref 0
@@ -367,6 +383,10 @@ let insert_next_killed frame =
   | _ -> ()
 (*e: function Simple.insert_next_killed *)
 
+(*****************************************************************************)
+(* Format *)
+(*****************************************************************************)
+
 (*s: function Simple.format_to *)
 let format_to frame =
   let point = frame.frm_point in
@@ -391,6 +411,10 @@ let format_to_string () =
   string
 (*e: function Simple.format_to_string *)
 
+
+(*****************************************************************************)
+(* Words *)
+(*****************************************************************************)
 
 (*s: function Simple.in_next_word *)
 let in_next_word text mark syntax =
@@ -490,12 +514,18 @@ let current_word buf point =
 (*e: function Simple.current_word (features/simple.ml) *)
 
   
+(*****************************************************************************)
+(* Buffers *)
+(*****************************************************************************)
   
 (*s: function Simple.buffer_list *)
 let buffer_list frame =
   (Efuns.location()).loc_buffers |> Common.hash_to_list |> List.map fst
 (*e: function Simple.buffer_list *)
 
+(*****************************************************************************)
+(* Delete *)
+(*****************************************************************************)
 
 (*s: function Simple.delete_char *)
 let delete_char frame =
@@ -540,6 +570,10 @@ let hungry_electric_delete frame =
   Text.commit_session text session
 (*e: function Simple.hungry_electric_delete *)
 
+(*****************************************************************************)
+(* Scroll *)
+(*****************************************************************************)
+
 (*
      let move_backward frame =
    Functions.move_backward frame 1; ()
@@ -569,6 +603,20 @@ let scroll_line frame n =
   frame.frm_y_offset <- frame.frm_y_offset + n
 (*e: function Simple.scroll_line *)
 
+let scroll_down frame =
+  scroll_line frame 1;
+  forward_line frame
+
+let scroll_up frame =
+  scroll_line frame (-1);
+  backward_line frame
+
+let scroll_other_up frame =
+  Window.next scroll_up frame.frm_window
+
+let scroll_other_down frame =
+  Window.next scroll_down frame.frm_window
+
 (*s: function Simple.recenter *)
 let recenter frame =
   let buf = frame.frm_buffer in
@@ -593,6 +641,10 @@ let begin_of_file frame =
   Text.set_position text frame.frm_point 0
 (*e: function Simple.begin_of_file *)
 
+(*****************************************************************************)
+(* Words *)
+(*****************************************************************************)
+
 (*s: function Simple.delete_backward_word *)
 let delete_backward_word buf point =
   let text = buf.buf_text in
@@ -612,6 +664,10 @@ let delete_forward_word buf point =
   Text.bmove text point len;
   Text.delete text point len |> ignore
 (*e: function Simple.delete_forward_word *)
+
+(*****************************************************************************)
+(* Undo *)
+(*****************************************************************************)
 
 (*s: function Simple.undo *)
 let undo frame =
@@ -653,6 +709,10 @@ let mouse_set_frame frame =
   Text.goto_point text mark point;
   ()
 (*e: function Simple.mouse_set_frame *)
+
+(*****************************************************************************)
+(* Highlight *)
+(*****************************************************************************)
  
 (*s: constant Simple.highlighted *)
 (* hightlighting of regions *)  
@@ -769,6 +829,9 @@ let highlight frame =
   hightlight_region buf debut fin
 (*e: function Simple.highlight *)
 
+(*****************************************************************************)
+(* Paren *)
+(*****************************************************************************)
 
 (*s: constant Simple.htmlp *)
 let htmlp = ref false
@@ -824,6 +887,9 @@ let highlight_paren frame =
   iter []
 (*e: function Simple.highlight_paren *)
   
+(*****************************************************************************)
+(* Mouse *)
+(*****************************************************************************)
   
 (*s: function Simple.mouse_drag_region *)
 (* C'est tout simple. On arrive dans cette fonction quand on est en train
@@ -930,6 +996,10 @@ let mouse_save_then_kill frame =
 *)
 (*e: function Simple.mouse_save_then_kill *)
 
+(*****************************************************************************)
+(* Buffers *)
+(*****************************************************************************)
+
 (*s: function Simple.next_buffer *)
 let next_buffer buf =
   let buf_list = Utils.list_of_hash (Efuns.location()).loc_buffers in
@@ -956,6 +1026,10 @@ let kill_buffer frame =
   if buf.buf_shared = 0 
   then Ebuffer.kill buf
 (*e: function Simple.kill_buffer *)
+
+(*****************************************************************************)
+(* Color helpers *)
+(*****************************************************************************)
 
 (*s: function Simple.color *)
 let color buf regexp strict attr =
@@ -991,6 +1065,10 @@ let color buf regexp strict attr =
     buf.buf_modified <- buf.buf_modified + 1
 (*e: function Simple.color *)
 
+(*****************************************************************************)
+(* Points *)
+(*****************************************************************************)
+
 (*s: function Simple.point_at_mark *)
 let point_at_mark frame =
   let buf = frame.frm_buffer in
@@ -1003,6 +1081,9 @@ let point_at_mark frame =
   Text.set_position text mark pos
 (*e: function Simple.point_at_mark *)
 
+(*****************************************************************************)
+(* Words *)
+(*****************************************************************************)
 
 (*s: function Simple.on_word *)
 let on_word buf point f =
@@ -1057,6 +1138,9 @@ let transpose_chars buf point =
   ()
 (*e: function Simple.transpose_chars *)
 
+(*****************************************************************************)
+(* Paragraphs *)
+(*****************************************************************************)
 
 (*s: function Simple.backward_paragraph *)
 let backward_paragraph buf point =
@@ -1084,6 +1168,9 @@ let forward_paragraph buf point =
   with Not_found -> Text.set_position text point (Text.size text)
 (*e: function Simple.forward_paragraph *)
 
+(*****************************************************************************)
+(* Electric *)
+(*****************************************************************************)
 
 (*s: function Simple.electric_insert_space *)
 let electric_insert_space frame =
@@ -1220,6 +1307,10 @@ let next_hole frame =
   Text.remove_point text curseur
 (*e: function Simple.next_hole *)
 
+(*****************************************************************************)
+(* Structures *)
+(*****************************************************************************)
+
 (*s: function Simple.insert_structure *)
 let insert_structure s frame =
   let buf = frame.frm_buffer in
@@ -1235,6 +1326,10 @@ let install_structures buf list =
     Keymap.add_binding buf.buf_map key (insert_structure s)
   )
 (*e: function Simple.install_structures *)
+
+(*****************************************************************************)
+(* Parameters *)
+(*****************************************************************************)
   
 open Options
 
@@ -1286,6 +1381,9 @@ let all_parameters frame _ =
       list
 (*e: function Simple.all_parameters *)
 
+(*****************************************************************************)
+(* Toplevel *)
+(*****************************************************************************)
   
 (*s: toplevel Simple._1 *)
 let _ =

@@ -80,6 +80,12 @@ let _ =
   define_action "goto_line" Complexe.goto_line;
   (*e: navigating actions *)
 
+  define_action "scroll_up" Simple.scroll_up; 
+  define_action "scroll_down" Simple.scroll_down; 
+  define_action "scroll_other_up" Simple.scroll_other_up; 
+  define_action "scroll_other_down" Simple.scroll_other_down; 
+
+
   (* ----------------------------------------------------------- *)
   (* Editing *)
   (* ----------------------------------------------------------- *)
@@ -355,8 +361,8 @@ let _ =
 
         [MetaMap, XK.xk_Up], "scroll_up"; 
         [MetaMap, XK.xk_Down], "scroll_down"; 
-        [MetaMap, XK.xk_Left], "scroll_up_other"; 
-        [MetaMap, XK.xk_Right], "scroll_down_other"; 
+        [MetaMap, XK.xk_Left], "scroll_other_up"; 
+        [MetaMap, XK.xk_Right], "scroll_other_down"; 
 
         (*e: navigating keys *)
 
