@@ -38,6 +38,7 @@ let c_error_regexp = define_option ["compil"; "error_regexp"] "" regexp_option
 (*e: constant Compil.c_error_regexp *)
 
 (*s: function Compil.c_find_error *)
+(* todo: vs C_mode.c_find_error? *)
 let c_find_error text error_point =
   let groups = 
     Text.search_forward_groups text (snd !!c_error_regexp)

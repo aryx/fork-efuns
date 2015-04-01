@@ -39,6 +39,41 @@ let prompt buf =
   spf "%s $ " (pwd buf)
 
 
+let columnize width xs =
+  (* don't want to use the last char *)
+  let width = width - 1 in
+
+  let maxlen = xs |> List.map String.length |> Common2.maximum in
+  (* need to account for extra spaces between columns *)
+  let maxlen = maxlen + 1 in
+
+  (* ex: width = 80  maxlen = 10 => nbcols = 8. maxlen = 11 => nbcols = 7 *)
+  let nbcols = width / maxlen in
+  (* ex xs len = 16 nbcols = 8 => nblines = 2. nbcols = 7 => nblines = 3 *) 
+  let nblines = 
+    List.length xs / nbcols +
+    (if List.length xs mod nbcols = 0 then 0 else 1)
+  in
+  let space_per_col = width / nbcols in
+  let arr = Array.of_list xs in
+  let buf = Buffer.create (nblines * width) in
+  for i = 0 to nblines - 1 do
+    for j = 0 to nbcols - 1 do
+      let idx = i * nbcols + j in
+      let s =
+        try arr.(idx)
+        with Invalid_argument "index out of bounds" -> ""
+      in
+      let len = String.length s in
+      Buffer.add_string buf s;
+      let nbspaces = space_per_col - len in
+      Buffer.add_string buf (String.make nbspaces ' ');
+    done;
+    if i <> nblines - 1 
+    then Buffer.add_string buf "\n";
+  done;
+  Buffer.contents buf
+
 (*****************************************************************************)
 (* Scrolling *)
 (*****************************************************************************)
@@ -95,7 +130,10 @@ let display_prompt buf =
 let builtin_ls ?(show_dotfiles=false) frame =
   let buf = frame.frm_buffer in
   let dir = pwd buf in
-  let files = Utils.file_list dir in
+  let files = Utils.file_list dir |> List.sort (fun a b ->
+    compare a b (* (String.lowercase a) (String.lowercase b)*)
+  )
+  in
   let files =
     if show_dotfiles
     then files
@@ -115,16 +153,8 @@ let builtin_ls ?(show_dotfiles=false) frame =
       file
   )
   in
-
-  (* similar to Select.display_completions *)
-  let rec iter list s =
-    match list with
-    | [] -> s
-    | [f] -> Printf.sprintf "%s\n%s" s f
-    | f1::f2::tail  ->
-      iter tail (Printf.sprintf "%s\n%-40s%s" s f1 f2)
-  in
-  Text.insert_at_end buf.buf_text (iter files "");
+  let s = columnize frame.frm_width files in
+  Text.insert_at_end buf.buf_text s;
   display_prompt buf
 
 let builtin_l frame =

@@ -42,7 +42,7 @@ WARNING_FLAGS?=-w +A-4-29-6-45-41-44-48-27-32-21 -warn-error +a
 #WARNING_FLAGS= -w -21
 
 #dont use -custom, it makes the bytecode unportable.
-OCAMLCFLAGS?=-g -dtypes -bin-annot -thread $(WARNING_FLAGS)
+OCAMLCFLAGS?=-g -dtypes -absname -bin-annot -thread $(WARNING_FLAGS)
 
 # This flag is also used in subdirectories so don't change its name here.
 OPTFLAGS?=-thread

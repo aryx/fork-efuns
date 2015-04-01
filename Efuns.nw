@@ -20,7 +20,7 @@
 %   let point = point.point uglyness
 % - use global for location instead of all those fields
 % - removed useless opti around representation, and rename line_repr,
-%   repr_line; use boxes instead. repr was used for too many things.
+%   repr_line; use boxes instead. 'repr' was used for too many things.
 
 %thx to codemap/codegraph/scheck:
 % - SEMI use cg to reduce backward deps, introduce globals.c, utils.c,
@@ -189,6 +189,7 @@ Here are other candidates that were considered but ultimately discarded:
 % see Editor.nw for more choices
 
 % vs emacs:
+%  - see http://www.emacswiki.org/emacs/EfunsEditor
 %  - no extension language (lisp) to extend the editor with plugins.
 %    It made sense for Emacs because the implementation language
 %    was C, which is more error prone than lisp, but by using OCaml
@@ -198,7 +199,10 @@ Here are other candidates that were considered but ultimately discarded:
 %    in emacs case I usually do it via modifying my .emacs and
 %    very often reloading my emacs (buy maybe I'm not a good dynamic
 %    programmer)
-%  - see also http://www.emacswiki.org/emacs/EfunsEditor
+%  - easier to debug! can use ocamldebug, no more -debug-on-error
+%    and binary search in .emacs when have a paren pb
+%  - easier to program, ocaml > lisp! can also use ocamlyacc, my
+%    pfff real parsers. More colors. More structure.
 
 % see also other ocaml editors?
 %  - https://github.com/diml/zed (seems just an "engine")
@@ -273,6 +277,8 @@ the main author of Efuns.
 % navigating in file (fast, different granularities), random access!
 % editing (inserting/deleting/moving/cut-copy-paste/transposing)
 % search/replace
+
+% special chars (^M, Tabs), overflow (80 cols)
 
 % efficient keyboard! combination of keys, macros! M-x, C-x o
 % everything with keyboard!

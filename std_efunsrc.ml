@@ -29,9 +29,11 @@ let fondamental_mode frame =
 (*e: function Std_efunsrc.fondamental_mode *)
 
 (*s: function Std_efunsrc.compile *)
+(*
 let compile frame =
   Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
     frame "compile"
+*)
 (*e: function Std_efunsrc.compile *)
 
 (*s: toplevel Std_efunsrc._1 *)
@@ -164,7 +166,7 @@ let _ =
   define_action "shell_command"  System.shell_command;
   (*x: external command actions *)
   define_action "grep" Compil.grep;
-  (*  define_action "compile" (compile c_find_error); *)
+  define_action "compile" (Compil.compile Compil.c_find_error);
   (*e: external command actions *)
 
   (* ----------------------------------------------------------- *)
@@ -267,7 +269,7 @@ let _ =
   (* C-x map *)
   define_action "point_at_mark"  Simple.point_at_mark;
   (*x: misc actions *)
-  define_action "compile" compile;
+  (*define_action "compile" compile;*)
   (*x: misc actions *)
   (* C-x map *)
   define_action "next_error"  Compil.next_error;
@@ -347,6 +349,8 @@ let _ =
         (* pad: *)
         [MetaMap, Char.code '>'], "end_of_file";
         [MetaMap, Char.code '<'], "begin_of_file";
+        [MetaMap, Char.code 'g'], "goto_line";
+
         (*e: navigating keys *)
 
         (* -------------------------------------------------------- *)
@@ -424,6 +428,11 @@ let _ =
         (*s: external commands keys *)
         [MetaMap, Char.code '!'], "shell_command";
         (*e: external commands keys *)
+        (* pad: *)
+        [MetaMap, XK.xk_Return], "compile";
+        [c_x;ControlMap, Char.code 'n' ], "next_error";
+
+        [c_x;NormalMap, Char.code '`' ], "next_error";
 
         (* pad: *)
         [MetaMap, Char.code '1'], "eshell_num";
@@ -501,7 +510,6 @@ let _ =
         (*x: misc keys *)
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         (*x: misc keys *)
-        [c_x;NormalMap, Char.code '`' ], "next_error";
         (*x: misc keys *)
         [NormalMap, Char.code ' '], "char_expand_abbrev";
         [MetaMap, Char.code '/'], "dabbrev_expand";

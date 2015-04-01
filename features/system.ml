@@ -1,8 +1,7 @@
 (*s: features/system.ml *)
+open Common
 open Efuns
 open Unix
-(*open Concur*)
-(*open ThreadUnix*)
 
 (*s: function System.open_process *)
 let open_process cmd =
@@ -11,15 +10,17 @@ let open_process cmd =
   let inchan = in_channel_of_descr in_read in
   let outchan = out_channel_of_descr out_write in
   match fork() with
-    0 ->
+  | 0 ->
       if out_read <> stdin then begin
-          dup2 out_read stdin; 
-          close out_read 
+        dup2 out_read stdin; 
+        close out_read 
       end;
       if in_write <> Unix.stdout ||  in_write <> Unix.stderr then begin
-          if in_write <> Unix.stdout then dup2 in_write stdout;
-          if in_write <> Unix.stderr then dup2 in_write stderr; 
-          close in_write 
+        if in_write <> Unix.stdout 
+        then dup2 in_write stdout;
+        if in_write <> Unix.stderr 
+        then dup2 in_write stderr; 
+        close in_write 
       end;
       List.iter close [in_read;out_write];
       execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
@@ -45,17 +46,16 @@ let system buf_name cmd end_action =
   let location = Efuns.location () in
   Concur.Thread.add_reader ins (fun () ->
     let pos,str = Text.delete_res text curseur
-        (Text.point_to_eof text curseur) in
+                    (Text.point_to_eof text curseur) in
     let len = input inc tampon 0 1000 in
     Mutex.lock location.loc_mutex;
     if len = 0 then begin
       let pid,status = waitpid [WNOHANG] pid in
       (match status with 
-      | WEXITED s -> Text.insert_at_end text 
-              (Printf.sprintf "Exited with status %d\n" s); 
-            close_in inc;
-            close_out outc;
-            (try end_action buf s with _ -> ())
+      | WEXITED s -> Text.insert_at_end text (spf "Exited with status %d\n" s); 
+          close_in inc;
+          close_out outc;
+          (try end_action buf s with _ -> ())
       | _ -> Text.insert_at_end text "Broken pipe" 
       );
       Text.set_position text curseur (Text.size text);
@@ -79,30 +79,29 @@ let system buf_name cmd end_action =
   );
 
   let lmap = buf.buf_map in
-  Keymap.add_binding lmap [NormalMap, XK.xk_Return]
-    (fun frame ->
-      let point = frame.frm_point in
-      Text.insert text point "\n";
-      Text.fmove text point 1;
-      if !active then (* to avoid a segmentation fault in Ocaml *)
-        let str = Text.sub text curseur 
-            (Text.point_to_eof text curseur) in
-        Text.set_position text curseur (Text.size text);
-        (* synchronize viewpoint *)
-        output outc str 0 (String.length str);
-        flush outc
+  Keymap.add_binding lmap [NormalMap, XK.xk_Return] (fun frame ->
+    let point = frame.frm_point in
+    Text.insert text point "\n";
+    Text.fmove text point 1;
+    if !active then (* to avoid a segmentation fault in Ocaml *) begin
+      let str = Text.sub text curseur 
+          (Text.point_to_eof text curseur) in
+      Text.set_position text curseur (Text.size text);
+      (* synchronize viewpoint *)
+      output outc str 0 (String.length str);
+      flush outc
+    end
   );
 
   (*s: [[System.system()]] set finalizer, to intercept killed frame *)
   buf.buf_finalizers <- (fun () -> 
-      (try 
-          Unix.kill pid Sys.sigkill;
-          let _,_ = waitpid [] pid in
-          ()
-        with _ -> ());
-      (*Concur.Thread.remove_reader ins*) failwith "System.system: TODO 2"
-    )
-  :: buf.buf_finalizers;
+    (try 
+       Unix.kill pid Sys.sigkill;
+       waitpid [] pid |> ignore;
+     with _ -> ()
+    );
+    Concur.Thread.remove_reader ins
+  ) :: buf.buf_finalizers;
   (*e: [[System.system()]] set finalizer, to intercept killed frame *)
 
   buf
