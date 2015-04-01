@@ -337,6 +337,7 @@ let _ =
         [NormalMap, XK.xk_Up], "backward_line"; 
         [NormalMap, XK.xk_Down], "forward_line"; 
 
+
         [ControlMap, XK.xk_Up], "backward_paragraph";
         [ControlMap, XK.xk_Down], "forward_paragraph";  
 
@@ -346,10 +347,16 @@ let _ =
         [ControlMap, XK.xk_Next], "end_of_file";
         [ControlMap, XK.xk_Prior], "begin_of_file";
         (*x: navigating keys *)
+
         (* pad: *)
         [MetaMap, Char.code '>'], "end_of_file";
         [MetaMap, Char.code '<'], "begin_of_file";
         [MetaMap, Char.code 'g'], "goto_line";
+
+        [MetaMap, XK.xk_Up], "scroll_up"; 
+        [MetaMap, XK.xk_Down], "scroll_down"; 
+        [MetaMap, XK.xk_Left], "scroll_up_other"; 
+        [MetaMap, XK.xk_Right], "scroll_down_other"; 
 
         (*e: navigating keys *)
 
@@ -428,6 +435,7 @@ let _ =
         (*s: external commands keys *)
         [MetaMap, Char.code '!'], "shell_command";
         (*e: external commands keys *)
+
         (* pad: *)
         [MetaMap, XK.xk_Return], "compile";
         [c_x;ControlMap, Char.code 'n' ], "next_error";
@@ -453,10 +461,9 @@ let _ =
         (*x: buffer managment keys *)
         [c_x; NormalMap, Char.code 'k'], "kill_buffer";
         (*e: buffer managment keys *)
-        (* pad: *)
-        [ControlMetaMap, XK.xk_Tab], "buffer_menu";
 
         (*s: buffer navigating keys *)
+        (* lefessant?: *)
         [ControlMetaMap, XK.xk_Left], "left_buffer";
         [ControlMetaMap, XK.xk_Right], "right_buffer";
         [ControlMetaMap, XK.xk_Down], "down_buffer";
@@ -474,7 +481,9 @@ let _ =
         (*e: frame navigation keys *)
 
         (* pad: *)
+        [ControlMetaMap, XK.xk_Tab], "buffer_menu";
         [ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
+        [ControlMap, XK.xk_Tab], "next_frame";
 
         (* -------------------------------------------------------- *)
         (* Meta *)
@@ -515,12 +524,13 @@ let _ =
         [MetaMap, Char.code '/'], "dabbrev_expand";
         (*x: misc keys *)
         (*s: window managment keys *)
+        (* less: delete *)
         [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
         [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
         [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
         (*e: window managment keys *)
         (*x: misc keys *)
-        [ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
+        [ c_c; NormalMap, Char.code '-'], "next_hole";
         (*e: misc keys *)
         (*e: [[global_map]] initial entries *)
       ]

@@ -41,11 +41,12 @@ let prompt buf =
 
 let columnize width xs =
   (* don't want to use the last char *)
-  let width = width - 1 in
 
   let maxlen = xs |> List.map String.length |> Common2.maximum in
   (* need to account for extra spaces between columns *)
-  let maxlen = maxlen + 1 in
+  let maxlen = maxlen + 2 in
+  (* but don't need the extra space for the last col so compensate *)
+  let width = width + 2 in
 
   (* ex: width = 80  maxlen = 10 => nbcols = 8. maxlen = 11 => nbcols = 7 *)
   let nbcols = width / maxlen in
@@ -59,7 +60,7 @@ let columnize width xs =
   let buf = Buffer.create (nblines * width) in
   for i = 0 to nblines - 1 do
     for j = 0 to nbcols - 1 do
-      let idx = i * nbcols + j in
+      let idx = i + j * nblines in
       let s =
         try arr.(idx)
         with Invalid_argument "index out of bounds" -> ""
@@ -67,7 +68,8 @@ let columnize width xs =
       let len = String.length s in
       Buffer.add_string buf s;
       let nbspaces = space_per_col - len in
-      Buffer.add_string buf (String.make nbspaces ' ');
+      if j <> nbcols - 1
+      then Buffer.add_string buf (String.make nbspaces ' ');
     done;
     if i <> nblines - 1 
     then Buffer.add_string buf "\n";
