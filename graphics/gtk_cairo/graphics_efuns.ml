@@ -120,7 +120,7 @@ let draw_minimap cr pg =
 
   fill_rectangle_xywh ~cr ~x:0. ~y:0. 
     ~w:metrics.mini_width ~h:metrics.main_height
-    ~color:"DarkSlateGray" ();
+    ~color:"grey22" ();
 
   Cairo.scale cr (1. / metrics.mini_factor) (1. / metrics.mini_factor);
 
