@@ -207,13 +207,11 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_force_start : bool;
     (*x: [[Efuns.frame]] other fields *)
+    mutable frm_prefix : key list;
+    (*x: [[Efuns.frame]] other fields *)
     mutable frm_last_action : action;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_killed : bool;
-    (*x: [[Efuns.frame]] other fields *)
-    mutable frm_prefix : key list;
-    (*x: [[Efuns.frame]] other fields *)
-    mutable frm_repeat_action : int;
     (*e: [[Efuns.frame]] other fields *)
   } 
 (*e: type Efuns.frame *)
@@ -559,7 +557,8 @@ let _ =
 (*s: constant Efuns.t *)
 (*let t = x_res*)
 (*e: constant Efuns.t *)
-  (*
+
+(*
   let _ = Printf.printf "%d %d %s %s %s" !width !height !font !fg !bg; 
   print_newline () 
 *)

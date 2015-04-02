@@ -189,7 +189,7 @@ let change_buffer frame =
 let window_change_buffer frame =
   Select.select_buffer frame "Switch to buffer in new frame: " 
     (Select.get_previous_frame ())
-  (fun name ->
+    (fun name ->
       let top_window = Top_window.create ()
            (*"TODO_Display"*) 
       in
@@ -237,23 +237,17 @@ let open_display frame =
 
 (*s: function Complex.goto_line *)
 let goto_line frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
   Select.simple_select frame "goto-line:" (fun name ->
     let line = int_of_string name in
-    Text.goto_line text point (line - 1)
+    Text.goto_line frame.frm_buffer.buf_text frame.frm_point (line - 1)
   )
 (*e: function Complex.goto_line *)
 
 (*s: function Complex.goto_char *)
 let goto_char frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
   Select.simple_select frame "goto-char:" (fun name ->
     let char = int_of_string name in
-    Text.set_position text point char
+    Text.set_position frame.frm_buffer.buf_text frame.frm_point char
   )
 (*e: function Complex.goto_char *)
 

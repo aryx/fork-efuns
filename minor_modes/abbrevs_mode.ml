@@ -32,7 +32,7 @@ let _ =
 (*s: function Abbrevs_mode.install *)
 let install buf =
   try
-    ignore (get_local buf abbrev_table)
+    get_local buf abbrev_table |> ignore
   with _ -> 
     set_local buf abbrev_table abbrevs
 (*e: function Abbrevs_mode.install *)
@@ -47,7 +47,9 @@ let abbrevs_chars = define_option ["abbrevs_mode"; "abbrevs_chars"] ""
 (*e: constant Abbrevs_mode.abbrevs_chars *)
   
 (*s: function Abbrevs_mode.find_matching *)
-let find_matching  frame = self_insert_command frame; highlight_paren frame
+let find_matching  frame = 
+  self_insert_command frame; 
+  Simple.highlight_paren frame
 (*e: function Abbrevs_mode.find_matching *)
 (*s: function Abbrevs_mode.char_expand_abbrev *)
 let char_expand_abbrev frame =

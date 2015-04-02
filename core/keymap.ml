@@ -22,9 +22,6 @@ open Efuns
 (*s: function Keymap.dummy_action *)
 let dummy_action frame = () 
 (*e: function Keymap.dummy_action *)
-(*s: function Keymap.unbound_key *)
-let unbound_key buffer _ = raise UnboundKey
-(*e: function Keymap.unbound_key *)
 
 (*s: function Keymap.create *)
 let create () =
@@ -127,12 +124,7 @@ let rec add_binding map key_list binding =
           failwith "ERROR add_complex_binding: Unable to add prefix"
 (*e: function Keymap.add_binding *)
           
-
-(*s: function Keymap.define_char_binding *)
-let define_char_binding map char (f : frame -> 'a) =
-  add_binding map [NormalMap,Char.code char] f
-(*e: function Keymap.define_char_binding *)
-    
+   
 (*s: constant Keymap.c_h *)
 let c_h = (ControlMap, Char.code 'h')
 (*e: constant Keymap.c_h *)

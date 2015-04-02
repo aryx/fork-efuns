@@ -195,7 +195,8 @@ open Options
 <<toplevel Efuns._2>>
   
 <<constant Efuns.t>>
-  (*
+
+(*
   let _ = Printf.printf "%d %d %s %s %s" !width !height !font !fg !bg; 
   print_newline () 
 *)
@@ -220,13 +221,6 @@ open Options
 
 
 \subsection*{[[core/text.ml]]}
-
-
-
-
-
-
-
 
 
 <<function Text.insert_at_end>>=
@@ -336,20 +330,20 @@ let compare text p1 p2 =
   compare p1.pos p2.pos
 @
 
-<<function Text.add>>=
-(*
-let add text point delta =
-  let gpos = text.gpoint.pos in
-  let gap_end = gpos + text.gsize in
-  if point <= gpos && point + delta > gpos then
-    point + delta + text.gsize
-  else
-  if point >= gap_end && point+delta < gap_end then
-    point + delta - text.gsize
-  else
-    point + delta
-*)
-@
+%<<function Text.add>>=
+%(*
+%let add text point delta =
+%  let gpos = text.gpoint.pos in
+%  let gap_end = gpos + text.gsize in
+%  if point <= gpos && point + delta > gpos then
+%    point + delta + text.gsize
+%  else
+%  if point >= gap_end && point+delta < gap_end then
+%    point + delta - text.gsize
+%  else
+%    point + delta
+%*)
+%@
 
 <<function Text.get_char>>=
 let get_char tree point =
@@ -445,7 +439,6 @@ let bmove_res tree p delta =
 let bmove text p delta = 
   bmove_res text p delta |> ignore
 @
-
 <<function Text.fmove>>=
 let fmove text p delta = 
   fmove_res text p delta |> ignore
@@ -528,12 +521,6 @@ let sub text point len =
 
 
 
-
-
-
-
-
-
 <<function Text.move_res>>=
 let move_res text point n =
   if n > 0 
@@ -564,19 +551,19 @@ let rec region tree p1 p2 =
   else sub tree p1 (distance tree p1 p2)
 @
 
-<<function Text.goto_xy>>=
-(*
-let goto_xy tree point x y =
-  let text = tree.tree_text in    
-  let y =
-    if y < text.text_nlines then y
-    else text.text_nlines - 1
-  in
-  point.pos <- text.text_newlines.(y).position;
-  point.line <- y;
-  fmove tree point x |> ignore
-*)
-@
+%<<function Text.goto_xy>>=
+%(*
+%let goto_xy tree point x y =
+%  let text = tree.tree_text in    
+%  let y =
+%    if y < text.text_nlines then y
+%    else text.text_nlines - 1
+%  in
+%  point.pos <- text.text_newlines.(y).position;
+%  point.line <- y;
+%  fmove tree point x |> ignore
+%*)
+%@
 
 <<function Text.update>>=
 let update tree str =
@@ -655,7 +642,6 @@ open Utils
 <<type Text.session>>
 
 
-
 <<type Text.line>>
 
 <<type Text.point>>
@@ -667,10 +653,6 @@ open Utils
 <<type Text.action>>
 
 
-(*      
-module TextTree = WX_text.Make(Text)
-open TextTree
-*)
 type tree_desc =
       { mutable tree_nlines: int;
         mutable tree_width: int;
@@ -716,30 +698,6 @@ let make_text text lines =
 
 type t = tree_desc
   
-(* type t = tree tree_desc   *)
-
-(* external id: t -> tree tree_desc = "%identity" *)
-
-(*
-let print msg text =
-  let s = text.text_string in
-  let gpoint = text.gpoint in
-  let gsize  = text.gsize in
-  let len = text.text_size in
-  let gap_end = gpoint + gsize in
-    Printf.printf "%s: <<%s[gap:%d]%s>>" msg (String.sub s 0 gpoint) gsize 
-      (String.sub s gap_end (len - gap_end));
-    print_newline ()
- 
-let print_newlines text =
-  print_string "Newlines :";
-  for i = 0 to text.text_nlines - 1 do
-    Printf.printf " %d" text.text_newlines.(i).position;
-  done;
-  print_newline ()
-*)
-
-  
 <<function Text.version>>
   
 <<function Text.nbre_lines>>
@@ -762,39 +720,6 @@ let print_newlines text =
 
 <<constant Text.add_amount>>
 <<function Text.extend_gap>>
-
-(*
-  let rec iter tree lines =
-    match tree with
-      Parts text ->
-        if lines = text.tree_nlines || lines = -1 then
-          (* Insert in the last part *)
-          iter text.tree_parts.(Array.length text.tree_parts - 1) (-1)
-        else
-        let rec iter2 lines i =
-          let tlines = match text.tree_parts.(i) with
-              Parts t -> t.tree_nlines
-            | Lines t -> t.tree_nlines 
-          in
-          if tlines > lines then
-            iter text.tree_parts.(i) lines
-          else
-            iter2 (lines - tlines) (i+1)
-        in
-        iter2 lines 0;
-        text.tree_modified <- true;
-        text.tree_nlines <- text.tree_nlines + nbr
-    | Lines text ->
-        let newtext = Array.create text.tree_nlines text.tree_parts.(0) in
-        Array.blit text.tree_parts 0 newtext 0 lines;
-        Array.blit t.text_newlines gline newtext lines nbr;
-        Array.blit text.tree_parts lines newtext (lines+nbr) (
-          text.tree_nlines - lines);
-        text.tree_modified <- true;        
-        text.tree_nlines <- text.tree_nlines + nbr
-  in
-  iter (Parts tree) gline
-*)
 
 <<function Text.low_insert>>
 
@@ -848,8 +773,6 @@ let with_dup_point text point f =
 
 <<function Text.compare>>
   
-<<function Text.add>>
-
 <<function Text.get_char>>
 
 <<function Text.get_attr>>
@@ -933,8 +856,6 @@ let with_dup_point text point f =
 
 <<function Text.region>>
 
-<<function Text.goto_xy>>
-
 <<function Text.update>>
 
 <<function Text.lexing>>
@@ -948,6 +869,69 @@ let with_dup_point text point f =
 <<function Text.toggle_readonly>>
   
 @
+
+%(*      
+%module TextTree = WX_text.Make(Text)
+%open TextTree
+%*)
+%  
+%(* type t = tree tree_desc   *)
+%
+%(* external id: t -> tree tree_desc = "%identity" *)
+%
+%(*
+%let print msg text =
+%  let s = text.text_string in
+%  let gpoint = text.gpoint in
+%  let gsize  = text.gsize in
+%  let len = text.text_size in
+%  let gap_end = gpoint + gsize in
+%    Printf.printf "%s: <<%s[gap:%d]%s>>" msg (String.sub s 0 gpoint) gsize 
+%      (String.sub s gap_end (len - gap_end));
+%    print_newline ()
+% 
+%let print_newlines text =
+%  print_string "Newlines :";
+%  for i = 0 to text.text_nlines - 1 do
+%    Printf.printf " %d" text.text_newlines.(i).position;
+%  done;
+%  print_newline ()
+%*)
+
+
+%(*
+%  let rec iter tree lines =
+%    match tree with
+%      Parts text ->
+%        if lines = text.tree_nlines || lines = -1 then
+%          (* Insert in the last part *)
+%          iter text.tree_parts.(Array.length text.tree_parts - 1) (-1)
+%        else
+%        let rec iter2 lines i =
+%          let tlines = match text.tree_parts.(i) with
+%              Parts t -> t.tree_nlines
+%            | Lines t -> t.tree_nlines 
+%          in
+%          if tlines > lines then
+%            iter text.tree_parts.(i) lines
+%          else
+%            iter2 (lines - tlines) (i+1)
+%        in
+%        iter2 lines 0;
+%        text.tree_modified <- true;
+%        text.tree_nlines <- text.tree_nlines + nbr
+%    | Lines text ->
+%        let newtext = Array.create text.tree_nlines text.tree_parts.(0) in
+%        Array.blit text.tree_parts 0 newtext 0 lines;
+%        Array.blit t.text_newlines gline newtext lines nbr;
+%        Array.blit text.tree_parts lines newtext (lines+nbr) (
+%          text.tree_nlines - lines);
+%        text.tree_modified <- true;        
+%        text.tree_nlines <- text.tree_nlines + nbr
+%  in
+%  iter (Parts tree) gline
+%*)
+
 
 
 \subsection*{[[core/ebuffer.ml]]}
@@ -1118,18 +1102,15 @@ let find_buffer_opt name =
 \subsection*{[[core/keymap.ml]]}
 
 
-<<function Keymap.unbound_key>>=
-let unbound_key buffer _ = raise UnboundKey
-@
+%<<function Keymap.unbound_key>>=
+%let unbound_key buffer _ = raise UnboundKey
+%@
 %dead?
-
-
-<<function Keymap.define_char_binding>>=
-let define_char_binding map char (f : frame -> 'a) =
-  add_binding map [NormalMap,Char.code char] f
-@
+%<<function Keymap.define_char_binding>>=
+%let define_char_binding map char (f : frame -> 'a) =
+%  add_binding map [NormalMap,Char.code char] f
+%@
 %dead?
-
 %dead: let keysym_to_name = []
 % (it's in XK now)
 
@@ -1146,7 +1127,6 @@ En effet, on aurait envie de pouvoir modifier les bindings selon divers
 open Efuns
 
 <<function Keymap.dummy_action>>
-<<function Keymap.unbound_key>>
 
 <<function Keymap.create>>
 
@@ -1162,9 +1142,7 @@ open Efuns
 
 <<function Keymap.add_binding>>
           
-
-<<function Keymap.define_char_binding>>
-    
+   
 <<constant Keymap.c_h>>
 <<constant Keymap.c_x>>
 <<constant Keymap.c_c>>
@@ -1572,18 +1550,21 @@ let string_to_modifier s =
 @
 
 <<function Simple.modifier_to_string>>=
-(*
-let modifier_to_string mask = 
-  let s = if mask land shiftMask = 0 then "" else "S" in
-  let s = if mask land controlMask = 0 then s else "C" ^ s in
-  let s = if mask land mod1Mask = 0 then s else "M" ^ s in
-  let s = if mask land mod2Mask = 0 then s else "2" ^ s in
-  let s = if mask land mod3Mask = 0 then s else "3" ^ s in
-  let s = if mask land mod4Mask = 0 then s else "4" ^ s in
-  let s = if mask land mod5Mask = 0 then s else "5" ^ s in
-  s
-*)
 @
+
+%<<function Simple.modifier_to_string>>=
+%(*
+%let modifier_to_string mask = 
+%  let s = if mask land shiftMask = 0 then "" else "S" in
+%  let s = if mask land controlMask = 0 then s else "C" ^ s in
+%  let s = if mask land mod1Mask = 0 then s else "M" ^ s in
+%  let s = if mask land mod2Mask = 0 then s else "2" ^ s in
+%  let s = if mask land mod3Mask = 0 then s else "3" ^ s in
+%  let s = if mask land mod4Mask = 0 then s else "4" ^ s in
+%  let s = if mask land mod5Mask = 0 then s else "5" ^ s in
+%  s
+%*)
+%@
 
 <<constant Simple.name_to_keysym>>=
 let name_to_keysym = 
@@ -1596,20 +1577,25 @@ let name_to_keysym =
 @
 
 <<function Simple.value_to_keysym>>=
-(*
-let value_to_keysym v =
-  match v with
-    Value v -> List.assoc v name_to_keysym
-  | _ -> raise Not_found
-*)
 @
 
+%<<function Simple.value_to_keysym>>=
+%(*
+%let value_to_keysym v =
+%  match v with
+%    Value v -> List.assoc v name_to_keysym
+%  | _ -> raise Not_found
+%*)
+%@
+
 <<function Simple.keysym_to_value>>=
-(*
-let keysym_to_value k =
-  Value (List.assoc k XK.keysym_to_name)
-*)
 @
+%<<function Simple.keysym_to_value>>=
+%(*
+%let keysym_to_value k =
+%  Value (List.assoc k XK.keysym_to_name)
+%*)
+%@
 
 <<function Simple.value_to_key>>=
 (* form: SC-Button1 *)
@@ -1760,31 +1746,33 @@ let kill_bol buf point =
 
 
 <<function Simple.format_to>>=
-let format_to frame =
-  let point = frame.frm_point in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  Format.set_formatter_output_functions 
-    (fun str pos len ->
-      let s = String.sub str pos len in
-      Text.insert text point s |> ignore;
-      Text.fmove text point len)
-  (fun () -> ())
 @
+%<<function Simple.format_to>>=
+%let format_to frame =
+%  let point = frame.frm_point in
+%  let buf = frame.frm_buffer in
+%  let text = buf.buf_text in
+%  Format.set_formatter_output_functions 
+%    (fun str pos len ->
+%      let s = String.sub str pos len in
+%      Text.insert text point s |> ignore;
+%      Text.fmove text point len)
+%  (fun () -> ())
+%@
+%
 
 <<function Simple.format_to_string>>=
-let format_to_string () =
-  let string = ref "" in
-  Format.set_formatter_output_functions 
-    (fun str pos len ->
-      let s = String.sub str pos len in
-      string := !string ^ s)
-  (fun () -> ());
-  string
 @
-
-
-
+%<<function Simple.format_to_string>>=
+%let format_to_string () =
+%  let string = ref "" in
+%  Format.set_formatter_output_functions 
+%    (fun str pos len ->
+%      let s = String.sub str pos len in
+%      string := !string ^ s)
+%  (fun () -> ());
+%  string
+%@
 
 
 <<function Simple.to_frame>>=
@@ -1794,24 +1782,26 @@ let to_frame f frame =
 
 
 
-
-<<function Simple.current_word>>=
-(*
-let current_word buf point =
-  let text = buf.buf_text in
-  let syntax = buf.buf_syntax_table in
-  let start = dup_point text point in
-  to_begin_of_word text start syntax;
-  let term = dup_point text point in
-  to_end_of_word text term syntax;
-  let word = Text.region text start term in
-  remove_point text start;
-  remove_point text term;
-  word
-*)
+<<function Simple.current_word (features/simple.ml)>>=
 @
 
-<<function Simple.current_word (features/simple.ml)>>=
+%<<function Simple.current_word>>=
+%(*
+%let current_word buf point =
+%  let text = buf.buf_text in
+%  let syntax = buf.buf_syntax_table in
+%  let start = dup_point text point in
+%  to_begin_of_word text start syntax;
+%  let term = dup_point text point in
+%  to_end_of_word text term syntax;
+%  let word = Text.region text start term in
+%  remove_point text start;
+%  remove_point text term;
+%  word
+%*)
+%@
+
+<<function Simple.current_word>>=
 let current_word buf point =
   (beginning_of_word buf point) ^ (end_of_word buf point)
 @
@@ -1838,121 +1828,6 @@ let scroll_line frame n =
 
 
 
-<<constant Simple.highlighted>>=
-(* hightlighting of regions *)  
-let highlighted = ref None
-@
-
-<<constant Simple.highlight_bit>>=
-let highlight_bit = 1 lsl 24
-@
-
-<<function Simple.unhightlight_region>>=
-let unhightlight_region buf debut fin =
-  let text = buf.buf_text in
-  let curseur = Text.new_point text in
-  let final = Text.new_point text in
-  Text.set_position text curseur debut;
-  Text.set_position text final fin;
-  let unhigh = lnot (1 lsl 24) in
-  while curseur < final do
-    let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr land unhigh);
-    Text.fmove text curseur 1;
-  done;
-  Text.remove_point text curseur;
-  Text.remove_point text final;
-  buf.buf_modified <- buf.buf_modified + 1
-@
-
-<<function Simple.hightlight_region>>=
-let hightlight_region buf debut fin =
-  let text = buf.buf_text in
-  let curseur = Text.new_point text in
-  let final = Text.new_point text in
-  Text.set_position text curseur debut;
-  Text.set_position text final fin;
-  let high = 1 lsl 24 in
-  while curseur < final do
-    let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr lor high);
-    Text.fmove text curseur 1
-  done;
-  Text.remove_point text curseur;
-  Text.remove_point text final;
-  buf.buf_modified <- buf.buf_modified + 1
-@
-
-<<constant Simple.highlighted_chars>>=
-let highlighted_chars = ref []
-@
-
-<<function Simple.unhightlight>>=
-let unhightlight _frame =
-  !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
-      let text = buf.buf_text in
-      Text.set_char_attr text curseur attr;
-      buf.buf_modified <- buf.buf_modified + 1;
-      Text.remove_point text curseur
-  );
-  highlighted_chars := [];
-  match !highlighted with
-  | None -> ()
-  | Some (frame,debut,fin) -> 
-     (*   if !keypressed <> XK.xk_Pointer_Drag1 then *)
-     highlighted := None;
-     let buf = frame.frm_buffer in
-     let text = buf.buf_text in
-     let curseur = Text.new_point text in
-     let final = Text.new_point text in
-     Text.set_position text curseur debut;
-     Text.set_position text final fin;
-     let str = Text.region text curseur final in
-     Text.remove_point text curseur;
-     Text.remove_point text final;
-     kill_string str;
-     (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
-     unhightlight_region buf debut fin
-@
-
-<<function Simple.highlight>>=
-let highlight frame =
-  let frame =
-    match !highlighted with
-      None -> frame
-    | Some (frame,d,f) -> frame
-  in    
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  let mark = Ebuffer.get_mark buf point in
-  let debut, fin =
-    if point < mark then
-      point,mark
-    else
-      mark,point
-  in
-  let pos1 = Text.get_position text debut in
-  let pos2 = Text.get_position text fin in
-  let debut,fin =
-    match !highlighted with
-      None -> pos1,pos2
-    | Some (frame,d,f) ->
-        if d < pos1 then    
-          unhightlight_region buf d pos1; 
-        if f > pos2 then
-          unhightlight_region buf pos2 f;
-        if pos1 < d then
-          pos1,d
-        else
-        if pos2 > f then
-          f, pos2
-        else
-          pos1,pos1
-  in
-  highlighted := Some (frame, pos1, pos2);
-  hightlight_region buf debut fin
-@
 
 <<constant Simple.htmlp>>=
 let htmlp = ref false
@@ -2000,7 +1875,7 @@ let highlight_paren frame =
         [] -> (* found matching par *)
           let attr = Text.get_attr text curseur in
           highlighted_chars := (buf,curseur,attr) :: !highlighted_chars;
-          Text.set_char_attr text curseur (attr lor (1 lsl 24));
+          Text.set_char_attr text curseur (attr lor highlight_bit);
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack
@@ -2174,7 +2049,7 @@ let insert_special_char frame =
 @
 
 <<misc keys>>=
-[ ControlMap, Char.code 'c'; NormalMap, Char.code '-'], "next_hole";
+[ c_c; NormalMap, Char.code '-'], "next_hole";
 @
 
 <<misc actions>>=
@@ -2233,12 +2108,15 @@ let _ =
   Efuns.add_start_hook (fun () ->
       let location = Efuns.location () in
       let gmap = location.loc_map in
+
       (* unhightlight region *)
       Efuns.add_hook Top_window.handle_key_start_hook unhightlight;      
+
       (* standard chars *)
       for key = 32 to 127 do
         Keymap.add_binding gmap [NormalMap, key] self_insert_command
       done;
+
       (* special for AZERTY keyboards *)
       Array.iter (fun (key, char) ->
           Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
@@ -2263,11 +2141,14 @@ let _ =
       for key = 97 to 97+25 do
         Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
       done;
+
       Keymap.add_binding gmap [NormalMap, XK.xk_Pointer_Drag1]
         mouse_drag_region;
+
       Keymap.add_interactive (location.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
             Ebuffer.fondamental_mode);
+
       set_global line_comment ""
   )
 @
@@ -2280,6 +2161,10 @@ let _ =
 open Options
 open Xtypes
 open Efuns
+
+(*****************************************************************************)
+(* Keys *)
+(*****************************************************************************)
 
 <<function Simple.string_to_modifier>>
   
@@ -2298,6 +2183,10 @@ open Efuns
 <<constant Simple.key_option>>
 
 <<constant Simple.binding_option>>
+
+(*****************************************************************************)
+(* Insertion *)
+(*****************************************************************************)
 
 <<function Simple.insert_string>>
 
@@ -2320,6 +2209,10 @@ open Efuns
 <<function Simple.self_insert_command>>
     
 <<function Simple.char_insert_command>>
+
+(*****************************************************************************)
+(* Move *)
+(*****************************************************************************)
 
 <<function Simple.move_backward>>
 
@@ -2348,6 +2241,10 @@ open Efuns
 <<function Simple.backward_line>>
 
 
+(*****************************************************************************)
+(* Kill *)
+(*****************************************************************************)
+
 <<constant Simple.kill_size>>
 <<constant Simple.kill_max>>
 <<constant Simple.kill_ring>>
@@ -2369,10 +2266,18 @@ open Efuns
 
 <<function Simple.insert_next_killed>>
 
+(*****************************************************************************)
+(* Format *)
+(*****************************************************************************)
+
 <<function Simple.format_to>>
 
 <<function Simple.format_to_string>>
 
+
+(*****************************************************************************)
+(* Words *)
+(*****************************************************************************)
 
 <<function Simple.in_next_word>>
 
@@ -2398,9 +2303,15 @@ open Efuns
 <<function Simple.current_word (features/simple.ml)>>
 
   
+(*****************************************************************************)
+(* Buffers *)
+(*****************************************************************************)
   
 <<function Simple.buffer_list>>
 
+(*****************************************************************************)
+(* Delete *)
+(*****************************************************************************)
 
 <<function Simple.delete_char>>
 
@@ -2409,6 +2320,10 @@ open Efuns
 <<function Simple.hungry_char>>
 
 <<function Simple.hungry_electric_delete>>
+
+(*****************************************************************************)
+(* Scroll *)
+(*****************************************************************************)
 
 (*
      let move_backward frame =
@@ -2424,15 +2339,37 @@ let move_forward frame =
 
 <<function Simple.scroll_line>>
 
+let scroll_down frame =
+  scroll_line frame 1;
+  forward_line frame
+
+let scroll_up frame =
+  scroll_line frame (-1);
+  backward_line frame
+
+let scroll_other_up frame =
+  Window.next scroll_up frame.frm_window
+
+let scroll_other_down frame =
+  Window.next scroll_down frame.frm_window
+
 <<function Simple.recenter>>
 
 <<function Simple.end_of_file>>
 
 <<function Simple.begin_of_file>>
 
+(*****************************************************************************)
+(* Words *)
+(*****************************************************************************)
+
 <<function Simple.delete_backward_word>>
 
 <<function Simple.delete_forward_word>>
+
+(*****************************************************************************)
+(* Undo *)
+(*****************************************************************************)
 
 <<function Simple.undo>>
 
@@ -2440,6 +2377,10 @@ let move_forward frame =
 
 
 <<function Simple.mouse_set_frame>>
+
+(*****************************************************************************)
+(* Highlight *)
+(*****************************************************************************)
  
 <<constant Simple.highlighted>>
 <<constant Simple.highlight_bit>>
@@ -2454,6 +2395,9 @@ let move_forward frame =
   
 <<function Simple.highlight>>
 
+(*****************************************************************************)
+(* Paren *)
+(*****************************************************************************)
 
 <<constant Simple.htmlp>>
 <<function Simple.is_paren_end>>
@@ -2461,6 +2405,9 @@ let move_forward frame =
 
 <<function Simple.highlight_paren>>
   
+(*****************************************************************************)
+(* Mouse *)
+(*****************************************************************************)
   
 <<function Simple.mouse_drag_region>>
 
@@ -2469,14 +2416,29 @@ let move_forward frame =
 
 <<function Simple.mouse_save_then_kill>>
 
+(*****************************************************************************)
+(* Buffers *)
+(*****************************************************************************)
+
 <<function Simple.next_buffer>>
 
 <<function Simple.kill_buffer>>
 
+(*****************************************************************************)
+(* Color helpers *)
+(*****************************************************************************)
+
 <<function Simple.color>>
+
+(*****************************************************************************)
+(* Points *)
+(*****************************************************************************)
 
 <<function Simple.point_at_mark>>
 
+(*****************************************************************************)
+(* Words *)
+(*****************************************************************************)
 
 <<function Simple.on_word>>
   
@@ -2485,11 +2447,17 @@ let move_forward frame =
 
 <<function Simple.transpose_chars>>
 
+(*****************************************************************************)
+(* Paragraphs *)
+(*****************************************************************************)
 
 <<function Simple.backward_paragraph>>
 
 <<function Simple.forward_paragraph>>
 
+(*****************************************************************************)
+(* Electric *)
+(*****************************************************************************)
 
 <<function Simple.electric_insert_space>>
 
@@ -2505,9 +2473,17 @@ let move_forward frame =
 
 <<function Simple.next_hole>>
 
+(*****************************************************************************)
+(* Structures *)
+(*****************************************************************************)
+
 <<function Simple.insert_structure>>
 
 <<function Simple.install_structures>>
+
+(*****************************************************************************)
+(* Parameters *)
+(*****************************************************************************)
   
 open Options
 
@@ -2522,6 +2498,9 @@ open Options
 <<constant Simple.all_params>>
 <<function Simple.all_parameters>>
 
+(*****************************************************************************)
+(* Toplevel *)
+(*****************************************************************************)
   
 <<toplevel Simple._1>>
   
@@ -2539,6 +2518,15 @@ open Options
 %  add_parameter location name bool_of_string string_of_bool param
 %    *)
 % ????
+
+ 
+%(*
+%     let move_backward frame =
+%   Functions.move_backward frame 1; ()
+%
+%let move_forward frame = 
+%  Functions.move_forward frame 1; () 
+%*) 
 
 
 \subsection*{[[features/select.ml]]}
@@ -3069,12 +3057,6 @@ let reload frame =
 
 
 
-
-
-
-
-
-
 <<function Complex.change_font>>=
 let change_font frame =
   Minibuffer.create_return 
@@ -3291,17 +3273,12 @@ open Options
 \subsection*{[[features/system.ml]]}
 
 
-
-
-
-
 %-------------------------------------------------------------
 
 <<features/system.ml>>=
+open Common
 open Efuns
 open Unix
-(*open Concur*)
-(*open ThreadUnix*)
 
 <<function System.open_process>>
 
@@ -3325,16 +3302,16 @@ open Unix
 <<function Search.to_regexp>>=
 let to_regexp flag str =
   match flag with
-    Regexp ->
-      (if !case_fold then
-          Str.regexp_case_fold 
-        else
-          Str.regexp) str
+  | Regexp ->
+      (if !case_fold 
+       then Str.regexp_case_fold 
+       else Str.regexp
+      ) str
   | RegexpString ->
-      (if !case_fold then
-          Str.regexp_string_case_fold
-        else
-          Str.regexp_string) str
+      (if !case_fold 
+       then Str.regexp_string_case_fold
+       else Str.regexp_string
+      ) str
 @
 
 <<type Search.query>>=
@@ -3429,10 +3406,6 @@ open Efuns
 
 
 
-
-
-
-
 %-------------------------------------------------------------
 
 <<features/interactive.ml>>=
@@ -3503,6 +3476,11 @@ open Efuns
 <<function Complex.left_buffer>>
 
 <<function Complex.right_buffer>>
+
+let switch_to_other_buffer frame =
+  let default = Select.get_previous_frame () in
+  Select.set_previous_frame frame;
+  Frame.change_buffer frame.frm_window default
   
 
 @
@@ -3559,6 +3537,7 @@ let c_error_regexp = define_option ["compil"; "error_regexp"] "" regexp_option
 %$
 
 <<function Compil.c_find_error>>=
+(* todo: vs C_mode.c_find_error? *)
 let c_find_error text error_point =
   let groups = 
     Text.search_forward_groups text (snd !!c_error_regexp)
@@ -3666,35 +3645,40 @@ type find_error_fun = Text.t -> Text.point -> error
 @
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 \section{[[graphics/]]}
 
 \subsection*{[[graphics/top_window.ml]]}
 
 
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_prefix : key list;
-@
-
-<<function Top_window.dummy_action>>=
-let dummy_action frame = ()
-@
-
-<<[[Efuns.frame]] other fields>>=
-mutable frm_repeat_action : int;
-@
-% for undo?
-
-<<[[Top_window.try_map()]] set repeat action>>=
-frame.frm_repeat_action <- 
-  if (f == frame.frm_last_action) 
-  then frame.frm_repeat_action + 1
-  else 0;
-@
-
-
-
-
+%<<[[Efuns.frame]] other fields>>=
+%mutable frm_repeat_action : int;
+%@
+%% for undo?
+%
+%<<[[Top_window.try_map()]] set repeat action>>=
+%frame.frm_repeat_action <- 
+%  if (f == frame.frm_last_action) 
+%  then frame.frm_repeat_action + 1
+%  else 0;
+%@
 
 
 
@@ -3846,8 +3830,6 @@ open Efuns
 
 <<function Top_window.clear_message>>
 
-<<function Top_window.dummy_action>>
-
 <<function Top_window.try_map>>
 
 <<function Top_window.set_cursor_on>>
@@ -3900,14 +3882,6 @@ open Efuns
 <<constant Top_window.buffers_menu>>
 
 <<function Top_window.scroll_to_frame>>
-(*
-    Text.set_position text point y;
-      let point = Text.new_point text in
-      let curline = Text.point_line text frame.frm_start in
-      let newline = Text.point_line text point in
-      Text.remove_point text point;
-    frame.frm_y_offset <- frame.frm_y_offset + (newline - curline);
-  *)
 
 
 <<constant Top_window.menus>>
@@ -4024,6 +3998,7 @@ open Keymap (* c_xxx *)
 open Options
 open Efuns
 
+
 <<constant Efuns.init_files>>
 <<constant Efuns.init_frames>>
 <<constant Efuns.displayname>>
@@ -4043,6 +4018,10 @@ open Efuns
 <<toplevel Main._>>
 
 @
+
+
+
+
 
 
 \section{[[major_modes/]]}
@@ -4354,7 +4333,7 @@ let _ =
 <<function Abbrevs_mode.install>>=
 let install buf =
   try
-    ignore (get_local buf abbrev_table)
+    get_local buf abbrev_table |> ignore
   with _ -> 
     set_local buf abbrev_table abbrevs
 @
@@ -4369,7 +4348,9 @@ let abbrevs_chars = define_option ["abbrevs_mode"; "abbrevs_chars"] ""
 @
 
 <<function Abbrevs_mode.find_matching>>=
-let find_matching  frame = self_insert_command frame; highlight_paren frame
+let find_matching  frame = 
+  self_insert_command frame; 
+  Simple.highlight_paren frame
 @
 
 <<function Abbrevs_mode.char_expand_abbrev>>=
@@ -4736,17 +4717,16 @@ let mode = Ebuffer.new_minor_mode "paren" []
 @
 
 <<function Paren_mode.find_matching>>=
-let find_matching  frame = 
+let find_matching frame = 
   self_insert_command frame; 
-  highlight_paren frame
+  Simple.highlight_paren frame
 @
 
 <<toplevel Paren_mode._1>>=
 let _ = 
-  List.iter
-    (fun key -> 
-      Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
-  ) [ ')'; '}'; ']' ]
+  [ ')'; '}'; ']' ] |> List.iter (fun key -> 
+    Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
+  ) 
 @
 
 <<toplevel Paren_mode._2>>=
@@ -4784,7 +4764,8 @@ let mode = Ebuffer.new_minor_mode "tab" []
 @
 
 <<function Tab_mode.insert_tab>>=
-let insert_tab frame = ignore (insert_string frame "\t")
+let insert_tab frame = 
+  insert_string frame "\t" |> ignore
 @
 
 <<toplevel Tab_mode._1>>=
@@ -4818,6 +4799,8 @@ open Efuns
 
 <<toplevel Tab_mode._2>>
 @
+
+
 
 \section{[[prog_modes/]]}
 
@@ -5322,7 +5305,9 @@ let efuns_property = "_EFUNS_SERVER"
 @
 
 <<constant Server.user>>=
-let user = try Sys.getenv "USER" with _ -> "noname"
+let user = 
+  try Sys.getenv "USER" 
+  with _ -> "noname"
 @
 
 <<constant Server.socket_name>>=
@@ -5344,7 +5329,7 @@ let read_command fd frame =
   try
     let cmd = input_value inc in
     match cmd with
-      LoadFile (name,pos,str) ->
+    | LoadFile (name,pos,str) ->
         let window = frame.frm_window in
         let top_window = Window.top window in
         wrap top_window (fun top_window ->
@@ -5488,8 +5473,10 @@ let _ =  if not (Sys.file_exists socket_name) then raise Not_found
 @
 
 <<toplevel Efuns_client._3>>=
+let (inc,outc) = open_connection (ADDR_UNIX socket_name)
 let _ =  
-  output_value outc (LoadFile (filename,pos,string)); flush outc
+  output_value outc (LoadFile (filename,pos,string)); 
+  flush outc
 @
 
 
@@ -5521,125 +5508,10 @@ open Filename
 <<constant Efuns_client.atom>>
 <<constant Efuns_client.socket_name>>
 <<toplevel Efuns_client._2>>
-let (inc,outc) = open_connection (ADDR_UNIX socket_name)
 <<toplevel Efuns_client._3>>
   
 @
 
-
-\section{[[dynamic/]]}
-
-\subsection*{[[dynamic/eval.ml]]}
-
-<<function Eval.try_load>>=
-let try_load top_window f =
-  try
-    f (); 
-    Efuns.init top_window.top_location
-  with
-    Dynlink.Error error ->
-      Top_window.message top_window (Dynlink.error_message error)
-  | e -> 
-      Top_window.message top_window
-        (Printf.sprintf "Exception %s" (Printexc.to_string e))
-@
-
-<<function Eval.load>>=
-let load top_window mod_name =
-  try_load top_window (fun () -> load_module mod_name)
-@
-
-<<function Eval.load_library>>=
-let load_library frame =
-  select_lib_filename frame "Load library: " 
-    (fun str ->
-      let top_window = Window.top frame.frm_window in
-      try_load top_window (fun () -> load_file str))
-@
-
-<<function Eval.eval_buffer>>=
-let eval_buffer frame =
-  let top_window = Window.top frame.frm_window in
-  let location = top_window.top_location in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let filename = Filename.temp_file "buffer" ".ml" in
-  let outc = open_out filename in
-  Text.save buf.buf_text outc;
-  close_out outc;
-  let cmd = "ocamlc -c -I " ^ Version.efuns_lib ^ " " ^ filename in 
-  let end_action buf status =
-    match status with
-      0 -> try_load top_window 
-          (fun _ -> 
-            let fl =  ((Filename.chop_suffix filename ".ml") ^ ".cmo") 
-            in 
-            load_file fl;
-            Efuns.init top_window.top_location)
-    | _ -> 
-        set_compilation_buffer frame buf (Filename.dirname filename);
-        Top_window.message top_window "Error while compiling buffer"
-  in
-  System.system "*Eval*" location cmd end_action |> ignore
-@
-
-
-%-------------------------------------------------------------
-
-<<dynamic/eval.ml>>=
-<<copyright header2>>
-
-open Efuns
-open Text
-open Frame
-open Simple
-open Select
-open Search
-open Compil
-
-  (*
-let rec load_module mod_name =
-  let filename = (String.uncapitalize mod_name) ^ ".cmo" in
-  try
-    let filename = Utils.find_in_path !Efuns.load_path filename in
-    load_file filename
-  with
-    Not_found -> failwith ("Can't find file "^filename)
-
-and load_file filename =
-  try
-    Dynlink.loadfile filename
-  with
-    Dynlink.Error (Dynlink.Unavailable_unit mod_name) -> 
-      load_interface mod_name;
-      load_file filename
-  | Dynlink.Error (
-    Dynlink.Linking_error (_, Dynlink.Undefined_global mod_name)) ->
-      load_module mod_name;
-      load_file filename
-
-and load_interface mod_name =
-  try
-    Dynlink.add_interfaces [mod_name] !Efuns.load_path; ()
-  with
-    Not_found ->
-      failwith (Printf.sprintf "No interface for %s" mod_name)
-      *)
-
-open Dyneval
-
-<<function Eval.try_load>>
-
-<<function Eval.load>>
-
-<<function Eval.load_library>>
-
-  
-<<function Eval.eval_buffer>>
-@
-
-
-\section{[[misc/]]}
 
 \subsection*{[[misc/efuns_filebrowser.ml]]}
 
@@ -5834,6 +5706,8 @@ open WX_filesel
 
 \subsection*{[[misc/efuns_texbrowser.ml]]}
 
+% outline better?
+
 <<constant Efuns_texbrowser.display>>=
 let display = new WX_display.t ""
 @
@@ -5856,14 +5730,16 @@ let regexp = Str.regexp "\\(\\input\\|\\section\\|\\subsection\\|\\subsubsection
 
 <<function Efuns_texbrowser.load>>=
 let load filename pos all =
-  let _ = Sys.command(Printf.sprintf "efuns_server %s -pos %d -str \"%s\" &" filename pos all)
-  in ()
+  Sys.command (spf "efuns_server %s -pos %d -str \"%s\" &" filename pos all)
+   |> ignore
 @
 
 <<constant Efuns_texbrowser.filename>>=
-let filename = ref (if Array.length Sys.argv = 2 then
-      Sys.argv.(1) else 
-      failwith "Usage: efuns_texbrowser filename")
+let filename = ref 
+  (if Array.length Sys.argv = 2 
+   then Sys.argv.(1) 
+   else failwith "Usage: efuns_texbrowser filename"
+  )
 @
 
 <<constant Efuns_texbrowser.dirname>>=
@@ -5994,4 +5870,114 @@ open WX_filesel
 <<constant Efuns_texbrowser.file_menu>>
 
 <<toplevel Efuns_texbrowser._1>>
+@
+
+\section{[[dynamic/]]}
+
+\subsection*{[[dynamic/eval.ml]]}
+
+<<function Eval.try_load>>=
+let try_load top_window f =
+  try
+    f (); 
+    Efuns.init top_window.top_location
+  with
+  | Dynlink.Error error ->
+      Top_window.message top_window (Dynlink.error_message error)
+  | e -> 
+      Top_window.message top_window (spf "Exception %s" (Printexc.to_string e))
+@
+
+<<function Eval.load>>=
+let load top_window mod_name =
+  try_load top_window (fun () -> load_module mod_name)
+@
+
+<<function Eval.load_library>>=
+let load_library frame =
+  select_lib_filename frame "Load library: " 
+    (fun str ->
+      let top_window = Window.top frame.frm_window in
+      try_load top_window (fun () -> load_file str))
+@
+
+<<function Eval.eval_buffer>>=
+let eval_buffer frame =
+  let top_window = Window.top frame.frm_window in
+  let location = top_window.top_location in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let filename = Filename.temp_file "buffer" ".ml" in
+  let outc = open_out filename in
+  Text.save buf.buf_text outc;
+  close_out outc;
+  let cmd = "ocamlc -c -I " ^ Version.efuns_lib ^ " " ^ filename in 
+  let end_action buf status =
+    match status with
+      0 -> try_load top_window 
+          (fun _ -> 
+            let fl =  ((Filename.chop_suffix filename ".ml") ^ ".cmo") 
+            in 
+            load_file fl;
+            Efuns.init top_window.top_location)
+    | _ -> 
+        set_compilation_buffer frame buf (Filename.dirname filename);
+        Top_window.message top_window "Error while compiling buffer"
+  in
+  System.system "*Eval*" location cmd end_action |> ignore
+@
+
+
+%-------------------------------------------------------------
+
+<<dynamic/eval.ml>>=
+<<copyright header2>>
+
+open Efuns
+open Text
+open Frame
+open Simple
+open Select
+open Search
+open Compil
+
+(*
+let rec load_module mod_name =
+  let filename = (String.uncapitalize mod_name) ^ ".cmo" in
+  try
+    let filename = Utils.find_in_path !Efuns.load_path filename in
+    load_file filename
+  with
+    Not_found -> failwith ("Can't find file "^filename)
+
+and load_file filename =
+  try
+    Dynlink.loadfile filename
+  with
+    Dynlink.Error (Dynlink.Unavailable_unit mod_name) -> 
+      load_interface mod_name;
+      load_file filename
+  | Dynlink.Error (
+    Dynlink.Linking_error (_, Dynlink.Undefined_global mod_name)) ->
+      load_module mod_name;
+      load_file filename
+
+and load_interface mod_name =
+  try
+    Dynlink.add_interfaces [mod_name] !Efuns.load_path; ()
+  with
+    Not_found ->
+      failwith (Printf.sprintf "No interface for %s" mod_name)
+      *)
+
+open Dyneval
+
+<<function Eval.try_load>>
+
+<<function Eval.load>>
+
+<<function Eval.load_library>>
+
+  
+<<function Eval.eval_buffer>>
 @

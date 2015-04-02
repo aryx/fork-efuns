@@ -35,17 +35,6 @@ let string_to_modifier s =
 (*e: function Simple.string_to_modifier *)
   
 (*s: function Simple.modifier_to_string *)
-(*
-let modifier_to_string mask = 
-  let s = if mask land shiftMask = 0 then "" else "S" in
-  let s = if mask land controlMask = 0 then s else "C" ^ s in
-  let s = if mask land mod1Mask = 0 then s else "M" ^ s in
-  let s = if mask land mod2Mask = 0 then s else "2" ^ s in
-  let s = if mask land mod3Mask = 0 then s else "3" ^ s in
-  let s = if mask land mod4Mask = 0 then s else "4" ^ s in
-  let s = if mask land mod5Mask = 0 then s else "5" ^ s in
-  s
-*)
 (*e: function Simple.modifier_to_string *)
       
 (*s: constant Simple.name_to_keysym *)
@@ -59,19 +48,9 @@ let name_to_keysym =
 (*e: constant Simple.name_to_keysym *)
   
 (*s: function Simple.value_to_keysym *)
-(*
-let value_to_keysym v =
-  match v with
-    Value v -> List.assoc v name_to_keysym
-  | _ -> raise Not_found
-*)
 (*e: function Simple.value_to_keysym *)
       
 (*s: function Simple.keysym_to_value *)
-(*
-let keysym_to_value k =
-  Value (List.assoc k XK.keysym_to_name)
-*)
 (*e: function Simple.keysym_to_value *)
   
 (*s: function Simple.value_to_key *)
@@ -388,27 +367,9 @@ let insert_next_killed frame =
 (*****************************************************************************)
 
 (*s: function Simple.format_to *)
-let format_to frame =
-  let point = frame.frm_point in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  Format.set_formatter_output_functions 
-    (fun str pos len ->
-      let s = String.sub str pos len in
-      Text.insert text point s |> ignore;
-      Text.fmove text point len)
-  (fun () -> ())
 (*e: function Simple.format_to *)
 
 (*s: function Simple.format_to_string *)
-let format_to_string () =
-  let string = ref "" in
-  Format.set_formatter_output_functions 
-    (fun str pos len ->
-      let s = String.sub str pos len in
-      string := !string ^ s)
-  (fun () -> ());
-  string
 (*e: function Simple.format_to_string *)
 
 
@@ -419,13 +380,14 @@ let format_to_string () =
 (*s: function Simple.in_next_word *)
 let in_next_word text mark syntax =
   while (not syntax.(Char.code (Text.get_char text mark))) &&
-    Text.fmove_res text mark 1 = 1 do () done
+        Text.fmove_res text mark 1 = 1 
+  do () done
 (*e: function Simple.in_next_word *)
 
 (*s: function Simple.in_prev_word *)
 let in_prev_word text mark syntax =
   while Text.bmove_res text mark 1 = 1 &&
-    (not syntax.(Char.code (Text.get_char text mark)))
+        (not syntax.(Char.code (Text.get_char text mark)))
   do () done
 (*e: function Simple.in_prev_word *)
 
@@ -435,18 +397,18 @@ let to_begin_of_word text mark syntax =
   if Text.bmove_res text mark 1 = 1 then
     begin
       while syntax.(Char.code (Text.get_char text mark)) &&
-        (Text.bmove_res text mark 1) <> 0 do ()
-      done;
-      if not syntax.(Char.code (Text.get_char text mark)) then
-        (Text.fmove text mark 1)
+            (Text.bmove_res text mark 1) <> 0 
+      do () done;
+      if not syntax.(Char.code (Text.get_char text mark)) 
+      then (Text.fmove text mark 1)
     end
 (*e: function Simple.to_begin_of_word *)
 
 (*s: function Simple.to_end_of_word *)
 let to_end_of_word text mark syntax =
   while syntax.(Char.code (Text.get_char text mark)) &&
-    (Text.fmove_res text mark 1) <> 0 do ()
-  done
+       (Text.fmove_res text mark 1) <> 0 
+  do () done
 (*e: function Simple.to_end_of_word *)
 
 (*s: function Simple.to_frame *)
@@ -493,24 +455,11 @@ let end_of_word  buf point =
 (*e: function Simple.end_of_word *)
 
 (*s: function Simple.current_word *)
-(*
 let current_word buf point =
-  let text = buf.buf_text in
-  let syntax = buf.buf_syntax_table in
-  let start = dup_point text point in
-  to_begin_of_word text start syntax;
-  let term = dup_point text point in
-  to_end_of_word text term syntax;
-  let word = Text.region text start term in
-  remove_point text start;
-  remove_point text term;
-  word
-*)
+  (beginning_of_word buf point) ^ (end_of_word buf point)
 (*e: function Simple.current_word *)
 
 (*s: function Simple.current_word (features/simple.ml) *)
-let current_word buf point =
-  (beginning_of_word buf point) ^ (end_of_word buf point)
 (*e: function Simple.current_word (features/simple.ml) *)
 
   
@@ -729,10 +678,9 @@ let unhightlight_region buf debut fin =
   let final = Text.new_point text in
   Text.set_position text curseur debut;
   Text.set_position text final fin;
-  let unhigh = lnot (1 lsl 24) in
   while curseur < final do
     let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr land unhigh);
+    Text.set_char_attr text curseur (attr land (lnot highlight_bit));
     Text.fmove text curseur 1;
   done;
   Text.remove_point text curseur;
@@ -747,10 +695,9 @@ let hightlight_region buf debut fin =
   let final = Text.new_point text in
   Text.set_position text curseur debut;
   Text.set_position text final fin;
-  let high = 1 lsl 24 in
   while curseur < final do
     let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr lor high);
+    Text.set_char_attr text curseur (attr lor highlight_bit);
     Text.fmove text curseur 1
   done;
   Text.remove_point text curseur;
@@ -765,10 +712,10 @@ let highlighted_chars = ref []
 (*s: function Simple.unhightlight *)
 let unhightlight _frame =
   !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
-      let text = buf.buf_text in
-      Text.set_char_attr text curseur attr;
-      buf.buf_modified <- buf.buf_modified + 1;
-      Text.remove_point text curseur
+    let text = buf.buf_text in
+    Text.set_char_attr text curseur attr;
+    buf.buf_modified <- buf.buf_modified + 1;
+    Text.remove_point text curseur
   );
   highlighted_chars := [];
   match !highlighted with
@@ -794,7 +741,7 @@ let unhightlight _frame =
 let highlight frame =
   let frame =
     match !highlighted with
-      None -> frame
+    | None -> frame
     | Some (frame,d,f) -> frame
   in    
   let buf = frame.frm_buffer in
@@ -802,28 +749,26 @@ let highlight frame =
   let text = buf.buf_text in
   let mark = Ebuffer.get_mark buf point in
   let debut, fin =
-    if point < mark then
-      point,mark
-    else
-      mark,point
+    if point < mark 
+    then point,mark
+    else mark,point
   in
   let pos1 = Text.get_position text debut in
   let pos2 = Text.get_position text fin in
   let debut,fin =
     match !highlighted with
-      None -> pos1,pos2
+    | None -> pos1,pos2
     | Some (frame,d,f) ->
-        if d < pos1 then    
-          unhightlight_region buf d pos1; 
-        if f > pos2 then
-          unhightlight_region buf pos2 f;
-        if pos1 < d then
-          pos1,d
+        if d < pos1 
+        then unhightlight_region buf d pos1; 
+        if f > pos2 
+        then unhightlight_region buf pos2 f;
+        if pos1 < d 
+        then  pos1,d
         else
-        if pos2 > f then
-          f, pos2
-        else
-          pos1,pos1
+          if pos2 > f 
+          then f, pos2
+          else pos1,pos1
   in
   highlighted := Some (frame, pos1, pos2);
   hightlight_region buf debut fin
@@ -877,7 +822,7 @@ let highlight_paren frame =
         [] -> (* found matching par *)
           let attr = Text.get_attr text curseur in
           highlighted_chars := (buf,curseur,attr) :: !highlighted_chars;
-          Text.set_char_attr text curseur (attr lor (1 lsl 24));
+          Text.set_char_attr text curseur (attr lor highlight_bit);
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack
@@ -1146,8 +1091,7 @@ let transpose_chars buf point =
 let backward_paragraph buf point =
   let text = buf.buf_text in
   while Text.bmove_res text point 1 = 1 && 
-    (let c = Text.get_char text point in
-      c = '\n' || c = ' ') 
+        (let c = Text.get_char text point in c = '\n' || c = ' ')
   do () done;
   try
     Text.search_backward text (Str.regexp "\n *\n") point |> ignore;
@@ -1158,10 +1102,9 @@ let backward_paragraph buf point =
 (*s: function Simple.forward_paragraph *)
 let forward_paragraph buf point =
   let text = buf.buf_text in
-  while
-    (let c = Text.get_char text point in
-      c = '\n' || c = ' ') 
-    && Text.fmove_res text point 1 = 1 do () done;
+  while (let c = Text.get_char text point in c = '\n' || c = ' ') &&
+         Text.fmove_res text point 1 = 1 
+  do () done;
   try
     Text.search_forward text (Str.regexp "\n *\n") point |> ignore;
     Text.fmove text point 1
@@ -1397,12 +1340,15 @@ let _ =
   Efuns.add_start_hook (fun () ->
       let location = Efuns.location () in
       let gmap = location.loc_map in
+
       (* unhightlight region *)
       Efuns.add_hook Top_window.handle_key_start_hook unhightlight;      
+
       (* standard chars *)
       for key = 32 to 127 do
         Keymap.add_binding gmap [NormalMap, key] self_insert_command
       done;
+
       (* special for AZERTY keyboards *)
       Array.iter (fun (key, char) ->
           Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
@@ -1427,11 +1373,14 @@ let _ =
       for key = 97 to 97+25 do
         Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
       done;
+
       Keymap.add_binding gmap [NormalMap, XK.xk_Pointer_Drag1]
         mouse_drag_region;
+
       Keymap.add_interactive (location.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
             Ebuffer.fondamental_mode);
+
       set_global line_comment ""
   )
 (*e: toplevel Simple._1 *)

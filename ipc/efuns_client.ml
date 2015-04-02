@@ -59,10 +59,11 @@ let socket_name = (Xlib.getWholeProperty display root atom).gp_value
 (*s: toplevel Efuns_client._2 *)
 let _ =  if not (Sys.file_exists socket_name) then raise Not_found
 (*e: toplevel Efuns_client._2 *)
-let (inc,outc) = open_connection (ADDR_UNIX socket_name)
 (*s: toplevel Efuns_client._3 *)
+let (inc,outc) = open_connection (ADDR_UNIX socket_name)
 let _ =  
-  output_value outc (LoadFile (filename,pos,string)); flush outc
+  output_value outc (LoadFile (filename,pos,string)); 
+  flush outc
 (*e: toplevel Efuns_client._3 *)
   
 (*e: ipc/efuns_client.ml *)

@@ -20,7 +20,7 @@ open Select
 open Search
 open Compil
 
-  (*
+(*
 let rec load_module mod_name =
   let filename = (String.uncapitalize mod_name) ^ ".cmo" in
   try
@@ -57,11 +57,10 @@ let try_load top_window f =
     f (); 
     Efuns.init top_window.top_location
   with
-    Dynlink.Error error ->
+  | Dynlink.Error error ->
       Top_window.message top_window (Dynlink.error_message error)
   | e -> 
-      Top_window.message top_window
-        (Printf.sprintf "Exception %s" (Printexc.to_string e))
+      Top_window.message top_window (spf "Exception %s" (Printexc.to_string e))
 (*e: function Eval.try_load *)
 
 (*s: function Eval.load *)

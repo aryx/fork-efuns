@@ -35,14 +35,16 @@ let regexp = Str.regexp "\\(\\input\\|\\section\\|\\subsection\\|\\subsubsection
 
 (*s: function Efuns_texbrowser.load *)
 let load filename pos all =
-  let _ = Sys.command(Printf.sprintf "efuns_server %s -pos %d -str \"%s\" &" filename pos all)
-  in ()
+  Sys.command (spf "efuns_server %s -pos %d -str \"%s\" &" filename pos all)
+   |> ignore
 (*e: function Efuns_texbrowser.load *)
 
 (*s: constant Efuns_texbrowser.filename *)
-let filename = ref (if Array.length Sys.argv = 2 then
-      Sys.argv.(1) else 
-      failwith "Usage: efuns_texbrowser filename")
+let filename = ref 
+  (if Array.length Sys.argv = 2 
+   then Sys.argv.(1) 
+   else failwith "Usage: efuns_texbrowser filename"
+  )
 (*e: constant Efuns_texbrowser.filename *)
   
 (*s: constant Efuns_texbrowser.dirname *)

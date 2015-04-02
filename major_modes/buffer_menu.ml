@@ -16,11 +16,15 @@ open Common
 open Options
 
 open Efuns
+
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
 (* A port of my (colorized) buffer-menu from emacs to efuns.
-*)
+ *
+ * todo:
+ *  - D, X to delete buffers and execute plan
+ *)
 
 let buflist_name = "*Buffer List*"
 
@@ -53,9 +57,10 @@ let mode =  Ebuffer.new_major_mode "Buffer List" [install]
 let menu frame =
 
   let buf = Ebuffer.default buflist_name in
+  let text = buf.buf_text in
+
   Ebuffer.set_major_mode buf mode;
 
-  let text = buf.buf_text in
   let str = " MR Buffer             Size  Mode         File\n" in
   (* M = Modified, R = Read-only? *)
   Text.update text str;
@@ -118,14 +123,6 @@ let key_return frame =
       (spf "not valid entry in buffer list, exn = %s" (Common.exn_to_s exn))
 
 
-
-    
-  
-
-(*****************************************************************************)
-(* Install *)
-(*****************************************************************************)
-
 (*****************************************************************************)
 (* Setup *)
 (*****************************************************************************)
@@ -138,5 +135,4 @@ let _ =
 
     let map = mode.maj_map in
     Keymap.add_binding map [(NormalMap, XK.xk_Return)] key_return;
-
   )

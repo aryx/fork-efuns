@@ -236,7 +236,6 @@ let create_without_top window mini buf =
       
       frm_prefix = [];
       
-      frm_repeat_action = 0;
       frm_last_action = Keymap.dummy_action;
 
       frm_force_start = false;

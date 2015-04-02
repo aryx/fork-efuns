@@ -132,7 +132,7 @@ let set_history map string history =
 
 (*s: function Select.incremental_mini_buffer *)
 let incremental_mini_buffer 
- frame ismap request default incremental_action action =
+ frame ismap request default incremental_action end_action =
   let top_window = Window.top frame.frm_window in
   let incremental mini_frame =
     incremental_action frame (Text.to_string mini_frame.frm_buffer.buf_text)
@@ -151,7 +151,7 @@ let incremental_mini_buffer
   top_window.top_second_cursor <- Some frame;
   Minibuffer.create_return frame ismap request default (fun frame str -> 
     top_window.top_second_cursor <- None;
-    action frame str
+    end_action frame str
   )
 (*e: function Select.incremental_mini_buffer *)
 

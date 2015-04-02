@@ -19,17 +19,16 @@ let mode = Ebuffer.new_minor_mode "paren" []
 (*e: constant Paren_mode.mode *)
 
 (*s: function Paren_mode.find_matching *)
-let find_matching  frame = 
+let find_matching frame = 
   self_insert_command frame; 
-  highlight_paren frame
+  Simple.highlight_paren frame
 (*e: function Paren_mode.find_matching *)
   
 (*s: toplevel Paren_mode._1 *)
 let _ = 
-  List.iter
-    (fun key -> 
-      Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
-  ) [ ')'; '}'; ']' ]
+  [ ')'; '}'; ']' ] |> List.iter (fun key -> 
+    Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
+  ) 
 (*e: toplevel Paren_mode._1 *)
 
 (*s: toplevel Paren_mode._2 *)

@@ -608,7 +608,9 @@ and buffer =
   } 
 @
 % string option because have some buffers like *Messages*
-% that are not connected to a file
+%  that are not connected to a file
+% buf_name should be unique, because it's used as a key to
+% the location.loc_buffers hashtbl (see also get_name())
 
 % diff with Text? 
 % - have a name, Text is really just the content. 
@@ -1160,6 +1162,10 @@ let execute_buffer_action action buf =
 let dummy_action frame = () 
 @
 
+%<<function Top_window.dummy_action>>=
+%let dummy_action frame = ()
+%@
+
 
 %todo: I think we can merge this with the keyboard definitions
 % at least add to interactive here.
@@ -1180,6 +1186,12 @@ let _ =
 (* Navigating (in the file) *)
 (* ----------------------------------------------------------- *)
 <<navigating actions>>
+
+define_action "scroll_up" Simple.scroll_up; 
+define_action "scroll_down" Simple.scroll_down; 
+define_action "scroll_other_up" Simple.scroll_other_up; 
+define_action "scroll_other_down" Simple.scroll_other_down; 
+
 
 (* ----------------------------------------------------------- *)
 (* Editing *)
@@ -1227,6 +1239,7 @@ let _ =
 <<buffer navigating actions>>
 
 define_action "buffer_menu"  Buffer_menu.menu;
+define_action "switch_to_other_buffer"  Multi_buffers.switch_to_other_buffer;
 
 <<frame managment actions>>
 <<frame navigation actions>>
@@ -1508,6 +1521,12 @@ let c_c = (ControlMap, Char.code 'c')
 <<external commands keys>>
 
 (* pad: *)
+[MetaMap, XK.xk_Return], "compile";
+[c_x;ControlMap, Char.code 'n' ], "next_error";
+
+[c_x;NormalMap, Char.code '`' ], "next_error";
+
+(* pad: *)
 [MetaMap, Char.code '1'], "eshell_num";
 [MetaMap, Char.code '2'], "eshell_num";
 [MetaMap, Char.code '3'], "eshell_num";
@@ -1522,14 +1541,15 @@ let c_c = (ControlMap, Char.code 'c')
 (* Buffers/windows/frames *)
 (* -------------------------------------------------------- *)
 <<buffer managment keys>>
-[ControlMetaMap, XK.xk_Tab], "buffer_menu";
 
 <<buffer navigating keys>>
 <<frame managment keys>>
 <<frame navigation keys>>
 
 (* pad: *)
-[ControlMetaMap, Char.code 'l'], "other_buffer";
+[ControlMetaMap, XK.xk_Tab], "buffer_menu";
+[ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
+[ControlMap, XK.xk_Tab], "next_frame";
 
 (* -------------------------------------------------------- *)
 (* Meta *)
@@ -1871,7 +1891,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 25
+let height = define_option ["height"] "" int_option 44 (* 44, 25 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -2968,9 +2988,6 @@ let get_color color_name =
 @
 
 
-<<constant Main.highlight_color>>=
-let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
-@
 
 <<[[main()]] misc initializations>>=
 (* color 0 is foreground *)
@@ -3027,39 +3044,128 @@ let color buf regexp strict attr =
 
 % todo: have also a region variant, start/end
 
-\section{Fonts}
-% with an 's'?
+\section{Highlights}
 
-<<[[Efuns.location]] other fields>>=
-loc_fonts : (string,int) Hashtbl.t;
-loc_fonts_names : string array;
-mutable loc_fonts_n : int;
+<<constant Main.highlight_color>>=
+let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
+@
+% color 2 by convention
+
+<<constant Simple.highlight_bit>>=
+let highlight_bit = 1 lsl 24
+@
+% see also make_attr
+
+<<function Simple.hightlight_region>>=
+let hightlight_region buf debut fin =
+  let text = buf.buf_text in
+  let curseur = Text.new_point text in
+  let final = Text.new_point text in
+  Text.set_position text curseur debut;
+  Text.set_position text final fin;
+  while curseur < final do
+    let attr = Text.get_attr text curseur in
+    Text.set_char_attr text curseur (attr lor highlight_bit);
+    Text.fmove text curseur 1
+  done;
+  Text.remove_point text curseur;
+  Text.remove_point text final;
+  buf.buf_modified <- buf.buf_modified + 1
 @
 
-% similar to get_color, have the side effect of "allocating" a new font
-<<function Window.get_font>>=
-let get_font font_name =
-  let location = Efuns.location() in
-  try
-    Hashtbl.find location.loc_fonts font_name
-  with Not_found ->
-    if location.loc_fonts_n = 256 
-    then raise Not_found
-    else begin
-      let n = location.loc_fonts_n in
-      location.loc_fonts_n <- n + 1;
-      location.loc_fonts_names.(n) <- font_name;
-      Hashtbl.add location.loc_fonts font_name n;
-      n
-    end
+<<function Simple.unhightlight_region>>=
+let unhightlight_region buf debut fin =
+  let text = buf.buf_text in
+  let curseur = Text.new_point text in
+  let final = Text.new_point text in
+  Text.set_position text curseur debut;
+  Text.set_position text final fin;
+  while curseur < final do
+    let attr = Text.get_attr text curseur in
+    Text.set_char_attr text curseur (attr land (lnot highlight_bit));
+    Text.fmove text curseur 1;
+  done;
+  Text.remove_point text curseur;
+  Text.remove_point text final;
+  buf.buf_modified <- buf.buf_modified + 1
 @
 
-<<[[main()]] misc initializations>>=
-(* font 0 is initial font *)
-Window.get_font !!font |> ignore;
+
+
+<<constant Simple.highlighted>>=
+(* hightlighting of regions *)  
+let highlighted = ref None
 @
 
-%todo: variable sized font?
+<<constant Simple.highlighted_chars>>=
+let highlighted_chars = ref []
+@
+
+<<function Simple.unhightlight>>=
+let unhightlight _frame =
+  !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
+    let text = buf.buf_text in
+    Text.set_char_attr text curseur attr;
+    buf.buf_modified <- buf.buf_modified + 1;
+    Text.remove_point text curseur
+  );
+  highlighted_chars := [];
+  match !highlighted with
+  | None -> ()
+  | Some (frame,debut,fin) -> 
+     (*   if !keypressed <> XK.xk_Pointer_Drag1 then *)
+     highlighted := None;
+     let buf = frame.frm_buffer in
+     let text = buf.buf_text in
+     let curseur = Text.new_point text in
+     let final = Text.new_point text in
+     Text.set_position text curseur debut;
+     Text.set_position text final fin;
+     let str = Text.region text curseur final in
+     Text.remove_point text curseur;
+     Text.remove_point text final;
+     kill_string str;
+     (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
+     unhightlight_region buf debut fin
+@
+
+<<function Simple.highlight>>=
+let highlight frame =
+  let frame =
+    match !highlighted with
+    | None -> frame
+    | Some (frame,d,f) -> frame
+  in    
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  let text = buf.buf_text in
+  let mark = Ebuffer.get_mark buf point in
+  let debut, fin =
+    if point < mark 
+    then point,mark
+    else mark,point
+  in
+  let pos1 = Text.get_position text debut in
+  let pos2 = Text.get_position text fin in
+  let debut,fin =
+    match !highlighted with
+    | None -> pos1,pos2
+    | Some (frame,d,f) ->
+        if d < pos1 
+        then unhightlight_region buf d pos1; 
+        if f > pos2 
+        then unhightlight_region buf pos2 f;
+        if pos1 < d 
+        then  pos1,d
+        else
+          if pos2 > f 
+          then f, pos2
+          else pos1,pos1
+  in
+  highlighted := Some (frame, pos1, pos2);
+  hightlight_region buf debut fin
+@
+
 
 
 %\section{Highlighting}
@@ -3067,7 +3173,8 @@ Window.get_font !!font |> ignore;
 %<<[[Text.line]] other fields>>=
 %mutable line_hlt : int; (* highlighting *)
 %@
-%%dead? seems never set. subsumed by color attribute?
+%%dead? seems never set. subsumed by color attribute? with special
+% higlight bit?
 %
 %
 %<<[[Text.compute_representation()]] handle highlighting>>=
@@ -3159,6 +3266,42 @@ Window.get_font !!font |> ignore;
 %in
 %line.boxes <- iter line.boxes []
 %@
+
+\section{Fonts}
+% with an 's'?
+
+<<[[Efuns.location]] other fields>>=
+loc_fonts : (string,int) Hashtbl.t;
+loc_fonts_names : string array;
+mutable loc_fonts_n : int;
+@
+
+% similar to get_color, have the side effect of "allocating" a new font
+<<function Window.get_font>>=
+let get_font font_name =
+  let location = Efuns.location() in
+  try
+    Hashtbl.find location.loc_fonts font_name
+  with Not_found ->
+    if location.loc_fonts_n = 256 
+    then raise Not_found
+    else begin
+      let n = location.loc_fonts_n in
+      location.loc_fonts_n <- n + 1;
+      location.loc_fonts_names.(n) <- font_name;
+      Hashtbl.add location.loc_fonts font_name n;
+      n
+    end
+@
+
+<<[[main()]] misc initializations>>=
+(* font 0 is initial font *)
+Window.get_font !!font |> ignore;
+@
+
+%todo: variable sized font?
+
+
 
 \section{Line representation}
 % Line display?
@@ -4648,6 +4791,14 @@ let scroll_to_frame ady top_window =
       Text.set_position text frame.frm_start y
     end
 @
+%(*
+%    Text.set_position text point y;
+%      let point = Text.new_point text in
+%      let curline = Text.point_line text frame.frm_start in
+%      let newline = Text.point_line text point in
+%      Text.remove_point text point;
+%    frame.frm_y_offset <- frame.frm_y_offset + (newline - curline);
+%  *)
 
 
 
@@ -4993,13 +5144,17 @@ let message top_window msg =
 exception UnboundKey
 @
 
+<<[[Efuns.frame]] other fields>>=
+mutable frm_prefix : key list;
+@
+% prefix, have to wait for another key press
+
 % Top_window.handle_key -> <>(top_window.top_active_frame, ...)
 <<function Top_window.try_map>>=
 let try_map frame key =
   let keylist = frame.frm_prefix @ [key] in
   match Ebuffer.get_binding frame.frm_buffer keylist with
   | Function f ->
-      <<[[Top_window.try_map()]] set repeat action>>
       frame.frm_prefix <- [];
       (* dispatch the action *)
       <<[[Top_window.try_map()]] if debug, print action name>>
@@ -5011,7 +5166,7 @@ let try_map frame key =
       message top_window (Keymap.print_key_list frame.frm_prefix);
   | Unbound -> raise UnboundKey
 @
-% prefix?
+%old:      <<[[Top_window.try_map()]] set repeat action>>
 
 
 % Ebuffer.get_binding is essentially trying to find the right map
@@ -5496,6 +5651,7 @@ let incremental_mini_buffer
 [NormalMap, XK.xk_Up], "backward_line"; 
 [NormalMap, XK.xk_Down], "forward_line"; 
 
+
 [ControlMap, XK.xk_Up], "backward_paragraph";
 [ControlMap, XK.xk_Down], "forward_paragraph";  
 
@@ -5508,9 +5664,17 @@ let incremental_mini_buffer
 
 \ifallcode
 <<navigating keys>>=
+
 (* pad: *)
 [MetaMap, Char.code '>'], "end_of_file";
 [MetaMap, Char.code '<'], "begin_of_file";
+[MetaMap, Char.code 'g'], "goto_line";
+
+[MetaMap, XK.xk_Up], "scroll_up"; 
+[MetaMap, XK.xk_Down], "scroll_down"; 
+[MetaMap, XK.xk_Left], "scroll_other_up"; 
+[MetaMap, XK.xk_Right], "scroll_other_down"; 
+
 @
 \fi
 
@@ -6189,6 +6353,12 @@ let remove_mark buf =
 
 
 \subsection{Highlight}
+%less: mv in colors section?
+
+%less: when done via mouse?
+%todo: could be done also in cua mode
+
+%todo: use also for C-s?
 
 \subsection{Cut}
 
@@ -6461,6 +6631,7 @@ let last_search = ref ""
 
 % should be a buffer setting
 <<constant Search.case_fold>>=
+(* todo: this should be a buffer variable, not a global *)
 let case_fold = ref false
 @
 
@@ -6468,12 +6639,14 @@ let case_fold = ref false
 let isearch to_regexp sens frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+  let ismap = Keymap.create () in
+
   let point = frame.frm_point in
   let spoint = Text.dup_point text point in
   let orig = Text.get_position text point in
+
   let sens = ref sens in
   let to_regexp = ref to_regexp in
-  let ismap = Keymap.create () in
 
   let request () =
     "isearch-"^
@@ -6486,41 +6659,35 @@ let isearch to_regexp sens frame =
       | RegexpString -> " :"
     )
   in
+
   let string = ref "" in
   let isearch_s () =
     last_search := !string;
-    let regexp, delta =       
-      if !case_fold then
-        match !to_regexp with
-          Regexp -> Str.regexp_case_fold !string, 0
-        | RegexpString -> Str.regexp_string_case_fold
-              !string, String.length !string
-      else
-      match !to_regexp with
-        Regexp -> Str.regexp !string, 0
-      | RegexpString -> Str.regexp_string !string, String.length !string
+    let regexp, delta =
+      match !to_regexp, !case_fold with
+      | Regexp, true  -> Str.regexp_case_fold !string, 0
+      | Regexp, false -> Str.regexp !string, 0
+      | RegexpString, true -> Str.regexp_string_case_fold !string, String.length !string
+      | RegexpString, false -> Str.regexp_string !string, String.length !string
     in  
-    let point = frame.frm_point in
-    let buf = frame.frm_buffer in
-    let text = buf.buf_text in
     Text.goto_point text point spoint;
     match !sens with
-      Backward -> 
-        Text.search_backward text regexp point |> ignore
+    | Backward -> Text.search_backward text regexp point |> ignore
     | Forward ->  
         let len = Text.search_forward text regexp point in
-(*        Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
+     (* Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
         print_newline ();*)
-        Text.fmove text point len; ()
+        Text.fmove text point len |> ignore
   in
   let set_last mini_frame =
-    if !string = "" then
+    if !string = "" then begin
       let buf = mini_frame.frm_buffer in
       let text = buf.buf_text in
       let point = mini_frame.frm_point in
       Text.insert text point !last_search;
       Text.fmove text point (String.length !last_search);
       string := !last_search
+    end
   in
 
   <<[[Search.isearch()]] key bindings>>
@@ -6545,6 +6712,18 @@ Keymap.add_binding ismap [ControlMap, Char.code 'r']
     isearch_s ();
     Minibuffer.update_request mini_frame (request ())
 );  
+
+Keymap.add_binding ismap [ControlMap, Char.code 'w']
+  (fun mini_frame ->
+    (*      set_last mini_frame;       *)
+    Text.goto_point text spoint point;
+    let end_current_word = Simple.end_of_word buf point in
+    string := !string ^ end_current_word;
+    Simple.insert_string mini_frame end_current_word;
+    isearch_s ();
+    Minibuffer.update_request mini_frame (request ())
+  );
+
 let _mini_frame =
   Select.incremental_mini_buffer frame ismap (request ()) !string
     (fun frame str -> 
@@ -6869,8 +7048,8 @@ let replace flag frame query str repl =
             end
         in
         iter ()
-  with
-    Not_found ->
+  with 
+  | Not_found ->
       Text.commit_session text session;
       Top_window.message top_window
         ("Replace "^(string_of_int !n)^" occurences")
@@ -6891,6 +7070,9 @@ let replace flag frame query str repl =
 \section{Buffer names}
 
 % can have ambiguity?
+% no buf_name should be unique, so using it as a key to
+% pass to change_buffer() should be enough
+% (after all it's used as a key in location.loc_buffers)
 
 % Ebuffer.create -> <>
 <<function Ebuffer.get_name>>=
@@ -7025,6 +7207,7 @@ let kill buf =
 % lefessant specific?
 
 <<buffer navigating keys>>=
+(* lefessant?: *)
 [ControlMetaMap, XK.xk_Left], "left_buffer";
 [ControlMetaMap, XK.xk_Right], "right_buffer";
 [ControlMetaMap, XK.xk_Down], "down_buffer";
@@ -7764,17 +7947,16 @@ let system buf_name cmd end_action =
   let location = Efuns.location () in
   Concur.Thread.add_reader ins (fun () ->
     let pos,str = Text.delete_res text curseur
-        (Text.point_to_eof text curseur) in
+                    (Text.point_to_eof text curseur) in
     let len = input inc tampon 0 1000 in
     Mutex.lock location.loc_mutex;
     if len = 0 then begin
       let pid,status = waitpid [WNOHANG] pid in
       (match status with 
-      | WEXITED s -> Text.insert_at_end text 
-              (Printf.sprintf "Exited with status %d\n" s); 
-            close_in inc;
-            close_out outc;
-            (try end_action buf s with _ -> ())
+      | WEXITED s -> Text.insert_at_end text (spf "Exited with status %d\n" s); 
+          close_in inc;
+          close_out outc;
+          (try end_action buf s with _ -> ())
       | _ -> Text.insert_at_end text "Broken pipe" 
       );
       Text.set_position text curseur (Text.size text);
@@ -7798,18 +7980,18 @@ let system buf_name cmd end_action =
   );
 
   let lmap = buf.buf_map in
-  Keymap.add_binding lmap [NormalMap, XK.xk_Return]
-    (fun frame ->
-      let point = frame.frm_point in
-      Text.insert text point "\n";
-      Text.fmove text point 1;
-      if !active then (* to avoid a segmentation fault in Ocaml *)
-        let str = Text.sub text curseur 
-            (Text.point_to_eof text curseur) in
-        Text.set_position text curseur (Text.size text);
-        (* synchronize viewpoint *)
-        output outc str 0 (String.length str);
-        flush outc
+  Keymap.add_binding lmap [NormalMap, XK.xk_Return] (fun frame ->
+    let point = frame.frm_point in
+    Text.insert text point "\n";
+    Text.fmove text point 1;
+    if !active then (* to avoid a segmentation fault in Ocaml *) begin
+      let str = Text.sub text curseur 
+          (Text.point_to_eof text curseur) in
+      Text.set_position text curseur (Text.size text);
+      (* synchronize viewpoint *)
+      output outc str 0 (String.length str);
+      flush outc
+    end
   );
 
   <<[[System.system()]] set finalizer, to intercept killed frame>>
@@ -7825,15 +8007,17 @@ let open_process cmd =
   let inchan = in_channel_of_descr in_read in
   let outchan = out_channel_of_descr out_write in
   match fork() with
-    0 ->
+  | 0 ->
       if out_read <> stdin then begin
-          dup2 out_read stdin; 
-          close out_read 
+        dup2 out_read stdin; 
+        close out_read 
       end;
       if in_write <> Unix.stdout ||  in_write <> Unix.stderr then begin
-          if in_write <> Unix.stdout then dup2 in_write stdout;
-          if in_write <> Unix.stderr then dup2 in_write stderr; 
-          close in_write 
+        if in_write <> Unix.stdout 
+        then dup2 in_write stdout;
+        if in_write <> Unix.stderr 
+        then dup2 in_write stderr; 
+        close in_write 
       end;
       List.iter close [in_read;out_write];
       execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
@@ -7860,14 +8044,13 @@ mutable buf_finalizers : (unit -> unit) list;
 
 <<[[System.system()]] set finalizer, to intercept killed frame>>=
 buf.buf_finalizers <- (fun () -> 
-    (try 
-        Unix.kill pid Sys.sigkill;
-        let _,_ = waitpid [] pid in
-        ()
-      with _ -> ());
-    (*Concur.Thread.remove_reader ins*) failwith "System.system: TODO 2"
-  )
-:: buf.buf_finalizers;
+  (try 
+     Unix.kill pid Sys.sigkill;
+     waitpid [] pid |> ignore;
+   with _ -> ()
+  );
+  Concur.Thread.remove_reader ins
+) :: buf.buf_finalizers;
 @
 
 
@@ -7898,7 +8081,7 @@ then Text.set_position text point (Text.size text);
 @
 <<external command actions>>=
 define_action "grep" Compil.grep;
-(*  define_action "compile" (compile c_find_error); *)
+define_action "compile" (Compil.compile Compil.c_find_error);
 @
 
 
@@ -7941,12 +8124,14 @@ let grep frame =
 \subsection{[[M-x compile]]}
 
 <<misc actions>>=
-define_action "compile" compile;
+(*define_action "compile" compile;*)
 @
 <<function Std_efunsrc.compile>>=
+(*
 let compile frame =
   Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
     frame "compile"
+*)
 @
 % ???
 
@@ -8000,7 +8185,6 @@ let compile find_error_fun frame =
 \subsection{Go to next error}
 
 <<misc keys>>=
-[c_x;NormalMap, Char.code '`' ], "next_error";
 @
 <<misc actions>>=
 (* C-x map *)
@@ -8605,6 +8789,7 @@ let n_5 = (NormalMap, Char.code '5')
 @
 
 <<window managment keys>>=
+(* less: delete *)
 [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
 [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
 [c_x; n_5; NormalMap, Char.code '0'], "delete_window";

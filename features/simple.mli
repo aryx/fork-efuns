@@ -187,9 +187,6 @@ val add_bool_parameter : Efuns.location -> string -> bool ref -> unit
 
 (* misc *)
 
-val format_to : Efuns.action
-val format_to_string : unit -> string ref
-
 val to_frame : (Efuns.buffer -> Text.point -> 'a) -> Efuns.frame -> 'a
 val htmlp : bool ref
 val simplify : Text.t -> Text.point -> Text.point -> unit

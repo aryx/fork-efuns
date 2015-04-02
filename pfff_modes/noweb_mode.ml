@@ -78,7 +78,10 @@ let noweb_color_buffer buf =
 
 let install buf =
   noweb_color_buffer buf; 
-(*  buf.buf_syntax_table.(Char.code '_') <- true;*)
+  (* true in code usually, not necesseraly for tex itself, but have
+   * to pick one
+   *)
+  buf.buf_syntax_table.(Char.code '_') <- true;
   ()
 
 

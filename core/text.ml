@@ -46,7 +46,6 @@ type session = int
 (*e: type Text.session *)
 
 
-
 (*s: type Text.line *)
 and line = {
     mutable position : position; (* bol (beginning of line) *)
@@ -126,10 +125,6 @@ and action =
 (*e: type Text.action *)
 
 
-(*      
-module TextTree = WX_text.Make(Text)
-open TextTree
-*)
 type tree_desc =
       { mutable tree_nlines: int;
         mutable tree_width: int;
@@ -174,30 +169,6 @@ let make_text text lines =
   in tree
 
 type t = tree_desc
-  
-(* type t = tree tree_desc   *)
-
-(* external id: t -> tree tree_desc = "%identity" *)
-
-(*
-let print msg text =
-  let s = text.text_string in
-  let gpoint = text.gpoint in
-  let gsize  = text.gsize in
-  let len = text.text_size in
-  let gap_end = gpoint + gsize in
-    Printf.printf "%s: <<%s[gap:%d]%s>>" msg (String.sub s 0 gpoint) gsize 
-      (String.sub s gap_end (len - gap_end));
-    print_newline ()
- 
-let print_newlines text =
-  print_string "Newlines :";
-  for i = 0 to text.text_nlines - 1 do
-    Printf.printf " %d" text.text_newlines.(i).position;
-  done;
-  print_newline ()
-*)
-
   
 (*s: function Text.version *)
 let version tree = 
@@ -348,39 +319,6 @@ let extend_gap text amount =
   text.text_size <- old_size + add_size;
   ()
 (*e: function Text.extend_gap *)
-
-(*
-  let rec iter tree lines =
-    match tree with
-      Parts text ->
-        if lines = text.tree_nlines || lines = -1 then
-          (* Insert in the last part *)
-          iter text.tree_parts.(Array.length text.tree_parts - 1) (-1)
-        else
-        let rec iter2 lines i =
-          let tlines = match text.tree_parts.(i) with
-              Parts t -> t.tree_nlines
-            | Lines t -> t.tree_nlines 
-          in
-          if tlines > lines then
-            iter text.tree_parts.(i) lines
-          else
-            iter2 (lines - tlines) (i+1)
-        in
-        iter2 lines 0;
-        text.tree_modified <- true;
-        text.tree_nlines <- text.tree_nlines + nbr
-    | Lines text ->
-        let newtext = Array.create text.tree_nlines text.tree_parts.(0) in
-        Array.blit text.tree_parts 0 newtext 0 lines;
-        Array.blit t.text_newlines gline newtext lines nbr;
-        Array.blit text.tree_parts lines newtext (lines+nbr) (
-          text.tree_nlines - lines);
-        text.tree_modified <- true;        
-        text.tree_nlines <- text.tree_nlines + nbr
-  in
-  iter (Parts tree) gline
-*)
 
 (*s: function Text.low_insert *)
 let low_insert tree pos str =
@@ -799,21 +737,6 @@ let compare text p1 p2 =
   compare p1.pos p2.pos
 (*e: function Text.compare *)
   
-(*s: function Text.add *)
-(*
-let add text point delta =
-  let gpos = text.gpoint.pos in
-  let gap_end = gpos + text.gsize in
-  if point <= gpos && point + delta > gpos then
-    point + delta + text.gsize
-  else
-  if point >= gap_end && point+delta < gap_end then
-    point + delta - text.gsize
-  else
-    point + delta
-*)
-(*e: function Text.add *)
-
 (*s: function Text.get_char *)
 let get_char tree point =
   let text = tree.tree_text in    
@@ -1358,20 +1281,6 @@ let rec region tree p1 p2 =
   then region tree p2 p1
   else sub tree p1 (distance tree p1 p2)
 (*e: function Text.region *)
-
-(*s: function Text.goto_xy *)
-(*
-let goto_xy tree point x y =
-  let text = tree.tree_text in    
-  let y =
-    if y < text.text_nlines then y
-    else text.text_nlines - 1
-  in
-  point.pos <- text.text_newlines.(y).position;
-  point.line <- y;
-  fmove tree point x |> ignore
-*)
-(*e: function Text.goto_xy *)
 
 (*s: function Text.update *)
 let update tree str =

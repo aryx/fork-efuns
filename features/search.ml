@@ -291,7 +291,7 @@ let isearch to_regexp sens frame =
 
   Keymap.add_binding ismap [ControlMap, Char.code 'w']
     (fun mini_frame ->
-(*      set_last mini_frame;       *)
+      (*      set_last mini_frame;       *)
       Text.goto_point text spoint point;
       let end_current_word = Simple.end_of_word buf point in
       string := !string ^ end_current_word;

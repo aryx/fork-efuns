@@ -20,7 +20,9 @@ open Top_window
 let efuns_property = "_EFUNS_SERVER"  
 (*e: constant Server.efuns_property *)
 (*s: constant Server.user *)
-let user = try Sys.getenv "USER" with _ -> "noname"
+let user = 
+  try Sys.getenv "USER" 
+  with _ -> "noname"
 (*e: constant Server.user *)
 (*s: constant Server.socket_name *)
 let socket_name = (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user !displayname)
@@ -41,7 +43,7 @@ let read_command fd frame =
   try
     let cmd = input_value inc in
     match cmd with
-      LoadFile (name,pos,str) ->
+    | LoadFile (name,pos,str) ->
         let window = frame.frm_window in
         let top_window = Window.top window in
         wrap top_window (fun top_window ->

@@ -45,21 +45,11 @@ let clear_message top_window =
   | _ -> ()
 (*e: function Top_window.clear_message *)
 
-(*s: function Top_window.dummy_action *)
-let dummy_action frame = ()
-(*e: function Top_window.dummy_action *)
-
 (*s: function Top_window.try_map *)
 let try_map frame key =
   let keylist = frame.frm_prefix @ [key] in
   match Ebuffer.get_binding frame.frm_buffer keylist with
   | Function f ->
-      (*s: [[Top_window.try_map()]] set repeat action *)
-      frame.frm_repeat_action <- 
-        if (f == frame.frm_last_action) 
-        then frame.frm_repeat_action + 1
-        else 0;
-      (*e: [[Top_window.try_map()]] set repeat action *)
       frame.frm_prefix <- [];
       (* dispatch the action *)
       (*s: [[Top_window.try_map()]] if debug, print action name *)
@@ -380,14 +370,6 @@ let scroll_to_frame ady top_window =
       Text.set_position text frame.frm_start y
     end
 (*e: function Top_window.scroll_to_frame *)
-(*
-    Text.set_position text point y;
-      let point = Text.new_point text in
-      let curline = Text.point_line text frame.frm_start in
-      let newline = Text.point_line text point in
-      Text.remove_point text point;
-    frame.frm_y_offset <- frame.frm_y_offset + (newline - curline);
-  *)
 
 
 (*s: constant Top_window.menus *)
