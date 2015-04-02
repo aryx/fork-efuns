@@ -36,6 +36,10 @@ type metrics = {
 
   main_width: float;
   mini_width: float;
+
+  mini_factor: float;
+
+  main_height: float;
 }
 
 (*****************************************************************************)
@@ -107,11 +111,37 @@ let draw_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () =
 (* Minimap *)
 (*****************************************************************************)
 let draw_minimap cr pg =
-  let _loc = Efuns.location () in
-  let (_, metrics) = pg in
+  let loc = Efuns.location () in
+  let (ly, metrics) = pg in
   let x = metrics.main_width in
-  draw_rectangle_xywh ~cr ~x ~y:0. ~w:metrics.mini_width ~h:100. 
+  fill_rectangle_xywh ~cr ~x ~y:0. ~w:metrics.mini_width ~h:metrics.main_height
+    ~color:"black" ();
+
+  let frame = loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+
+  let line = Text.point_line text frame.frm_start in
+
+  let y = (float_of_int line) * metrics.font_height / metrics.mini_factor in
+
+  draw_rectangle_xywh ~cr ~x ~y ~w:metrics.mini_width ~h:100. 
     ~color:"yellow" ();
+
+
+  for i = 0 to Text.nbre_lines text -.. 1 do
+    let line = Text.compute_representation text buf.buf_charreprs i in
+    let repr_str = line.Text.repr_string in
+    line.Text.boxes |> List.rev |> List.iter (fun box ->
+      let h = metrics.font_height in
+      let y = ((float_of_int i * h) + h * 0.1) / metrics.mini_factor in
+      Cairo.move_to cr x y;
+
+      Pango.Layout.set_text ly  (prepare_string repr_str);
+      Pango_cairo.update_layout cr ly;
+      Pango_cairo.show_layout cr ly;
+    )
+  done;
   ()
   
 
@@ -247,16 +277,20 @@ let init2 init_files =
     float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
   let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
   let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
-  let height = ascent + descent in
+  let height = (ascent + descent) * 1.1 in
 
-  let factor_minimap = 8. in
+  let mini_factor = 8. in
+  let main_width = float_of_int location.loc_width * width in
 
   let metrics = { 
     font_width = width; 
-    font_height = height * 1.1;
+    font_height = height;
 
-    main_width = float_of_int location.loc_width * width;
-    mini_width = (float_of_int location.loc_width * width) / factor_minimap;
+    mini_factor;
+
+    main_width;
+    mini_width = main_width / mini_factor;
+    main_height = float_of_int location.loc_height * height;
   } in
 
   (*-------------------------------------------------------------------*)
@@ -265,13 +299,11 @@ let init2 init_files =
 
   (* those are the dimensions for the main view, the pixmap *)
   let width = 
-     metrics.main_width + metrics.mini_width
-     |> ceil |> int_of_float
+    metrics.main_width + metrics.mini_width |> ceil |> int_of_float
     (* 1320 *)
   in
   let height = 
-    (float_of_int location.loc_height * metrics.font_height) 
-     |> ceil |> int_of_float
+    metrics.main_height |> ceil |> int_of_float
     (* 1400 *)
   in
 
