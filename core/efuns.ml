@@ -339,7 +339,9 @@ type location =
     (* pwd of efuns when started *)
     mutable loc_dirname : string;
 
-    (* general look, configurable via -xxx command line options or .efunsrc *)
+    (* general look, configurable via -xxx command line options or .efunsrc 
+     * (dimension type is in characters)
+     *)
     mutable loc_width : int;
     mutable loc_height : int;
 

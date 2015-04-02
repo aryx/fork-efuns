@@ -33,6 +33,9 @@ type world = {
 type metrics = {
   font_width: float;
   font_height: float;
+
+  main_width: float;
+  mini_width: float;
 }
 
 (*****************************************************************************)
@@ -99,6 +102,18 @@ let draw_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () =
   Cairo.line_to cr x (y+h);
   Cairo.stroke cr;
   ()
+
+(*****************************************************************************)
+(* Minimap *)
+(*****************************************************************************)
+let draw_minimap cr pg =
+  let _loc = Efuns.location () in
+  let (_, metrics) = pg in
+  let x = metrics.main_width in
+  draw_rectangle_xywh ~cr ~x ~y:0. ~w:metrics.mini_width ~h:100. 
+    ~color:"yellow" ();
+  ()
+  
 
 (*****************************************************************************)
 (* Draw Efuns API *)
@@ -180,6 +195,7 @@ let backend loc cr pg win =
     update_display = (fun () -> 
       if !debug_graphics
       then pr2 ("backend.update_display()");
+      draw_minimap cr pg;
       GtkBase.Widget.queue_draw win#as_widget;
     );
   }
@@ -192,6 +208,7 @@ let backend loc cr pg win =
 let paint w =
   if !debug_graphics
   then pr2 "paint";
+  (* this will trigger backend.update_display *)
   Top_window.update_display () 
 
 (* for the special key, Control, Meta, etc *)
@@ -202,11 +219,62 @@ let modifiers = ref 0
 (*****************************************************************************)
 
 let init2 init_files =
+
+  (*-------------------------------------------------------------------*)
+  (* Graphics initialisation *)
+  (*-------------------------------------------------------------------*)
   let _locale = GtkMain.Main.init () in
   let location = Efuns.location () in
 
-  let width = 1320 in
-  let height = 1400 in
+  let desc = Pango.Font.from_string location.loc_font
+(*
+    "Sans Bold 25" 
+    "Fixed Bold 32"
+    "Monaco 16"
+    "Menlo 19"
+    "Courier 19"
+    "Menlo 18"
+*)
+  in
+  Pango.Font.set_weight desc `ULTRABOLD; 
+  let ctx = Pango_cairo.FontMap.create_context 
+    (Pango_cairo.FontMap.get_default ()) in
+  Pango.Context.set_font_description ctx desc;
+  let metrics = 
+    Pango.Context.get_metrics ctx 
+      (Pango.Context.get_font_description ctx) None in
+  let width = 
+    float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
+  let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
+  let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
+  let height = ascent + descent in
+
+  let factor_minimap = 8. in
+
+  let metrics = { 
+    font_width = width; 
+    font_height = height * 1.1;
+
+    main_width = float_of_int location.loc_width * width;
+    mini_width = (float_of_int location.loc_width * width) / factor_minimap;
+  } in
+
+  (*-------------------------------------------------------------------*)
+  (* Window creation *)
+  (*-------------------------------------------------------------------*)
+
+  (* those are the dimensions for the main view, the pixmap *)
+  let width = 
+     metrics.main_width + metrics.mini_width
+     |> ceil |> int_of_float
+    (* 1320 *)
+  in
+  let height = 
+    (float_of_int location.loc_height * metrics.font_height) 
+     |> ceil |> int_of_float
+    (* 1400 *)
+  in
+
   let w = {
     model = location;
     width;
@@ -235,9 +303,11 @@ let init2 init_files =
   (* Layout *)
   (*-------------------------------------------------------------------*)
 
-
   let vbox = GPack.vbox ~packing:win#add () in
 
+    (*-------------------------------------------------------------------*)
+    (* Menu *)
+    (*-------------------------------------------------------------------*)
     (* not necessary, can even be distracting, but can be useful
      * for beginners to have at least an help menu.
      *)
@@ -284,11 +354,17 @@ let init2 init_files =
                 ))))
       ) |> ignore;
 
+    (*-------------------------------------------------------------------*)
+    (* main view *)
+    (*-------------------------------------------------------------------*)
     let px = GDraw.pixmap ~width ~height ~window:win () in
     px#set_foreground `BLACK;
     px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
     GMisc.pixmap px ~packing:vbox#add () |> ignore;
 
+    (*-------------------------------------------------------------------*)
+    (* status bar *)
+    (*-------------------------------------------------------------------*)
     let _statusbar = GMisc.statusbar ~packing:vbox#add () in
 
   (*-------------------------------------------------------------------*)
@@ -297,38 +373,9 @@ let init2 init_files =
 
   let cr = Cairo_lablgtk.create px#pixmap in
   let layout = Pango_cairo.create_layout cr in
-  let desc = Pango.Font.from_string location.loc_font
-(*
-    "Sans Bold 25" 
-    "Fixed Bold 32"
-    "Monaco 16"
-    "Menlo 19"
-    "Courier 19"
-    "Menlo 18"
-*)
-  in
-  Pango.Font.set_weight desc `ULTRABOLD; 
   Pango.Layout.set_font_description layout desc;
-
-
-  let ctx = Pango_cairo.FontMap.create_context 
-    (Pango_cairo.FontMap.get_default ()) in
-  Pango.Context.set_font_description ctx desc;
-  let metrics = 
-    Pango.Context.get_metrics ctx 
-      (Pango.Context.get_font_description ctx) None in
-  let width = 
-    float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
-  let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
-  let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
-  let height = ascent + descent in
-  let metrics = { 
-    font_width = width; 
-    font_height = height * 1.1;
-  } in
-  let pg = (layout, metrics) in
-
   Pango_cairo.update_layout cr layout;
+  let pg = (layout, metrics) in
 
   top_window.graphics <- Some (backend location cr pg win); 
 
@@ -371,6 +418,7 @@ let init2 init_files =
     in
     code_opt |> Common.do_option (fun code ->
       let evt = Xtypes.XTKeyPress (!modifiers, GdkEvent.Key.string key, code) in
+      (* this will generate a redisplay event via backend.update_display *)
       Top_window.handler top_window evt;
     );
     true
