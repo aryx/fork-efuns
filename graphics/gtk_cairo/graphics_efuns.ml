@@ -113,9 +113,16 @@ let draw_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () =
 let draw_minimap cr pg =
   let loc = Efuns.location () in
   let (ly, metrics) = pg in
-  let x = metrics.main_width in
-  fill_rectangle_xywh ~cr ~x ~y:0. ~w:metrics.mini_width ~h:metrics.main_height
-    ~color:"black" ();
+
+  let target = Cairo.get_target cr in
+  let cr = Cairo.create target in
+  Cairo.translate cr metrics.main_width 0.0;
+
+  fill_rectangle_xywh ~cr ~x:0. ~y:0. 
+    ~w:metrics.mini_width ~h:metrics.main_height
+    ~color:"DarkSlateGray" ();
+
+  Cairo.scale cr (1. / metrics.mini_factor) (1. / metrics.mini_factor);
 
   let frame = loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
   let buf = frame.frm_buffer in
@@ -123,9 +130,12 @@ let draw_minimap cr pg =
 
   let line = Text.point_line text frame.frm_start in
 
-  let y = (float_of_int line) * metrics.font_height / metrics.mini_factor in
+  let x = 0. in
+  let y = (float_of_int line) * metrics.font_height in
+  let h = (float_of_int loc.loc_height) * metrics.font_height in
 
-  draw_rectangle_xywh ~cr ~x ~y ~w:metrics.mini_width ~h:100. 
+  Cairo.set_line_width cr ((Cairo.get_line_width cr) * metrics.mini_factor);
+  draw_rectangle_xywh ~cr ~x ~y ~w:metrics.main_width ~h
     ~color:"yellow" ();
 
 
@@ -133,11 +143,22 @@ let draw_minimap cr pg =
     let line = Text.compute_representation text buf.buf_charreprs i in
     let repr_str = line.Text.repr_string in
     line.Text.boxes |> List.rev |> List.iter (fun box ->
+      let w = metrics.font_width in
       let h = metrics.font_height in
-      let y = ((float_of_int i * h) + h * 0.1) / metrics.mini_factor in
+      let x = float_of_int box.Text.box_pos_repr * w in
+      let y = (float_of_int i * h) + h * 0.1 in
       Cairo.move_to cr x y;
+      let attr = box.Text.box_attr in
 
-      Pango.Layout.set_text ly  (prepare_string repr_str);
+      let str = String.sub repr_str box.Text.box_pos_repr box.Text.box_size in
+
+      let fgcolor = 
+        let idx = attr land 255 in
+        loc.loc_colors_names.(idx)
+      in
+      set_source_color ~cr ~color:fgcolor ();
+      
+      Pango.Layout.set_text ly  (prepare_string str);
       Pango_cairo.update_layout cr ly;
       Pango_cairo.show_layout cr ly;
     )
@@ -279,7 +300,7 @@ let init2 init_files =
   let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
   let height = (ascent + descent) * 1.1 in
 
-  let mini_factor = 8. in
+  let mini_factor = 10. in
   let main_width = float_of_int location.loc_width * width in
 
   let metrics = { 
