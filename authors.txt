@@ -1,4 +1,9 @@
 Fabrice Lefessant
 
 With contributions from:
- - Yoann Padioleau (goal column, dircolors, buffer_menu, pfff-based modes)
+ - Yoann Padioleau 
+    * dircolors
+    * buffer_menu (C-M-Tab and C-M-l)
+    * eshell
+    * pfff-based modes
+    * goal column, C-s C-w, M-down/up/right/left scrolling, 
