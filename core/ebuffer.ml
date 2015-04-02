@@ -14,6 +14,8 @@
 open Common
 open Efuns
 
+(* this file is called ebuffer.ml because buffer.ml already exists in stdlib *)
+
 (*s: constant Ebuffer.create_buf_hook *)
 let create_buf_hook = Local.create_abstr "create_buf_hook"
 (*e: constant Ebuffer.create_buf_hook *)

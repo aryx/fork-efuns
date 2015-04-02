@@ -1068,6 +1068,8 @@ let tabreprs = [|
   |]
 (*e: constant Text.tabreprs *)
 
+type charreprs = string array
+
 (*s: function Text.compute_representation *)
 (* On devrait reprendre la representation la ou elle est ... *)
 let compute_representation tree charreprs n =

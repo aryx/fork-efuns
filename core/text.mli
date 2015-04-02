@@ -166,5 +166,6 @@ type line =
 val dummy_line : line
 
 (* display *)
+type charreprs = string array
 
-val compute_representation : t -> string array -> int -> line
+val compute_representation : t -> charreprs -> int -> line

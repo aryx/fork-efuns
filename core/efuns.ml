@@ -110,7 +110,7 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_vars : Local.vars;
     (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_charreprs : string array; (* 256 array *)
+    mutable buf_charreprs : Text.charreprs; (* 256 array *)
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_syntax_table : bool array;
     (*x: [[Efuns.buffer]] other fields *)
