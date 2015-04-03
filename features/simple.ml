@@ -388,10 +388,6 @@ let to_end_of_word text mark syntax =
   do () done
 (*e: function Simple.to_end_of_word *)
 
-(*s: function Simple.to_frame *)
-let to_frame f frame =
-  f frame.frm_buffer frame.frm_point
-(*e: function Simple.to_frame *)
 
 (*s: function Simple.backward_word *)
 let backward_word buf point =

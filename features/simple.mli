@@ -125,7 +125,6 @@ val color : Efuns.buffer -> Str.regexp -> bool -> Text.attribute -> unit
 
 (* misc *)
 
-val to_frame : (Efuns.buffer -> Text.point -> 'a) -> Efuns.frame -> 'a
 
 val binding_option :
   ((Efuns.mod_ident * int) list * string) Options.option_class

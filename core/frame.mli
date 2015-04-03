@@ -60,6 +60,10 @@ val current_dir : Efuns.frame -> string
 
 (* dumpers *)
 
+(* iterator *)
+
+val to_frame : (Efuns.buffer -> Text.point -> 'a) -> Efuns.frame -> 'a
+
 (* misc *)
 
 val editname : string
@@ -68,7 +72,6 @@ exception FoundFrame of Efuns.frame
 
 val print_list : string list -> string
 val bindings_help : Efuns.frame -> unit
-
 
 (*
 val display_line : Efuns.top_window -> Efuns.frame -> string -> int -> unit

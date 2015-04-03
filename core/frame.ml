@@ -728,5 +728,10 @@ let bindings_help frame =
   let window = frame.frm_window in
   change_buffer window "*bindings*"
 (*e: function Frame.bindings_help *)
+
+(*s: function Simple.to_frame *)
+let to_frame f frame =
+  f frame.frm_buffer frame.frm_point
+(*e: function Simple.to_frame *)
   
 (*e: core/frame.ml *)

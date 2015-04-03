@@ -58,8 +58,8 @@ let _ =
   define_action "move_backward"  (fun frame -> ignore (Simple.move_backward frame 1));
   define_action "move_forward"   (fun frame -> ignore (Simple.move_forward frame 1));
 
-  define_action "backward_word"  (Simple.to_frame Simple.backward_word);
-  define_action "forward_word"  (Simple.to_frame Simple.forward_word);  
+  define_action "backward_word"  (Frame.to_frame Simple.backward_word);
+  define_action "forward_word"  (Frame.to_frame Simple.forward_word);  
 
   define_action "beginning_of_line"  Simple.beginning_of_line;
   define_action "end_of_line"  Simple.end_of_line;
@@ -67,8 +67,8 @@ let _ =
   define_action "backward_line"  Simple.backward_line;
   define_action "forward_line"  Simple.forward_line;  
 
-  define_action "backward_paragraph"  (Simple.to_frame Simple.backward_paragraph);
-  define_action "forward_paragraph"  (Simple.to_frame Simple.forward_paragraph);  
+  define_action "backward_paragraph"  (Frame.to_frame Simple.backward_paragraph);
+  define_action "forward_paragraph"  (Frame.to_frame Simple.forward_paragraph);  
 
   define_action "backward_screen"  Simple.backward_screen;
   define_action "forward_screen"  Simple.forward_screen;
@@ -103,8 +103,8 @@ let _ =
   define_action "delete_before_point"  Simple.delete_backspace_char;
   define_action "delete_at_point"  Simple.delete_char;
 
-  define_action "delete_forward_word"  (Simple.to_frame Simple.delete_forward_word);
-  define_action "delete_backward_word"  (Simple.to_frame Simple.delete_backward_word);
+  define_action "delete_forward_word"  (Frame.to_frame Simple.delete_forward_word);
+  define_action "delete_backward_word"  (Frame.to_frame Simple.delete_backward_word);
 
   define_action "hungry_electric_delete"  Simple.hungry_electric_delete;
   define_action "kill_end_of_line"  Simple.kill_end_of_line;
@@ -122,9 +122,9 @@ let _ =
   (* Transforming *)
   (* ------------------------- *)
   (*s: transforming actions *)
-  define_action "transpose_chars"  (Simple.to_frame Simple.transpose_chars);
+  define_action "transpose_chars"  (Frame.to_frame Simple.transpose_chars);
 
-  define_action "transpose_words"  (Simple.to_frame Simple.transpose_words);
+  define_action "transpose_words"  (Frame.to_frame Simple.transpose_words);
   define_action "lowercase_word" (fun frame ->
     let buf = frame.frm_buffer in
     let point = frame.frm_point in
