@@ -824,6 +824,8 @@ let with_dup_point text point f =
   
 <<constant Text.tabreprs>>
 
+type charreprs = string array
+
 <<function Text.compute_representation>>
 
 
@@ -1013,6 +1015,8 @@ let catch format buf f =
 <<copyright header2>>
 open Common
 open Efuns
+
+(* this file is called ebuffer.ml because buffer.ml already exists in stdlib *)
 
 <<constant Ebuffer.create_buf_hook>>
 <<constant Ebuffer.modes_alist>>
@@ -3997,7 +4001,6 @@ open Keymap (* c_xxx *)
 <<copyright header>>
 open Options
 open Efuns
-
 
 <<constant Efuns.init_files>>
 <<constant Efuns.init_frames>>
