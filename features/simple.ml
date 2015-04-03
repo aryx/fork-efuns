@@ -11,7 +11,6 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-
 open Efuns
 open Xtypes
 
@@ -543,7 +542,7 @@ let forward_paragraph buf point =
 (*****************************************************************************)
 
 (*
-     let move_backward frame =
+let move_backward frame =
    Functions.move_backward frame 1; ()
 
 let move_forward frame = 

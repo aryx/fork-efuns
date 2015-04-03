@@ -127,12 +127,11 @@ val color : Efuns.buffer -> Str.regexp -> bool -> Text.attribute -> unit
 
 val to_frame : (Efuns.buffer -> Text.point -> 'a) -> Efuns.frame -> 'a
 
-val simplify : Text.t -> Text.point -> Text.point -> unit
-
 val binding_option :
   ((Efuns.mod_ident * int) list * string) Options.option_class
 
 
 (*
 val single_char : string
+val simplify : Text.t -> Text.point -> Text.point -> unit
 *)
