@@ -29,18 +29,6 @@ module PI = Parse_info
 (* Colors *)
 (*****************************************************************************)
 
-(* dupe of pfff/code_map/draw_microlevel.ml *)
-let color_of_categ categ =
-  let attrs = Highlight_code.info_of_category categ in
-  attrs +> Common.find_some (fun attr ->
-    match attr with
-    | `FOREGROUND s 
-    | `BACKGROUND s (* todo: should really draw the background of the text *)
-      -> 
-        Some (s)
-    | _ -> None
-  )
-
 let colorize buf file =
 
   let (ast2, _stat) = Parse_cpp.parse file in
@@ -54,7 +42,7 @@ let colorize buf file =
   let cursor = Text.new_point text in
 
   ast2 |> List.iter (Highlight_cpp.visit_toplevel ~tag_hook:(fun info categ ->
-    let color = color_of_categ categ in
+    let color = Pfff_modes.color_of_categ categ in
 
     let pos = PI.pos_of_info info in
     Text.set_position text cursor pos;
@@ -85,10 +73,8 @@ let install buf =
   buf.buf_syntax_table.(Char.code '_') <- true;
   ()
 
-
 let mode =  Ebuffer.new_major_mode "C" [install]
 let cpp_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
-
 
 (*****************************************************************************)
 (* Setup *)

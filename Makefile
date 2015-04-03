@@ -61,6 +61,7 @@ SRC=\
  prog_modes/c_mode.ml\
  prog_modes/lisp_mode.ml\
  \
+ pfff_modes/pfff_modes.ml\
  pfff_modes/caml_mode.ml\
  pfff_modes/cpp_mode.ml\
  pfff_modes/noweb_mode.ml\
@@ -138,7 +139,7 @@ INCLUDEDIRS=\
   commons\
   core features\
   graphics $(BACKENDDIR) $(GRAPHICSDIRS) $(PFFFDIRS) \
-  major_modes minor_modes prog_modes text_modes
+  major_modes minor_modes prog_modes text_modes pfff_modes
 
 ##############################################################################
 # Generic variables

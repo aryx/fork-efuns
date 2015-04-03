@@ -29,18 +29,6 @@ module PI = Parse_info
 (* Colors *)
 (*****************************************************************************)
 
-(* dupe of pfff/code_map/draw_microlevel.ml *)
-let color_of_categ categ =
-  let attrs = Highlight_code.info_of_category categ in
-  attrs +> Common.find_some (fun attr ->
-    match attr with
-    | `FOREGROUND s 
-    | `BACKGROUND s (* todo: should really draw the background of the text *)
-      -> 
-        Some (s)
-    | _ -> None
-  )
-
 let colorize buf file =
   let (astopt,toks), _stat = 
     Common.save_excursion Flag_parsing_ml.error_recovery true (fun()->
@@ -54,11 +42,13 @@ let colorize buf file =
 
   let ast = astopt ||| [] in
   (ast, toks) |> Highlight_ml.visit_program ~tag_hook:(fun info categ ->
-    let color = color_of_categ categ in
+    let color = Pfff_modes.color_of_categ categ in
+    let fontsize = Pfff_modes.size_of_categ categ in
 
     let pos = PI.pos_of_info info in
     Text.set_position text cursor pos;
-    let attr = Text.make_attr (Window.get_color color) 1 0 false in
+    let attr = Text.make_attr (Window.get_color color) 1 fontsize false in
+
     let str = PI.str_of_info info in
     let len = String.length str in
     Text.set_attr text cursor len attr
