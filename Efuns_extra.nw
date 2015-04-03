@@ -1470,7 +1470,7 @@ let current_dir frame =
   let buf = frame.frm_buffer in
   match buf.buf_filename with
     Some filename -> Filename.dirname filename ^ "/"
-  | None -> (Efuns.location()).loc_dirname ^ "/"
+  | None -> (Globals.location()).loc_dirname ^ "/"
 @
 
 <<exception Frame.FoundFrame>>=
@@ -1480,7 +1480,7 @@ exception FoundFrame of frame
 <<function Frame.find_buffer_frame>>=
 let find_buffer_frame buf =
   try
-    (Efuns.location()).top_windows |> List.iter (fun top_window ->
+    (Globals.location()).top_windows |> List.iter (fun top_window ->
       top_window.window |> Window.iter (fun frame -> 
         if frame.frm_buffer == buf 
         then raise (FoundFrame frame)
@@ -1992,7 +1992,7 @@ let mouse_drag_region frame =
 
 <<function Simple.next_buffer>>=
 let next_buffer buf =
-  let buf_list = Utils.list_of_hash (Efuns.location()).loc_buffers in
+  let buf_list = Utils.list_of_hash (Globals.location()).loc_buffers in
   let rec iter list =
     match list with
       [] -> raise Not_found 
@@ -2145,19 +2145,19 @@ let install_structures buf list =
 
 <<toplevel Simple._1>>=
 let _ =
-  define_buffer_action "overwrite_mode" (fun buf -> 
+  Action.define_buffer_action "overwrite_mode" (fun buf -> 
       let mode = overwrite_mode in
       if Ebuffer.modep buf mode 
       then Ebuffer.del_minor_mode buf mode
       else Ebuffer.set_minor_mode buf mode
   );
 
-  Efuns.add_start_hook (fun () ->
-      let location = Efuns.location () in
-      let gmap = location.loc_map in
+  Hook.add_start_hook (fun () ->
+      let loc = Globals.location () in
+      let gmap = loc.loc_map in
 
       (* unhightlight region *)
-      Efuns.add_hook Top_window.handle_key_start_hook unhightlight;      
+      Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
 
       (* standard chars *)
       for key = 32 to 127 do
@@ -2192,11 +2192,11 @@ let _ =
       Keymap.add_binding gmap [NormalMap, XK.xk_Pointer_Drag1]
         mouse_drag_region;
 
-      Keymap.add_interactive (location.loc_map) "fondamental_mode" 
+      Keymap.add_interactive (loc.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
             Ebuffer.fondamental_mode);
 
-      set_global line_comment ""
+      Var.set_global line_comment ""
   )
 @
 
@@ -2592,8 +2592,8 @@ let display_completions frame list =
     let text = buf.buf_text in
     Text.update text (iter list "Completions :");
     
-    let hooks = try get_global completions_buf_hook with Not_found -> [] in
-    exec_hooks hooks buf;
+    let hooks = try Var.get_global completions_buf_hook with Not_found -> [] in
+    Hook.exec_hooks hooks buf;
 
     (try Frame.find_buffer_frame buf
      with Not_found -> Frame.create_inactive (Multi_frames.cut_frame frame) buf
@@ -3120,7 +3120,7 @@ let file_perm = Local.create "file_perm" string_of_int int_of_string
 let mkdir frame =
   Select.select_filename frame "Make directory: "
     (fun str -> 
-      let file_perm = try get_var frame.frm_buffer file_perm with _ -> 
+      let file_perm = try Var.get_var frame.frm_buffer file_perm with _ -> 
             0x1ff land (lnot umask) in
       Unix.mkdir str file_perm)
 @
@@ -3146,7 +3146,7 @@ let all_variables frame _ =
   | _ ->
       let list = 
         (Local.list buf.buf_vars) @ 
-        (Local.list (Efuns.location()).loc_vars) 
+        (Local.list (Globals.location()).loc_vars) 
       in
       all_vars := Some (frame, list);
       list
@@ -3167,22 +3167,22 @@ let set_global_variable frame =
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
-          Local.input (Efuns.location()).loc_vars variable value))
+          Local.input (Globals.location()).loc_vars variable value))
 @
 
 
 
 <<toplevel Complex._1>>=
 let _ =
-  Efuns.add_start_hook (fun () ->
-    let location = Efuns.location() in
-      Keymap.add_interactive location.loc_map "make_directory" mkdir;
-      Keymap.add_interactive location.loc_map "set_local_variable" 
+  Hook.add_start_hook (fun () ->
+    let loc = Globals.location() in
+      Keymap.add_interactive loc.loc_map "make_directory" mkdir;
+      Keymap.add_interactive loc.loc_map "set_local_variable" 
         set_local_variable;
-      Keymap.add_interactive location.loc_map "set_global_variable" 
+      Keymap.add_interactive loc.loc_map "set_global_variable" 
         set_global_variable;
-      Keymap.add_interactive location.loc_map "set_parameter" set_parameter;
-      Keymap.add_interactive location.loc_map "get_parameter" get_parameter;
+      Keymap.add_interactive loc.loc_map "set_parameter" set_parameter;
+      Keymap.add_interactive loc.loc_map "get_parameter" get_parameter;
       
   )
 @
@@ -3776,21 +3776,21 @@ let mini_message frame msg =
 
 <<function Top_window.wrap>>=
 let wrap top_window f () = 
-  let location = Efuns.location() in
-  Mutex.lock location.loc_mutex;  
+  let loc = Globals.location() in
+  Mutex.lock loc.loc_mutex;  
   clean_display ();    
   clear_message top_window;
   keypressed := XK.xk_Menu;
   let frame = top_window.top_active_frame in
-  exec_hooks (try get_global handle_key_start_hook with _ -> []) frame;    
+  Hook.exec_hooks (try Var.get_global handle_key_start_hook with _ ->[]) frame;
   begin
     try f top_window 
     with e -> message top_window (Printf.sprintf "Uncaught exception %s" 
                                     (Utils.printexn e))
   end;
-  exec_hooks (try get_global handle_key_end_hook with _ -> []) ();    
+  Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();    
   update_display ();
-  Mutex.unlock location.loc_mutex
+  Mutex.unlock loc.loc_mutex
 @
 
 <<function Top_window.wrap_item>>=
@@ -3941,6 +3941,7 @@ open Efuns
 open Utils
 open Options
 open Efuns
+open Action
 
 <<constant Std_efunsrc.grep_hist>>
 
@@ -4069,7 +4070,7 @@ let file_reg = Str.regexp ".* \\([^ ]+\\)$"
 <<function Dired.get_file_line>>=
 let get_file_line frame =
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
-    (Efuns.location()).loc_dirname <- Filename.dirname filename;
+    (Globals.location()).loc_dirname <- Filename.dirname filename;
   );
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -4248,12 +4249,12 @@ let _ =
     ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
     ];
   
-  Efuns.add_start_hook (fun () ->
-    Keymap.add_interactive ((Efuns.location()).loc_map) "dired_mode" 
+  Hook.add_start_hook (fun () ->
+    Keymap.add_interactive ((Globals.location()).loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
-    Efuns.set_global Ebuffer.modes_alist 
-      ((".*/$",mode) :: (Efuns.get_global Ebuffer.modes_alist));
+    Var.set_global Ebuffer.modes_alist 
+      ((".*/$",mode) :: (Var.get_global Ebuffer.modes_alist));
   )   
 @
 %$
@@ -4352,10 +4353,8 @@ let _ =
 
 <<function Abbrevs_mode.install>>=
 let install buf =
-  try
-    get_local buf abbrev_table |> ignore
-  with _ -> 
-    set_local buf abbrev_table abbrevs
+  try Var.get_local buf abbrev_table |> ignore
+  with _ -> Var.set_local buf abbrev_table abbrevs
 @
 
 <<constant Abbrevs_mode.mode>>=
@@ -4389,7 +4388,7 @@ let _ =
 
 <<toplevel Abbrevs_mode._3>>=
 let _ = 
-  define_action "abbrevs_mode" 
+  Action.define_action "abbrevs_mode" 
     (fun frame -> 
       let buf = frame.frm_buffer in
       if Ebuffer.modep buf mode 
@@ -4695,12 +4694,12 @@ let _ =
 
 <<toplevel Fill_mode._2>>=
 let _ = 
-  define_buffer_action (minor_mode_name ^ "_mode")
+  Action.define_buffer_action (minor_mode_name ^ "_mode")
     (fun buf -> 
-      if Ebuffer.modep buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode);
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+     );
 @
 
 
@@ -4751,7 +4750,7 @@ let _ =
 
 <<toplevel Paren_mode._2>>=
 let _ = 
-  define_buffer_action "paren_mode" 
+  Action.define_buffer_action "paren_mode" 
     (fun buf -> 
       if Ebuffer.modep buf mode 
       then Ebuffer.del_minor_mode buf mode
@@ -4795,13 +4794,13 @@ let _ =
 
 <<toplevel Tab_mode._2>>=
 let _ = 
-  define_buffer_action "tab_mode" 
+  Action.define_buffer_action "tab_mode" 
     (fun buf -> 
       if Ebuffer.modep buf mode 
       then Ebuffer.del_minor_mode buf mode
       else Ebuffer.set_minor_mode buf mode
   );
-  define_action "insert_tab" insert_tab
+  Action.define_action "insert_tab" insert_tab
 @
 
 %-------------------------------------------------------------
@@ -4857,20 +4856,20 @@ let rules_color = define_option ["makefile_mode";"rules_color"] ""
 <<function Makefile_mode.makefile_color>>=
 let makefile_color buf =
   Simple.color buf mkfile_rules false
-    (Text.make_attr (Window.get_color !!rules_color) 1 0 false);
+    (Text.make_attr (Attr.get_color !!rules_color) 1 0 false);
   Simple.color buf mkfile_target false 
-    (Text.make_attr (Window.get_color !!target_color) 1 0 false);
+    (Text.make_attr (Attr.get_color !!target_color) 1 0 false);
   Simple.color buf mkfile_vars false 
-    (Text.make_attr (Window.get_color !!Pl_colors.variable_name_color) 1 0 false);
+    (Text.make_attr (Attr.get_color !!Pl_colors.variable_name_color) 1 0 false);
   Simple.color buf mkfile_comments false 
-    (Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 0 false);
+    (Text.make_attr (Attr.get_color !!Pl_colors.comment_color) 1 0 false);
   ()
 @
 
 <<function Makefile_mode.install>>=
 let install buf =
   makefile_color buf;
-  execute_buffer_action "tab_mode" buf
+  Action.execute_buffer_action "tab_mode" buf
 @
 <<constant Makefile_mode.mode>>=
 let mode = Ebuffer.new_major_mode "Makefile" [makefile_color]
@@ -4898,10 +4897,10 @@ let interactives_map = define_option ["makefile_mode"; "interactives_map"] ""
 
 <<toplevel Makefile_mode._2>>=
 let _ = 
-  define_action "makefile_mode.compile" (Compil.compile Compil.c_find_error);
-  define_action "makefile_mode.color_buffer" 
+  Action.define_action "makefile_mode.compile" (Compil.compile Compil.c_find_error);
+  Action.define_action "makefile_mode.color_buffer" 
     (fun frame -> makefile_color frame.frm_buffer);
-  define_action "makefile_mode" makefile_mode;
+  Action.define_action "makefile_mode" makefile_mode;
   ()
 @
 %(*  define_action "insert_tab" insert_tab; *)
@@ -4937,7 +4936,7 @@ let _ =
   let map = mode.maj_map in
   !!local_map |> List.iter (fun (keys, action) ->
       try
-        Keymap.add_binding map keys (execute_action action)
+        Keymap.add_binding map keys (Action.execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
@@ -4945,7 +4944,7 @@ let _ =
   );
   !!interactives_map |> List.iter (fun (name, action) ->
       try
-        Keymap.add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (Action.execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
@@ -4957,9 +4956,9 @@ let _ =
 <<toplevel Makefile_mode._4>>=
 let _ = 
   (* Keymap.add_prefix mode.maj_map [c_c];   *)
-  Efuns.add_start_hook (fun () ->
-    let alist = get_global Ebuffer.modes_alist in
-    set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
+  Hook.add_start_hook (fun () ->
+    let alist = Var.get_global Ebuffer.modes_alist in
+    Var.set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
     
     Simple.add_option_parameter target_color;
     Simple.add_option_parameter rules_color;

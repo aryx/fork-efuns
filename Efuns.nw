@@ -1687,7 +1687,7 @@ let describe_variable frame =
           try
             Local.print buf.buf_vars variable
           with _ ->
-            Local.print (Efuns.location()).loc_vars variable)))
+            Local.print (Globals.location()).loc_vars variable)))
 @
 <<misc actions>>=
 define_action "describe_variable"  Complexe.describe_variable;
@@ -1747,7 +1747,7 @@ Hook.exec_hooks hooks buf;
 <<function Frame.exec_named_hooks>>=
 let exec_named_hooks hooks frame =
   hooks |> List.rev |> List.iter (fun action -> 
-   try execute_action action frame with _ -> ()
+   try Action.execute_action action frame with _ -> ()
   )
 @
 %<<function Frame.exec_named_hooks_with_abort>>=
@@ -1863,11 +1863,11 @@ let main () =
 % see appendix on configuration file library
 <<[[main()]] set options filename>>=
 Options.filename := 
-  (try Utils.find_in_path (Utils.homedir :: !!Efuns.load_path) ".efunsrc" 
+  (try Utils.find_in_path (Utils.homedir :: !!Globals.load_path) ".efunsrc" 
    with _ -> Filename.concat Utils.homedir ".efunsrc"
   );
 (try Options.init () 
- with exn -> Efuns.error "init error, exn = %s" (Common.exn_to_s exn)
+ with exn -> Globals.error "init error, exn = %s" (Common.exn_to_s exn)
 );
 @
 
@@ -1941,7 +1941,7 @@ let font_opt = ref None
 (match !height_opt with None -> () | Some color -> height =:= color);
 (match !fg_opt     with None -> () | Some color -> foreground =:= color);
 (match !bg_opt     with None -> () | Some color -> background =:= color);
-(match !font_opt   with None -> () | Some color -> font =:= color);
+(match !font_opt   with None -> () | Some color -> Globals.font =:= color);
 @
 
 
@@ -1961,7 +1961,7 @@ let displayname = ref ""
 let check = ref false
 @
 <<[[main()]] command line options>>=
-"-check", Arg.Set check, ": only for testing";
+"-check", Arg.Set Globals.check, ": only for testing";
 @
 
 % (*    "-c", Arg.String Dyneval.compile,"<file.ml>: compile file";*)
@@ -1981,7 +1981,7 @@ let location = {
     loc_height = !!height;
     loc_fg = !!foreground;
     loc_bg = !!background;
-    loc_font = !!font;
+    loc_font = !!Globals.font;
 
     loc_map = Keymap.create ();
     loc_dirname = Sys.getcwd ();
@@ -2014,9 +2014,9 @@ init_efuns location (* launch first hooks *);
 % main.ml -> <>
 <<function Efuns.init>>=
 let init_efuns (location : location) =
-  global_location := Some location;
-  let hooks = List.rev !Efuns.start_hooks in
-  Efuns.start_hooks := [];
+  Globals.global_location := Some location;
+  let hooks = List.rev !Hook.start_hooks in
+  Hook.start_hooks := [];
   hooks |> List.iter (fun f -> f ())
 
 @
@@ -2040,7 +2040,7 @@ let add_start_hook hook =
 
 <<toplevel Std_efunsrc._5>>=
 let _ =
-  Efuns.add_start_hook (fun () ->
+  Hook.add_start_hook (fun () ->
     <<[[Std_efunsrc._5]] start hooks options>>
     init_global_map ()
   )
@@ -2087,19 +2087,19 @@ let backend top_window =
 
 <<function Top_window.create>>=
 let create () =
-  let location = Efuns.location() in
+  let loc = Globals.location() in
   let buf = 
     Ebuffer.default "*help*" in
   (* keep one line for the minibuffer, hence the -1 *)
   let window = 
-    Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
+    Window.create_at_top  0 0 loc.loc_width (loc.loc_height - 1) in
   let frame = 
     Frame.create_without_top window None buf in
   let top_window =
     { 
       top_name = "window";
-      top_width = location.loc_width;
-      top_height = location.loc_height;
+      top_width = loc.loc_width;
+      top_height = loc.loc_height;
       window = window;
       top_active_frame = frame;
 
@@ -2112,7 +2112,7 @@ let create () =
 
   (* adjust what Window.create_at_top could not do *)
   frame.frm_window.win_up <- TopWindow top_window;
-  location.top_windows <- top_window :: location.top_windows;
+  loc.top_windows <- top_window :: loc.top_windows;
 
   top_window
 @
@@ -2240,7 +2240,7 @@ let create_at_top xpos ypos width height =
 % Graphics_xxx.init | (event loop -> handle_key) -> <>
 <<function Top_window.update_display>>=
 let update_display () =
-  (Efuns.location()).top_windows |> List.iter (fun top_window ->
+  (Globals.location()).top_windows |> List.iter (fun top_window ->
      top_window.window |> Window.iter (fun frm -> 
        Frame.display top_window frm
      );
@@ -2249,7 +2249,7 @@ let update_display () =
       | frm :: _ -> Frame.display top_window frm
      );
      cursor_on top_window;
-     let graphic = Window.backend top_window in
+     let graphic = Efuns.backend top_window in
      graphic.Xdraw.update_display();
   ) 
 @
@@ -2293,7 +2293,7 @@ let update_display () =
 
 <<function Top_window.handler>>=
 let handler top_window event =
-  Efuns.with_lock (fun () ->
+  Globals.with_lock (fun () ->
     match event with
     <<[[Top_window.handler()]] match event cases>>
   )
@@ -2324,7 +2324,7 @@ let handle_key top_window modifiers keysym =
   clean_display (); (* set cursor off *)
   clear_message top_window;
 
-  exec_hooks (try Efuns.get_var buf handle_key_start_hook with _ -> []) frame;
+  Hook.exec_hooks (try Var.get_var buf handle_key_start_hook with _ ->[]) frame;
 
   let mod_ = 
     <<[[Top_window.handle_key()]] compute mod>>
@@ -2338,7 +2338,7 @@ let handle_key top_window modifiers keysym =
     <<[[Top_window.handle_key()]] handle exception of try_map>>
   end;
 
-  exec_hooks (try get_global handle_key_end_hook with _ -> []) ();
+  Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();
 
   update_display ()
 @
@@ -3005,11 +3005,11 @@ let get_color color_name =
 
 <<[[main()]] misc initializations>>=
 (* color 0 is foreground *)
-Window.get_color !!foreground |> ignore;
+Attr.get_color !!foreground |> ignore;
 (* color 1 is background *)
-Window.get_color !!background |> ignore;
+Attr.get_color !!background |> ignore;
 (* color 2 is highlight *)
-Window.get_color !!highlight_color |> ignore;
+Attr.get_color !!highlight_color |> ignore;
 @
 
 % standard! just like stdin/stdout/stderr convention. Sometimes
@@ -3310,7 +3310,7 @@ let get_font font_name =
 
 <<[[main()]] misc initializations>>=
 (* font 0 is initial font *)
-Window.get_font !!font |> ignore;
+Attr.get_font !!Globals.font |> ignore;
 @
 
 %todo: variable sized font?
@@ -3925,7 +3925,7 @@ let update_time buf =
     buf.buf_filename |> Common.do_option (fun file ->
       let st = Unix.lstat file in
       if st.st_kind = S_REG 
-      then Efuns.set_local buf buf_mtime st.st_mtime;
+      then Var.set_local buf buf_mtime st.st_mtime;
     )
   with _ -> ()
 @
@@ -3940,8 +3940,8 @@ let check_file frame =
       let st = Unix.lstat file in
       if st.st_kind = S_REG then
         try
-          let time = Efuns.get_local buf buf_mtime in
-          Efuns.set_local buf buf_mtime st.st_mtime;
+          let time = Var.get_local buf buf_mtime in
+          Var.set_local buf buf_mtime st.st_mtime;
           if time <> st.st_mtime then
             (Select.select_yes_or_no frame 
                (Printf.sprintf "%s changed on disk; reload (y/n) ?" 
@@ -3951,7 +3951,7 @@ let check_file frame =
                    then reload frame 
                    else Frame.status_modified frame true
                  )) |> ignore
-       with _ -> Efuns.set_local buf buf_mtime st.st_mtime
+       with _ -> Var.set_local buf buf_mtime st.st_mtime
     )
   with _ -> ()
 @
@@ -3975,7 +3975,7 @@ define_action "write_file"  Complexe.write_buffer;
 
 <<function Complex.save_some_buffers>>=
 let save_some_buffers frame =
-  let buffers = list_of_hash (Efuns.location()).loc_buffers in
+  let buffers = Utils.list_of_hash (Globals.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> ())
 @
 %less: save_buffers_and_action here?
@@ -4009,7 +4009,7 @@ define_action "exit"  Complexe.exit_efuns;
 
 <<function Complex.exit_efuns>>=
 let exit_efuns frame =
-  let buffers = Utils.list_of_hash (Efuns.location()).loc_buffers in
+  let buffers = Utils.list_of_hash (Globals.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
     exit 0
@@ -4238,7 +4238,7 @@ frame.frm_redraw
 \subsubsection{Redraw}
 
 <<[[Frame.display()]] redraw>>=
-if !debug_display
+if !Globals.debug_display
 then pr2 "redraw";
 <<[[Frame.display()]] redraw, possibly update frm_y_offset>>
 <<[[Frame.display()]] redraw, possibly update frm_x_offset>>
@@ -4610,7 +4610,7 @@ let cursor_on top_window =
 let set_cursor_on top_window frame = 
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
-    let graphic = Window.backend top_window in
+    let graphic = Efuns.backend top_window in
     graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
       (frame.frm_ypos + frame.frm_cursor_y) 
@@ -4623,7 +4623,7 @@ let set_cursor_on top_window frame =
 % event loop -> ... -> handle_key -> ...; <>; Top_window.update_display()
 <<function Top_window.clean_display>>=
 let clean_display () =
-  (Efuns.location()).top_windows |> List.iter cursor_off 
+  (Globals.location()).top_windows |> List.iter cursor_off 
 @
 
 % update_display -> clean_display -> <>
@@ -4639,7 +4639,7 @@ let cursor_off top_window =
 <<function Top_window.set_cursor_off>>=
 let set_cursor_off top_window frame =
   if frame.frm_cursor.[0] <> '\000' then
-    let graphic = Window.backend top_window in
+    let graphic = Efuns.backend top_window in
     graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x) 
       (frame.frm_ypos + frame.frm_cursor_y) 
@@ -5115,7 +5115,7 @@ graphic.Xdraw.draw_string
 let clear_message top_window =
   match top_window.top_mini_buffers with
     [] -> 
-      let graphic = Window.backend top_window in
+      let graphic = Efuns.backend top_window in
       graphic.Xdraw.clear_eol 
         0 (top_window.top_height - 1) 
         top_window.top_width; 
@@ -5129,7 +5129,7 @@ let clear_message top_window =
 
 <<function Top_window.message>>=
 let message top_window msg =
-  let graphic = Window.backend top_window in
+  let graphic = Efuns.backend top_window in
   let len = String.length msg in
 
   graphic.Xdraw.draw_string 0 (top_window.top_height - 1)
@@ -5221,7 +5221,7 @@ let rec get_binding map keylist =
     frame.frm_prefix <- [];
 | Failure str -> message top_window str
 | e -> 
-    if !debug
+    if !Globals.debug
     then pr2 (spf "Uncaught exception %s" (Utils.printexn e));
     message top_window 
       (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
@@ -5513,7 +5513,7 @@ let call_interactive frame =
 let buf_interactives buf =
   let interactives = 
     buf.buf_major_mode.maj_map.interactives @
-    (Efuns.location()).loc_map.interactives 
+    (Globals.location()).loc_map.interactives 
   in
   List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
    interactives buf.buf_minor_modes 
@@ -5590,7 +5590,7 @@ if !!interactives_map = [] then begin
 <<[[Std_efunsrc.init_global_map()]] add interactives from interactives_map>>=
 !!interactives_map |> List.iter (fun (name, action) ->
   try
-    Keymap.add_interactive (Efuns.location()).loc_map name 
+    Keymap.add_interactive (Globals.location()).loc_map name 
       (execute_action action)
   with e ->
     Log.printf "Error for action %s" action;
@@ -5953,7 +5953,7 @@ let rec goal_column frame =
   if frame.frm_last_action == forward_line ||
      frame.frm_last_action == backward_line
   then 
-    try Efuns.get_local frame.frm_buffer temporary_goal_column
+    try Var.get_local frame.frm_buffer temporary_goal_column
     with Not_found -> cur_col
   else cur_col
 @
@@ -5962,7 +5962,7 @@ let rec goal_column frame =
 and move_to_goal_column frame goal_col =
   move_backward frame (begin_to_point frame) |> ignore;
   move_forward frame (min goal_col (point_to_end frame)) |> ignore;
-  Efuns.set_local frame.frm_buffer temporary_goal_column goal_col
+  Var.set_local frame.frm_buffer temporary_goal_column goal_col
 @
 
 
@@ -7083,7 +7083,7 @@ let replace flag frame query str repl =
 
 <<function Simple.buffer_list>>=
 let buffer_list frame =
-  (Efuns.location()).loc_buffers |> Common.hash_to_list |> List.map fst
+  (Globals.location()).loc_buffers |> Common.hash_to_list |> List.map fst
 @
 
 
@@ -7126,7 +7126,7 @@ let get_name filename =
 <<[[Std_efunsrc]] buffers menu setup>>=
 Top_window.buffers_menu := (fun top_window button () ->
     let buffers = ref [] in
-    let loc = Efuns.location() in
+    let loc = Globals.location() in
     Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
     let _desc = Array.map (fun name -> 
           (name, Top_window.wrap top_window (fun top_window ->
@@ -7171,7 +7171,7 @@ let change_buffer frame =
 <<function Frame.change_buffer>>=
 let change_buffer window name = 
   try
-    let buf = Hashtbl.find (Efuns.location()).loc_buffers name in
+    let buf = Hashtbl.find (Globals.location()).loc_buffers name in
     let frame = create window None buf in
     exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name
@@ -7864,7 +7864,7 @@ let _ =
 
 <<toplevel Minor_mode_sample._2>>=
 let _ = 
-  define_action (minor_mode_name ^ "_mode")
+  Action.define_action (minor_mode_name ^ "_mode")
     (fun frame -> 
       let buf = frame.frm_buffer in
       if Ebuffer.modep buf mode 
@@ -7965,12 +7965,12 @@ let system buf_name cmd end_action =
   let ins = Unix.descr_of_in_channel inc in
   let tampon = String.create 1000 in
   let active = ref true in
-  let location = Efuns.location () in
+  let loc = Globals.location () in
   Concur.Thread.add_reader ins (fun () ->
     let pos,str = Text.delete_res text curseur
                     (Text.point_to_eof text curseur) in
     let len = input inc tampon 0 1000 in
-    Mutex.lock location.loc_mutex;
+    Mutex.lock loc.loc_mutex;
     if len = 0 then begin
       let pid,status = waitpid [WNOHANG] pid in
       (match status with 
@@ -7985,7 +7985,7 @@ let system buf_name cmd end_action =
       (* redraw screen *)
       Top_window.update_display ();
 
-      Mutex.unlock location.loc_mutex;
+      Mutex.unlock loc.loc_mutex;
       Concur.Thread.remove_reader ins; (* Kill self *)
     end
     else
@@ -7997,7 +7997,7 @@ let system buf_name cmd end_action =
 
     (* redraw screen *)
     Top_window.update_display ();
-    Mutex.unlock location.loc_mutex
+    Mutex.unlock loc.loc_mutex
   );
 
   let lmap = buf.buf_map in
@@ -8138,7 +8138,7 @@ let grep frame =
       let buf = comp_frame.frm_buffer in
       let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir);
-      set_local buf find_error c_find_error
+      Var.set_local buf find_error c_find_error
   )
 @
 
@@ -8199,7 +8199,7 @@ let compile find_error_fun frame =
       let buf = comp_frame.frm_buffer in
       let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir);
-      set_local buf find_error find_error_fun
+      Var.set_local buf find_error find_error_fun
   )
 @
 
@@ -8223,8 +8223,8 @@ let next_error top_frame =
       if frame.frm_killed 
       then Frame.unkill (Multi_frames.cut_frame top_frame) frame;
       let buf = frame.frm_buffer in
-      let find_error = try
-          get_local buf find_error
+      let find_error = 
+        try Var.get_local buf find_error
         with Failure _ -> !default_error
       in
       let text = buf.buf_text in
@@ -8312,11 +8312,11 @@ let eval frame =
 
 <<toplevel Abbrevs._1>>=
 let _ =
-  define_action "char_expand_abbrev" (fun frame ->
+  Action.define_action "char_expand_abbrev" (fun frame ->
       expand_sabbrev frame; 
       Simple.self_insert_command frame
   );
-  define_action "dabbrev_expand" dabbrev_expand;
+  Action.define_action "dabbrev_expand" dabbrev_expand;
   ()
 @
 
@@ -8326,7 +8326,7 @@ let expand_sabbrev frame =
     let point = frame.frm_point in
     let buf = frame.frm_buffer in
     let text = buf.buf_text in
-    let abbrevs = get_local buf abbrev_table in
+    let abbrevs = Var.get_local buf abbrev_table in
     let mark = Text.dup_point text point in
     Simple.to_begin_of_word text point buf.buf_syntax_table;
     let str = Text.region text point mark in
@@ -8713,8 +8713,8 @@ Utils.set_signal Sys.sighup (Sys.Signal_handle (fun _ ->
 \section{Dynamic linking}
 
 <<[[main()]] command line options>>=
-  "-I",Arg.String (fun s -> Efuns.load_path =:= 
-      (Utils.string_to_path s) @ !!Efuns.load_path), "<path>: Load Path";
+  "-I",Arg.String (fun s -> Globals.load_path =:= 
+      (Utils.string_to_path s) @ !!Globals.load_path), "<path>: Load Path";
 @
 %dead? or for dynlink?
 
@@ -8854,13 +8854,13 @@ let delete_window frame =
   failwith "Top_window:delete_window: TODO"
 (*
   let top_window = Window.top frame.frm_window in
-  let location = Efuns.location() in
-  if List.length location.top_windows > 1 then
+  let loc = Efuns.loc() in
+  if List.length loc.top_windows > 1 then
     let xterm = Window.xterm top_window in
     top_window.top_appli#destroy;
     WX_xterm.destroy_window xterm;
     Frame.kill_all top_window.window;
-    location.top_windows <- Utils.list_remove location.top_windows
+    loc.top_windows <- Utils.list_remove loc.top_windows
       top_window
 *)
 @
@@ -8935,27 +8935,27 @@ let debug_init = ref false
 % all those hooks that are run at startup time
 
 <<[[main()]] command line options>>=
-"-debug", Arg.Set Efuns.debug, 
+"-debug", Arg.Set Globals.debug, 
 " for debugging";
-"-debug_graphics", Arg.Set Efuns.debug_graphics, 
+"-debug_graphics", Arg.Set Globals.debug_graphics, 
 " for debugging";
-"-debug_display", Arg.Set Efuns.debug_display, 
+"-debug_display", Arg.Set Globals.debug_display, 
 " for debugging";
-"-debug_init", Arg.Set Efuns.debug_init, 
+"-debug_init", Arg.Set Globals.debug_init, 
 " for debugging";
 
 "-debugger", Arg.Unit (fun () ->
-  Efuns.debug := true;
+  Globals.debug := true;
 ), " for debugging";
 @
 
 \section{Actions trace, [[-debug]]}
 
 <<[[Top_window.try_map()]] if debug, print action name>>=
-if !Efuns.debug
+if !Globals.debug
 then begin
   let found = ref false in
-  Efuns.actions |> Hashtbl.iter  (fun k v ->
+  Action.actions |> Hashtbl.iter  (fun k v ->
     match v with
     (* subtle: this will work only if f2 was not a closure *)
     | FrameAction f2 when f == f2 ->
@@ -9217,9 +9217,9 @@ let add_parameter (name : string) (input : string -> 'a)
   let (input : string -> Obj.t) = Obj.magic input in
   let (print : Obj.t -> string) = Obj.magic print in
   let (param : Obj.t option_record) = Obj.magic param in
-  set_global parameters_var (
+  Var.set_global parameters_var (
     (name, (input, print, param)) :: 
-    (try get_global parameters_var with _ -> []))
+    (try Var.get_global parameters_var with _ -> []))
 @
 
 
@@ -9231,7 +9231,7 @@ let all_params = ref None
 <<function Simple.all_parameters>>=
 let all_parameters frame _ =
   let parameters = 
-    try get_global parameters_var with _ -> []
+    try Var.get_global parameters_var with _ -> []
   in
   match !all_params with
     Some (f,l) when f == parameters -> l
@@ -9248,7 +9248,7 @@ let parameters_hist = ref []
 
 <<function Complex.set_parameter>>=
 let set_parameter frame = 
-  let parameters = get_global Simple.parameters_var in
+  let parameters = Var.get_global Simple.parameters_var in
   Select.select frame "set-parameter : " parameters_hist
     "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
@@ -9260,7 +9260,7 @@ let set_parameter frame =
 
 <<function Complex.get_parameter>>=
 let get_parameter frame =
-  let parameters = get_global Simple.parameters_var in  
+  let parameters = Var.get_global Simple.parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
     "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
