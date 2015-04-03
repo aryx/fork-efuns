@@ -5389,11 +5389,11 @@ let mouse_y = ref 0
 
 <<[[Std_efunsrc.init_global_map()]] mouse keys setup>>=
 Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
-  "set_active_frame" Simple.mouse_set_frame;
+  "set_active_frame" Mouse.mouse_set_frame;
 Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
-  "insert_at_point" Simple.mouse_yank_at_click;
+  "insert_at_point" Mouse.mouse_yank_at_click;
 Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
-  "mouse_save_then_kill" Simple.mouse_save_then_kill;
+  "mouse_save_then_kill" Mouse.mouse_save_then_kill;
 @
 
 <<function Simple.mouse_set_frame>>=
@@ -7762,7 +7762,7 @@ Local.get buf.buf_major_mode.maj_vars var
 @
 <<misc actions>>=
 (* C-M map *)
-define_action "next_hole" Simple.next_hole;
+define_action "next_hole" Structure.next_hole;
 @
 
 % Simple.insert_structure -> <>
@@ -9233,8 +9233,8 @@ let input = set_input
 
 % interface
 <<[[Std_efunsrc._5]] start hooks options>>=
-Simple.add_option_parameter Compil.compile_find_makefile;
-Simple.add_option_parameter Text.add_amount;
+Parameter.add_option_parameter Compil.compile_find_makefile;
+Parameter.add_option_parameter Text.add_amount;
 @
 
 
@@ -9299,9 +9299,9 @@ let parameters_hist = ref []
 
 <<function Complex.set_parameter>>=
 let set_parameter frame = 
-  let parameters = Var.get_global Simple.parameters_var in
+  let parameters = Var.get_global Parameter.parameters_var in
   Select.select frame "set-parameter : " parameters_hist
-    "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
+    "" (Parameter.all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
           let (input,print,param) = List.assoc variable parameters
@@ -9311,9 +9311,9 @@ let set_parameter frame =
 
 <<function Complex.get_parameter>>=
 let get_parameter frame =
-  let parameters = Var.get_global Simple.parameters_var in  
+  let parameters = Var.get_global Parameter.parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
-    "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
+    "" (Parameter.all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
         (Printf.sprintf "%s : %s" variable (
           let (input,print,param) = List.assoc variable parameters
@@ -9410,8 +9410,8 @@ let highlight_paren frame =
       match stack with
         [] -> (* found matching par *)
           let attr = Text.get_attr text curseur in
-          highlighted_chars := (buf,curseur,attr) :: !highlighted_chars;
-          Text.set_char_attr text curseur (attr lor highlight_bit);
+          H.highlighted_chars := (buf,curseur,attr) :: !H.highlighted_chars;
+          Text.set_char_attr text curseur (attr lor H.highlight_bit);
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack

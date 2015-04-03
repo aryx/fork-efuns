@@ -4289,7 +4289,7 @@ let abbrevs_chars = define_option ["abbrevs_mode"; "abbrevs_chars"] ""
 <<function Abbrevs_mode.find_matching>>=
 let find_matching  frame = 
   self_insert_command frame; 
-  Simple.highlight_paren frame
+  Paren_mode.highlight_paren frame
 @
 
 <<function Abbrevs_mode.char_expand_abbrev>>=
@@ -4658,7 +4658,7 @@ let mode = Ebuffer.new_minor_mode "paren" []
 <<function Paren_mode.find_matching>>=
 let find_matching frame = 
   self_insert_command frame; 
-  Simple.highlight_paren frame
+  highlight_paren frame
 @
 
 <<toplevel Paren_mode._1>>=
@@ -4686,6 +4686,7 @@ let _ =
 open Simple
 open Efuns
 
+module H = Highlight
 
 <<constant Simple.htmlp>>
 <<function Simple.is_paren_end>>
@@ -4890,8 +4891,8 @@ let _ =
     let alist = Var.get_global Ebuffer.modes_alist in
     Var.set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
     
-    Simple.add_option_parameter target_color;
-    Simple.add_option_parameter rules_color;
+    Parameter.add_option_parameter target_color;
+    Parameter.add_option_parameter rules_color;
   )   
 @
 
