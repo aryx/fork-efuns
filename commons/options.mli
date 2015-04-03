@@ -50,14 +50,14 @@ val define_option_class :
 val to_value : 'a option_class -> 'a -> option_value
 val from_value : 'a option_class -> option_value -> 'a
   
-val string_option : string option_class
-val color_option : string option_class
-val font_option : string option_class
-val int_option : int option_class
-val bool_option : bool option_class
-val float_option : float option_class
-val path_option : string list option_class
-val string2_option : (string * string) option_class
+val string_option   : string option_class
+val color_option    : string option_class
+val font_option     : string option_class
+val int_option      : int option_class
+val bool_option     : bool option_class
+val float_option    : float option_class
+val path_option     : string list option_class
+val string2_option  : (string * string) option_class
 val filename_option : string option_class
   
   (* parameterized options *)
@@ -70,20 +70,22 @@ val tuple3_option : 'a option_class * 'b option_class * 'c option_class ->
   ('a * 'b * 'c) option_class
   
 val value_to_string : option_value -> string
-val string_to_value : string -> option_value
 val value_to_int : option_value -> int
-val int_to_value : int -> option_value
-val bool_of_string : string -> bool
 val value_to_bool : option_value -> bool
-val bool_to_value : bool -> option_value
 val value_to_float : option_value -> float
-val float_to_value : float -> option_value
 val value_to_string2 : option_value -> string * string
-val string2_to_value : string * string -> option_value
 val value_to_list : (option_value -> 'a) -> option_value -> 'a list
+val value_to_path : option_value -> string list
+
+val string_to_value : string -> option_value
+val int_to_value : int -> option_value
+val bool_to_value : bool -> option_value
+val float_to_value : float -> option_value
+val string2_to_value : string * string -> option_value
 val list_to_value : ('a -> option_value) -> 'a list -> option_value
 val smalllist_to_value : ('a -> option_value) -> 'a list -> option_value
-val value_to_path : option_value -> string list
 val path_to_value : string list -> option_value
+
+val bool_of_string : string -> bool
 
 val help : out_channel -> unit

@@ -135,18 +135,22 @@ val replace_matched : t -> string -> string
 (* misc *)
 
 type version = int
+val version : t -> version
 
-val find_xy : t -> int -> int -> int -> int * int
-val version : t -> int
-val lexing : t -> point -> point -> Lexing.lexbuf
 val readonly : t -> bool
 val toggle_readonly : t -> unit
+
+val find_xy : t -> int -> int -> int -> int * int
+val lexing : t -> point -> point -> Lexing.lexbuf
 val add_amount : int Options.option_record
 val compare : t -> point -> point -> int
 
+(* line (mostly for display) *)
+
 type line =
   { 
-    mutable position : int;
+    mutable position : position;
+
     mutable boxes : box list;
     mutable repr_string : string;
     mutable repr_len : int;
@@ -155,7 +159,7 @@ type line =
 
   and box = { 
     box_pos : position;   (* pos of box in Text.t string *)
-    box_len : int;   (* len of box in Text.t string *)
+    box_len : int;        (* len of box in Text.t string *)
     mutable box_attr : int;    (* common attribute *)
 
     box_charsize : int; (* common size *)

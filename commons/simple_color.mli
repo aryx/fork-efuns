@@ -48,22 +48,22 @@ val unrgb: color -> rgb
 (* shortcut *)
 val c: string -> color
 
-val black : color
-val white : color
-val red : color
-val green : color
-val blue : color
-val yellow : color
-val cyan : color
+val black   : color
+val white   : color
+val red     : color
+val green   : color
+val blue    : color
+val yellow  : color
+val cyan    : color
 val magenta : color
 
-val blackf : rgbf
-val whitef : rgbf
-val redf : rgbf
-val greenf : rgbf
-val bluef : rgbf
-val yellowf : rgbf
-val cyanf : rgbf
+val blackf   : rgbf
+val whitef   : rgbf
+val redf     : rgbf
+val greenf   : rgbf
+val bluef    : rgbf
+val yellowf  : rgbf
+val cyanf    : rgbf
 val magentaf : rgbf
 
 

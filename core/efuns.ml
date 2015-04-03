@@ -16,8 +16,6 @@
 (*************************************************************************)
 (*      Types      *)
 (*************************************************************************)
-open Utils
-open Local
 
 (*s: function Efuns.error *)
 let error f x =
@@ -133,7 +131,7 @@ and major_mode = {
     maj_map : map;
 
     mutable maj_hooks : (buffer -> unit) list;
-    mutable maj_vars : vars;
+    mutable maj_vars : Local.vars;
   }
 (*e: type Efuns.major_mode *)
 
@@ -143,7 +141,7 @@ and minor_mode = {
     min_map : map;
 
     mutable min_hooks : (buffer -> unit) list;
-    mutable min_vars : vars;
+    mutable min_vars : Local.vars;
   }
 (*e: type Efuns.minor_mode *)
   
@@ -328,12 +326,12 @@ and window_down =
 (*s: type Efuns.location *)
 type location =
   { 
-    (* key is buffer name *)
+    (* key is buffer name (made unique via get_name()) *)
     mutable loc_buffers : (string, buffer) Hashtbl.t;
-    (* key is filename *)
+    (* key is filename (should be unique? use realpath?) *)
     mutable loc_files : (string, buffer) Hashtbl.t;
 
-    (* list??*)
+    (* list when have one efuns running multiple top windows *)
     mutable top_windows : top_window list;
 
     (* pwd of efuns when started *)
@@ -402,7 +400,7 @@ let add_start_hook hook =
 (*e: function Efuns.add_start_hook *)
 
 
-  (* Les variables locales *)
+  (* Les variables *)
   
 (*s: function Efuns.set_global *)
 let set_global var value = 
@@ -505,7 +503,7 @@ let path = (*Dyneval.load_path*) ref []
   
 (*s: constant Efuns.efuns_path *)
 let efuns_path = [ 
-      (Filename.concat homedir ".efuns") ;
+      (Filename.concat Utils.homedir ".efuns") ;
 (*
       Version.efuns_lib; 
       Version.installdir; 

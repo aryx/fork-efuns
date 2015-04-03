@@ -1,4 +1,3 @@
-
 (* see Efuns.top_window type *)
 
 (* creation *)
@@ -15,6 +14,7 @@ val handler : Efuns.top_window -> Xtypes.event -> unit
 
 (* keyboard event *)
 
+(* internal: handle_key() *)
 val handle_key_start_hook : (Efuns.frame -> unit) list Local.var
 val handle_key_end_hook : (unit -> unit) list Local.var
 
@@ -24,18 +24,19 @@ val keypressed : Efuns.keySym ref
 
 val mouse_set_active : Efuns.top_window -> Efuns.frame
 
-(* menu *)
+(* menus *)
 
 val file_menu : (string * string) list Options.option_record
 val edit_menu : (string * string) list Options.option_record
 val help_menu : (string * Efuns.action) array ref
 val buffers_menu : (Efuns.top_window -> unit -> unit -> unit) ref
 
-(* message ??? *)
+(* message *)
 
 val message : Efuns.top_window -> string -> unit
-val mini_message : Efuns.frame -> string -> unit
 val clear_message : Efuns.top_window -> unit
+
+val mini_message : Efuns.frame -> string -> unit
 
 (* misc *)
 val wrap : Efuns.top_window -> (Efuns.top_window -> unit) -> unit -> unit

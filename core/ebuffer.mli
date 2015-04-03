@@ -1,5 +1,5 @@
 
-(* see Efuns.buffer, Efuns.major_mode, Efuns.minor_mode type *)
+(* see Efuns.buffer, Efuns.major_mode, Efuns.minor_mode types *)
 
 (* creation *)
 

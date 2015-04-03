@@ -4,6 +4,7 @@
 type vars
 (*e: signature type Local.vars *)
 (*s: signature function Local.vars *)
+(* constructor *)
 val vars : unit -> vars
 (*e: signature function Local.vars *)
 

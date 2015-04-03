@@ -21,6 +21,10 @@
 % - use global for location instead of all those fields
 % - removed useless opti around representation, and rename line_repr,
 %   repr_line; use boxes instead. 'repr' was used for too many things.
+% - more cohesion, e.g. Select and Simple buffer stuff in 
+%   Multi_buffers instead, split Efuns to have also Vars and Actions,
+%   mv colors and fonts from Window to Attrs
+%   
 
 %thx to codemap/codegraph/scheck:
 % - SEMI use cg to reduce backward deps, introduce globals.c, utils.c,

@@ -1,4 +1,3 @@
-
 (* see Efuns.window type *)
 
 (* creation *)
