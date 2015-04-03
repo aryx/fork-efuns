@@ -3,8 +3,8 @@
 
 val insert_char : Efuns.frame -> char -> unit
 val insert_string : Efuns.frame -> string -> unit
-val insert_return : Efuns.action
 
+val insert_return : Efuns.action
 val self_insert_command : Efuns.action
 val insert_special_char : Efuns.action
 

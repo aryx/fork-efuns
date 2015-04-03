@@ -11,7 +11,6 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-
 open Efuns
 open Xtypes
 
@@ -32,6 +31,7 @@ let insert_string frame str =
 let single_char = String.make 1 ' '
 (*e: constant Simple.single_char *)
 (*s: function Simple.insert_char *)
+(* could factorize and just call insert_string? *)
 let insert_char frame char =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
