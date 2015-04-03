@@ -23,31 +23,42 @@ open Efuns
 (*****************************************************************************)
 
 type world = {
-  model: Efuns.location;
+  (* the "model" *)
+  loc: Efuns.location;
 
-  (* viewport, device coordinates *)
-  mutable width:  int;
-  mutable height: int;
-
-(*
   (* first cairo layer, for heavy computation e.g. the minimap *)
   mutable base: [ `Any ] Cairo.surface;
-  (* second cairo layer, when move the mouse *)
+  (* second cairo layer, for scrolling window on minimap *)
   mutable overlay: [ `Any ] Cairo.surface;
-*)
+
+  mutable final: [ `Any ] Cairo.surface;
+
+  ly: Pango.layout;
+
+  metrics: layout;
+
+  (* to avoid redrawing the minimap each time 
+   * buf_name and version of text.
+   *)
+  mutable last_top_frame_info:(string * Text.version);
 }
 
-type metrics = {
+and layout = {
   font_width: float;
   font_height: float;
 
   main_width: float;
-  mini_width: float;
+  main_height: float;
 
   mini_factor: float;
-
-  main_height: float;
+  mini_width: float;
 }
+
+let active_frame_info w =
+  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  buf.buf_name, Text.version text
 
 (*****************************************************************************)
 (* Cairo helpers *)
@@ -114,45 +125,38 @@ let draw_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () =
   Cairo.stroke cr;
   ()
 
+(* see http://cairographics.org/FAQ/#clear_a_surface *)
+let clear cr =
+  Cairo.set_source_rgba cr 0. 0. 0.   0.;
+  Cairo.set_operator cr Cairo.OPERATOR_SOURCE;
+  Cairo.paint cr;
+  Cairo.set_operator cr Cairo.OPERATOR_OVER;
+  ()
+
 (*****************************************************************************)
 (* Minimap *)
 (*****************************************************************************)
-let draw_minimap cr pg =
-  let loc = Efuns.location () in
-  let (ly, metrics) = pg in
+let draw_minimap w =
 
-  let target = Cairo.get_target cr in
-  let cr = Cairo.create target in
-  Cairo.translate cr metrics.main_width 0.0;
+  let cr = Cairo.create w.base in
+  Cairo.translate cr w.metrics.main_width 0.0;
 
   fill_rectangle_xywh ~cr ~x:0. ~y:0. 
-    ~w:metrics.mini_width ~h:metrics.main_height
+    ~w:w.metrics.mini_width ~h:w.metrics.main_height
     ~color:"grey22" ();
 
-  Cairo.scale cr (1. / metrics.mini_factor) (1. / metrics.mini_factor);
+  Cairo.scale cr (1. / w.metrics.mini_factor) (1. / w.metrics.mini_factor);
 
-  let frame = loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
+  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-
-  let line = Text.point_line text frame.frm_start in
-
-  let x = 0. in
-  let y = (float_of_int line) * metrics.font_height in
-  let h = (float_of_int loc.loc_height) * metrics.font_height in
-
-  Cairo.set_line_width cr ((Cairo.get_line_width cr) * metrics.mini_factor);
-  draw_rectangle_xywh ~cr ~x ~y ~w:metrics.main_width ~h
-    ~color:"yellow" ();
-
 
   for i = 0 to Text.nbre_lines text -.. 1 do
     let line = Text.compute_representation text buf.buf_charreprs i in
     let repr_str = line.Text.repr_string in
     line.Text.boxes |> List.rev |> List.iter (fun box ->
-      let w = metrics.font_width in
-      let h = metrics.font_height in
-      let x = float_of_int box.Text.box_pos_repr * w in
+      let h = w.metrics.font_height in
+      let x = float_of_int box.Text.box_pos_repr * w.metrics.font_width in
       let y = (float_of_int i * h) + h * 0.1 in
       Cairo.move_to cr x y;
       let attr = box.Text.box_attr in
@@ -161,15 +165,15 @@ let draw_minimap cr pg =
 
       let fgcolor = 
         let idx = attr land 255 in
-        loc.loc_colors_names.(idx)
+        w.loc.loc_colors_names.(idx)
       in
       let _fontsize = (attr lsr 16) land 255 in
       set_source_color ~cr ~color:fgcolor ();
 
 
-      Pango.Layout.set_text ly  (prepare_string str);
-      Pango_cairo.update_layout cr ly;
-      Pango_cairo.show_layout cr ly;
+      Pango.Layout.set_text w.ly  (prepare_string str);
+      Pango_cairo.update_layout cr w.ly;
+      Pango_cairo.show_layout cr w.ly;
 (*
       Cairo.select_font_face cr "courier"
         Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
@@ -180,6 +184,28 @@ let draw_minimap cr pg =
   done;
   ()
   
+
+let draw_minimap_overlay w =
+
+  let cr = Cairo.create w.overlay in
+  clear cr;
+
+  Cairo.translate cr w.metrics.main_width 0.0;
+  Cairo.scale cr (1. / w.metrics.mini_factor) (1. / w.metrics.mini_factor);
+
+  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+
+  let line = Text.point_line text frame.frm_start in
+  let x = 0. in
+  let y = (float_of_int line) * w.metrics.font_height in
+  let h = (float_of_int w.loc.loc_height) * w.metrics.font_height in
+
+  Cairo.set_line_width cr ((Cairo.get_line_width cr) * w.metrics.mini_factor);
+  draw_rectangle_xywh ~cr ~x ~y ~w:w.metrics.main_width ~h
+    ~color:"yellow" ();
+  ()
 
 (*****************************************************************************)
 (* Draw Efuns API *)
@@ -251,8 +277,22 @@ let draw_string loc cr pg   col line  str  offset len   attr =
   ()
 
 
-let backend loc cr pg win = 
+let assemble_layers w =
+  let surface_src = w.base in
+  let cr_final = Cairo.create w.final in
+  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
+  Cairo.set_source_surface cr_final surface_src 0. 0.;
+  Cairo.paint cr_final;
+  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
+  Cairo.set_source_surface cr_final w.overlay 0. 0.;
+  Cairo.paint cr_final;
+  ()
+
+let backend w win = 
   let conv x = float_of_int x in
+  let cr = Cairo.create w.base in
+  let pg = (w.ly, w.metrics) in
+  let loc = w.loc in
   { Xdraw. 
     clear_eol = (fun a b c -> 
       clear_eol cr pg (conv a) (conv b) c); 
@@ -261,7 +301,15 @@ let backend loc cr pg win =
     update_display = (fun () -> 
       if !debug_graphics
       then pr2 ("backend.update_display()");
-      draw_minimap cr pg;
+      let active_frame = active_frame_info w in
+      if active_frame <> w.last_top_frame_info
+      then begin 
+        (* todo: do in a thread when idle *)
+        draw_minimap w;
+        w.last_top_frame_info <- active_frame;
+      end;
+      draw_minimap_overlay w;
+      assemble_layers w;
       GtkBase.Widget.queue_draw win#as_widget;
     );
   }
@@ -299,17 +347,17 @@ let init2 init_files =
     "Monaco 16"
     "Menlo 19"
     "Courier 19"
-    "Menlo 18"
+    "Menlo 18" <- current
 *)
   in
   Pango.Font.set_weight desc `ULTRABOLD; 
-  let ctx = Pango_cairo.FontMap.create_context 
-    (Pango_cairo.FontMap.get_default ()) in
+
+  let fontmap = Pango_cairo.FontMap.get_default () in
+  let ctx = Pango_cairo.FontMap.create_context fontmap in
   Pango.Context.set_font_description ctx desc;
 
-  let metrics = 
-    Pango.Context.get_metrics ctx 
-      (Pango.Context.get_font_description ctx) None in
+  (*todo? remove? should be desc no? (Pango.Context.get_font_description ctx) *)
+  let metrics = Pango.Context.get_metrics ctx desc None in
   let width = 
     float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
   let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
@@ -330,10 +378,6 @@ let init2 init_files =
     main_height = float_of_int location.loc_height * height;
   } in
 
-  (*-------------------------------------------------------------------*)
-  (* Window creation *)
-  (*-------------------------------------------------------------------*)
-
   (* those are the dimensions for the main view, the pixmap *)
   let width = 
     metrics.main_width + metrics.mini_width |> ceil |> int_of_float
@@ -344,12 +388,9 @@ let init2 init_files =
     (* 1400 *)
   in
 
-  let _w = {
-    model = location;
-    width;
-    height;
-  }
-  in
+  (*-------------------------------------------------------------------*)
+  (* Window creation *)
+  (*-------------------------------------------------------------------*)
 
   let win = GWindow.window ~title:"Efuns" () in
   let quit () = GMain.Main.quit (); in
@@ -426,6 +467,7 @@ let init2 init_files =
     (*-------------------------------------------------------------------*)
     (* main view *)
     (*-------------------------------------------------------------------*)
+
     let px = GDraw.pixmap ~width ~height ~window:win () in
     px#set_foreground `BLACK;
     px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
@@ -437,17 +479,32 @@ let init2 init_files =
     let _statusbar = GMisc.statusbar ~packing:vbox#add () in
 
   (*-------------------------------------------------------------------*)
-  (* Cairo/pango setup *)
+  (* Cairo/pango graphics backend setup *)
   (*-------------------------------------------------------------------*)
 
   let cr = Cairo_lablgtk.create px#pixmap in
+  let surface = Cairo.get_target cr in
   let layout = Pango_cairo.create_layout cr in
   Pango.Layout.set_font_description layout desc;
   Pango_cairo.update_layout cr layout;
+
+  let w = {
+    loc = location;
+    base = 
+      Cairo.surface_create_similar surface Cairo.CONTENT_COLOR_ALPHA
+        width height;
+    overlay = 
+      Cairo.surface_create_similar surface Cairo.CONTENT_COLOR_ALPHA
+        width height;
+    final = Cairo.get_target cr;
+    ly = layout;
+    metrics;
+    last_top_frame_info = ("", -1);
+  }
+  in
+  top_window.graphics <- Some (backend w win); 
+
   let pg = (layout, metrics) in
-
-  top_window.graphics <- Some (backend location cr pg win); 
-
   for i = 0 to (Efuns.location()).loc_height -.. 1 do
     clear_eol cr pg 0. (float_of_int i) 80;
   done;
@@ -520,14 +577,6 @@ let init2 init_files =
   win#connect#destroy ~callback:quit |> ignore;
   win#show ();
   GMain.main()
-
-
-
-
-
-
-
-
 
 
 (*****************************************************************************)
