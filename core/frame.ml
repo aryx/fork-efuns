@@ -259,10 +259,9 @@ let create_without_top window mini buf =
 let active frame =
   let top_window = Window.top frame.frm_window in
   top_window.top_active_frame <- frame;
-  match frame.frm_buffer.buf_filename with
-    None -> ()
-  | Some filename -> 
-      (Efuns.location()).loc_dirname <- Filename.dirname filename
+  frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
+    (Efuns.location()).loc_dirname <- Filename.dirname filename
+  )
 (*e: function Frame.active *)
       
       

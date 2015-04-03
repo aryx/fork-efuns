@@ -11,85 +11,9 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-open Options
-open Xtypes
+
 open Efuns
-
-(*****************************************************************************)
-(* Keys *)
-(*****************************************************************************)
-
-(*s: function Simple.string_to_modifier *)
-let string_to_modifier s =  
-  let mask = ref 0 in
-  for i = 0 to String.length s - 1 do
-    mask := !mask lor (match s.[i] with
-      | 'C' -> controlMask
-      | 'A' -> mod1Mask
-      | 'M' -> mod1Mask
-      | '1' -> mod1Mask
-      | _ -> 0
-    )
-  done;
-  !mask
-(*e: function Simple.string_to_modifier *)
-  
-(*s: function Simple.modifier_to_string *)
-(*e: function Simple.modifier_to_string *)
-      
-(*s: constant Simple.name_to_keysym *)
-let name_to_keysym = 
-  ("Button1", XK.xk_Pointer_Button1) ::
-  ("Button2", XK.xk_Pointer_Button2) ::
-  ("Button3", XK.xk_Pointer_Button3) ::
-  ("Button4", XK.xk_Pointer_Button4) ::
-  ("Button5", XK.xk_Pointer_Button5) ::
-  XK.name_to_keysym
-(*e: constant Simple.name_to_keysym *)
-  
-(*s: function Simple.value_to_keysym *)
-(*e: function Simple.value_to_keysym *)
-      
-(*s: function Simple.keysym_to_value *)
-(*e: function Simple.keysym_to_value *)
-  
-(*s: function Simple.value_to_key *)
-(* form: SC-Button1 *)
-let value_to_key v =
-  match v with 
-    Value s -> 
-      let key, mods = 
-        try
-          let index = String.index s '-' in
-          let mods = String.sub s 0 index in
-          let key = String.sub s (index+1) (String.length s - index - 1) in
-          key, mods
-        with _ -> s, ""
-      in
-      let key = List.assoc key name_to_keysym in
-      let mods = string_to_modifier mods in
-      let map = 
-        if mods land (controlMask lor mod1Mask) = (controlMask lor mod1Mask)
-        then ControlMetaMap else
-        if mods land controlMask <> 0 then ControlMap else
-        if mods land mod1Mask <> 0 then MetaMap else NormalMap
-      in
-      map, key
-      
-  | _ -> raise Not_found
-(*e: function Simple.value_to_key *)
-  
-(*s: function Simple.key_to_value *)
-let key_to_value k = Value (Keymap.print_key k)
-(*e: function Simple.key_to_value *)
-      
-(*s: constant Simple.key_option *)
-let key_option = define_option_class "Key" value_to_key key_to_value
-(*e: constant Simple.key_option *)
-
-(*s: constant Simple.binding_option *)
-let binding_option = tuple2_option (smalllist_option key_option, string_option)
-(*e: constant Simple.binding_option *)
+open Xtypes
 
 (*****************************************************************************)
 (* Insertion *)
@@ -179,7 +103,54 @@ let char_insert_command char frame =
 (*e: function Simple.char_insert_command *)
 
 (*****************************************************************************)
-(* Move *)
+(* Deletion *)
+(*****************************************************************************)
+
+(*s: function Simple.delete_char *)
+let delete_char frame =
+  let text = frame.frm_buffer.buf_text in
+  Text.delete text frame.frm_point 1 |> ignore
+(*e: function Simple.delete_char *)
+
+(*s: function Simple.delete_backspace_char *)
+let delete_backspace_char frame =
+  let text = frame.frm_buffer.buf_text in
+  if Text.bmove_res text frame.frm_point 1 <> 0 
+  then Text.delete text frame.frm_point 1 |> ignore
+(*e: function Simple.delete_backspace_char *)
+
+(*s: function Simple.hungry_char *)
+let hungry_char c = 
+  c = ' ' || c = '\n' || c = '\t'
+(*e: function Simple.hungry_char *)
+
+(*s: function Simple.hungry_electric_delete *)
+let hungry_electric_delete frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let session = Text.start_session text in
+  let c1 = previous_char frame in
+  delete_backspace_char frame;
+  let c2 = previous_char frame in
+  begin
+    if hungry_char c1 && hungry_char c2 then
+      try
+        delete_backspace_char frame;
+        while 
+          let c = previous_char frame in
+          hungry_char c        
+        do
+          delete_backspace_char frame
+        done;
+        insert_char frame ' '
+      with
+        Not_found -> ()
+  end;
+  Text.commit_session text session
+(*e: function Simple.hungry_electric_delete *)
+
+(*****************************************************************************)
+(* Navigation *)
 (*****************************************************************************)
 
 (*s: function Simple.move_backward *)
@@ -362,16 +333,23 @@ let insert_next_killed frame =
   | _ -> ()
 (*e: function Simple.insert_next_killed *)
 
-(*****************************************************************************)
-(* Format *)
-(*****************************************************************************)
 
-(*s: function Simple.format_to *)
-(*e: function Simple.format_to *)
-
-(*s: function Simple.format_to_string *)
-(*e: function Simple.format_to_string *)
-
+(*s: function Simple.kill_region *)
+let kill_region frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let mark =
+    match buf.buf_mark with
+      None -> failwith "No mark set"
+    | Some mark -> mark
+  in
+  let (start,term) = 
+    if mark > point then (point,mark) else (mark,point)
+  in
+  let _,region = Text.delete_res text start (Text.distance text start term) in
+  kill_string region
+(*e: function Simple.kill_region *)
 
 (*****************************************************************************)
 (* Words *)
@@ -458,66 +436,107 @@ let end_of_word  buf point =
 let current_word buf point =
   (beginning_of_word buf point) ^ (end_of_word buf point)
 (*e: function Simple.current_word *)
+ 
+(*s: function Simple.delete_backward_word *)
+let delete_backward_word buf point =
+  let text = buf.buf_text in
+  let old_point = Text.dup_point text point in
+  backward_word buf point;
+  Text.delete text point (Text.distance text point old_point) |> ignore;
+  Text.remove_point text old_point
+(*e: function Simple.delete_backward_word *)
 
-(*s: function Simple.current_word (features/simple.ml) *)
-(*e: function Simple.current_word (features/simple.ml) *)
+(*s: function Simple.delete_forward_word *)
+let delete_forward_word buf point =
+  let text = buf.buf_text in
+  let old_point = Text.dup_point text point in
+  forward_word buf point;
+  let len = Text.distance text old_point point in
+  Text.remove_point text old_point;
+  Text.bmove text point len;
+  Text.delete text point len |> ignore
+(*e: function Simple.delete_forward_word *)
 
-  
-(*****************************************************************************)
-(* Buffers *)
-(*****************************************************************************)
-  
-(*s: function Simple.buffer_list *)
-let buffer_list frame =
-  (Efuns.location()).loc_buffers |> Common.hash_to_list |> List.map fst
-(*e: function Simple.buffer_list *)
-
-(*****************************************************************************)
-(* Delete *)
-(*****************************************************************************)
-
-(*s: function Simple.delete_char *)
-let delete_char frame =
-  let text = frame.frm_buffer.buf_text in
-  Text.delete text frame.frm_point 1 |> ignore
-(*e: function Simple.delete_char *)
-
-(*s: function Simple.delete_backspace_char *)
-let delete_backspace_char frame =
-  let text = frame.frm_buffer.buf_text in
-  if Text.bmove_res text frame.frm_point 1 <> 0 
-  then Text.delete text frame.frm_point 1 |> ignore
-(*e: function Simple.delete_backspace_char *)
-
-(*s: function Simple.hungry_char *)
-let hungry_char c = 
-  c = ' ' || c = '\n' || c = '\t'
-(*e: function Simple.hungry_char *)
-
-(*s: function Simple.hungry_electric_delete *)
-let hungry_electric_delete frame =
-  let buf = frame.frm_buffer in
+(*s: function Simple.on_word *)
+let on_word buf point f =
   let text = buf.buf_text in
   let session = Text.start_session text in
-  let c1 = previous_char frame in
-  delete_backspace_char frame;
-  let c2 = previous_char frame in
-  begin
-    if hungry_char c1 && hungry_char c2 then
-      try
-        delete_backspace_char frame;
-        while 
-          let c = previous_char frame in
-          hungry_char c        
-        do
-          delete_backspace_char frame
-        done;
-        insert_char frame ' '
-      with
-        Not_found -> ()
-  end;
-  Text.commit_session text session
-(*e: function Simple.hungry_electric_delete *)
+  let syntax = buf.buf_syntax_table in
+  to_begin_of_word text point syntax;
+  let pos1 = Text.dup_point text point in
+  to_end_of_word text point syntax;
+  let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
+  let w = f word1 in
+  Text.insert text pos1 w |> ignore;
+  Text.fmove text point (String.length w);
+  Text.commit_session text session;
+  Text.remove_point text pos1
+(*e: function Simple.on_word *)
+  
+(*s: function Simple.transpose_words *)
+let transpose_words buf point =
+  let text = buf.buf_text in
+  let session = Text.start_session text in
+  let syntax = buf.buf_syntax_table in
+  in_prev_word text point syntax;
+  to_begin_of_word text point syntax;
+  let pos1 = Text.dup_point text point in
+  to_end_of_word text point syntax;
+  let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
+  Text.goto_point text point pos1;
+  in_next_word text point syntax;
+  let pos2 = Text.dup_point text point in
+  to_end_of_word text point syntax;
+  let _,word2 = Text.delete_res text pos2 (Text.distance text pos2 point) in    
+  Text.insert text pos1 word2 |> ignore;
+  Text.insert text pos2 word1 |> ignore;
+  Text.fmove text point (String.length word1);
+  Text.commit_session text session;
+  Text.remove_point text pos1;
+  Text.remove_point text pos2
+(*e: function Simple.transpose_words *)
+
+
+(*s: function Simple.transpose_chars *)
+let transpose_chars buf point =
+  let text = buf.buf_text in
+  let session = Text.start_session text in
+  Text.bmove text point 1;
+  let pos,c1 = Text.delete_res text point 1 in
+  Text.fmove text point 1;
+  Text.insert text point c1 |> ignore;
+  Text.commit_session text session;
+  Text.fmove text point 1;
+  ()
+(*e: function Simple.transpose_chars *)
+
+(*****************************************************************************)
+(* Paragraphs *)
+(*****************************************************************************)
+
+(*s: function Simple.backward_paragraph *)
+let backward_paragraph buf point =
+  let text = buf.buf_text in
+  while Text.bmove_res text point 1 = 1 && 
+        (let c = Text.get_char text point in c = '\n' || c = ' ')
+  do () done;
+  try
+    Text.search_backward text (Str.regexp "\n *\n") point |> ignore;
+    Text.fmove text point 1
+  with Not_found -> Text.set_position text point 0
+(*e: function Simple.backward_paragraph *)
+
+(*s: function Simple.forward_paragraph *)
+let forward_paragraph buf point =
+  let text = buf.buf_text in
+  while (let c = Text.get_char text point in c = '\n' || c = ' ') &&
+         Text.fmove_res text point 1 = 1 
+  do () done;
+  try
+    Text.search_forward text (Str.regexp "\n *\n") point |> ignore;
+    Text.fmove text point 1
+  with Not_found -> Text.set_position text point (Text.size text)
+(*e: function Simple.forward_paragraph *)
 
 (*****************************************************************************)
 (* Scroll *)
@@ -591,30 +610,6 @@ let begin_of_file frame =
 (*e: function Simple.begin_of_file *)
 
 (*****************************************************************************)
-(* Words *)
-(*****************************************************************************)
-
-(*s: function Simple.delete_backward_word *)
-let delete_backward_word buf point =
-  let text = buf.buf_text in
-  let old_point = Text.dup_point text point in
-  backward_word buf point;
-  Text.delete text point (Text.distance text point old_point) |> ignore;
-  Text.remove_point text old_point
-(*e: function Simple.delete_backward_word *)
-
-(*s: function Simple.delete_forward_word *)
-let delete_forward_word buf point =
-  let text = buf.buf_text in
-  let old_point = Text.dup_point text point in
-  forward_word buf point;
-  let len = Text.distance text old_point point in
-  Text.remove_point text old_point;
-  Text.bmove text point len;
-  Text.delete text point len |> ignore
-(*e: function Simple.delete_forward_word *)
-
-(*****************************************************************************)
 (* Undo *)
 (*****************************************************************************)
 
@@ -628,36 +623,6 @@ let undo frame =
   Text.set_position text point at_point;
   Text.fmove text point len
 (*e: function Simple.undo *)
-
-(*s: function Simple.kill_region *)
-let kill_region frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let mark =
-    match buf.buf_mark with
-      None -> failwith "No mark set"
-    | Some mark -> mark
-  in
-  let (start,term) = 
-    if mark > point then (point,mark) else (mark,point)
-  in
-  let _,region = Text.delete_res text start (Text.distance text start term) in
-  kill_string region
-(*e: function Simple.kill_region *)
-
-
-(*s: function Simple.mouse_set_frame *)
-let mouse_set_frame frame =
-  let top_window = Window.top frame.frm_window in
-  let frame = Top_window.mouse_set_active top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let mark = Ebuffer.get_mark buf point in
-  Text.goto_point text mark point;
-  ()
-(*e: function Simple.mouse_set_frame *)
 
 (*****************************************************************************)
 (* Highlight *)
@@ -908,7 +873,6 @@ failwith "Simple.mouse_yank_at_click: TODO"
 *)
 (*e: function Simple.mouse_yank_at_click *)
 
-
 (*s: function Simple.mouse_save_then_kill *)
 let mouse_save_then_kill frame =
   failwith "Simple.mouse_save_then_kill: TODO"
@@ -941,36 +905,17 @@ let mouse_save_then_kill frame =
 *)
 (*e: function Simple.mouse_save_then_kill *)
 
-(*****************************************************************************)
-(* Buffers *)
-(*****************************************************************************)
-
-(*s: function Simple.next_buffer *)
-let next_buffer buf =
-  let buf_list = Utils.list_of_hash (Efuns.location()).loc_buffers in
-  let rec iter list =
-    match list with
-      [] -> raise Not_found 
-    | (name,b) :: tail ->
-        if b == buf then 
-          match tail with
-            [] -> snd (List.hd buf_list)
-          | (_,b)::_ -> b
-        else
-          iter tail
-  in
-  iter buf_list
-(*e: function Simple.next_buffer *)
-
-(*s: function Simple.kill_buffer *)
-let kill_buffer frame =
-  let window = frame.frm_window in
+(*s: function Simple.mouse_set_frame *)
+let mouse_set_frame frame =
+  let top_window = Window.top frame.frm_window in
+  let frame = Top_window.mouse_set_active top_window in
   let buf = frame.frm_buffer in
-  let new_buf = next_buffer buf in
-  let _new_frame = Frame.create window None new_buf in
-  if buf.buf_shared = 0 
-  then Ebuffer.kill buf
-(*e: function Simple.kill_buffer *)
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let mark = Ebuffer.get_mark buf point in
+  Text.goto_point text mark point;
+  ()
+(*e: function Simple.mouse_set_frame *)
 
 (*****************************************************************************)
 (* Color helpers *)
@@ -1026,90 +971,6 @@ let point_at_mark frame =
   Text.set_position text mark pos
 (*e: function Simple.point_at_mark *)
 
-(*****************************************************************************)
-(* Words *)
-(*****************************************************************************)
-
-(*s: function Simple.on_word *)
-let on_word buf point f =
-  let text = buf.buf_text in
-  let session = Text.start_session text in
-  let syntax = buf.buf_syntax_table in
-  to_begin_of_word text point syntax;
-  let pos1 = Text.dup_point text point in
-  to_end_of_word text point syntax;
-  let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
-  let w = f word1 in
-  Text.insert text pos1 w |> ignore;
-  Text.fmove text point (String.length w);
-  Text.commit_session text session;
-  Text.remove_point text pos1
-(*e: function Simple.on_word *)
-  
-(*s: function Simple.transpose_words *)
-let transpose_words buf point =
-  let text = buf.buf_text in
-  let session = Text.start_session text in
-  let syntax = buf.buf_syntax_table in
-  in_prev_word text point syntax;
-  to_begin_of_word text point syntax;
-  let pos1 = Text.dup_point text point in
-  to_end_of_word text point syntax;
-  let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
-  Text.goto_point text point pos1;
-  in_next_word text point syntax;
-  let pos2 = Text.dup_point text point in
-  to_end_of_word text point syntax;
-  let _,word2 = Text.delete_res text pos2 (Text.distance text pos2 point) in    
-  Text.insert text pos1 word2 |> ignore;
-  Text.insert text pos2 word1 |> ignore;
-  Text.fmove text point (String.length word1);
-  Text.commit_session text session;
-  Text.remove_point text pos1;
-  Text.remove_point text pos2
-(*e: function Simple.transpose_words *)
-
-
-(*s: function Simple.transpose_chars *)
-let transpose_chars buf point =
-  let text = buf.buf_text in
-  let session = Text.start_session text in
-  Text.bmove text point 1;
-  let pos,c1 = Text.delete_res text point 1 in
-  Text.fmove text point 1;
-  Text.insert text point c1 |> ignore;
-  Text.commit_session text session;
-  Text.fmove text point 1;
-  ()
-(*e: function Simple.transpose_chars *)
-
-(*****************************************************************************)
-(* Paragraphs *)
-(*****************************************************************************)
-
-(*s: function Simple.backward_paragraph *)
-let backward_paragraph buf point =
-  let text = buf.buf_text in
-  while Text.bmove_res text point 1 = 1 && 
-        (let c = Text.get_char text point in c = '\n' || c = ' ')
-  do () done;
-  try
-    Text.search_backward text (Str.regexp "\n *\n") point |> ignore;
-    Text.fmove text point 1
-  with Not_found -> Text.set_position text point 0
-(*e: function Simple.backward_paragraph *)
-
-(*s: function Simple.forward_paragraph *)
-let forward_paragraph buf point =
-  let text = buf.buf_text in
-  while (let c = Text.get_char text point in c = '\n' || c = ' ') &&
-         Text.fmove_res text point 1 = 1 
-  do () done;
-  try
-    Text.search_forward text (Str.regexp "\n *\n") point |> ignore;
-    Text.fmove text point 1
-  with Not_found -> Text.set_position text point (Text.size text)
-(*e: function Simple.forward_paragraph *)
 
 (*****************************************************************************)
 (* Electric *)
@@ -1323,6 +1184,83 @@ let all_parameters frame _ =
       all_params := Some (parameters, list);
       list
 (*e: function Simple.all_parameters *)
+
+
+(*****************************************************************************)
+(* Keys *)
+(*****************************************************************************)
+
+(*s: function Simple.string_to_modifier *)
+let string_to_modifier s =  
+  let mask = ref 0 in
+  for i = 0 to String.length s - 1 do
+    mask := !mask lor (match s.[i] with
+      | 'C' -> controlMask
+      | 'A' -> mod1Mask
+      | 'M' -> mod1Mask
+      | '1' -> mod1Mask
+      | _ -> 0
+    )
+  done;
+  !mask
+(*e: function Simple.string_to_modifier *)
+  
+(*s: function Simple.modifier_to_string *)
+(*e: function Simple.modifier_to_string *)
+      
+(*s: constant Simple.name_to_keysym *)
+let name_to_keysym = 
+  ("Button1", XK.xk_Pointer_Button1) ::
+  ("Button2", XK.xk_Pointer_Button2) ::
+  ("Button3", XK.xk_Pointer_Button3) ::
+  ("Button4", XK.xk_Pointer_Button4) ::
+  ("Button5", XK.xk_Pointer_Button5) ::
+  XK.name_to_keysym
+(*e: constant Simple.name_to_keysym *)
+  
+(*s: function Simple.value_to_keysym *)
+(*e: function Simple.value_to_keysym *)
+      
+(*s: function Simple.keysym_to_value *)
+(*e: function Simple.keysym_to_value *)
+  
+(*s: function Simple.value_to_key *)
+(* form: SC-Button1 *)
+let value_to_key v =
+  match v with 
+    Value s -> 
+      let key, mods = 
+        try
+          let index = String.index s '-' in
+          let mods = String.sub s 0 index in
+          let key = String.sub s (index+1) (String.length s - index - 1) in
+          key, mods
+        with _ -> s, ""
+      in
+      let key = List.assoc key name_to_keysym in
+      let mods = string_to_modifier mods in
+      let map = 
+        if mods land (controlMask lor mod1Mask) = (controlMask lor mod1Mask)
+        then ControlMetaMap else
+        if mods land controlMask <> 0 then ControlMap else
+        if mods land mod1Mask <> 0 then MetaMap else NormalMap
+      in
+      map, key
+      
+  | _ -> raise Not_found
+(*e: function Simple.value_to_key *)
+  
+(*s: function Simple.key_to_value *)
+let key_to_value k = Value (Keymap.print_key k)
+(*e: function Simple.key_to_value *)
+      
+(*s: constant Simple.key_option *)
+let key_option = define_option_class "Key" value_to_key key_to_value
+(*e: constant Simple.key_option *)
+
+(*s: constant Simple.binding_option *)
+let binding_option = tuple2_option (smalllist_option key_option, string_option)
+(*e: constant Simple.binding_option *)
 
 (*****************************************************************************)
 (* Toplevel *)

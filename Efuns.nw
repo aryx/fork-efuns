@@ -2048,6 +2048,14 @@ Graphics_efuns.init !initial_files;
 @
 %less: could just take ()
 
+
+<<function Window.xterm>>=
+let backend top_window =
+  match top_window.graphics with
+    None -> raise Not_found
+  | Some x -> x
+@
+
 \subsection{[[Graphics.init()]]}
 
 % this is the not portable part!
@@ -3752,7 +3760,7 @@ define_action "load_buffer"  Complexe.load_buffer;
 % in Complex because requires select and minibuffer
 <<function Complex.load_buffer>>=
 let load_buffer frame = 
-  Select.set_previous_frame frame;
+  Multi_buffers.set_previous_frame frame;
   Select.select_filename frame "Find file: " (fun str -> 
     Frame.load_file frame.frm_window str |> ignore
   )
@@ -7068,6 +7076,12 @@ let replace flag frame query str repl =
 %  - cycling
 
 
+<<function Simple.buffer_list>>=
+let buffer_list frame =
+  (Efuns.location()).loc_buffers |> Common.hash_to_list |> List.map fst
+@
+
+
 \section{Buffer names}
 
 % can have ambiguity?
@@ -7141,9 +7155,9 @@ define_action "change_buffer"  Complexe.change_buffer;
 
 <<function Complex.change_buffer>>=
 let change_buffer frame =
-  let default = Select.get_previous_frame () in
-  Select.set_previous_frame frame;
-  Select.select_buffer frame " Switch to buffer: " default (fun str ->
+  let default = Multi_buffers.get_previous_frame () in
+  Multi_buffers.set_previous_frame frame;
+  Multi_buffers.select_buffer frame " Switch to buffer: " default (fun str ->
     Frame.change_buffer frame.frm_window str
   )
 @
@@ -7174,7 +7188,7 @@ let change_buffer window name =
 @
 <<buffer managment actions>>=
 (* C-x map *)
-define_action "kill_buffer"  Simple.kill_buffer;
+define_action "kill_buffer"  Multi_buffers.kill_buffer;
 @
 
 <<function Simple.kill_buffer>>=
@@ -7233,11 +7247,11 @@ let prev_buffers = ref []
 
 <<function Complex.left_buffer>>=
 let left_buffer frame =
-  Select.set_previous_frame frame;
+  set_previous_frame frame;
   Frame.change_buffer frame.frm_window 
-    (match !Select.prev_buffers with
+    (match !prev_buffers with
     | name :: buffer :: tail ->
-        Select.prev_buffers := tail @ [name]; 
+        prev_buffers := tail @ [name]; 
         buffer
     | _ -> raise Not_found
     )
@@ -7245,13 +7259,13 @@ let left_buffer frame =
 
 <<function Complex.right_buffer>>=
 let right_buffer frame =
-  Select.set_previous_frame frame;
+  set_previous_frame frame;
   Frame.change_buffer frame.frm_window 
-    (match !Select.prev_buffers with
+    (match !prev_buffers with
     | name :: tail ->
         (match List.rev tail with
         | buffer :: tail ->
-            Select.prev_buffers := name :: (List.rev tail);
+            prev_buffers := name :: (List.rev tail);
             buffer
         | _ -> raise Not_found
         )
@@ -7281,7 +7295,7 @@ let down_buffer frame =
 let up_buffer frame =
   if !up_buffer = "" 
   then raise Not_found;
-  Select.set_previous_frame frame;
+  set_previous_frame frame;
   Frame.change_buffer frame.frm_window !up_buffer
 @
 
@@ -8382,7 +8396,7 @@ let dabbrev_expand frame =
     with
       Not_found ->
         Text.remove_point curr_text mark;
-        let curr_buf = Simple.next_buffer curr_buf in
+        let curr_buf = Multi_buffers.next_buffer curr_buf in
         if curr_buf == buf then
           if !loop then raise Not_found
           else
@@ -8819,8 +8833,8 @@ let window_load_buffer frame =
 
 <<function Complex.window_change_buffer>>=
 let window_change_buffer frame =
-  Select.select_buffer frame "Switch to buffer in new frame: " 
-    (Select.get_previous_frame ())
+  Multi_buffers.select_buffer frame "Switch to buffer in new frame: " 
+    (Multi_buffers.get_previous_frame ())
     (fun name ->
       let top_window = Top_window.create ()
            (*"TODO_Display"*) 

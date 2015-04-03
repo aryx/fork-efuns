@@ -112,7 +112,7 @@ let dabbrev_expand frame =
     with
       Not_found ->
         Text.remove_point curr_text mark;
-        let curr_buf = Simple.next_buffer curr_buf in
+        let curr_buf = Multi_buffers.next_buffer curr_buf in
         if curr_buf == buf then
           if !loop then raise Not_found
           else

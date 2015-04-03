@@ -13,7 +13,6 @@
 (*e: copyright header2 *)
 open Efuns
 
-
 (*s: constant Minibuffer.charreprs *)
 let charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i))
 (*e: constant Minibuffer.charreprs *)

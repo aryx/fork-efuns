@@ -133,7 +133,7 @@ let save_some_buffers frame =
 
 (*s: function Complex.load_buffer *)
 let load_buffer frame = 
-  Select.set_previous_frame frame;
+  Multi_buffers.set_previous_frame frame;
   Select.select_filename frame "Find file: " (fun str -> 
     Frame.load_file frame.frm_window str |> ignore
   )
@@ -178,17 +178,17 @@ let window_load_buffer frame =
 
 (*s: function Complex.change_buffer *)
 let change_buffer frame =
-  let default = Select.get_previous_frame () in
-  Select.set_previous_frame frame;
-  Select.select_buffer frame " Switch to buffer: " default (fun str ->
+  let default = Multi_buffers.get_previous_frame () in
+  Multi_buffers.set_previous_frame frame;
+  Multi_buffers.select_buffer frame " Switch to buffer: " default (fun str ->
     Frame.change_buffer frame.frm_window str
   )
 (*e: function Complex.change_buffer *)
 
 (*s: function Complex.window_change_buffer *)
 let window_change_buffer frame =
-  Select.select_buffer frame "Switch to buffer in new frame: " 
-    (Select.get_previous_frame ())
+  Multi_buffers.select_buffer frame "Switch to buffer in new frame: " 
+    (Multi_buffers.get_previous_frame ())
     (fun name ->
       let top_window = Top_window.create ()
            (*"TODO_Display"*) 

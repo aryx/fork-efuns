@@ -205,8 +205,6 @@ let save buf =
 
   exec_named_buf_hooks !!saved_buffer_hooks buf
 (*e: function Ebuffer.save *)
-
-
  
 (*s: function Ebuffer.read *)
 let read filename local_map =

@@ -67,7 +67,7 @@ let menu frame =
   Text.insert_at_end text " -- ------             ----  ----         ----\n";
 
   let current = frame.frm_buffer.buf_name in
-  let all = Simple.buffer_list frame in
+  let all = Multi_buffers.buffer_list frame in
   let hall = all |> Common.hashset_of_list in
   list := !list |> List.filter (fun str -> Hashtbl.mem hall str);
   let history = !list in
@@ -101,7 +101,7 @@ let menu frame =
   Dircolors.colorize buf;
   (*  Text.toggle_readonly text; *)
   Text.goto_line text buf.buf_point 2;
-  Select.set_previous_frame frame;
+  Multi_buffers.set_previous_frame frame;
   Frame.change_buffer frame.frm_window "*Buffer List*";
 
   ()

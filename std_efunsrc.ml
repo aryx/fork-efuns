@@ -183,7 +183,7 @@ let _ =
   define_action "change_buffer"  Complexe.change_buffer;
   (*x: buffer managment actions *)
   (* C-x map *)
-  define_action "kill_buffer"  Simple.kill_buffer;
+  define_action "kill_buffer"  Multi_buffers.kill_buffer;
   (*e: buffer managment actions *)
   (*s: buffer navigating actions *)
   (* C-M map *)

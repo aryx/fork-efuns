@@ -17,9 +17,6 @@ val select_string :
 val simple_select : 
   Efuns.frame -> string -> (string -> unit) -> unit
 
-val buf_hist : string list ref
-val select_buffer : 
-  Efuns.frame -> string -> string -> (string -> unit) -> unit
 
 val dont_complete : string list Options.option_record
 val dont_complete_regexps : (string list * Str.regexp) ref
@@ -48,11 +45,6 @@ val complete_filename :
 
 val is_userdir : string -> bool
 
-(* right place? *)
-val next_default : string ref
-val prev_buffers : string list ref
-val set_previous_frame : Efuns.frame -> unit
-val get_previous_frame : unit -> string
 
 (* for C-s *)
 val incremental_mini_buffer :

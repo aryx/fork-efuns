@@ -467,7 +467,7 @@ let load_input frame buf point =
   let _ = Frame.load_file frame.frm_window str in ()
 
 let load_input_file frame = 
-  Select.set_previous_frame frame;
+  Multi_buffers.set_previous_frame frame;
   let buf= frame.frm_buffer in
   load_input frame buf frame.frm_point
 
@@ -477,7 +477,7 @@ let set_main_file frame = main_buffer := Some frame.frm_buffer
 let to_main_file frame =
   let buf_name = match !main_buffer with None -> raise Not_found |
       Some buf -> buf.buf_name in
-  Select.set_previous_frame frame;
+  Multi_buffers.set_previous_frame frame;
   Frame.change_buffer frame.frm_window buf_name
  
 let load_next_input_file frame =

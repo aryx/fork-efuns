@@ -195,9 +195,9 @@ let draw_minimap w =
       Pango_cairo.update_layout cr w.ly;
       Pango_cairo.show_layout cr w.ly;
 *)
-      Cairo.select_font_face cr "courier"
+      Cairo.select_font_face cr "serif"
         Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
-      Cairo.set_font_size cr (18. + 20. * (float_of_int fontsize));
+      Cairo.set_font_size cr (38. + 25. * (float_of_int fontsize));
       Cairo.show_text cr (prepare_string str);
     )
   done;

@@ -11,6 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
+
 (* A FAIRE:
 On doit faire converger ce text vers un text directement affichable par
 WX_text. Pour cela:

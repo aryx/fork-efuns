@@ -6,7 +6,7 @@
 %-------------------------------------------------------------
 
 <<commons2/local.mli>>=
-<<copyright header>>
+
 <<signature type Local.vars>>
 <<signature function Local.vars>>
 
@@ -28,6 +28,7 @@
 
 <<commons2/local.ml>>=
 <<copyright header>>
+
 (* We use strings instead of ints to enable migration of datas between
 editors (data must be symbolic) *)
 
@@ -79,7 +80,7 @@ external id : 'a -> 'a = "%identity"
 (* Useful types for Efuns *)
 
 (*************************************************************************)
-               (*      Types      *)
+(*      Types      *)
 (*************************************************************************)
 open Utils
 open Local
@@ -134,7 +135,7 @@ and keys = key list
 <<type Efuns.to_regexp>>
 
 (*************************************************************************)
-               (*      Values      *)
+(*      Values      *)
 (*************************************************************************)
 
 <<global Efuns.global_location>>
@@ -166,7 +167,7 @@ let with_lock f =
   Common.finalize f (fun () -> Mutex.unlock loc.loc_mutex)
   
 (*************************************************************************)
-               (*      Initialization      *)
+(*      Initialization      *)
 (*************************************************************************)
   
 (* Les variables importantes dans le reste du programme. *)
@@ -617,6 +618,7 @@ let start_session tree =
 
 <<core/text.ml>>=
 <<copyright header2>>
+
 (* A FAIRE:
 On doit faire converger ce text vers un text directement affichable par
 WX_text. Pour cela:
@@ -1050,8 +1052,6 @@ open Options
 <<function Ebuffer.exec_named_buf_hooks_with_abort>>
       
 <<function Ebuffer.save>>
-
-
  
 <<function Ebuffer.read>>
 
@@ -1122,6 +1122,7 @@ let find_buffer_opt name =
 
 <<core/keymap.ml>>=
 <<copyright header2>>
+
 (*
 La gestion des keymaps est inadapte'e a` la modification dynamique.
 En effet, on aurait envie de pouvoir modifier les bindings selon divers
@@ -1223,7 +1224,6 @@ let update_request frame request =
 <<copyright header2>>
 open Efuns
 
-
 <<constant Minibuffer.charreprs>>
 <<toplevel Minibuffer._1>>
 
@@ -1245,12 +1245,6 @@ open Efuns
 
 \subsection*{[[core/window.ml]]}
 
-<<function Window.xterm>>=
-let backend top_window =
-  match top_window.graphics with
-    None -> raise Not_found
-  | Some x -> x
-@
 
 %old: function Window.display>>=
 
@@ -1313,10 +1307,9 @@ let dummy_mode = Ebuffer.new_major_mode "" []
 let active frame =
   let top_window = Window.top frame.frm_window in
   top_window.top_active_frame <- frame;
-  match frame.frm_buffer.buf_filename with
-    None -> ()
-  | Some filename -> 
-      (Efuns.location()).loc_dirname <- Filename.dirname filename
+  frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
+    (Efuns.location()).loc_dirname <- Filename.dirname filename
+  )
 @
 
 <<function Frame.create>>=
@@ -1786,9 +1779,6 @@ let to_frame f frame =
 
 
 
-<<function Simple.current_word (features/simple.ml)>>=
-@
-
 %<<function Simple.current_word>>=
 %(*
 %let current_word buf point =
@@ -1810,10 +1800,6 @@ let current_word buf point =
   (beginning_of_word buf point) ^ (end_of_word buf point)
 @
 
-<<function Simple.buffer_list>>=
-let buffer_list frame =
-  (Efuns.location()).loc_buffers |> Common.hash_to_list |> List.map fst
-@
 
 
 
@@ -2162,31 +2148,9 @@ let _ =
 
 <<features/simple.ml>>=
 <<copyright header2>>
-open Options
-open Xtypes
+
 open Efuns
-
-(*****************************************************************************)
-(* Keys *)
-(*****************************************************************************)
-
-<<function Simple.string_to_modifier>>
-  
-<<function Simple.modifier_to_string>>
-      
-<<constant Simple.name_to_keysym>>
-  
-<<function Simple.value_to_keysym>>
-      
-<<function Simple.keysym_to_value>>
-  
-<<function Simple.value_to_key>>
-  
-<<function Simple.key_to_value>>
-      
-<<constant Simple.key_option>>
-
-<<constant Simple.binding_option>>
+open Xtypes
 
 (*****************************************************************************)
 (* Insertion *)
@@ -2215,7 +2179,19 @@ open Efuns
 <<function Simple.char_insert_command>>
 
 (*****************************************************************************)
-(* Move *)
+(* Deletion *)
+(*****************************************************************************)
+
+<<function Simple.delete_char>>
+
+<<function Simple.delete_backspace_char>>
+
+<<function Simple.hungry_char>>
+
+<<function Simple.hungry_electric_delete>>
+
+(*****************************************************************************)
+(* Navigation *)
 (*****************************************************************************)
 
 <<function Simple.move_backward>>
@@ -2270,14 +2246,8 @@ open Efuns
 
 <<function Simple.insert_next_killed>>
 
-(*****************************************************************************)
-(* Format *)
-(*****************************************************************************)
 
-<<function Simple.format_to>>
-
-<<function Simple.format_to_string>>
-
+<<function Simple.kill_region>>
 
 (*****************************************************************************)
 (* Words *)
@@ -2303,27 +2273,25 @@ open Efuns
 <<function Simple.end_of_word>>
 
 <<function Simple.current_word>>
+ 
+<<function Simple.delete_backward_word>>
 
-<<function Simple.current_word (features/simple.ml)>>
+<<function Simple.delete_forward_word>>
 
+<<function Simple.on_word>>
   
-(*****************************************************************************)
-(* Buffers *)
-(*****************************************************************************)
-  
-<<function Simple.buffer_list>>
+<<function Simple.transpose_words>>
+
+
+<<function Simple.transpose_chars>>
 
 (*****************************************************************************)
-(* Delete *)
+(* Paragraphs *)
 (*****************************************************************************)
 
-<<function Simple.delete_char>>
+<<function Simple.backward_paragraph>>
 
-<<function Simple.delete_backspace_char>>
-
-<<function Simple.hungry_char>>
-
-<<function Simple.hungry_electric_delete>>
+<<function Simple.forward_paragraph>>
 
 (*****************************************************************************)
 (* Scroll *)
@@ -2364,23 +2332,10 @@ let scroll_other_down frame =
 <<function Simple.begin_of_file>>
 
 (*****************************************************************************)
-(* Words *)
-(*****************************************************************************)
-
-<<function Simple.delete_backward_word>>
-
-<<function Simple.delete_forward_word>>
-
-(*****************************************************************************)
 (* Undo *)
 (*****************************************************************************)
 
 <<function Simple.undo>>
-
-<<function Simple.kill_region>>
-
-
-<<function Simple.mouse_set_frame>>
 
 (*****************************************************************************)
 (* Highlight *)
@@ -2417,16 +2372,9 @@ let scroll_other_down frame =
 
 <<function Simple.mouse_yank_at_click>>
 
-
 <<function Simple.mouse_save_then_kill>>
 
-(*****************************************************************************)
-(* Buffers *)
-(*****************************************************************************)
-
-<<function Simple.next_buffer>>
-
-<<function Simple.kill_buffer>>
+<<function Simple.mouse_set_frame>>
 
 (*****************************************************************************)
 (* Color helpers *)
@@ -2440,24 +2388,6 @@ let scroll_other_down frame =
 
 <<function Simple.point_at_mark>>
 
-(*****************************************************************************)
-(* Words *)
-(*****************************************************************************)
-
-<<function Simple.on_word>>
-  
-<<function Simple.transpose_words>>
-
-
-<<function Simple.transpose_chars>>
-
-(*****************************************************************************)
-(* Paragraphs *)
-(*****************************************************************************)
-
-<<function Simple.backward_paragraph>>
-
-<<function Simple.forward_paragraph>>
 
 (*****************************************************************************)
 (* Electric *)
@@ -2501,6 +2431,29 @@ open Options
   
 <<constant Simple.all_params>>
 <<function Simple.all_parameters>>
+
+
+(*****************************************************************************)
+(* Keys *)
+(*****************************************************************************)
+
+<<function Simple.string_to_modifier>>
+  
+<<function Simple.modifier_to_string>>
+      
+<<constant Simple.name_to_keysym>>
+  
+<<function Simple.value_to_keysym>>
+      
+<<function Simple.keysym_to_value>>
+  
+<<function Simple.value_to_key>>
+  
+<<function Simple.key_to_value>>
+      
+<<constant Simple.key_option>>
+
+<<constant Simple.binding_option>>
 
 (*****************************************************************************)
 (* Toplevel *)
@@ -2867,8 +2820,8 @@ let buf_hist = ref []
 
 <<function Select.select_buffer>>=
 let select_buffer frame request default action =
-  select frame (request^"(default :"^ default ^ ") ") buf_hist ""
-    (fun _ -> Simple.buffer_list frame) (fun s ->s) 
+  Select.select frame (request^"(default :"^ default ^ ") ") buf_hist ""
+    (fun _ -> buffer_list frame) (fun s ->s) 
   (fun str ->
       let str = 
         if str = "" then default else str in
@@ -2971,16 +2924,6 @@ let completions_buf_hook = Local.create_abstr "completions_buf_hook"
                Other selection
   
   ****************************************************)
-
-<<constant Select.prev_buffers>>
-<<constant Select.next_default>>
-<<function Select.set_previous_frame>>
-<<function Select.get_previous_frame>>
-
-<<constant Select.buf_hist>>
-<<function Select.select_buffer>>
-
-
 
 <<function Select.select_string>>
 
@@ -3469,6 +3412,22 @@ open Efuns
 <<copyright header2>>
 open Efuns
 
+<<function Simple.buffer_list>>
+
+
+<<constant Select.prev_buffers>>
+<<constant Select.next_default>>
+<<function Select.set_previous_frame>>
+<<function Select.get_previous_frame>>
+
+<<constant Select.buf_hist>>
+<<function Select.select_buffer>>
+
+
+<<function Simple.next_buffer>>
+
+<<function Simple.kill_buffer>>
+
 <<constant Complex.up_buffer>>
 
 
@@ -3482,8 +3441,8 @@ open Efuns
 <<function Complex.right_buffer>>
 
 let switch_to_other_buffer frame =
-  let default = Select.get_previous_frame () in
-  Select.set_previous_frame frame;
+  let default = get_previous_frame () in
+  set_previous_frame frame;
   Frame.change_buffer frame.frm_window default
   
 

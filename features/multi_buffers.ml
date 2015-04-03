@@ -13,6 +13,69 @@
 (*e: copyright header2 *)
 open Efuns
 
+(*s: function Simple.buffer_list *)
+let buffer_list frame =
+  (Efuns.location()).loc_buffers |> Common.hash_to_list |> List.map fst
+(*e: function Simple.buffer_list *)
+
+
+(*s: constant Select.prev_buffers *)
+let prev_buffers = ref []
+(*e: constant Select.prev_buffers *)
+(*s: constant Select.next_default *)
+let next_default = ref ""
+(*e: constant Select.next_default *)
+(*s: function Select.set_previous_frame *)
+let set_previous_frame frame = 
+  let name = frame.frm_buffer.buf_name in
+  next_default := name;
+  prev_buffers := name :: (Utils.list_removeq !prev_buffers name)
+(*e: function Select.set_previous_frame *)
+(*s: function Select.get_previous_frame *)
+let get_previous_frame () = !next_default
+(*e: function Select.get_previous_frame *)
+
+(*s: constant Select.buf_hist *)
+let buf_hist = ref []
+(*e: constant Select.buf_hist *)
+(*s: function Select.select_buffer *)
+let select_buffer frame request default action =
+  Select.select frame (request^"(default :"^ default ^ ") ") buf_hist ""
+    (fun _ -> buffer_list frame) (fun s ->s) 
+  (fun str ->
+      let str = 
+        if str = "" then default else str in
+      action str)
+(*e: function Select.select_buffer *)
+
+
+(*s: function Simple.next_buffer *)
+let next_buffer buf =
+  let buf_list = Utils.list_of_hash (Efuns.location()).loc_buffers in
+  let rec iter list =
+    match list with
+      [] -> raise Not_found 
+    | (name,b) :: tail ->
+        if b == buf then 
+          match tail with
+            [] -> snd (List.hd buf_list)
+          | (_,b)::_ -> b
+        else
+          iter tail
+  in
+  iter buf_list
+(*e: function Simple.next_buffer *)
+
+(*s: function Simple.kill_buffer *)
+let kill_buffer frame =
+  let window = frame.frm_window in
+  let buf = frame.frm_buffer in
+  let new_buf = next_buffer buf in
+  let _new_frame = Frame.create window None new_buf in
+  if buf.buf_shared = 0 
+  then Ebuffer.kill buf
+(*e: function Simple.kill_buffer *)
+
 (*s: constant Complex.up_buffer *)
 let up_buffer = ref ""
 (*e: constant Complex.up_buffer *)
@@ -28,17 +91,17 @@ let down_buffer frame =
 let up_buffer frame =
   if !up_buffer = "" 
   then raise Not_found;
-  Select.set_previous_frame frame;
+  set_previous_frame frame;
   Frame.change_buffer frame.frm_window !up_buffer
 (*e: function Complex.up_buffer *)
   
 (*s: function Complex.left_buffer *)
 let left_buffer frame =
-  Select.set_previous_frame frame;
+  set_previous_frame frame;
   Frame.change_buffer frame.frm_window 
-    (match !Select.prev_buffers with
+    (match !prev_buffers with
     | name :: buffer :: tail ->
-        Select.prev_buffers := tail @ [name]; 
+        prev_buffers := tail @ [name]; 
         buffer
     | _ -> raise Not_found
     )
@@ -46,13 +109,13 @@ let left_buffer frame =
 
 (*s: function Complex.right_buffer *)
 let right_buffer frame =
-  Select.set_previous_frame frame;
+  set_previous_frame frame;
   Frame.change_buffer frame.frm_window 
-    (match !Select.prev_buffers with
+    (match !prev_buffers with
     | name :: tail ->
         (match List.rev tail with
         | buffer :: tail ->
-            Select.prev_buffers := name :: (List.rev tail);
+            prev_buffers := name :: (List.rev tail);
             buffer
         | _ -> raise Not_found
         )
@@ -61,8 +124,8 @@ let right_buffer frame =
 (*e: function Complex.right_buffer *)
 
 let switch_to_other_buffer frame =
-  let default = Select.get_previous_frame () in
-  Select.set_previous_frame frame;
+  let default = get_previous_frame () in
+  set_previous_frame frame;
   Frame.change_buffer frame.frm_window default
   
 

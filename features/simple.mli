@@ -149,13 +149,6 @@ val mouse_drag_region : Efuns.action
 val mouse_yank_at_click : Efuns.action
 val mouse_save_then_kill : Efuns.action
 
-(* buffers *)
-
-val buffer_list : Efuns.frame -> string list
-
-val next_buffer : Efuns.buffer -> Efuns.buffer
-val kill_buffer : Efuns.action
-
 (* indentation *)
 
 val set_indent : Text.t -> Text.point -> int -> unit

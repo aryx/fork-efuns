@@ -388,37 +388,6 @@ let select_filename frame request action =
   
   ****************************************************)
 
-(*s: constant Select.prev_buffers *)
-let prev_buffers = ref []
-(*e: constant Select.prev_buffers *)
-(*s: constant Select.next_default *)
-let next_default = ref ""
-(*e: constant Select.next_default *)
-(*s: function Select.set_previous_frame *)
-let set_previous_frame frame = 
-  let name = frame.frm_buffer.buf_name in
-  next_default := name;
-  prev_buffers := name :: (Utils.list_removeq !prev_buffers name)
-(*e: function Select.set_previous_frame *)
-(*s: function Select.get_previous_frame *)
-let get_previous_frame () = !next_default
-(*e: function Select.get_previous_frame *)
-
-(*s: constant Select.buf_hist *)
-let buf_hist = ref []
-(*e: constant Select.buf_hist *)
-(*s: function Select.select_buffer *)
-let select_buffer frame request default action =
-  select frame (request^"(default :"^ default ^ ") ") buf_hist ""
-    (fun _ -> Simple.buffer_list frame) (fun s ->s) 
-  (fun str ->
-      let str = 
-        if str = "" then default else str in
-      action str)
-(*e: function Select.select_buffer *)
-
-
-
 (*s: function Select.select_string *)
 let select_string frame request history default action =
   let map = Keymap.create () in
