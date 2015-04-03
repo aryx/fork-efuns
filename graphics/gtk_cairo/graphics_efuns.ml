@@ -28,6 +28,13 @@ type world = {
   (* viewport, device coordinates *)
   mutable width:  int;
   mutable height: int;
+
+(*
+  (* first cairo layer, for heavy computation e.g. the minimap *)
+  mutable base: [ `Any ] Cairo.surface;
+  (* second cairo layer, when move the mouse *)
+  mutable overlay: [ `Any ] Cairo.surface;
+*)
 }
 
 type metrics = {
@@ -156,11 +163,19 @@ let draw_minimap cr pg =
         let idx = attr land 255 in
         loc.loc_colors_names.(idx)
       in
+      let _fontsize = (attr lsr 16) land 255 in
       set_source_color ~cr ~color:fgcolor ();
-      
+
+
       Pango.Layout.set_text ly  (prepare_string str);
       Pango_cairo.update_layout cr ly;
       Pango_cairo.show_layout cr ly;
+(*
+      Cairo.select_font_face cr "courier"
+        Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
+      Cairo.set_font_size cr (18. + 20. * (float_of_int fontsize));
+      Cairo.show_text cr (prepare_string str);
+*)
     )
   done;
   ()
@@ -256,7 +271,7 @@ let backend loc cr pg win =
 (* Final view rendering *)
 (*****************************************************************************)
 
-let paint w =
+let paint () =
   if !debug_graphics
   then pr2 "paint";
   (* this will trigger backend.update_display *)
@@ -291,6 +306,7 @@ let init2 init_files =
   let ctx = Pango_cairo.FontMap.create_context 
     (Pango_cairo.FontMap.get_default ()) in
   Pango.Context.set_font_description ctx desc;
+
   let metrics = 
     Pango.Context.get_metrics ctx 
       (Pango.Context.get_font_description ctx) None in
@@ -328,7 +344,7 @@ let init2 init_files =
     (* 1400 *)
   in
 
-  let w = {
+  let _w = {
     model = location;
     width;
     height;
@@ -375,7 +391,7 @@ let init2 init_files =
             else `I (str, (fun () -> 
               let frame = top_window.top_active_frame in
               execute_action action frame;
-              paint w
+              paint ()
             ))))
       ) |> ignore;
       factory#add_submenu "_Edit" |> (fun menu -> 
@@ -386,7 +402,7 @@ let init2 init_files =
             | _ -> `I (str, (fun () -> 
               let frame = top_window.top_active_frame in
               execute_action action_name frame;
-              paint w;
+              paint ();
             ))
            ))
       ) |> ignore;
@@ -403,7 +419,7 @@ let init2 init_files =
                 `I (str, (fun () -> 
                   let frame = top_window.top_active_frame in
                   action frame;
-                  paint w;
+                  paint ();
                 ))))
       ) |> ignore;
 
@@ -435,7 +451,7 @@ let init2 init_files =
   for i = 0 to (Efuns.location()).loc_height -.. 1 do
     clear_eol cr pg 0. (float_of_int i) 80;
   done;
-  paint w;
+  paint ();
 
   (*-------------------------------------------------------------------*)
   (* Events *)
@@ -538,7 +554,6 @@ let test_draw cr =
 *)
   Cairo.select_font_face cr "fixed"
     Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
-
   Cairo.set_font_size cr 0.05;
 
   let _extent = Cairo.text_extents cr "peh" in
