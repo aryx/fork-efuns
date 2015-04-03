@@ -58,11 +58,11 @@ let _ =
   Hook.add_start_hook (fun () ->
     Hook.add_hook color_buf_hook color_number_and_punctuation;
 
-    Simple.add_option_parameter keyword_color;
-    Simple.add_option_parameter string_color;
-    Simple.add_option_parameter comment_color;
+    Parameter.add_option_parameter keyword_color;
+    Parameter.add_option_parameter string_color;
+    Parameter.add_option_parameter comment_color;
 
-    Simple.add_option_parameter module_color;
+    Parameter.add_option_parameter module_color;
   )
 
 

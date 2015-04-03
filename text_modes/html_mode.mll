@@ -248,7 +248,7 @@ let install buf =
   let abbrevs = Hashtbl.create 11 in
   Var.set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs abbreviations;
-  Simple.install_structures buf structures;
+  Structure.install_structures buf structures;
   ()
 
 let mode = Ebuffer.new_major_mode "HTML" [install]
@@ -265,7 +265,7 @@ let _ =
       Keymap.add_binding map [NormalMap, Char.code char]
         (fun frame ->
           Simple.self_insert_command frame;
-          Simple.highlight_paren frame)
+          Paren_mode.highlight_paren frame)
   ) ['>']
   
 let _ =  

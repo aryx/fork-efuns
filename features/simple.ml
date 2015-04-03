@@ -11,6 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
+
 open Efuns
 open Xtypes
 
@@ -25,7 +26,6 @@ let insert_string frame str =
   Text.insert text point str |> ignore;
   Text.fmove text point (String.length str) |> ignore
 (*e: function Simple.insert_string *)
-
   
 (*s: constant Simple.single_char *)
 let single_char = String.make 1 ' '
@@ -625,299 +625,6 @@ let undo frame =
 (*e: function Simple.undo *)
 
 (*****************************************************************************)
-(* Highlight *)
-(*****************************************************************************)
- 
-(*s: constant Simple.highlighted *)
-(* hightlighting of regions *)  
-let highlighted = ref None
-(*e: constant Simple.highlighted *)
-(*s: constant Simple.highlight_bit *)
-let highlight_bit = 1 lsl 24
-(*e: constant Simple.highlight_bit *)
-
-(*s: function Simple.unhightlight_region *)
-let unhightlight_region buf debut fin =
-  let text = buf.buf_text in
-  let curseur = Text.new_point text in
-  let final = Text.new_point text in
-  Text.set_position text curseur debut;
-  Text.set_position text final fin;
-  while curseur < final do
-    let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr land (lnot highlight_bit));
-    Text.fmove text curseur 1;
-  done;
-  Text.remove_point text curseur;
-  Text.remove_point text final;
-  buf.buf_modified <- buf.buf_modified + 1
-(*e: function Simple.unhightlight_region *)
-
-(*s: function Simple.hightlight_region *)
-let hightlight_region buf debut fin =
-  let text = buf.buf_text in
-  let curseur = Text.new_point text in
-  let final = Text.new_point text in
-  Text.set_position text curseur debut;
-  Text.set_position text final fin;
-  while curseur < final do
-    let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr lor highlight_bit);
-    Text.fmove text curseur 1
-  done;
-  Text.remove_point text curseur;
-  Text.remove_point text final;
-  buf.buf_modified <- buf.buf_modified + 1
-(*e: function Simple.hightlight_region *)
-
-(*s: constant Simple.highlighted_chars *)
-let highlighted_chars = ref []
-(*e: constant Simple.highlighted_chars *)
-
-(*s: function Simple.unhightlight *)
-let unhightlight _frame =
-  !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
-    let text = buf.buf_text in
-    Text.set_char_attr text curseur attr;
-    buf.buf_modified <- buf.buf_modified + 1;
-    Text.remove_point text curseur
-  );
-  highlighted_chars := [];
-  match !highlighted with
-  | None -> ()
-  | Some (frame,debut,fin) -> 
-     (*   if !keypressed <> XK.xk_Pointer_Drag1 then *)
-     highlighted := None;
-     let buf = frame.frm_buffer in
-     let text = buf.buf_text in
-     let curseur = Text.new_point text in
-     let final = Text.new_point text in
-     Text.set_position text curseur debut;
-     Text.set_position text final fin;
-     let str = Text.region text curseur final in
-     Text.remove_point text curseur;
-     Text.remove_point text final;
-     kill_string str;
-     (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
-     unhightlight_region buf debut fin
-(*e: function Simple.unhightlight *)
-  
-(*s: function Simple.highlight *)
-let highlight frame =
-  let frame =
-    match !highlighted with
-    | None -> frame
-    | Some (frame,d,f) -> frame
-  in    
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  let mark = Ebuffer.get_mark buf point in
-  let debut, fin =
-    if point < mark 
-    then point,mark
-    else mark,point
-  in
-  let pos1 = Text.get_position text debut in
-  let pos2 = Text.get_position text fin in
-  let debut,fin =
-    match !highlighted with
-    | None -> pos1,pos2
-    | Some (frame,d,f) ->
-        if d < pos1 
-        then unhightlight_region buf d pos1; 
-        if f > pos2 
-        then unhightlight_region buf pos2 f;
-        if pos1 < d 
-        then  pos1,d
-        else
-          if pos2 > f 
-          then f, pos2
-          else pos1,pos1
-  in
-  highlighted := Some (frame, pos1, pos2);
-  hightlight_region buf debut fin
-(*e: function Simple.highlight *)
-
-(*****************************************************************************)
-(* Paren *)
-(*****************************************************************************)
-
-(*s: constant Simple.htmlp *)
-let htmlp = ref false
-(*e: constant Simple.htmlp *)
-(*s: function Simple.is_paren_end *)
-let is_paren_end c = (c == '}') || (c == ']') || (c == ')')
-  ||  (!htmlp && c == '>')
-(*e: function Simple.is_paren_end *)
-(*s: function Simple.is_paren_begin *)
-let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
-  ||  (!htmlp && c == '<')
-(*e: function Simple.is_paren_begin *)
-
-(*s: function Simple.highlight_paren *)
-let highlight_paren frame =
-  htmlp := (!Top_window.keypressed = Char.code '>');
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let curseur = Text.dup_point text point in
-  if Text.bmove_res text curseur 1 = 0 
-  then Text.remove_point text curseur
-  else
-  let c = Text.get_char text curseur in
-  if not(is_paren_end c) 
-  then Text.remove_point text curseur 
-  else
-  let rec iter stack =
-    if Text.bmove_res text curseur 1 = 0 then
-      begin
-        Text.remove_point text curseur;
-        Top_window.mini_message frame "No matching parenthesis"
-      end
-    else
-    let d = Text.get_char text curseur in
-    if is_paren_end d then
-      begin
-        iter (d :: stack)
-      end
-    else
-    if is_paren_begin d then
-      match stack with
-        [] -> (* found matching par *)
-          let attr = Text.get_attr text curseur in
-          highlighted_chars := (buf,curseur,attr) :: !highlighted_chars;
-          Text.set_char_attr text curseur (attr lor highlight_bit);
-          buf.buf_modified <- buf.buf_modified + 1
-      | _ :: stack -> (* don't try to match *)
-          iter stack
-    else
-      iter stack
-  in
-  iter []
-(*e: function Simple.highlight_paren *)
-  
-(*****************************************************************************)
-(* Mouse *)
-(*****************************************************************************)
-  
-(*s: function Simple.mouse_drag_region *)
-(* C'est tout simple. On arrive dans cette fonction quand on est en train
-de bouger la souris avec le bouton appuyer. La frame courante est donc 
-correcte. On peut utiliser la position de la souris pour trouver la 
-nouvelle position du curseur dans la frame. Si on en sort, on peut
-ou prendre la derniere position, ou la premiere.
-*)
-let mouse_drag_region frame =
-  failwith "Simple.mouse_drag_region: TODO"
-(*
-  let top_window = Window.top frame.frm_window in
-  let point = frame.frm_point in
-  begin
-    try
-      move_point frame point !mouse_x !mouse_y
-    with
-      Not_found ->
-        let buf = frame.frm_buffer in
-        let text = buf.buf_text in
-        let y = !mouse_y - frame.frm_ypos in
-        if y < 0 then
-          ( scroll_line frame (y-1);
-            goto_point text point frame.frm_start;
-            bmove text point 1; ())
-        else
-        if y >= frame.frm_height - 1 then
-          (
-            scroll_line frame (y - frame.frm_height + 2);
-            goto_point text point frame.frm_end;
-            fmove text point 1; ())
-  end;
-  highlight frame;
-  let top_window = Window.top frame.frm_window in
-  let xterm = top_window.top_term in
-  Selection.setSelection xterm#display xterm#window XA.xa_primary
-    (fun target ->
-      if target = XA.xa_string then 
-        match !highlighted with
-          None -> raise Not_found
-        | Some (frame,debut,fin) -> 
-            let buf = frame.frm_buffer in
-            let text = buf.buf_text in
-            let curseur = new_point text in
-            let final = new_point text in
-            set_position text curseur debut;
-            set_position text final fin;
-            let str = Text.region text curseur final in
-            remove_point text curseur;
-            remove_point text final;
-            
-            1, str
-      else raise Not_found
-  ) !Eloop.event_time
-*)
-(*e: function Simple.mouse_drag_region *)
-
-(*s: function Simple.mouse_yank_at_click *)
-let  mouse_yank_at_click frame =
-failwith "Simple.mouse_yank_at_click: TODO"
-(*
-  let top_window = Window.top frame.frm_window in
-  let frame = mouse_set_active top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let xterm = Window.xterm top_window in
-  let str = WX_xterm.get_cutbuffer xterm in
-  Text.insert text point str |> ignore;
-  Text.fmove text point (String.length str)
-*)
-(*e: function Simple.mouse_yank_at_click *)
-
-(*s: function Simple.mouse_save_then_kill *)
-let mouse_save_then_kill frame =
-  failwith "Simple.mouse_save_then_kill: TODO"
-(*
-  let top_window = Window.top frame.frm_window in
-  let frame = Top_window.find_selected_frame top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let mark = Ebuffer.get_mark buf point in
-  let new_point = new_point text in
-  Frame.move_point frame new_point !mouse_x !mouse_y;
-  if point = new_point then
-    begin
-      remove_point text new_point;
-      let (start,term) =
-        if point < mark then (point,mark) else (mark,point) 
-      in
-      Text.delete text start (Text.distance text start term) |> ignore
-    end
-  else
-  let xterm = Window.xterm top_window in
-  goto_point text mark point;
-  goto_point text point new_point;
-  remove_point text new_point;
-  let str = Text.region text mark point in
-  kill_string str;
-  WX_xterm.set_cutbuffer xterm str;
-  highlight frame
-*)
-(*e: function Simple.mouse_save_then_kill *)
-
-(*s: function Simple.mouse_set_frame *)
-let mouse_set_frame frame =
-  let top_window = Window.top frame.frm_window in
-  let frame = Top_window.mouse_set_active top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let mark = Ebuffer.get_mark buf point in
-  Text.goto_point text mark point;
-  ()
-(*e: function Simple.mouse_set_frame *)
-
-(*****************************************************************************)
 (* Color helpers *)
 (*****************************************************************************)
 
@@ -1059,31 +766,6 @@ let fill_paragraph frame =
   Text.commit_session text session
 (*e: function Simple.fill_paragraph *)
   
-(*s: function Simple.set_indent *)
-(* modify the indentation of (point) line. Does not modify point *)
-let set_indent text point offset = 
-  let curseur = Text.dup_point text point in
-  Text.bmove text curseur (Text.point_to_bol text curseur);
-  let rec iter offset =
-    let c = Text.get_char text curseur in
-    if offset > 0 then
-      if c = ' ' then
-        (Text.fmove text curseur 1; iter (offset - 1))
-      else
-      if c = '\t' then
-        (Text.delete text curseur 1 |> ignore;
-         iter offset)
-      else
-        (Text.insert text curseur (String.make offset ' '))
-    else
-    if c = ' ' || c='\t' then
-      (Text.delete text curseur 1;
-        iter 0)
-  in
-  iter offset;
-  Text.remove_point text curseur
-(*e: function Simple.set_indent *)
-
 (*s: function Simple.insert_special_char *)
 let insert_special_char frame =
   let key = !Top_window.keypressed in
@@ -1094,101 +776,10 @@ let insert_special_char frame =
     insert_char frame (Char.chr (key - 65))
 (*e: function Simple.insert_special_char *)
 
-(*s: function Simple.next_hole *)
-(* a hole is two consecutive '^' chars *)
-let next_hole frame = 
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  let curseur = Text.dup_point text point in
-  while 
-    not ((Text.get_char text curseur = '^') && (Text.fmove_res text curseur 1 = 1) &&
-      (Text.get_char text curseur = '^')) && (Text.fmove_res text curseur 1 = 1) do () done;
-  if Text.get_char text curseur = '^' then
-    (Text.bmove text curseur 1;
-      Text.delete text curseur 2;
-      Text.goto_point text point curseur);
-  Text.remove_point text curseur
-(*e: function Simple.next_hole *)
-
-(*****************************************************************************)
-(* Structures *)
-(*****************************************************************************)
-
-(*s: function Simple.insert_structure *)
-let insert_structure s frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  Text.insert text point s;
-  next_hole frame
-(*e: function Simple.insert_structure *)
-
-(*s: function Simple.install_structures *)
-let install_structures buf list =
-  list |> List.iter (fun (key, s) ->
-    Keymap.add_binding buf.buf_map key (insert_structure s)
-  )
-(*e: function Simple.install_structures *)
-
-(*****************************************************************************)
-(* Parameters *)
-(*****************************************************************************)
-  
-open Options
-
-(*s: type Simple.parameter *)
-type parameter = (string * ((string -> Obj.t) * (Obj.t -> string) * 
-      Obj.t option_record))
-(*e: type Simple.parameter *)
-  
-(*s: constant Simple.parameters_var *)
-let parameters_var = Local.create_abstr "parameters"
-(*e: constant Simple.parameters_var *)
-  
-(*s: function Simple.add_parameter *)
-let add_parameter (name : string) (input : string -> 'a) 
-  (print : 'a -> string) (param : 'a option_record) =
-  let (input : string -> Obj.t) = Obj.magic input in
-  let (print : Obj.t -> string) = Obj.magic print in
-  let (param : Obj.t option_record) = Obj.magic param in
-  Var.set_global parameters_var (
-    (name, (input, print, param)) :: 
-    (try Var.get_global parameters_var with _ -> []))
-(*e: function Simple.add_parameter *)
-
-(*s: function Simple.add_option_parameter *)
-let add_option_parameter option =
-  add_parameter (shortname option)
-   (fun s -> from_value (get_class option) (Value s))
-   (fun v -> 
-      match to_value (get_class option) v with
-        Value s -> s
-      | _ -> failwith "Unable to print option"
-    ) 
-    option
-(*e: function Simple.add_option_parameter *)
-  
-(*s: constant Simple.all_params *)
-let all_params = ref None
-(*e: constant Simple.all_params *)
-(*s: function Simple.all_parameters *)
-let all_parameters frame _ =
-  let parameters = 
-    try Var.get_global parameters_var with _ -> []
-  in
-  match !all_params with
-    Some (f,l) when f == parameters -> l
-  | _ ->
-      let list = List.map fst parameters in
-      all_params := Some (parameters, list);
-      list
-(*e: function Simple.all_parameters *)
-
-
 (*****************************************************************************)
 (* Keys *)
 (*****************************************************************************)
+open Options
 
 (*s: function Simple.string_to_modifier *)
 let string_to_modifier s =  
@@ -1276,21 +867,18 @@ let _ =
   );
 
   Hook.add_start_hook (fun () ->
-      let loc = Globals.location () in
-      let gmap = loc.loc_map in
+    let loc = Globals.location () in
+    let gmap = loc.loc_map in
 
-      (* unhightlight region *)
-      Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
+    (* standard chars *)
+    for key = 32 to 127 do
+      Keymap.add_binding gmap [NormalMap, key] self_insert_command
+    done;
 
-      (* standard chars *)
-      for key = 32 to 127 do
-        Keymap.add_binding gmap [NormalMap, key] self_insert_command
-      done;
-
-      (* special for AZERTY keyboards *)
-      Array.iter (fun (key, char) ->
-          Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
-      ) [| 
+    (* special for AZERTY keyboards *)
+    Array.iter (fun (key, char) ->
+        Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
+    ) [| 
 (*
         (XK.xk_eacute, 'é');
         (XK.xk_egrave, 'è');
@@ -1311,9 +899,6 @@ let _ =
       for key = 97 to 97+25 do
         Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
       done;
-
-      Keymap.add_binding gmap [NormalMap, XK.xk_Pointer_Drag1]
-        mouse_drag_region;
 
       Keymap.add_interactive (loc.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 

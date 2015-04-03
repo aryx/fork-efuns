@@ -14,6 +14,65 @@
 open Simple
 open Efuns
 
+module H = Highlight
+
+(*s: constant Simple.htmlp *)
+let htmlp = ref false
+(*e: constant Simple.htmlp *)
+(*s: function Simple.is_paren_end *)
+let is_paren_end c = (c == '}') || (c == ']') || (c == ')')
+  ||  (!htmlp && c == '>')
+(*e: function Simple.is_paren_end *)
+(*s: function Simple.is_paren_begin *)
+let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
+  ||  (!htmlp && c == '<')
+(*e: function Simple.is_paren_begin *)
+
+(*s: function Simple.highlight_paren *)
+let highlight_paren frame =
+  htmlp := (!Top_window.keypressed = Char.code '>');
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let curseur = Text.dup_point text point in
+  if Text.bmove_res text curseur 1 = 0 
+  then Text.remove_point text curseur
+  else
+  let c = Text.get_char text curseur in
+  if not(is_paren_end c) 
+  then Text.remove_point text curseur 
+  else
+  let rec iter stack =
+    if Text.bmove_res text curseur 1 = 0 then
+      begin
+        Text.remove_point text curseur;
+        Top_window.mini_message frame "No matching parenthesis"
+      end
+    else
+    let d = Text.get_char text curseur in
+    if is_paren_end d then
+      begin
+        iter (d :: stack)
+      end
+    else
+    if is_paren_begin d then
+      match stack with
+        [] -> (* found matching par *)
+          let attr = Text.get_attr text curseur in
+          H.highlighted_chars := (buf,curseur,attr) :: !H.highlighted_chars;
+          Text.set_char_attr text curseur (attr lor H.highlight_bit);
+          buf.buf_modified <- buf.buf_modified + 1
+      | _ :: stack -> (* don't try to match *)
+          iter stack
+    else
+      iter stack
+  in
+  iter []
+(*e: function Simple.highlight_paren *)
+
+
+
+
 (*s: constant Paren_mode.mode *)
 let mode = Ebuffer.new_minor_mode "paren" []
 (*e: constant Paren_mode.mode *)
@@ -21,7 +80,7 @@ let mode = Ebuffer.new_minor_mode "paren" []
 (*s: function Paren_mode.find_matching *)
 let find_matching frame = 
   self_insert_command frame; 
-  Simple.highlight_paren frame
+  highlight_paren frame
 (*e: function Paren_mode.find_matching *)
   
 (*s: toplevel Paren_mode._1 *)

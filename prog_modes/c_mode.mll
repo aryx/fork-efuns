@@ -682,7 +682,7 @@ let indent_between_points buf start_point end_point =
     let rec iter indents =
       let (current,pos,indents) = pop_indentation indents in
       Text.set_position text curseur (pos+1);
-      Simple.set_indent text curseur current;
+      Indent.set_indent text curseur current;
       iter indents
     in
     iter indentations
@@ -741,9 +741,9 @@ let insert_and_return frame =
         Not_found  -> 0
     in
     let session = Text.start_session text in
-    Simple.set_indent text point current;
+    Indent.set_indent text point current;
     Simple.insert_char frame '\n';
-    Simple.set_indent text point next;
+    Indent.set_indent text point next;
     Text.commit_session text session;
     Text.fmove text point next; 
     ()
@@ -777,7 +777,7 @@ let indent_current_line frame =
     with
       Not_found  -> 0
   in
-  Simple.set_indent text point current
+  Indent.set_indent text point current
 
   
 (***********************************************************************)
@@ -858,7 +858,7 @@ let setup_maps () =
   ['}';']';')'] |> List.iter (fun char ->
       Keymap.add_binding map [NormalMap, Char.code char] (fun frame ->
         Simple.self_insert_command frame;
-        Simple.highlight_paren frame
+        Paren_mode.highlight_paren frame
       )
   );
 

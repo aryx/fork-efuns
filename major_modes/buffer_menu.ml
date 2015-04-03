@@ -95,7 +95,7 @@ let menu frame =
          buf.buf_major_mode.maj_name
          (match buf.buf_filename with
          | None -> ""
-         | Some s -> s
+         | Some s -> String.sub s 0 (min (String.length s -1) 36)
          ));
   );
   Dircolors.colorize buf;

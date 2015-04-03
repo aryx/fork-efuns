@@ -372,7 +372,7 @@ let install buf =
         abbrevs
   in
   Utils.hash_add_assoc abbrevs !!abbreviations;
-  Simple.install_structures buf !!structures; 
+  Structure.install_structures buf !!structures; 
   List.iter (fun action ->
       try Action.execute_buffer_action action buf with _ -> ()
   ) !!tex_hooks;
@@ -566,7 +566,7 @@ let setup_actions () =
   Action.define_action "tex_mode.to_main_file" to_main_file;
   Action.define_action "tex_mode.find_matching_paren" (fun frame ->
       Simple.self_insert_command frame;
-      Simple.highlight_paren frame);
+      Paren_mode.highlight_paren frame);
   Action.define_action "tex_mode.end_env" end_env;
   Action.define_action "tex_mode.begin_env" begin_env;
   ()  

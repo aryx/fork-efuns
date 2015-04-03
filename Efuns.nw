@@ -1897,7 +1897,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 44 (* 44, 25 *)
+let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -3138,7 +3138,7 @@ let unhightlight _frame =
      let str = Text.region text curseur final in
      Text.remove_point text curseur;
      Text.remove_point text final;
-     kill_string str;
+     Simple.kill_string str;
      (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
      unhightlight_region buf debut fin
 @
@@ -6139,6 +6139,7 @@ let single_char = String.make 1 ' '
 % thread-safe?
 
 <<function Simple.insert_char>>=
+(* could factorize and just call insert_string? *)
 let insert_char frame char =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
@@ -7745,10 +7746,60 @@ Local.get buf.buf_major_mode.maj_vars var
 
 \section{Indentation}
 
-\section{Structures}
-% ???
-
 \section{Abbrevs}
+
+\section{Structures}
+
+%ex: data passed to install_structures
+%      [c_c; n'; NormalMap, Char.code 'b'], "begin ^^ end^^";
+%      [c_c; n'; NormalMap, Char.code 'f'], "for ^^ to ^^ do\n^^";
+%      [c_c; n'; NormalMap, Char.code 'w'], "while ^^ do\n^^\ndone";
+% a kind of abbrev
+
+
+<<misc keys>>=
+[ c_c; NormalMap, Char.code '-'], "next_hole";
+@
+<<misc actions>>=
+(* C-M map *)
+define_action "next_hole" Simple.next_hole;
+@
+
+% Simple.insert_structure -> <>
+<<function Simple.next_hole>>=
+(* a hole is two consecutive '^' chars *)
+let next_hole frame = 
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  let text = buf.buf_text in
+  let curseur = Text.dup_point text point in
+  while 
+    not ((Text.get_char text curseur = '^') && (Text.fmove_res text curseur 1 = 1) &&
+      (Text.get_char text curseur = '^')) && (Text.fmove_res text curseur 1 = 1) do () done;
+  if Text.get_char text curseur = '^' then
+    (Text.bmove text curseur 1;
+      Text.delete text curseur 2;
+      Text.goto_point text point curseur);
+  Text.remove_point text curseur
+@
+
+% install_structures -> <>
+<<function Simple.insert_structure>>=
+let insert_structure s frame =
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  let text = buf.buf_text in
+  Text.insert text point s;
+  next_hole frame
+@
+% ???
+<<function Simple.install_structures>>=
+let install_structures buf list =
+  list |> List.iter (fun (key, s) ->
+    Keymap.add_binding buf.buf_map key (insert_structure s)
+  )
+@
+
 
 \chapter{Minor Modes}
 
@@ -9313,6 +9364,62 @@ let get_parameter frame =
 
 \section{Paren}
 % useful! edwin power!
+
+<<constant Simple.htmlp>>=
+let htmlp = ref false
+@
+
+<<function Simple.is_paren_end>>=
+let is_paren_end c = (c == '}') || (c == ']') || (c == ')')
+  ||  (!htmlp && c == '>')
+@
+
+<<function Simple.is_paren_begin>>=
+let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
+  ||  (!htmlp && c == '<')
+@
+
+<<function Simple.highlight_paren>>=
+let highlight_paren frame =
+  htmlp := (!Top_window.keypressed = Char.code '>');
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let curseur = Text.dup_point text point in
+  if Text.bmove_res text curseur 1 = 0 
+  then Text.remove_point text curseur
+  else
+  let c = Text.get_char text curseur in
+  if not(is_paren_end c) 
+  then Text.remove_point text curseur 
+  else
+  let rec iter stack =
+    if Text.bmove_res text curseur 1 = 0 then
+      begin
+        Text.remove_point text curseur;
+        Top_window.mini_message frame "No matching parenthesis"
+      end
+    else
+    let d = Text.get_char text curseur in
+    if is_paren_end d then
+      begin
+        iter (d :: stack)
+      end
+    else
+    if is_paren_begin d then
+      match stack with
+        [] -> (* found matching par *)
+          let attr = Text.get_attr text curseur in
+          highlighted_chars := (buf,curseur,attr) :: !highlighted_chars;
+          Text.set_char_attr text curseur (attr lor highlight_bit);
+          buf.buf_modified <- buf.buf_modified + 1
+      | _ :: stack -> (* don't try to match *)
+          iter stack
+    else
+      iter stack
+  in
+  iter []
+@
 
 \section{Tab}
 

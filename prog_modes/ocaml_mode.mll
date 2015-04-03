@@ -1078,7 +1078,7 @@ let indent_between_points buf start_point end_point =
     let rec iter indents =
       let (current,pos,indents) = pop_indentation indents in
       Text.set_position text curseur (pos+1);
-      Simple.set_indent text curseur current;
+      Indent.set_indent text curseur current;
       iter indents
     in
     iter indentations
@@ -1137,9 +1137,9 @@ let insert_and_return frame =
         Not_found  -> 0
     in
     let session = Text.start_session text in
-    Simple.set_indent text point current;
+    Indent.set_indent text point current;
     Simple.insert_char frame '\n';
-    Simple.set_indent text point next;
+    Indent.set_indent text point next;
     Text.commit_session text session;
     Text.fmove text point next; 
     ()
@@ -1173,7 +1173,7 @@ let indent_current_line frame =
     with
       Not_found  -> 0
   in
-  Simple.set_indent text point current
+  Indent.set_indent text point current
 
 (***********************************************************************)
 (*********************  aide a la programmation *********)
@@ -1326,7 +1326,7 @@ let install buf =
   Var.set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs !!abbreviations;
 
-  Simple.install_structures buf !!structures;
+  Structure.install_structures buf !!structures;
 
   !!ocaml_hooks |> List.iter (fun action ->
       try Action.execute_buffer_action action buf with _ -> ()
@@ -1420,8 +1420,8 @@ let _ =
     Var.set_global Ebuffer.modes_alist 
       ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
     
-    Simple.add_option_parameter ocaml_path;
-    Simple.add_option_parameter indentation;
+    Parameter.add_option_parameter ocaml_path;
+    Parameter.add_option_parameter indentation;
 
     setup ()
   )  

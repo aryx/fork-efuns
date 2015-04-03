@@ -276,6 +276,9 @@ let _ =
   (* C-x map *)
   define_action "point_at_mark"  Simple.point_at_mark;
   (*x: misc actions *)
+  (* C-M map *)
+  define_action "next_hole" Structure.next_hole;
+  (*x: misc actions *)
   (*define_action "compile" compile;*)
   (*x: misc actions *)
   (* C-x map *)
@@ -289,9 +292,6 @@ let _ =
   (* C-x 5 map *)
   define_action "delete_window"  Top_window.delete_window;
   (*e: window managment actions *)
-  (*x: misc actions *)
-  (* C-M map *)
-  define_action "next_hole" Simple.next_hole;
   (*e: misc actions *)
   (*e: actions definitions *)
   ()
@@ -526,6 +526,8 @@ let _ =
         (*x: misc keys *)
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         (*x: misc keys *)
+        [ c_c; NormalMap, Char.code '-'], "next_hole";
+        (*x: misc keys *)
         (*x: misc keys *)
         [NormalMap, Char.code ' '], "char_expand_abbrev";
         [MetaMap, Char.code '/'], "dabbrev_expand";
@@ -536,8 +538,6 @@ let _ =
         [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
         [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
         (*e: window managment keys *)
-        (*x: misc keys *)
-        [ c_c; NormalMap, Char.code '-'], "next_hole";
         (*e: misc keys *)
         (*e: [[global_map]] initial entries *)
       ]
@@ -615,11 +615,11 @@ let init_global_map () =
   (* Mouse *)
   (*s: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
-    "set_active_frame" Simple.mouse_set_frame;
+    "set_active_frame" Mouse.mouse_set_frame;
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
-    "insert_at_point" Simple.mouse_yank_at_click;
+    "insert_at_point" Mouse.mouse_yank_at_click;
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
-    "mouse_save_then_kill" Simple.mouse_save_then_kill;
+    "mouse_save_then_kill" Mouse.mouse_save_then_kill;
   (*e: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   ()
 (*e: function Std_efunsrc.init_global_map *)
@@ -705,8 +705,8 @@ let _ =
 let _ =
   Hook.add_start_hook (fun () ->
     (*s: [[Std_efunsrc._5]] start hooks options *)
-    Simple.add_option_parameter Compil.compile_find_makefile;
-    Simple.add_option_parameter Text.add_amount;
+    Parameter.add_option_parameter Compil.compile_find_makefile;
+    Parameter.add_option_parameter Text.add_amount;
     (*e: [[Std_efunsrc._5]] start hooks options *)
     init_global_map ()
   )

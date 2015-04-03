@@ -38,6 +38,11 @@ SRC=\
  core/top_window.ml\
  \
  features/simple.ml\
+  features/mouse.ml\
+  features/highlight.ml\
+  features/parameter.ml\
+  features/indent.ml\
+  features/structure.ml\
  features/minibuffer.ml\
  features/multi_frames.ml\
  features/select.ml\
@@ -230,11 +235,11 @@ SRC_VIEWS= \
   commons/local.ml\
   commons/local.mli\
   core/efuns.ml\
-  core/var.ml\
-  core/attr.ml\
-  core/hook.ml\
-  core/action.ml\
-  core/globals.ml\
+   core/var.ml\
+   core/attr.ml\
+   core/hook.ml\
+   core/action.ml\
+   core/globals.ml\
   core/text.ml\
   core/ebuffer.ml\
   core/keymap.ml\
@@ -242,6 +247,11 @@ SRC_VIEWS= \
   core/frame.ml\
   core/top_window.ml\
   features/simple.ml\
+   features/mouse.ml\
+   features/highlight.ml\
+   features/parameter.ml\
+   features/indent.ml\
+   features/structure.ml\
   features/minibuffer.ml\
   features/complexe.ml\
   features/system.ml\

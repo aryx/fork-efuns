@@ -369,9 +369,9 @@ let parameters_hist = ref []
   
 (*s: function Complex.set_parameter *)
 let set_parameter frame = 
-  let parameters = Var.get_global Simple.parameters_var in
+  let parameters = Var.get_global Parameter.parameters_var in
   Select.select frame "set-parameter : " parameters_hist
-    "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
+    "" (Parameter.all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
           let (input,print,param) = List.assoc variable parameters
@@ -381,9 +381,9 @@ let set_parameter frame =
   
 (*s: function Complex.get_parameter *)
 let get_parameter frame =
-  let parameters = Var.get_global Simple.parameters_var in  
+  let parameters = Var.get_global Parameter.parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
-    "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
+    "" (Parameter.all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
         (Printf.sprintf "%s : %s" variable (
           let (input,print,param) = List.assoc variable parameters

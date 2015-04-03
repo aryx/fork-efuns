@@ -136,8 +136,8 @@ let _ =
     let alist = Var.get_global Ebuffer.modes_alist in
     Var.set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
     
-    Simple.add_option_parameter target_color;
-    Simple.add_option_parameter rules_color;
+    Parameter.add_option_parameter target_color;
+    Parameter.add_option_parameter rules_color;
   )   
 (*e: toplevel Makefile_mode._4 *)
 (*e: prog_modes/makefile_mode.ml *)

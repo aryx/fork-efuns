@@ -1585,6 +1585,99 @@ open Text
 
 \section{[[features/]]}
 
+\subsection*{[[features/highlight.ml]]}
+
+<<features/highlight.ml>>=
+<<copyright header efuns>>
+open Efuns
+
+<<constant Simple.highlighted>>
+<<constant Simple.highlight_bit>>
+
+<<function Simple.unhightlight_region>>
+
+<<function Simple.hightlight_region>>
+
+<<constant Simple.highlighted_chars>>
+
+<<function Simple.unhightlight>>
+  
+<<function Simple.highlight>>
+
+let _ =
+  Hook.add_start_hook (fun () ->
+    (* unhightlight region *)
+    Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
+  )
+@
+
+\subsection*{[[features/parameter.ml]]}
+
+<<features/parameter.ml>>=
+<<copyright header efuns>>
+
+  
+open Options
+
+<<type Simple.parameter>>
+  
+<<constant Simple.parameters_var>>
+  
+<<function Simple.add_parameter>>
+
+<<function Simple.add_option_parameter>>
+  
+<<constant Simple.all_params>>
+<<function Simple.all_parameters>>
+
+@
+
+\subsection*{[[features/mouse.ml]]}
+
+<<features/mouse.ml>>=
+<<copyright header efuns>>
+open Efuns
+
+<<function Simple.mouse_drag_region>>
+
+<<function Simple.mouse_yank_at_click>>
+
+<<function Simple.mouse_save_then_kill>>
+
+<<function Simple.mouse_set_frame>>
+
+let _ =
+  Hook.add_start_hook (fun () ->
+    Keymap.add_global_key [NormalMap, XK.xk_Pointer_Drag1]
+      "mouse_drag_region" mouse_drag_region;
+  )
+
+@
+
+\subsection*{[[features/indent.ml]]}
+
+<<features/indent.ml>>=
+<<copyright header efuns>>
+
+<<function Simple.set_indent>>
+
+@
+
+\subsection*{[[features/structure.ml]]}
+
+<<features/structure.ml>>=
+<<copyright header efuns>>
+open Efuns
+
+<<function Simple.next_hole>>
+
+
+<<function Simple.insert_structure>>
+
+<<function Simple.install_structures>>
+
+@
+
 \subsection*{[[features/simple.ml]]}
 
 % ?? -> <>
@@ -1876,61 +1969,6 @@ let scroll_line frame n =
 
 
 
-<<constant Simple.htmlp>>=
-let htmlp = ref false
-@
-
-<<function Simple.is_paren_end>>=
-let is_paren_end c = (c == '}') || (c == ']') || (c == ')')
-  ||  (!htmlp && c == '>')
-@
-
-<<function Simple.is_paren_begin>>=
-let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
-  ||  (!htmlp && c == '<')
-@
-
-<<function Simple.highlight_paren>>=
-let highlight_paren frame =
-  htmlp := (!Top_window.keypressed = Char.code '>');
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let curseur = Text.dup_point text point in
-  if Text.bmove_res text curseur 1 = 0 
-  then Text.remove_point text curseur
-  else
-  let c = Text.get_char text curseur in
-  if not(is_paren_end c) 
-  then Text.remove_point text curseur 
-  else
-  let rec iter stack =
-    if Text.bmove_res text curseur 1 = 0 then
-      begin
-        Text.remove_point text curseur;
-        Top_window.mini_message frame "No matching parenthesis"
-      end
-    else
-    let d = Text.get_char text curseur in
-    if is_paren_end d then
-      begin
-        iter (d :: stack)
-      end
-    else
-    if is_paren_begin d then
-      match stack with
-        [] -> (* found matching par *)
-          let attr = Text.get_attr text curseur in
-          highlighted_chars := (buf,curseur,attr) :: !highlighted_chars;
-          Text.set_char_attr text curseur (attr lor highlight_bit);
-          buf.buf_modified <- buf.buf_modified + 1
-      | _ :: stack -> (* don't try to match *)
-          iter stack
-    else
-      iter stack
-  in
-  iter []
-@
 
 <<function Simple.mouse_drag_region>>=
 (* C'est tout simple. On arrive dans cette fonction quand on est en train
@@ -2095,49 +2133,6 @@ let insert_special_char frame =
     insert_char frame (Char.chr (key - 65))
 @
 
-<<misc keys>>=
-[ c_c; NormalMap, Char.code '-'], "next_hole";
-@
-
-<<misc actions>>=
-(* C-M map *)
-define_action "next_hole" Simple.next_hole;
-@
-
-% Simple.insert_structure -> <>
-<<function Simple.next_hole>>=
-(* a hole is two consecutive '^' chars *)
-let next_hole frame = 
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  let curseur = Text.dup_point text point in
-  while 
-    not ((Text.get_char text curseur = '^') && (Text.fmove_res text curseur 1 = 1) &&
-      (Text.get_char text curseur = '^')) && (Text.fmove_res text curseur 1 = 1) do () done;
-  if Text.get_char text curseur = '^' then
-    (Text.bmove text curseur 1;
-      Text.delete text curseur 2;
-      Text.goto_point text point curseur);
-  Text.remove_point text curseur
-@
-
-% install_structures -> <>
-<<function Simple.insert_structure>>=
-let insert_structure s frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
-  Text.insert text point s;
-  next_hole frame
-@
-% ???
-<<function Simple.install_structures>>=
-let install_structures buf list =
-  list |> List.iter (fun (key, s) ->
-    Keymap.add_binding buf.buf_map key (insert_structure s)
-  )
-@
 
 
 
@@ -2153,21 +2148,18 @@ let _ =
   );
 
   Hook.add_start_hook (fun () ->
-      let loc = Globals.location () in
-      let gmap = loc.loc_map in
+    let loc = Globals.location () in
+    let gmap = loc.loc_map in
 
-      (* unhightlight region *)
-      Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
+    (* standard chars *)
+    for key = 32 to 127 do
+      Keymap.add_binding gmap [NormalMap, key] self_insert_command
+    done;
 
-      (* standard chars *)
-      for key = 32 to 127 do
-        Keymap.add_binding gmap [NormalMap, key] self_insert_command
-      done;
-
-      (* special for AZERTY keyboards *)
-      Array.iter (fun (key, char) ->
-          Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
-      ) [| 
+    (* special for AZERTY keyboards *)
+    Array.iter (fun (key, char) ->
+        Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
+    ) [| 
 (*
         (XK.xk_eacute, 'é');
         (XK.xk_egrave, 'è');
@@ -2188,9 +2180,6 @@ let _ =
       for key = 97 to 97+25 do
         Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
       done;
-
-      Keymap.add_binding gmap [NormalMap, XK.xk_Pointer_Drag1]
-        mouse_drag_region;
 
       Keymap.add_interactive (loc.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
@@ -2214,7 +2203,6 @@ open Xtypes
 (*****************************************************************************)
 
 <<function Simple.insert_string>>
-
   
 <<constant Simple.single_char>>
 <<function Simple.insert_char>>
@@ -2395,45 +2383,6 @@ let scroll_other_down frame =
 <<function Simple.undo>>
 
 (*****************************************************************************)
-(* Highlight *)
-(*****************************************************************************)
- 
-<<constant Simple.highlighted>>
-<<constant Simple.highlight_bit>>
-
-<<function Simple.unhightlight_region>>
-
-<<function Simple.hightlight_region>>
-
-<<constant Simple.highlighted_chars>>
-
-<<function Simple.unhightlight>>
-  
-<<function Simple.highlight>>
-
-(*****************************************************************************)
-(* Paren *)
-(*****************************************************************************)
-
-<<constant Simple.htmlp>>
-<<function Simple.is_paren_end>>
-<<function Simple.is_paren_begin>>
-
-<<function Simple.highlight_paren>>
-  
-(*****************************************************************************)
-(* Mouse *)
-(*****************************************************************************)
-  
-<<function Simple.mouse_drag_region>>
-
-<<function Simple.mouse_yank_at_click>>
-
-<<function Simple.mouse_save_then_kill>>
-
-<<function Simple.mouse_set_frame>>
-
-(*****************************************************************************)
 (* Color helpers *)
 (*****************************************************************************)
 
@@ -2458,41 +2407,12 @@ let scroll_other_down frame =
 
 <<function Simple.fill_paragraph>>
   
-<<function Simple.set_indent>>
-
 <<function Simple.insert_special_char>>
-
-<<function Simple.next_hole>>
-
-(*****************************************************************************)
-(* Structures *)
-(*****************************************************************************)
-
-<<function Simple.insert_structure>>
-
-<<function Simple.install_structures>>
-
-(*****************************************************************************)
-(* Parameters *)
-(*****************************************************************************)
-  
-open Options
-
-<<type Simple.parameter>>
-  
-<<constant Simple.parameters_var>>
-  
-<<function Simple.add_parameter>>
-
-<<function Simple.add_option_parameter>>
-  
-<<constant Simple.all_params>>
-<<function Simple.all_parameters>>
-
 
 (*****************************************************************************)
 (* Keys *)
 (*****************************************************************************)
+open Options
 
 <<function Simple.string_to_modifier>>
   
@@ -4765,6 +4685,16 @@ let _ =
 <<copyright header2>>
 open Simple
 open Efuns
+
+
+<<constant Simple.htmlp>>
+<<function Simple.is_paren_end>>
+<<function Simple.is_paren_begin>>
+
+<<function Simple.highlight_paren>>
+
+
+
 
 <<constant Paren_mode.mode>>
 
