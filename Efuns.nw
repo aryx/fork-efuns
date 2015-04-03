@@ -980,12 +980,12 @@ mutable top_active_frame : frame;
 <<type Efuns.location>>=
 type location =
   { 
-    (* key is buffer name *)
+    (* key is buffer name (made unique via get_name()) *)
     mutable loc_buffers : (string, buffer) Hashtbl.t;
-    (* key is filename *)
+    (* key is filename (should be unique? use realpath?) *)
     mutable loc_files : (string, buffer) Hashtbl.t;
 
-    (* list??*)
+    (* list when have one efuns running multiple top windows *)
     mutable top_windows : top_window list;
 
     (* pwd of efuns when started *)
@@ -7566,7 +7566,7 @@ and major_mode = {
     maj_map : map;
 
     mutable maj_hooks : (buffer -> unit) list;
-    mutable maj_vars : vars;
+    mutable maj_vars : Local.vars;
   }
 @
 
@@ -7768,7 +7768,7 @@ and minor_mode = {
     min_map : map;
 
     mutable min_hooks : (buffer -> unit) list;
-    mutable min_vars : vars;
+    mutable min_vars : Local.vars;
   }
 @
 
@@ -8728,7 +8728,7 @@ let path = (*Dyneval.load_path*) ref []
 
 <<constant Efuns.efuns_path>>=
 let efuns_path = [ 
-      (Filename.concat homedir ".efuns") ;
+      (Filename.concat Utils.homedir ".efuns") ;
 (*
       Version.efuns_lib; 
       Version.installdir; 
@@ -8987,6 +8987,7 @@ type vars
 @
 
 <<signature function Local.vars>>=
+(* constructor *)
 val vars : unit -> vars
 @
 
