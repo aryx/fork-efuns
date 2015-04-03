@@ -186,19 +186,19 @@ let draw_minimap w =
         let idx = attr land 255 in
         w.loc.loc_colors_names.(idx)
       in
-      let _fontsize = (attr lsr 16) land 255 in
+      let fontsize = (attr lsr 16) land 255 in
       set_source_color ~cr ~color:fgcolor ();
 
 
+(*
       Pango.Layout.set_text w.ly  (prepare_string str);
       Pango_cairo.update_layout cr w.ly;
       Pango_cairo.show_layout cr w.ly;
-(*
+*)
       Cairo.select_font_face cr "courier"
         Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
       Cairo.set_font_size cr (18. + 20. * (float_of_int fontsize));
       Cairo.show_text cr (prepare_string str);
-*)
     )
   done;
   ()
