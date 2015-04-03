@@ -13,15 +13,31 @@
  * license.txt for more details.
  *)
 open Common
+open Efuns
 
 module E = Entity_code
 module HC = Highlight_code
+module PI = Parse_info
 
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
 (* Common code to the different pfff-based efuns modes
 *)
+
+
+(*****************************************************************************)
+(* Types *)
+(*****************************************************************************)
+
+(* copy of pfff/code_map/parsing2.ml *)
+type ('ast, 'token) for_helper = {
+  parse: Common.filename -> ('ast * 'token list) list;
+  highlight: tag_hook:(Parse_info.info -> HC.category -> unit) ->
+             Highlight_code.highlighter_preferences -> 'ast * 'token list ->
+             unit;
+(*  info_of_tok:('token -> Parse_info.info); *)
+}
 
 (*****************************************************************************)
 (* Helpers *)
@@ -54,3 +70,25 @@ let size_of_categ categ =
   | HC.CommentSection4 -> 1
 
   | _ -> 0
+
+
+let colorize funcs buf file =
+  let xs = funcs.parse file in
+  let prefs = Highlight_code.default_highlighter_preferences in
+
+  let text = buf.buf_text in
+  let cursor = Text.new_point text in
+
+  xs |> List.iter (fun x -> x |> funcs.highlight ~tag_hook:(fun info categ->
+    let color = color_of_categ categ in
+    let fontsize = size_of_categ categ in
+
+    let pos = PI.pos_of_info info in
+    Text.set_position text cursor pos;
+    let attr = Text.make_attr (Window.get_color color) 1 fontsize false in
+
+    let str = PI.str_of_info info in
+    let len = String.length str in
+    Text.set_attr text cursor len attr
+  ) prefs 
+  )
