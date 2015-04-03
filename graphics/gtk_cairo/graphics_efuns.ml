@@ -38,9 +38,9 @@ type world = {
   metrics: layout;
 
   (* to avoid redrawing the minimap each time 
-   * buf_name and version of text.
+   * buf_name, version of text, page
    *)
-  mutable last_top_frame_info:(string * Text.version);
+  mutable last_top_frame_info:(string * Text.version * int);
 }
 
 and layout = {
@@ -52,13 +52,9 @@ and layout = {
 
   mini_factor: float;
   mini_width: float;
-}
 
-let active_frame_info w =
-  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  buf.buf_name, Text.version text
+  linemax: int;
+}
 
 (*****************************************************************************)
 (* Cairo helpers *)
@@ -136,6 +132,20 @@ let clear cr =
 (*****************************************************************************)
 (* Minimap *)
 (*****************************************************************************)
+
+(* opti to avoid recompute/redraw expensive minimap *)
+let active_frame_info w =
+  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+
+  let line = Text.point_line text frame.frm_start in
+  (* ex: linemax = 400, line = 10 => startpage = 0; line = 410 => page = 1 *)
+  let startpage = line /.. w.metrics.linemax in
+
+  buf.buf_name, Text.version text, startpage
+
+
 let draw_minimap w =
 
   let cr = Cairo.create w.base in
@@ -151,13 +161,22 @@ let draw_minimap w =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
-  for i = 0 to Text.nbre_lines text -.. 1 do
+  let line = Text.point_line text frame.frm_start in
+  (* ex: linemax = 400, line = 10 => startpage = 0; line = 410 => page = 1 *)
+  let startpage = line /.. w.metrics.linemax in
+  let startline = startpage *.. w.metrics.linemax in
+  let endline = 
+    min (startline +.. w.metrics.linemax) (Text.nbre_lines text -.. 1) in
+
+
+  for i = startline to endline do
     let line = Text.compute_representation text buf.buf_charreprs i in
     let repr_str = line.Text.repr_string in
     line.Text.boxes |> List.rev |> List.iter (fun box ->
       let h = w.metrics.font_height in
       let x = float_of_int box.Text.box_pos_repr * w.metrics.font_width in
-      let y = (float_of_int i * h) + h * 0.1 in
+      let line_in_page = i mod w.metrics.linemax in
+      let y = (float_of_int line_in_page * h) + h * 0.1 in
       Cairo.move_to cr x y;
       let attr = box.Text.box_attr in
 
@@ -198,6 +217,13 @@ let draw_minimap_overlay w =
   let text = buf.buf_text in
 
   let line = Text.point_line text frame.frm_start in
+
+  (* ex: linemax = 400, line = 10 => startpage = 0; line = 410 => page = 1 *)
+  let startpage = line /.. w.metrics.linemax in
+  let startline = startpage *.. w.metrics.linemax in
+
+  let line = line -.. startline in
+
   let x = 0. in
   let y = (float_of_int line) * w.metrics.font_height in
   let h = (float_of_int w.loc.loc_height) * w.metrics.font_height in
@@ -356,7 +382,6 @@ let init2 init_files =
   let ctx = Pango_cairo.FontMap.create_context fontmap in
   Pango.Context.set_font_description ctx desc;
 
-  (*todo? remove? should be desc no? (Pango.Context.get_font_description ctx) *)
   let metrics = Pango.Context.get_metrics ctx desc None in
   let width = 
     float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
@@ -364,19 +389,25 @@ let init2 init_files =
   let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
   let height = (ascent + descent) * 1.1 in
 
-  let mini_factor = 10. in
-  let main_width = float_of_int location.loc_width * width in
-
   let metrics = { 
     font_width = width; 
     font_height = height;
 
-    mini_factor;
+    mini_factor = 10.;
 
-    main_width;
-    mini_width = main_width / mini_factor;
+    main_width = float_of_int location.loc_width * width;
     main_height = float_of_int location.loc_height * height;
+
+    (* derived from above below *)
+    linemax = 0;
+    mini_width = 0.;
   } in
+  let metrics = { metrics with
+    linemax = metrics.main_height * metrics.mini_factor / metrics.font_height 
+       |> ceil |> int_of_float;
+    mini_width = metrics.main_width / metrics.mini_factor;
+  }
+  in
 
   (* those are the dimensions for the main view, the pixmap *)
   let width = 
@@ -499,7 +530,7 @@ let init2 init_files =
     final = Cairo.get_target cr;
     ly = layout;
     metrics;
-    last_top_frame_info = ("", -1);
+    last_top_frame_info = ("", -1, -1);
   }
   in
   top_window.graphics <- Some (backend w win); 
