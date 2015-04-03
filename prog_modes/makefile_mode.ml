@@ -39,13 +39,13 @@ let target_color = define_option ["makefile_mode"; "target_color"] ""
 (*s: function Makefile_mode.makefile_color *)
 let makefile_color buf =
   Simple.color buf mkfile_rules false
-    (Text.make_attr (Window.get_color !!rules_color) 1 0 false);
+    (Text.make_attr (Attr.get_color !!rules_color) 1 0 false);
   Simple.color buf mkfile_target false 
-    (Text.make_attr (Window.get_color !!target_color) 1 0 false);
+    (Text.make_attr (Attr.get_color !!target_color) 1 0 false);
   Simple.color buf mkfile_vars false 
-    (Text.make_attr (Window.get_color !!Pl_colors.variable_name_color) 1 0 false);
+    (Text.make_attr (Attr.get_color !!Pl_colors.variable_name_color) 1 0 false);
   Simple.color buf mkfile_comments false 
-    (Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 0 false);
+    (Text.make_attr (Attr.get_color !!Pl_colors.comment_color) 1 0 false);
   ()
 (*e: function Makefile_mode.makefile_color *)
  
@@ -56,7 +56,7 @@ let c_c = (ControlMap,Char.code 'c')
 (*s: function Makefile_mode.install *)
 let install buf =
   makefile_color buf;
-  execute_buffer_action "tab_mode" buf
+  Action.execute_buffer_action "tab_mode" buf
 (*e: function Makefile_mode.install *)
   
 (*s: constant Makefile_mode.mode *)
@@ -99,10 +99,10 @@ let makefile_mode frame =
         
 (*s: toplevel Makefile_mode._2 *)
 let _ = 
-  define_action "makefile_mode.compile" (Compil.compile Compil.c_find_error);
-  define_action "makefile_mode.color_buffer" 
+  Action.define_action "makefile_mode.compile" (Compil.compile Compil.c_find_error);
+  Action.define_action "makefile_mode.color_buffer" 
     (fun frame -> makefile_color frame.frm_buffer);
-  define_action "makefile_mode" makefile_mode;
+  Action.define_action "makefile_mode" makefile_mode;
   ()
 (*e: toplevel Makefile_mode._2 *)
 
@@ -111,7 +111,7 @@ let _ =
   let map = mode.maj_map in
   !!local_map |> List.iter (fun (keys, action) ->
       try
-        Keymap.add_binding map keys (execute_action action)
+        Keymap.add_binding map keys (Action.execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
@@ -119,7 +119,7 @@ let _ =
   );
   !!interactives_map |> List.iter (fun (name, action) ->
       try
-        Keymap.add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (Action.execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
@@ -132,9 +132,9 @@ let _ =
 (*s: toplevel Makefile_mode._4 *)
 let _ = 
   (* Keymap.add_prefix mode.maj_map [c_c];   *)
-  Efuns.add_start_hook (fun () ->
-    let alist = get_global Ebuffer.modes_alist in
-    set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
+  Hook.add_start_hook (fun () ->
+    let alist = Var.get_global Ebuffer.modes_alist in
+    Var.set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
     
     Simple.add_option_parameter target_color;
     Simple.add_option_parameter rules_color;

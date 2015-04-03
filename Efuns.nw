@@ -1026,7 +1026,7 @@ let location () =
 @
 
 <<[[Ebuffer.create()]] adjust location global fields>>=
-Hashtbl.add (Efuns.location()).loc_buffers name buf;
+Hashtbl.add (Globals.location()).loc_buffers name buf;
 @
 
 
@@ -1123,7 +1123,7 @@ let define_buffer_action action_name action_fun =
 <<sanity check action defined twice>>=
 (try 
     Hashtbl.find actions action_name |> ignore;
-    error "action \"%s\" defined twice" action_name;
+    Globals.error "action \"%s\" defined twice" action_name;
  with _ -> ()
 );
 @
@@ -1136,7 +1136,7 @@ let define_buffer_action action_name action_fun =
 let get_action action =
   try Hashtbl.find actions action 
   with Not_found ->
-    error "Could not find action %s. Forgot define_action()?" action;
+    Globals.error "Could not find action %s. Forgot define_action()?" action;
     BufferAction (fun _ -> ())
 @
 
@@ -1159,7 +1159,7 @@ let execute_buffer_action action buf =
   match (get_action action) with
     BufferAction f -> f buf
   | FrameAction _f -> 
-      error "Can't apply action %s on buffer" action
+      Globals.error "Can't apply action %s on buffer" action
 @
 
 
@@ -1393,7 +1393,7 @@ mutable buf_map_partial : bool;
 % but always true no?
 <<[[Ebuffer.get_binding()]] if partial map>>=
 if buf.buf_map_partial then
-  (let b = Keymap.get_binding (Efuns.location()).loc_map keylist in
+  (let b = Keymap.get_binding (Globals.location()).loc_map keylist in
     match b with
       Prefix map -> binding := b;
     | Function f -> binding := b; raise Exit
@@ -1408,7 +1408,7 @@ if buf.buf_map_partial then
 
 <<function Keymap.add_global_key>>=
 let add_global_key = fun prefix string action ->
-  interactive (Efuns.location()).loc_map prefix string action
+  interactive (Globals.location()).loc_map prefix string action
 @
 <<function Keymap.add_local_key>>=
 let add_local_key buf = 
@@ -1637,7 +1637,7 @@ loc_vars : Local.vars;
 
 <<function Efuns.set_global>>=
 let set_global var value = 
-  Local.set (location()).loc_vars var value
+  Local.set (Globals.location()).loc_vars var value
 @
 <<function Efuns.set_local>>=
 let set_local buf var value = 
@@ -1714,14 +1714,14 @@ define_action "describe_variable"  Complexe.describe_variable;
 let exec_hooks hooks arg =
   hooks |> List.iter (fun f ->
     try f arg 
-    with exn -> error "exn in hook: %s" (Common.exn_to_s exn)
+    with exn -> Globals.error "exn in hook: %s" (Common.exn_to_s exn)
   )
 @
 
 <<function Efuns.add_hook>>=
 let add_hook hook_var hook =
-  let tail = try get_global hook_var with _ -> [] in
-  set_global hook_var (hook :: tail)
+  let tail = try Var.get_global hook_var with _ -> [] in
+  Var.set_global hook_var (hook :: tail)
 @
 
 
@@ -1733,8 +1733,8 @@ let create_buf_hook = Local.create_abstr "create_buf_hook"
 %less: remame create_buffer_hooks? more consistent?
 % of use of this hook var
 <<[[Ebuffer.create()]] run hooks>>=
-let hooks = try get_global create_buf_hook with Not_found -> [] in
-exec_hooks hooks buf;
+let hooks = try Var.get_global create_buf_hook with Not_found -> [] in
+Hook.exec_hooks hooks buf;
 @
 % will be set to set_buffer_mode, which use the alist to automatically
 % set the major mode!
@@ -1777,8 +1777,9 @@ define_action "check_file" Complexe.check_file;
 <<function Ebuffer.exec_named_buf_hooks>>=
 let exec_named_buf_hooks hooks frame =
   hooks |> List.rev |> List.iter (fun action ->
-    try execute_buffer_action action frame 
-    with exn -> error "exec_named_buf_hooks: exn = %s" (Common.exn_to_s exn)
+    try Action.execute_buffer_action action frame 
+    with exn -> Globals.error "exec_named_buf_hooks: exn = %s" 
+                    (Common.exn_to_s exn)
   )
 @
 
@@ -1786,7 +1787,7 @@ let exec_named_buf_hooks hooks frame =
 <<function Ebuffer.exec_named_buf_hooks_with_abort>>=
 let exec_named_buf_hooks_with_abort hooks frame =
   hooks |> List.rev |> List.iter (fun action ->
-    execute_buffer_action action frame
+    Action.execute_buffer_action action frame
  )
 @
 % no try here
@@ -2053,7 +2054,7 @@ Graphics_efuns.init !initial_files;
 %less: could just take ()
 
 
-<<function Window.xterm>>=
+<<function Efuns.backend>>=
 let backend top_window =
   match top_window.graphics with
     None -> raise Not_found
@@ -2143,7 +2144,7 @@ let create () =
 <<function Ebuffer.default>>=
 let default name =
   try
-    Hashtbl.find (Efuns.location()).loc_buffers name
+    Hashtbl.find (Globals.location()).loc_buffers name
   with Not_found ->
     let str = 
       if name = "*help*" 
@@ -2985,7 +2986,7 @@ mutable loc_colors_n : int;
 % have side effect of setting the color if it's not there before!
 <<function Window.get_color>>=
 let get_color color_name =
-  let location = Efuns.location() in
+  let location = Globals.location() in
   try
     Hashtbl.find location.loc_colors color_name
   with Not_found ->
@@ -3292,7 +3293,7 @@ mutable loc_fonts_n : int;
 % similar to get_color, have the side effect of "allocating" a new font
 <<function Window.get_font>>=
 let get_font font_name =
-  let location = Efuns.location() in
+  let location = Globals.location() in
   try
     Hashtbl.find location.loc_fonts font_name
   with Not_found ->
@@ -4132,7 +4133,7 @@ let display top_window frame =
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
-  let graphic = Window.backend top_window in
+  let graphic = Efuns.backend top_window in
 
   <<[[Frame.display()]] if buf sync goto end of text>>
   if
@@ -5306,7 +5307,7 @@ let create_bindings () =
 <<function Keymap.all_bindings>>=
 let all_bindings () =
   let s = ref "Default bindings:" in
-  (Efuns.location()).loc_map.interactives |> List.iter(fun (name,(_,binding)) ->
+  (Globals.location()).loc_map.interactives |> List.iter(fun (name,(_,binding)) ->
     match binding with
     | None -> ()
     | Some key_list ->
@@ -7110,7 +7111,8 @@ let get_name filename =
   in
   try
     while true do
-      let _ = Hashtbl.find (Efuns.location()).loc_buffers (compute_name ()) in 
+      let _ = Hashtbl.find (Globals.location()).loc_buffers (compute_name ()) 
+      in 
       incr i
     done; 
     assert false
@@ -7208,7 +7210,7 @@ let kill_buffer frame =
 
 <<function Ebuffer.kill>>=
 let kill buf =
-  let location = Efuns.location() in
+  let location = Globals.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
   buf.buf_filename |> Common.do_option (fun filename ->
     Hashtbl.remove location.loc_files filename
@@ -7584,13 +7586,13 @@ let new_major_mode name hooks = {
 % set_buffer_mode -> <>
 <<function Ebuffer.set_major_mode>>=
 let set_major_mode buf mode =
-  if !debug
+  if !Globals.debug
   then pr2 (spf "setting %s major mode" mode.maj_name);
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
   mode.maj_hooks |> List.iter (fun f -> 
     try f buf 
-    with exn -> error "set_major_mode: exn = %s" (Common.exn_to_s exn)
+    with exn -> Globals.error "set_major_mode: exn = %s" (Common.exn_to_s exn)
   )
 @
 
@@ -7640,12 +7642,12 @@ let set_buffer_mode buf =
            then Str.matched_group 1 buf.buf_name 
            else buf.buf_name 
          with exn -> 
-           error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
+           Globals.error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
            buf.buf_name
          )
     | Some file_name -> file_name 
   in 
-  let modes_alist = Efuns.get_var buf modes_alist in
+  let modes_alist = Var.get_var buf modes_alist in
   (* must use != here, because modes_alist contain functional values *)
   if (!modes_old != modes_alist) then begin
     regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
@@ -7663,7 +7665,7 @@ let set_buffer_mode buf =
         with 
         | Exit -> raise Exit
         | exn -> 
-            error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
+            Globals.error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
             raise Exit
     ) 
   with Exit -> ()
@@ -7680,9 +7682,9 @@ let regexp_alist = ref []
 
 <<toplevel Ebuffer._1>>=
 let _ =
-  Efuns.add_start_hook (fun () ->
-    set_global create_buf_hook [set_buffer_mode];
-    set_global modes_alist []
+  Hook.add_start_hook (fun () ->
+    Var.set_global create_buf_hook [set_buffer_mode];
+    Var.set_global modes_alist []
   )
 @
 % important hook!!
@@ -7798,7 +7800,7 @@ let set_minor_mode buf mode =
   buf.buf_modified <- buf.buf_modified + 1;
   mode.min_hooks |> List.iter (fun f -> 
     try f buf 
-    with exn -> error "set_minor_mode: exn = %s" (Common.exn_to_s exn)
+    with exn -> Globals.error "set_minor_mode: exn = %s" (Common.exn_to_s exn)
   ) 
 @
 
@@ -8907,7 +8909,7 @@ let error f x =
 let message buf m =
   let name = "*Messages*" in
   try
-    let buf = Hashtbl.find (Efuns.location()).loc_buffers name in
+    let buf = Hashtbl.find (Globals.location()).loc_buffers name in
     Text.insert_at_end buf.buf_text (m^"\n");
   with Not_found ->
     create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore

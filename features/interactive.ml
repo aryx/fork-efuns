@@ -28,7 +28,7 @@ let meta_hist = ref []
 let buf_interactives buf =
   let interactives = 
     buf.buf_major_mode.maj_map.interactives @
-    (Efuns.location()).loc_map.interactives 
+    (Globals.location()).loc_map.interactives 
   in
   List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
    interactives buf.buf_minor_modes 

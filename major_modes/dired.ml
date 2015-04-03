@@ -34,7 +34,7 @@ let file_reg = Str.regexp ".* \\([^ ]+\\)$"
 (*s: function Dired.get_file_line *)
 let get_file_line frame =
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
-    (Efuns.location()).loc_dirname <- Filename.dirname filename;
+    (Globals.location()).loc_dirname <- Filename.dirname filename;
   );
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -212,12 +212,12 @@ let _ =
     ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
     ];
   
-  Efuns.add_start_hook (fun () ->
-    Keymap.add_interactive ((Efuns.location()).loc_map) "dired_mode" 
+  Hook.add_start_hook (fun () ->
+    Keymap.add_interactive ((Globals.location()).loc_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
-    Efuns.set_global Ebuffer.modes_alist 
-      ((".*/$",mode) :: (Efuns.get_global Ebuffer.modes_alist));
+    Var.set_global Ebuffer.modes_alist 
+      ((".*/$",mode) :: (Var.get_global Ebuffer.modes_alist));
   )   
 (*e: toplevel Dired._1 *)
 (*e: major_modes/dired.ml *)

@@ -162,13 +162,13 @@ type mode =
 let tex_color_buffer buf =
 
   let keyword_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.keyword_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.keyword_color) 1 0 false in
   let string_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.string_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.string_color) 1 0 false in
   let comment_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.comment_color) 1 0 false in
   let gray_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.module_color) 1 0 false in
 
   let text = buf.buf_text in
   let start_point = Text.new_point text in
@@ -365,23 +365,23 @@ let install buf =
   for i = 0 to String.length syntax - 1 do
     buf.buf_syntax_table.(Char.code syntax.[i]) <- true;
   done;
-  let abbrevs = try get_local buf Abbrevs.abbrev_table
+  let abbrevs = try Var.get_local buf Abbrevs.abbrev_table
     with _ -> 
         let abbrevs = Hashtbl.create 11 in
-        set_local buf Abbrevs.abbrev_table abbrevs;
+        Var.set_local buf Abbrevs.abbrev_table abbrevs;
         abbrevs
   in
   Utils.hash_add_assoc abbrevs !!abbreviations;
   Simple.install_structures buf !!structures; 
   List.iter (fun action ->
-      try execute_buffer_action action buf with _ -> ()
+      try Action.execute_buffer_action action buf with _ -> ()
   ) !!tex_hooks;
   ()
   
 let mode = Ebuffer.new_major_mode"TeX" [install]
 
 let comment_string = "%"
-let _ = set_major_var mode Simple.line_comment "%"
+let _ = Var.set_major_var mode Simple.line_comment "%"
   
 let comment_region frame =
   let buf = frame.frm_buffer in
@@ -549,26 +549,26 @@ let end_env frame =
   
 
 let setup_actions () =  
-  define_action "tex_mode" tex_mode;
+  Action.define_action "tex_mode" tex_mode;
 (*  define_action "tex_mode.browse" browse; *)
-  define_action "tex_mode.color_buffer" (fun frame -> 
+  Action.define_action "tex_mode.color_buffer" (fun frame -> 
       tex_color_buffer frame.frm_buffer);
-  define_action "tex_mode.compile" (Compil.compile tex_find_error);
-  define_action "tex_mode.comment_region" comment_region;
-  define_action "tex_mode.uncomment_region" uncomment_region;
-  define_action "tex_mode.char_expand_abbrev" (fun frame ->
+  Action.define_action "tex_mode.compile" (Compil.compile tex_find_error);
+  Action.define_action "tex_mode.comment_region" comment_region;
+  Action.define_action "tex_mode.uncomment_region" uncomment_region;
+  Action.define_action "tex_mode.char_expand_abbrev" (fun frame ->
       Abbrevs.expand_sabbrev frame; Simple.self_insert_command frame);
-  define_action "tex_mode.insert_return" insert_return_in_tex;
-  define_action "tex_mode.load_input_file" load_input_file;
-  define_action "tex_mode.load_next_input_file" load_next_input_file;
-  define_action "tex_mode.load_prev_input_file" load_prev_input_file;
-  define_action "tex_mode.set_main_file" set_main_file;
-  define_action "tex_mode.to_main_file" to_main_file;
-  define_action "tex_mode.find_matching_paren" (fun frame ->
+  Action.define_action "tex_mode.insert_return" insert_return_in_tex;
+  Action.define_action "tex_mode.load_input_file" load_input_file;
+  Action.define_action "tex_mode.load_next_input_file" load_next_input_file;
+  Action.define_action "tex_mode.load_prev_input_file" load_prev_input_file;
+  Action.define_action "tex_mode.set_main_file" set_main_file;
+  Action.define_action "tex_mode.to_main_file" to_main_file;
+  Action.define_action "tex_mode.find_matching_paren" (fun frame ->
       Simple.self_insert_command frame;
       Simple.highlight_paren frame);
-  define_action "tex_mode.end_env" end_env;
-  define_action "tex_mode.begin_env" begin_env;
+  Action.define_action "tex_mode.end_env" end_env;
+  Action.define_action "tex_mode.begin_env" begin_env;
   ()  
     
 let local_map = define_option ["tex_mode"; "local_map"] ""
@@ -616,7 +616,7 @@ let setup_maps () =
   (*  Keymap.add_prefix map [c_c]; *)
    !!local_map |> List.iter (fun (keys, action) ->
       try
-        let f = execute_action action in
+        let f = Action.execute_action action in
         Keymap.add_binding map keys f;
         Keymap.add_interactive map action f;
       with e ->
@@ -626,7 +626,7 @@ let setup_maps () =
   );
   !!interactives_map |> List.iter (fun (name, action) ->
       try
-        Keymap.add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (Action.execute_action action)
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;          
@@ -639,9 +639,9 @@ let mode_regexp = define_option ["tex_mode"; "mode_regexp"] ""
 
 
 let _ =  
-  Efuns.add_start_hook (fun () ->
-    let alist = get_global Ebuffer.modes_alist in
-    set_global Ebuffer.modes_alist 
+  Hook.add_start_hook (fun () ->
+    let alist = Var.get_global Ebuffer.modes_alist in
+    Var.set_global Ebuffer.modes_alist 
       ((List.map (fun s -> s, mode) !!mode_regexp) @ alist);
     setup_actions ();
     setup_maps ();

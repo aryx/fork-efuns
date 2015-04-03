@@ -489,7 +489,7 @@ let ocaml_path = define_option ["ocaml_mode"; "ocaml_path"] ""
   
 let setup_ocaml_path () =
   if !!ocaml_path = [] 
-  then ocaml_path =:= !!Efuns.load_path
+  then ocaml_path =:= !!Globals.load_path
 
 (***********************************************************************)
 (* Colors *)
@@ -497,17 +497,17 @@ let setup_ocaml_path () =
 
 let ocaml_color_region buf start_point end_point =
   let keyword_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.keyword_color) 1 
-                               (Window.get_font !!(*keyword_*)font) false in
+    Text.make_attr (Attr.get_color !!Pl_colors.keyword_color) 1 
+                               (Attr.get_font !!(*keyword_*)Globals.font) false in
   let string_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.string_color) 1 
-                              (Window.get_font !!(*string_*)font)    false in
+    Text.make_attr (Attr.get_color !!Pl_colors.string_color) 1 
+                              (Attr.get_font !!(*string_*)Globals.font)    false in
   let comment_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 
-                               (Window.get_font !!(*comment_*)font) false in
+    Text.make_attr (Attr.get_color !!Pl_colors.comment_color) 1 
+                               (Attr.get_font !!(*comment_*)Globals.font) false in
   let gray_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 
-                            (Window.get_font !!(*upper_*)font) false in
+    Text.make_attr (Attr.get_color !!Pl_colors.module_color) 1 
+                            (Attr.get_font !!(*upper_*)Globals.font) false in
   let text = buf.buf_text in
   let curseur = Text.new_point text in
   let lexbuf = lexing text start_point end_point in
@@ -553,8 +553,8 @@ let ocaml_color_buffer buf =
   let start_point = Text.new_point text in
   let end_point = Text.new_point text in
   Text.set_position text end_point (Text.size text);
-  let hooks = try get_global Pl_colors.color_buf_hook with Not_found -> [] in
-  exec_hooks hooks buf;
+  let hooks = try Var.get_global Pl_colors.color_buf_hook with Not_found ->[] in
+  Hook.exec_hooks hooks buf;
   ocaml_color_region buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point
@@ -1323,13 +1323,13 @@ let install buf =
   done;
 
   let abbrevs = Hashtbl.create 11 in
-  set_local buf Abbrevs.abbrev_table abbrevs;
+  Var.set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs !!abbreviations;
 
   Simple.install_structures buf !!structures;
 
   !!ocaml_hooks |> List.iter (fun action ->
-      try execute_buffer_action action buf with _ -> ()
+      try Action.execute_buffer_action action buf with _ -> ()
   )
 
 
@@ -1375,17 +1375,17 @@ let setup () =
   setup_abbrevs ();
   setup_structures ();
 
-  define_action "ocaml_mode" ocaml_mode;
-  define_action "ocaml_mode.compile" (Compil.compile ocaml_find_error);
-  define_action "ocaml_mode.color_buffer" 
+  Action.define_action "ocaml_mode" ocaml_mode;
+  Action.define_action "ocaml_mode.compile" (Compil.compile ocaml_find_error);
+  Action.define_action "ocaml_mode.color_buffer" 
     (fun frame -> ocaml_color_buffer frame.frm_buffer);
-  define_action "ocaml_mode.indent_buffer" indent_buffer;
+  Action.define_action "ocaml_mode.indent_buffer" indent_buffer;
 (*  define_action "ocaml_mode.eval_buffer" eval_buffer; *)
-  define_action "ocaml_mode.indent_phrase" indent_phrase;
-  define_action "ocaml_mode.indent_line" indent_current_line;
-  define_action "ocaml_mode.char_expand_abbrev" (fun frame ->
+  Action.define_action "ocaml_mode.indent_phrase" indent_phrase;
+  Action.define_action "ocaml_mode.indent_line" indent_current_line;
+  Action.define_action "ocaml_mode.char_expand_abbrev" (fun frame ->
       Abbrevs.expand_sabbrev frame; Simple.self_insert_command frame);
-  define_action "ocaml_mode.return_expand_abbrev"
+  Action.define_action "ocaml_mode.return_expand_abbrev"
     (fun frame -> Abbrevs.expand_sabbrev frame; insert_and_return frame); 
 
   setup_maps ();
@@ -1393,7 +1393,7 @@ let setup () =
   let map = mode.maj_map in
   !!local_map |> List.iter (fun (keys, action) ->
       try
-        let f = execute_action action in
+        let f = Action.execute_action action in
         Keymap.add_binding map keys f;
         Keymap.add_interactive map action f;
       with e ->
@@ -1402,10 +1402,10 @@ let setup () =
   );
   !!interactives_map |> List.iter (fun (name, action) ->
       try
-        Keymap.add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (Action.execute_action action)
       with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;          
+        Log.printf "Error for action %s" action;
+        Log.exn "%s\n" e;
   );
   ()
 
@@ -1415,9 +1415,9 @@ let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
     [(*".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)"*)]
   
 let _ =  
-  Efuns.add_start_hook (fun () ->
-    let alist = get_global Ebuffer.modes_alist in
-    set_global Ebuffer.modes_alist 
+  Hook.add_start_hook (fun () ->
+    let alist = Var.get_global Ebuffer.modes_alist in
+    Var.set_global Ebuffer.modes_alist 
       ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
     
     Simple.add_option_parameter ocaml_path;
@@ -1431,11 +1431,11 @@ let _ =
 let minor_mode = Ebuffer.new_minor_mode "ocaml" []
 
 let _ =  
-  Efuns.add_start_hook (fun () ->
+  Hook.add_start_hook (fun () ->
   Keymap.add_binding minor_mode.min_map 
-      [c_c; ControlMap, Char.code 'c'] (execute_action "ocaml_mode.compile")
+   [c_c; ControlMap, Char.code 'c'] (Action.execute_action "ocaml_mode.compile")
    |> ignore;
-  define_action "ocaml_minor_mode" 
+  Action.define_action "ocaml_minor_mode" 
     (fun frame -> 
       let buf = frame.frm_buffer in
       if Ebuffer.modep buf minor_mode 

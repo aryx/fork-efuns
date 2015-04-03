@@ -15,7 +15,7 @@ open Efuns
 
 (*s: function Simple.buffer_list *)
 let buffer_list frame =
-  (Efuns.location()).loc_buffers |> Common.hash_to_list |> List.map fst
+  (Globals.location()).loc_buffers |> Common.hash_to_list |> List.map fst
 (*e: function Simple.buffer_list *)
 
 
@@ -51,7 +51,7 @@ let select_buffer frame request default action =
 
 (*s: function Simple.next_buffer *)
 let next_buffer buf =
-  let buf_list = Utils.list_of_hash (Efuns.location()).loc_buffers in
+  let buf_list = Utils.list_of_hash (Globals.location()).loc_buffers in
   let rec iter list =
     match list with
       [] -> raise Not_found 

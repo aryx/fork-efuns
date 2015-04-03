@@ -145,7 +145,7 @@ let expand_sabbrev frame =
     let point = frame.frm_point in
     let buf = frame.frm_buffer in
     let text = buf.buf_text in
-    let abbrevs = get_local buf abbrev_table in
+    let abbrevs = Var.get_local buf abbrev_table in
     let mark = Text.dup_point text point in
     Simple.to_begin_of_word text point buf.buf_syntax_table;
     let str = Text.region text point mark in
@@ -163,11 +163,11 @@ let expand_sabbrev frame =
 
 (*s: toplevel Abbrevs._1 *)
 let _ =
-  define_action "char_expand_abbrev" (fun frame ->
+  Action.define_action "char_expand_abbrev" (fun frame ->
       expand_sabbrev frame; 
       Simple.self_insert_command frame
   );
-  define_action "dabbrev_expand" dabbrev_expand;
+  Action.define_action "dabbrev_expand" dabbrev_expand;
   ()
 (*e: toplevel Abbrevs._1 *)
   

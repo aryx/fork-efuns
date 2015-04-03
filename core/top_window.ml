@@ -18,7 +18,7 @@ open Efuns
   
 (*s: function Top_window.message *)
 let message top_window msg =
-  let graphic = Window.backend top_window in
+  let graphic = Efuns.backend top_window in
   let len = String.length msg in
 
   graphic.Xdraw.draw_string 0 (top_window.top_height - 1)
@@ -38,7 +38,7 @@ let message top_window msg =
 let clear_message top_window =
   match top_window.top_mini_buffers with
     [] -> 
-      let graphic = Window.backend top_window in
+      let graphic = Efuns.backend top_window in
       graphic.Xdraw.clear_eol 
         0 (top_window.top_height - 1) 
         top_window.top_width; 
@@ -53,10 +53,10 @@ let try_map frame key =
       frame.frm_prefix <- [];
       (* dispatch the action *)
       (*s: [[Top_window.try_map()]] if debug, print action name *)
-      if !Efuns.debug
+      if !Globals.debug
       then begin
         let found = ref false in
-        Efuns.actions |> Hashtbl.iter  (fun k v ->
+        Action.actions |> Hashtbl.iter  (fun k v ->
           match v with
           (* subtle: this will work only if f2 was not a closure *)
           | FrameAction f2 when f == f2 ->
@@ -83,7 +83,7 @@ let try_map frame key =
 let set_cursor_on top_window frame = 
   Frame.set_cursor frame;
   if frame.frm_cursor.[0] <> '\000' then
-    let graphic = Window.backend top_window in
+    let graphic = Efuns.backend top_window in
     graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
       (frame.frm_ypos + frame.frm_cursor_y) 
@@ -93,7 +93,7 @@ let set_cursor_on top_window frame =
 (*s: function Top_window.set_cursor_off *)
 let set_cursor_off top_window frame =
   if frame.frm_cursor.[0] <> '\000' then
-    let graphic = Window.backend top_window in
+    let graphic = Efuns.backend top_window in
     graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x) 
       (frame.frm_ypos + frame.frm_cursor_y) 
@@ -127,7 +127,7 @@ let cursor_off top_window =
 
 (*s: function Top_window.update_display *)
 let update_display () =
-  (Efuns.location()).top_windows |> List.iter (fun top_window ->
+  (Globals.location()).top_windows |> List.iter (fun top_window ->
      top_window.window |> Window.iter (fun frm -> 
        Frame.display top_window frm
      );
@@ -136,14 +136,14 @@ let update_display () =
       | frm :: _ -> Frame.display top_window frm
      );
      cursor_on top_window;
-     let graphic = Window.backend top_window in
+     let graphic = Efuns.backend top_window in
      graphic.Xdraw.update_display();
   ) 
 (*e: function Top_window.update_display *)
 
 (*s: function Top_window.clean_display *)
 let clean_display () =
-  (Efuns.location()).top_windows |> List.iter cursor_off 
+  (Globals.location()).top_windows |> List.iter cursor_off 
 (*e: function Top_window.clean_display *)
 
 (*s: function Top_window.resize_window *)
@@ -243,7 +243,7 @@ let handle_key top_window modifiers keysym =
   clean_display (); (* set cursor off *)
   clear_message top_window;
 
-  exec_hooks (try Efuns.get_var buf handle_key_start_hook with _ -> []) frame;
+  Hook.exec_hooks (try Var.get_var buf handle_key_start_hook with _ ->[]) frame;
 
   let mod_ = 
     (*s: [[Top_window.handle_key()]] compute mod *)
@@ -270,14 +270,14 @@ let handle_key top_window modifiers keysym =
         frame.frm_prefix <- [];
     | Failure str -> message top_window str
     | e -> 
-        if !debug
+        if !Globals.debug
         then pr2 (spf "Uncaught exception %s" (Utils.printexn e));
         message top_window 
           (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
     (*e: [[Top_window.handle_key()]] handle exception of try_map *)
   end;
 
-  exec_hooks (try get_global handle_key_end_hook with _ -> []) ();
+  Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();
 
   update_display ()
 (*e: function Top_window.handle_key *)
@@ -288,21 +288,21 @@ let handle_key top_window modifiers keysym =
   
 (*s: function Top_window.wrap *)
 let wrap top_window f () = 
-  let location = Efuns.location() in
-  Mutex.lock location.loc_mutex;  
+  let loc = Globals.location() in
+  Mutex.lock loc.loc_mutex;  
   clean_display ();    
   clear_message top_window;
   keypressed := XK.xk_Menu;
   let frame = top_window.top_active_frame in
-  exec_hooks (try get_global handle_key_start_hook with _ -> []) frame;    
+  Hook.exec_hooks (try Var.get_global handle_key_start_hook with _ ->[]) frame;
   begin
     try f top_window 
     with e -> message top_window (Printf.sprintf "Uncaught exception %s" 
                                     (Utils.printexn e))
   end;
-  exec_hooks (try get_global handle_key_end_hook with _ -> []) ();    
+  Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();    
   update_display ();
-  Mutex.unlock location.loc_mutex
+  Mutex.unlock loc.loc_mutex
 (*e: function Top_window.wrap *)
 
 (*s: function Top_window.wrap_item *)
@@ -312,7 +312,7 @@ let wrap_item top_window (n,f) =
         
 (*s: function Top_window.handler *)
 let handler top_window event =
-  Efuns.with_lock (fun () ->
+  Globals.with_lock (fun () ->
     match event with
     (*s: [[Top_window.handler()]] match event cases *)
     | Xtypes.XTKeyPress (modifiers, _s, keysym) ->
@@ -391,19 +391,19 @@ let help_menu = ref ([| |]: (string * action) array)
   
 (*s: function Top_window.create *)
 let create () =
-  let location = Efuns.location() in
+  let loc = Globals.location() in
   let buf = 
     Ebuffer.default "*help*" in
   (* keep one line for the minibuffer, hence the -1 *)
   let window = 
-    Window.create_at_top  0 0 location.loc_width (location.loc_height - 1) in
+    Window.create_at_top  0 0 loc.loc_width (loc.loc_height - 1) in
   let frame = 
     Frame.create_without_top window None buf in
   let top_window =
     { 
       top_name = "window";
-      top_width = location.loc_width;
-      top_height = location.loc_height;
+      top_width = loc.loc_width;
+      top_height = loc.loc_height;
       window = window;
       top_active_frame = frame;
 
@@ -416,7 +416,7 @@ let create () =
 
   (* adjust what Window.create_at_top could not do *)
   frame.frm_window.win_up <- TopWindow top_window;
-  location.top_windows <- top_window :: location.top_windows;
+  loc.top_windows <- top_window :: loc.top_windows;
 
   top_window
 (*e: function Top_window.create *)
@@ -426,13 +426,13 @@ let delete_window frame =
   failwith "Top_window:delete_window: TODO"
 (*
   let top_window = Window.top frame.frm_window in
-  let location = Efuns.location() in
-  if List.length location.top_windows > 1 then
+  let loc = Efuns.loc() in
+  if List.length loc.top_windows > 1 then
     let xterm = Window.xterm top_window in
     top_window.top_appli#destroy;
     WX_xterm.destroy_window xterm;
     Frame.kill_all top_window.window;
-    location.top_windows <- Utils.list_remove location.top_windows
+    loc.top_windows <- Utils.list_remove loc.top_windows
       top_window
 *)
 (*e: function Top_window.delete_window *)
@@ -461,4 +461,5 @@ let check_abort frame =
   else false
 *)
 (*e: function Top_window.check_abort *)
+
 (*e: graphics/top_window.ml *)

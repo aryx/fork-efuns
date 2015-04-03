@@ -201,7 +201,7 @@ let rec goal_column frame =
   if frame.frm_last_action == forward_line ||
      frame.frm_last_action == backward_line
   then 
-    try Efuns.get_local frame.frm_buffer temporary_goal_column
+    try Var.get_local frame.frm_buffer temporary_goal_column
     with Not_found -> cur_col
   else cur_col
 (*e: function Simple.goal_column *)
@@ -210,7 +210,7 @@ let rec goal_column frame =
 and move_to_goal_column frame goal_col =
   move_backward frame (begin_to_point frame) |> ignore;
   move_forward frame (min goal_col (point_to_end frame)) |> ignore;
-  Efuns.set_local frame.frm_buffer temporary_goal_column goal_col
+  Var.set_local frame.frm_buffer temporary_goal_column goal_col
 (*e: function Simple.move_to_goal_column *)
 
 (*s: function Simple.forward_line *)
@@ -1152,9 +1152,9 @@ let add_parameter (name : string) (input : string -> 'a)
   let (input : string -> Obj.t) = Obj.magic input in
   let (print : Obj.t -> string) = Obj.magic print in
   let (param : Obj.t option_record) = Obj.magic param in
-  set_global parameters_var (
+  Var.set_global parameters_var (
     (name, (input, print, param)) :: 
-    (try get_global parameters_var with _ -> []))
+    (try Var.get_global parameters_var with _ -> []))
 (*e: function Simple.add_parameter *)
 
 (*s: function Simple.add_option_parameter *)
@@ -1175,7 +1175,7 @@ let all_params = ref None
 (*s: function Simple.all_parameters *)
 let all_parameters frame _ =
   let parameters = 
-    try get_global parameters_var with _ -> []
+    try Var.get_global parameters_var with _ -> []
   in
   match !all_params with
     Some (f,l) when f == parameters -> l
@@ -1268,19 +1268,19 @@ let binding_option = tuple2_option (smalllist_option key_option, string_option)
   
 (*s: toplevel Simple._1 *)
 let _ =
-  define_buffer_action "overwrite_mode" (fun buf -> 
+  Action.define_buffer_action "overwrite_mode" (fun buf -> 
       let mode = overwrite_mode in
       if Ebuffer.modep buf mode 
       then Ebuffer.del_minor_mode buf mode
       else Ebuffer.set_minor_mode buf mode
   );
 
-  Efuns.add_start_hook (fun () ->
-      let location = Efuns.location () in
-      let gmap = location.loc_map in
+  Hook.add_start_hook (fun () ->
+      let loc = Globals.location () in
+      let gmap = loc.loc_map in
 
       (* unhightlight region *)
-      Efuns.add_hook Top_window.handle_key_start_hook unhightlight;      
+      Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
 
       (* standard chars *)
       for key = 32 to 127 do
@@ -1315,11 +1315,11 @@ let _ =
       Keymap.add_binding gmap [NormalMap, XK.xk_Pointer_Drag1]
         mouse_drag_region;
 
-      Keymap.add_interactive (location.loc_map) "fondamental_mode" 
+      Keymap.add_interactive (loc.loc_map) "fondamental_mode" 
         (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
             Ebuffer.fondamental_mode);
 
-      set_global line_comment ""
+      Var.set_global line_comment ""
   )
 (*e: toplevel Simple._1 *)
   

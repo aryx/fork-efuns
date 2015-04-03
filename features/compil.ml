@@ -71,8 +71,8 @@ let next_error top_frame =
       if frame.frm_killed 
       then Frame.unkill (Multi_frames.cut_frame top_frame) frame;
       let buf = frame.frm_buffer in
-      let find_error = try
-          get_local buf find_error
+      let find_error = 
+        try Var.get_local buf find_error
         with Failure _ -> !default_error
       in
       let text = buf.buf_text in
@@ -163,7 +163,7 @@ let compile find_error_fun frame =
       let buf = comp_frame.frm_buffer in
       let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir);
-      set_local buf find_error find_error_fun
+      Var.set_local buf find_error find_error_fun
   )
 (*e: function Compil.compile *)
 
@@ -219,7 +219,7 @@ let grep frame =
       let buf = comp_frame.frm_buffer in
       let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir);
-      set_local buf find_error c_find_error
+      Var.set_local buf find_error c_find_error
   )
 (*e: function Compil.grep *)
 (*e: features/compil.ml *)

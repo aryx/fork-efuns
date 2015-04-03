@@ -135,7 +135,7 @@ let extensions = [
 let colorize buf = 
   Simple.color buf 
     (Str.regexp ("[a-zA-Z0-9_\\-]*/")) false
-    (Text.make_attr (Window.get_color dir_color) 1 0 false);
+    (Text.make_attr (Attr.get_color dir_color) 1 0 false);
 
   (* a bit brute force, but seems fast enough *)
   extensions |> List.iter (fun (exts, color) ->
@@ -143,16 +143,16 @@ let colorize buf =
       | E ext ->
           Simple.color buf 
             (Str.regexp (spf "\\b[a-zA-Z0-9_-]*\\.%s\\b" ext)) false
-            (Text.make_attr (Window.get_color color) 1 0 false);
+            (Text.make_attr (Attr.get_color color) 1 0 false);
       | Reg re ->
           Simple.color buf 
             (Str.regexp (spf "\\b[a-zA-Z0-9_-]*%s[a-zA-Z0-9_-]*\\b" re)) false
-            (Text.make_attr (Window.get_color color) 1 0 false);
+            (Text.make_attr (Attr.get_color color) 1 0 false);
     )
   )
 
 
 let _ = 
-  Efuns.add_start_hook (fun () ->
-    Efuns.add_hook Select.completions_buf_hook colorize;
+  Hook.add_start_hook (fun () ->
+    Hook.add_hook Select.completions_buf_hook colorize;
   )

@@ -392,15 +392,15 @@ let c_find_error text error_point =
 
 let c_color_region buf start_point end_point =
   let keyword_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.keyword_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.keyword_color) 1 0 false in
   let string_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.string_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.string_color) 1 0 false in
   let comment_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.comment_color) 1 0 false in
   let _gray_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.module_color) 1 0 false in
   let preprocessor_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.preprocessor_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.preprocessor_color) 1 0 false in
 
   let text = buf.buf_text in
   let curseur = Text.new_point text in
@@ -806,10 +806,10 @@ let install buf =
 
   let abbrevs =
     try
-      get_local (buf) Abbrevs.abbrev_table
+      Var.get_local (buf) Abbrevs.abbrev_table
     with Failure _ -> 
       let abbrevs = Hashtbl.create 11 in
-      set_local buf Abbrevs.abbrev_table abbrevs;
+      Var.set_local buf Abbrevs.abbrev_table abbrevs;
       abbrevs
   in
   Utils.hash_add_assoc abbrevs abbreviations;
@@ -837,13 +837,13 @@ let interactives_map = define_option ["c_mode"; "interactives_map"] ""
 
 
 let setup_actions () = 
-  define_action "c_mode" c_mode;
-  define_action "c_mode.color_buffer"
+  Action.define_action "c_mode" c_mode;
+  Action.define_action "c_mode.color_buffer"
     (fun frame -> c_color_buffer frame.frm_buffer);
-  define_action "c_mode.indent_buffer" indent_buffer;
-  define_action "c_mode.compile"  (Compil.compile c_find_error);
-  define_action "c_mode.indent_line" indent_current_line;
-  define_action "c_mode.indent_phrase" indent_phrase
+  Action.define_action "c_mode.indent_buffer" indent_buffer;
+  Action.define_action "c_mode.compile"  (Compil.compile c_find_error);
+  Action.define_action "c_mode.indent_line" indent_current_line;
+  Action.define_action "c_mode.indent_phrase" indent_phrase
     
   
 let setup_maps () =
@@ -879,7 +879,7 @@ let setup_maps () =
   (*  Keymap.add_prefix map [c_c]; *)
   !!local_map |> List.iter (fun (keys, action) ->
       try
-        let f = execute_action action in
+        let f = Action.execute_action action in
         Keymap.add_binding map keys f;
         Keymap.add_interactive map action f;
       with e ->
@@ -888,7 +888,7 @@ let setup_maps () =
   );
   !!interactives_map |> List.iter (fun (name, action) ->
       try
-        Keymap.add_interactive map name (execute_action action)
+        Keymap.add_interactive map name (Action.execute_action action)
       with e ->
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;          
@@ -896,11 +896,11 @@ let setup_maps () =
   ()
 
 let _ =  
-  Efuns.add_start_hook (fun () ->
-    Keymap.add_interactive (Efuns.location()).loc_map "c-mode" 
+  Hook.add_start_hook (fun () ->
+    Keymap.add_interactive (Globals.location()).loc_map "c-mode" 
         (fun frame -> install frame.frm_buffer);
-    let alist = get_global Ebuffer.modes_alist in
-    set_global Ebuffer.modes_alist 
+    let alist = Var.get_global Ebuffer.modes_alist in
+    Var.set_global Ebuffer.modes_alist 
         ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
     setup_actions ();
     setup_maps ();

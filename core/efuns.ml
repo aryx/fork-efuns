@@ -13,20 +13,13 @@
 (*e: copyright header2 *)
 (* Useful types for Efuns *)
 
-(*************************************************************************)
-(*      Types      *)
-(*************************************************************************)
-
-(*s: function Efuns.error *)
-let error f x =
-  print_string ("error: ");
-  Printf.printf f x;
-  print_newline ()
-(*e: function Efuns.error *)
-  
 (*s: exception Efuns.UnboundKey *)
 exception UnboundKey
 (*e: exception Efuns.UnboundKey *)
+
+(*************************************************************************)
+(* Keymaps and actions *)
+(*************************************************************************)
 
 (*s: type Efuns.map *)
 type map =
@@ -80,6 +73,10 @@ and binding =
 | Prefix of map
 | Unbound
 (*e: type Efuns.binding *)
+
+(*************************************************************************)
+(* Buffers *)
+(*************************************************************************)
 
 (*s: type Efuns.buffer *)
 (* a buffer containing a file in Text.t *)
@@ -144,6 +141,10 @@ and minor_mode = {
     mutable min_vars : Local.vars;
   }
 (*e: type Efuns.minor_mode *)
+
+(*************************************************************************)
+(* Frames *)
+(*************************************************************************)
   
 (*s: type Efuns.frame *)
 (* a frame: a view of a buffer for a window *)
@@ -267,6 +268,10 @@ and frm_line =
   } 
 (*e: type Efuns.line_repr *)
 
+(*************************************************************************)
+(* Windows *)
+(*************************************************************************)
+
 (*s: type Efuns.top_window *)
 (* an xterm: a window containing some frames *)
 and top_window = 
@@ -323,6 +328,10 @@ and window_down =
 | VComb of window * window
 (*e: type Efuns.window_down *)
 
+(*************************************************************************)
+(* The world *)
+(*************************************************************************)
+
 (*s: type Efuns.location *)
 type location =
   { 
@@ -365,6 +374,18 @@ type location =
   } 
 (*e: type Efuns.location *)
 
+(*************************************************************************)
+(* Misc *)
+(*************************************************************************)
+
+(* used by frame, so can't be in top_window.ml *)
+(*s: function Efuns.backend *)
+let backend top_window =
+  match top_window.graphics with
+    None -> raise Not_found
+  | Some x -> x
+(*e: function Efuns.backend *)
+
 (*s: type Efuns.sens *)
 type sens = 
 | Backward
@@ -376,250 +397,11 @@ type to_regexp =
 | RegexpString
 (*e: type Efuns.to_regexp *)
 
-(*************************************************************************)
-(*      Values      *)
-(*************************************************************************)
-
-(*s: global Efuns.global_location *)
-let global_location = ref None
-(*e: global Efuns.global_location *)
-(*s: function Efuns.location *)
-let location () =
-  match !global_location with
-  | None -> failwith "no global location defined"
-  | Some x -> x
-(*e: function Efuns.location *)
-
-(*s: constant Efuns.start_hooks *)
-(* Les hooks de lancement apres le chargement d'un module *)
-let start_hooks = (ref []: (unit -> unit) list ref)
-(*e: constant Efuns.start_hooks *)
-(*s: function Efuns.add_start_hook *)
-let add_start_hook hook = 
-  start_hooks := hook :: !start_hooks
-(*e: function Efuns.add_start_hook *)
-
-
-  (* Les variables *)
-  
-(*s: function Efuns.set_global *)
-let set_global var value = 
-  Local.set (location()).loc_vars var value
-(*e: function Efuns.set_global *)
-(*s: function Efuns.set_local *)
-let set_local buf var value = 
-  Local.set buf.buf_vars var value
-(*e: function Efuns.set_local *)
-(*s: function Efuns.get_var *)
-let get_var buf var = 
-  try 
-    Local.get buf.buf_vars var 
-  with Not_found ->
-    try 
-      (*s: [[Efuns.get_var()]] try with major mode variables *)
-      Local.get buf.buf_major_mode.maj_vars var
-      (*e: [[Efuns.get_var()]] try with major mode variables *)
-    with Not_found ->
-      try 
-        (*s: [[Efuns.get_var()]] try with minor mode variables *)
-        let rec iter list =
-          match list with
-          | [] -> raise Not_found
-          | min :: list -> 
-              try
-                Local.get min.min_vars var
-              with _ -> iter list
-        in
-        iter buf.buf_minor_modes
-        (*e: [[Efuns.get_var()]] try with minor mode variables *)
-      with Not_found ->
-        Local.get (location()).loc_vars var
-(*e: function Efuns.get_var *)
-          
-(*s: function Efuns.get_global *)
-let get_global var = 
-  Local.get (location()).loc_vars var
-(*e: function Efuns.get_global *)
-(*s: function Efuns.get_local *)
-let get_local buf var = 
-  Local.get buf.buf_vars var
-(*e: function Efuns.get_local *)
-  
-(*s: function Efuns.set_minor_var *)
-let set_minor_var min var value = 
-  Local.set min.min_vars var value
-(*e: function Efuns.set_minor_var *)
-(*s: function Efuns.set_major_var *)
-let set_major_var maj var value = 
-  Local.set maj.maj_vars var value
-(*e: function Efuns.set_major_var *)
-  
-(*s: function Efuns.exec_hooks *)
-let exec_hooks hooks arg =
-  hooks |> List.iter (fun f ->
-    try f arg 
-    with exn -> error "exn in hook: %s" (Common.exn_to_s exn)
-  )
-(*e: function Efuns.exec_hooks *)
-
-(*s: function Efuns.add_hook *)
-let add_hook hook_var hook =
-  let tail = try get_global hook_var with _ -> [] in
-  set_global hook_var (hook :: tail)
-(*e: function Efuns.add_hook *)
-
-let with_lock f =
-  let loc = location () in
-  Mutex.lock loc.loc_mutex;
-  Common.finalize f (fun () -> Mutex.unlock loc.loc_mutex)
-  
-(*************************************************************************)
-(*      Initialization      *)
-(*************************************************************************)
-  
-(* Les variables importantes dans le reste du programme. *)
-open Options
-
-(*s: constant Efuns.check *)
-let check = ref false
-(*e: constant Efuns.check *)
-
-(*s: constants Efuns.debug_xxx *)
-let debug = ref false
-let debug_graphics = ref false
-let debug_display = ref false
-let debug_init = ref false
-(*e: constants Efuns.debug_xxx *)
-
-(*s: constant Efuns.load_path *)
-let load_path = define_option ["efuns_path"] 
-  "<load_path> is the path where modules (.cmo and .cma) can be found
-  for dynamic linking." path_option []
-(*e: constant Efuns.load_path *)
-
-(*s: constant Efuns.path *)
-let path = (*Dyneval.load_path*) ref []
-(*e: constant Efuns.path *)
-  
-(*s: constant Efuns.efuns_path *)
-let efuns_path = [ 
-      (Filename.concat Utils.homedir ".efuns") ;
-(*
-      Version.efuns_lib; 
-      Version.installdir; 
-      Version.ocamllib
-*)
-  ]
-(*e: constant Efuns.efuns_path *)
-  
-(*s: toplevel Efuns._1 *)
-let _ = 
-  path := !!load_path @ efuns_path;
-  option_hook load_path (fun _ -> path := !!load_path @ efuns_path)
-(*e: toplevel Efuns._1 *)
-
-(* used in some major mode *)
-(*s: constant Efuns.font *)
-let font = define_option ["font"] "" string_option "Menlo 18"
-(*e: constant Efuns.font *)
-
-  
-(*--------------------    Ressources *)
-(*s: constant Efuns.xdefaults *)
-let xdefaults = try Sys.getenv "XUSERFILESEARCHPATH" with
-    Not_found -> Filename.concat Utils.homedir ".Xdefaults"
-(*e: constant Efuns.xdefaults *)
-
-(*s: constant Efuns.x_res *)
-(*let x_res = Xrm.create ()*)
-(*e: constant Efuns.x_res *)
-(*s: toplevel Efuns._2 *)
-(*
-let _ =
-  begin    
-    try
-      let efuns_res = 
-        let path = try Utils.string_to_path (Sys.getenv "XFILESEARCHPATH") with _ -> 
-              [] in
-        let xenv = try Sys.getenv "XENVIRONMENT" with _ -> "" in
-        let xroot = try Filename.concat  (Sys.getenv "X11ROOT")
-            "lib/X11/app-defaults/" with _ -> "" in
-        Utils.find_in_path (path@[
-            xenv; xroot; "/usr/X11/lib/X11/app-defaults/"]) "Efuns"
-      in
-      Xrm.safe_load x_res efuns_res
-    with _ -> ()
-  end;
-  Xrm.safe_load x_res xdefaults
-*)
-(*e: toplevel Efuns._2 *)
-  
-(*s: constant Efuns.t *)
-(*let t = x_res*)
-(*e: constant Efuns.t *)
-
-(*
-  let _ = Printf.printf "%d %d %s %s %s" !width !height !font !fg !bg; 
-  print_newline () 
-*)
-  
-
-(*s: global Efuns.actions *)
-let (actions : (action_name, generic_action) Hashtbl.t) = 
-  Hashtbl.create 63
-(*e: global Efuns.actions *)
-
-(*s: function Efuns.define_action *)
-let define_action action_name action_fun =
-  (*s: sanity check action defined twice *)
-  (try 
-      Hashtbl.find actions action_name |> ignore;
-      error "action \"%s\" defined twice" action_name;
-   with _ -> ()
-  );
-  (*e: sanity check action defined twice *)
-  Hashtbl.add actions action_name (FrameAction action_fun)
-(*e: function Efuns.define_action *)
-
-(*s: function Efuns.define_buffer_action *)
-let define_buffer_action action_name action_fun =
-  (*s: sanity check action defined twice *)
-  (try 
-      Hashtbl.find actions action_name |> ignore;
-      error "action \"%s\" defined twice" action_name;
-   with _ -> ()
-  );
-  (*e: sanity check action defined twice *)
-  Hashtbl.add actions action_name (BufferAction action_fun)
-(*e: function Efuns.define_buffer_action *)
-
-(*s: function Efuns.get_action *)
-let get_action action =
-  try Hashtbl.find actions action 
-  with Not_found ->
-    error "Could not find action %s. Forgot define_action()?" action;
-    BufferAction (fun _ -> ())
-(*e: function Efuns.get_action *)
-
-(*s: function Efuns.execute_action *)
-let execute_action action = 
-  match (get_action action) with
-  | FrameAction f -> f 
-  | BufferAction f -> (fun frame -> f frame.frm_buffer)
-(*e: function Efuns.execute_action *)
-
-(*s: function Efuns.execute_buffer_action *)
-let execute_buffer_action action buf =
-  match (get_action action) with
-    BufferAction f -> f buf
-  | FrameAction _f -> 
-      error "Can't apply action %s on buffer" action
-(*e: function Efuns.execute_buffer_action *)
-      
 (*s: function Efuns.string_to_regex *)
 let string_to_regex s = s, Str.regexp s
 (*e: function Efuns.string_to_regex *)
-    
+
+open Options    
 (*s: constant Efuns.regexp_option *)
 let regexp_option = define_option_class "Regexp" 
     (fun v -> match v with

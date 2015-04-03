@@ -26,6 +26,11 @@ SRC=\
  \
  core/text.ml\
  core/efuns.ml\
+  core/globals.ml\
+  core/var.ml\
+  core/hook.ml\
+  core/attr.ml\
+  core/action.ml\
  core/keymap.ml\
  core/ebuffer.ml\
  core/window.ml\
@@ -225,6 +230,11 @@ SRC_VIEWS= \
   commons/local.ml\
   commons/local.mli\
   core/efuns.ml\
+  core/var.ml\
+  core/attr.ml\
+  core/hook.ml\
+  core/action.ml\
+  core/globals.ml\
   core/text.ml\
   core/ebuffer.ml\
   core/keymap.ml\

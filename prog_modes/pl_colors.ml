@@ -45,18 +45,18 @@ let color_buf_hook = Local.create_abstr "color_buf_hook"
 let color_number_and_punctuation buf =
   Simple.color buf 
     (Str.regexp ("\\b[0-9]+\\b")) false
-      (Text.make_attr (Window.get_color !!number_color) 1 0 false);
+      (Text.make_attr (Attr.get_color !!number_color) 1 0 false);
   Simple.color buf 
     (Str.regexp ("[|;(){}\\[\\]]")) false
-      (Text.make_attr (Window.get_color !!punctuation_color) 1 0 false);
+      (Text.make_attr (Attr.get_color !!punctuation_color) 1 0 false);
   ()
 
 
   
 
 let _ =  
-  Efuns.add_start_hook (fun () ->
-    Efuns.add_hook color_buf_hook color_number_and_punctuation;
+  Hook.add_start_hook (fun () ->
+    Hook.add_hook color_buf_hook color_number_and_punctuation;
 
     Simple.add_option_parameter keyword_color;
     Simple.add_option_parameter string_color;

@@ -81,7 +81,7 @@ let caml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 (*****************************************************************************)
 
 let setup () = 
-  define_action "caml_mode" caml_mode;
+  Action.define_action "caml_mode" caml_mode;
   ()
 
 
@@ -89,9 +89,9 @@ let mode_regexp =
   [".*\\.\\(ml\\|mli\\|mll\\|mly\\)"]
 
 let _ =
-  Efuns.add_start_hook (fun () ->
-    let alist = get_global Ebuffer.modes_alist in
-    set_global Ebuffer.modes_alist 
+  Hook.add_start_hook (fun () ->
+    let alist = Var.get_global Ebuffer.modes_alist in
+    Var.set_global Ebuffer.modes_alist 
       ((List.map (fun s -> s, mode) mode_regexp) @ alist);
     
     setup();

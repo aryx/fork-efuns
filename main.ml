@@ -35,9 +35,9 @@ let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 
 (*s: function Efuns.init *)
 let init_efuns (location : location) =
-  global_location := Some location;
-  let hooks = List.rev !Efuns.start_hooks in
-  Efuns.start_hooks := [];
+  Globals.global_location := Some location;
+  let hooks = List.rev !Hook.start_hooks in
+  Hook.start_hooks := [];
   hooks |> List.iter (fun f -> f ())
 
 (*e: function Efuns.init *)
@@ -97,24 +97,24 @@ let main () =
     "-d",        Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
     "--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
     (*x: [[main()]] command line options *)
-    "-check", Arg.Set check, ": only for testing";
+    "-check", Arg.Set Globals.check, ": only for testing";
     (*x: [[main()]] command line options *)
-      "-I",Arg.String (fun s -> Efuns.load_path =:= 
-          (Utils.string_to_path s) @ !!Efuns.load_path), "<path>: Load Path";
+      "-I",Arg.String (fun s -> Globals.load_path =:= 
+          (Utils.string_to_path s) @ !!Globals.load_path), "<path>: Load Path";
     (*x: [[main()]] command line options *)
       "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
     (*x: [[main()]] command line options *)
-    "-debug", Arg.Set Efuns.debug, 
+    "-debug", Arg.Set Globals.debug, 
     " for debugging";
-    "-debug_graphics", Arg.Set Efuns.debug_graphics, 
+    "-debug_graphics", Arg.Set Globals.debug_graphics, 
     " for debugging";
-    "-debug_display", Arg.Set Efuns.debug_display, 
+    "-debug_display", Arg.Set Globals.debug_display, 
     " for debugging";
-    "-debug_init", Arg.Set Efuns.debug_init, 
+    "-debug_init", Arg.Set Globals.debug_init, 
     " for debugging";
 
     "-debugger", Arg.Unit (fun () ->
-      Efuns.debug := true;
+      Globals.debug := true;
     ), " for debugging";
     (*e: [[main()]] command line options *)
    ]
@@ -123,11 +123,11 @@ let main () =
   (*s: [[main()]] set options *)
   (*s: [[main()]] set options filename *)
   Options.filename := 
-    (try Utils.find_in_path (Utils.homedir :: !!Efuns.load_path) ".efunsrc" 
+    (try Utils.find_in_path (Utils.homedir :: !!Globals.load_path) ".efunsrc" 
      with _ -> Filename.concat Utils.homedir ".efunsrc"
     );
   (try Options.init () 
-   with exn -> Efuns.error "init error, exn = %s" (Common.exn_to_s exn)
+   with exn -> Globals.error "init error, exn = %s" (Common.exn_to_s exn)
   );
   (*e: [[main()]] set options filename *)
   (*s: [[main()]] adjust options *)
@@ -135,7 +135,7 @@ let main () =
   (match !height_opt with None -> () | Some color -> height =:= color);
   (match !fg_opt     with None -> () | Some color -> foreground =:= color);
   (match !bg_opt     with None -> () | Some color -> background =:= color);
-  (match !font_opt   with None -> () | Some color -> font =:= color);
+  (match !font_opt   with None -> () | Some color -> Globals.font =:= color);
   (*e: [[main()]] adjust options *)
   (*e: [[main()]] set options *)
 
@@ -150,7 +150,7 @@ let main () =
       loc_height = !!height;
       loc_fg = !!foreground;
       loc_bg = !!background;
-      loc_font = !!font;
+      loc_font = !!Globals.font;
 
       loc_map = Keymap.create ();
       loc_dirname = Sys.getcwd ();
@@ -173,14 +173,14 @@ let main () =
   (*e: [[main()]] initialize the world *)
   (*s: [[main()]] misc initializations *)
   (* color 0 is foreground *)
-  Window.get_color !!foreground |> ignore;
+  Attr.get_color !!foreground |> ignore;
   (* color 1 is background *)
-  Window.get_color !!background |> ignore;
+  Attr.get_color !!background |> ignore;
   (* color 2 is highlight *)
-  Window.get_color !!highlight_color |> ignore;
+  Attr.get_color !!highlight_color |> ignore;
   (*x: [[main()]] misc initializations *)
   (* font 0 is initial font *)
-  Window.get_font !!font |> ignore;
+  Attr.get_font !!Globals.font |> ignore;
   (*e: [[main()]] misc initializations *)
 
   (*s: [[main()]] run the UI *)

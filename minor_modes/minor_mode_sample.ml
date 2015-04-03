@@ -42,7 +42,7 @@ let _ =
 
 (*s: toplevel Minor_mode_sample._2 *)
 let _ = 
-  define_action (minor_mode_name ^ "_mode")
+  Action.define_action (minor_mode_name ^ "_mode")
     (fun frame -> 
       let buf = frame.frm_buffer in
       if Ebuffer.modep buf mode 

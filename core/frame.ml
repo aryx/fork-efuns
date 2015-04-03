@@ -260,7 +260,7 @@ let active frame =
   let top_window = Window.top frame.frm_window in
   top_window.top_active_frame <- frame;
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
-    (Efuns.location()).loc_dirname <- Filename.dirname filename
+    (Globals.location()).loc_dirname <- Filename.dirname filename
   )
 (*e: function Frame.active *)
       
@@ -498,7 +498,7 @@ let display top_window frame =
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
 
-  let graphic = Window.backend top_window in
+  let graphic = Efuns.backend top_window in
 
   (*s: [[Frame.display()]] if buf sync goto end of text *)
   if buf.buf_sync && buf.buf_modified <> frame.frm_last_buf_updated 
@@ -520,7 +520,7 @@ let display top_window frame =
     (*e: [[Frame.display()]] conditions for redraw *)
   then begin
     (*s: [[Frame.display()]] redraw *)
-    if !debug_display
+    if !Globals.debug_display
     then pr2 "redraw";
     (*s: [[Frame.display()]] redraw, possibly update frm_y_offset *)
     let start = frame.frm_start in
@@ -664,7 +664,7 @@ let current_dir frame =
   let buf = frame.frm_buffer in
   match buf.buf_filename with
     Some filename -> Filename.dirname filename ^ "/"
-  | None -> (Efuns.location()).loc_dirname ^ "/"
+  | None -> (Globals.location()).loc_dirname ^ "/"
 (*e: function Frame.current_dir *)
 
 
@@ -675,7 +675,7 @@ exception FoundFrame of frame
 (*s: function Frame.find_buffer_frame *)
 let find_buffer_frame buf =
   try
-    (Efuns.location()).top_windows |> List.iter (fun top_window ->
+    (Globals.location()).top_windows |> List.iter (fun top_window ->
       top_window.window |> Window.iter (fun frame -> 
         if frame.frm_buffer == buf 
         then raise (FoundFrame frame)
@@ -694,7 +694,7 @@ let change_buffer_hooks = define_option ["change_buffer_hooks"] ""
 (*s: function Frame.exec_named_hooks *)
 let exec_named_hooks hooks frame =
   hooks |> List.rev |> List.iter (fun action -> 
-   try execute_action action frame with _ -> ()
+   try Action.execute_action action frame with _ -> ()
   )
 (*e: function Frame.exec_named_hooks *)
 
@@ -711,7 +711,7 @@ let load_file window filename =
 (*s: function Frame.change_buffer *)
 let change_buffer window name = 
   try
-    let buf = Hashtbl.find (Efuns.location()).loc_buffers name in
+    let buf = Hashtbl.find (Globals.location()).loc_buffers name in
     let frame = create window None buf in
     exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name

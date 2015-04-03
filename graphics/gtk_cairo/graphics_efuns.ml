@@ -282,7 +282,7 @@ let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
   ()
 
 let draw_string loc cr pg   col line  str  offset len   attr =
-  if !debug_graphics
+  if !Globals.debug_graphics
   then pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
               col line str offset len attr);
   let bgcolor = 
@@ -325,7 +325,7 @@ let backend w win =
     draw_string = (fun a b c d e f -> 
       draw_string loc cr pg (conv a) (conv b) c d e f);
     update_display = (fun () -> 
-      if !debug_graphics
+      if !Globals.debug_graphics
       then pr2 ("backend.update_display()");
       let active_frame = active_frame_info w in
       if active_frame <> w.last_top_frame_info
@@ -346,7 +346,7 @@ let backend w win =
 (*****************************************************************************)
 
 let paint () =
-  if !debug_graphics
+  if !Globals.debug_graphics
   then pr2 "paint";
   (* this will trigger backend.update_display *)
   Top_window.update_display () 
@@ -364,9 +364,9 @@ let init2 init_files =
   (* Graphics initialisation *)
   (*-------------------------------------------------------------------*)
   let _locale = GtkMain.Main.init () in
-  let location = Efuns.location () in
+  let loc = Globals.location () in
 
-  let desc = Pango.Font.from_string location.loc_font
+  let desc = Pango.Font.from_string loc.loc_font
 (*
     "Sans Bold 25" 
     "Fixed Bold 32"
@@ -395,8 +395,8 @@ let init2 init_files =
 
     mini_factor = 10.;
 
-    main_width = float_of_int location.loc_width * width;
-    main_height = float_of_int location.loc_height * height;
+    main_width = float_of_int loc.loc_width * width;
+    main_height = float_of_int loc.loc_height * height;
 
     (* derived from above below *)
     linemax = 0;
@@ -430,7 +430,7 @@ let init2 init_files =
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
   (*-------------------------------------------------------------------*)
 
-  (* location.loc_height <- 45; *)
+  (* loc.loc_height <- 45; *)
   (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create () in
   (* the *bindings* buffer *)
@@ -462,7 +462,7 @@ let init2 init_files =
             then `S
             else `I (str, (fun () -> 
               let frame = top_window.top_active_frame in
-              execute_action action frame;
+              Action.execute_action action frame;
               paint ()
             ))))
       ) |> ignore;
@@ -473,7 +473,7 @@ let init2 init_files =
             | "" -> `S
             | _ -> `I (str, (fun () -> 
               let frame = top_window.top_active_frame in
-              execute_action action_name frame;
+              Action.execute_action action_name frame;
               paint ();
             ))
            ))
@@ -520,7 +520,7 @@ let init2 init_files =
   Pango_cairo.update_layout cr layout;
 
   let w = {
-    loc = location;
+    loc = loc;
     base = 
       Cairo.surface_create_similar surface Cairo.CONTENT_COLOR_ALPHA
         width height;
@@ -536,7 +536,7 @@ let init2 init_files =
   top_window.graphics <- Some (backend w win); 
 
   let pg = (layout, metrics) in
-  for i = 0 to (Efuns.location()).loc_height -.. 1 do
+  for i = 0 to (Globals.location()).loc_height -.. 1 do
     clear_eol cr pg 0. (float_of_int i) 80;
   done;
   paint ();
@@ -546,7 +546,7 @@ let init2 init_files =
   (*-------------------------------------------------------------------*)
 
   win#event#connect#key_press ~callback:(fun key ->
-    if !debug
+    if !Globals.debug
     then pr2 (spf "key: %d, %s" 
                 (GdkEvent.Key.keyval key) (GdkEvent.Key.string key));
 
@@ -723,6 +723,6 @@ let test_cairo () =
 (*****************************************************************************)
 
 let init a =
-  if !Efuns.check
+  if !Globals.check
   then test_cairo ()
   else init2 a

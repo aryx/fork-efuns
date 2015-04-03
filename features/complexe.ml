@@ -66,7 +66,7 @@ let update_time buf =
     buf.buf_filename |> Common.do_option (fun file ->
       let st = Unix.lstat file in
       if st.st_kind = S_REG 
-      then Efuns.set_local buf buf_mtime st.st_mtime;
+      then Var.set_local buf buf_mtime st.st_mtime;
     )
   with _ -> ()
 (*e: function Complex.update_time *)
@@ -100,8 +100,8 @@ let check_file frame =
       let st = Unix.lstat file in
       if st.st_kind = S_REG then
         try
-          let time = Efuns.get_local buf buf_mtime in
-          Efuns.set_local buf buf_mtime st.st_mtime;
+          let time = Var.get_local buf buf_mtime in
+          Var.set_local buf buf_mtime st.st_mtime;
           if time <> st.st_mtime then
             (Select.select_yes_or_no frame 
                (Printf.sprintf "%s changed on disk; reload (y/n) ?" 
@@ -111,14 +111,14 @@ let check_file frame =
                    then reload frame 
                    else Frame.status_modified frame true
                  )) |> ignore
-       with _ -> Efuns.set_local buf buf_mtime st.st_mtime
+       with _ -> Var.set_local buf buf_mtime st.st_mtime
     )
   with _ -> ()
 (*e: function Complex.check_file *)
     
 (*s: function Complex.exit_efuns *)
 let exit_efuns frame =
-  let buffers = Utils.list_of_hash (Efuns.location()).loc_buffers in
+  let buffers = Utils.list_of_hash (Globals.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
     exit 0
@@ -127,7 +127,7 @@ let exit_efuns frame =
 
 (*s: function Complex.save_some_buffers *)
 let save_some_buffers frame =
-  let buffers = list_of_hash (Efuns.location()).loc_buffers in
+  let buffers = Utils.list_of_hash (Globals.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> ())
 (*e: function Complex.save_some_buffers *)
 
@@ -282,7 +282,7 @@ let file_perm = Local.create "file_perm" string_of_int int_of_string
 let mkdir frame =
   Select.select_filename frame "Make directory: "
     (fun str -> 
-      let file_perm = try get_var frame.frm_buffer file_perm with _ -> 
+      let file_perm = try Var.get_var frame.frm_buffer file_perm with _ -> 
             0x1ff land (lnot umask) in
       Unix.mkdir str file_perm)
 (*e: function Complex.mkdir *)
@@ -322,7 +322,7 @@ let all_variables frame _ =
   | _ ->
       let list = 
         (Local.list buf.buf_vars) @ 
-        (Local.list (Efuns.location()).loc_vars) 
+        (Local.list (Globals.location()).loc_vars) 
       in
       all_vars := Some (frame, list);
       list
@@ -343,7 +343,7 @@ let set_global_variable frame =
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
-          Local.input (Efuns.location()).loc_vars variable value))
+          Local.input (Globals.location()).loc_vars variable value))
 (*e: function Complex.set_global_variable *)
   
 (*s: function Complex.get_variable *)
@@ -358,7 +358,7 @@ let describe_variable frame =
           try
             Local.print buf.buf_vars variable
           with _ ->
-            Local.print (Efuns.location()).loc_vars variable)))
+            Local.print (Globals.location()).loc_vars variable)))
 (*e: function Complex.get_variable *)
 
 open Options
@@ -369,7 +369,7 @@ let parameters_hist = ref []
   
 (*s: function Complex.set_parameter *)
 let set_parameter frame = 
-  let parameters = get_global Simple.parameters_var in
+  let parameters = Var.get_global Simple.parameters_var in
   Select.select frame "set-parameter : " parameters_hist
     "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
@@ -381,7 +381,7 @@ let set_parameter frame =
   
 (*s: function Complex.get_parameter *)
 let get_parameter frame =
-  let parameters = get_global Simple.parameters_var in  
+  let parameters = Var.get_global Simple.parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
     "" (Simple.all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
@@ -394,15 +394,15 @@ let get_parameter frame =
   
 (*s: toplevel Complex._1 *)
 let _ =
-  Efuns.add_start_hook (fun () ->
-    let location = Efuns.location() in
-      Keymap.add_interactive location.loc_map "make_directory" mkdir;
-      Keymap.add_interactive location.loc_map "set_local_variable" 
+  Hook.add_start_hook (fun () ->
+    let loc = Globals.location() in
+      Keymap.add_interactive loc.loc_map "make_directory" mkdir;
+      Keymap.add_interactive loc.loc_map "set_local_variable" 
         set_local_variable;
-      Keymap.add_interactive location.loc_map "set_global_variable" 
+      Keymap.add_interactive loc.loc_map "set_global_variable" 
         set_global_variable;
-      Keymap.add_interactive location.loc_map "set_parameter" set_parameter;
-      Keymap.add_interactive location.loc_map "get_parameter" get_parameter;
+      Keymap.add_interactive loc.loc_map "set_parameter" set_parameter;
+      Keymap.add_interactive loc.loc_map "get_parameter" get_parameter;
       
   )
 (*e: toplevel Complex._1 *)

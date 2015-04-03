@@ -6,6 +6,7 @@ val create : unit -> Efuns.top_window
 
 (* display *)
 
+(* see also Efuns.backend : Efuns.top_window -> Xdraw.graphics_backend *)
 val update_display : unit -> unit
 
 (* event handler *)

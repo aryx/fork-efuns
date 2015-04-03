@@ -41,7 +41,7 @@ open Efuns
 
 let pwd_var = Local.create_string "pwd_var"
 let pwd buf =
-  Efuns.get_local buf pwd_var
+  Var.get_local buf pwd_var
 
 let prompt buf =
   spf "%s $ " (pwd buf)
@@ -130,7 +130,7 @@ let colorize buf =
   Dircolors.colorize buf;
   Simple.color buf 
     (Str.regexp ("^/.* \\$")) false
-      (Text.make_attr (Window.get_color prompt_color) 1 0 false);
+      (Text.make_attr (Attr.get_color prompt_color) 1 0 false);
   ()
 
 (*****************************************************************************)
@@ -201,7 +201,7 @@ let builtin_l frame =
 (* later: handle cd - *)
 let builtin_cd frame s =
   let buf = frame.frm_buffer in
-  let olddir = Efuns.get_local buf pwd_var in
+  let olddir = Var.get_local buf pwd_var in
   let newdir =
     if Filename.is_relative s
     then Filename.concat olddir s |> Common.realpath
@@ -210,7 +210,7 @@ let builtin_cd frame s =
   let stat = Unix.stat newdir in
   match stat.Unix.st_kind with
   | Unix.S_DIR -> 
-      Efuns.set_local buf pwd_var newdir;
+      Var.set_local buf pwd_var newdir;
       builtin_ls frame
   | _ -> failwith (spf "%s is not a directory" newdir)
 
@@ -236,7 +236,7 @@ let run_cmd frame cmd =
   let text = buf.buf_text in
 
   let (pid,inc,outc) = System.open_process cmd in
-  let location = Efuns.location () in
+  let loc = Globals.location () in
 
   let end_action buf _s = 
     display_prompt buf 
@@ -248,7 +248,7 @@ let run_cmd frame cmd =
     let finished = ref false in
     while not !finished do
       let len = input inc tampon 0 1000 in
-      Mutex.lock location.loc_mutex;
+      Mutex.lock loc.loc_mutex;
       if len = 0 then begin
         let pid, status = Unix.waitpid [Unix.WNOHANG] pid in
         (match status with 
@@ -263,7 +263,7 @@ let run_cmd frame cmd =
       end
       else Text.insert_at_end text (String.sub tampon 0 len);
 
-      Mutex.unlock location.loc_mutex;
+      Mutex.unlock loc.loc_mutex;
       scroll_until_not_pass_prompt frame;
       (* redraw screen *)
       Top_window.update_display ();
@@ -315,11 +315,11 @@ let key_return frame =
 (*****************************************************************************)
 
 let install buf =
-  Efuns.set_local buf pwd_var
+  Var.set_local buf pwd_var
     (* todo: use the dirname of the file in current frame 
        Frame.current_dir?
     *)
-     (Efuns.location()).loc_dirname;
+     (Globals.location()).loc_dirname;
   buf.buf_syntax_table.(Char.code '_') <- true;
   buf.buf_syntax_table.(Char.code '-') <- true;
   display_prompt buf;
@@ -348,7 +348,7 @@ let eshell_num frame =
 (*****************************************************************************)
 
 let _ = 
-  Efuns.add_start_hook (fun () ->
+  Hook.add_start_hook (fun () ->
     Keymap.define_interactive_action "eshell" (eshell "*Shell*");
     Keymap.define_interactive_action "shell" (eshell "*Shell*");
     (* use Top_window.keypressed *)

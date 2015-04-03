@@ -85,7 +85,7 @@ let colorize funcs buf file =
 
     let pos = PI.pos_of_info info in
     Text.set_position text cursor pos;
-    let attr = Text.make_attr (Window.get_color color) 1 fontsize false in
+    let attr = Text.make_attr (Attr.get_color color) 1 fontsize false in
 
     let str = PI.str_of_info info in
     let len = String.length str in

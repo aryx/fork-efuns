@@ -30,12 +30,12 @@ let _ =
 
 (*s: toplevel Tab_mode._2 *)
 let _ = 
-  define_buffer_action "tab_mode" 
+  Action.define_buffer_action "tab_mode" 
     (fun buf -> 
       if Ebuffer.modep buf mode 
       then Ebuffer.del_minor_mode buf mode
       else Ebuffer.set_minor_mode buf mode
   );
-  define_action "insert_tab" insert_tab
+  Action.define_action "insert_tab" insert_tab
 (*e: toplevel Tab_mode._2 *)
 (*e: minor_modes/tab_mode.ml *)

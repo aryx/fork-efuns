@@ -83,8 +83,8 @@ let display_completions frame list =
     let text = buf.buf_text in
     Text.update text (iter list "Completions :");
     
-    let hooks = try get_global completions_buf_hook with Not_found -> [] in
-    exec_hooks hooks buf;
+    let hooks = try Var.get_global completions_buf_hook with Not_found -> [] in
+    Hook.exec_hooks hooks buf;
 
     (try Frame.find_buffer_frame buf
      with Not_found -> Frame.create_inactive (Multi_frames.cut_frame frame) buf

@@ -43,12 +43,12 @@ let system buf_name cmd end_action =
   let ins = Unix.descr_of_in_channel inc in
   let tampon = String.create 1000 in
   let active = ref true in
-  let location = Efuns.location () in
+  let loc = Globals.location () in
   Concur.Thread.add_reader ins (fun () ->
     let pos,str = Text.delete_res text curseur
                     (Text.point_to_eof text curseur) in
     let len = input inc tampon 0 1000 in
-    Mutex.lock location.loc_mutex;
+    Mutex.lock loc.loc_mutex;
     if len = 0 then begin
       let pid,status = waitpid [WNOHANG] pid in
       (match status with 
@@ -63,7 +63,7 @@ let system buf_name cmd end_action =
       (* redraw screen *)
       Top_window.update_display ();
 
-      Mutex.unlock location.loc_mutex;
+      Mutex.unlock loc.loc_mutex;
       Concur.Thread.remove_reader ins; (* Kill self *)
     end
     else
@@ -75,7 +75,7 @@ let system buf_name cmd end_action =
 
     (* redraw screen *)
     Top_window.update_display ();
-    Mutex.unlock location.loc_mutex
+    Mutex.unlock loc.loc_mutex
   );
 
   let lmap = buf.buf_map in

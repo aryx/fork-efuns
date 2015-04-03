@@ -202,13 +202,13 @@ let lexing text start_point end_point =
 let lisp_color_region buf start_point end_point =
 
   let _keyword_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.keyword_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.keyword_color) 1 0 false in
   let string_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.string_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.string_color) 1 0 false in
   let comment_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.comment_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.comment_color) 1 0 false in
   let gray_attr = 
-    Text.make_attr (Window.get_color !!Pl_colors.module_color) 1 0 false in
+    Text.make_attr (Attr.get_color !!Pl_colors.module_color) 1 0 false in
 
   let text = buf.buf_text in
   let curseur = Text.new_point text in
@@ -523,7 +523,7 @@ let install buf =
   buf.buf_syntax_table.(Char.code '+') <- true;
   buf.buf_syntax_table.(Char.code '*') <- true;
   let abbrevs = Hashtbl.create 11 in
-  set_local buf Abbrevs.abbrev_table abbrevs;
+  Var.set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs abbreviations;
   ()
 
@@ -555,11 +555,11 @@ let setup () =
   )
 
 let _ =  
-  Efuns.add_start_hook (fun () ->
-    Keymap.add_interactive (Efuns.location()).loc_map "lisp-mode" 
+  Hook.add_start_hook (fun () ->
+    Keymap.add_interactive (Globals.location()).loc_map "lisp-mode" 
         (fun frame -> install frame.frm_buffer);
-    let alist = get_global Ebuffer.modes_alist in
-    set_global Ebuffer.modes_alist
+    let alist = Var.get_global Ebuffer.modes_alist in
+    Var.set_global Ebuffer.modes_alist
       ((".*\\.\\(el\\|gwm\\)$", mode):: alist);
     setup ();
   )

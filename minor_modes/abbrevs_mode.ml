@@ -31,10 +31,8 @@ let _ =
   
 (*s: function Abbrevs_mode.install *)
 let install buf =
-  try
-    get_local buf abbrev_table |> ignore
-  with _ -> 
-    set_local buf abbrev_table abbrevs
+  try Var.get_local buf abbrev_table |> ignore
+  with _ -> Var.set_local buf abbrev_table abbrevs
 (*e: function Abbrevs_mode.install *)
 
 (*s: constant Abbrevs_mode.mode *)
@@ -67,7 +65,7 @@ let _ =
 
 (*s: toplevel Abbrevs_mode._3 *)
 let _ = 
-  define_action "abbrevs_mode" 
+  Action.define_action "abbrevs_mode" 
     (fun frame -> 
       let buf = frame.frm_buffer in
       if Ebuffer.modep buf mode 

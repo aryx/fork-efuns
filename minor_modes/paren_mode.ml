@@ -33,7 +33,7 @@ let _ =
 
 (*s: toplevel Paren_mode._2 *)
 let _ = 
-  define_buffer_action "paren_mode" 
+  Action.define_buffer_action "paren_mode" 
     (fun buf -> 
       if Ebuffer.modep buf mode 
       then Ebuffer.del_minor_mode buf mode

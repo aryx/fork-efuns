@@ -59,7 +59,8 @@ let get_name filename =
   in
   try
     while true do
-      let _ = Hashtbl.find (Efuns.location()).loc_buffers (compute_name ()) in 
+      let _ = Hashtbl.find (Globals.location()).loc_buffers (compute_name ()) 
+      in 
       incr i
     done; 
     assert false
@@ -128,7 +129,7 @@ let create name filename text local_map =
 
     } in
   (*s: [[Ebuffer.create()]] adjust location global fields *)
-  Hashtbl.add (Efuns.location()).loc_buffers name buf;
+  Hashtbl.add (Globals.location()).loc_buffers name buf;
   (*e: [[Ebuffer.create()]] adjust location global fields *)
   (*s: [[Ebuffer.create()]] adjust charreprs *)
   for i=0 to 25 do
@@ -140,15 +141,15 @@ let create name filename text local_map =
   buf.buf_charreprs.(9) <- String.make !tab_size ' ';
   (*e: [[Ebuffer.create()]] adjust charreprs *)
   (*s: [[Ebuffer.create()]] run hooks *)
-  let hooks = try get_global create_buf_hook with Not_found -> [] in
-  exec_hooks hooks buf;
+  let hooks = try Var.get_global create_buf_hook with Not_found -> [] in
+  Hook.exec_hooks hooks buf;
   (*e: [[Ebuffer.create()]] run hooks *)
   buf
 (*e: function Ebuffer.create *)
 
 (*s: function Ebuffer.kill *)
 let kill buf =
-  let location = Efuns.location() in
+  let location = Globals.location() in
   Hashtbl.remove location.loc_buffers buf.buf_name;
   buf.buf_filename |> Common.do_option (fun filename ->
     Hashtbl.remove location.loc_files filename
@@ -177,15 +178,16 @@ let saved_buffer_hooks = define_option ["saved_buffer_hooks"] ""
 (*s: function Ebuffer.exec_named_buf_hooks *)
 let exec_named_buf_hooks hooks frame =
   hooks |> List.rev |> List.iter (fun action ->
-    try execute_buffer_action action frame 
-    with exn -> error "exec_named_buf_hooks: exn = %s" (Common.exn_to_s exn)
+    try Action.execute_buffer_action action frame 
+    with exn -> Globals.error "exec_named_buf_hooks: exn = %s" 
+                    (Common.exn_to_s exn)
   )
 (*e: function Ebuffer.exec_named_buf_hooks *)
 
 (*s: function Ebuffer.exec_named_buf_hooks_with_abort *)
 let exec_named_buf_hooks_with_abort hooks frame =
   hooks |> List.rev |> List.iter (fun action ->
-    execute_buffer_action action frame
+    Action.execute_buffer_action action frame
  )
 (*e: function Ebuffer.exec_named_buf_hooks_with_abort *)
       
@@ -208,10 +210,10 @@ let save buf =
  
 (*s: function Ebuffer.read *)
 let read filename local_map =
-  let location = Efuns.location() in
-  let filename = Utils.normal_name location.loc_dirname filename in
+  let loc = Globals.location() in
+  let filename = Utils.normal_name loc.loc_dirname filename in
   try
-    Hashtbl.find location.loc_files filename
+    Hashtbl.find loc.loc_files filename
   with Not_found ->
     let text =
       try
@@ -222,12 +224,12 @@ let read filename local_map =
       with _ -> Text.create ""
     in
     let buf = create filename (Some filename) text local_map in
-    Hashtbl.add location.loc_files filename buf;
+    Hashtbl.add loc.loc_files filename buf;
     buf
 (*e: function Ebuffer.read *)
 
 let find_buffer_opt name =
-  try Some (Hashtbl.find (Efuns.location()).loc_buffers name)
+  try Some (Hashtbl.find (Globals.location()).loc_buffers name)
   with Not_found -> None
 
 (*s: constant Ebuffer.help_buffer_content *)
@@ -243,7 +245,7 @@ INRIA Rocquencourt
 (*s: function Ebuffer.default *)
 let default name =
   try
-    Hashtbl.find (Efuns.location()).loc_buffers name
+    Hashtbl.find (Globals.location()).loc_buffers name
   with Not_found ->
     let str = 
       if name = "*help*" 
@@ -265,23 +267,23 @@ exception BufferAlreadyOpened
 
 (*s: function Ebuffer.change_name *)
 let change_name buf filename =
-  let location = Efuns.location() in
-  Hashtbl.remove location.loc_buffers buf.buf_name;
+  let loc = Globals.location() in
+  Hashtbl.remove loc.loc_buffers buf.buf_name;
   buf.buf_filename |> Common.do_option (fun filename ->
-    Hashtbl.remove location.loc_files filename
+    Hashtbl.remove loc.loc_files filename
   );
   let filename = 
     if Filename.is_relative filename then
-      Filename.concat location.loc_dirname filename
+      Filename.concat loc.loc_dirname filename
     else
       filename
   in
-  if Utils.hashtbl_mem location.loc_files filename 
+  if Utils.hashtbl_mem loc.loc_files filename 
   then raise BufferAlreadyOpened;
-  let filename = Utils.normal_name location.loc_dirname filename in
+  let filename = Utils.normal_name loc.loc_dirname filename in
   let name = get_name filename in
-  Hashtbl.add location.loc_buffers name buf;
-  Hashtbl.add location.loc_files filename buf;
+  Hashtbl.add loc.loc_buffers name buf;
+  Hashtbl.add loc.loc_files filename buf;
   buf.buf_filename <- Some filename;
   buf.buf_name <- name
 (*e: function Ebuffer.change_name *)
@@ -327,13 +329,13 @@ let regexp_alist = ref []
 
 (*s: function Ebuffer.set_major_mode *)
 let set_major_mode buf mode =
-  if !debug
+  if !Globals.debug
   then pr2 (spf "setting %s major mode" mode.maj_name);
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
   mode.maj_hooks |> List.iter (fun f -> 
     try f buf 
-    with exn -> error "set_major_mode: exn = %s" (Common.exn_to_s exn)
+    with exn -> Globals.error "set_major_mode: exn = %s" (Common.exn_to_s exn)
   )
 (*e: function Ebuffer.set_major_mode *)
 
@@ -343,7 +345,7 @@ let set_minor_mode buf mode =
   buf.buf_modified <- buf.buf_modified + 1;
   mode.min_hooks |> List.iter (fun f -> 
     try f buf 
-    with exn -> error "set_minor_mode: exn = %s" (Common.exn_to_s exn)
+    with exn -> Globals.error "set_minor_mode: exn = %s" (Common.exn_to_s exn)
   ) 
 (*e: function Ebuffer.set_minor_mode *)
 
@@ -377,12 +379,12 @@ let set_buffer_mode buf =
            then Str.matched_group 1 buf.buf_name 
            else buf.buf_name 
          with exn -> 
-           error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
+           Globals.error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
            buf.buf_name
          )
     | Some file_name -> file_name 
   in 
-  let modes_alist = Efuns.get_var buf modes_alist in
+  let modes_alist = Var.get_var buf modes_alist in
   (* must use != here, because modes_alist contain functional values *)
   if (!modes_old != modes_alist) then begin
     regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
@@ -400,7 +402,7 @@ let set_buffer_mode buf =
         with 
         | Exit -> raise Exit
         | exn -> 
-            error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
+            Globals.error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
             raise Exit
     ) 
   with Exit -> ()
@@ -434,7 +436,7 @@ let get_binding buf keylist =
     );
     (*s: [[Ebuffer.get_binding()]] if partial map *)
     if buf.buf_map_partial then
-      (let b = Keymap.get_binding (Efuns.location()).loc_map keylist in
+      (let b = Keymap.get_binding (Globals.location()).loc_map keylist in
         match b with
           Prefix map -> binding := b;
         | Function f -> binding := b; raise Exit
@@ -449,7 +451,7 @@ let get_binding buf keylist =
 let message buf m =
   let name = "*Messages*" in
   try
-    let buf = Hashtbl.find (Efuns.location()).loc_buffers name in
+    let buf = Hashtbl.find (Globals.location()).loc_buffers name in
     Text.insert_at_end buf.buf_text (m^"\n");
   with Not_found ->
     create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore
@@ -460,11 +462,11 @@ let catch format buf f =
   try
     f ()
   with e ->
-    let location = Efuns.location() in
+    let loc = Globals.location() in
     let name = "*Messages*" in
     let m = Printf.sprintf format (Utils.printexn e) in
     try
-      let buf = Hashtbl.find location.loc_buffers name in
+      let buf = Hashtbl.find loc.loc_buffers name in
       Text.insert_at_end buf.buf_text (m ^ "\n");
     with Not_found ->
       create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
@@ -473,9 +475,9 @@ let catch format buf f =
       
 (*s: toplevel Ebuffer._1 *)
 let _ =
-  Efuns.add_start_hook (fun () ->
-    set_global create_buf_hook [set_buffer_mode];
-    set_global modes_alist []
+  Hook.add_start_hook (fun () ->
+    Var.set_global create_buf_hook [set_buffer_mode];
+    Var.set_global modes_alist []
   )
 (*e: toplevel Ebuffer._1 *)
 (*e: core/ebuffer.ml *)

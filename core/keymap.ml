@@ -11,6 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
+open Efuns
 
 (*
 La gestion des keymaps est inadapte'e a` la modification dynamique.
@@ -18,7 +19,6 @@ En effet, on aurait envie de pouvoir modifier les bindings selon divers
   crite`res, tels que le buffer (possible), le mode(pas possible).
 *)
 
-open Efuns
 
 (*s: function Keymap.dummy_action *)
 let dummy_action frame = () 
@@ -142,7 +142,7 @@ let n_5 = (NormalMap, Char.code '5')
 (*s: function Keymap.all_bindings *)
 let all_bindings () =
   let s = ref "Default bindings:" in
-  (Efuns.location()).loc_map.interactives |> List.iter(fun (name,(_,binding)) ->
+  (Globals.location()).loc_map.interactives |> List.iter(fun (name,(_,binding)) ->
     match binding with
     | None -> ()
     | Some key_list ->
@@ -168,7 +168,7 @@ let add_interactive map name f =
 
 (*s: function Keymap.add_global_key *)
 let add_global_key = fun prefix string action ->
-  interactive (Efuns.location()).loc_map prefix string action
+  interactive (Globals.location()).loc_map prefix string action
 (*e: function Keymap.add_global_key *)
 (*s: function Keymap.add_local_key *)
 let add_local_key buf = 
@@ -184,7 +184,7 @@ let add_major_key major =
 (*e: function Keymap.add_major_key *)
 
 let define_interactive_action action_name action_fun =
-  Efuns.define_action action_name action_fun;
-  let map = (Efuns.location()).loc_map in
+  Action.define_action action_name action_fun;
+  let map = (Globals.location()).loc_map in
   add_interactive map action_name action_fun
 (*e: core/keymap.ml *)

@@ -70,81 +70,13 @@ external id : 'a -> 'a = "%identity"
 
 \section{[[core/]]}
 
-\subsection*{[[core/efuns.ml]]}
+\subsection*{[[core/var.ml]]}
 
+<<core/var.ml>>=
+<<copyright header efuns>>
+open Efuns
+open Globals
 
-%-------------------------------------------------------------
-
-<<core/efuns.ml>>=
-<<copyright header2>>
-(* Useful types for Efuns *)
-
-(*************************************************************************)
-(*      Types      *)
-(*************************************************************************)
-
-<<function Efuns.error>>
-  
-<<exception Efuns.UnboundKey>>
-
-<<type Efuns.map>>
-<<type Efuns.keySym>>
-<<type Efuns.key>>
-
-<<type Efuns.action>>
-
-and action_name = string
-
-<<type Efuns.generic_action>>
-
-<<type Efuns.mod_ident>>
-
-and keys = key list
-
-<<type Efuns.prefix>>
-
-<<type Efuns.binding>>
-
-<<type Efuns.buffer>>
-
-<<type Efuns.major_mode>>
-
-<<type Efuns.minor_mode>>
-  
-<<type Efuns.frame>>
-
-<<type Efuns.status_info>>
-
-<<type Efuns.status>>
-
-<<type Efuns.line_repr>>
-
-<<type Efuns.top_window>>
-
-<<type Efuns.window>>
-
-<<type Efuns.window_up>>
-
-<<type Efuns.window_down>>
-
-<<type Efuns.location>>
-
-<<type Efuns.sens>>
-<<type Efuns.to_regexp>>
-
-(*************************************************************************)
-(*      Values      *)
-(*************************************************************************)
-
-<<global Efuns.global_location>>
-<<function Efuns.location>>
-
-<<constant Efuns.start_hooks>>
-<<function Efuns.add_start_hook>>
-
-
-  (* Les variables *)
-  
 <<function Efuns.set_global>>
 <<function Efuns.set_local>>
 <<function Efuns.get_var>>
@@ -155,15 +87,75 @@ and keys = key list
 <<function Efuns.set_minor_var>>
 <<function Efuns.set_major_var>>
   
+
+@
+
+\subsection*{[[core/attr.ml]]}
+
+<<core/attr.ml>>=
+<<copyright header efuns>>
+open Efuns
+
+(* see also Text.make_attr *)
+
+<<function Window.get_font>>
+        
+<<function Window.get_color>>
+
+@
+
+\subsection*{[[core/hook.ml]]}
+
+<<core/hook.ml>>=
+<<copyright header efuns>>
+
+<<constant Efuns.start_hooks>>
+<<function Efuns.add_start_hook>>
+
 <<function Efuns.exec_hooks>>
 
 <<function Efuns.add_hook>>
+
+@
+
+\subsection*{[[core/action.ml]]}
+
+<<core/action.ml>>=
+<<copyright header efuns>>
+open Efuns
+
+<<global Efuns.actions>>
+
+<<function Efuns.define_action>>
+
+<<function Efuns.define_buffer_action>>
+
+<<function Efuns.get_action>>
+
+<<function Efuns.execute_action>>
+
+<<function Efuns.execute_buffer_action>>
+
+@
+
+\subsection*{[[core/globals.ml]]}
+
+<<core/globals.ml>>=
+<<copyright header efuns>>
+open Efuns
+
+(* there are other globals: actions, start_hooks, etc *)
+
+<<global Efuns.global_location>>
+<<function Efuns.location>>
 
 let with_lock f =
   let loc = location () in
   Mutex.lock loc.loc_mutex;
   Common.finalize f (fun () -> Mutex.unlock loc.loc_mutex)
   
+<<function Efuns.error>>
+
 (*************************************************************************)
 (*      Initialization      *)
 (*************************************************************************)
@@ -185,7 +177,6 @@ open Options
 
 (* used in some major mode *)
 <<constant Efuns.font>>
-
   
 (*--------------------    Ressources *)
 <<constant Efuns.xdefaults>>
@@ -201,20 +192,94 @@ open Options
 *)
   
 
-<<global Efuns.actions>>
+@
 
-<<function Efuns.define_action>>
+\subsection*{[[core/efuns.ml]]}
 
-<<function Efuns.define_buffer_action>>
 
-<<function Efuns.get_action>>
+%-------------------------------------------------------------
 
-<<function Efuns.execute_action>>
+<<core/efuns.ml>>=
+<<copyright header2>>
+(* Useful types for Efuns *)
 
-<<function Efuns.execute_buffer_action>>
-      
+<<exception Efuns.UnboundKey>>
+
+(*************************************************************************)
+(* Keymaps and actions *)
+(*************************************************************************)
+
+<<type Efuns.map>>
+<<type Efuns.keySym>>
+<<type Efuns.key>>
+
+<<type Efuns.action>>
+
+and action_name = string
+
+<<type Efuns.generic_action>>
+
+<<type Efuns.mod_ident>>
+
+and keys = key list
+
+<<type Efuns.prefix>>
+
+<<type Efuns.binding>>
+
+(*************************************************************************)
+(* Buffers *)
+(*************************************************************************)
+
+<<type Efuns.buffer>>
+
+<<type Efuns.major_mode>>
+
+<<type Efuns.minor_mode>>
+
+(*************************************************************************)
+(* Frames *)
+(*************************************************************************)
+  
+<<type Efuns.frame>>
+
+<<type Efuns.status_info>>
+
+<<type Efuns.status>>
+
+<<type Efuns.line_repr>>
+
+(*************************************************************************)
+(* Windows *)
+(*************************************************************************)
+
+<<type Efuns.top_window>>
+
+<<type Efuns.window>>
+
+<<type Efuns.window_up>>
+
+<<type Efuns.window_down>>
+
+(*************************************************************************)
+(* The world *)
+(*************************************************************************)
+
+<<type Efuns.location>>
+
+(*************************************************************************)
+(* Misc *)
+(*************************************************************************)
+
+(* used by frame, so can't be in top_window.ml *)
+<<function Efuns.backend>>
+
+<<type Efuns.sens>>
+<<type Efuns.to_regexp>>
+
 <<function Efuns.string_to_regex>>
-    
+
+open Options    
 <<constant Efuns.regexp_option>>
 @
 
@@ -941,10 +1006,10 @@ type charreprs = string array
 
 <<function Ebuffer.read>>=
 let read filename local_map =
-  let location = Efuns.location() in
-  let filename = Utils.normal_name location.loc_dirname filename in
+  let loc = Globals.location() in
+  let filename = Utils.normal_name loc.loc_dirname filename in
   try
-    Hashtbl.find location.loc_files filename
+    Hashtbl.find loc.loc_files filename
   with Not_found ->
     let text =
       try
@@ -955,7 +1020,7 @@ let read filename local_map =
       with _ -> Text.create ""
     in
     let buf = create filename (Some filename) text local_map in
-    Hashtbl.add location.loc_files filename buf;
+    Hashtbl.add loc.loc_files filename buf;
     buf
 @
 
@@ -967,23 +1032,23 @@ exception BufferAlreadyOpened
 
 <<function Ebuffer.change_name>>=
 let change_name buf filename =
-  let location = Efuns.location() in
-  Hashtbl.remove location.loc_buffers buf.buf_name;
+  let loc = Globals.location() in
+  Hashtbl.remove loc.loc_buffers buf.buf_name;
   buf.buf_filename |> Common.do_option (fun filename ->
-    Hashtbl.remove location.loc_files filename
+    Hashtbl.remove loc.loc_files filename
   );
   let filename = 
     if Filename.is_relative filename then
-      Filename.concat location.loc_dirname filename
+      Filename.concat loc.loc_dirname filename
     else
       filename
   in
-  if Utils.hashtbl_mem location.loc_files filename 
+  if Utils.hashtbl_mem loc.loc_files filename 
   then raise BufferAlreadyOpened;
-  let filename = Utils.normal_name location.loc_dirname filename in
+  let filename = Utils.normal_name loc.loc_dirname filename in
   let name = get_name filename in
-  Hashtbl.add location.loc_buffers name buf;
-  Hashtbl.add location.loc_files filename buf;
+  Hashtbl.add loc.loc_buffers name buf;
+  Hashtbl.add loc.loc_files filename buf;
   buf.buf_filename <- Some filename;
   buf.buf_name <- name
 @
@@ -997,11 +1062,11 @@ let catch format buf f =
   try
     f ()
   with e ->
-    let location = Efuns.location() in
+    let loc = Globals.location() in
     let name = "*Messages*" in
     let m = Printf.sprintf format (Utils.printexn e) in
     try
-      let buf = Hashtbl.find location.loc_buffers name in
+      let buf = Hashtbl.find loc.loc_buffers name in
       Text.insert_at_end buf.buf_text (m ^ "\n");
     with Not_found ->
       create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
@@ -1054,7 +1119,7 @@ open Options
 <<function Ebuffer.read>>
 
 let find_buffer_opt name =
-  try Some (Hashtbl.find (Efuns.location()).loc_buffers name)
+  try Some (Hashtbl.find (Globals.location()).loc_buffers name)
   with Not_found -> None
 
 <<constant Ebuffer.help_buffer_content>>
@@ -1120,6 +1185,7 @@ let find_buffer_opt name =
 
 <<core/keymap.ml>>=
 <<copyright header2>>
+open Efuns
 
 (*
 La gestion des keymaps est inadapte'e a` la modification dynamique.
@@ -1127,7 +1193,6 @@ En effet, on aurait envie de pouvoir modifier les bindings selon divers
   crite`res, tels que le buffer (possible), le mode(pas possible).
 *)
 
-open Efuns
 
 <<function Keymap.dummy_action>>
 
@@ -1163,8 +1228,8 @@ open Efuns
 <<function Keymap.add_major_key>>
 
 let define_interactive_action action_name action_fun =
-  Efuns.define_action action_name action_fun;
-  let map = (Efuns.location()).loc_map in
+  Action.define_action action_name action_fun;
+  let map = (Globals.location()).loc_map in
   add_interactive map action_name action_fun
 @
 
@@ -1267,13 +1332,7 @@ open Efuns
 <<function Window.next>>
       
 <<function Window.prev>>
-
-<<function Window.xterm>>
-
-<<function Window.get_font>>
-        
-<<function Window.get_color>>
-        
+       
 @
 
 
@@ -1306,7 +1365,7 @@ let active frame =
   let top_window = Window.top frame.frm_window in
   top_window.top_active_frame <- frame;
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
-    (Efuns.location()).loc_dirname <- Filename.dirname filename
+    (Globals.location()).loc_dirname <- Filename.dirname filename
   )
 @
 
@@ -3865,6 +3924,7 @@ open Efuns
   in other cases. *)
   
 <<function Top_window.check_abort>>
+
 @
 
 

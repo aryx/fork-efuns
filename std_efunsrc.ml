@@ -14,6 +14,7 @@
 open Utils
 open Options
 open Efuns
+open Action
 
 (*s: constant Std_efunsrc.grep_hist *)
 let grep_hist = ref ["grep -n "]
@@ -601,7 +602,7 @@ let init_global_map () =
   (*s: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
   !!interactives_map |> List.iter (fun (name, action) ->
     try
-      Keymap.add_interactive (Efuns.location()).loc_map name 
+      Keymap.add_interactive (Globals.location()).loc_map name 
         (execute_action action)
     with e ->
       Log.printf "Error for action %s" action;
@@ -679,7 +680,7 @@ let _ =
   (*s: [[Std_efunsrc]] buffers menu setup *)
   Top_window.buffers_menu := (fun top_window button () ->
       let buffers = ref [] in
-      let loc = Efuns.location() in
+      let loc = Globals.location() in
       Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) loc.loc_buffers;
       let _desc = Array.map (fun name -> 
             (name, Top_window.wrap top_window (fun top_window ->
@@ -702,7 +703,7 @@ let _ =
   
 (*s: toplevel Std_efunsrc._5 *)
 let _ =
-  Efuns.add_start_hook (fun () ->
+  Hook.add_start_hook (fun () ->
     (*s: [[Std_efunsrc._5]] start hooks options *)
     Simple.add_option_parameter Compil.compile_find_makefile;
     Simple.add_option_parameter Text.add_amount;

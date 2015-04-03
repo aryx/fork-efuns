@@ -83,7 +83,7 @@ let menu frame =
     (all |> Common.exclude (fun str -> List.mem str list))
   in
 
-  Efuns.set_local buf buflist_array (Array.of_list list);
+  Var.set_local buf buflist_array (Array.of_list list);
 
   list |> List.iter (fun name ->
     let buf = Ebuffer.default name in
@@ -109,7 +109,7 @@ let menu frame =
 
 let key_return frame =
   let buf = frame.frm_buffer in
-  let arr = Efuns.get_local buf buflist_array in
+  let arr = Var.get_local buf buflist_array in
   let point = frame.frm_point in
   let line = Text.point_line buf.buf_text point in
   try 
@@ -128,8 +128,9 @@ let key_return frame =
 (*****************************************************************************)
 
 let _ = 
-  Efuns.add_start_hook (fun () ->
-    define_action "buffer_menu_change_buffer_record" change_buffer_record;
+  Hook.add_start_hook (fun () ->
+    Action.define_action "buffer_menu_change_buffer_record" 
+      change_buffer_record;
      Frame.change_buffer_hooks =:=
       ("buffer_menu_change_buffer_record" :: !!Frame.change_buffer_hooks);
 
