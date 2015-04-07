@@ -118,6 +118,8 @@ let _ =
   define_action "insert_killed"  Simple.insert_killed;
   define_action "insert_next_killed"  Simple.insert_next_killed;
   (*e: moving actions *)
+  define_action "copy_region"  Simple.copy_region;
+
   (* ------------------------- *)
   (* Transforming *)
   (* ------------------------- *)
@@ -400,6 +402,11 @@ let _ =
         [ControlMap, Char.code 'y'], "insert_killed";
         [MetaMap, Char.code 'y'], "insert_next_killed";
         (*e: moving keys *)
+
+        (* pad: pc-select *)
+        [MetaMap, Char.code 'w'], "copy_region";
+        
+
         (* ---------------------- *)
         (* Transforming *)
         (* ---------------------- *)

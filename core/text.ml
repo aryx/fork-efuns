@@ -714,17 +714,18 @@ let set_attr tree point len attr = (* should not exceed one line *)
 
 (*s: function Text.low_distance *)
 let low_distance text p1 p2 =
-  if p1 >= p2 then 0 else
-  if p1 <= text.gpoint.pos then
-    if p2 <= text.gpoint.pos then
-      p2 - p1
+  if p1 >= p2 
+  then 0 
+  else
+    if p1 <= text.gpoint.pos 
+    then
+      if p2 <= text.gpoint.pos 
+      then p2 - p1
+      else p2 - p1 - text.gsize
     else
-      p2 - p1 - text.gsize
-  else
-  if p2 <= text.gpoint.pos then
-    p2 - p1 + text.gsize
-  else
-    p2 - p1
+      if p2 <= text.gpoint.pos 
+      then p2 - p1 + text.gsize
+      else p2 - p1
 (*e: function Text.low_distance *)
 
 (*s: function Text.distance *)

@@ -297,9 +297,6 @@ let insert_at_end tree str =
 
 
 
-<<type Text.delta>>=
-type delta = int
-@
 
 <<function Text.find_xy>>=
 let find_xy text point line pos =
@@ -368,26 +365,7 @@ let save tree outc =
 @
 
 
-<<function Text.low_distance>>=
-let low_distance text p1 p2 =
-  if p1 >= p2 then 0 else
-  if p1 <= text.gpoint.pos then
-    if p2 <= text.gpoint.pos then
-      p2 - p1
-    else
-      p2 - p1 - text.gsize
-  else
-  if p2 <= text.gpoint.pos then
-    p2 - p1 + text.gsize
-  else
-    p2 - p1
-@
 
-<<function Text.distance>>=
-let distance tree p1 p2 =
-  let text = tree.tree_text in    
-  low_distance text p1.pos p2.pos
-@
 
 <<function Text.compare>>=
 let compare text p1 p2 = 
@@ -1236,17 +1214,6 @@ let define_interactive_action action_name action_fun =
 
 \subsection*{[[core/minibuffer.ml]]}
 
-<<function Minibuffer.kill>>=
-let kill mini_frame old_frame =
-  let window = mini_frame.frm_window in
-  let top_window = Window.top window in
-  Top_window.clear_message top_window;
-  top_window.top_mini_buffers <- List.tl top_window.top_mini_buffers;
-  if old_frame.frm_killed then
-    Frame.unkill window old_frame;
-  top_window.top_active_frame <- old_frame;
-  Frame.kill mini_frame
-@
 
 <<function Minibuffer.return>>=
 let return action old_frame mini_frame =
@@ -1579,6 +1546,8 @@ open Text
 <<function Frame.save_buffer>>
 
 <<function Frame.bindings_help>>
+
+<<function Simple.to_frame>>
   
 @
 
@@ -1838,13 +1807,7 @@ let line_size frame =
 
 
 
-<<constant Simple.kill_size>>=
-let kill_size = ref 0
-@
 
-<<constant Simple.kill_max>>=
-let kill_max = 10
-@
 
 
 <<constant Simple.last_kill>>=
@@ -1852,12 +1815,6 @@ let last_kill = ref None
 @
 
 
-<<function Simple.kill_string>>=
-let kill_string str =
-  Array.blit kill_ring 0 kill_ring 1 (kill_max - 1);
-  incr kill_size;
-  kill_ring.(0) <- str
-@
 
 <<function Simple.kill_text>>=
 let kill_text text point len =
@@ -2293,6 +2250,27 @@ open Xtypes
 
 <<function Simple.kill_region>>
 
+(* copy-region-as-kill-nomark in emacs *)
+let copy_region frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let mark =
+    match buf.buf_mark with
+      None -> failwith "No mark set"
+    | Some mark -> 
+        buf.buf_mark <- None;
+        mark
+  in
+  let (start,term) = 
+    if mark > point then (point,mark) else (mark,point)
+  in
+  let region = Text.sub text start (Text.distance text start term) in
+  kill_string region;
+  let top_window = Window.top frame.frm_window in
+  Top_window.message top_window "Region saved"
+  
+
 (*****************************************************************************)
 (* Words *)
 (*****************************************************************************)
@@ -2306,7 +2284,6 @@ open Xtypes
 
 <<function Simple.to_end_of_word>>
 
-<<function Simple.to_frame>>
 
 <<function Simple.backward_word>>
 

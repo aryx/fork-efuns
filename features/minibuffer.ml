@@ -58,8 +58,8 @@ let kill mini_frame old_frame =
   let top_window = Window.top window in
   Top_window.clear_message top_window;
   top_window.top_mini_buffers <- List.tl top_window.top_mini_buffers;
-  if old_frame.frm_killed then
-    Frame.unkill window old_frame;
+  if old_frame.frm_killed 
+  then Frame.unkill window old_frame;
   top_window.top_active_frame <- old_frame;
   Frame.kill mini_frame
 (*e: function Minibuffer.kill *)

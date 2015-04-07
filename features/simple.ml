@@ -322,8 +322,12 @@ let insert_next_killed frame =
   let point = frame.frm_point in
   match !last_insert with
   |  Some (oldframe,oldpoint,n,len) when 
-    oldframe == frame && oldpoint + len = Text.get_position text point ->
-      let n = if n = (min !kill_size kill_max) - 1 then 0 else n+1 in
+        oldframe == frame && oldpoint + len = Text.get_position text point ->
+      let n = 
+        if n = (min !kill_size kill_max) - 1 
+        then 0 
+        else n+1 
+      in
       Text.bmove text point len;
       Text.delete text point len |> ignore;
       let pos, len =  Text.insert_res text point kill_ring.(n) in
@@ -340,7 +344,7 @@ let kill_region frame =
   let point = frame.frm_point in
   let mark =
     match buf.buf_mark with
-      None -> failwith "No mark set"
+    | None -> failwith "No mark set"
     | Some mark -> mark
   in
   let (start,term) = 
@@ -349,6 +353,27 @@ let kill_region frame =
   let _,region = Text.delete_res text start (Text.distance text start term) in
   kill_string region
 (*e: function Simple.kill_region *)
+
+(* copy-region-as-kill-nomark in emacs *)
+let copy_region frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let mark =
+    match buf.buf_mark with
+      None -> failwith "No mark set"
+    | Some mark -> 
+        buf.buf_mark <- None;
+        mark
+  in
+  let (start,term) = 
+    if mark > point then (point,mark) else (mark,point)
+  in
+  let region = Text.sub text start (Text.distance text start term) in
+  kill_string region;
+  let top_window = Window.top frame.frm_window in
+  Top_window.message top_window "Region saved"
+  
 
 (*****************************************************************************)
 (* Words *)

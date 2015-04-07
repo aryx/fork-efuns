@@ -27,7 +27,7 @@ let message top_window msg =
     (top_window.top_width - len);
 
   match top_window.top_mini_buffers with
-    [] -> (* No mini-buffer ... *) ()
+  | [] -> (* No mini-buffer ... *) ()
   | mini_buffer :: _ -> (* one mini-buffer is active *)
       graphic.Xdraw.update_display ();
       (* let _ = Unix.select [] [] [] 0.2 in *)
@@ -37,7 +37,7 @@ let message top_window msg =
 (*s: function Top_window.clear_message *)
 let clear_message top_window =
   match top_window.top_mini_buffers with
-    [] -> 
+  | [] -> 
       let graphic = Efuns.backend top_window in
       graphic.Xdraw.clear_eol 
         0 (top_window.top_height - 1) 

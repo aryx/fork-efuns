@@ -1213,6 +1213,8 @@ define_action "scroll_other_down" Simple.scroll_other_down;
 (* Moving (Cut, copy, paste) *)
 (* ------------------------- *)
 <<moving actions>>
+define_action "copy_region"  Simple.copy_region;
+
 (* ------------------------- *)
 (* Transforming *)
 (* ------------------------- *)
@@ -1504,6 +1506,11 @@ let c_c = (ControlMap, Char.code 'c')
 (* Moving (Cut, copy, paste) *)
 (* ------------------------------ *)
 <<moving keys>>
+
+(* pad: pc-select *)
+[MetaMap, Char.code 'w'], "copy_region";
+        
+
 (* ---------------------- *)
 (* Transforming *)
 (* ---------------------- *)
@@ -1897,7 +1904,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
+let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -2553,6 +2560,39 @@ let move_point_to tree point p =
 @
 % find_xy???
 %less: rename move_point_to_pos
+
+
+\section{Delta}
+
+<<type Text.delta>>=
+type delta = int
+@
+
+%val distance : t -> point -> point -> delta
+
+% helper often used when want compute a delta from 2 pos
+
+<<function Text.distance>>=
+let distance tree p1 p2 =
+  let text = tree.tree_text in    
+  low_distance text p1.pos p2.pos
+@
+
+<<function Text.low_distance>>=
+let low_distance text p1 p2 =
+  if p1 >= p2 
+  then 0 
+  else
+    if p1 <= text.gpoint.pos 
+    then
+      if p2 <= text.gpoint.pos 
+      then p2 - p1
+      else p2 - p1 - text.gsize
+    else
+      if p2 <= text.gpoint.pos 
+      then p2 - p1 + text.gsize
+      else p2 - p1
+@
 
 \section{Lines}
 
@@ -5062,6 +5102,19 @@ mutable win_mini : bool;
 % which is what is used in Window.create true
 
 
+<<function Minibuffer.kill>>=
+let kill mini_frame old_frame =
+  let window = mini_frame.frm_window in
+  let top_window = Window.top window in
+  Top_window.clear_message top_window;
+  top_window.top_mini_buffers <- List.tl top_window.top_mini_buffers;
+  if old_frame.frm_killed 
+  then Frame.unkill window old_frame;
+  top_window.top_active_frame <- old_frame;
+  Frame.kill mini_frame
+@
+
+
 % Minibuffer.create -> <>
 <<function Minibuffer.buf_create>>=
 let buf_create text local_map =
@@ -5110,11 +5163,11 @@ graphic.Xdraw.draw_string
  0 (String.length request) Text.direct_attr
 @
 
-% event loop -> ... -> Top_window.handle_key -> <>
+% (event loop -> ... -> Top_window.handle_key) | C-g -> <>
 <<function Top_window.clear_message>>=
 let clear_message top_window =
   match top_window.top_mini_buffers with
-    [] -> 
+  | [] -> 
       let graphic = Efuns.backend top_window in
       graphic.Xdraw.clear_eol 
         0 (top_window.top_height - 1) 
@@ -5124,8 +5177,10 @@ let clear_message top_window =
 
 
 \subsection{[[Top_window.message()]]}
+% convenient to communicate info, like a status bar.
 
-% convenient to communicate info
+% (even though it's actually not really a minibuffer thing;
+% it's just located at the same place than the minibuffer)
 
 <<function Top_window.message>>=
 let message top_window msg =
@@ -5138,7 +5193,7 @@ let message top_window msg =
     (top_window.top_width - len);
 
   match top_window.top_mini_buffers with
-    [] -> (* No mini-buffer ... *) ()
+  | [] -> (* No mini-buffer ... *) ()
   | mini_buffer :: _ -> (* one mini-buffer is active *)
       graphic.Xdraw.update_display ();
       (* let _ = Unix.select [] [] [] 0.2 in *)
@@ -5696,8 +5751,8 @@ let incremental_mini_buffer
 define_action "move_backward"  (fun frame -> ignore (Simple.move_backward frame 1));
 define_action "move_forward"   (fun frame -> ignore (Simple.move_forward frame 1));
 
-define_action "backward_word"  (Simple.to_frame Simple.backward_word);
-define_action "forward_word"  (Simple.to_frame Simple.forward_word);  
+define_action "backward_word"  (Frame.to_frame Simple.backward_word);
+define_action "forward_word"  (Frame.to_frame Simple.forward_word);  
 
 define_action "beginning_of_line"  Simple.beginning_of_line;
 define_action "end_of_line"  Simple.end_of_line;
@@ -5705,8 +5760,8 @@ define_action "end_of_line"  Simple.end_of_line;
 define_action "backward_line"  Simple.backward_line;
 define_action "forward_line"  Simple.forward_line;  
 
-define_action "backward_paragraph"  (Simple.to_frame Simple.backward_paragraph);
-define_action "forward_paragraph"  (Simple.to_frame Simple.forward_paragraph);  
+define_action "backward_paragraph"  (Frame.to_frame Simple.backward_paragraph);
+define_action "forward_paragraph"  (Frame.to_frame Simple.forward_paragraph);  
 
 define_action "backward_screen"  Simple.backward_screen;
 define_action "forward_screen"  Simple.forward_screen;
@@ -6195,8 +6250,8 @@ let self_insert_command frame =
 define_action "delete_before_point"  Simple.delete_backspace_char;
 define_action "delete_at_point"  Simple.delete_char;
 
-define_action "delete_forward_word"  (Simple.to_frame Simple.delete_forward_word);
-define_action "delete_backward_word"  (Simple.to_frame Simple.delete_backward_word);
+define_action "delete_forward_word"  (Frame.to_frame Simple.delete_forward_word);
+define_action "delete_backward_word"  (Frame.to_frame Simple.delete_backward_word);
 
 define_action "hungry_electric_delete"  Simple.hungry_electric_delete;
 define_action "kill_end_of_line"  Simple.kill_end_of_line;
@@ -6317,6 +6372,10 @@ define_action "insert_next_killed"  Simple.insert_next_killed;
 
 \subsection{Mark}
 
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_mark : Text.point option;
+@
+
 <<function Complex.mark_at_point>>=
 let mark_at_point frame =
   Ebuffer.set_mark frame.frm_buffer frame.frm_point;
@@ -6325,16 +6384,13 @@ let mark_at_point frame =
   ()
 @
 
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_mark : Text.point option;
-@
 
 <<function Ebuffer.set_mark>>=
 let set_mark buf point =
   let text = buf.buf_text in
   buf.buf_modified <- buf.buf_modified + 1;
   match buf.buf_mark with
-    None ->
+  | None ->
       let mark = Text.dup_point text point in
       buf.buf_mark <- Some mark
   | Some mark ->
@@ -6347,7 +6403,7 @@ let set_mark buf point =
 <<function Ebuffer.get_mark>>=
 let rec get_mark buf point =
   match buf.buf_mark with
-    None -> 
+  | None -> 
       set_mark buf point;
       get_mark buf point
   | Some mark -> mark
@@ -6355,12 +6411,11 @@ let rec get_mark buf point =
 
 <<function Ebuffer.remove_mark>>=
 let remove_mark buf =
-  match buf.buf_mark with
-    None -> ()
-  | Some mark ->
-      buf.buf_mark <- None;
-      Text.remove_point buf.buf_text mark;
-      buf.buf_modified <- buf.buf_modified + 1
+  buf.buf_mark |> Common.do_option (fun mark ->
+    buf.buf_mark <- None;
+    Text.remove_point buf.buf_text mark;
+    buf.buf_modified <- buf.buf_modified + 1
+  )
 @
 
 
@@ -6371,7 +6426,7 @@ let remove_mark buf =
 %less: mv in colors section?
 
 %less: when done via mouse?
-%todo: could be done also in cua mode
+%todo: could be done also in cua mode (aka pc-select mode)
 
 %todo: use also for C-s?
 
@@ -6384,7 +6439,7 @@ let kill_region frame =
   let point = frame.frm_point in
   let mark =
     match buf.buf_mark with
-      None -> failwith "No mark set"
+    | None -> failwith "No mark set"
     | Some mark -> mark
   in
   let (start,term) = 
@@ -6394,15 +6449,32 @@ let kill_region frame =
   kill_string region
 @
 
+
+<<constant Simple.kill_ring>>=
+let kill_ring = Array.create kill_max ""
+@
+<<constant Simple.kill_max>>=
+let kill_max = 10
+@
+<<constant Simple.kill_size>>=
+let kill_size = ref 0
+@
+
+<<function Simple.kill_string>>=
+let kill_string str =
+  Array.blit kill_ring 0 kill_ring 1 (kill_max - 1);
+  incr kill_size;
+  kill_ring.(0) <- str
+@
+
 \subsection{Copy}
 % M-w?
 
 \subsection{Paste}
 
-<<constant Simple.kill_ring>>=
-let kill_ring = Array.create kill_max ""
-@
 
+
+% c-y
 <<function Simple.insert_killed>>=
 let insert_killed frame =
   let buf = frame.frm_buffer in
@@ -6416,6 +6488,7 @@ let insert_killed frame =
 <<constant Simple.last_insert>>=
 let last_insert = ref None
 @
+% for M-y
 
 % M-y
 <<function Simple.insert_next_killed>>=
@@ -6425,8 +6498,12 @@ let insert_next_killed frame =
   let point = frame.frm_point in
   match !last_insert with
   |  Some (oldframe,oldpoint,n,len) when 
-    oldframe == frame && oldpoint + len = Text.get_position text point ->
-      let n = if n = (min !kill_size kill_max) - 1 then 0 else n+1 in
+        oldframe == frame && oldpoint + len = Text.get_position text point ->
+      let n = 
+        if n = (min !kill_size kill_max) - 1 
+        then 0 
+        else n+1 
+      in
       Text.bmove text point len;
       Text.delete text point len |> ignore;
       let pos, len =  Text.insert_res text point kill_ring.(n) in
@@ -8529,9 +8606,9 @@ let escaped s =
 @
 
 <<transforming actions>>=
-define_action "transpose_chars"  (Simple.to_frame Simple.transpose_chars);
+define_action "transpose_chars"  (Frame.to_frame Simple.transpose_chars);
 
-define_action "transpose_words"  (Simple.to_frame Simple.transpose_words);
+define_action "transpose_words"  (Frame.to_frame Simple.transpose_words);
 define_action "lowercase_word" (fun frame ->
   let buf = frame.frm_buffer in
   let point = frame.frm_point in

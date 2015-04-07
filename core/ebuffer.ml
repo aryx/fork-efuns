@@ -294,7 +294,7 @@ let set_mark buf point =
   let text = buf.buf_text in
   buf.buf_modified <- buf.buf_modified + 1;
   match buf.buf_mark with
-    None ->
+  | None ->
       let mark = Text.dup_point text point in
       buf.buf_mark <- Some mark
   | Some mark ->
@@ -304,7 +304,7 @@ let set_mark buf point =
 (*s: function Ebuffer.get_mark *)
 let rec get_mark buf point =
   match buf.buf_mark with
-    None -> 
+  | None -> 
       set_mark buf point;
       get_mark buf point
   | Some mark -> mark
@@ -312,12 +312,11 @@ let rec get_mark buf point =
 
 (*s: function Ebuffer.remove_mark *)
 let remove_mark buf =
-  match buf.buf_mark with
-    None -> ()
-  | Some mark ->
-      buf.buf_mark <- None;
-      Text.remove_point buf.buf_text mark;
-      buf.buf_modified <- buf.buf_modified + 1
+  buf.buf_mark |> Common.do_option (fun mark ->
+    buf.buf_mark <- None;
+    Text.remove_point buf.buf_text mark;
+    buf.buf_modified <- buf.buf_modified + 1
+  )
 (*e: function Ebuffer.remove_mark *)
 
 (*s: constant Ebuffer.modes_old *)
