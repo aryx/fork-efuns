@@ -255,29 +255,31 @@ let string_to_filename filename =
   
 
 let exns = ref []
-let register_exn f = exns := f :: !exns
+let register_exn f = 
+  exns := f :: !exns
+
 let printexn exn =
   let rec iter exns =
     match exns with
       [] -> Printexc.to_string exn
     | f :: tail ->
-        try f exn with
-          _ -> iter tail
+        try f exn 
+        with  _ -> iter tail
   in
   iter !exns
   
 let catchexn s f =
-  try f () with
-    e -> 
-      Printf.printf "Uncaught exception in %s: %s" s (printexn e);
-      print_newline () 
+  try f () 
+  with e -> 
+    Printf.printf "Uncaught exception in %s: %s" s (printexn e);
+    print_newline () 
   
 let vcatchexn s f =
-  try Some (f ()) with
-    e -> 
-      Printf.printf "Uncaught exception in %s: %s" s (printexn e);
-      print_newline ();
-      None
+  try Some (f ()) 
+  with  e -> 
+    Printf.printf "Uncaught exception in %s: %s" s (printexn e);
+    print_newline ();
+    None
 
   
 let set_signal sig_num sig_beh =
