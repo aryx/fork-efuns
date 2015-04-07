@@ -85,7 +85,7 @@ let extensions = [
   ([E "htm"; E "html"; E "html\\.gz"; E "htm\\.gz"] , html_color);
 
 
-  ([E "rpm"; E "deb"]                                          , package_color);
+  ([E "rpm"; E "deb"; E "dmg"]                            , package_color);
   ([E "tar"; E "tgz"; E "tar.gz"; E "tar.bz2"; E "zip"; E "rar"] , tar_color);
   ([E "bak"; E "BAK"; Reg "\\.save"]       , backup_color);
 
