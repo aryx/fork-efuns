@@ -230,7 +230,7 @@ let draw_minimap_overlay w =
 
   Cairo.set_line_width cr ((Cairo.get_line_width cr) * w.metrics.mini_factor);
   draw_rectangle_xywh ~cr ~x ~y ~w:w.metrics.main_width ~h
-    ~color:"yellow" ();
+    ~color:"black" ();
   ()
 
 (*****************************************************************************)
