@@ -269,11 +269,19 @@ let handle_key top_window modifiers keysym =
             (Keymap.print_key_list (frame.frm_prefix @ [key])));
         frame.frm_prefix <- [];
     | Failure str -> message top_window str
+    (*x: [[Top_window.handle_key()]] handle exception of try_map *)
     | e -> 
+        let str = spf "Uncaught exception %s" (Utils.printexn e) in
+        let bt = Printexc.get_backtrace () in
         if !Globals.debug
-        then pr2 (spf "Uncaught exception %s" (Utils.printexn e));
-        message top_window 
-          (Printf.sprintf "Uncaught exception %s" (Utils.printexn e))
+        then pr2 str;
+        message top_window  str;
+        let buf = Ebuffer.default "*backtrace*" in
+        let text = buf.buf_text in
+        Text.insert_at_end text str;
+        Text.insert_at_end text "\n";
+        Text.insert_at_end text bt;
+        Text.insert_at_end text "\n"
     (*e: [[Top_window.handle_key()]] handle exception of try_map *)
   end;
 
