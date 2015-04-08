@@ -354,6 +354,7 @@ let kill_region frame =
   kill_string region
 (*e: function Simple.kill_region *)
 
+(*s: function Simple.copy_region *)
 (* copy-region-as-kill-nomark in emacs *)
 let copy_region frame =
   let buf = frame.frm_buffer in
@@ -373,6 +374,7 @@ let copy_region frame =
   kill_string region;
   let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Region saved"
+(*e: function Simple.copy_region *)
   
 
 (*****************************************************************************)
