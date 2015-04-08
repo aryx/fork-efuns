@@ -1432,13 +1432,6 @@ let move_point frame point x y =
   fmove text point x |> ignore
 @
 
-<<function Frame.current_dir>>=
-let current_dir frame =
-  let buf = frame.frm_buffer in
-  match buf.buf_filename with
-    Some filename -> Filename.dirname filename ^ "/"
-  | None -> (Globals.location()).loc_dirname ^ "/"
-@
 
 <<exception Frame.FoundFrame>>=
 exception FoundFrame of frame
@@ -2250,25 +2243,7 @@ open Xtypes
 
 <<function Simple.kill_region>>
 
-(* copy-region-as-kill-nomark in emacs *)
-let copy_region frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let mark =
-    match buf.buf_mark with
-      None -> failwith "No mark set"
-    | Some mark -> 
-        buf.buf_mark <- None;
-        mark
-  in
-  let (start,term) = 
-    if mark > point then (point,mark) else (mark,point)
-  in
-  let region = Text.sub text start (Text.distance text start term) in
-  kill_string region;
-  let top_window = Window.top frame.frm_window in
-  Top_window.message top_window "Region saved"
+<<function Simple.copy_region>>
   
 
 (*****************************************************************************)
@@ -3180,6 +3155,8 @@ open Common
 open Efuns
 open Unix
 
+type end_action = (Efuns.buffer -> int -> unit)
+
 <<function System.open_process>>
 
 <<function System.system>>
@@ -3430,18 +3407,15 @@ open Efuns
 
 \subsection*{[[features/compil.ml]]}
 
-<<constant Compil.compilation_frame>>=
-let compilation_frame = ref None
-@
 
 <<type Compil.error>>=
 type error = {
-(* error location *)    
+    (* error location *)    
     err_filename : string;
     err_line : int;
     err_begin : int;
     err_end : int;
-(* error message *)
+    (* error message *)
     err_msg : int;
   }
 @
@@ -3454,9 +3428,9 @@ let c_error_regexp = define_option ["compil"; "error_regexp"] "" regexp_option
 
 <<function Compil.c_find_error>>=
 (* todo: vs C_mode.c_find_error? *)
-let c_find_error text error_point =
+let find_error_gen re text error_point =
   let groups = 
-    Text.search_forward_groups text (snd !!c_error_regexp)
+    Text.search_forward_groups text re
       error_point 2 in
   let error =
     {  
@@ -3470,28 +3444,11 @@ let c_find_error text error_point =
   error
 @
 
-<<constant Compil.find_error>>=
-let find_error = Local.create_abstr "find_error"
-@
-
-<<constant Compil.default_error>>=
-let default_error = ref c_find_error
-@
 
 
-<<constant Compil.compile_find_makefile>>=
-let compile_find_makefile = define_option ["compil";"find_makefile"] ""
-    bool_option true
-@
 
-<<constant Compil.make_command>>=
-let make_command = define_option ["compil";"make_command"] ""
-    string_option "make -k"
-@
 
-<<constant Compil.make_hist>>=
-let make_hist = ref [!!make_command]
-@
+
 
 
 <<function Compil.set_compilation_buffer>>=
@@ -3499,7 +3456,7 @@ let set_compilation_buffer frame comp_buf cdir =
   (*let error_point = new_point comp_buf.buf_text in*)
   let window =
     match !compilation_frame with
-      None -> 
+    | None -> 
         Multi_frames.cut_frame frame
     | Some (frame,point, _) ->
         Text.remove_point frame.frm_buffer.buf_text point;  
@@ -3527,6 +3484,7 @@ let grep_hist = ref [""]
 
 <<features/compil.ml>>=
 <<copyright header2>>
+open Common
 open Options
 open Efuns
 
@@ -3542,12 +3500,38 @@ type find_error_fun = Text.t -> Text.point -> error
 
 <<constant Compil.find_error>>
 <<constant Compil.default_error>>
+
+let find_error_location_regexp = Local.create_abstr "find_error_loc_regexp"
+let find_error_error_regexp = Local.create_abstr "find_error_err_regexp"
   
 <<function Compil.next_error>>
 
 <<constant Compil.compile_find_makefile>>
   
 <<constant Compil.make_command>>
+
+let color_buffer buf =
+  Dircolors.colorize buf;
+
+  let re =
+    try Var.get_var buf find_error_location_regexp
+    with Not_found | Failure _ -> snd !!c_error_regexp
+  in
+  Simple.color buf re false
+    (Text.make_attr (Attr.get_color "green") 1 0 false);
+
+  let re =
+    try Var.get_var buf find_error_error_regexp
+    with Not_found | Failure _ -> Str.regexp "Error"
+  in
+  Simple.color buf re false
+    (Text.make_attr (Attr.get_color "red") 1 0 false);
+  ()
+
+let install buf =
+  color_buffer buf
+
+let mode = Ebuffer.new_major_mode "Compilation" [install]
   
 <<constant Compil.make_hist>>
 <<function Compil.compile>>
@@ -4804,7 +4788,6 @@ let interactives_map = define_option ["makefile_mode"; "interactives_map"] ""
 
 <<toplevel Makefile_mode._2>>=
 let _ = 
-  Action.define_action "makefile_mode.compile" (Compil.compile Compil.c_find_error);
   Action.define_action "makefile_mode.color_buffer" 
     (fun frame -> makefile_color frame.frm_buffer);
   Action.define_action "makefile_mode" makefile_mode;
@@ -4823,8 +4806,8 @@ let _ =
     ];
   if !!interactives_map = [] then 
         interactives_map =:= [
-          "compile", "makefile_mode.compile";
           "color_buffer", "makefile_mode.color_buffer";
+          (*"compile", "makefile_mode.compile";*)
       ]
 @
 % meh for interactives, ok shorter name, but meh
