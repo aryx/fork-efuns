@@ -3,6 +3,8 @@ open Common
 open Efuns
 open Unix
 
+type end_action = (Efuns.buffer -> int -> unit)
+
 (*s: function System.open_process *)
 let open_process cmd =
   let (in_read, in_write) = pipe() in
@@ -92,7 +94,6 @@ let system buf_name cmd end_action =
       flush outc
     end
   );
-
   (*s: [[System.system()]] set finalizer, to intercept killed frame *)
   buf.buf_finalizers <- (fun () -> 
     (try 
@@ -103,13 +104,17 @@ let system buf_name cmd end_action =
     Concur.Thread.remove_reader ins
   ) :: buf.buf_finalizers;
   (*e: [[System.system()]] set finalizer, to intercept killed frame *)
-
   buf
 (*e: function System.system *)
 
 (*s: function System.start_command *)
-let start_command buf_name window cmd =
-  let buf = system buf_name cmd (fun _buf _status -> ()) in
+let start_command buf_name window cmd end_action_opt =
+  let end_action =
+    match end_action_opt with
+    | None  -> (fun _buf _status -> ())
+    | Some f -> f
+  in
+  let buf = system buf_name cmd end_action in
   let frame = Frame.create window None buf in
   frame
 (*e: function System.start_command *)

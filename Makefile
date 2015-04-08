@@ -51,9 +51,9 @@ SRC=\
  features/complexe.ml\
  features/abbrevs.ml\
  features/system.ml\
+ features/dircolors.ml\
  features/compil.ml\
  features/search.ml\
- features/dircolors.ml\
  \
  minor_modes/minor_mode_sample.ml\
  minor_modes/paren_mode.ml\

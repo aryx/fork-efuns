@@ -87,8 +87,8 @@ let _ =
     ];
   if !!interactives_map = [] then 
         interactives_map =:= [
-          "compile", "makefile_mode.compile";
           "color_buffer", "makefile_mode.color_buffer";
+          (*"compile", "makefile_mode.compile";*)
       ]
 (*e: toplevel Makefile_mode._1 *)
 
@@ -99,7 +99,6 @@ let makefile_mode frame =
         
 (*s: toplevel Makefile_mode._2 *)
 let _ = 
-  Action.define_action "makefile_mode.compile" (Compil.compile Compil.c_find_error);
   Action.define_action "makefile_mode.color_buffer" 
     (fun frame -> makefile_color frame.frm_buffer);
   Action.define_action "makefile_mode" makefile_mode;

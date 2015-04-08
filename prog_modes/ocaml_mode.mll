@@ -1272,10 +1272,9 @@ let ocaml_find_error text error_point =
       err_filename = groups.(0);
       err_line = (int_of_string groups.(1)) - 1;
       err_begin = int_of_string groups.(2);
-      err_end = try
-        int_of_string groups.(3)
-      with
-        _ -> int_of_string groups.(2)
+      err_end = 
+        try int_of_string groups.(3)
+        with  _ -> int_of_string groups.(2)
     } in
   Text.fmove text error_point 1;
   error
@@ -1350,7 +1349,7 @@ let interactives_map = define_option ["ocaml_mode"; "interactives_map"] ""
 let setup_maps () =
   if !!local_map = [] 
   then local_map =:= [
-      [c_c; ControlMap, Char.code 'c'], "ocaml_mode.compile";    
+      [c_c; ControlMap, Char.code 'c'], "compile";    
       [ControlMap, Char.code 'l'], "ocaml_mode.color_buffer";
       [c_c; ControlMap, Char.code 'b'], "ocaml_mode.indent_buffer";
       [c_c; ControlMap, Char.code 'C'], "ocaml_mode.color_buffer";
@@ -1376,7 +1375,6 @@ let setup () =
   setup_structures ();
 
   Action.define_action "ocaml_mode" ocaml_mode;
-  Action.define_action "ocaml_mode.compile" (Compil.compile ocaml_find_error);
   Action.define_action "ocaml_mode.color_buffer" 
     (fun frame -> ocaml_color_buffer frame.frm_buffer);
   Action.define_action "ocaml_mode.indent_buffer" indent_buffer;
@@ -1389,6 +1387,9 @@ let setup () =
     (fun frame -> Abbrevs.expand_sabbrev frame; insert_and_return frame); 
 
   setup_maps ();
+
+  Var.set_major_var mode Compil.find_error ocaml_find_error;
+
 
   let map = mode.maj_map in
   !!local_map |> List.iter (fun (keys, action) ->
@@ -1433,7 +1434,7 @@ let minor_mode = Ebuffer.new_minor_mode "ocaml" []
 let _ =  
   Hook.add_start_hook (fun () ->
   Keymap.add_binding minor_mode.min_map 
-   [c_c; ControlMap, Char.code 'c'] (Action.execute_action "ocaml_mode.compile")
+   [c_c; ControlMap, Char.code 'c'] (Action.execute_action "compile")
    |> ignore;
   Action.define_action "ocaml_minor_mode" 
     (fun frame -> 

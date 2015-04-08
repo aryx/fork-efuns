@@ -553,7 +553,6 @@ let setup_actions () =
 (*  define_action "tex_mode.browse" browse; *)
   Action.define_action "tex_mode.color_buffer" (fun frame -> 
       tex_color_buffer frame.frm_buffer);
-  Action.define_action "tex_mode.compile" (Compil.compile tex_find_error);
   Action.define_action "tex_mode.comment_region" comment_region;
   Action.define_action "tex_mode.uncomment_region" uncomment_region;
   Action.define_action "tex_mode.char_expand_abbrev" (fun frame ->
@@ -569,6 +568,7 @@ let setup_actions () =
       Paren_mode.highlight_paren frame);
   Action.define_action "tex_mode.end_env" end_env;
   Action.define_action "tex_mode.begin_env" begin_env;
+
   ()  
     
 let local_map = define_option ["tex_mode"; "local_map"] ""
@@ -579,10 +579,14 @@ let interactives_map = define_option ["tex_mode"; "interactives_map"] ""
   []
 
 let setup_maps () =
+
+  Var.set_major_var mode Compil.find_error tex_find_error;
+
+
   if !!local_map = [] then
     local_map =:= [
       [c_c;ControlMap, Char.code 'l'], "tex_mode.color_buffer" ;
-      [c_c;ControlMap, Char.code 'c'], "tex_mode.compile" ;
+      [c_c;ControlMap, Char.code 'c'], "compile" ;
       [c_c;NormalMap, Char.code '%'], "tex_mode.comment_region";
       [c_c;ControlMap, Char.code 'u'; NormalMap,Char.code '%'],
       "tex_mode.uncomment_region";

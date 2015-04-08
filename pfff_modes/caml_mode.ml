@@ -13,9 +13,8 @@
  * license.txt for more details.
  *)
 open Common
-
+open Options
 open Efuns
-
 module PI = Parse_info
 
 (*****************************************************************************)
@@ -71,6 +70,7 @@ let caml_color_buffer buf =
 let install buf =
   caml_color_buffer buf; 
   buf.buf_syntax_table.(Char.code '_') <- true;
+  buf.buf_syntax_table.(Char.code '\'') <- true;
   ()
 
 let mode =  Ebuffer.new_major_mode "Caml" [install]
@@ -82,6 +82,10 @@ let caml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 
 let setup () = 
   Action.define_action "caml_mode" caml_mode;
+  Var.set_major_var mode Compil.find_error 
+    Ocaml_mode.ocaml_find_error;
+  Var.set_major_var mode Compil.find_error_location_regexp 
+    (snd !!Ocaml_mode.ocaml_error_regexp);
   ()
 
 

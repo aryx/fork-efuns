@@ -175,7 +175,7 @@ let _ =
   define_action "shell_command"  System.shell_command;
   (*x: external command actions *)
   define_action "grep" Compil.grep;
-  define_action "compile" (Compil.compile Compil.c_find_error);
+  define_action "compile" Compil.compile;
   (*e: external command actions *)
 
   (* ----------------------------------------------------------- *)
@@ -450,11 +450,11 @@ let _ =
         [MetaMap, Char.code '!'], "shell_command";
         (*e: external commands keys *)
 
+        [c_x;NormalMap, Char.code '`' ], "next_error";
+
         (* pad: *)
         [MetaMap, XK.xk_Return], "compile";
-        [c_x;ControlMap, Char.code 'n' ], "next_error";
-
-        [c_x;NormalMap, Char.code '`' ], "next_error";
+        [ControlMap, Char.code 'n' ], "next_error";
 
         (* pad: *)
         [MetaMap, Char.code '1'], "eshell_num";
@@ -534,7 +534,6 @@ let _ =
         [c_x; ControlMap, Char.code 'x'], "point_at_mark";
         (*x: misc keys *)
         [ c_c; NormalMap, Char.code '-'], "next_hole";
-        (*x: misc keys *)
         (*x: misc keys *)
         [NormalMap, Char.code ' '], "char_expand_abbrev";
         [MetaMap, Char.code '/'], "dabbrev_expand";

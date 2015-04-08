@@ -535,8 +535,11 @@ let setup () =
   Keymap.add_interactive map "lisp-indent-buffer" indent_buffer;
   Keymap.add_interactive map "lisp-color-buffer" 
     (fun frame -> lisp_color_buffer frame.frm_buffer);
+
+  Var.set_major_var mode Compil.find_error lisp_find_error;
+
   Keymap.add_major_key mode [c_c; ControlMap, Char.code 'c'] 
-    "lisp-compile" (Compil.compile lisp_find_error);
+    "lisp-compile" Compil.compile;
 (*  add_major_key mode [c_c; ControlMap,Char.code 'e']
     "lisp-eval-buffer" eval_buffer;
 *)

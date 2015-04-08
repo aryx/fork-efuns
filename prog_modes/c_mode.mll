@@ -841,7 +841,6 @@ let setup_actions () =
   Action.define_action "c_mode.color_buffer"
     (fun frame -> c_color_buffer frame.frm_buffer);
   Action.define_action "c_mode.indent_buffer" indent_buffer;
-  Action.define_action "c_mode.compile"  (Compil.compile c_find_error);
   Action.define_action "c_mode.indent_line" indent_current_line;
   Action.define_action "c_mode.indent_phrase" indent_phrase
     
@@ -865,7 +864,7 @@ let setup_maps () =
   if !!local_map = [] then
     local_map =:= [
       [c_c;ControlMap, Char.code 'l'], "c_mode.color_buffer" ;
-      [c_c;ControlMap, Char.code 'c'], "c_mode.compile" ;
+      [c_c;ControlMap, Char.code 'c'], "compile" ;
       [MetaMap,Char.code 'q'], "c_mode.indent_phrase";
       [NormalMap,XK.xk_Tab], "c_mode.indent_line";
       [c_c; ControlMap, Char.code 'b'], "c_mode.indent_buffer";

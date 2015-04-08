@@ -186,19 +186,24 @@ let draw_minimap w =
         let idx = attr land 255 in
         w.loc.loc_colors_names.(idx)
       in
-      let fontsize = (attr lsr 16) land 255 in
+      let _fontsize = (attr lsr 16) land 255 in
       set_source_color ~cr ~color:fgcolor ();
 
 
-(*
+
       Pango.Layout.set_text w.ly  (prepare_string str);
       Pango_cairo.update_layout cr w.ly;
       Pango_cairo.show_layout cr w.ly;
-*)
+
+(*
+  this generate some out_of_memory error when run directly efuns
+  on lexer_nw.mll. weird, but cairo text api is known to be buggy.
+
       Cairo.select_font_face cr "serif"
         Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
       Cairo.set_font_size cr (38. + 25. * (float_of_int fontsize));
       Cairo.show_text cr (prepare_string str);
+*)
     )
   done;
   ()
