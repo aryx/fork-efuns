@@ -1,0 +1,6 @@
+
+
+<<foo>>=
+this is some text
+<<and some nested chunk>>
+@
