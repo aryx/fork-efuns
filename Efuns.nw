@@ -603,6 +603,7 @@ and buffer =
   { 
     mutable buf_text : Text.t;
 
+    (* should be unique; can be used as a primary key in location.loc_buffers*)
     mutable buf_name : string;
     mutable buf_filename : string option;
 
@@ -1904,7 +1905,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
+let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -7302,7 +7303,19 @@ define_action "kill_buffer"  Multi_buffers.kill_buffer;
 let kill_buffer frame =
   let window = frame.frm_window in
   let buf = frame.frm_buffer in
-  let new_buf = next_buffer buf in
+
+  let new_buf = 
+    match !prev_buffers with
+    | x::xs when x <> buf.buf_name -> 
+        prev_buffers := xs;
+        (try 
+          Hashtbl.find (Globals.location()).loc_buffers x
+        with Not_found -> 
+          next_buffer buf
+        )
+    | _ -> next_buffer buf 
+  in
+
   let _new_frame = Frame.create window None new_buf in
   if buf.buf_shared = 0 
   then Ebuffer.kill buf
@@ -7349,6 +7362,11 @@ define_action "up_buffer"  Multi_buffers.up_buffer;
 
 
 <<constant Select.prev_buffers>>=
+(* todo: maybe this should be in frame.ml, next to change_buffer,
+ * so change_buffer can maintain it instead of imposing to everyone
+ * to use set_previous_frame just before Frame.change_buffer.
+ * todo: or do via change_buffer_hook?
+ *)
 let prev_buffers = ref []
 @
 
@@ -7384,7 +7402,6 @@ let right_buffer frame =
 <<function Select.set_previous_frame>>=
 let set_previous_frame frame = 
   let name = frame.frm_buffer.buf_name in
-  next_default := name;
   prev_buffers := name :: (Utils.list_removeq !prev_buffers name)
 @
 
@@ -8637,10 +8654,12 @@ let dabbrev_expand frame =
       Not_found ->
         Text.remove_point curr_text mark;
         let curr_buf = Multi_buffers.next_buffer curr_buf in
-        if curr_buf == buf then
-          if !loop then raise Not_found
-          else
-            loop := true; (* to avoid infinite loop *)
+        if curr_buf == buf 
+        then
+          if !loop 
+          then raise Not_found
+          else loop := true (* to avoid infinite loop *)
+        ;
         iter curr_buf (Text.size curr_buf.buf_text) 
     | Exit ->
         Text.remove_point curr_text mark;

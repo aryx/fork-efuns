@@ -115,11 +115,8 @@ GTKLOOP=gtkThread.cmo
 #OTHERSYSLIBS=graphics.cma
 #$(shell ocamlfind query cairo)
 
-
-
 COMMONDIR=$(LIBROOT)/pfff-commons
 COMMONCMA=$(LIBROOT)/pfff-commons/lib.cma
-
 
 # many dirs are here just because of -linkall
 PFFF_LIBS=\

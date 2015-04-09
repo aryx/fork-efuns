@@ -7,7 +7,7 @@ SYNCFLAGS=-md5sum_in_auxfile -less_marks -lang ocaml
 #SYNCFLAGS=-less_marks -lang C
 
 # .opt
-SYNCWEB=~/github/syncweb/syncweb.opt $(SYNCFLAGS)
+SYNCWEB=~/github/syncweb/syncweb $(SYNCFLAGS)
 NOWEB=~/github/syncweb/scripts/noweblatex
 PDFLATEX=pdflatex --shell-escape 
 

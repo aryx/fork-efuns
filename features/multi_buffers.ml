@@ -105,7 +105,7 @@ let kill_buffer frame =
 
 (*s: constant Complex.up_buffer *)
 let up_buffer = ref ""
-(*e: constant Complex.up_buffer *)  
+(*e: constant Complex.up_buffer *)
 (*s: function Complex.down_buffer *)
 let down_buffer frame = 
   up_buffer := frame.frm_buffer.buf_name
