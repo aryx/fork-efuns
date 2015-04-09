@@ -290,13 +290,15 @@ open Options
 @
 
 
+
+
+
 \subsection*{[[core/text.ml]]}
 
 
 <<function Text.insert_at_end>>=
-let insert_at_end tree str =
-  let text = tree.tree_text in
-  low_insert tree text.text_size str |> ignore;
+let insert_at_end text str =
+  low_insert text text.text_size str |> ignore;
   text.text_history <- [];
   text.text_modified <- text.text_modified + 1
 @
@@ -306,7 +308,6 @@ let insert_at_end tree str =
 
 <<function Text.find_xy>>=
 let find_xy text point line pos =
-  let text = text.tree_text in    
   let gpos = text.gpoint.pos in
   let gline = text.gpoint.line in
   let gap_end = gpos + text.gsize in
@@ -360,8 +361,7 @@ let read inc =
 @
 
 <<function Text.save>>=
-let save tree outc =
-  let text = tree.tree_text in    
+let save text outc =
   let str = text.text_string in
   let gpos = text.gpoint.pos in
   let gsize = text.gsize in
@@ -394,8 +394,7 @@ let compare text p1 p2 =
 %@
 
 <<function Text.get_char>>=
-let get_char tree point =
-  let text = tree.tree_text in    
+let get_char text point =
   let pos = point.pos in
   let gpos = text.gpoint.pos in
   let pos = 
@@ -410,8 +409,7 @@ let get_char tree point =
 
 
 <<function Text.fmove_res>>=
-let fmove_res tree p delta =
-  let text = tree.tree_text in    
+let fmove_res text p delta =
   if delta = 0 then 0 else
   let gpos = text.gpoint.pos in
   let size = text.text_size in
@@ -447,8 +445,7 @@ let fmove_res tree p delta =
 @
 
 <<function Text.bmove_res>>=
-let bmove_res tree p delta =
-  let text = tree.tree_text in    
+let bmove_res text p delta =
   if delta = 0 then 0 else
   let gpos = text.gpoint.pos in
   let gap_end = gpos + text.gsize in
@@ -493,8 +490,7 @@ let fmove text p delta =
 @
 
 <<function Text.to_string>>=
-let to_string tree =
-  let text = tree.tree_text in    
+let to_string text =
   let len = text.text_size - text.gsize in
   if len = 0 
   then "" 
@@ -528,8 +524,7 @@ mutable text_clean : bool;
 
 
 <<function Text.blit>>=
-let blit str tree point len =
-  let text = tree.tree_text in      
+let blit str text point len =
   let pos = point.pos in
   let len = min len (low_distance text pos text.text_size) in
   let gpos = text.gpoint.pos in
@@ -545,9 +540,8 @@ let blit str tree point len =
 
 
 <<function Text.set_position>>=
-let set_position tree point pos =
-  let text = tree.tree_text in    
-  move_point_to tree point
+let set_position text point pos =
+  move_point_to text point
     (if pos > text.gpoint.pos 
      then pos + text.gsize
      else pos
@@ -583,9 +577,8 @@ let move text point n =
 
 
 <<function Text.clear>>=
-let clear tree =
-  let text = tree.tree_text in      
-  low_delete tree 0 (text.text_size - text.gsize) |> ignore;
+let clear text =
+  low_delete text 0 (text.text_size - text.gsize) |> ignore;
   text.text_history <- [];
   List.iter (fun p -> p.pos <- 0; p.line <- 0) text.text_points
 @
@@ -593,33 +586,31 @@ let clear tree =
 
 
 <<function Text.region>>=
-let rec region tree p1 p2 =
+let rec region text p1 p2 =
   if p1>p2 
-  then region tree p2 p1
-  else sub tree p1 (distance tree p1 p2)
+  then region text p2 p1
+  else sub text p1 (distance text p1 p2)
 @
 
 %<<function Text.goto_xy>>=
 %(*
-%let goto_xy tree point x y =
-%  let text = tree.tree_text in    
-%  let y =
+%let goto_xy text point x y =
+%%  let y =
 %    if y < text.text_nlines then y
 %    else text.text_nlines - 1
 %  in
 %  point.pos <- text.text_newlines.(y).position;
 %  point.line <- y;
-%  fmove tree point x |> ignore
+%  fmove text point x |> ignore
 %*)
 %@
 
 <<function Text.update>>=
-let update tree str =
-  let text = tree.tree_text in    
+let update text str =
   let newlines = compute_newlines str in
   let len = String.length str in
   text.text_points |> List.iter (fun point -> 
-    point.pos <- get_position tree point
+    point.pos <- get_position text point
   );
   text.text_string <- str;
   text.text_attrs <- (Array.create len direct_attr);
@@ -635,27 +626,25 @@ let update tree str =
       let pos = point.pos in
       point.pos <- 0;
       point.line <- 0;
-      set_position tree point pos
+      set_position text point pos
   ) 
   
 @
 
 <<function Text.lexing>>=
-let lexing tree curseur end_point =
-  let text = tree.tree_text in    
+let lexing text curseur end_point =
   clean_text text;
   Lexing.from_function 
     (fun str len ->
-      let len = min len (distance tree curseur end_point) in
-      let len = blit str tree curseur len in
-      fmove tree curseur len |> ignore;
+      let len = min len (distance text curseur end_point) in
+      let len = blit str text curseur len in
+      fmove text curseur len |> ignore;
       len
   )
 @
 
 <<function Text.start_session>>=
-let start_session tree =   
-  let text = tree.tree_text in    
+let start_session text =   
   text.text_modified
 @
 
@@ -701,51 +690,7 @@ open Utils
   
 <<type Text.action>>
 
-
-type tree_desc =
-      { mutable tree_nlines: int;
-        mutable tree_width: int;
-        mutable tree_height: int;
-(*        mutable tree_parts: 'a array; *)
-(*        mutable tree_up: tree tree_desc; *)
-        mutable tree_pos: int;
-        mutable tree_modified: bool;
-        mutable line_height: int;
-        mutable line_width: int;
-
-        mutable tree_text: text 
-}
-
-let make_text text lines =
-  let nlines = Array.length lines in
-  let tree = {
-      tree_nlines = nlines;
-      tree_width = 0;
-      tree_height = 0;
-(*
-      tree_parts = [| Lines {
-          tree_nlines = nlines;
-          tree_width = 0;
-          tree_height = 0;
-          tree_parts = lines;
-          tree_up = tree;
-          tree_pos = 0;
-          tree_modified = true;
-          line_height = 0;
-          line_width = 0;
-          tree_text = text;      
-        }|];
-      tree_up = tree;
-*)
-      tree_pos = 0;
-      tree_modified = true;
-      line_height = 0;
-      line_width = 0;
-      tree_text = text;
-    }
-  in tree
-
-type t = tree_desc
+type t = text
   
 <<function Text.version>>
   
@@ -983,6 +928,51 @@ type charreprs = string array
 %  iter (Parts tree) gline
 %*)
 
+
+%type tree_desc =
+%      { mutable tree_nlines: int;
+%        mutable tree_width: int;
+%        mutable tree_height: int;
+%(*        mutable tree_parts: 'a array; *)
+%(*        mutable tree_up: tree tree_desc; *)
+%        mutable tree_pos: int;
+%        mutable tree_modified: bool;
+%        mutable line_height: int;
+%        mutable line_width: int;
+%
+%        mutable tree_text: text 
+%}
+%
+%let make_text text lines =
+%  let nlines = Array.length lines in
+%  let tree = {
+%      tree_nlines = nlines;
+%      tree_width = 0;
+%      tree_height = 0;
+%(*
+%      tree_parts = [| Lines {
+%          tree_nlines = nlines;
+%          tree_width = 0;
+%          tree_height = 0;
+%          tree_parts = lines;
+%          tree_up = tree;
+%          tree_pos = 0;
+%          tree_modified = true;
+%          line_height = 0;
+%          line_width = 0;
+%          tree_text = text;      
+%        }|];
+%      tree_up = tree;
+%*)
+%      tree_pos = 0;
+%      tree_modified = true;
+%      line_height = 0;
+%      line_width = 0;
+%      tree_text = text;
+%    }
+%  in tree
+%
+%type t = tree_desc
 
 
 \subsection*{[[core/ebuffer.ml]]}
