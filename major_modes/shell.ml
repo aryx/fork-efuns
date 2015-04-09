@@ -224,6 +224,7 @@ let builtin_v frame s =
     else s
   in
   display_prompt buf;
+  Multi_buffers.set_previous_frame frame;
   Frame.load_file frame.frm_window file |> ignore
   
 
@@ -333,6 +334,7 @@ let eshell buf_name frame =
   let text = Text.create "" in
   let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
   Ebuffer.set_major_mode buf mode;
+  Multi_buffers.set_previous_frame frame;
   Frame.change_buffer frame.frm_window buf.buf_name;
   ()
 
@@ -341,7 +343,9 @@ let eshell_num frame =
   let buf_name = spf "*Shell-%c*" char in
   match Ebuffer.find_buffer_opt buf_name with
   | None -> eshell buf_name frame
-  | Some buf -> Frame.change_buffer frame.frm_window buf.buf_name
+  | Some buf -> 
+      Multi_buffers.set_previous_frame frame;
+      Frame.change_buffer frame.frm_window buf.buf_name
 
 (*****************************************************************************)
 (* Setup *)

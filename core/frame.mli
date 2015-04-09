@@ -13,6 +13,7 @@ val create_inactive :
 
 val load_file : Efuns.window -> string -> Efuns.frame
 
+(* ugly: you may want to use Multi_buffers.set_previous_frame just before *)
 val change_buffer : Efuns.window -> string -> unit
 val change_buffer_hooks: Efuns.action_name list Options.option_record
 

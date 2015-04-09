@@ -113,10 +113,12 @@ let dabbrev_expand frame =
       Not_found ->
         Text.remove_point curr_text mark;
         let curr_buf = Multi_buffers.next_buffer curr_buf in
-        if curr_buf == buf then
-          if !loop then raise Not_found
-          else
-            loop := true; (* to avoid infinite loop *)
+        if curr_buf == buf 
+        then
+          if !loop 
+          then raise Not_found
+          else loop := true (* to avoid infinite loop *)
+        ;
         iter curr_buf (Text.size curr_buf.buf_text) 
     | Exit ->
         Text.remove_point curr_text mark;

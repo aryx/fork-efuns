@@ -32,14 +32,18 @@ let buflist_name = "*Buffer List*"
 (* Helpers *)
 (*****************************************************************************)
 
+(* less: could be factorized with Multi_buffers.prev_buffers,
+ * but right now change_buffer_hook is more reliable than the unchecked
+ * invariant that every call to Frame.change_buffer is preceded by
+ * Multi_buffers.set_previous_frame
+ *)
 let list = ref []
 
+(* ?? -> <> (as change_buffer_hook) *)
 let change_buffer_record frame =
   let name = frame.frm_buffer.buf_name in
-  if name = buflist_name
-  then ()
-  else list :=  name :: Utils.list_removeq !list name;
-  ()
+  if name <> buflist_name
+  then list := name :: Utils.list_removeq !list name
 
 let buflist_array = Local.create_abstr "buffer_menu_buflist"
 
@@ -49,7 +53,6 @@ let buflist_array = Local.create_abstr "buffer_menu_buflist"
 
 let install buf =
   ()
-
 let mode =  Ebuffer.new_major_mode "Buffer List" [install]
 
 
