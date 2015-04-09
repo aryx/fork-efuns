@@ -134,6 +134,7 @@ let set_history map string history =
 let incremental_mini_buffer 
  frame ismap request default incremental_action end_action =
   let top_window = Window.top frame.frm_window in
+
   let incremental mini_frame =
     incremental_action frame (Text.to_string mini_frame.frm_buffer.buf_text)
   in
@@ -141,6 +142,7 @@ let incremental_mini_buffer
     Simple.self_insert_command mini_frame;
     incremental mini_frame
   in
+
   for key = 32 to 127 do
     Keymap.add_binding ismap [NormalMap, key] incremental_insert
   done;
@@ -148,6 +150,7 @@ let incremental_mini_buffer
     Simple.delete_backspace_char mini_frame;
     incremental mini_frame
   );
+
   top_window.top_second_cursor <- Some frame;
   Minibuffer.create_return frame ismap request default (fun frame str -> 
     top_window.top_second_cursor <- None;
@@ -183,6 +186,7 @@ let select frame request history start completion_fun prefix_fun action =
           (Utils.completion !completions (prefix_fun !string))
   );
   set_history map string history;
+
   incremental_mini_buffer frame map request start
     (fun frame str -> string := str;)
     (fun old_frame str -> 

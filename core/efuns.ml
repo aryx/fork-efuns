@@ -197,6 +197,7 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_cursor_x : int;
     mutable frm_cursor_y : int;
+
     mutable frm_cursor : string;
     mutable frm_cursor_attr : Text.attribute;
     (*x: [[Efuns.frame]] other fields *)
@@ -277,8 +278,6 @@ and frm_line =
 (* an xterm: a window containing some frames *)
 and top_window = 
   { 
-    mutable top_name : string;
-
     mutable top_width : int;
     mutable top_height : int; (* including minibuffer line *)
 
@@ -288,6 +287,8 @@ and top_window =
     mutable graphics : Xdraw.graphics_backend option;
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_active_frame : frame;
+    (*x: [[Efuns.top_window]] other fields *)
+    mutable top_name : string;
     (*x: [[Efuns.top_window]] other fields *)
     mutable top_mini_buffers : frame list;
     (*x: [[Efuns.top_window]] other fields *)

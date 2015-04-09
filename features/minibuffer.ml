@@ -25,29 +25,29 @@ let _ =
 let buf_create text local_map =
   { 
     buf_text = text;
+
     buf_name = "*Minibuffer*";
     buf_filename = None; (* no connected file! *)
 
+    buf_point = Text.new_point text;
+    buf_start = Text.new_point text;
+
+    buf_last_saved = Text.version text;
+    buf_modified = 0;
+
+
+    buf_map = local_map;
+    buf_map_partial = true;
+    buf_charreprs = charreprs;
+    buf_syntax_table = Ebuffer.default_syntax_table;
+    buf_vars = Local.vars ();
     buf_major_mode = Ebuffer.fondamental_mode;
     buf_minor_modes = [];
 
-    buf_charreprs = charreprs;
-    buf_map = local_map;
-    buf_map_partial = true;
-    buf_syntax_table = Ebuffer.default_syntax_table;
-
-    buf_modified = 0;
-    buf_last_saved = Text.version text;
-
-    buf_point = Text.new_point text;
-    buf_start = Text.new_point text;
-    buf_mark = None;
-
     buf_sync = false;
+    buf_mark = None;
     buf_shared = 0;
     buf_finalizers = [];
-
-    buf_vars = Local.vars ();
   }
 (*e: function Minibuffer.buf_create *)
 

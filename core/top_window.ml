@@ -103,25 +103,31 @@ let set_cursor_off top_window frame =
 (*s: function Top_window.cursor_on *)
 let cursor_on top_window =
   let frame = top_window.top_active_frame in
+  set_cursor_on top_window frame;
+  (*s: [[Top_window.cursor_on()]] set top window name *)
   let name = frame.frm_buffer.buf_name in
-  if not (name == top_window.top_name) then begin
+  if name <> top_window.top_name then begin
     Common.pr2_once "Top_window.top_apply#setWM_NAME";
     (* top_window.top_appli#setWM_NAME name; *)
     top_window.top_name <- name
   end;
-  set_cursor_on top_window frame;
+  (*e: [[Top_window.cursor_on()]] set top window name *)
+  (*s: [[Top_window.cursor_on()]] display secondary cursor *)
   top_window.top_second_cursor |> Common.do_option (fun frame ->
     set_cursor_on top_window frame
   )
+  (*e: [[Top_window.cursor_on()]] display secondary cursor *)
 (*e: function Top_window.cursor_on *)
 
 (*s: function Top_window.cursor_off *)
 let cursor_off top_window =
   let frame = top_window.top_active_frame in
   set_cursor_off top_window frame;
+  (*s: [[Top_window.cursor_off()]] hide secondary cursor *)
   top_window.top_second_cursor |> Common.do_option (fun frame ->
     set_cursor_off top_window frame
   )
+  (*e: [[Top_window.cursor_off()]] hide secondary cursor *)
 (*e: function Top_window.cursor_off *)
 
 
@@ -143,7 +149,19 @@ let update_display () =
 
 (*s: function Top_window.clean_display *)
 let clean_display () =
-  (Globals.location()).top_windows |> List.iter cursor_off 
+  (Globals.location()).top_windows |> List.iter (fun top_window ->
+     cursor_off top_window;
+     (*s: [[clean_display()]] sanity check second cursor and minibuffer *)
+     (match top_window.top_mini_buffers, top_window.top_second_cursor with
+      | _, None -> ()
+      | _::_, Some _ -> ()
+      | [], Some frame ->
+          Globals.error "weird, second cursor for %s but no minibuffer"
+            (frame.frm_buffer.buf_name);
+          top_window.top_second_cursor <- None
+     )
+     (*e: [[clean_display()]] sanity check second cursor and minibuffer *)
+   )
 (*e: function Top_window.clean_display *)
 
 (*s: function Top_window.resize_window *)
@@ -409,14 +427,16 @@ let create () =
     Frame.create_without_top window None buf in
   let top_window =
     { 
-      top_name = "window";
       top_width = loc.loc_width;
       top_height = loc.loc_height;
       window = window;
       top_active_frame = frame;
 
+      top_name = "window";
+
       top_mini_buffers = [];
       top_second_cursor = None;
+
 
       graphics = None;
     } 

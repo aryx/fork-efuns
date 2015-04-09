@@ -399,6 +399,15 @@ Options:
 % redisplay engine (actually incremental line oriented display)
 % triggered after each event.
 
+%todo: choose between windows or frames term, pro/cons.
+% - frames
+%   * cons: emacs actually uses this term for different top windows, hmm
+%   * pro: 
+% - windows
+%   * cons: they are not really windows in the traditional sense;
+%     they are more tiled automatically windows
+%   * pro: other tools like 'sam' use windows for that
+
 
 \section{Trace of a file loading}
 
@@ -930,8 +939,6 @@ let create mini up_window xpos ypos width height =
 (* an xterm: a window containing some frames *)
 and top_window = 
   { 
-    mutable top_name : string;
-
     mutable top_width : int;
     mutable top_height : int; (* including minibuffer line *)
 
@@ -2054,7 +2061,7 @@ let _ =
   )
 @
 
-\section{The graphical window}
+\section{The graphical top window}
 
 <<[[main()]] run the UI>>=
 Graphics_efuns.init !initial_files;
@@ -2105,14 +2112,16 @@ let create () =
     Frame.create_without_top window None buf in
   let top_window =
     { 
-      top_name = "window";
       top_width = loc.loc_width;
       top_height = loc.loc_height;
       window = window;
       top_active_frame = frame;
 
+      top_name = "window";
+
       top_mini_buffers = [];
       top_second_cursor = None;
+
 
       graphics = None;
     } 
@@ -2143,9 +2152,6 @@ let create () =
 %      top_appli = top;
 %      top_scrollbar = ady;
 %*)
-
-
-
 
 
 
@@ -3723,7 +3729,7 @@ let cancel_repr text _point n =
 
 
 
-\chapter{Main Window}
+\chapter{Main Top Window}
 
 % menu
 % windows/frames with buffers
@@ -3820,7 +3826,7 @@ let load_buffer frame =
 let load_file window filename =
   let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = create window None buf in
-  exec_named_hooks !!change_buffer_hooks frame;
+  Hook.exec_named_hooks !!change_buffer_hooks frame;
   status_name frame buf.buf_name;
   frame
 @
@@ -3915,7 +3921,7 @@ mutable buf_last_saved : Text.version;
 
 <<function Ebuffer.save>>=
 let save buf =
-  exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
+  Hook.exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
 
   let filename =
     match buf.buf_filename with
@@ -3927,7 +3933,7 @@ let save buf =
   close_out outc;
   buf.buf_last_saved <- Text.version buf.buf_text;
 
-  exec_named_buf_hooks !!saved_buffer_hooks buf
+  Hook.exec_named_buf_hooks !!saved_buffer_hooks buf
 @
 
 
@@ -4563,9 +4569,110 @@ graphic.Xdraw.draw_string
 
 \subsection{Cursor}
 
+% an output, but strongly related
+% also to input devices (input device feedback essentially)
+
+% flow is that some functions modify possible top_active_frame,
+% modify top_active_frame.frm_point, and now we need to put
+% the cursor at the right place.
+
+
+% Top_window.update_display -> Frame.display ; ...;  <>
+<<function Top_window.cursor_on>>=
+let cursor_on top_window =
+  let frame = top_window.top_active_frame in
+  set_cursor_on top_window frame;
+  <<[[Top_window.cursor_on()]] set top window name>>
+  <<[[Top_window.cursor_on()]] display secondary cursor>>
+@
+% when can have second_cursor? for C-s! you edit in mini_frame
+%  but the cursor is on the searched frame
+
+
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_cursor_x : int;
+mutable frm_cursor_y : int;
+
+mutable frm_cursor : string;
+mutable frm_cursor_attr : Text.attribute;
+@
+% a frame has a cursor!
+% x and y here are coordinates in the frame, not top_window coordinates,
+% and not text_string coordinates.
+% frm_cursor and frm_cursor_attr are the old value, what text
+% was under the cursor before (a string because of compute_representation)
+
+
+
+<<function Top_window.set_cursor_on>>=
+let set_cursor_on top_window frame = 
+  Frame.set_cursor frame;
+  if frame.frm_cursor.[0] <> '\000' then
+    let graphic = Efuns.backend top_window in
+    graphic.Xdraw.draw_string
+      (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
+      (frame.frm_ypos + frame.frm_cursor_y) 
+      frame.frm_cursor 0 1 Text.inverse_attr
+@
+% ugly \000 special trick.
+
+
+<<function Frame.set_cursor>>=
+let set_cursor frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+
+  let point = frame.frm_point in
+  let x = point_to_cursor buf point in
+  let line = Ebuffer.compute_representation buf (point_line text point) in
+  
+  try
+    for i = 0 to frame.frm_height - 1 do
+      let line_repr = frame.frm_table.(i) in
+      if line_repr.frm_text_line == line then
+        let x,y =
+          if x = 0 
+          then 0,i
+          else
+            ((x-1) mod frame.frm_cutline) + 1, i + (x-1) / frame.frm_cutline
+        in
+        frame.frm_cursor_x <- x;
+        frame.frm_cursor_y <- y;
+        raise Exit
+    done;      
+    (* insert cursor is not on frame *)
+    frame.frm_cursor.[0] <- '\000'
+    
+  with Exit -> 
+    let rec iter reprs =
+      match reprs with
+      | [] -> 
+          frame.frm_cursor.[0] <- ' '
+      | repr :: tail ->
+          let point_x = point_col text point in
+          if repr.box_pos <= point_x && repr.box_pos + repr.box_len > point_x 
+          then begin
+            let pos =
+              repr.box_pos_repr + repr.box_charsize * 
+              (point_x - repr.box_pos)
+            in
+            frame.frm_cursor.[0] <- line.repr_string.[pos];
+            frame.frm_cursor_attr <- repr.box_attr;
+          end else
+            iter tail
+    in
+    let repr_line = frame.frm_table.(frame.frm_cursor_y) in
+    iter repr_line.frmline_boxes
+@
+
+
+
+
 % x,y display -> text (reverse of display_line stuff)
 
 % why not return an actual point then? it's more a (line x col) actually
+% Frame.display (when frm_force_start) -> <>
 <<function Frame.cursor_to_point>>=
 let cursor_to_point frame x y =
   <<[[Frame.cursor_to_point()]] sanity check parameters in range>>
@@ -4582,7 +4689,7 @@ let cursor_to_point frame x y =
   let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
     frm_line.frmline_boxes 0 
   in
-  col , line
+  col, line
 @
 % useful for? the mouse?
 
@@ -4591,17 +4698,17 @@ let point_to_cursor buf point =
   let text = buf.buf_text in
   let line = Ebuffer.compute_representation buf (Text.point_line text point) in
   let xpos = Text.point_col text point in
-  let rec iter reprs =
-    match reprs with
+  let rec iter boxes =
+    match boxes with
     | [] -> 0
-    | repr :: tail ->
-        if repr.box_pos > xpos 
+    | box :: tail ->
+        if xpos < box.box_pos
         then iter tail
-        else repr.box_pos_repr + repr.box_charsize *  (xpos - repr.box_pos)
+        else box.box_pos_repr + box.box_charsize *  (xpos - box.box_pos)
   in
   iter line.Text.boxes
 @
-
+% remember that the boxes are sorted in reverse, head is last box
 
 
 <<[[Frame.cursor_to_point()]] sanity check parameters in range>>=
@@ -4609,54 +4716,12 @@ if (y < 0) || (x<0) || (y >= frame.frm_height-1) || (x>frame.frm_cutline)
 then raise Not_found;
 @
 
-<<[[Efuns.frame]] other fields>>=
-mutable frm_cursor_x : int;
-mutable frm_cursor_y : int;
-mutable frm_cursor : string;
-mutable frm_cursor_attr : Text.attribute;
-@
-% a frame has a cursor!
-% x and y here are coordinates in the frame, not top_window coordinates,
-% and not text_string coordinates.
 
 
 
 
 
 
-% an output, but strongly related
-% also to input devices (input device feedback essentially)
-
-% Top_window.update_display -> <>
-<<function Top_window.cursor_on>>=
-let cursor_on top_window =
-  let frame = top_window.top_active_frame in
-  let name = frame.frm_buffer.buf_name in
-  if not (name == top_window.top_name) then begin
-    Common.pr2_once "Top_window.top_apply#setWM_NAME";
-    (* top_window.top_appli#setWM_NAME name; *)
-    top_window.top_name <- name
-  end;
-  set_cursor_on top_window frame;
-  top_window.top_second_cursor |> Common.do_option (fun frame ->
-    set_cursor_on top_window frame
-  )
-@
-% when can have second_cursor? for C-s! you edit in mini_frame
-%  but the cursor is on the searched frame
-% todo: aspectize second_cursor
-
-
-<<function Top_window.set_cursor_on>>=
-let set_cursor_on top_window frame = 
-  Frame.set_cursor frame;
-  if frame.frm_cursor.[0] <> '\000' then
-    let graphic = Efuns.backend top_window in
-    graphic.Xdraw.draw_string
-      (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
-      (frame.frm_ypos + frame.frm_cursor_y) 
-      frame.frm_cursor 0 1 Text.inverse_attr
-@
 
 
 %\subsection{[[Top_window.clean_display()]]}
@@ -4664,7 +4729,10 @@ let set_cursor_on top_window frame =
 % event loop -> ... -> handle_key -> ...; <>; Top_window.update_display()
 <<function Top_window.clean_display>>=
 let clean_display () =
-  (Globals.location()).top_windows |> List.iter cursor_off 
+  (Globals.location()).top_windows |> List.iter (fun top_window ->
+     cursor_off top_window;
+     <<[[clean_display()]] sanity check second cursor and minibuffer>>
+   )
 @
 
 % update_display -> clean_display -> <>
@@ -4672,9 +4740,7 @@ let clean_display () =
 let cursor_off top_window =
   let frame = top_window.top_active_frame in
   set_cursor_off top_window frame;
-  top_window.top_second_cursor |> Common.do_option (fun frame ->
-    set_cursor_off top_window frame
-  )
+  <<[[Top_window.cursor_off()]] hide secondary cursor>>
 @
 
 <<function Top_window.set_cursor_off>>=
@@ -4686,8 +4752,6 @@ let set_cursor_off top_window frame =
       (frame.frm_ypos + frame.frm_cursor_y) 
       frame.frm_cursor 0 1 frame.frm_cursor_attr
 @
-% inverse!
-
 
 \subsection{Frame offsets}
 
@@ -4874,6 +4938,22 @@ frame.frm_force_start <- false;
 %todo: how frm_force_start can ever be true? it's true only temporarily
 % so I don't get how the flow can go two times in Frame.display?
 
+\subsection{Top windows name}
+
+<<[[Efuns.top_window]] other fields>>=
+mutable top_name : string;
+@
+
+<<[[Top_window.cursor_on()]] set top window name>>=
+let name = frame.frm_buffer.buf_name in
+if name <> top_window.top_name then begin
+  Common.pr2_once "Top_window.top_apply#setWM_NAME";
+  (* top_window.top_appli#setWM_NAME name; *)
+  top_window.top_name <- name
+end;
+@
+% was using not (==), so I should use !=, but not sure why he didn't use <>
+
 \section{[[Status]] Line}
 
 \subsection{Status line creation}
@@ -5055,7 +5135,7 @@ then
 
 \subsection{Minubuffer creation}
 
-% when it's created? each time enter M-x?
+% when it's created? each time enter M-x or use some Select.xxx functions.
 
 <<[[Efuns.top_window]] other fields>>=
 mutable top_mini_buffers : frame list;
@@ -5102,6 +5182,48 @@ mutable win_mini : bool;
 @
 % which is what is used in Window.create true
 
+% Minibuffer.create -> <>
+<<function Minibuffer.buf_create>>=
+let buf_create text local_map =
+  { 
+    buf_text = text;
+
+    buf_name = "*Minibuffer*";
+    buf_filename = None; (* no connected file! *)
+
+    buf_point = Text.new_point text;
+    buf_start = Text.new_point text;
+
+    buf_last_saved = Text.version text;
+    buf_modified = 0;
+
+
+    buf_map = local_map;
+    buf_map_partial = true;
+    buf_charreprs = charreprs;
+    buf_syntax_table = Ebuffer.default_syntax_table;
+    buf_vars = Local.vars ();
+    buf_major_mode = Ebuffer.fondamental_mode;
+    buf_minor_modes = [];
+
+    buf_sync = false;
+    buf_mark = None;
+    buf_shared = 0;
+    buf_finalizers = [];
+  }
+@
+% why not simply call Buffer.create? because no filename, 
+% and specific buf_name
+
+
+<<[[Frame.install()]] sanity check frame is not a minibuffer>>=
+if window.win_mini = (frame.frm_mini_buffer = None) then begin 
+  kill frame; 
+  failwith "Cannot install in minibuffer"
+end;
+@
+
+
 
 <<function Minibuffer.kill>>=
 let kill mini_frame old_frame =
@@ -5113,46 +5235,6 @@ let kill mini_frame old_frame =
   then Frame.unkill window old_frame;
   top_window.top_active_frame <- old_frame;
   Frame.kill mini_frame
-@
-
-
-% Minibuffer.create -> <>
-<<function Minibuffer.buf_create>>=
-let buf_create text local_map =
-  { 
-    buf_text = text;
-    buf_name = "*Minibuffer*";
-    buf_filename = None; (* no connected file! *)
-
-    buf_major_mode = Ebuffer.fondamental_mode;
-    buf_minor_modes = [];
-
-    buf_charreprs = charreprs;
-    buf_map = local_map;
-    buf_map_partial = true;
-    buf_syntax_table = Ebuffer.default_syntax_table;
-
-    buf_modified = 0;
-    buf_last_saved = Text.version text;
-
-    buf_point = Text.new_point text;
-    buf_start = Text.new_point text;
-    buf_mark = None;
-
-    buf_sync = false;
-    buf_shared = 0;
-    buf_finalizers = [];
-
-    buf_vars = Local.vars ();
-  }
-@
-
-
-<<[[Frame.install()]] sanity check frame is not a minibuffer>>=
-if window.win_mini = (frame.frm_mini_buffer = None) then begin 
-  kill frame; 
-  failwith "Cannot install in minibuffer"
-end;
 @
 
 \subsection{Minibuffer display}
@@ -5537,6 +5619,7 @@ let mouse_save_then_kill frame =
 
 
 \subsection{[[M-x foo]], [[call_interactive()]]}
+% maybe should start with a simpler select? like C-x C-f ?
 
 <<meta keys>>=
 [MetaMap, Char.code 'x'], "call_interactive";
@@ -5546,10 +5629,6 @@ define_action "call_interactive"  Interactive.call_interactive;
 @
 
 
-<<constant Interactive.meta_hist>>=
-let meta_hist = ref []
-@
-
 <<function Interactive.call_interactive>>=
 let call_interactive frame =
   let buf = frame.frm_buffer in
@@ -5557,7 +5636,11 @@ let call_interactive frame =
   Select.select frame "M-x " meta_hist "" 
     (fun _ -> List.map fst interactives)
     (fun s -> s) 
-    (exec_interactive interactives frame)
+    (fun s -> exec_interactive interactives frame s)
+@
+
+<<constant Interactive.meta_hist>>=
+let meta_hist = ref []
 @
 
 <<function Interactive.buf_interactives>>=
@@ -5569,7 +5652,7 @@ let buf_interactives buf =
   List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
    interactives buf.buf_minor_modes 
 @
-% not sure it's that useful to allow to customize the interactive
+%less: not sure it's that useful to allow to customize the interactive
 % mapping in the major, minors, or buffer. A single global
 % interactive seems simpler. To have a consistent M-x compile
 % that always bind to the same action (and have this action then
@@ -5590,13 +5673,11 @@ let exec_interactive interactives frame name =
 
 
 <<[[Interactive.exec_interactive()]] display if has a keybinding>>=
-(match key with
-| None -> ()
-| Some key_list ->
-    let top_window = Window.top frame.frm_window in
-    Top_window.message top_window
-      ("you can run "^name^" by typing "^
-        (Keymap.print_key_list key_list))
+key |> Common.do_option (fun key_list ->
+  let top_window = Window.top frame.frm_window in
+  Top_window.message top_window
+    ("you can run "^name^" by typing "^
+      (Keymap.print_key_list key_list))
 );
 @
 
@@ -5667,6 +5748,52 @@ map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 %less: should look for duplicates
 
 
+\subsection{[[Select.select()]]}
+
+<<function Select.select>>=
+let select frame request history start completion_fun prefix_fun action =
+  let map = Keymap.create () in
+  let string = ref "" in
+  Keymap.add_binding map [ControlMap, Char.code 'g'] (fun mini_frame -> 
+    remove_completions mini_frame;
+    Minibuffer.kill mini_frame frame
+  );
+  let completion = ref "_*NoCompletion*_" in
+  let completions = ref [] in
+  Keymap.add_binding map [NormalMap, XK.xk_Tab] (fun mini_frame ->
+      if (!completion != !string) then begin
+        let text = mini_frame.frm_buffer.buf_text in
+        completions := completion_fun !string;
+        let suffix, n  = Utils.common_suffix !completions (prefix_fun !string)in
+        completion := !string;
+        Text.insert text mini_frame.frm_point suffix;
+        Text.fmove text mini_frame.frm_point (String.length suffix);
+        if n>1 
+        then display_completions frame
+                (Utils.completion !completions (prefix_fun !string));
+        
+      end else
+      (* can be improved, by displaying another part of the completion buffer *)
+        display_completions frame
+          (Utils.completion !completions (prefix_fun !string))
+  );
+  set_history map string history;
+
+  incremental_mini_buffer frame map request start
+    (fun frame str -> string := str;)
+    (fun old_frame str -> 
+       (match !history with
+        | hd :: _ when hd = str -> ()
+        | _ ->
+            if str <> "" 
+            then history := str :: !history
+        );
+       remove_completions frame;
+       action str
+    ) |> ignore
+@
+
+
 \subsection{Incremental mini buffer}
 % for select (and so completion), for search, replace.
 % each time ask input to user.
@@ -5676,6 +5803,7 @@ map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 let incremental_mini_buffer 
  frame ismap request default incremental_action end_action =
   let top_window = Window.top frame.frm_window in
+
   let incremental mini_frame =
     incremental_action frame (Text.to_string mini_frame.frm_buffer.buf_text)
   in
@@ -5683,6 +5811,7 @@ let incremental_mini_buffer
     Simple.self_insert_command mini_frame;
     incremental mini_frame
   in
+
   for key = 32 to 127 do
     Keymap.add_binding ismap [NormalMap, key] incremental_insert
   done;
@@ -5690,6 +5819,7 @@ let incremental_mini_buffer
     Simple.delete_backspace_char mini_frame;
     incremental mini_frame
   );
+
   top_window.top_second_cursor <- Some frame;
   Minibuffer.create_return frame ismap request default (fun frame str -> 
     top_window.top_second_cursor <- None;
@@ -5697,6 +5827,39 @@ let incremental_mini_buffer
   )
 @
 
+\subsection{Secondary cursor}
+
+% cursor is output, but strongly related to input, because it's
+% an input feedback.
+
+<<[[Efuns.top_window]] other fields>>=
+mutable top_second_cursor : frame option;
+@
+
+
+<<[[Top_window.cursor_on()]] display secondary cursor>>=
+top_window.top_second_cursor |> Common.do_option (fun frame ->
+  set_cursor_on top_window frame
+)
+@
+
+<<[[Top_window.cursor_off()]] hide secondary cursor>>=
+top_window.top_second_cursor |> Common.do_option (fun frame ->
+  set_cursor_off top_window frame
+)
+@
+
+
+<<[[clean_display()]] sanity check second cursor and minibuffer>>=
+(match top_window.top_mini_buffers, top_window.top_second_cursor with
+ | _, None -> ()
+ | _::_, Some _ -> ()
+ | [], Some frame ->
+     Globals.error "weird, second cursor for %s but no minibuffer"
+       (frame.frm_buffer.buf_name);
+     top_window.top_second_cursor <- None
+)
+@
 
 
 
@@ -6735,9 +6898,6 @@ let isearch_backward_regexp = isearch Regexp Backward
 
 \subsection{Secondary cursor}
 
-<<[[Efuns.top_window]] other fields>>=
-mutable top_second_cursor : frame option;
-@
 
 \subsection{Helpers}
 
@@ -7275,7 +7435,7 @@ let change_buffer window name =
   try
     let buf = Hashtbl.find (Globals.location()).loc_buffers name in
     let frame = create window None buf in
-    exec_named_hooks !!change_buffer_hooks frame;
+    Hook.exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name
   with Not_found -> ()
 @

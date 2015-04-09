@@ -35,4 +35,27 @@ let add_hook hook_var hook =
   Var.set_global hook_var (hook :: tail)
 (*e: function Efuns.add_hook *)
 
+(*s: function Frame.exec_named_hooks *)
+let exec_named_hooks hooks frame =
+  hooks |> List.rev |> List.iter (fun action -> 
+   try Action.execute_action action frame with _ -> ()
+  )
+(*e: function Frame.exec_named_hooks *)
+
+(*s: function Ebuffer.exec_named_buf_hooks *)
+let exec_named_buf_hooks hooks frame =
+  hooks |> List.rev |> List.iter (fun action ->
+    try Action.execute_buffer_action action frame 
+    with exn -> Globals.error "exec_named_buf_hooks: exn = %s" 
+                    (Common.exn_to_s exn)
+  )
+(*e: function Ebuffer.exec_named_buf_hooks *)
+
+(*s: function Ebuffer.exec_named_buf_hooks_with_abort *)
+let exec_named_buf_hooks_with_abort hooks frame =
+  hooks |> List.rev |> List.iter (fun action ->
+    Action.execute_buffer_action action frame
+ )
+(*e: function Ebuffer.exec_named_buf_hooks_with_abort *)
+
 (*e: core/hook.ml *)

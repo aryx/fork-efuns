@@ -175,25 +175,9 @@ let saved_buffer_hooks = define_option ["saved_buffer_hooks"] ""
   ["update_time" ]
 (*e: constant Ebuffer.saved_buffer_hooks *)
 
-(*s: function Ebuffer.exec_named_buf_hooks *)
-let exec_named_buf_hooks hooks frame =
-  hooks |> List.rev |> List.iter (fun action ->
-    try Action.execute_buffer_action action frame 
-    with exn -> Globals.error "exec_named_buf_hooks: exn = %s" 
-                    (Common.exn_to_s exn)
-  )
-(*e: function Ebuffer.exec_named_buf_hooks *)
-
-(*s: function Ebuffer.exec_named_buf_hooks_with_abort *)
-let exec_named_buf_hooks_with_abort hooks frame =
-  hooks |> List.rev |> List.iter (fun action ->
-    Action.execute_buffer_action action frame
- )
-(*e: function Ebuffer.exec_named_buf_hooks_with_abort *)
-      
 (*s: function Ebuffer.save *)
 let save buf =
-  exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
+  Hook.exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
 
   let filename =
     match buf.buf_filename with
@@ -205,7 +189,7 @@ let save buf =
   close_out outc;
   buf.buf_last_saved <- Text.version buf.buf_text;
 
-  exec_named_buf_hooks !!saved_buffer_hooks buf
+  Hook.exec_named_buf_hooks !!saved_buffer_hooks buf
 (*e: function Ebuffer.save *)
  
 (*s: function Ebuffer.read *)

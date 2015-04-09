@@ -284,13 +284,13 @@ let point_to_cursor buf point =
   let text = buf.buf_text in
   let line = Ebuffer.compute_representation buf (Text.point_line text point) in
   let xpos = Text.point_col text point in
-  let rec iter reprs =
-    match reprs with
+  let rec iter boxes =
+    match boxes with
     | [] -> 0
-    | repr :: tail ->
-        if repr.box_pos > xpos 
+    | box :: tail ->
+        if xpos < box.box_pos
         then iter tail
-        else repr.box_pos_repr + repr.box_charsize *  (xpos - repr.box_pos)
+        else box.box_pos_repr + box.box_charsize *  (xpos - box.box_pos)
   in
   iter line.Text.boxes
 (*e: function Frame.point_to_cursor *)
@@ -314,7 +314,7 @@ let cursor_to_point frame x y =
   let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
     frm_line.frmline_boxes 0 
   in
-  col , line
+  col, line
 (*e: function Frame.cursor_to_point *)
 
 
@@ -348,6 +348,7 @@ let display_line graphic frame repr_string y =
 let set_cursor frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+
   let point = frame.frm_point in
   let x = point_to_cursor buf point in
   let line = Ebuffer.compute_representation buf (point_line text point) in
@@ -357,7 +358,8 @@ let set_cursor frame =
       let line_repr = frame.frm_table.(i) in
       if line_repr.frm_text_line == line then
         let x,y =
-          if x = 0 then 0,i
+          if x = 0 
+          then 0,i
           else
             ((x-1) mod frame.frm_cutline) + 1, i + (x-1) / frame.frm_cutline
         in
@@ -368,28 +370,26 @@ let set_cursor frame =
     (* insert cursor is not on frame *)
     frame.frm_cursor.[0] <- '\000'
     
-  with
-    Exit -> 
-      let rec iter reprs =
-        match reprs with
-          [] -> 
-            frame.frm_cursor.[0] <- ' '
-        | repr :: tail ->
-            let point_x = point_col text point in
-            if repr.box_pos <= point_x &&
-              repr.box_pos + repr.box_len > point_x then
-              let pos =
-                repr.box_pos_repr + repr.box_charsize * 
-                (point_x - repr.box_pos)
-              in
-              frame.frm_cursor.[0] <- line.repr_string.[pos];
-              frame.frm_cursor_attr <- repr.box_attr;
-            else
-              iter tail
-      in
-      let repr_line = frame.frm_table.(frame.frm_cursor_y)
-      in
-      iter repr_line.frmline_boxes
+  with Exit -> 
+    let rec iter reprs =
+      match reprs with
+      | [] -> 
+          frame.frm_cursor.[0] <- ' '
+      | repr :: tail ->
+          let point_x = point_col text point in
+          if repr.box_pos <= point_x && repr.box_pos + repr.box_len > point_x 
+          then begin
+            let pos =
+              repr.box_pos_repr + repr.box_charsize * 
+              (point_x - repr.box_pos)
+            in
+            frame.frm_cursor.[0] <- line.repr_string.[pos];
+            frame.frm_cursor_attr <- repr.box_attr;
+          end else
+            iter tail
+    in
+    let repr_line = frame.frm_table.(frame.frm_cursor_y) in
+    iter repr_line.frmline_boxes
 (*e: function Frame.set_cursor *)
 
 (*s: function Frame.update_table *)
@@ -691,18 +691,11 @@ let change_buffer_hooks = define_option ["change_buffer_hooks"] ""
   [ "check_file" ]
 (*e: constant Frame.change_buffer_hooks *)
 
-(*s: function Frame.exec_named_hooks *)
-let exec_named_hooks hooks frame =
-  hooks |> List.rev |> List.iter (fun action -> 
-   try Action.execute_action action frame with _ -> ()
-  )
-(*e: function Frame.exec_named_hooks *)
-
 (*s: function Frame.load_file *)
 let load_file window filename =
   let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = create window None buf in
-  exec_named_hooks !!change_buffer_hooks frame;
+  Hook.exec_named_hooks !!change_buffer_hooks frame;
   status_name frame buf.buf_name;
   frame
 (*e: function Frame.load_file *)
@@ -713,7 +706,7 @@ let change_buffer window name =
   try
     let buf = Hashtbl.find (Globals.location()).loc_buffers name in
     let frame = create window None buf in
-    exec_named_hooks !!change_buffer_hooks frame;
+    Hook.exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name
   with Not_found -> ()
 (*e: function Frame.change_buffer *)

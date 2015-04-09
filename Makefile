@@ -28,9 +28,9 @@ SRC=\
  core/efuns.ml\
   core/globals.ml\
   core/var.ml\
-  core/hook.ml\
   core/attr.ml\
   core/action.ml\
+  core/hook.ml\
  core/keymap.ml\
  core/ebuffer.ml\
  core/window.ml\

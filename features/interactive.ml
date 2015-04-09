@@ -39,13 +39,11 @@ let exec_interactive interactives frame name =
   try
     let f, key = List.assoc name interactives in
     (*s: [[Interactive.exec_interactive()]] display if has a keybinding *)
-    (match key with
-    | None -> ()
-    | Some key_list ->
-        let top_window = Window.top frame.frm_window in
-        Top_window.message top_window
-          ("you can run "^name^" by typing "^
-            (Keymap.print_key_list key_list))
+    key |> Common.do_option (fun key_list ->
+      let top_window = Window.top frame.frm_window in
+      Top_window.message top_window
+        ("you can run "^name^" by typing "^
+          (Keymap.print_key_list key_list))
     );
     (*e: [[Interactive.exec_interactive()]] display if has a keybinding *)
     (* run it ! *)
@@ -62,6 +60,6 @@ let call_interactive frame =
   Select.select frame "M-x " meta_hist "" 
     (fun _ -> List.map fst interactives)
     (fun s -> s) 
-    (exec_interactive interactives frame)
+    (fun s -> exec_interactive interactives frame s)
 (*e: function Interactive.call_interactive *)
 (*e: features/interactive.ml *)

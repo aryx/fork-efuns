@@ -116,6 +116,12 @@ open Efuns
 
 <<function Efuns.add_hook>>
 
+<<function Frame.exec_named_hooks>>
+
+<<function Ebuffer.exec_named_buf_hooks>>
+
+<<function Ebuffer.exec_named_buf_hooks_with_abort>>
+
 @
 
 \subsection*{[[core/action.ml]]}
@@ -1088,10 +1094,6 @@ open Options
   
 <<constant Ebuffer.saved_buffer_hooks>>
 
-<<function Ebuffer.exec_named_buf_hooks>>
-
-<<function Ebuffer.exec_named_buf_hooks_with_abort>>
-      
 <<function Ebuffer.save>>
  
 <<function Ebuffer.read>>
@@ -1355,53 +1357,6 @@ let create_inactive window buf =
 
 
 
-<<function Frame.set_cursor>>=
-let set_cursor frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let x = point_to_cursor buf point in
-  let line = Ebuffer.compute_representation buf (point_line text point) in
-  
-  try
-    for i = 0 to frame.frm_height - 1 do
-      let line_repr = frame.frm_table.(i) in
-      if line_repr.frm_text_line == line then
-        let x,y =
-          if x = 0 then 0,i
-          else
-            ((x-1) mod frame.frm_cutline) + 1, i + (x-1) / frame.frm_cutline
-        in
-        frame.frm_cursor_x <- x;
-        frame.frm_cursor_y <- y;
-        raise Exit
-    done;      
-    (* insert cursor is not on frame *)
-    frame.frm_cursor.[0] <- '\000'
-    
-  with
-    Exit -> 
-      let rec iter reprs =
-        match reprs with
-          [] -> 
-            frame.frm_cursor.[0] <- ' '
-        | repr :: tail ->
-            let point_x = point_col text point in
-            if repr.box_pos <= point_x &&
-              repr.box_pos + repr.box_len > point_x then
-              let pos =
-                repr.box_pos_repr + repr.box_charsize * 
-                (point_x - repr.box_pos)
-              in
-              frame.frm_cursor.[0] <- line.repr_string.[pos];
-              frame.frm_cursor_attr <- repr.box_attr;
-            else
-              iter tail
-      in
-      let repr_line = frame.frm_table.(frame.frm_cursor_y)
-      in
-      iter repr_line.frmline_boxes
-@
 
 
 
@@ -1528,8 +1483,6 @@ open Text
 <<function Frame.find_buffer_frame>>
 
 <<constant Frame.change_buffer_hooks>>
-
-<<function Frame.exec_named_hooks>>
 
 <<function Frame.load_file>>
 
@@ -2513,47 +2466,6 @@ let set_history map string history =
 @
 
 
-<<function Select.select>>=
-let select frame request history start completion_fun prefix_fun action =
-  let map = Keymap.create () in
-  let string = ref "" in
-  Keymap.add_binding map [ControlMap, Char.code 'g'] (fun mini_frame -> 
-    remove_completions mini_frame;
-    Minibuffer.kill mini_frame frame
-  );
-  let completion = ref "_*NoCompletion*_" in
-  let completions = ref [] in
-  Keymap.add_binding map [NormalMap, XK.xk_Tab] (fun mini_frame ->
-      if (!completion != !string) then begin
-        let text = mini_frame.frm_buffer.buf_text in
-        completions := completion_fun !string;
-        let suffix, n  = Utils.common_suffix !completions (prefix_fun !string)in
-        completion := !string;
-        Text.insert text mini_frame.frm_point suffix;
-        Text.fmove text mini_frame.frm_point (String.length suffix);
-        if n>1 
-        then display_completions frame
-                (Utils.completion !completions (prefix_fun !string));
-        
-      end else
-      (* can be improved, by displaying another part of the completion buffer *)
-        display_completions frame
-          (Utils.completion !completions (prefix_fun !string))
-  );
-  set_history map string history;
-  incremental_mini_buffer frame map request start
-    (fun frame str -> string := str;)
-    (fun old_frame str -> 
-       (match !history with
-        | hd :: _ when hd = str -> ()
-        | _ ->
-            if str <> "" 
-            then history := str :: !history
-        );
-       remove_completions frame;
-       action str
-    ) |> ignore
-@
 
 <<constant Select.file_hist>>=
 let file_hist = ref []
