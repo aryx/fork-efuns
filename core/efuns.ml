@@ -201,10 +201,10 @@ and frame  =
     mutable frm_cursor : string;
     mutable frm_cursor_attr : Text.attribute;
     (*x: [[Efuns.frame]] other fields *)
-    (* ?? *)
-    mutable frm_x_offset : int;
     (* offset(+/-) of screen-lines after frm_start *)
     mutable frm_y_offset : int;
+    (* ?? *)
+    mutable frm_x_offset : int;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_force_start : bool;
     (*x: [[Efuns.frame]] other fields *)

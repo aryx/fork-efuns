@@ -593,19 +593,27 @@ let scroll_line frame n =
   frame.frm_y_offset <- frame.frm_y_offset + n
 (*e: function Simple.scroll_line *)
 
+(*s: function Simple.scroll_down *)
 let scroll_down frame =
   scroll_line frame 1;
   forward_line frame
+(*e: function Simple.scroll_down *)
 
+(*s: function Simple.scroll_up *)
 let scroll_up frame =
   scroll_line frame (-1);
   backward_line frame
+(*e: function Simple.scroll_up *)
 
+(*s: function Simple.scroll_other_up *)
 let scroll_other_up frame =
   Window.next scroll_up frame.frm_window
+(*e: function Simple.scroll_other_up *)
 
+(*s: function Simple.scroll_other_down *)
 let scroll_other_down frame =
   Window.next scroll_down frame.frm_window
+(*e: function Simple.scroll_other_down *)
 
 (*s: function Simple.recenter *)
 let recenter frame =

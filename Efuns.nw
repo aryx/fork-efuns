@@ -4737,13 +4737,15 @@ let set_cursor_off top_window frame =
 
 
 <<[[Efuns.frame]] other fields>>=
-(* ?? *)
-mutable frm_x_offset : int;
 (* offset(+/-) of screen-lines after frm_start *)
 mutable frm_y_offset : int;
+(* ?? *)
+mutable frm_x_offset : int;
 @
 
-
+% why not modify instead frm_start and decrement its line?
+% because we don't know how many text lines translate in frame lines
+% because of the compute_representation and the 80col overflow.
 
 
 
@@ -6208,6 +6210,39 @@ let forward_screen frame =
   frame.frm_y_offset <- frame.frm_y_offset + frame.frm_height - 2
 @
 
+
+<<function Simple.scroll_line>>=
+let scroll_line frame n =
+  frame.frm_force_start <- true;
+  frame.frm_redraw <- true;
+  frame.frm_y_offset <- frame.frm_y_offset + n
+@
+
+\ifallcode
+% pad stuff
+<<function Simple.scroll_down>>=
+let scroll_down frame =
+  scroll_line frame 1;
+  forward_line frame
+@
+
+<<function Simple.scroll_up>>=
+let scroll_up frame =
+  scroll_line frame (-1);
+  backward_line frame
+@
+
+<<function Simple.scroll_other_up>>=
+let scroll_other_up frame =
+  Window.next scroll_up frame.frm_window
+@
+
+<<function Simple.scroll_other_down>>=
+let scroll_other_down frame =
+  Window.next scroll_down frame.frm_window
+@
+
+\fi
 \subsection{File}
 
 <<function Simple.begin_of_file>>=
