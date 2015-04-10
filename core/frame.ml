@@ -605,6 +605,7 @@ let display top_window frame =
   match frame.frm_mini_buffer with
   | None -> 
       (*s: [[Frame.display()]] draw status line *)
+      (*
       let status = frame.frm_status in
 
       status_modified frame (version text <> buf.buf_last_saved);
@@ -619,6 +620,29 @@ let display top_window frame =
           frame.frm_xpos (frame.frm_ypos + frame.frm_height - 1)
           status.status_string 
           0 width Text.inverse_attr
+      *)
+      let str = spf "-%s- %s  %s L%-6d (%s) --"
+        (if (version text <> buf.buf_last_saved) then "**" else "--")
+        (buf.buf_name ^ 
+         String.make (max 1 ((width / 3) - String.length buf.buf_name)) ' ')
+        (match () with
+        | _ when point.pos = 0 -> "Top"
+        | _ when point.pos = Text.size text -> "Bot"
+        | _ -> spf "%2d%%" 
+          (Text.point_line text point * 100 / Text.nbre_lines text)
+        )
+        (Text.point_line text point + 1)
+        (let xs = buf.buf_minor_modes |> List.map (fun m -> m.min_name) in
+         let xs = buf.buf_major_mode.maj_name :: xs in
+         xs +> Common.join " "
+        )
+      in
+      let minuses = String.make 256 '-' in
+      let str = str ^ minuses in
+      graphic.Xdraw.draw_string 
+        frame.frm_xpos (frame.frm_ypos + frame.frm_height - 1)
+        str
+        0 width Text.inverse_attr
       (*e: [[Frame.display()]] draw status line *)
   | Some request ->
       (*s: [[Frame.display()]] draw minibuffer request string *)

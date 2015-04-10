@@ -16,6 +16,7 @@ with variable font size for important entities (for pfff-based major modes)
 M-w (copy_region)
 M-c (capitalize_words)
 C-s C-w
+Top|Bot|% for line in status line
 
 ** pad's stuff
 scroll other windows
