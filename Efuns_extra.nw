@@ -854,6 +854,13 @@ type charreprs = string array
 <<function Text.start_session>>
   
 <<function Text.commit_session>>
+
+let with_session f text =
+  let session = start_session text in
+  let res = f () in
+  commit_session text session;
+  res
+
     
 <<function Text.readonly>>
   

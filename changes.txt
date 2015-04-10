@@ -2,18 +2,24 @@
 
 * 0.20 (Q2 2015)
 
-** adjustments to emacs behavior
+** compilation mode
+working M-x compile, with colors, and using more variables
+than major mode interactives
+
+** shell mode
 better ls in eshell, multi cols
-C-s C-w
+
+** minimap a la Sublime Text (a la code thumbnails in visual studio)
+with variable font size for important entities (for pfff-based major modes)
+
+** adjustments to emacs behavior
 M-w (copy_region)
-working M-x compile, with colors
+M-c (capitalize_words)
+C-s C-w
 
 ** pad's stuff
 scroll other windows
 buffer menu, C-M-l and right order
-
-** minimap a la Sublime Text (a la code thumbnails in visual studio)
-with variable font size for important entities (for pfff-based major modes)
 
 ** refactoring
 

@@ -125,18 +125,16 @@ let _ =
   (* ------------------------- *)
   (*s: transforming actions *)
   define_action "transpose_chars"  (Frame.to_frame Simple.transpose_chars);
-
   define_action "transpose_words"  (Frame.to_frame Simple.transpose_words);
-  define_action "lowercase_word" (fun frame ->
-    let buf = frame.frm_buffer in
-    let point = frame.frm_point in
-    Simple.on_word buf point String.lowercase
-  );
 
+  define_action "lowercase_word" (fun frame ->
+    Simple.on_word frame.frm_buffer frame.frm_point String.lowercase
+  );
   define_action "uppercase_word" (fun frame ->
-    let buf = frame.frm_buffer in
-    let point = frame.frm_point in
-    Simple.on_word buf point String.uppercase
+    Simple.on_word frame.frm_buffer frame.frm_point String.uppercase
+  );
+  define_action "capitalize_word" (fun frame ->
+    Simple.on_word frame.frm_buffer frame.frm_point String.capitalize
   );
 
   define_action "fill_paragraph" Simple.fill_paragraph;
@@ -411,10 +409,11 @@ let _ =
         (* ---------------------- *)
         (*s: transforming keys *)
         [ControlMap, Char.code 't'], "transpose_chars";
-
         [MetaMap, Char.code 't'], "transpose_words";
+
         [MetaMap, Char.code 'l'], "lowercase_word";
         [MetaMap, Char.code 'u'], "uppercase_word";
+        [MetaMap, Char.code 'c'], "capitalize_word";
 
         [MetaMap, XK.xk_q], "fill_paragraph";
         (*e: transforming keys *)

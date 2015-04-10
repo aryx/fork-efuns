@@ -71,7 +71,6 @@ let insert_at_place frame char =
   if c = '\n' then
     insert_char frame char
   else
-  let _sessionTODOBUG = Text.start_session text in
   Text.delete text point 1 |> ignore;
   single_char.[0] <- char;    
   Text.insert text point single_char |> ignore;
@@ -127,25 +126,22 @@ let hungry_char c =
 let hungry_electric_delete frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  let session = Text.start_session text in
-  let c1 = previous_char frame in
-  delete_backspace_char frame;
-  let c2 = previous_char frame in
-  begin
-    if hungry_char c1 && hungry_char c2 then
-      try
-        delete_backspace_char frame;
-        while 
-          let c = previous_char frame in
-          hungry_char c        
-        do
-          delete_backspace_char frame
-        done;
-        insert_char frame ' '
-      with
-        Not_found -> ()
-  end;
-  Text.commit_session text session
+  text |> Text.with_session (fun () ->
+   let c1 = previous_char frame in
+   delete_backspace_char frame;
+   let c2 = previous_char frame in
+   if hungry_char c1 && hungry_char c2 then
+     try
+       delete_backspace_char frame;
+       while 
+         let c = previous_char frame in
+         hungry_char c        
+       do
+         delete_backspace_char frame
+       done;
+       insert_char frame ' '
+     with Not_found -> ()
+  )
 (*e: function Simple.hungry_electric_delete *)
 
 (*****************************************************************************)
@@ -482,52 +478,52 @@ let delete_forward_word buf point =
 (*s: function Simple.on_word *)
 let on_word buf point f =
   let text = buf.buf_text in
-  let session = Text.start_session text in
-  let syntax = buf.buf_syntax_table in
-  to_begin_of_word text point syntax;
-  let pos1 = Text.dup_point text point in
-  to_end_of_word text point syntax;
-  let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
-  let w = f word1 in
-  Text.insert text pos1 w |> ignore;
-  Text.fmove text point (String.length w);
-  Text.commit_session text session;
-  Text.remove_point text pos1
+  text |> Text.with_session (fun () ->
+    let syntax = buf.buf_syntax_table in
+    to_begin_of_word text point syntax;
+    let pos1 = Text.dup_point text point in
+    to_end_of_word text point syntax;
+    let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
+    let w = f word1 in
+    Text.insert text pos1 w |> ignore;
+    Text.fmove text point (String.length w);
+    Text.remove_point text pos1
+  )
 (*e: function Simple.on_word *)
   
 (*s: function Simple.transpose_words *)
 let transpose_words buf point =
   let text = buf.buf_text in
-  let session = Text.start_session text in
-  let syntax = buf.buf_syntax_table in
-  in_prev_word text point syntax;
-  to_begin_of_word text point syntax;
-  let pos1 = Text.dup_point text point in
-  to_end_of_word text point syntax;
-  let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
-  Text.goto_point text point pos1;
-  in_next_word text point syntax;
-  let pos2 = Text.dup_point text point in
-  to_end_of_word text point syntax;
-  let _,word2 = Text.delete_res text pos2 (Text.distance text pos2 point) in    
-  Text.insert text pos1 word2 |> ignore;
-  Text.insert text pos2 word1 |> ignore;
-  Text.fmove text point (String.length word1);
-  Text.commit_session text session;
-  Text.remove_point text pos1;
-  Text.remove_point text pos2
+  text |> Text.with_session (fun () ->
+    let syntax = buf.buf_syntax_table in
+    in_prev_word text point syntax;
+    to_begin_of_word text point syntax;
+    let pos1 = Text.dup_point text point in
+    to_end_of_word text point syntax;
+    let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
+    Text.goto_point text point pos1;
+    in_next_word text point syntax;
+    let pos2 = Text.dup_point text point in
+    to_end_of_word text point syntax;
+    let _,word2 = Text.delete_res text pos2 (Text.distance text pos2 point) in    
+    Text.insert text pos1 word2 |> ignore;
+    Text.insert text pos2 word1 |> ignore;
+    Text.fmove text point (String.length word1);
+    Text.remove_point text pos1;
+    Text.remove_point text pos2
+  )
 (*e: function Simple.transpose_words *)
 
 
 (*s: function Simple.transpose_chars *)
 let transpose_chars buf point =
   let text = buf.buf_text in
-  let session = Text.start_session text in
-  Text.bmove text point 1;
-  let pos,c1 = Text.delete_res text point 1 in
-  Text.fmove text point 1;
-  Text.insert text point c1 |> ignore;
-  Text.commit_session text session;
+  text |> Text.with_session (fun () ->
+    Text.bmove text point 1;
+    let pos,c1 = Text.delete_res text point 1 in
+    Text.fmove text point 1;
+    Text.insert text point c1 |> ignore;
+  );
   Text.fmove text point 1;
   ()
 (*e: function Simple.transpose_chars *)
@@ -765,35 +761,35 @@ let fill_paragraph frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
   let start = Text.dup_point text point in
-  let session = Text.start_session text in
-  backward_paragraph buf start;
-  let fin = Text.dup_point text start in
-  forward_paragraph buf fin;
-  simplify text start fin;
-  Text.insert text start "\n" |> ignore;
-  let rec iter count last_space =
-    if Text.compare text start fin < 0 then
-    if Text.fmove_res text start 1 = 1 then 
-      let c = Text.get_char text start in  
-        if c = ' ' then (* good, a new space *)
-          iter (count+1) 0
-      else
-      if count > 75 && count <> last_space then 
-          begin
-          Text.bmove text start (last_space+1);
-          Text.delete text start 1;
-          Text.insert text start "\n";
-          Text.fmove text start 1;
-          iter 0 0
-          end
+  text |> Text.with_session (fun () ->
+    backward_paragraph buf start;
+    let fin = Text.dup_point text start in
+    forward_paragraph buf fin;
+    simplify text start fin;
+    Text.insert text start "\n" |> ignore;
+    let rec iter count last_space =
+      if Text.compare text start fin < 0 then
+      if Text.fmove_res text start 1 = 1 then 
+        let c = Text.get_char text start in  
+          if c = ' ' then (* good, a new space *)
+            iter (count+1) 0
         else
-          iter (count+1) (last_space+1)
-  in
-  iter 0 0;  
-  Text.insert text fin "\n" |> ignore;
-  Text.remove_point text start;
-  Text.remove_point text fin;
-  Text.commit_session text session
+        if count > 75 && count <> last_space then 
+            begin
+            Text.bmove text start (last_space+1);
+            Text.delete text start 1;
+            Text.insert text start "\n";
+            Text.fmove text start 1;
+            iter 0 0
+            end
+          else
+            iter (count+1) (last_space+1)
+    in
+    iter 0 0;  
+    Text.insert text fin "\n" |> ignore;
+    Text.remove_point text start;
+    Text.remove_point text fin;
+  )
 (*e: function Simple.fill_paragraph *)
   
 (*s: function Simple.insert_special_char *)
