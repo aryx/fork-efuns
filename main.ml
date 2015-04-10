@@ -34,7 +34,7 @@ let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 (*e: constant Main.highlight_color *)
 
 (*s: function Efuns.init *)
-let init_efuns (location : location) =
+let init_efuns location =
   Globals.global_location := Some location;
   let hooks = List.rev !Hook.start_hooks in
   Hook.start_hooks := [];
@@ -85,7 +85,6 @@ let main () =
     raise SigInt
   ));
   (*e: [[main()]] set signal handlers *)
-
   Arg.parse [
     (*s: [[main()]] command line options *)
     "-width"  , Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";

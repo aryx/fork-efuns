@@ -216,9 +216,6 @@ let create_without_top window mini buf =
       frm_point = point;
       frm_end = frm_end;
 
-      frm_x_offset = 0;
-      frm_y_offset = 0;
-
       frm_cursor_x = 0;
       frm_cursor_y = 0;
       frm_cursor = String.make 1 ' ';
@@ -227,7 +224,12 @@ let create_without_top window mini buf =
       frm_last_text_updated = 0;
       frm_last_buf_updated = 0;
 
-      frm_redraw = true;
+      frm_redraw = true; (* ! *)
+      frm_force_start = false;
+      frm_x_offset = 0;
+      frm_y_offset = 0;
+      frm_cutline = window.win_width - 1;
+      frm_table = [||];
 
       frm_has_scrollbar = 0;
       frm_has_status_line = 1;
@@ -235,14 +237,9 @@ let create_without_top window mini buf =
       frm_mini_buffer = mini;
       
       frm_prefix = [];
-      
       frm_last_action = Keymap.dummy_action;
 
-      frm_force_start = false;
-      frm_cutline = window.win_width - 1;
       frm_killed = false;
-
-      frm_table = [||];
     } 
   in
   (*s: [[Frame.create_without_top()]] adjust status of frame *)

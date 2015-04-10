@@ -21,8 +21,8 @@ let create_at_top xpos ypos width height =
     win_width = width;
     win_height = height;
 
-    win_down = NoFrame (); 
-    win_up = Window window;
+    win_down = NoFrame; 
+    win_up = Window window; (* this will be adjust in the caller *)
 
     win_mini = false;
   } in
@@ -38,7 +38,7 @@ let create mini up_window xpos ypos width height =
   win_width = width;
   win_height = height;
 
-  win_down = NoFrame (); 
+  win_down = NoFrame; 
   win_up = up_window;
 
   win_mini = mini;
@@ -59,7 +59,7 @@ let iter f window =
     | HComb (w1,w2) -> iter1 w1; iter1 w2       
     | VComb (w1,w2) -> iter1 w1; iter1 w2
     | WFrame frame -> f frame
-    | NoFrame _ -> ()
+    | NoFrame -> ()
   in
   iter1 window
 (*e: function Window.iter *)
@@ -70,7 +70,7 @@ let rec first f window =
     WFrame frame -> f frame
   | HComb (w1,w2) -> first f w1
   | VComb (w1,w2) -> first f w1
-  | NoFrame _ -> ()
+  | NoFrame -> ()
 (*e: function Window.first *)
 
 (*s: function Window.last *)
@@ -79,7 +79,7 @@ let rec last f window =
     WFrame frame -> f frame
   | HComb (w1,w2) -> last f w2
   | VComb (w1,w2) -> last f w2
-  | NoFrame _ -> ()
+  | NoFrame -> ()
 (*e: function Window.last *)
 
 (*s: function Window.next *)

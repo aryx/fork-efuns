@@ -324,7 +324,7 @@ and window_up =
 (*s: type Efuns.window_down *)
 and window_down =
 | WFrame of frame
-| NoFrame of unit
+| NoFrame
 
 | HComb of window * window 
 | VComb of window * window
@@ -337,9 +337,9 @@ and window_down =
 (*s: type Efuns.location *)
 type location =
   { 
-    (* key is buffer name (made unique via get_name()) *)
+    (* key is buffer name (made unique via get_unique_name()) *)
     mutable loc_buffers : (string, buffer) Hashtbl.t;
-    (* key is filename (should be unique? use realpath?) *)
+    (* key is filename (should be unique? todo: use realpath?) *)
     mutable loc_files : (string, buffer) Hashtbl.t;
 
     (* list when have one efuns running multiple top windows *)

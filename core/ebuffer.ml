@@ -44,7 +44,7 @@ let default_syntax_table = create_syntax_table ()
 (*e: constant Ebuffer.default_syntax_table *)
 
 (*s: function Ebuffer.get_name *)
-let get_name filename =
+let get_unique_name filename =
   let basename = Filename.basename filename in
   let name = 
     if basename = "" 
@@ -96,7 +96,7 @@ let tab_size = ref 9
 
 (*s: function Ebuffer.create *)
 let create name filename text local_map =
-  let name = get_name name in
+  let name = get_unique_name name in
   let buf =
     { 
       buf_text = text;
@@ -115,8 +115,8 @@ let create name filename text local_map =
       buf_syntax_table = default_syntax_table;
       buf_map_partial = true;
       buf_vars = Local.vars ();
-      buf_minor_modes = [];
       buf_major_mode = fondamental_mode;
+      buf_minor_modes = [];
 
       buf_sync = false;
       buf_mark = None;
@@ -265,7 +265,7 @@ let change_name buf filename =
   if Utils.hashtbl_mem loc.loc_files filename 
   then raise BufferAlreadyOpened;
   let filename = Utils.normal_name loc.loc_dirname filename in
-  let name = get_name filename in
+  let name = get_unique_name filename in
   Hashtbl.add loc.loc_buffers name buf;
   Hashtbl.add loc.loc_files filename buf;
   buf.buf_filename <- Some filename;
@@ -421,7 +421,7 @@ let get_binding buf keylist =
     if buf.buf_map_partial then
       (let b = Keymap.get_binding (Globals.location()).loc_map keylist in
         match b with
-          Prefix map -> binding := b;
+        | Prefix map -> binding := b;
         | Function f -> binding := b; raise Exit
         | Unbound -> ()
       );

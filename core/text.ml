@@ -93,6 +93,7 @@ type text = {
 
     mutable text_newlines : line array;
     mutable text_nlines : int; (* Array.length text.text_newlines *)
+
     (*s: [[Text.text]] gap fields *)
     (* g for gap *)
     mutable gpoint : point;
@@ -498,10 +499,10 @@ let create str =
 
       text_attrs = attrs;
 
-      text_points = [];
       (* no gap at the beginning *)
       gpoint = { pos = 0; line = 0 };
       gsize = 0;
+      text_points = [];
 
       text_modified = 0;
       text_clean = false;

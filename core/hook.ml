@@ -37,24 +37,24 @@ let add_hook hook_var hook =
 
 (*s: function Frame.exec_named_hooks *)
 let exec_named_hooks hooks frame =
-  hooks |> List.rev |> List.iter (fun action -> 
-   try Action.execute_action action frame with _ -> ()
+  hooks |> List.rev |> List.iter (fun action_name -> 
+   try Action.execute_action action_name frame with _ -> ()
   )
 (*e: function Frame.exec_named_hooks *)
 
 (*s: function Ebuffer.exec_named_buf_hooks *)
 let exec_named_buf_hooks hooks frame =
-  hooks |> List.rev |> List.iter (fun action ->
-    try Action.execute_buffer_action action frame 
-    with exn -> Globals.error "exec_named_buf_hooks: exn = %s" 
-                    (Common.exn_to_s exn)
+  hooks |> List.rev |> List.iter (fun action_name ->
+    try Action.execute_buffer_action action_name frame 
+    with exn -> 
+      Globals.error "exec_named_buf_hooks: exn = %s" (Common.exn_to_s exn)
   )
 (*e: function Ebuffer.exec_named_buf_hooks *)
 
 (*s: function Ebuffer.exec_named_buf_hooks_with_abort *)
 let exec_named_buf_hooks_with_abort hooks frame =
-  hooks |> List.rev |> List.iter (fun action ->
-    Action.execute_buffer_action action frame
+  hooks |> List.rev |> List.iter (fun action_name ->
+    Action.execute_buffer_action action_name frame
  )
 (*e: function Ebuffer.exec_named_buf_hooks_with_abort *)
 

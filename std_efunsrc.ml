@@ -252,6 +252,7 @@ let _ =
   (* ----------------------------------------------------------- *)
   (*s: misc actions *)
   define_action "revert_buffer" Complexe.reload;
+
   define_action "open_display" Complexe.open_display;
   define_action "change_font"  Complexe.change_font;
   (*x: misc actions *)
@@ -402,10 +403,8 @@ let _ =
         [ControlMap, Char.code 'y'], "insert_killed";
         [MetaMap, Char.code 'y'], "insert_next_killed";
         (*e: moving keys *)
-
         (* pad: pc-select *)
         [MetaMap, Char.code 'w'], "copy_region";
-        
 
         (* ---------------------- *)
         (* Transforming *)
@@ -449,7 +448,6 @@ let _ =
         (*s: external commands keys *)
         [MetaMap, Char.code '!'], "shell_command";
         (*e: external commands keys *)
-
         [c_x;NormalMap, Char.code '`' ], "next_error";
 
         (* pad: *)

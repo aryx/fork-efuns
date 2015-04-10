@@ -174,7 +174,7 @@ let rec resize_window window xpos ypos width height =
   window.win_height <- height;
   match window.win_down with
     WFrame frame -> Frame.install window frame
-  | NoFrame () -> assert false
+  | NoFrame -> assert false
   | HComb (w1,w2) ->
       let wi1 = w1.win_width * width / old_width in
       resize_window w1 xpos ypos wi1 height;
@@ -188,7 +188,7 @@ let rec resize_window window xpos ypos width height =
 (*s: function Top_window.find_frame *)
 let rec find_frame window x y =
   match window.win_down with
-    NoFrame () -> assert false
+    NoFrame -> assert false
   | WFrame frame -> frame
   | HComb (w1,w2) -> 
       if w2.win_xpos > x then find_frame w1 x y
