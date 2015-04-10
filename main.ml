@@ -20,12 +20,10 @@ let initial_files = ref []
 (*s: constant Efuns.init_frames *)
 let init_frames = ref []
 (*e: constant Efuns.init_frames *)
-(*s: constant Efuns.displayname *)
-let displayname = ref ""
-(*e: constant Efuns.displayname *)
+
 (*s: constants Main options *)
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
+let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 (*e: constants Main options *)
@@ -93,8 +91,10 @@ let main () =
     "-bg"     , Arg.String(fun s -> bg_opt := Some s), "<color>: Background color";
     "-font"   , Arg.String(fun s -> font_opt := Some s), "<font>: Font name";
     (*x: [[main()]] command line options *)
-    "-d",        Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
-    "--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+    "-d",        Arg.String(fun s -> Globals.displayname := s),
+    " <dpy>: Name of display";
+    "--display", Arg.String(fun s -> Globals.displayname := s),
+    " <dpy>: Name of display";
     (*x: [[main()]] command line options *)
     "-check", Arg.Set Globals.check, ": only for testing";
     (*x: [[main()]] command line options *)

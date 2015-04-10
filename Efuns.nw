@@ -1283,7 +1283,6 @@ define_action "open_display" Complexe.open_display;
 define_action "change_font"  Complexe.change_font;
 @  
 %(*  define_action "load_library" load_library;*)
-%(*  define_action "start_server" Server.start;  *)
 
 
 % a bit annoying, but ocaml is not a dynamic language with
@@ -1911,7 +1910,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
+let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -1967,8 +1966,10 @@ let font_opt = ref None
 let displayname = ref ""
 @
 <<[[main()]] command line options>>=
-"-d",        Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
-"--display", Arg.String(fun s -> displayname := s),"<dpy>: Name of display";
+"-d",        Arg.String(fun s -> Globals.displayname := s),
+" <dpy>: Name of display";
+"--display", Arg.String(fun s -> Globals.displayname := s),
+" <dpy>: Name of display";
 @
 
 
@@ -5717,7 +5718,7 @@ if !!interactives_map = [] then begin
 (*"load_library";*)
 "open_display";
 "unset_attr";
-(*"start_server";*)
+"start_server";
 @      
 % a big ugly. An ocaml attribute would be better
 % that then auto generate the list of interactive functions.
@@ -8694,6 +8695,10 @@ let next_error top_frame =
 % dual of previous chapter in some sense since this time
 % it's external command that call in efuns instead of efuns
 % calling external commands
+
+<<misc actions>>=
+define_action "start_server" Server.start;
+@
 
 \section{[[M-x eval]]}
 

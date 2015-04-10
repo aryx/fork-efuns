@@ -121,6 +121,11 @@ let _ =
 (*let t = x_res*)
 (*e: constant Efuns.t *)
 
+(* for ipc/server too *)
+(*s: constant Efuns.displayname *)
+let displayname = ref ""
+(*e: constant Efuns.displayname *)
+
 (*
   let _ = Printf.printf "%d %d %s %s %s" !width !height !font !fg !bg; 
   print_newline () 

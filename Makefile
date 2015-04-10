@@ -8,6 +8,7 @@
 TOP=$(shell pwd)
 
 TARGET=efuns
+PROGS=$(TARGET) efuns_client
 
 BACKENDDIR=graphics/gtk_cairo
 
@@ -79,6 +80,8 @@ SRC=\
  text_modes/tex_mode.ml\
  text_modes/html_mode.ml\
  \
+ ipc/server.ml \
+ \
  std_efunsrc.ml\
  $(BACKENDDIR)/graphics_efuns.ml \
  main.ml \
@@ -146,7 +149,7 @@ INCLUDEDIRS=\
   commons\
   core features\
   graphics $(BACKENDDIR) $(GRAPHICSDIRS) $(PFFFDIRS) \
-  major_modes minor_modes prog_modes text_modes pfff_modes
+  major_modes minor_modes prog_modes text_modes pfff_modes ipc
 
 ##############################################################################
 # Generic variables
@@ -158,11 +161,9 @@ INCLUDEDIRS=\
 ##############################################################################
 .PHONY:: all all.opt opt top clean distclean
 
-all:: $(CMIS)
-	$(MAKE) $(TARGET) 
+all:: $(CMIS) $(PROGS)
 
-opt:
-	$(MAKE) $(TARGET).opt
+opt: $(PROGS:=.opt)
 
 # need -linkall!
 $(TARGET): $(OBJS)
@@ -179,6 +180,12 @@ $(TARGET).opt: $(OPTOBJS)
 clean::
 	rm -f */*.cm[ioxa] */*.[oa] */*.cmxa */*.annot */*.cmt*
 
+
+efuns_client: ipc/efuns_client.cmo
+	$(OCAMLC) $(BYTECODE_STATIC) -o $@ $(LIBS) $^
+
+efuns_client.opt: ipc/efuns_client.cmx
+	$(OCAMLOPT) $(STATIC) -o $@ $(LIBS:.cma=.cmxa) $^
 
 depend::
 	$(OCAMLDEP) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend

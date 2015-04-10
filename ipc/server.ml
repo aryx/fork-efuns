@@ -12,9 +12,7 @@
 (***********************************************************************)
 (*e: copyright header *)
 open Efuns
-open Xtypes
 open Unix  
-open Top_window
   
 (*s: constant Server.efuns_property *)
 let efuns_property = "_EFUNS_SERVER"  
@@ -25,7 +23,8 @@ let user =
   with _ -> "noname"
 (*e: constant Server.user *)
 (*s: constant Server.socket_name *)
-let socket_name = (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user !displayname)
+let socket_name = 
+  (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user !Globals.displayname)
 (*e: constant Server.socket_name *)
 
 (*s: constant Server.started *)
@@ -36,7 +35,8 @@ let started = ref false
 type proto =
   LoadFile of string * int * string
 (*e: type Server.proto *)
-  
+
+ 
 (*s: function Server.read_command *)
 let read_command fd frame =
   let inc = in_channel_of_descr fd in
@@ -46,21 +46,23 @@ let read_command fd frame =
     | LoadFile (name,pos,str) ->
         let window = frame.frm_window in
         let top_window = Window.top window in
-        wrap top_window (fun top_window ->
+        (*wrap*) top_window |> (fun top_window ->
             let frame = Frame.load_file window name in
-            if pos <> 0 then
+            if pos <> 0 then begin
               let buf = frame.frm_buffer in
               let text = buf.buf_text in
               let point = frame.frm_point in
               try
-                if str = "" then raise Not_found else                  
-                let regexp = Str.regexp_string str in
-                let len = Text.search_forward text regexp point in
-                ()
-              with
-                Not_found -> 
-                  Text.set_position text point pos
-        ) ()
+                if str = "" 
+                then raise Not_found 
+                else                  
+                  let regexp = Str.regexp_string str in
+                  Text.search_forward text regexp point |> ignore
+              with Not_found -> 
+                Text.set_position text point pos
+            end;
+            Top_window.update_display () 
+        ) (*()*)
   with
     _ -> Concur.Thread.remove_reader fd 
 (*e: function Server.read_command *)
@@ -75,7 +77,7 @@ let module_accept s frame =
 (*s: function Server.start *)
 let start frame =
   if not !started then
-  let top_window = Window.top frame.frm_window in
+  (*let top_window = Window.top frame.frm_window in*)
   Utils.catchexn "Efuns server:" (fun _ ->
       let s = Unix.socket PF_UNIX SOCK_STREAM 0 in
       if Sys.file_exists socket_name then Unix.unlink socket_name;
@@ -83,15 +85,17 @@ let start frame =
       Unix.listen s 254;
       Unix.set_nonblock s;
       Unix.set_close_on_exec s;
-      let display = top_window.top_root#display  in
-        Concur.Thread.add_reader s (fun _ -> 
-            started := true;
-            module_accept s frame);
+      (*let display = top_window.top_root#display  in *)
+      Concur.Thread.add_reader s (fun _ -> 
+        started := true;
+        module_accept s frame
+      );
+      (*
       let atom = X.internAtom display efuns_property false in
       X.changeProperty display top_window.top_root#window 
         PropModeReplace atom XA.xa_string 1 socket_name;
+      *)
   )  
 (*e: function Server.start *)
   
-
 (*e: ipc/server.ml *)

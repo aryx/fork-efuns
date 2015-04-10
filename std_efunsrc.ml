@@ -285,6 +285,8 @@ let _ =
   (* C-x map *)
   define_action "next_error"  Compil.next_error;
   (*x: misc actions *)
+  define_action "start_server" Server.start;
+  (*x: misc actions *)
   (*s: window managment actions *)
   (* C-x 5 map *)
   define_action "window_load_buffer"  Complexe.window_load_buffer;
@@ -555,7 +557,7 @@ let _ =
         (*"load_library";*)
         "open_display";
         "unset_attr";
-        (*"start_server";*)
+        "start_server";
         (*x: [[interactives_map]] initial entries *)
         "goto_char";
         "goto_line";
