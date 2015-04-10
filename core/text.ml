@@ -1050,7 +1050,8 @@ let compute_representation text charreprs n =
             let char_attr = text.text_attrs.(!text_cursor) in
             char_repr := 
                (*s: [[Text.compute_representation()]] compute charrepr, special char *)
-               if charcode = 9 
+               (* bugfix: it's char_code here, not charcode, tests/tabs.txt *)
+               if char_code = 9 
                then tabreprs.(!repr_cursor mod 9)
                (*e: [[Text.compute_representation()]] compute charrepr, special char *)
                else charreprs.(char_code);

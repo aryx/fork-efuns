@@ -1,0 +1,3 @@
+clean::
+	rm -f *.cm[ioxa] *.[oa] *.cmxa *.annot *.cmt*
+	rm -f *~ .*~ *.exe gmon.out #*#

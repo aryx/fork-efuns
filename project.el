@@ -19,11 +19,12 @@
  (join-string 
   (list 
    "-debugger"
-   (case 2
+   (case 3
      
      (0 "/home/pad/github/fork-efuns/changes.txt")
      (1 "/home/pad/github/fork-efuns/main.ml /home/pad/github/fork-efuns/std_efunsrc.ml")
      (2 "/home/pad/pfff/lang_nw/parsing/lexer_nw.mll")
+     (3 "/home/pad/github/fork-efuns/tests/tabs.txt")
      
      )
    ))

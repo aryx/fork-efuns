@@ -4956,6 +4956,9 @@ end;
 
 \subsection{Status line creation}
 
+%less: delete, my code in the end is simpler.
+%no need those blit stuff and modified opti cache.
+
 <<[[Efuns.frame]] status field>>=
 mutable frm_status : status;    
 @
