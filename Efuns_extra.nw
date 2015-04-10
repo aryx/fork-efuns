@@ -643,11 +643,6 @@ let lexing text curseur end_point =
   )
 @
 
-<<function Text.start_session>>=
-let start_session text =   
-  text.text_modified
-@
-
 
 
 %-------------------------------------------------------------
@@ -1713,12 +1708,12 @@ let insert_at_place frame char =
   if c = '\n' then
     insert_char frame char
   else
-  let _sessionTODOBUG = Text.start_session text in
   Text.delete text point 1 |> ignore;
   single_char.[0] <- char;    
   Text.insert text point single_char |> ignore;
   Text.fmove text point 1 |> ignore
 @
+%old:  let _sessionTODOBUG = Text.start_session text in
 
 <<constant Simple.overwrite_mode>>=
 let overwrite_mode = Ebuffer.new_minor_mode "Over" []

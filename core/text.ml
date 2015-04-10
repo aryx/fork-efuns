@@ -1262,6 +1262,13 @@ let commit_session text session_date =
     in
     iter [] text.text_history
 (*e: function Text.commit_session *)
+
+let with_session f text =
+  let session = start_session text in
+  let res = f () in
+  commit_session text session;
+  res
+
     
 (*s: function Text.readonly *)
 let readonly text = 

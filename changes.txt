@@ -1,5 +1,26 @@
 -*- org -*-
 
+* 0.20 (Q2 2015)
+
+** adjustments to emacs behavior
+better ls in eshell, multi cols
+C-s C-w
+M-w (copy_region)
+working M-x compile, with colors
+
+** pad's stuff
+scroll other windows
+buffer menu, C-M-l and right order
+
+** minimap a la Sublime Text (a la code thumbnails in visual studio)
+with variable font size for important entities (for pfff-based major modes)
+
+** refactoring
+
+- split efuns.ml and simple.ml in many more modules
+- add more .mli
+- compile to use variables
+
 * 0.19 (Q1 2015)
 
 ** a new Dircolors module
@@ -24,8 +45,9 @@ for Caml, C/C++, and TeX/Noweb
 - removed many opens
 - use global for location
 - reorg main.ml to use less toplevels and pack in a main() function
-- use more List.iter, Common.do_option, |>, with_xxx
+- use more List.iter, Common.do_option, |>, with_session, with_point
 - factorize color in pl_colors.ml
+- added many .mli
 
 * Version 018:
 ===========

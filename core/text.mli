@@ -105,6 +105,7 @@ val undo : t -> action * position * delta
 type session
 val start_session : t -> session
 val commit_session : t -> session -> unit
+val with_session: (unit -> 'a) -> t -> 'a
 
 (* attributes *)
 
