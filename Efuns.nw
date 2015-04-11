@@ -489,7 +489,7 @@ type position = int
 
 
 <<type Text.line>>=
-and line = {
+type line = {
     mutable position : position; (* bol (beginning of line) *)
 
     <<[[Text.line]] representation fields>>
@@ -632,10 +632,10 @@ and buffer =
 
 % point is an important notion!
 <<type Text.point>>=
-and point = {
+type point = {
     mutable pos : position;
     mutable line : int;
-  }
+}
 @
 % the first field is a charpos, not a column. The additional .line(was y) is
 % to quickly know the line number so can index in the text.text_newlines array

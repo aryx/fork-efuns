@@ -671,16 +671,20 @@ open Options
 open Utils
 
 <<type Text.position>>
-<<type Text.version>>
+
+<<type Text.point>>
+
+<<type Text.delta>>
 
 <<type Text.attribute>>
-<<type Text.delta>>
+
+
+<<type Text.version>>
+
 <<type Text.session>>
 
 
 <<type Text.line>>
-
-<<type Text.point>>
 
 <<type Text.repr>>
 

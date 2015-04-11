@@ -32,23 +32,34 @@ open Utils
 (*s: type Text.position *)
 type position = int
 (*e: type Text.position *)
-(*s: type Text.version *)
-type version = int
-(*e: type Text.version *)
+
+(*s: type Text.point *)
+type point = {
+    mutable pos : position;
+    mutable line : int;
+}
+(*e: type Text.point *)
+
+(*s: type Text.delta *)
+type delta = int
+(*e: type Text.delta *)
 
 (*s: type Text.attribute *)
 type attribute = int
 (*e: type Text.attribute *)
-(*s: type Text.delta *)
-type delta = int
-(*e: type Text.delta *)
+
+
+(*s: type Text.version *)
+type version = int
+(*e: type Text.version *)
+
 (*s: type Text.session *)
 type session = int
 (*e: type Text.session *)
 
 
 (*s: type Text.line *)
-and line = {
+type line = {
     mutable position : position; (* bol (beginning of line) *)
 
     (*s: [[Text.line]] representation fields *)
@@ -62,13 +73,6 @@ and line = {
     (*e: [[Text.line]] other fields *)
   } 
 (*e: type Text.line *)
-
-(*s: type Text.point *)
-and point = {
-    mutable pos : position;
-    mutable line : int;
-  }
-(*e: type Text.point *)
 
 (*s: type Text.repr *)
 and box = 
