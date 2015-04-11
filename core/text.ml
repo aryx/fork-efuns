@@ -29,6 +29,10 @@ ici.
 open Options
 open Utils
 
+(*****************************************************************************)
+(* Types *)
+(*****************************************************************************)
+
 (*s: type Text.position *)
 type position = int
 (*e: type Text.position *)
@@ -137,6 +141,10 @@ type coord = {
   c_line: int;
 }
 
+
+(*****************************************************************************)
+(* Helpers *)
+(*****************************************************************************)
   
 (*s: function Text.version *)
 let version text = 
@@ -164,6 +172,10 @@ let point_col text point =
   else pos - bol
 (*e: function Text.point_col *)
 
+(*****************************************************************************)
+(* Attributes *)
+(*****************************************************************************)
+
 (*s: function Text.make_attr *)
 let make_attr fg bg font highlighted =
   let attr = 
@@ -182,6 +194,10 @@ let direct_attr =  make_attr 0 1 0 false
 let inverse_attr =  make_attr 1 0 0 false
 (*e: constant Text.inverse_attr *)
 
+(*****************************************************************************)
+(* Line *)
+(*****************************************************************************)
+
 (*s: function Text.mk_line_with_pos *)
 let mk_line_with_pos pos = 
   {
@@ -194,6 +210,9 @@ let mk_line_with_pos pos =
   }
 (*e: function Text.mk_line_with_pos *)
 
+(*****************************************************************************)
+(* Gap *)
+(*****************************************************************************)
 
 (*s: function Text.move_gpoint_to *)
 let move_gpoint_to text pos =
@@ -283,6 +302,10 @@ let extend_gap text amount =
   text.text_size <- old_size + add_size;
   ()
 (*e: function Text.extend_gap *)
+
+(*****************************************************************************)
+(* Low level insert/delete *)
+(*****************************************************************************)
 
 (*s: function Text.low_insert *)
 let low_insert text pos str =
@@ -407,6 +430,10 @@ let low_delete text pos len =
   (gpos, str, text.text_modified) 
 (*e: function Text.low_delete *)
 
+(*****************************************************************************)
+(* Undo *)
+(*****************************************************************************)
+
 (*s: function Text.undo *)
 let undo text =
   let rec undo action =
@@ -446,6 +473,10 @@ let undo text =
       rev_action
 (*e: function Text.undo *)
 
+(*****************************************************************************)
+(* Insert/delete public API *)
+(*****************************************************************************)
+
 (*s: function Text.insert_at_end *)
 let insert_at_end text str =
   low_insert text text.text_size str |> ignore;
@@ -479,6 +510,9 @@ let delete text point len =
   delete_res text point len |> ignore
 (*e: function Text.delete *)
 
+(*****************************************************************************)
+(* Constructor *)
+(*****************************************************************************)
   
 (*s: function Text.compute_newlines *)
 let compute_newlines string =
@@ -521,6 +555,10 @@ let create str =
     }
 (*e: function Text.create *)
   
+(*****************************************************************************)
+(* Misc *)
+(*****************************************************************************)
+
 (*s: function Text.find_xy *)
 let find_xy text point line pos =
   let gpos = text.gpoint.pos in
@@ -568,6 +606,10 @@ let find_xy text point line pos =
   x,y
 (*e: function Text.find_xy *)
 
+(*****************************************************************************)
+(* Points *)
+(*****************************************************************************)
+
 (*s: function Text.new_point *)
 let new_point text =
   let p = { pos = 0; line = 0; } in    
@@ -614,6 +656,10 @@ let with_new_point text f =
   Common.finalize (fun () -> f p) (fun () -> remove_point text p)
 
 
+(*****************************************************************************)
+(* IO *)
+(*****************************************************************************)
+
 (*s: function Text.read *)
 let read inc =
   create (read_string inc)
@@ -628,6 +674,10 @@ let save text outc =
   output outc str (gpos + gsize) 
   (text.text_size - gpos - gsize)
 (*e: function Text.save *)
+
+(*****************************************************************************)
+(* Attributes *)
+(*****************************************************************************)
 
 (*s: function Text.unset_attr *)
 let unset_attr text =
@@ -661,6 +711,10 @@ let set_attr text point len attr = (* should not exceed one line *)
     Array.fill text.text_attrs after_pos after attr
 (*e: function Text.set_attr *)
 
+(*****************************************************************************)
+(* Distance, delta *)
+(*****************************************************************************)
+
 (*s: function Text.low_distance *)
 let low_distance text p1 p2 =
   if p1 >= p2 
@@ -686,6 +740,10 @@ let distance text p1 p2 =
 let compare text p1 p2 = 
   compare p1.pos p2.pos
 (*e: function Text.compare *)
+
+(*****************************************************************************)
+(* Text/attr Getters/setters *)
+(*****************************************************************************)
   
 (*s: function Text.get_char *)
 let get_char text point =
@@ -729,6 +787,10 @@ let set_char_attr text point attr =
     text.text_attrs.(pos) <- attr
   end
 (*e: function Text.set_char_attr *)
+
+(*****************************************************************************)
+(* Moving *)
+(*****************************************************************************)
 
 (*s: function Text.fmove_res *)
 let fmove_res text p delta =
@@ -813,6 +875,10 @@ let bmove text p delta =
 let fmove text p delta = 
   fmove_res text p delta |> ignore
 (*e: function Text.fmove *)
+
+(*****************************************************************************)
+(* Misc *)
+(*****************************************************************************)
   
 (*s: function Text.to_string *)
 let to_string text =
@@ -856,6 +922,10 @@ let blit str text point len =
    );
   len
 (*e: function Text.blit *)
+
+(*****************************************************************************)
+(* Position *)
+(*****************************************************************************)
   
 (*s: function Text.get_position *)
 let get_position text point = 
@@ -873,6 +943,10 @@ let set_position text point pos =
      else pos
      )
 (*e: function Text.set_position *)
+
+(*****************************************************************************)
+(* Sub content  *)
+(*****************************************************************************)
     
 (*s: function Text.sub *)
 let sub text point len =
@@ -880,6 +954,10 @@ let sub text point len =
   blit str text point len |> ignore;
   str
 (*e: function Text.sub *)
+
+(*****************************************************************************)
+(* Search/replace  *)
+(*****************************************************************************)
     
 (*s: function Text.search_forward *)
 let search_forward text regexp point =
@@ -969,6 +1047,9 @@ let search_backward_groups text regexp point groups =
   array
 (*e: function Text.search_backward_groups *)
 
+(*****************************************************************************)
+(* Representation  *)
+(*****************************************************************************)
 
 (*s: constant Text.repr_string *)
 let repr_string = ref ""
@@ -1120,6 +1201,9 @@ let compute_representation text charreprs n =
     line
 (*e: function Text.compute_representation *)
 
+(*****************************************************************************)
+(* Point_to_xxx  *)
+(*****************************************************************************)
 
 (*s: function Text.point_to_eol *)
 let point_to_eol text point =
@@ -1187,12 +1271,14 @@ let clear text =
   List.iter (fun p -> p.pos <- 0; p.line <- 0) text.text_points
 (*e: function Text.clear *)
 
+(*****************************************************************************)
+(* Line  *)
+(*****************************************************************************)
 
 (*s: function Text.point_line *)
 let point_line _text point = 
   point.line
 (*e: function Text.point_line *)
-
 
 (*s: function Text.goto_line *)
 let goto_line text point y =
@@ -1205,6 +1291,9 @@ let goto_line text point y =
   end
 (*e: function Text.goto_line *)
 
+(*****************************************************************************)
+(* Misc  *)
+(*****************************************************************************)
 
 (*s: function Text.region *)
 let rec region text p1 p2 =
