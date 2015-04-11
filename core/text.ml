@@ -127,6 +127,12 @@ and action =
 (*e: type Text.action *)
 
 type t = text
+
+type coord = {
+  c_col: int;
+  c_line: int;
+}
+
   
 (*s: function Text.version *)
 let version text = 
@@ -516,44 +522,43 @@ let find_xy text point line pos =
   let gpos = text.gpoint.pos in
   let gline = text.gpoint.line in
   let gap_end = gpos + text.gsize in
+
   let y,x =
     if pos >= gap_end then
-(* go forward *)
+      (* go forward *)
       let rec iter line =
-        if line >= text.text_nlines then
-          text.text_nlines - 1
+        if line >= text.text_nlines 
+        then text.text_nlines - 1
         else
-        if text.text_newlines.(line).position > pos then line - 1
-        else
-          iter (line + 1)
+          if text.text_newlines.(line).position > pos 
+          then line - 1
+          else iter (line + 1)
       in
       let line = 
-        if point > gap_end && pos > point then
-          iter (line+1) 
-        else
-          iter (gline+1) 
+        if point > gap_end && pos > point 
+        then iter (line+1) 
+        else iter (gline+1) 
       in
-      if line = gline then
+      if line = gline 
+      then
         let gchars = gpos - text.text_newlines.(gline).position in
         line, gchars + pos - gap_end
       else
         line, pos - text.text_newlines.(line).position
     else
-(* go backward *)
+    (* go backward *)
     let rec iter line =
-      if line > 0 then
-        if text.text_newlines.(line).position > pos then 
-          iter (line - 1)
-        else
-          line
-      else
-        0
+      if line > 0 
+      then
+        if text.text_newlines.(line).position > pos 
+        then iter (line - 1)
+        else line
+      else 0
     in
     let line = 
-      if point < gpos && pos <= point then
-        iter line 
-      else
-        iter gline in
+      if point < gpos && pos <= point 
+      then iter line 
+      else iter gline in
     line, pos - text.text_newlines.(line).position
   in
   x,y

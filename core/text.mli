@@ -27,7 +27,11 @@ type position = int
 type point = {
     mutable pos : position;
     mutable line : int;
-  }
+}
+type coord = {
+  c_col: int;
+  c_line: int;
+}
 
 (* point creation *)
 
@@ -142,7 +146,7 @@ val version : t -> version
 val readonly : t -> bool
 val toggle_readonly : t -> unit
 
-val find_xy : t -> int -> int -> int -> int * int
+(*val find_xy : t -> int -> int -> int -> coord *)
 val lexing : t -> point -> point -> Lexing.lexbuf
 val add_amount : int Options.option_record
 val compare : t -> point -> point -> int

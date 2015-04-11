@@ -2580,7 +2580,8 @@ let low_distance text p1 p2 =
       else p2 - p1
 @
 
-\section{Lines}
+\section{Lines and columns}
+% coordinates?
 
 % already seen Text.text_newlines, Text.text_nlines, and 
 % Text.line (very partial for now) type
@@ -4686,8 +4687,7 @@ let point_to_cursor buf point =
 
 %todo: have a point_to_y where do the iteration over frm_table
 
-% x,y display -> text (reverse of display_line stuff)
-
+% x,y display -> text (colxline) (reverse of display_line stuff)
 % why not return an actual point then? it's more a (line x col) actually
 % Frame.display (when frm_force_start) -> <>
 <<function Frame.cursor_to_point>>=
