@@ -3,11 +3,11 @@
 * 0.20 (Q2 2015)
 
 ** compilation mode
-working M-x compile, with colors, and using more variables
-than major mode interactives
+working M-x compile, with colors, C-n
+(and internally using variables rather than major mode interactives patches)
 
 ** shell mode
-better ls in eshell, multi cols
+better ls in eshell, multi cols, correctly sorted
 
 ** minimap a la Sublime Text (a la code thumbnails in visual studio)
 with variable font size for important entities (for pfff-based major modes)
@@ -15,12 +15,14 @@ with variable font size for important entities (for pfff-based major modes)
 ** adjustments to emacs behavior
 M-w (copy_region)
 M-c (capitalize_words)
-C-s C-w
+C-s C-w (incomplete though)
 Top|Bot|% for line in status line
+C-u C-space (position history navigation)
+correct order for history of visited buffers
 
 ** pad's stuff
 scroll other windows
-buffer menu, C-M-l and right order
+buffer menu C-M-Tab, C-M-l and right order
 
 ** refactoring
 
@@ -53,10 +55,11 @@ for Caml, C/C++, and TeX/Noweb
 - use global for location
 - reorg main.ml to use less toplevels and pack in a main() function
 - use more List.iter, Common.do_option, |>, with_session, with_point
-- factorize color in pl_colors.ml
 - added many .mli
+- factorize color in pl_colors.ml
 
-* Version 018:
+
+* Version 018: (1999?)
 ===========
 ** module Text:
   - new function [search_backward_groups]

@@ -46,6 +46,9 @@ let replace flag frame query str repl =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
+  (*s: save current pos from frame for position history navigation *)
+  Simple.save_current_pos frame;
+  (*e: save current pos from frame for position history navigation *)
   let regexp = to_regexp flag str in
   let session = Text.start_session text in
   let n = ref 0 in
@@ -225,6 +228,9 @@ let isearch to_regexp sens frame =
   let point = frame.frm_point in
   let spoint = Text.dup_point text point in
   let orig = Text.get_position text point in
+  (*s: save current pos from frame for position history navigation *)
+  Simple.save_current_pos frame;
+  (*e: save current pos from frame for position history navigation *)
 
   let sens = ref sens in
   let to_regexp = ref to_regexp in

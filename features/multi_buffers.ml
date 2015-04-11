@@ -147,5 +147,13 @@ let right_buffer frame =
     )
 (*e: function Complex.right_buffer *)
 
+(*s: function Complex.change_buffer *)
+let change_buffer frame =
+  let default = get_previous_frame () in
+  set_previous_frame frame;
+  select_buffer frame " Switch to buffer: " default (fun str ->
+    Frame.change_buffer frame.frm_window str
+  )
+(*e: function Complex.change_buffer *)
 
 (*e: features/multi_buffers.ml *)

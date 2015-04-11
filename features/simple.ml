@@ -621,10 +621,50 @@ let recenter frame =
   frame.frm_y_offset <- - frame.frm_height/2
 (*e: function Simple.recenter *)
 
+(*****************************************************************************)
+(* Position history *)
+(*****************************************************************************)
+
+(*s: constant Simple.history_pos_max *)
+let history_pos_max = 10
+(*e: constant Simple.history_pos_max *)
+
+(*s: function Simple.save_current_pos *)
+let save_current_pos frame =
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  if Array.length buf.buf_history_pos < history_pos_max
+  then buf.buf_history_pos <- Array.create history_pos_max None;
+  let arr = buf.buf_history_pos in
+  Array.blit arr 0 arr 1 (history_pos_max - 1);
+  arr.(0) <- Some (Text.dup_point buf.buf_text point)
+(*e: function Simple.save_current_pos *)
+
+(*s: function Simple.goto_last_saved_pos *)
+let goto_last_saved_pos frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  if Array.length buf.buf_history_pos < history_pos_max
+  then buf.buf_history_pos <- Array.create history_pos_max None;
+  let arr = buf.buf_history_pos in
+  let head = arr.(0) in
+  Array.blit arr 1 arr 0 (history_pos_max - 1);
+  match head with
+  | Some pt -> Text.goto_point text frame.frm_point pt
+  | None -> failwith "No position history"
+(*e: function Simple.goto_last_saved_pos *)
+
+(*****************************************************************************)
+(* File *)
+(*****************************************************************************)
+
 (*s: function Simple.end_of_file *)
 let end_of_file frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+  (*s: save current pos from frame for position history navigation (in simple.ml) *)
+  save_current_pos frame;
+  (*e: save current pos from frame for position history navigation (in simple.ml) *)
   Text.set_position text frame.frm_point (Text.size text)
 (*e: function Simple.end_of_file *)
 
@@ -632,6 +672,9 @@ let end_of_file frame =
 let begin_of_file frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+  (*s: save current pos from frame for position history navigation (in simple.ml) *)
+  save_current_pos frame;
+  (*e: save current pos from frame for position history navigation (in simple.ml) *)
   Text.set_position text frame.frm_point 0
 (*e: function Simple.begin_of_file *)
 
@@ -646,6 +689,9 @@ let undo frame =
   let point = frame.frm_point in
   let action, at_point, len = Text.undo text in
   frame.frm_last_text_updated <- Text.version text - 1;
+  (*s: save current pos from frame for position history navigation (in simple.ml) *)
+  save_current_pos frame;
+  (*e: save current pos from frame for position history navigation (in simple.ml) *)
   Text.set_position text point at_point;
   Text.fmove text point len
 (*e: function Simple.undo *)

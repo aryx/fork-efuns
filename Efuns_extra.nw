@@ -2261,6 +2261,20 @@ let move_forward frame =
 
 <<function Simple.recenter>>
 
+(*****************************************************************************)
+(* Position history *)
+(*****************************************************************************)
+
+<<constant Simple.history_pos_max>>
+
+<<function Simple.save_current_pos>>
+
+<<function Simple.goto_last_saved_pos>>
+
+(*****************************************************************************)
+(* File *)
+(*****************************************************************************)
+
 <<function Simple.end_of_file>>
 
 <<function Simple.begin_of_file>>
@@ -2990,8 +3004,6 @@ open Efuns
 
 <<function Complex.window_load_buffer>>
 
-<<function Complex.change_buffer>>
-
 <<function Complex.window_change_buffer>>
 
 <<function Complex.change_font>>
@@ -3273,6 +3285,7 @@ let switch_to_other_buffer frame =
 
 <<function Complex.right_buffer>>
 
+<<function Complex.change_buffer>>
 
 @
 
@@ -3397,7 +3410,6 @@ type find_error_fun = Text.t -> Text.point -> error
 <<function Compil.c_find_error>>
 
 <<constant Compil.find_error>>
-<<constant Compil.default_error>>
 
 let find_error_location_regexp = Local.create_abstr "find_error_loc_regexp"
 let find_error_error_regexp = Local.create_abstr "find_error_err_regexp"
@@ -3725,8 +3737,6 @@ open Action
 
 <<function Std_efunsrc.save_options>>
 <<function Std_efunsrc.fondamental_mode>>
-
-<<function Std_efunsrc.compile>>
 
 <<toplevel Std_efunsrc._1>>
   

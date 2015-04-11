@@ -1,9 +1,14 @@
 
 val buffer_list : Efuns.frame -> string list
 
+(* interactive with default *)
+val change_buffer : Efuns.action
+(* go to default *)
 val switch_to_other_buffer: Efuns.action
+
 val left_buffer  : Efuns.action
 val right_buffer : Efuns.action
+
 (* pinning *)
 val down_buffer  : Efuns.action
 val up_buffer    : Efuns.action

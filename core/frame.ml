@@ -72,7 +72,7 @@ let status_major_mode frame  =
   let buf = frame.frm_buffer in
   let status = frame.frm_status in
   if not (status.stat_modes == buf.buf_minor_modes &&
-          status.stat_mode == buf.buf_major_mode
+           status.stat_mode == buf.buf_major_mode
     ) then
     begin
       status.stat_modes <- buf.buf_minor_modes;

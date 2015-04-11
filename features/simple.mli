@@ -90,6 +90,9 @@ val scroll_other_up: Efuns.action
 val end_of_file : Efuns.action
 val begin_of_file : Efuns.action
 
+(* history navigation *)
+val goto_last_saved_pos: Efuns.action
+val save_current_pos: Efuns.frame -> unit (* not an action *)
 
 (* cut/copy/paste *)
 

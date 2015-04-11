@@ -16,9 +16,6 @@ val write_buffer : Efuns.action
 val save_buffer : Efuns.action
 
 val window_load_buffer : Efuns.action
-
-val change_buffer : Efuns.action
-
 val window_change_buffer : Efuns.action
 
 (* time *)

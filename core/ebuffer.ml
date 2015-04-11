@@ -122,6 +122,7 @@ let create name filename text local_map =
       buf_mark = None;
       buf_shared = 0;
       buf_finalizers = [];
+      buf_history_pos = [||];
 
       (*s: [[Ebuffer.create()]] buffer other fields setup *)
       buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));

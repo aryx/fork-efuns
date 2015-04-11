@@ -176,15 +176,6 @@ let window_load_buffer frame =
     )
 (*e: function Complex.window_load_buffer *)
 
-(*s: function Complex.change_buffer *)
-let change_buffer frame =
-  let default = Multi_buffers.get_previous_frame () in
-  Multi_buffers.set_previous_frame frame;
-  Multi_buffers.select_buffer frame " Switch to buffer: " default (fun str ->
-    Frame.change_buffer frame.frm_window str
-  )
-(*e: function Complex.change_buffer *)
-
 (*s: function Complex.window_change_buffer *)
 let window_change_buffer frame =
   Multi_buffers.select_buffer frame "Switch to buffer in new frame: " 
@@ -239,6 +230,9 @@ let open_display frame =
 let goto_line frame =
   Select.simple_select frame "goto-line:" (fun name ->
     let line = int_of_string name in
+    (*s: save current pos from frame for position history navigation *)
+    Simple.save_current_pos frame;
+    (*e: save current pos from frame for position history navigation *)
     Text.goto_line frame.frm_buffer.buf_text frame.frm_point (line - 1)
   )
 (*e: function Complex.goto_line *)
@@ -263,6 +257,9 @@ let describe_position frame =
 (*s: function Complex.mark_at_point *)
 let mark_at_point frame =
   Ebuffer.set_mark frame.frm_buffer frame.frm_point;
+  (*s: save current pos from frame for position history navigation *)
+  Simple.save_current_pos frame;
+  (*e: save current pos from frame for position history navigation *)
   let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Mark set";
   ()

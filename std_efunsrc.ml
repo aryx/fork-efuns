@@ -29,14 +29,6 @@ let fondamental_mode frame =
   Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
 (*e: function Std_efunsrc.fondamental_mode *)
 
-(*s: function Std_efunsrc.compile *)
-(*
-let compile frame =
-  Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
-    frame "compile"
-*)
-(*e: function Std_efunsrc.compile *)
-
 (*s: toplevel Std_efunsrc._1 *)
 let _ =
   (*s: actions definitions *)
@@ -79,13 +71,16 @@ let _ =
   (* M-x *)
   define_action "goto_char" Complexe.goto_char;
   define_action "goto_line" Complexe.goto_line;
-  (*e: navigating actions *)
-
+  (*x: navigating actions *)
+  (* pad: *)
   define_action "scroll_up" Simple.scroll_up; 
   define_action "scroll_down" Simple.scroll_down; 
   define_action "scroll_other_up" Simple.scroll_other_up; 
   define_action "scroll_other_down" Simple.scroll_other_down; 
-
+  (*x: navigating actions *)
+  (* pad: *)
+  define_action "goto_last_saved_pos" Simple.goto_last_saved_pos; 
+  (*e: navigating actions *)
 
   (* ----------------------------------------------------------- *)
   (* Editing *)
@@ -117,8 +112,8 @@ let _ =
   define_action "kill_region"  Simple.kill_region;
   define_action "insert_killed"  Simple.insert_killed;
   define_action "insert_next_killed"  Simple.insert_next_killed;
-  (*e: moving actions *)
   define_action "copy_region"  Simple.copy_region;
+  (*e: moving actions *)
 
   (* ------------------------- *)
   (* Transforming *)
@@ -181,24 +176,26 @@ let _ =
   (* ----------------------------------------------------------- *)
   (*s: buffer managment actions *)
   (* C-x map *)
-  define_action "change_buffer"  Complexe.change_buffer;
+  define_action "change_buffer"  Multi_buffers.change_buffer;
+  (*x: buffer managment actions *)
+  define_action "switch_to_other_buffer"  Multi_buffers.switch_to_other_buffer;
   (*x: buffer managment actions *)
   (* C-x map *)
   define_action "kill_buffer"  Multi_buffers.kill_buffer;
   (*e: buffer managment actions *)
   (*s: buffer navigating actions *)
+  define_action "buffer_menu"  Buffer_menu.menu;
+  (*x: buffer navigating actions *)
   (* C-M map *)
   define_action "left_buffer"  Multi_buffers.left_buffer;
   (* C-M map *)
   define_action "right_buffer"  Multi_buffers.right_buffer;
+  (*x: buffer navigating actions *)
   (* C-M map *)
   define_action "down_buffer"  Multi_buffers.down_buffer;
   (* C-M map *)
   define_action "up_buffer"  Multi_buffers.up_buffer;
   (*e: buffer navigating actions *)
-
-  define_action "buffer_menu"  Buffer_menu.menu;
-  define_action "switch_to_other_buffer"  Multi_buffers.switch_to_other_buffer;
 
   (*s: frame managment actions *)
   (* C-x map *)
@@ -280,8 +277,6 @@ let _ =
   (* C-M map *)
   define_action "next_hole" Structure.next_hole;
   (*x: misc actions *)
-  (*define_action "compile" compile;*)
-  (*x: misc actions *)
   (* C-x map *)
   define_action "next_error"  Compil.next_error;
   (*x: misc actions *)
@@ -357,17 +352,19 @@ let _ =
         [ControlMap, XK.xk_Next], "end_of_file";
         [ControlMap, XK.xk_Prior], "begin_of_file";
         (*x: navigating keys *)
-
         (* pad: *)
         [MetaMap, Char.code '>'], "end_of_file";
         [MetaMap, Char.code '<'], "begin_of_file";
         [MetaMap, Char.code 'g'], "goto_line";
-
+        (* pad: *)
         [MetaMap, XK.xk_Up], "scroll_up"; 
         [MetaMap, XK.xk_Down], "scroll_down"; 
         [MetaMap, XK.xk_Left], "scroll_other_up"; 
         [MetaMap, XK.xk_Right], "scroll_other_down"; 
 
+        (*x: navigating keys *)
+        [ControlMap, Char.code 'u'; ControlMap, Char.code ' '], 
+          "goto_last_saved_pos"; 
         (*e: navigating keys *)
 
         (* -------------------------------------------------------- *)
@@ -402,9 +399,9 @@ let _ =
         [ControlMap, Char.code 'w'], "kill_region";
         [ControlMap, Char.code 'y'], "insert_killed";
         [MetaMap, Char.code 'y'], "insert_next_killed";
-        (*e: moving keys *)
         (* pad: pc-select *)
         [MetaMap, Char.code 'w'], "copy_region";
+        (*e: moving keys *)
 
         (* ---------------------- *)
         (* Transforming *)
@@ -470,15 +467,21 @@ let _ =
         (* Buffers/windows/frames *)
         (* -------------------------------------------------------- *)
         (*s: buffer managment keys *)
+        (* pad: *)
+        [ControlMetaMap, XK.xk_Tab], "buffer_menu";
+        (*x: buffer managment keys *)
         [c_x; NormalMap, Char.code 'b'], "change_buffer";
+        (* pad: *)
+        [ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
         (*x: buffer managment keys *)
         [c_x; NormalMap, Char.code 'k'], "kill_buffer";
         (*e: buffer managment keys *)
-
         (*s: buffer navigating keys *)
-        (* lefessant?: *)
+        (* lefessant? in emacs now? *)
         [ControlMetaMap, XK.xk_Left], "left_buffer";
         [ControlMetaMap, XK.xk_Right], "right_buffer";
+        (*x: buffer navigating keys *)
+        (* pinning *)
         [ControlMetaMap, XK.xk_Down], "down_buffer";
         [ControlMetaMap, XK.xk_Up], "up_buffer";
         (*e: buffer navigating keys *)
@@ -491,12 +494,9 @@ let _ =
         (*e: frame managment keys *)
         (*s: frame navigation keys *)
         [c_x; NormalMap, Char.code 'o'], "next_frame";
-        (*e: frame navigation keys *)
-
-        (* pad: *)
-        [ControlMetaMap, XK.xk_Tab], "buffer_menu";
-        [ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
+        (* pad: xemacs inspired *)
         [ControlMap, XK.xk_Tab], "next_frame";
+        (*e: frame navigation keys *)
 
         (* -------------------------------------------------------- *)
         (* Meta *)
@@ -554,10 +554,9 @@ let _ =
         "describe_position";
         (*x: [[interactives_map]] initial entries *)
         "save_options";
-        (*"load_library";*)
         "open_display";
         "unset_attr";
-        "start_server";
+        (*"load_library";*)
         (*x: [[interactives_map]] initial entries *)
         "goto_char";
         "goto_line";
@@ -571,6 +570,8 @@ let _ =
         (*x: [[interactives_map]] initial entries *)
         "compile";
         "grep";
+        (*x: [[interactives_map]] initial entries *)
+        "start_server";
         (*x: [[interactives_map]] initial entries *)
         "eval";  
         (*x: [[interactives_map]] initial entries *)

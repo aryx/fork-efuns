@@ -59,8 +59,6 @@ let find_error_gen re text error_point =
 (*s: constant Compil.find_error *)
 let find_error = Local.create_abstr "find_error"
 (*e: constant Compil.find_error *)
-(*s: constant Compil.default_error *)
-(*e: constant Compil.default_error *)
 
 let find_error_location_regexp = Local.create_abstr "find_error_loc_regexp"
 let find_error_error_regexp = Local.create_abstr "find_error_err_regexp"
@@ -164,11 +162,7 @@ let compile frame =
     ("Compile command: (default :"^ default^") " )
     make_hist ""
     (fun cmd -> 
-      let cmd = 
-        if cmd = "" 
-        then default 
-        else cmd 
-      in
+      let cmd = if cmd = "" then default else cmd in (* cmd ||| default *)
       let cdir = Frame.current_dir frame in
       (*s: [[Compil.compile()]] find possibly cdir with a makefile *)
       let cdir = 

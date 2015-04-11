@@ -700,6 +700,7 @@ let create name filename text local_map =
       buf_mark = None;
       buf_shared = 0;
       buf_finalizers = [];
+      buf_history_pos = [||];
 
       <<[[Ebuffer.create()]] buffer other fields setup>>
 
@@ -1194,12 +1195,6 @@ let _ =
 (* ----------------------------------------------------------- *)
 <<navigating actions>>
 
-define_action "scroll_up" Simple.scroll_up; 
-define_action "scroll_down" Simple.scroll_down; 
-define_action "scroll_other_up" Simple.scroll_other_up; 
-define_action "scroll_other_down" Simple.scroll_other_down; 
-
-
 (* ----------------------------------------------------------- *)
 (* Editing *)
 (* ----------------------------------------------------------- *)
@@ -1215,7 +1210,6 @@ define_action "scroll_other_down" Simple.scroll_other_down;
 (* Moving (Cut, copy, paste) *)
 (* ------------------------- *)
 <<moving actions>>
-define_action "copy_region"  Simple.copy_region;
 
 (* ------------------------- *)
 (* Transforming *)
@@ -1246,9 +1240,6 @@ define_action "copy_region"  Simple.copy_region;
 (* ----------------------------------------------------------- *)
 <<buffer managment actions>>
 <<buffer navigating actions>>
-
-define_action "buffer_menu"  Buffer_menu.menu;
-define_action "switch_to_other_buffer"  Multi_buffers.switch_to_other_buffer;
 
 <<frame managment actions>>
 <<frame navigation actions>>
@@ -1512,8 +1503,6 @@ let c_h = (ControlMap, Char.code 'h')
 (* Moving (Cut, copy, paste) *)
 (* ------------------------------ *)
 <<moving keys>>
-(* pad: pc-select *)
-[MetaMap, Char.code 'w'], "copy_region";
 
 (* ---------------------- *)
 (* Transforming *)
@@ -1556,15 +1545,9 @@ let c_h = (ControlMap, Char.code 'h')
 (* Buffers/windows/frames *)
 (* -------------------------------------------------------- *)
 <<buffer managment keys>>
-
 <<buffer navigating keys>>
 <<frame managment keys>>
 <<frame navigation keys>>
-
-(* pad: *)
-[ControlMetaMap, XK.xk_Tab], "buffer_menu";
-[ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
-[ControlMap, XK.xk_Tab], "next_frame";
 
 (* -------------------------------------------------------- *)
 (* Meta *)
@@ -2161,7 +2144,6 @@ let create () =
 %*)
 
 
-
 <<function Ebuffer.default>>=
 let default name =
   try
@@ -2493,6 +2475,9 @@ define_action "describe_position" Complexe.describe_position;
 <<[[interactives_map]] initial entries>>=
 "describe_position";
 @
+% When not bound to a key you need to extend initial entries.
+% a bit ugly I think. Could just iterate over all define_action
+% hashtbl.
 
 <<function Complex.get_pos>>=
 let describe_position frame =
@@ -4156,7 +4141,7 @@ let install window frame =
   <<[[Frame.install()]] set frm_table>>
   frame.frm_redraw <- true
 @
-
+%less: rename prepare_for_display?
 
 \subsection{Frame display}
 
@@ -4954,10 +4939,11 @@ end;
 
 \section{[[Status]] Line}
 
+%less: delete lots of the code below. My code in the end is simpler.
+%no need those blit stuff and modified opti cache.
+
 \subsection{Status line creation}
 
-%less: delete, my code in the end is simpler.
-%no need those blit stuff and modified opti cache.
 
 <<[[Efuns.frame]] status field>>=
 mutable frm_status : status;    
@@ -4976,6 +4962,8 @@ and status =
     <<[[Efuns.status]] other fields>>
   }
 @
+%todo: redundant, used for some opti to know if things have
+% changed, but not worth it I think.
 
 <<[[Frame.create_without_top()]] let status>>=
 let status = {
@@ -5236,6 +5224,7 @@ let buf_create text local_map =
     buf_mark = None;
     buf_shared = 0;
     buf_finalizers = [];
+    buf_history_pos = [||];
   }
 @
 % why not simply call Buffer.create? because no filename, 
@@ -5387,8 +5376,7 @@ let rec get_binding map keylist =
 @
 
 
-% useful for undo, will see also useful for goal-column
-
+% useful for undo. Also useful for goal-column!
 <<[[Efuns.frame]] other fields>>=
 mutable frm_last_action : action;
 @
@@ -5739,13 +5727,11 @@ if !!interactives_map = [] then begin
   end    
 @
 
-
 <<[[interactives_map]] initial entries>>=
 "save_options";
-(*"load_library";*)
 "open_display";
 "unset_attr";
-"start_server";
+(*"load_library";*)
 @      
 % a big ugly. An ocaml attribute would be better
 % that then auto generate the list of interactive functions.
@@ -5852,6 +5838,8 @@ let incremental_mini_buffer
     end_action frame str
   )
 @
+%todo: sure top_second_cursor get reseted? if do C-g in minibuffer?
+% if exn?
 
 \subsection{Secondary cursor}
 
@@ -5876,6 +5864,8 @@ top_window.top_second_cursor |> Common.do_option (fun frame ->
 @
 
 
+% safe sanity check because the invariant is fragile to maintain
+% and I have bugs.
 <<[[clean_display()]] sanity check second cursor and minibuffer>>=
 (match top_window.top_mini_buffers, top_window.top_second_cursor with
  | _, None -> ()
@@ -5923,12 +5913,11 @@ top_window.top_second_cursor |> Common.do_option (fun frame ->
 
 \ifallcode
 <<navigating keys>>=
-
 (* pad: *)
 [MetaMap, Char.code '>'], "end_of_file";
 [MetaMap, Char.code '<'], "begin_of_file";
 [MetaMap, Char.code 'g'], "goto_line";
-
+(* pad: *)
 [MetaMap, XK.xk_Up], "scroll_up"; 
 [MetaMap, XK.xk_Down], "scroll_down"; 
 [MetaMap, XK.xk_Left], "scroll_other_up"; 
@@ -6262,7 +6251,18 @@ let scroll_line frame n =
   frame.frm_y_offset <- frame.frm_y_offset + n
 @
 
+
+
 \ifallcode
+
+<<navigating actions>>=
+(* pad: *)
+define_action "scroll_up" Simple.scroll_up; 
+define_action "scroll_down" Simple.scroll_down; 
+define_action "scroll_other_up" Simple.scroll_other_up; 
+define_action "scroll_other_down" Simple.scroll_other_down; 
+@
+
 % pad stuff
 <<function Simple.scroll_down>>=
 let scroll_down frame =
@@ -6289,10 +6289,12 @@ let scroll_other_down frame =
 \fi
 \subsection{File}
 
+
 <<function Simple.begin_of_file>>=
 let begin_of_file frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+  <<save current pos from frame for position history navigation (in simple.ml)>>
   Text.set_position text frame.frm_point 0
 @
 
@@ -6300,6 +6302,7 @@ let begin_of_file frame =
 let end_of_file frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+  <<save current pos from frame for position history navigation (in simple.ml)>>
   Text.set_position text frame.frm_point (Text.size text)
 @
 
@@ -6318,6 +6321,7 @@ let goto_char frame =
 let goto_line frame =
   Select.simple_select frame "goto-line:" (fun name ->
     let line = int_of_string name in
+    <<save current pos from frame for position history navigation>>
     Text.goto_line frame.frm_buffer.buf_text frame.frm_point (line - 1)
   )
 @
@@ -6388,7 +6392,76 @@ let point_to_line text point line =
 @
 
 
+\subsection{Position history}
+% meta!
+% could be in advanced topic
 
+%pad: when you do big jump in a file, it's hard to "undo". You need
+% to keep a history. It's easy to undo a forward screen,
+% just do backward screen. It's not so easy to undo
+% a goto begin_of_file, or a C-s. Enter buf_history_pos.
+
+
+<<[[Efuns.buffer]] history fields>>=
+mutable buf_history_pos: Text.point option array;
+@
+% stack with limited size
+<<constant Simple.history_pos_max>>=
+let history_pos_max = 10
+@
+% don't want too many dup points created, they can have a cost
+% at some point
+
+
+<<save current pos from frame for position history navigation>>=
+Simple.save_current_pos frame;
+@
+
+\ifallcode
+<<save current pos from frame for position history navigation (in simple.ml)>>=
+save_current_pos frame;
+@
+\fi
+
+<<function Simple.save_current_pos>>=
+let save_current_pos frame =
+  let buf = frame.frm_buffer in
+  let point = frame.frm_point in
+  if Array.length buf.buf_history_pos < history_pos_max
+  then buf.buf_history_pos <- Array.create history_pos_max None;
+  let arr = buf.buf_history_pos in
+  Array.blit arr 0 arr 1 (history_pos_max - 1);
+  arr.(0) <- Some (Text.dup_point buf.buf_text point)
+@
+
+
+<<navigating keys>>=
+[ControlMap, Char.code 'u'; ControlMap, Char.code ' '], 
+  "goto_last_saved_pos"; 
+@
+<<navigating actions>>=
+(* pad: *)
+define_action "goto_last_saved_pos" Simple.goto_last_saved_pos; 
+@
+% normally in emacs C-u has a special meaning, but I think I use it
+% only for this history position navigation thing so ...
+
+<<function Simple.goto_last_saved_pos>>=
+let goto_last_saved_pos frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  if Array.length buf.buf_history_pos < history_pos_max
+  then buf.buf_history_pos <- Array.create history_pos_max None;
+  let arr = buf.buf_history_pos in
+  let head = arr.(0) in
+  Array.blit arr 1 arr 0 (history_pos_max - 1);
+  match head with
+  | Some pt -> Text.goto_point text frame.frm_point pt
+  | None -> failwith "No position history"
+@
+
+
+% see also search later which is also a form of navigation.
 
 \section{Inserting}
 
@@ -6573,6 +6646,8 @@ let hungry_electric_delete frame =
 [ControlMap, Char.code 'w'], "kill_region";
 [ControlMap, Char.code 'y'], "insert_killed";
 [MetaMap, Char.code 'y'], "insert_next_killed";
+(* pad: pc-select *)
+[MetaMap, Char.code 'w'], "copy_region";
 @
 
 <<moving actions>>=
@@ -6580,6 +6655,7 @@ define_action "mark_at_point"  Complexe.mark_at_point;
 define_action "kill_region"  Simple.kill_region;
 define_action "insert_killed"  Simple.insert_killed;
 define_action "insert_next_killed"  Simple.insert_next_killed;
+define_action "copy_region"  Simple.copy_region;
 @
 
 \subsection{Mark}
@@ -6591,6 +6667,7 @@ mutable buf_mark : Text.point option;
 <<function Complex.mark_at_point>>=
 let mark_at_point frame =
   Ebuffer.set_mark frame.frm_buffer frame.frm_point;
+  <<save current pos from frame for position history navigation>>
   let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Mark set";
   ()
@@ -6678,6 +6755,8 @@ let kill_string str =
   incr kill_size;
   kill_ring.(0) <- str
 @
+% incr kill_size, but anyway usually use with min kill_max kill_size
+% see below
 
 \subsection{Copy}
 
@@ -6760,6 +6839,7 @@ define_action "point_at_mark"  Simple.point_at_mark;
 [c_x; ControlMap, Char.code 'x'], "point_at_mark";
 @
 % I use C-u C-space for that? but I have a history of mark no?
+% it's different, see 'Position history' section.
 
 <<function Simple.point_at_mark>>=
 let point_at_mark frame =
@@ -6774,6 +6854,8 @@ let point_at_mark frame =
 @
 
 \section{Undo}
+
+%todo: and redo?
 
 <<undoing keys>>=
 [ControlMap, Char.code '_'], "undo";
@@ -6797,6 +6879,7 @@ let undo frame =
   let point = frame.frm_point in
   let action, at_point, len = Text.undo text in
   frame.frm_last_text_updated <- Text.version text - 1;
+  <<save current pos from frame for position history navigation (in simple.ml)>>
   Text.set_position text point at_point;
   Text.fmove text point len
 @
@@ -6839,6 +6922,7 @@ let undo text =
       text.text_history <- tail;
       rev_action
 @
+%todo: should push opposite action then? so can undo the undo?
 
 <<[[Text.text]] history fields>>=
 mutable text_history : action list;
@@ -6971,6 +7055,7 @@ let isearch to_regexp sens frame =
   let point = frame.frm_point in
   let spoint = Text.dup_point text point in
   let orig = Text.get_position text point in
+  <<save current pos from frame for position history navigation>>
 
   let sens = ref sens in
   let to_regexp = ref to_regexp in
@@ -7278,6 +7363,7 @@ let replace flag frame query str repl =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
+  <<save current pos from frame for position history navigation>>
   let regexp = to_regexp flag str in
   let session = Text.start_session text in
   let n = ref 0 in
@@ -7453,27 +7539,43 @@ Top_window.buffers_menu := (fun top_window button () ->
     )
 @
 
+<<buffer managment keys>>=
+(* pad: *)
+[ControlMetaMap, XK.xk_Tab], "buffer_menu";
+@
+<<buffer navigating actions>>=
+define_action "buffer_menu"  Buffer_menu.menu;
+@
+%todo: special major mode
+
 \section{Changing the buffer}
 
 %\section{Navigation}
 
 <<buffer managment keys>>=
 [c_x; NormalMap, Char.code 'b'], "change_buffer";
+(* pad: *)
+[ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
 @
 <<buffer managment actions>>=
 (* C-x map *)
-define_action "change_buffer"  Complexe.change_buffer;
+define_action "change_buffer"  Multi_buffers.change_buffer;
 @
-
+<<buffer managment actions>>=
+define_action "switch_to_other_buffer"  Multi_buffers.switch_to_other_buffer;
+@
 
 <<function Complex.change_buffer>>=
 let change_buffer frame =
-  let default = Multi_buffers.get_previous_frame () in
-  Multi_buffers.set_previous_frame frame;
-  Multi_buffers.select_buffer frame " Switch to buffer: " default (fun str ->
+  let default = get_previous_frame () in
+  set_previous_frame frame;
+  select_buffer frame " Switch to buffer: " default (fun str ->
     Frame.change_buffer frame.frm_window str
   )
 @
+% set_previous_frame is also used in load_buffer, each time
+% is close to switch to another buffer in the current frame.
+
 
 <<function Frame.change_buffer>>=
 let change_buffer window name = 
@@ -7485,9 +7587,6 @@ let change_buffer window name =
   with Not_found -> ()
 @
 
-
-% set_previous_frame is also used in load_buffer, each time
-% is close to switch to another buffer in the current frame.
 
 
 \section{Killing the buffer}
@@ -7525,7 +7624,7 @@ let kill_buffer frame =
   if buf.buf_shared = 0 
   then Ebuffer.kill buf
 @
-
+% can aspectize the prev_buffers things, so that more stuff together
 
 <<function Ebuffer.kill>>=
 let kill buf =
@@ -7547,11 +7646,9 @@ let kill buf =
 % lefessant specific?
 
 <<buffer navigating keys>>=
-(* lefessant?: *)
+(* lefessant? in emacs now? *)
 [ControlMetaMap, XK.xk_Left], "left_buffer";
 [ControlMetaMap, XK.xk_Right], "right_buffer";
-[ControlMetaMap, XK.xk_Down], "down_buffer";
-[ControlMetaMap, XK.xk_Up], "up_buffer";
 @
 
 <<buffer navigating actions>>=
@@ -7559,10 +7656,6 @@ let kill buf =
 define_action "left_buffer"  Multi_buffers.left_buffer;
 (* C-M map *)
 define_action "right_buffer"  Multi_buffers.right_buffer;
-(* C-M map *)
-define_action "down_buffer"  Multi_buffers.down_buffer;
-(* C-M map *)
-define_action "up_buffer"  Multi_buffers.up_buffer;
 @
 
 
@@ -7610,6 +7703,21 @@ let set_previous_frame frame =
   prev_buffers := name :: (Utils.list_removeq !prev_buffers name)
 @
 
+
+\section{Pinning buffers}
+
+<<buffer navigating actions>>=
+(* C-M map *)
+define_action "down_buffer"  Multi_buffers.down_buffer;
+(* C-M map *)
+define_action "up_buffer"  Multi_buffers.up_buffer;
+@
+
+<<buffer navigating keys>>=
+(* pinning *)
+[ControlMetaMap, XK.xk_Down], "down_buffer";
+[ControlMetaMap, XK.xk_Up], "up_buffer";
+@
 
 <<constant Complex.up_buffer>>=
 let up_buffer = ref ""
@@ -7795,6 +7903,8 @@ let remove_frame frame =
 
 <<frame navigation keys>>=
 [c_x; NormalMap, Char.code 'o'], "next_frame";
+(* pad: xemacs inspired *)
+[ControlMap, XK.xk_Tab], "next_frame";
 @
 <<frame navigation actions>>=
 (* C-x map *)
@@ -7880,11 +7990,6 @@ mutable buf_major_mode : major_mode;
 @
 % note that major mode is a property of the buffer! not the frame.
 
-<<[[Efuns.status]] other fields>>=
-mutable stat_mode : major_mode;
-@
-
-
 <<type Efuns.major_mode>>=
 and major_mode = {
     maj_name : string;
@@ -7920,6 +8025,11 @@ let set_major_mode buf mode =
 @
 
 
+<<[[Efuns.status]] other fields>>=
+mutable stat_mode : major_mode;
+@
+
+
 
 \section{Fundamental mode}
 
@@ -7935,7 +8045,6 @@ define_action "fondamental_mode" fondamental_mode;
 let fondamental_mode frame =
   Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
 @
-
 
 <<constant Ebuffer.fondamental_mode>>=
 let fondamental_mode = new_major_mode "Fondamental" [] (* no hooks *)
@@ -8024,7 +8133,7 @@ let status_major_mode frame  =
   let buf = frame.frm_buffer in
   let status = frame.frm_status in
   if not (status.stat_modes == buf.buf_minor_modes &&
-          status.stat_mode == buf.buf_major_mode
+           status.stat_mode == buf.buf_major_mode
     ) then
     begin
       status.stat_modes <- buf.buf_minor_modes;
@@ -8126,6 +8235,10 @@ let install_structures buf list =
 
 % next error variable
 
+\section{Outline}
+% or put with minor mode? after all it's a bit similar
+% to paren_mode where each major mode can customize what
+% is a paren-able character.
 
 \chapter{Minor Modes}
 
@@ -8135,10 +8248,6 @@ let install_structures buf list =
 
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_minor_modes : minor_mode list;
-@
-
-<<[[Efuns.status]] other fields>>=
-mutable stat_modes : minor_mode list;
 @
 
 <<type Efuns.minor_mode>>=
@@ -8192,6 +8301,10 @@ let del_minor_mode buf minor =
     ) buf.buf_minor_modes []
 @
 
+
+<<[[Efuns.status]] other fields>>=
+mutable stat_modes : minor_mode list;
+@
 
 
 \section{Example}
@@ -8250,6 +8363,7 @@ let _ =
     )
 @
 % could be define_buffer_action too as don't use any info from the frame
+%todo: could factorize this idiom
 
 <<function Ebuffer.modep>>=
 let modep buf minor =
@@ -8311,15 +8425,15 @@ iter buf.buf_minor_modes
 define_action "shell_command"  System.shell_command;
 @
 
+<<constant System.shell_hist>>=
+let shell_hist = ref []
+@
 <<function System.shell_command>>=
 let shell_command frame =
   Select.select_string frame "Run command:" shell_hist "" (fun cmd -> 
     start_command "*Command*" (Multi_frames.cut_frame frame) cmd |> ignore)
 @
 
-<<constant System.shell_hist>>=
-let shell_hist = ref []
-@
 
 <<function System.start_command>>=
 let start_command buf_name window cmd end_action_opt =
@@ -8332,7 +8446,6 @@ let start_command buf_name window cmd end_action_opt =
   let frame = Frame.create window None buf in
   frame
 @
-
 
 
 <<function System.system>>=
@@ -8435,6 +8548,8 @@ let open_process cmd =
 loc_mutex : Mutex.t;
 @
 % have multiple threads? need mutual exclusion?
+% need that for System!
+% (also maybe need that too have multiple top_windows).
 
 \subsection{Finalizers}
 
@@ -8531,16 +8646,16 @@ let current_dir frame =
 
 \subsection{[[M-x compile]]}
 
-<<misc actions>>=
-(*define_action "compile" compile;*)
-@
-<<function Std_efunsrc.compile>>=
-(*
-let compile frame =
-  Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
-    frame "compile"
-*)
-@
+%<<misc actions>>=
+%(*define_action "compile" compile;*)
+%@
+%<<function Std_efunsrc.compile>>=
+%(*
+%let compile frame =
+%  Interactive.exec_interactive (Interactive.buf_interactives frame.frm_buffer) 
+%    frame "compile"
+%*)
+%@
 % ???
 
 <<constant Compil.make_hist>>=
@@ -8558,11 +8673,7 @@ let compile frame =
     ("Compile command: (default :"^ default^") " )
     make_hist ""
     (fun cmd -> 
-      let cmd = 
-        if cmd = "" 
-        then default 
-        else cmd 
-      in
+      let cmd = if cmd = "" then default else cmd in (* cmd ||| default *)
       let cdir = Frame.current_dir frame in
       <<[[Compil.compile()]] find possibly cdir with a makefile>>
       let comp_window =
@@ -8650,12 +8761,8 @@ define_action "next_error"  Compil.next_error;
 %pad: C-n
 
 
-
 <<constant Compil.find_error>>=
 let find_error = Local.create_abstr "find_error"
-@
-
-<<constant Compil.default_error>>=
 @
 
 
@@ -8725,6 +8832,9 @@ let next_error top_frame =
 
 <<misc actions>>=
 define_action "start_server" Server.start;
+@
+<<[[interactives_map]] initial entries>>=
+"start_server";
 @
 
 \section{[[M-x eval]]}
@@ -9092,6 +9202,9 @@ let toggle_readonly text =
 
 \section{Tabs}
 
+% This should not exist I think. It complicates stuff.
+% Which is why I put it in advanced topics
+
 %(* for J.G. Malecki: tabs have a different representation depending
 % * their position in the text (as in xterms) 
 % *)
@@ -9103,25 +9216,14 @@ buf.buf_charreprs.(9) <- String.make !tab_size ' ';
 <<constant Ebuffer.tab_size>>=
 let tab_size = ref 9
 @
-
+% was 9, but really want 9?
+%todo: should be a major mode variable
 
 <<[[Text.compute_representation()]] compute charrepr, special char>>=
 if charcode = 9 
 then tabreprs.(!repr_cursor mod 9)
 @
-
-
-<<constant Minibuffer.charreprs>>=
-let charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i))
-@
-<<toplevel Minibuffer._1>>=
-let _ =
-  charreprs.(9) <- String.make !Ebuffer.tab_size ' '
-@
-
-
-% This should not exist I think. It complicates stuff.
-% Which is why I put it in advanced topics
+%todo: ! should use tab_size, so should pass it to compute_representation
 
 <<constant Text.tabreprs>>=
 let tabreprs = [|
@@ -9138,6 +9240,19 @@ let tabreprs = [|
   |]
 @
 % 8 columns tab!
+% should be different if decide to have something different than
+% 9 tab_size?
+
+
+<<constant Minibuffer.charreprs>>=
+let charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i))
+@
+<<toplevel Minibuffer._1>>=
+let _ =
+  charreprs.(9) <- String.make !Ebuffer.tab_size ' '
+@
+
+
 
 
 \section{Unicode}
@@ -9359,6 +9474,8 @@ let init_frames = ref []
 
 \chapter{Error Managment}
 
+\section{Logging}
+
 <<function Efuns.error>>=
 let error f x =
   print_string ("error: ");
@@ -9366,6 +9483,11 @@ let error f x =
   print_newline ()
 @
 
+% is actually now Globals.error
+
+\section{[[*Messages*]]}
+
+% ??? -> <>
 <<function Ebuffer.message>>=
 let message buf m =
   let name = "*Messages*" in
@@ -9376,6 +9498,8 @@ let message buf m =
     create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore
 @
 
+
+\section{[[*backtrace*]]}
 
 %there is a giant try somewhere?
 % if do some failwith in the code, e.g. failwith "Buffer is read-only",
@@ -9475,6 +9599,7 @@ type vars
 (* constructor *)
 val vars : unit -> vars
 @
+%less: rename mk_vars?
 
 <<signature type Local.var>>=
 type 'a var
@@ -9773,6 +9898,7 @@ let get_parameter frame =
 "c_mode";
 "tex_mode";
 @
+%todo: should be in their start_hook instead of here
 
 \section{Dired}
 
@@ -9791,15 +9917,12 @@ let get_parameter frame =
 (*"ocaml_compiler_mode";*)
 "ocaml_minor_mode";
 @
+%todo: should be in their start_hook instead of here
 
 \section{Abbrevs}
 
 \section{Paren}
 % useful! edwin power!
-
-<<constant Simple.htmlp>>=
-let htmlp = ref false
-@
 
 <<function Simple.is_paren_end>>=
 let is_paren_end c = (c == '}') || (c == ']') || (c == ')')
@@ -9809,6 +9932,10 @@ let is_paren_end c = (c == '}') || (c == ']') || (c == ')')
 <<function Simple.is_paren_begin>>=
 let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
   ||  (!htmlp && c == '<')
+@
+
+<<constant Simple.htmlp>>=
+let htmlp = ref false
 @
 
 <<function Simple.highlight_paren>>=
@@ -9876,6 +10003,8 @@ let highlight_paren frame =
 \begin{verbatim}
 BOL  = Beginning Of Line
 EOL  = End Of Line
+BOF  = Beginning Of File
+EOF  = End Of File
 \end{verbatim}
 
 \chapter*{Indexes}

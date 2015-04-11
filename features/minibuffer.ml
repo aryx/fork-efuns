@@ -48,6 +48,7 @@ let buf_create text local_map =
     buf_mark = None;
     buf_shared = 0;
     buf_finalizers = [];
+    buf_history_pos = [||];
   }
 (*e: function Minibuffer.buf_create *)
 

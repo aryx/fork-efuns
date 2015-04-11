@@ -96,6 +96,8 @@ and buffer =
     mutable buf_modified : int; (* version? *)
     (*x: [[Efuns.buffer]] history fields *)
     mutable buf_last_saved : Text.version;
+    (*x: [[Efuns.buffer]] history fields *)
+    mutable buf_history_pos: Text.point option array;
     (*e: [[Efuns.buffer]] history fields *)
     (*s: [[Efuns.buffer]] other fields *)
     mutable buf_shared : int; (* number of frames for that buffer *)
