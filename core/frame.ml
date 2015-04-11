@@ -376,14 +376,14 @@ let set_cursor frame =
       | [] -> 
           frame.frm_cursor.[0] <- ' '
       | box :: tail ->
-          if repr.box_pos <= ptcol && repr.box_pos + repr.box_len > ptcol
+          if box.box_pos <= ptcol && box.box_pos + box.box_len > ptcol
           then begin
             let pos =
-              repr.box_pos_repr + repr.box_charsize * 
-              (point_x - repr.box_pos)
+              box.box_pos_repr + box.box_charsize * 
+              (ptcol - box.box_pos)
             in
             frame.frm_cursor.[0] <- line.repr_string.[pos];
-            frame.frm_cursor_attr <- repr.box_attr;
+            frame.frm_cursor_attr <- box.box_attr;
           end else
             iter tail
     in
@@ -451,13 +451,13 @@ let update_table frame =
     else Text.goto_line text frame.frm_end (n-1)
   (*e: function Frame.update_table.iter_line *)
   (*s: function Frame.update_table.iter_repr *)
-  and iter_repr xcutline y n line reprs =
+  and iter_repr xcutline y n line boxes =
     (*s: [[Frame.update_table.iter_repr()]] if line too big *)
     if line.repr_len > xcutline then
-      match reprs with
-      | repr :: tail ->
-          if repr.box_pos_repr <= xcutline && 
-             repr.box_pos_repr + repr.box_size > xcutline
+      match boxes with
+      | box :: tail ->
+          if box.box_pos_repr <= xcutline && 
+             box.box_pos_repr + box.box_size > xcutline
           then
             if y = height 
             then Text.goto_line text frame.frm_end n 
@@ -466,10 +466,10 @@ let update_table frame =
                   let frm_line = frame.frm_table.(y) in
                   frm_line.frm_text_line <- line;
                   frm_line.lineidx_in_text <- n;
-                  frm_line.first_box_extra_offset <- xcutline - repr.box_pos_repr;
-                  frm_line.frmline_boxes <- reprs;
+                  frm_line.first_box_extra_offset <- xcutline - box.box_pos_repr;
+                  frm_line.frmline_boxes <- boxes;
                 end;
-                iter_repr (xcutline+frame.frm_cutline) (y+1) n line reprs
+                iter_repr (xcutline+frame.frm_cutline) (y+1) n line boxes
             end
           else iter_repr xcutline y n line tail
       | [] -> 

@@ -4445,7 +4445,7 @@ let rec iter_line y n line =
 @
 
 <<function Frame.update_table.iter_repr>>=
-and iter_repr xcutline y n line reprs =
+and iter_repr xcutline y n line boxes =
   <<[[Frame.update_table.iter_repr()]] if line too big>>
   else  
     let line = Ebuffer.compute_representation buf (n+1) in
@@ -4516,10 +4516,10 @@ let display_line graphic frame repr_string y =
 % xcutline is originally frm_cutline = frm_width - 1
 <<[[Frame.update_table.iter_repr()]] if line too big>>=
 if line.repr_len > xcutline then
-  match reprs with
-  | repr :: tail ->
-      if repr.box_pos_repr <= xcutline && 
-         repr.box_pos_repr + repr.box_size > xcutline
+  match boxes with
+  | box :: tail ->
+      if box.box_pos_repr <= xcutline && 
+         box.box_pos_repr + box.box_size > xcutline
       then
         if y = height 
         then Text.goto_line text frame.frm_end n 
@@ -4528,10 +4528,10 @@ if line.repr_len > xcutline then
               let frm_line = frame.frm_table.(y) in
               frm_line.frm_text_line <- line;
               frm_line.lineidx_in_text <- n;
-              frm_line.first_box_extra_offset <- xcutline - repr.box_pos_repr;
-              frm_line.frmline_boxes <- reprs;
+              frm_line.first_box_extra_offset <- xcutline - box.box_pos_repr;
+              frm_line.frmline_boxes <- boxes;
             end;
-            iter_repr (xcutline+frame.frm_cutline) (y+1) n line reprs
+            iter_repr (xcutline+frame.frm_cutline) (y+1) n line boxes
         end
       else iter_repr xcutline y n line tail
   | [] -> 
@@ -4641,14 +4641,14 @@ let set_cursor frame =
       | [] -> 
           frame.frm_cursor.[0] <- ' '
       | box :: tail ->
-          if repr.box_pos <= ptcol && repr.box_pos + repr.box_len > ptcol
+          if box.box_pos <= ptcol && box.box_pos + box.box_len > ptcol
           then begin
             let pos =
-              repr.box_pos_repr + repr.box_charsize * 
-              (point_x - repr.box_pos)
+              box.box_pos_repr + box.box_charsize * 
+              (ptcol - box.box_pos)
             in
             frame.frm_cursor.[0] <- line.repr_string.[pos];
-            frame.frm_cursor_attr <- repr.box_attr;
+            frame.frm_cursor_attr <- box.box_attr;
           end else
             iter tail
     in
