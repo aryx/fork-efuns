@@ -44,6 +44,11 @@ type point = {
 }
 (*e: type Text.point *)
 
+type coord = {
+  c_col: int;
+  c_line: int;
+}
+
 (*s: type Text.delta *)
 type delta = int
 (*e: type Text.delta *)
@@ -135,12 +140,6 @@ and action =
 (*e: type Text.action *)
 
 type t = text
-
-type coord = {
-  c_col: int;
-  c_line: int;
-}
-
 
 (*****************************************************************************)
 (* Helpers *)
@@ -1272,7 +1271,7 @@ let clear text =
 (*e: function Text.clear *)
 
 (*****************************************************************************)
-(* Line  *)
+(* Line x col  *)
 (*****************************************************************************)
 
 (*s: function Text.point_line *)
@@ -1290,6 +1289,11 @@ let goto_line text point y =
     point.line <- y
   end
 (*e: function Text.goto_line *)
+
+let point_coord text point =
+  { c_col = point_col text point;
+    c_line = point_line text point;
+  }
 
 (*****************************************************************************)
 (* Misc  *)

@@ -678,6 +678,11 @@ open Utils
 
 <<type Text.point>>
 
+type coord = {
+  c_col: int;
+  c_line: int;
+}
+
 <<type Text.delta>>
 
 <<type Text.attribute>>
@@ -697,12 +702,6 @@ open Utils
 <<type Text.action>>
 
 type t = text
-
-type coord = {
-  c_col: int;
-  c_line: int;
-}
-
 
 (*****************************************************************************)
 (* Helpers *)
@@ -940,12 +939,17 @@ let with_new_point text f =
 <<function Text.clear>>
 
 (*****************************************************************************)
-(* Line  *)
+(* Line x col  *)
 (*****************************************************************************)
 
 <<function Text.point_line>>
 
 <<function Text.goto_line>>
+
+let point_coord text point =
+  { c_col = point_col text point;
+    c_line = point_line text point;
+  }
 
 (*****************************************************************************)
 (* Misc  *)

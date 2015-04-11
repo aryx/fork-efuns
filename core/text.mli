@@ -23,6 +23,7 @@ val nbre_lines : t -> int
 (* position and points *)
 
 type position = int
+
 (* normally abstract! but useful to have it public for ocamldebug *)
 type point = {
     mutable pos : position;
@@ -50,8 +51,14 @@ val get_position : t -> point -> position
 val set_position : t -> point -> position -> unit
 val goto_point : t -> point -> point -> unit
 
+(* Line x col *)
+
 val point_line : t -> point -> int
 val point_col : t -> point -> int
+
+val point_coord: t -> point -> coord
+
+val goto_line : t -> point -> int -> unit
 
 (* point begin/end line/file distance to point *)
 
@@ -59,6 +66,7 @@ val point_to_bol : t -> point -> int
 val point_to_eol : t -> point -> int
 val point_to_bof : t -> point -> int
 val point_to_eof : t -> point -> int
+
 (* ?? *)
 val point_to_lof : t -> point -> int -> int
 val point_to_lol : t -> point -> int -> int
@@ -69,10 +77,7 @@ val point_to_line : t -> point -> int -> unit
 (* move *)
 
 val move_res : t -> point -> int -> int
-
 val move : t -> point -> int -> unit
-
-val goto_line : t -> point -> int -> unit
 
 (* relative move *)
 
@@ -82,7 +87,6 @@ val distance : t -> point -> point -> delta
 
 val bmove_res : t -> point -> delta -> delta
 val fmove_res : t -> point -> delta -> delta
-
 val bmove : t -> point -> delta -> unit
 val fmove : t -> point -> delta -> unit
 
@@ -98,7 +102,6 @@ val insert_at_end : t -> string -> unit
 
 val insert_res : t -> point -> string -> position * int
 val delete_res : t -> point -> delta -> position * string
-
 val insert : t -> point -> string -> unit
 val delete : t -> point -> delta -> unit
 
@@ -146,10 +149,10 @@ val version : t -> version
 val readonly : t -> bool
 val toggle_readonly : t -> unit
 
-(*val find_xy : t -> int -> int -> int -> coord *)
 val lexing : t -> point -> point -> Lexing.lexbuf
 val add_amount : int Options.option_record
 val compare : t -> point -> point -> int
+(*val find_xy : t -> int -> int -> int -> coord *)
 
 (* line (mostly for display) *)
 
