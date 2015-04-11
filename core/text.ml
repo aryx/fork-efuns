@@ -1055,10 +1055,10 @@ let compute_representation text charreprs n =
             let char_code = Char.code text.text_string.[!text_cursor] in
             let char_attr = text.text_attrs.(!text_cursor) in
             char_repr := 
-               (*s: [[Text.compute_representation()]] compute charrepr, special char *)
-               if charcode = 9 
+               (*s: [[Text.compute_representation()]] compute char_repr, special char *)
+               if char_code = 9 
                then tabreprs.(!repr_cursor mod 9)
-               (*e: [[Text.compute_representation()]] compute charrepr, special char *)
+               (*e: [[Text.compute_representation()]] compute char_repr, special char *)
                else charreprs.(char_code);
             char_size := String.length !char_repr;
 

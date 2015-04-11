@@ -3526,7 +3526,7 @@ while !text_cursor < end_pos &&
     let char_code = Char.code text.text_string.[!text_cursor] in
     let char_attr = text.text_attrs.(!text_cursor) in
     char_repr := 
-       <<[[Text.compute_representation()]] compute charrepr, special char>>
+       <<[[Text.compute_representation()]] compute char_repr, special char>>
        else charreprs.(char_code);
     char_size := String.length !char_repr;
 
@@ -9239,6 +9239,11 @@ if charcode = 9
 then tabreprs.(!repr_cursor mod 9)
 @
 %todo: ! should use tab_size, so should pass it to compute_representation
+
+<<[[Text.compute_representation()]] compute char_repr, special char>>=
+if char_code = 9 
+then tabreprs.(!repr_cursor mod 9)
+@
 
 <<constant Text.tabreprs>>=
 let tabreprs = [|
