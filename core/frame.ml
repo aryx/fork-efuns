@@ -545,11 +545,11 @@ let display top_window frame =
     if (point > frame.frm_end) || (point < start) then begin
         (*s: [[Frame.display()]] redraw, if frm_force_start *)
         if frame.frm_force_start then begin
-          let x,y = 
+          let col,line = 
             cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
           in
-          Text.goto_line text frame.frm_point y;
-          Text.fmove text frame.frm_point x |> ignore
+          Text.goto_line text frame.frm_point line;
+          Text.fmove text frame.frm_point col |> ignore
         end 
         (*e: [[Frame.display()]] redraw, if frm_force_start *)
         else begin

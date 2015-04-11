@@ -4865,18 +4865,26 @@ mutable frm_force_start : bool;
 
 <<[[Frame.display()]] redraw, if frm_force_start>>=
 if frame.frm_force_start then begin
-  let x,y = 
+  let col,line = 
     cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
   in
-  Text.goto_line text frame.frm_point y;
-  Text.fmove text frame.frm_point x |> ignore
+  Text.goto_line text frame.frm_point line;
+  Text.fmove text frame.frm_point col |> ignore
 end 
 @
+% why not return a point and just to goto_point?
+%old: was let x,y but confusing! it's col x line, but 
+% we should not confuse them when frame coord (the cursor actually)
+% where we use x and y.
+
+%todo: so code setting frm_force_start actually set frm_cursor_x
+% and frm_cursor_y? apparently no code does this, so why
+% this code?
 
 \subsection{Scrollbar}
 
-%later: can have sublime style toolbar actually!
-% or firefox style
+%semi: have sublime style scrollbar!
+%later: or firefox style with search highlight? or disappearing animation?
 % https://atom.io/packages/minimap
 % codemap spirit!
 
