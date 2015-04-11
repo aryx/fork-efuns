@@ -582,13 +582,12 @@ let _ =
         (*x: [[interactives_map]] initial entries *)
         "paren_mode";
         "abbrevs_mode";
-        (*"accents_mode";*)
         "fill_mode";
         "tab_mode";
         "overwrite_mode";
-
-        (*"ocaml_compiler_mode";*)
+        (*"accents_mode";*)
         "ocaml_minor_mode";
+        (*"ocaml_compiler_mode";*)
         (*e: [[interactives_map]] initial entries *)
       ]
     end    

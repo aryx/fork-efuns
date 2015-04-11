@@ -24,35 +24,33 @@ let highlight_bit = 1 lsl 24
 (*s: function Simple.unhightlight_region *)
 let unhightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = Text.new_point text in
-  let final = Text.new_point text in
-  Text.set_position text curseur debut;
-  Text.set_position text final fin;
-  while curseur < final do
-    let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr land (lnot highlight_bit));
-    Text.fmove text curseur 1;
-  done;
-  Text.remove_point text curseur;
-  Text.remove_point text final;
-  buf.buf_modified <- buf.buf_modified + 1
+  Text.with_new_point text (fun curseur ->
+  Text.with_new_point text (fun final ->
+    Text.set_position text curseur debut;
+    Text.set_position text final fin;
+    while curseur < final do
+      let attr = Text.get_attr text curseur in
+      Text.set_char_attr text curseur (attr land (lnot highlight_bit));
+      Text.fmove text curseur 1;
+    done;
+    buf.buf_modified <- buf.buf_modified + 1
+  ))
 (*e: function Simple.unhightlight_region *)
 
 (*s: function Simple.hightlight_region *)
 let hightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = Text.new_point text in
-  let final = Text.new_point text in
-  Text.set_position text curseur debut;
-  Text.set_position text final fin;
-  while curseur < final do
-    let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr lor highlight_bit);
-    Text.fmove text curseur 1
-  done;
-  Text.remove_point text curseur;
-  Text.remove_point text final;
-  buf.buf_modified <- buf.buf_modified + 1
+  Text.with_new_point text (fun curseur ->
+  Text.with_new_point text (fun final ->
+    Text.set_position text curseur debut;
+    Text.set_position text final fin;
+    while curseur < final do
+      let attr = Text.get_attr text curseur in
+      Text.set_char_attr text curseur (attr lor highlight_bit);
+      Text.fmove text curseur 1
+    done;
+    buf.buf_modified <- buf.buf_modified + 1
+  ))
 (*e: function Simple.hightlight_region *)
 
 (*s: constant Simple.highlighted_chars *)
@@ -75,15 +73,14 @@ let unhightlight _frame =
      highlighted := None;
      let buf = frame.frm_buffer in
      let text = buf.buf_text in
-     let curseur = Text.new_point text in
-     let final = Text.new_point text in
-     Text.set_position text curseur debut;
-     Text.set_position text final fin;
-     let str = Text.region text curseur final in
-     Text.remove_point text curseur;
-     Text.remove_point text final;
-     Simple.kill_string str;
-     (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
+     Text.with_new_point text (fun curseur ->
+     Text.with_new_point text (fun final ->
+       Text.set_position text curseur debut;
+       Text.set_position text final fin;
+       let str = Text.region text curseur final in
+       Simple.kill_string str;
+       (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
+     ));
      unhightlight_region buf debut fin
 (*e: function Simple.unhightlight *)
   

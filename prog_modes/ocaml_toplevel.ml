@@ -34,19 +34,13 @@ open Ocaml_env
 (*s: function Ocaml_toplevel.type_buffer *)
 let type_buffer buf =
   let text = buf.buf_text in
-  let start_point = Text.new_point text in
-  let end_point = Text.new_point text in
-  set_position text end_point (size text);
-  let lexbuf = lexing text start_point end_point in
-  try  
+  Text.with_new_point text (fun start_point ->
+  Text.with_new_point text (fun end_point ->
+    set_position text end_point (size text);
+    let lexbuf = lexing text start_point end_point in
     let (str, env) = Type.type_buffer buf.buf_name lexbuf !!ocaml_path in
-    remove_point text start_point;
-    remove_point text end_point;
     (str,env)
-  with x ->
-      remove_point text start_point;
-      remove_point text end_point;
-      raise x
+  ))
 (*e: function Ocaml_toplevel.type_buffer *)
 
 (*s: constant Ocaml_toplevel.compiled_idents *)

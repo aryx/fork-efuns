@@ -95,25 +95,23 @@ let mouse_save_then_kill frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
   let mark = Ebuffer.get_mark buf point in
-  let new_point = new_point text in
-  Frame.move_point frame new_point !mouse_x !mouse_y;
-  if point = new_point then
-    begin
-      remove_point text new_point;
+  Text.with_new_point text (fun new_point ->
+    Frame.move_point frame new_point !mouse_x !mouse_y;
+    if point = new_point then begin
       let (start,term) =
         if point < mark then (point,mark) else (mark,point) 
       in
       Text.delete text start (Text.distance text start term) |> ignore
+    end else begin
+      let xterm = Window.xterm top_window in
+      goto_point text mark point;
+      goto_point text point new_point;
+      let str = Text.region text mark point in
+      kill_string str;
+      WX_xterm.set_cutbuffer xterm str;
+      highlight frame
     end
-  else
-  let xterm = Window.xterm top_window in
-  goto_point text mark point;
-  goto_point text point new_point;
-  remove_point text new_point;
-  let str = Text.region text mark point in
-  kill_string str;
-  WX_xterm.set_cutbuffer xterm str;
-  highlight frame
+  )
 *)
 (*e: function Simple.mouse_save_then_kill *)
 

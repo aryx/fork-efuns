@@ -750,6 +750,10 @@ let with_dup_point text point f =
   let p = dup_point text point in
   Common.finalize (fun () -> f p) (fun () -> remove_point text p)
 
+let with_new_point text f =
+  let p = new_point text in
+  Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+
 
 <<function Text.read>>
 
@@ -1954,37 +1958,36 @@ let electric_insert_space frame =
   let point = frame.frm_point in
   let line_len = Text.point_to_bol text point in
   if line_len > 75 then
-    let mark = Text.dup_point text point in
-    (try
+    Text.with_dup_point text point (fun mark ->
+      try
         while (backward_word buf mark;
             Text.point_to_bol text mark > 75) do () done;
         forward_word buf mark; backward_word buf mark;
         Text.insert text mark "\n" |> ignore
-    with Not_found -> ()
-    );
-    Text.remove_point text mark
+      with Not_found -> ()
+    )
 @
 
 <<function Simple.simplify>>=
 let simplify text start point =
-  let start = Text.dup_point text start in
-  let rec iter last_c =
-    if start < point then
-      let c = Text.get_char text start in
-      if c = ' ' || c = '\n' || c = '\t' then
-        ( Text.delete text start 1 |> ignore;
-          iter ' ')
-      else
-      if last_c = ' ' then
-        ( Text.insert text start " " |> ignore;
-          Text.fmove text start 2;
-          iter 'a')
-      else
-        ( Text.fmove text start 1;
-          iter 'a')
-  in
-  iter 'a';
-  Text.remove_point text start
+  Text.with_dup_point text start (fun start ->
+    let rec iter last_c =
+      if start < point then
+        let c = Text.get_char text start in
+        if c = ' ' || c = '\n' || c = '\t' then
+          ( Text.delete text start 1 |> ignore;
+            iter ' ')
+        else
+        if last_c = ' ' then
+          ( Text.insert text start " " |> ignore;
+            Text.fmove text start 2;
+            iter 'a')
+        else
+          ( Text.fmove text start 1;
+            iter 'a')
+    in
+    iter 'a'
+  )
 @
 
 <<constant Simple.line_comment>>=
@@ -1995,26 +1998,26 @@ let line_comment = Local.create_abstr "Fill_mode.line_comment"
 <<function Simple.set_indent>>=
 (* modify the indentation of (point) line. Does not modify point *)
 let set_indent text point offset = 
-  let curseur = Text.dup_point text point in
-  Text.bmove text curseur (Text.point_to_bol text curseur);
-  let rec iter offset =
-    let c = Text.get_char text curseur in
-    if offset > 0 then
-      if c = ' ' then
-        (Text.fmove text curseur 1; iter (offset - 1))
+  Text.with_dup_point text point (fun curseur ->
+    Text.bmove text curseur (Text.point_to_bol text curseur);
+    let rec iter offset =
+      let c = Text.get_char text curseur in
+      if offset > 0 then
+        if c = ' ' then
+          (Text.fmove text curseur 1; iter (offset - 1))
+        else
+        if c = '\t' then
+          (Text.delete text curseur 1 |> ignore;
+           iter offset)
+        else
+          (Text.insert text curseur (String.make offset ' '))
       else
-      if c = '\t' then
-        (Text.delete text curseur 1 |> ignore;
-         iter offset)
-      else
-        (Text.insert text curseur (String.make offset ' '))
-    else
-    if c = ' ' || c='\t' then
-      (Text.delete text curseur 1;
-        iter 0)
-  in
-  iter offset;
-  Text.remove_point text curseur
+      if c = ' ' || c='\t' then
+        (Text.delete text curseur 1;
+          iter 0)
+    in
+    iter offset
+  )
 @
 
 <<function Simple.insert_special_char>>=
@@ -3863,13 +3866,13 @@ let get_file_line frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let start_point = Text.dup_point text point in
-  let before = Text.point_to_bol text point in
-  let after = Text.point_to_eol text point in
-  Text.bmove text start_point before;
-  let line = Text.sub text start_point (before + after) in
-  Text.remove_point text start_point;
-  line
+  Text.with_dup_point text point (fun start_point ->
+    let before = Text.point_to_bol text point in
+    let after = Text.point_to_eol text point in
+    Text.bmove text start_point before;
+    let line = Text.sub text start_point (before + after) in
+    line
+  )
 @
 
 <<function Dired.select_file>>=
@@ -4814,19 +4817,13 @@ let mkfile_comments= Str.regexp "^#.*$"
 <<function Ocaml_toplevel.type_buffer>>=
 let type_buffer buf =
   let text = buf.buf_text in
-  let start_point = Text.new_point text in
-  let end_point = Text.new_point text in
-  set_position text end_point (size text);
-  let lexbuf = lexing text start_point end_point in
-  try  
+  Text.with_new_point text (fun start_point ->
+  Text.with_new_point text (fun end_point ->
+    set_position text end_point (size text);
+    let lexbuf = lexing text start_point end_point in
     let (str, env) = Type.type_buffer buf.buf_name lexbuf !!ocaml_path in
-    remove_point text start_point;
-    remove_point text end_point;
     (str,env)
-  with x ->
-      remove_point text start_point;
-      remove_point text end_point;
-      raise x
+  ))
 @
 
 <<constant Ocaml_toplevel.compiled_idents>>=

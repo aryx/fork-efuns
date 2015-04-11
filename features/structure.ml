@@ -19,15 +19,15 @@ let next_hole frame =
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
   let text = buf.buf_text in
-  let curseur = Text.dup_point text point in
-  while 
-    not ((Text.get_char text curseur = '^') && (Text.fmove_res text curseur 1 = 1) &&
-      (Text.get_char text curseur = '^')) && (Text.fmove_res text curseur 1 = 1) do () done;
-  if Text.get_char text curseur = '^' then
-    (Text.bmove text curseur 1;
-      Text.delete text curseur 2;
-      Text.goto_point text point curseur);
-  Text.remove_point text curseur
+  Text.with_dup_point text point (fun curseur ->
+    while 
+      not ((Text.get_char text curseur = '^') && (Text.fmove_res text curseur 1 = 1) &&
+        (Text.get_char text curseur = '^')) && (Text.fmove_res text curseur 1 = 1)  do () done;
+    if Text.get_char text curseur = '^' then
+      (Text.bmove text curseur 1;
+        Text.delete text curseur 2;
+        Text.goto_point text point curseur);
+  )
 (*e: function Simple.next_hole *)
 
 

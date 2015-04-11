@@ -30,44 +30,41 @@ let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
 
 (*s: function Simple.highlight_paren *)
 let highlight_paren frame =
-  htmlp := (!Top_window.keypressed = Char.code '>');
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let curseur = Text.dup_point text point in
+  htmlp := (!Top_window.keypressed = Char.code '>');
+
+  Text.with_dup_point text point (fun curseur ->
   if Text.bmove_res text curseur 1 = 0 
-  then Text.remove_point text curseur
+  then ()
   else
   let c = Text.get_char text curseur in
-  if not(is_paren_end c) 
-  then Text.remove_point text curseur 
+  if not (is_paren_end c) 
+  then ()
   else
   let rec iter stack =
-    if Text.bmove_res text curseur 1 = 0 then
-      begin
-        Text.remove_point text curseur;
-        Top_window.mini_message frame "No matching parenthesis"
-      end
+    if Text.bmove_res text curseur 1 = 0 
+    then Top_window.mini_message frame "No matching parenthesis"
     else
     let d = Text.get_char text curseur in
-    if is_paren_end d then
-      begin
-        iter (d :: stack)
-      end
+    if is_paren_end d 
+    then iter (d :: stack)
     else
-    if is_paren_begin d then
+    if is_paren_begin d 
+    then
       match stack with
-        [] -> (* found matching par *)
+      | [] -> (* found matching par *)
           let attr = Text.get_attr text curseur in
           H.highlighted_chars := (buf,curseur,attr) :: !H.highlighted_chars;
           Text.set_char_attr text curseur (attr lor H.highlight_bit);
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack
-    else
-      iter stack
+    else iter stack
   in
   iter []
+  )
 (*e: function Simple.highlight_paren *)
 
 

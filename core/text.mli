@@ -34,6 +34,7 @@ type point = {
 val new_point : t -> point
 val dup_point : t -> point -> point
 val with_dup_point: t -> point -> (point -> 'a) -> 'a
+val with_new_point: t -> (point -> 'a) -> 'a
 
 (* point deletion *)
 

@@ -600,6 +600,10 @@ let with_dup_point text point f =
   let p = dup_point text point in
   Common.finalize (fun () -> f p) (fun () -> remove_point text p)
 
+let with_new_point text f =
+  let p = new_point text in
+  Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+
 
 (*s: function Text.read *)
 let read inc =

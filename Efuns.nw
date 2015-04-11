@@ -1893,7 +1893,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
+let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -2534,6 +2534,8 @@ let remove_point text p =
     ) []
 @
 %note: use of == not =
+%note: you should use with_dup_point() if you can, instead of manually using
+% dup_point ; remove_point
 
 <<function Text.goto_point>>=
 let goto_point _text p1 p2 =
@@ -3052,7 +3054,7 @@ Attr.get_color !!highlight_color |> ignore;
 <<function Simple.color>>=
 let color buf regexp strict attr =
   let text = buf.buf_text in
-  let point = Text.new_point text in
+  Text.with_new_point text (fun point ->
   try
     while true do
       let len = Text.search_forward text regexp point in
@@ -3079,8 +3081,8 @@ let color buf regexp strict attr =
     done
   (* at some point Text.search_forward will return Not_found *)
   with Not_found -> 
-    Text.remove_point text point;
     buf.buf_modified <- buf.buf_modified + 1
+  )
 @
 % not really incremental as font-lock-mode.
 % but can be a simple starting point!
@@ -3102,35 +3104,33 @@ let highlight_bit = 1 lsl 24
 <<function Simple.hightlight_region>>=
 let hightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = Text.new_point text in
-  let final = Text.new_point text in
-  Text.set_position text curseur debut;
-  Text.set_position text final fin;
-  while curseur < final do
-    let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr lor highlight_bit);
-    Text.fmove text curseur 1
-  done;
-  Text.remove_point text curseur;
-  Text.remove_point text final;
-  buf.buf_modified <- buf.buf_modified + 1
+  Text.with_new_point text (fun curseur ->
+  Text.with_new_point text (fun final ->
+    Text.set_position text curseur debut;
+    Text.set_position text final fin;
+    while curseur < final do
+      let attr = Text.get_attr text curseur in
+      Text.set_char_attr text curseur (attr lor highlight_bit);
+      Text.fmove text curseur 1
+    done;
+    buf.buf_modified <- buf.buf_modified + 1
+  ))
 @
 
 <<function Simple.unhightlight_region>>=
 let unhightlight_region buf debut fin =
   let text = buf.buf_text in
-  let curseur = Text.new_point text in
-  let final = Text.new_point text in
-  Text.set_position text curseur debut;
-  Text.set_position text final fin;
-  while curseur < final do
-    let attr = Text.get_attr text curseur in
-    Text.set_char_attr text curseur (attr land (lnot highlight_bit));
-    Text.fmove text curseur 1;
-  done;
-  Text.remove_point text curseur;
-  Text.remove_point text final;
-  buf.buf_modified <- buf.buf_modified + 1
+  Text.with_new_point text (fun curseur ->
+  Text.with_new_point text (fun final ->
+    Text.set_position text curseur debut;
+    Text.set_position text final fin;
+    while curseur < final do
+      let attr = Text.get_attr text curseur in
+      Text.set_char_attr text curseur (attr land (lnot highlight_bit));
+      Text.fmove text curseur 1;
+    done;
+    buf.buf_modified <- buf.buf_modified + 1
+  ))
 @
 
 
@@ -3160,15 +3160,14 @@ let unhightlight _frame =
      highlighted := None;
      let buf = frame.frm_buffer in
      let text = buf.buf_text in
-     let curseur = Text.new_point text in
-     let final = Text.new_point text in
-     Text.set_position text curseur debut;
-     Text.set_position text final fin;
-     let str = Text.region text curseur final in
-     Text.remove_point text curseur;
-     Text.remove_point text final;
-     Simple.kill_string str;
-     (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
+     Text.with_new_point text (fun curseur ->
+     Text.with_new_point text (fun final ->
+       Text.set_position text curseur debut;
+       Text.set_position text final fin;
+       let str = Text.region text curseur final in
+       Simple.kill_string str;
+       (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
+     ));
      unhightlight_region buf debut fin
 @
 
@@ -4895,11 +4894,11 @@ let scroll_to_frame ady top_window =
 @
 %(*
 %    Text.set_position text point y;
-%      let point = Text.new_point text in
-%      let curline = Text.point_line text frame.frm_start in
-%      let newline = Text.point_line text point in
-%      Text.remove_point text point;
-%    frame.frm_y_offset <- frame.frm_y_offset + (newline - curline);
+%      Text.with_new_point text (fun point -> 
+%        let curline = Text.point_line text frame.frm_start in
+%        let newline = Text.point_line text point in
+%        frame.frm_y_offset <- frame.frm_y_offset + (newline - curline);
+%      );
 %  *)
 
 
@@ -5581,25 +5580,23 @@ let mouse_save_then_kill frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
   let mark = Ebuffer.get_mark buf point in
-  let new_point = new_point text in
-  Frame.move_point frame new_point !mouse_x !mouse_y;
-  if point = new_point then
-    begin
-      remove_point text new_point;
+  Text.with_new_point text (fun new_point ->
+    Frame.move_point frame new_point !mouse_x !mouse_y;
+    if point = new_point then begin
       let (start,term) =
         if point < mark then (point,mark) else (mark,point) 
       in
       Text.delete text start (Text.distance text start term) |> ignore
+    end else begin
+      let xterm = Window.xterm top_window in
+      goto_point text mark point;
+      goto_point text point new_point;
+      let str = Text.region text mark point in
+      kill_string str;
+      WX_xterm.set_cutbuffer xterm str;
+      highlight frame
     end
-  else
-  let xterm = Window.xterm top_window in
-  goto_point text mark point;
-  goto_point text point new_point;
-  remove_point text new_point;
-  let str = Text.region text mark point in
-  kill_string str;
-  WX_xterm.set_cutbuffer xterm str;
-  highlight frame
+  )
 *)
 @
 
@@ -6066,22 +6063,22 @@ let to_end_of_word text mark syntax =
 let end_of_word  buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
-  let mark = Text.dup_point text point in
-  to_end_of_word text mark syntax;
-  let s = Text.region text point mark in
-  Text.remove_point text mark;
-  s
+  Text.with_dup_point text point (fun mark ->
+    to_end_of_word text mark syntax;
+    let s = Text.region text point mark in
+    s
+  )
 @
 
 <<function Simple.beginning_of_word>>=
 let beginning_of_word buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
-  let mark = Text.dup_point text point in
-  to_begin_of_word text mark syntax;
-  let s = Text.region text mark point in
-  Text.remove_point text mark;
-  s
+  Text.with_dup_point text point (fun mark ->
+    to_begin_of_word text mark syntax;
+    let s = Text.region text mark point in
+    s
+  )
 @
 
 
@@ -6581,21 +6578,21 @@ let delete_res text point len =
 <<function Simple.delete_backward_word>>=
 let delete_backward_word buf point =
   let text = buf.buf_text in
-  let old_point = Text.dup_point text point in
-  backward_word buf point;
-  Text.delete text point (Text.distance text point old_point) |> ignore;
-  Text.remove_point text old_point
+  Text.with_dup_point text point (fun old_point ->
+    backward_word buf point;
+    Text.delete text point (Text.distance text point old_point) |> ignore
+  )
 @
 
 <<function Simple.delete_forward_word>>=
 let delete_forward_word buf point =
   let text = buf.buf_text in
-  let old_point = Text.dup_point text point in
-  forward_word buf point;
-  let len = Text.distance text old_point point in
-  Text.remove_point text old_point;
-  Text.bmove text point len;
-  Text.delete text point len |> ignore
+  Text.with_dup_point text point (fun old_point ->
+    forward_word buf point;
+    let len = Text.distance text old_point point in
+    Text.bmove text point len;
+    Text.delete text point len |> ignore
+  )
 @
 
 \subsection{Lines}
@@ -8203,15 +8200,15 @@ let next_hole frame =
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
   let text = buf.buf_text in
-  let curseur = Text.dup_point text point in
-  while 
-    not ((Text.get_char text curseur = '^') && (Text.fmove_res text curseur 1 = 1) &&
-      (Text.get_char text curseur = '^')) && (Text.fmove_res text curseur 1 = 1) do () done;
-  if Text.get_char text curseur = '^' then
-    (Text.bmove text curseur 1;
-      Text.delete text curseur 2;
-      Text.goto_point text point curseur);
-  Text.remove_point text curseur
+  Text.with_dup_point text point (fun curseur ->
+    while 
+      not ((Text.get_char text curseur = '^') && (Text.fmove_res text curseur 1 = 1) &&
+        (Text.get_char text curseur = '^')) && (Text.fmove_res text curseur 1 = 1)  do () done;
+    if Text.get_char text curseur = '^' then
+      (Text.bmove text curseur 1;
+        Text.delete text curseur 2;
+        Text.goto_point text point curseur);
+  )
 @
 
 % install_structures -> <>
@@ -8897,10 +8894,12 @@ let expand_sabbrev frame =
     let buf = frame.frm_buffer in
     let text = buf.buf_text in
     let abbrevs = Var.get_local buf abbrev_table in
-    let mark = Text.dup_point text point in
-    Simple.to_begin_of_word text point buf.buf_syntax_table;
-    let str = Text.region text point mark in
-    Text.remove_point text mark;
+    let str =
+      Text.with_dup_point text point (fun mark ->
+        Simple.to_begin_of_word text point buf.buf_syntax_table;
+        Text.region text point mark 
+      )
+    in
     let len = String.length str in
     try
       let repl = Hashtbl.find abbrevs str in
@@ -8937,54 +8936,52 @@ let dabbrev_expand frame =
   let regexp = Str.regexp s in
   let rec iter curr_buf pos =
     let curr_text = curr_buf.buf_text in
-    let mark = Text.new_point curr_text in
-    Text.set_position curr_text mark pos;
-    try
-      let rec restart () =
-        let _len = Text.search_backward curr_text regexp mark in
-        if curr_text == text && mark = point then
-          raise Exit
-        else
-          if Text.bmove_res curr_text mark 1 <> 0 then
-            if syntax.(Char.code (Text.get_char curr_text mark)) 
-            then begin Text.fmove curr_text mark 1; restart () end
-            else Text.fmove curr_text mark 1 |> ignore
+    Text.with_new_point curr_text (fun mark ->
+      Text.set_position curr_text mark pos;
+      try
+        let rec restart () =
+          let _len = Text.search_backward curr_text regexp mark in
+          if curr_text == text && mark = point then
+            raise Exit
           else
-            ()
-      in
-      let rec first () =
-        restart ();
-        Text.fmove curr_text mark truelen;
-        let m = Simple.end_of_word curr_buf mark in
-        if List.mem m history then
-          (Text.bmove curr_text mark truelen; first ())
-        else
-          begin
+            if Text.bmove_res curr_text mark 1 <> 0 then
+              if syntax.(Char.code (Text.get_char curr_text mark)) 
+              then begin Text.fmove curr_text mark 1; restart () end
+              else Text.fmove curr_text mark 1 |> ignore
+            else
+              ()
+        in
+        let rec first () =
+          restart ();
+          Text.fmove curr_text mark truelen;
+          let m = Simple.end_of_word curr_buf mark in
+          if List.mem m history then begin
+            Text.bmove curr_text mark truelen; 
+            first ()
+          end else begin
             Text.fmove text point truelen;
             let _,len = Text.insert_res text point m in
             Text.fmove text point len;
             dabbrev_buf := Some (s, frame, Text.get_position text point, len, 
               curr_buf, Text.get_position curr_text mark, m :: history);
-            Text.remove_point curr_text mark
           end
-      in
-      first ()
-    with
-      Not_found ->
-        Text.remove_point curr_text mark;
-        let curr_buf = Multi_buffers.next_buffer curr_buf in
-        if curr_buf == buf 
-        then
-          if !loop 
-          then raise Not_found
-          else loop := true (* to avoid infinite loop *)
-        ;
-        iter curr_buf (Text.size curr_buf.buf_text) 
-    | Exit ->
-        Text.remove_point curr_text mark;
-        Text.fmove text point truelen;
-        dabbrev_buf := None;
-        raise Not_found
+        in
+        first ()
+      with 
+      | Not_found ->
+          let curr_buf = Multi_buffers.next_buffer curr_buf in
+          if curr_buf == buf 
+          then
+            if !loop 
+            then raise Not_found
+            else loop := true (* to avoid infinite loop *)
+          ;
+          iter curr_buf (Text.size curr_buf.buf_text) 
+      | Exit ->
+          Text.fmove text point truelen;
+          dabbrev_buf := None;
+          raise Not_found
+     )
   in
   iter buf pos; ()
 @
@@ -9093,20 +9090,18 @@ let transpose_words buf point =
     let syntax = buf.buf_syntax_table in
     in_prev_word text point syntax;
     to_begin_of_word text point syntax;
-    let pos1 = Text.dup_point text point in
-    to_end_of_word text point syntax;
-    let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
-    Text.goto_point text point pos1;
-    in_next_word text point syntax;
-    let pos2 = Text.dup_point text point in
-    to_end_of_word text point syntax;
-    let _,word2 = Text.delete_res text pos2 (Text.distance text pos2 point) in    
-    Text.insert text pos1 word2 |> ignore;
-    Text.insert text pos2 word1 |> ignore;
-    Text.fmove text point (String.length word1);
-    Text.remove_point text pos1;
-    Text.remove_point text pos2
-  )
+    Text.with_dup_point text point (fun pos1 ->
+      to_end_of_word text point syntax;
+      let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
+      Text.goto_point text point pos1;
+      in_next_word text point syntax;
+      Text.with_dup_point text point (fun pos2 ->
+        to_end_of_word text point syntax;
+        let _,word2 = Text.delete_res text pos2 (Text.distance text pos2 point) in    
+        Text.insert text pos1 word2 |> ignore;
+        Text.insert text pos2 word1 |> ignore;
+        Text.fmove text point (String.length word1);
+  )))
 @
 
 % for uppercase/lowercase
@@ -9116,13 +9111,13 @@ let on_word buf point f =
   text |> Text.with_session (fun () ->
     let syntax = buf.buf_syntax_table in
     to_begin_of_word text point syntax;
-    let pos1 = Text.dup_point text point in
-    to_end_of_word text point syntax;
-    let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
-    let w = f word1 in
-    Text.insert text pos1 w |> ignore;
-    Text.fmove text point (String.length w);
-    Text.remove_point text pos1
+    Text.with_dup_point text point (fun pos1 ->
+      to_end_of_word text point syntax;
+      let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
+      let w = f word1 in
+      Text.insert text pos1 w |> ignore;
+      Text.fmove text point (String.length w);
+    )
   )
 @
 
@@ -9134,36 +9129,35 @@ let fill_paragraph frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let start = Text.dup_point text point in
   text |> Text.with_session (fun () ->
+    Text.with_dup_point text point (fun start ->
     backward_paragraph buf start;
-    let fin = Text.dup_point text start in
-    forward_paragraph buf fin;
-    simplify text start fin;
-    Text.insert text start "\n" |> ignore;
-    let rec iter count last_space =
-      if Text.compare text start fin < 0 then
-      if Text.fmove_res text start 1 = 1 then 
-        let c = Text.get_char text start in  
-          if c = ' ' then (* good, a new space *)
-            iter (count+1) 0
-        else
-        if count > 75 && count <> last_space then 
-            begin
-            Text.bmove text start (last_space+1);
-            Text.delete text start 1;
-            Text.insert text start "\n";
-            Text.fmove text start 1;
-            iter 0 0
-            end
+    Text.with_dup_point text start (fun fin ->
+      forward_paragraph buf fin;
+
+      simplify text start fin;
+      Text.insert text start "\n" |> ignore;
+      let rec iter count last_space =
+        if Text.compare text start fin < 0 then
+        if Text.fmove_res text start 1 = 1 then 
+          let c = Text.get_char text start in  
+            if c = ' ' then (* good, a new space *)
+              iter (count+1) 0
           else
-            iter (count+1) (last_space+1)
-    in
-    iter 0 0;  
-    Text.insert text fin "\n" |> ignore;
-    Text.remove_point text start;
-    Text.remove_point text fin;
-  )
+          if count > 75 && count <> last_space then 
+              begin
+              Text.bmove text start (last_space+1);
+              Text.delete text start 1;
+              Text.insert text start "\n";
+              Text.fmove text start 1;
+              iter 0 0
+              end
+            else
+              iter (count+1) (last_space+1)
+      in
+      iter 0 0;  
+      Text.insert text fin "\n" |> ignore;
+  )))
 @
 
 
@@ -9909,13 +9903,12 @@ let get_parameter frame =
 <<[[interactives_map]] initial entries>>=
 "paren_mode";
 "abbrevs_mode";
-(*"accents_mode";*)
 "fill_mode";
 "tab_mode";
 "overwrite_mode";
-
-(*"ocaml_compiler_mode";*)
+(*"accents_mode";*)
 "ocaml_minor_mode";
+(*"ocaml_compiler_mode";*)
 @
 %todo: should be in their start_hook instead of here
 
@@ -9940,44 +9933,41 @@ let htmlp = ref false
 
 <<function Simple.highlight_paren>>=
 let highlight_paren frame =
-  htmlp := (!Top_window.keypressed = Char.code '>');
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let curseur = Text.dup_point text point in
+  htmlp := (!Top_window.keypressed = Char.code '>');
+
+  Text.with_dup_point text point (fun curseur ->
   if Text.bmove_res text curseur 1 = 0 
-  then Text.remove_point text curseur
+  then ()
   else
   let c = Text.get_char text curseur in
-  if not(is_paren_end c) 
-  then Text.remove_point text curseur 
+  if not (is_paren_end c) 
+  then ()
   else
   let rec iter stack =
-    if Text.bmove_res text curseur 1 = 0 then
-      begin
-        Text.remove_point text curseur;
-        Top_window.mini_message frame "No matching parenthesis"
-      end
+    if Text.bmove_res text curseur 1 = 0 
+    then Top_window.mini_message frame "No matching parenthesis"
     else
     let d = Text.get_char text curseur in
-    if is_paren_end d then
-      begin
-        iter (d :: stack)
-      end
+    if is_paren_end d 
+    then iter (d :: stack)
     else
-    if is_paren_begin d then
+    if is_paren_begin d 
+    then
       match stack with
-        [] -> (* found matching par *)
+      | [] -> (* found matching par *)
           let attr = Text.get_attr text curseur in
           H.highlighted_chars := (buf,curseur,attr) :: !H.highlighted_chars;
           Text.set_char_attr text curseur (attr lor H.highlight_bit);
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack
-    else
-      iter stack
+    else iter stack
   in
   iter []
+  )
 @
 
 \section{Tab}

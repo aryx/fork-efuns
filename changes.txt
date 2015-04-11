@@ -28,7 +28,7 @@ buffer menu C-M-Tab, C-M-l and right order
 
 - split efuns.ml and simple.ml in many more modules
 - add more .mli
-- compile to use variables
+- more use of with_dup_point, with_new_point, with_session
 
 * 0.19 (Q1 2015)
 
@@ -54,7 +54,7 @@ for Caml, C/C++, and TeX/Noweb
 - removed many opens
 - use global for location
 - reorg main.ml to use less toplevels and pack in a main() function
-- use more List.iter, Common.do_option, |>, with_session, with_point
+- use more List.iter, Common.do_option, |>, with_session, with_dup_point
 - added many .mli
 - factorize color in pl_colors.ml
 
