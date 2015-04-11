@@ -348,6 +348,7 @@ let set_cursor frame =
 
   let point = frame.frm_point in
   let x = point_to_cursor buf point in
+  let ptcol = point_col text point in
   let line = Ebuffer.compute_representation buf (point_line text point) in
   
   try
@@ -358,7 +359,9 @@ let set_cursor frame =
           if x = 0 
           then 0,i
           else
+            (*s: [[Frame.set_cursor()]] x y value handling overflow lines *)
             ((x-1) mod frame.frm_cutline) + 1, i + (x-1) / frame.frm_cutline
+            (*e: [[Frame.set_cursor()]] x y value handling overflow lines *)
         in
         frame.frm_cursor_x <- x;
         frame.frm_cursor_y <- y;
@@ -368,13 +371,12 @@ let set_cursor frame =
     frame.frm_cursor.[0] <- '\000'
     
   with Exit -> 
-    let rec iter reprs =
-      match reprs with
+    let rec iter boxes =
+      match boxes with
       | [] -> 
           frame.frm_cursor.[0] <- ' '
-      | repr :: tail ->
-          let point_x = point_col text point in
-          if repr.box_pos <= point_x && repr.box_pos + repr.box_len > point_x 
+      | box :: tail ->
+          if repr.box_pos <= ptcol && repr.box_pos + repr.box_len > ptcol
           then begin
             let pos =
               repr.box_pos_repr + repr.box_charsize * 
@@ -385,8 +387,8 @@ let set_cursor frame =
           end else
             iter tail
     in
-    let repr_line = frame.frm_table.(frame.frm_cursor_y) in
-    iter repr_line.frmline_boxes
+    let frm_line = frame.frm_table.(frame.frm_cursor_y) in
+    iter frm_line.frmline_boxes
 (*e: function Frame.set_cursor *)
 
 (*s: function Frame.update_table *)
@@ -412,7 +414,6 @@ let update_table frame =
   if !current_n = 0 && frame.frm_y_offset <0 
   then frame.frm_y_offset <- 0;
   (*e: [[Frame.update_table()]] adjust current line when frm_y_offset negative *)
-
   (*s: [[Frame.update_table()]] adjust current line when frm_y_offset positive *)
   (* assert current_line is the first line *)
 
@@ -552,6 +553,7 @@ let display top_window frame =
         end 
         (*e: [[Frame.display()]] redraw, if frm_force_start *)
         else begin
+          (* center around point *)
           Text.goto_point text start point;
           (*s: [[Frame.display()]] redraw, update frm_y_offset again *)
           frame.frm_y_offset <- - height / 2;

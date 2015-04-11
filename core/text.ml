@@ -580,9 +580,9 @@ let goto_point _text p1 p2 =
 (*e: function Text.goto_point *)
 
 (*s: function Text.move_point_to *)
-let move_point_to text point p =
-  let _x,y = find_xy text text.gpoint.pos text.gpoint.line p in
-  point.pos <- p;
+let move_point_to text point pos =
+  let _x,y = find_xy text text.gpoint.pos text.gpoint.line pos in
+  point.pos <- pos;
   point.line <- y
 (*e: function Text.move_point_to *)
 
@@ -994,7 +994,9 @@ let tabreprs = [|
   |]
 (*e: constant Text.tabreprs *)
 
+(*s: type Text.charreprs *)
 type charreprs = string array
+(*e: type Text.charreprs *)
 
 (*s: function Text.compute_representation *)
 (* On devrait reprendre la representation la ou elle est ... *)

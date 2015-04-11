@@ -258,9 +258,9 @@ and frm_line =
   { 
     mutable frm_text_line : Text.line;
 
-   (* sorted normally, head = first box in line *)
-   mutable frmline_boxes : Text.box list; 
-   mutable first_box_extra_offset : int;
+    (* sorted normally, head = first box in line *)
+    mutable frmline_boxes : Text.box list; 
+    mutable first_box_extra_offset : int;
 
     (*s: [[Efuns.frm_line]] other fields *)
     mutable lineidx_in_text : int;

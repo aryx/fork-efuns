@@ -116,19 +116,12 @@
 
 \begin{document}
 
-\title{
-{\Huge 
-Principia Softwarica: The Text Editor Efuns
-}\\
-{version 0.1}
-}
+\title{{\Huge Principia Softwarica: The Text Editor Efuns}\\{version 0.1}}
 
 \author{
-Yoann Padioleau\\
-\texttt{yoann.padioleau@gmail.com}\\
+Yoann Padioleau\\\texttt{yoann.padioleau@gmail.com}\\
 \\
-with code from\\
-Fabrice Le Fessant
+with code from\\Fabrice Le Fessant
 }
 
 
@@ -176,14 +169,14 @@ you fully understand how things work under the hood.
 
 Here are other candidates that were considered but ultimately discarded:
 \begin{itemize}
-\item emacs
+\item Emacs
 %too big, xdisp.c is a single file of 30 000 LOC ... more than the whole
 % efuns
-%todo: look at emacs lisp manual, and emacs manual to see the concepts
-\item microemacs
+%todo: look at emacs lisp manual, and emacs manual to see the concepts though
+\item Microemacs
 % the source of many forks apparently, so maybe the code is cleaner?
 % uemacs, one of them, used by torvalds, is 20 000 LOC so not bad
-\item qemacs
+\item Qemacs
 % unicode support! complex html/css visualization, multi fonts
 % size? 
 \item mg
@@ -207,7 +200,7 @@ Here are other candidates that were considered but ultimately discarded:
 %  - easier to debug! can use ocamldebug, no more -debug-on-error
 %    and binary search in .emacs when have a paren pb
 %  - easier to program, ocaml > lisp! can also use ocamlyacc, my
-%    pfff real parsers. More colors. More structure.
+%    pfff real parsers. More colors. More structure. Can use threads!
 
 % see also other ocaml editors?
 %  - https://github.com/diml/zed (seems just an "engine")
@@ -276,6 +269,7 @@ the main author of Efuns.
 
 \section{Text editor principles}
 
+%history:
 % as opposed to ed, can actually see the content! and update it
 % and get feedback in real-time. wysiwyg!
 
@@ -283,18 +277,19 @@ the main author of Efuns.
 % editing (inserting/deleting/moving/cut-copy-paste/transposing)
 % search/replace
 
-% display has a few subtelities: special chars (^M, Tabs), overflow (80 cols)
+% display has a few subtleties: special chars (^M, Tabs), overflow (80 cols)
 
 % efficient keyboard! combination of keys, macros! M-x, C-x o, prefixes.
 % everything with keyboard!
 
 % undo! multi steps undo! (TODO redo!) sessions so have also "macro-level" undo
+% history! also for position navigation
 % multi files/buffers, opening/saving/killing switching
 % multi windows (a kind of window manager!) so can see different parts at
 %  the same time (but I don't use that much in the end)
 
 % specialised "major" modes: color!, font, indentation, navigating, compile,
-%  outline
+%  outline, etc
 %todo: semantic editing/visualizing!
 
 % "Emacs is the extensible, customizable, self-documenting real-time
@@ -336,6 +331,8 @@ Options:
 "
 @
 % see also *help* buffer
+
+% see also efuns_client later so can cooperate with other programs (e.g. cm)
 
 \section{Code organization}
 
@@ -411,6 +408,7 @@ Options:
 %   * cons: they are not really windows in the traditional sense;
 %     they are more tiled automatically windows
 %   * pro: other tools like 'sam' use windows for that
+
 
 
 \section{Trace of a file loading}
@@ -648,6 +646,10 @@ and point = {
 % consistent to have point_line. It was also ugly to have point.point
 % everywhere and code like let point = point.point. It was confusing
 % two notions, a position and a point!
+%subtle: this is a cursor that needs to be maintained in sync!
+% things can change, text can be modified, so the trick is to remember
+% all the cursors in the text and when you modify the text you update
+% all the cursors. We'll see more later about this.
 
 <<[[Efuns.buffer]] current position fields>>=
 mutable buf_point : Text.point;
@@ -1189,12 +1191,10 @@ let _ =
 (* Loading *)
 (* ----------------------------------------------------------- *)
 <<loading actions>>
-
 (* ----------------------------------------------------------- *)
 (* Navigating (in the file) *)
 (* ----------------------------------------------------------- *)
 <<navigating actions>>
-
 (* ----------------------------------------------------------- *)
 (* Editing *)
 (* ----------------------------------------------------------- *)
@@ -1210,7 +1210,6 @@ let _ =
 (* Moving (Cut, copy, paste) *)
 (* ------------------------- *)
 <<moving actions>>
-
 (* ------------------------- *)
 (* Transforming *)
 (* ------------------------- *)
@@ -1219,46 +1218,37 @@ let _ =
 (* Replacing *)
 (* ------------------------- *)
 <<replacing actions>>
-
 (* ----------------------------------------------------------- *)
 (* Searching *)
 (* ----------------------------------------------------------- *)
 <<searching actions>>
-
 (* ----------------------------------------------------------- *)
 (* Undoing *)
 (* ----------------------------------------------------------- *)
 <<undoing actions>>
-
 (* ----------------------------------------------------------- *)
 (* External commands *)
 (* ----------------------------------------------------------- *)
 <<external command actions>>
-
 (* ----------------------------------------------------------- *)
 (* Buffers/windows/frames *)
 (* ----------------------------------------------------------- *)
 <<buffer managment actions>>
 <<buffer navigating actions>>
-
 <<frame managment actions>>
 <<frame navigation actions>>
-
 (* ----------------------------------------------------------- *)
 (* Meta *)
 (* ----------------------------------------------------------- *)
 <<meta actions>>
-
 (* ----------------------------------------------------------- *)
 (* Saving *)
 (* ----------------------------------------------------------- *)
 <<saving actions>>
-
 (* ----------------------------------------------------------- *)
 (* Major mode *)
 (* ----------------------------------------------------------- *)
 <<major mode actions>>
-
 (* ----------------------------------------------------------- *)
 (* Misc *)
 (* ----------------------------------------------------------- *)
@@ -1503,7 +1493,6 @@ let c_h = (ControlMap, Char.code 'h')
 (* Moving (Cut, copy, paste) *)
 (* ------------------------------ *)
 <<moving keys>>
-
 (* ---------------------- *)
 (* Transforming *)
 (* ---------------------- *)
@@ -1893,7 +1882,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
+let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -2327,7 +2316,7 @@ let handle_key top_window modifiers keysym =
   clean_display (); (* set cursor off *)
   clear_message top_window;
 
-  Hook.exec_hooks (try Var.get_var buf handle_key_start_hook with _ ->[]) frame;
+  Hook.exec_hooks(try Var.get_var buf handle_key_start_hook with _ ->[]) frame;
 
   let mod_ = 
     <<[[Top_window.handle_key()]] compute mod>>
@@ -2507,6 +2496,9 @@ mutable text_points : point list;
 % because the gap can move so you need to update all
 % the points references. So need to create points by using specific
 % APIs that maintain somewhere this list of points.
+%subtle, but nice, because if save position points somewhere,
+% then even if the text moves, you can go back to the same
+% position!
 
 
 <<function Text.new_point>>=
@@ -2548,9 +2540,9 @@ let goto_point _text p1 p2 =
 
 % ?? -> <>
 <<function Text.move_point_to>>=
-let move_point_to text point p =
-  let _x,y = find_xy text text.gpoint.pos text.gpoint.line p in
-  point.pos <- p;
+let move_point_to text point pos =
+  let _x,y = find_xy text text.gpoint.pos text.gpoint.line pos in
+  point.pos <- pos;
   point.line <- y
 @
 % find_xy???
@@ -3071,7 +3063,7 @@ let color buf regexp strict attr =
       in
       let after = Text.get_char text point in
       if not (strict && (buf.buf_syntax_table.(Char.code before) ||
-            buf.buf_syntax_table.(Char.code after))) then
+                         buf.buf_syntax_table.(Char.code after))) then
         begin
           Text.bmove text point len;
           Text.set_attr text point len attr;
@@ -3086,6 +3078,7 @@ let color buf regexp strict attr =
 @
 % not really incremental as font-lock-mode.
 % but can be a simple starting point!
+%less: strict means implicit \b\b around? but then it never colorizes, so bug?
 
 % todo: have also a region variant, start/end
 
@@ -3116,6 +3109,7 @@ let hightlight_region buf debut fin =
     buf.buf_modified <- buf.buf_modified + 1
   ))
 @
+%todo: have Text.iter_range ?
 
 <<function Simple.unhightlight_region>>=
 let unhightlight_region buf debut fin =
@@ -3132,7 +3126,7 @@ let unhightlight_region buf debut fin =
     buf.buf_modified <- buf.buf_modified + 1
   ))
 @
-
+% could factorize code with previous func
 
 
 <<constant Simple.highlighted>>=
@@ -3352,23 +3346,27 @@ Attr.get_font !!Globals.font |> ignore;
 % we will get closer to an actual display because we will handle
 % special chars, to get the "line representation" in repr_string.
 
+% it's subtle because many coordinates are positions in the original
+% text (point, pos, line) and other coordinates are positions in
+% the representation (x, y), with first string representation that
+% handles tabs, special ^M chars, and then the frame line representation
+% that handles overflow lines.
+
 \subsection{Line boxes}
 % (cached) representation
-
-% mv later? Keep Text Managment section to be only about text_string?
+%less: mv later? Keep Text Managment section to be only about text_string?
 
 % text.text_newlines is array of Text.line, where have seen
 % already the line.position which is the bol pos.
-% here is another field:
+% here is another field of Text.line record:
 
 <<[[Text.line]] representation fields>>=
 mutable boxes : box list; (* sorted in reverse; head is last box on the line *)
 @
-% order? they are reversed!
 %old: the field was called representation, and box was called line_repr 
 % (or repr_line), but I prefer to keep the representation term
 %  for the actual repr_string!
-% this a cache? because at the beginning it's empty, see
+%note: this a cache? because at the beginning it's empty, see
 % mk_line_with_pos(). It's not a cache really, but it's computed
 % on demand for the line we actually want to display (in which case
 % we need the line "representation").
@@ -3403,7 +3401,13 @@ and box =
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_charreprs : Text.charreprs; (* 256 array *)
 @
-% not char array!
+
+
+<<type Text.charreprs>>=
+type charreprs = string array
+@
+% not char array! string array.
+
 
 <<[[Ebuffer.create()]] buffer other fields setup>>=
 buf_charreprs = Array.init 256 (fun i -> String.make 1 (Char.chr i));
@@ -3461,7 +3465,8 @@ box_pos_repr : int;  (* pos of box in representation string *)
 
 % most important is computing repr_string, and then the boxes
 % which contain the appropriate colors for the different subparts
-% of repr_string.
+% of repr_string (boxes are used as index over repr_string with
+% the attr info)
 
 <<function Text.compute_representation>>=
 (* On devrait reprendre la representation la ou elle est ... *)
@@ -3982,7 +3987,7 @@ let check_file frame =
     )
   with _ -> ()
 @
-
+%less: should do that at each keystrok, not just at change_buffer
 
 
 
@@ -4274,6 +4279,7 @@ update_table frame;
 if (point > frame.frm_end) || (point < start) then begin
     <<[[Frame.display()]] redraw, if frm_force_start>>
     else begin
+      (* center around point *)
       Text.goto_point text start point;
       <<[[Frame.display()]] redraw, update frm_y_offset again>>
       update_table frame;
@@ -4320,6 +4326,7 @@ frame.frm_redraw <- false
 (* where do we put a \ for overflowing lines *)
 mutable frm_cutline : int; (* max_int for no, else length *)
 @
+%e.g. 79, the width of the window - 1 (because 0 indexed so col 79)
 
 <<[[Frame.install()]] adjust frm_cutline>>=
 if frame.frm_cutline < max_int 
@@ -4336,7 +4343,6 @@ mutable frm_table : frm_line array;
 % line 0 is the line that you see in the frame,
 % so this table is a sort of slice of the original text_newlines.
 % But it also manages the overflow lines! so it's not exactly a slice!
-
 % diff with frm.frm_buffer.buf_text.newlines? well it handles overflow
 % some some Text.line corresponds sometimes to 2 frm_line, but
 % with different repr_xxx values.
@@ -4346,9 +4352,9 @@ and frm_line =
   { 
     mutable frm_text_line : Text.line;
 
-   (* sorted normally, head = first box in line *)
-   mutable frmline_boxes : Text.box list; 
-   mutable first_box_extra_offset : int;
+    (* sorted normally, head = first box in line *)
+    mutable frmline_boxes : Text.box list; 
+    mutable first_box_extra_offset : int;
 
     <<[[Efuns.frm_line]] other fields>>
   } 
@@ -4373,6 +4379,7 @@ mutable lineidx_in_text : int;
 @
 % why need that? frm_text_line not enough?
 % for cursor_to_point?
+%less: mv later?
 
 
 <<[[Frame.install()]] set frm_table>>=
@@ -4408,7 +4415,6 @@ let update_table frame =
   let current_line = ref (Ebuffer.compute_representation buf !current_n) in
 
   <<[[Frame.update_table()]] adjust current line when frm_y_offset negative>>
-
   <<[[Frame.update_table()]] adjust current line when frm_y_offset positive>>
 
   (* update frame.frm_start *)
@@ -4552,10 +4558,14 @@ graphic.Xdraw.draw_string
 % an output, but strongly related
 % also to input devices (input device feedback essentially)
 
-% flow is that some functions modify possible top_active_frame,
-% modify top_active_frame.frm_point, and now we need to put
+% The flow is that some functions modify top_active_frame.frm_point
+% (and sometimes also modify first top_active_frame), and now we need to put
 % the cursor at the right place.
+% Because of tabs and ^M and frm_cutline there are a few complications.
 
+% we need to redo some of the logic done by update_table where
+% we need to manage frm_cutline because we don't want to polluate
+% update_table with cursor issues I think.
 
 % Top_window.update_display -> Frame.display ; ...;  <>
 <<function Top_window.cursor_on>>=
@@ -4605,6 +4615,7 @@ let set_cursor frame =
 
   let point = frame.frm_point in
   let x = point_to_cursor buf point in
+  let ptcol = point_col text point in
   let line = Ebuffer.compute_representation buf (point_line text point) in
   
   try
@@ -4615,7 +4626,7 @@ let set_cursor frame =
           if x = 0 
           then 0,i
           else
-            ((x-1) mod frame.frm_cutline) + 1, i + (x-1) / frame.frm_cutline
+            <<[[Frame.set_cursor()]] x y value handling overflow lines>>
         in
         frame.frm_cursor_x <- x;
         frame.frm_cursor_y <- y;
@@ -4625,13 +4636,12 @@ let set_cursor frame =
     frame.frm_cursor.[0] <- '\000'
     
   with Exit -> 
-    let rec iter reprs =
-      match reprs with
+    let rec iter boxes =
+      match boxes with
       | [] -> 
           frame.frm_cursor.[0] <- ' '
-      | repr :: tail ->
-          let point_x = point_col text point in
-          if repr.box_pos <= point_x && repr.box_pos + repr.box_len > point_x 
+      | box :: tail ->
+          if repr.box_pos <= ptcol && repr.box_pos + repr.box_len > ptcol
           then begin
             let pos =
               repr.box_pos_repr + repr.box_charsize * 
@@ -4642,12 +4652,39 @@ let set_cursor frame =
           end else
             iter tail
     in
-    let repr_line = frame.frm_table.(frame.frm_cursor_y) in
-    iter repr_line.frmline_boxes
+    let frm_line = frame.frm_table.(frame.frm_cursor_y) in
+    iter frm_line.frmline_boxes
 @
 
+% x is not 0
+<<[[Frame.set_cursor()]] x y value handling overflow lines>>=
+((x-1) mod frame.frm_cutline) + 1, i + (x-1) / frame.frm_cutline
+@
+% ex: x = 1, cutline = 80 => x = 1, y = i, x = 80 => x = 80, y = i
+%  x = 82 => x =  2, y = i + 1
 
 
+
+% set_cursor -> <>
+<<function Frame.point_to_cursor>>=
+let point_to_cursor buf point =
+  let text = buf.buf_text in
+  let line = Ebuffer.compute_representation buf (Text.point_line text point) in
+  let xpos = Text.point_col text point in
+  let rec iter boxes =
+    match boxes with
+    | [] -> 0
+    | box :: tail ->
+        if xpos < box.box_pos
+        then iter tail
+        else box.box_pos_repr + box.box_charsize *  (xpos - box.box_pos)
+  in
+  iter line.Text.boxes
+@
+% remember that the boxes are sorted in reverse, head is last box
+%less: rename point_to_x ?
+
+%todo: have a point_to_y where do the iteration over frm_table
 
 % x,y display -> text (reverse of display_line stuff)
 
@@ -4673,22 +4710,6 @@ let cursor_to_point frame x y =
 @
 % useful for? the mouse?
 
-<<function Frame.point_to_cursor>>=
-let point_to_cursor buf point =
-  let text = buf.buf_text in
-  let line = Ebuffer.compute_representation buf (Text.point_line text point) in
-  let xpos = Text.point_col text point in
-  let rec iter boxes =
-    match boxes with
-    | [] -> 0
-    | box :: tail ->
-        if xpos < box.box_pos
-        then iter tail
-        else box.box_pos_repr + box.box_charsize *  (xpos - box.box_pos)
-  in
-  iter line.Text.boxes
-@
-% remember that the boxes are sorted in reverse, head is last box
 
 
 <<[[Frame.cursor_to_point()]] sanity check parameters in range>>=

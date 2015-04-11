@@ -261,7 +261,7 @@ let handle_key top_window modifiers keysym =
   clean_display (); (* set cursor off *)
   clear_message top_window;
 
-  Hook.exec_hooks (try Var.get_var buf handle_key_start_hook with _ ->[]) frame;
+  Hook.exec_hooks(try Var.get_var buf handle_key_start_hook with _ ->[]) frame;
 
   let mod_ = 
     (*s: [[Top_window.handle_key()]] compute mod *)

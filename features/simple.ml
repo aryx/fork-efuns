@@ -718,7 +718,7 @@ let color buf regexp strict attr =
       in
       let after = Text.get_char text point in
       if not (strict && (buf.buf_syntax_table.(Char.code before) ||
-            buf.buf_syntax_table.(Char.code after))) then
+                         buf.buf_syntax_table.(Char.code after))) then
         begin
           Text.bmove text point len;
           Text.set_attr text point len attr;

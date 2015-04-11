@@ -42,7 +42,6 @@ let _ =
   (* C-x map *)
   define_action "insert_file"  Complexe.insert_file;
   (*e: loading actions *)
-
   (* ----------------------------------------------------------- *)
   (* Navigating (in the file) *)
   (* ----------------------------------------------------------- *)
@@ -81,7 +80,6 @@ let _ =
   (* pad: *)
   define_action "goto_last_saved_pos" Simple.goto_last_saved_pos; 
   (*e: navigating actions *)
-
   (* ----------------------------------------------------------- *)
   (* Editing *)
   (* ----------------------------------------------------------- *)
@@ -114,7 +112,6 @@ let _ =
   define_action "insert_next_killed"  Simple.insert_next_killed;
   define_action "copy_region"  Simple.copy_region;
   (*e: moving actions *)
-
   (* ------------------------- *)
   (* Transforming *)
   (* ------------------------- *)
@@ -143,7 +140,6 @@ let _ =
   define_action "query_replace_string" Search.query_replace_string;
   define_action "query_replace_regexp" Search.query_replace_regexp;
   (*e: replacing actions *)
-
   (* ----------------------------------------------------------- *)
   (* Searching *)
   (* ----------------------------------------------------------- *)
@@ -153,14 +149,12 @@ let _ =
   define_action "isearch_forward_regexp"  Search.isearch_forward_regexp;
   define_action "isearch_backward_regexp"  Search.isearch_backward_regexp;
   (*e: searching actions *)
-
   (* ----------------------------------------------------------- *)
   (* Undoing *)
   (* ----------------------------------------------------------- *)
   (*s: undoing actions *)
   define_action "undo"  Simple.undo;
   (*e: undoing actions *)
-
   (* ----------------------------------------------------------- *)
   (* External commands *)
   (* ----------------------------------------------------------- *)
@@ -170,7 +164,6 @@ let _ =
   define_action "grep" Compil.grep;
   define_action "compile" Compil.compile;
   (*e: external command actions *)
-
   (* ----------------------------------------------------------- *)
   (* Buffers/windows/frames *)
   (* ----------------------------------------------------------- *)
@@ -196,7 +189,6 @@ let _ =
   (* C-M map *)
   define_action "up_buffer"  Multi_buffers.up_buffer;
   (*e: buffer navigating actions *)
-
   (*s: frame managment actions *)
   (* C-x map *)
   define_action "vertical_cut_frame"  Multi_frames.v_cut_frame;    
@@ -212,7 +204,6 @@ let _ =
   (* C-x map *)
   define_action "next_frame"  Multi_frames.next_frame;
   (*e: frame navigation actions *)
-
   (* ----------------------------------------------------------- *)
   (* Meta *)
   (* ----------------------------------------------------------- *)
@@ -221,7 +212,6 @@ let _ =
   (*x: meta actions *)
   define_action "eval" Complexe.eval;  
   (*e: meta actions *)
-
   (* ----------------------------------------------------------- *)
   (* Saving *)
   (* ----------------------------------------------------------- *)
@@ -234,14 +224,12 @@ let _ =
   (* C-x map *)
   define_action "write_file"  Complexe.write_buffer; 
   (*e: saving actions *)
-
   (* ----------------------------------------------------------- *)
   (* Major mode *)
   (* ----------------------------------------------------------- *)
   (*s: major mode actions *)
   define_action "fondamental_mode" fondamental_mode;
   (*e: major mode actions *)
-
   (* ----------------------------------------------------------- *)
   (* Misc *)
   (* ----------------------------------------------------------- *)
@@ -402,7 +390,6 @@ let _ =
         (* pad: pc-select *)
         [MetaMap, Char.code 'w'], "copy_region";
         (*e: moving keys *)
-
         (* ---------------------- *)
         (* Transforming *)
         (* ---------------------- *)
