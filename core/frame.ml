@@ -15,7 +15,11 @@ open Common
 open Options
 
 open Efuns
-open Text
+open Text (* for the line fields *)
+
+(*****************************************************************************)
+(* Status line *)
+(*****************************************************************************)
 
 (*s: constant Frame.status_format *)
 let status_format = ref [
@@ -103,6 +107,10 @@ let status_name frame name =
   end
 (*e: function Frame.status_name *)
 
+(*****************************************************************************)
+(* Kill *)
+(*****************************************************************************)
+
 (*s: function Frame.kill *)
 let kill frame = 
   let buf = frame.frm_buffer in
@@ -119,6 +127,10 @@ let kill frame =
 let kill_all window =
   Window.iter kill window
 (*e: function Frame.kill_all *)
+
+(*****************************************************************************)
+(* Display *)
+(*****************************************************************************)
 
 (*s: function Frame.install *)
 let install window frame =
@@ -166,6 +178,10 @@ let install window frame =
 let resize frame =
   install frame.frm_window frame
 (*e: function Frame.resize *)
+
+(*****************************************************************************)
+(* Constructor *)
+(*****************************************************************************)
 
 (*s: constant Frame.editname *)
 let editname = "Efuns:"
@@ -275,6 +291,9 @@ let create_inactive window buf =
   create_without_top window None buf
 (*e: function Frame.create_inactive *)
 
+(*****************************************************************************)
+(* Cursor *)
+(*****************************************************************************)
 
 (*s: function Frame.point_to_cursor *)
 let point_to_x_when_no_cutline buf point =
@@ -314,6 +333,10 @@ let cursor_to_coord frame x y =
   { Text.c_col = col; Text.c_line = line }
 (*e: function Frame.cursor_to_point *)
 
+
+(*****************************************************************************)
+(* Display *)
+(*****************************************************************************)
 
 (*s: function Frame.display_line *)
 let display_line graphic frame repr_string y = 
@@ -656,6 +679,10 @@ let display top_window frame =
       (*e: [[Frame.display()]] draw minibuffer request string *)
   (*e: [[Frame.display()]] draw status line or minibuffer *)
 (*e: function Frame.display *)
+
+(*****************************************************************************)
+(* Misc  *)
+(*****************************************************************************)
 
 (*s: exception Frame.BufferKilled *)
 exception BufferKilled

@@ -349,7 +349,7 @@ type location =
     (* list when have one efuns running multiple top windows *)
     mutable top_windows : top_window list;
 
-    (* pwd of efuns when started *)
+    (* pwd of efuns when started and then dirname of file of active frame *)
     mutable loc_dirname : string;
 
     (* general look, configurable via -xxx command line options or .efunsrc 

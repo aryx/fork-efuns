@@ -1005,7 +1005,7 @@ type location =
     (* list when have one efuns running multiple top windows *)
     mutable top_windows : top_window list;
 
-    (* pwd of efuns when started *)
+    (* pwd of efuns when started and then dirname of file of active frame *)
     mutable loc_dirname : string;
 
     (* general look, configurable via -xxx command line options or .efunsrc 
@@ -1887,7 +1887,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
+let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -7873,6 +7873,18 @@ let iter f window =
 
 % the active window??
 
+% changed when navigate window, or delete windows.
+% one_frame | Window.next | ... -> <>
+<<function Frame.active>>=
+let active frame =
+  let top_window = Window.top frame.frm_window in
+  top_window.top_active_frame <- frame;
+  frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
+    (Globals.location()).loc_dirname <- Filename.dirname filename
+  )
+@
+% so loc_dirname is dirname of active frame!
+
 \section{Creating sub windows}
 
 <<[[edit_menu]] entries>>=
@@ -7971,6 +7983,7 @@ let one_frame frame =
         Frame.active frame
       end
 @
+
 
 <<function Multi_frames.delete_frame>>=
 let delete_frame frame =
@@ -8760,6 +8773,8 @@ let current_dir frame =
   | Some filename -> Filename.dirname filename ^ "/"
   | None -> (Globals.location()).loc_dirname ^ "/"
 @
+% note that loc_dirname is actually the dirname of the file of the
+%  active frame (or the cwd of efuns when it was started)
 
 \subsection{[[M-x compile]]}
 

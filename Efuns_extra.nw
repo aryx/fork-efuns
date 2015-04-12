@@ -1424,14 +1424,6 @@ let dummy_mode = Ebuffer.new_major_mode "" []
 @
 
 
-<<function Frame.active>>=
-let active frame =
-  let top_window = Window.top frame.frm_window in
-  top_window.top_active_frame <- frame;
-  frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
-    (Globals.location()).loc_dirname <- Filename.dirname filename
-  )
-@
 
 <<function Frame.create>>=
 let create window mini buf =
@@ -1503,7 +1495,11 @@ open Common
 open Options
 
 open Efuns
-open Text
+open Text (* for the line fields *)
+
+(*****************************************************************************)
+(* Status line *)
+(*****************************************************************************)
 
 <<constant Frame.status_format>>
 
@@ -1522,13 +1518,25 @@ open Text
 
 <<function Frame.status_name>>
 
+(*****************************************************************************)
+(* Kill *)
+(*****************************************************************************)
+
 <<function Frame.kill>>
 
 <<function Frame.kill_all>>
 
+(*****************************************************************************)
+(* Display *)
+(*****************************************************************************)
+
 <<function Frame.install>>
 
 <<function Frame.resize>>
+
+(*****************************************************************************)
+(* Constructor *)
+(*****************************************************************************)
 
 <<constant Frame.editname>>
 <<constant Frame.dummy_mode>>
@@ -1542,11 +1550,18 @@ open Text
 
 <<function Frame.create_inactive>>
 
+(*****************************************************************************)
+(* Cursor *)
+(*****************************************************************************)
 
 <<function Frame.point_to_cursor>>
 
 <<function Frame.cursor_to_point>>
 
+
+(*****************************************************************************)
+(* Display *)
+(*****************************************************************************)
 
 <<function Frame.display_line>>
 
@@ -1556,6 +1571,10 @@ open Text
 
 
 <<function Frame.display>>
+
+(*****************************************************************************)
+(* Misc  *)
+(*****************************************************************************)
 
 <<exception Frame.BufferKilled>>
 <<function Frame.unkill>>
