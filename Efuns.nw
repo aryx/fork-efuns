@@ -1887,7 +1887,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
+let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -5409,7 +5409,7 @@ exception UnboundKey
 <<[[Efuns.frame]] other fields>>=
 mutable frm_prefix : key list;
 @
-% prefix, have to wait for another key press
+% store prefix, when have to wait for another key press
 
 % Top_window.handle_key -> <>(top_window.top_active_frame, ...)
 <<function Top_window.try_map>>=
@@ -5510,7 +5510,7 @@ let rec add_binding map key_list binding =
 <<function Keymap.set_binding>>=
 let set_binding map key binding =
   match key with
-    (NormalMap,key) when key >= 0 && key < 256 -> 
+  | (NormalMap,key) when key >= 0 && key < 256 -> 
       map.char_map.(key) <- binding
   | _ -> 
       map.complex_bindings <- (key,binding) :: map.complex_bindings
@@ -5614,10 +5614,10 @@ let rec print_key_list key_list =
 <<constant Top_window.mouse_x>>=
 let mouse_x = ref 0
 @
-
 <<constant Top_window.mouse_y>>=
 let mouse_y = ref 0
 @
+% a bit like for keypressed, so action can access more information
 
 <<[[Top_window.handler()]] match event cases>>=
 | Xtypes.XTButtonPress (modifiers,button,x,y) -> 
@@ -5626,17 +5626,13 @@ let mouse_y = ref 0
     handle_key top_window modifiers (XK.xk_Pointer_Button_Dflt + button)
 @
 
-
-
+\subsection{Mouse navigation}
 
 <<[[Std_efunsrc.init_global_map()]] mouse keys setup>>=
 Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
   "set_active_frame" Mouse.mouse_set_frame;
-Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
-  "insert_at_point" Mouse.mouse_yank_at_click;
-Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
-  "mouse_save_then_kill" Mouse.mouse_save_then_kill;
 @
+
 
 <<function Simple.mouse_set_frame>>=
 let mouse_set_frame frame =
@@ -5649,84 +5645,60 @@ let mouse_set_frame frame =
   Text.goto_point text mark point;
   ()
 @
+% mark so can then have copy paste via mouse
 
-<<function Simple.mouse_yank_at_click>>=
-let  mouse_yank_at_click frame =
-failwith "Simple.mouse_yank_at_click: TODO"
-(*
-  let top_window = Window.top frame.frm_window in
-  let frame = mouse_set_active top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let xterm = Window.xterm top_window in
-  let str = WX_xterm.get_cutbuffer xterm in
-  Text.insert text point str |> ignore;
-  Text.fmove text point (String.length str)
-*)
+<<function Top_window.mouse_set_active>>=
+let mouse_set_active top_window =
+  let x = !mouse_x in
+  let y = !mouse_y in
+  let frame = find_selected_frame top_window in
+  Frame.move_point frame frame.frm_point x y;
+  frame
 @
 
-<<function Simple.mouse_save_then_kill>>=
-let mouse_save_then_kill frame =
-  failwith "Simple.mouse_save_then_kill: TODO"
-(*
-  let top_window = Window.top frame.frm_window in
-  let frame = Top_window.find_selected_frame top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let mark = Ebuffer.get_mark buf point in
-  Text.with_new_point text (fun new_point ->
-    Frame.move_point frame new_point !mouse_x !mouse_y;
-    if point = new_point then begin
-      let (start,term) =
-        if point < mark then (point,mark) else (mark,point) 
-      in
-      Text.delete text start (Text.distance text start term) |> ignore
-    end else begin
-      let xterm = Window.xterm top_window in
-      goto_point text mark point;
-      goto_point text point new_point;
-      let str = Text.region text mark point in
-      kill_string str;
-      WX_xterm.set_cutbuffer xterm str;
-      highlight frame
-    end
-  )
-*)
+<<function Top_window.find_selected_frame>>=
+let find_selected_frame top_window =
+  let x = !mouse_x in
+  let y = !mouse_y in
+  let frame = 
+    if y > top_window.top_height - 2 then
+      match top_window.top_mini_buffers with
+      | [] -> raise Not_found
+      | mini_frame :: _ -> mini_frame
+    else
+      find_frame top_window.window x y
+  in
+  Frame.active frame;
+  frame
 @
+% will see Frame.active later
 
-
-
-<<[[Top_window.handler()]] match event cases>>=
-| Xtypes.XTMouseMotion (modifiers,button,x,y) ->
-    mouse_x := x;
-    mouse_y := y;
-    handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
+<<function Top_window.find_frame>>=
+let rec find_frame window x y =
+  match window.win_down with
+    NoFrame -> raise Not_found
+  | WFrame frame -> frame
+  | HComb (w1,w2) -> 
+      if w2.win_xpos > x 
+      then find_frame w1 x y
+      else find_frame w2 x y
+  | VComb (w1,w2) ->
+      if w2.win_ypos > y 
+      then find_frame w1 x y
+      else find_frame w2 x y
 @
-
-<<[[Top_window.handler()]] match event cases>>=
-| Xtypes.XTResize (new_width, new_height) ->
-    resize_window top_window.window 0 0 new_width (new_height - 1);
-    top_window.top_mini_buffers |> List.iter (fun frame -> 
-      let window = frame.frm_window in
-      window.win_ypos <- new_height - 1;
-      window.win_width <- new_width;
-      Frame.install window frame
-    );
-    top_window.top_width <- new_width;
-    top_window.top_height <- new_height;
-    clear_message top_window;
-    update_display ()
-@          
+%old: was assert false, but seems more logic to raise Not_found
 
 \subsection{Cursor}
 % an output, but strongly related also to input devices 
 % (input device feedback essentially)
 
+% find back the subtleties we've seen before about ^M, 80cols overflow
+% with box_charsize, frm_cutline.
+
 % for the mouse
 % x y are actually screen coordinates!
-% ??? -> <>
+% mouse_save_then_kill -> <>
 <<function Frame.move_point>>=
 let move_point frame point x y =
   let buf = frame.frm_buffer in
@@ -5758,7 +5730,7 @@ let cursor_to_coord frame x y =
   in
   { Text.c_col = col; Text.c_line = line }
 @
-% useful for? the mouse?
+% useful for? the mouse!
 %old: was cursor_to_point, but it was returning a coord
 %less why not return an actual point then? it's more a (line x col) actually
 
@@ -5770,9 +5742,90 @@ then raise Not_found;
 
 
 
+\subsection{Mouse selection}
+
+<<[[Top_window.handler()]] match event cases>>=
+| Xtypes.XTMouseMotion (modifiers,button,x,y) ->
+    mouse_x := x;
+    mouse_y := y;
+    handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
+@
+
+\subsection{Mouse copy/paste}
+
+<<[[Std_efunsrc.init_global_map()]] mouse keys setup>>=
+Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
+  "mouse_save_then_kill" Mouse.mouse_save_then_kill;
+Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
+  "insert_at_point" Mouse.mouse_yank_at_click;
+@
 
 
+<<function Simple.mouse_yank_at_click>>=
+let  mouse_yank_at_click frame =
+failwith "Simple.mouse_yank_at_click: TODO"
+(*
+  let top_window = Window.top frame.frm_window in
+  let frame = mouse_set_active top_window in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let xterm = Window.xterm top_window in
+  let str = WX_xterm.get_cutbuffer xterm in
+  Text.insert text point str |> ignore;
+  Text.fmove text point (String.length str)
+*)
+@
+% normally should get the Xwindow clipboard string
 
+<<function Simple.mouse_save_then_kill>>=
+let mouse_save_then_kill frame =
+  failwith "Simple.mouse_save_then_kill: TODO"
+(*
+  let top_window = Window.top frame.frm_window in
+  let frame = Top_window.find_selected_frame top_window in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let mark = Ebuffer.get_mark buf point in
+  Text.with_new_point text (fun new_point ->
+    Frame.move_point frame new_point !mouse_x !mouse_y;
+    if point = new_point then begin
+      let (start,term) =
+        if point < mark then (point,mark) else (mark,point) 
+      in
+      Text.delete text start (Text.distance text start term) |> ignore
+    end else begin
+      let xterm = Window.xterm top_window in
+      goto_point text mark point;
+      goto_point text point new_point;
+      let str = Text.region text mark point in
+      kill_string str;
+      WX_xterm.set_cutbuffer xterm str;
+      highlight frame
+    end
+  )
+*)
+@
+
+\subsection{General clipboard}
+
+\subsection{Resize}
+
+<<[[Top_window.handler()]] match event cases>>=
+| Xtypes.XTResize (new_width, new_height) ->
+    resize_window top_window.window 0 0 new_width (new_height - 1);
+    top_window.top_mini_buffers |> List.iter (fun frame -> 
+      let window = frame.frm_window in
+      window.win_ypos <- new_height - 1;
+      window.win_width <- new_width;
+      Frame.install window frame
+    );
+    top_window.top_width <- new_width;
+    top_window.top_height <- new_height;
+    clear_message top_window;
+    update_display ()
+@          
 
 \section{Interactive select}
 % here?
@@ -6028,6 +6081,8 @@ top_window.top_second_cursor |> Common.do_option (fun frame ->
 \chapter{Basic Features}
 
 \section{Navigating}
+
+% see also mouse navigation earlier
 
 <<navigating keys>>=
 [NormalMap, XK.xk_Left], "move_backward"; 
@@ -6453,7 +6508,7 @@ let end_of_file frame =
 @
 
 
-\subsection{Position}
+\subsection{Specific positions}
 
 <<function Complex.goto_char>>=
 let goto_char frame =

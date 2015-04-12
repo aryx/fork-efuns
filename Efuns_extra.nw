@@ -3627,45 +3627,10 @@ let rec resize_window window xpos ypos width height =
       resize_window w2 xpos (ypos + he1) width (height - he1)
 @
 
-<<function Top_window.find_frame>>=
-let rec find_frame window x y =
-  match window.win_down with
-    NoFrame -> assert false
-  | WFrame frame -> frame
-  | HComb (w1,w2) -> 
-      if w2.win_xpos > x then find_frame w1 x y
-      else find_frame w2 x y
-  | VComb (w1,w2) ->
-      if w2.win_ypos > y then find_frame w1 x y
-      else find_frame w2 x y
-@
 
 
 
-<<function Top_window.find_selected_frame>>=
-let find_selected_frame top_window =
-  let x = !mouse_x in
-  let y = !mouse_y in
-  let frame = 
-    if y > top_window.top_height - 2 then
-      match top_window.top_mini_buffers with
-        [] -> raise Not_found
-      | mini_frame :: _ -> mini_frame
-    else
-      find_frame top_window.window x y
-  in
-  Frame.active frame;
-  frame
-@
 
-<<function Top_window.mouse_set_active>>=
-let mouse_set_active top_window =
-  let x = !mouse_x in
-  let y = !mouse_y in
-  let frame = find_selected_frame top_window in
-  Frame.move_point frame frame.frm_point x y;
-  frame
-@
 
 <<function Top_window.mini_message>>=
 let mini_message frame msg =
