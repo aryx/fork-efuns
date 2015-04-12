@@ -94,7 +94,7 @@ let rec get_binding map keylist =
 (*s: function Keymap.set_binding *)
 let set_binding map key binding =
   match key with
-    (NormalMap,key) when key >= 0 && key < 256 -> 
+  | (NormalMap,key) when key >= 0 && key < 256 -> 
       map.char_map.(key) <- binding
   | _ -> 
       map.complex_bindings <- (key,binding) :: map.complex_bindings

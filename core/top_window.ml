@@ -189,13 +189,15 @@ let rec resize_window window xpos ypos width height =
 (*s: function Top_window.find_frame *)
 let rec find_frame window x y =
   match window.win_down with
-    NoFrame -> assert false
+    NoFrame -> raise Not_found
   | WFrame frame -> frame
   | HComb (w1,w2) -> 
-      if w2.win_xpos > x then find_frame w1 x y
+      if w2.win_xpos > x 
+      then find_frame w1 x y
       else find_frame w2 x y
   | VComb (w1,w2) ->
-      if w2.win_ypos > y then find_frame w1 x y
+      if w2.win_ypos > y 
+      then find_frame w1 x y
       else find_frame w2 x y
 (*e: function Top_window.find_frame *)
 
@@ -216,7 +218,7 @@ let find_selected_frame top_window =
   let frame = 
     if y > top_window.top_height - 2 then
       match top_window.top_mini_buffers with
-        [] -> raise Not_found
+      | [] -> raise Not_found
       | mini_frame :: _ -> mini_frame
     else
       find_frame top_window.window x y

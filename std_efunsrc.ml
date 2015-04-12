@@ -608,10 +608,11 @@ let init_global_map () =
   (*s: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
     "set_active_frame" Mouse.mouse_set_frame;
-  Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
-    "insert_at_point" Mouse.mouse_yank_at_click;
+  (*x: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
     "mouse_save_then_kill" Mouse.mouse_save_then_kill;
+  Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
+    "insert_at_point" Mouse.mouse_yank_at_click;
   (*e: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   ()
 (*e: function Std_efunsrc.init_global_map *)
