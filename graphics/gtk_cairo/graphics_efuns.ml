@@ -23,37 +23,43 @@ open Efuns
 (*****************************************************************************)
 
 type world = {
-  (* the "model" *)
+  (* the "model" (but actually accessible also via Globals.location()) *)
   loc: Efuns.location;
+
+  (* dimensions *)
+  metrics: layout;
 
   (* first cairo layer, for heavy computation e.g. the minimap *)
   mutable base: [ `Any ] Cairo.surface;
   (* second cairo layer, for scrolling window on minimap *)
   mutable overlay: [ `Any ] Cairo.surface;
-
+  (* the final drawing area *)
   mutable final: [ `Any ] Cairo.surface;
 
+  (* pango is better than the (simpler but buggy) toy text api in cairo *)
   ly: Pango.layout;
 
-  metrics: layout;
-
-  (* to avoid redrawing the minimap each time 
-   * buf_name, version of text, page
+  (* we redraw (expensive) the minimap only if this triple changes:
+   *  (buf_name, version of text, page)
    *)
   mutable last_top_frame_info:(string * Text.version * int);
 }
 
+(* stuff are set as mutable because they are derived from the other fields *)
 and layout = {
   font_width: float;
   font_height: float;
 
-  main_width: float;
-  main_height: float;
+  main_width: float; (* should be loc.loc_width * font_width *)
+  main_height: float; (* should be loc.loc_height * font_height *)
 
   mini_factor: float;
-  mini_width: float;
+  mutable mini_width: float;
+  mutable linemax: int; (* number of lines the minimap can display in a "page"*)
 
-  linemax: int;
+  (* main + mini *)
+  mutable full_width: int;
+  mutable full_height: int;
 }
 
 (*****************************************************************************)
@@ -130,6 +136,58 @@ let clear cr =
   ()
 
 (*****************************************************************************)
+(* Pango and metrics *)
+(*****************************************************************************)
+
+let compute_metrics loc desc =
+
+  let fontmap = Pango_cairo.FontMap.get_default () in
+  let ctx = Pango_cairo.FontMap.create_context fontmap in
+  Pango.Context.set_font_description ctx desc;
+
+  let metrics = Pango.Context.get_metrics ctx desc None in
+  let width = 
+    float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
+  let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
+  let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
+  let height = (ascent + descent) * 1.1 in
+
+  let metrics = { 
+    font_width = width; 
+    font_height = height;
+
+    mini_factor = 10.;
+
+    main_width = float_of_int loc.loc_width * width;
+    main_height = float_of_int loc.loc_height * height;
+
+    (* derived from above below *)
+    linemax = 0;
+    mini_width = 0.;
+    full_width = 0;
+    full_height = 0;
+  }
+  in
+  metrics.linemax <- 
+   metrics.main_height * metrics.mini_factor / metrics.font_height 
+       |> ceil |> int_of_float;
+  metrics.mini_width <- metrics.main_width / metrics.mini_factor;
+  (* those are the dimensions for the main view, the drawing area *)
+  metrics.full_width <- 
+    metrics.main_width + metrics.mini_width |> ceil |>int_of_float;
+    (* 1320 *)
+  metrics.full_height <- metrics.main_height |> ceil |> int_of_float;
+    (* 1400 *)
+  
+  metrics
+
+let pango_layout cr desc =
+  let layout = Pango_cairo.create_layout cr in
+  Pango.Layout.set_font_description layout desc;
+  Pango_cairo.update_layout cr layout;
+  layout
+
+(*****************************************************************************)
 (* Minimap *)
 (*****************************************************************************)
 
@@ -189,8 +247,6 @@ let draw_minimap w =
       let _fontsize = (attr lsr 16) land 255 in
       set_source_color ~cr ~color:fgcolor ();
 
-
-
       Pango.Layout.set_text w.ly  (prepare_string str);
       Pango_cairo.update_layout cr w.ly;
       Pango_cairo.show_layout cr w.ly;
@@ -241,6 +297,8 @@ let draw_minimap_overlay w =
 (*****************************************************************************)
 (* Draw Efuns API *)
 (*****************************************************************************)
+
+(* less: could rewrite to just take w instead of cr x pg *)
 
 (* helper *)
 let move_to cr pg col line =
@@ -324,8 +382,10 @@ let assemble_layers w =
 
 let backend w win = 
   let conv x = float_of_int x in
+
   let cr = Cairo.create w.base in
   let pg = (w.ly, w.metrics) in
+
   let loc = w.loc in
   { Xdraw. 
     clear_eol = (fun a b c -> 
@@ -368,28 +428,24 @@ let configure loc top_window desc metrics da ev =
   let width = GdkEvent.Configure.width ev in
   let height = GdkEvent.Configure.height ev in
 
-  (* todo: metrics should be recomputed *)
+  (* todo: metrics should be recomputed by
+   * first adjusting loc_width and loc_height
+   *)
 
   (*-------------------------------------------------------------------*)
   (* Cairo/pango graphics backend setup *)
   (*-------------------------------------------------------------------*)
   let cr = Cairo_lablgtk.create (*px#pixmap*) da#misc#window in
-
   let surface = Cairo.get_target cr in
-  let layout = Pango_cairo.create_layout cr in
-  Pango.Layout.set_font_description layout desc;
-  Pango_cairo.update_layout cr layout;
+
+  let colorkind = Cairo.CONTENT_COLOR_ALPHA in
 
   let w = {
     loc = loc;
-    base = 
-      Cairo.surface_create_similar surface Cairo.CONTENT_COLOR_ALPHA
-        width height;
-    overlay = 
-      Cairo.surface_create_similar surface Cairo.CONTENT_COLOR_ALPHA
-        width height;
-    final = Cairo.get_target cr;
-    ly = layout;
+    base =    Cairo.surface_create_similar surface colorkind  width height;
+    overlay = Cairo.surface_create_similar surface colorkind  width height;
+    final = surface;
+    ly = pango_layout cr desc;
     metrics;
     last_top_frame_info = ("", -1, -1);
   }
@@ -444,46 +500,7 @@ let init2 init_files =
   in
   Pango.Font.set_weight desc `ULTRABOLD; 
 
-  let fontmap = Pango_cairo.FontMap.get_default () in
-  let ctx = Pango_cairo.FontMap.create_context fontmap in
-  Pango.Context.set_font_description ctx desc;
-
-  let metrics = Pango.Context.get_metrics ctx desc None in
-  let width = 
-    float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
-  let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
-  let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
-  let height = (ascent + descent) * 1.1 in
-
-  let metrics = { 
-    font_width = width; 
-    font_height = height;
-
-    mini_factor = 10.;
-
-    main_width = float_of_int loc.loc_width * width;
-    main_height = float_of_int loc.loc_height * height;
-
-    (* derived from above below *)
-    linemax = 0;
-    mini_width = 0.;
-  } in
-  let metrics = { metrics with
-    linemax = metrics.main_height * metrics.mini_factor / metrics.font_height 
-       |> ceil |> int_of_float;
-    mini_width = metrics.main_width / metrics.mini_factor;
-  }
-  in
-
-  (* those are the dimensions for the main view, the drawing area *)
-  let width = 
-    metrics.main_width + metrics.mini_width |> ceil |> int_of_float
-    (* 1320 *)
-  in
-  let height = 
-    metrics.main_height |> ceil |> int_of_float
-    (* 1400 *)
-  in
+  let metrics = compute_metrics loc desc in
 
   (*-------------------------------------------------------------------*)
   (* Window creation *)
@@ -568,7 +585,7 @@ let init2 init_files =
     let da = GMisc.drawing_area ~packing:vbox#add () in
     (* we manage ourselves layers with cairo *)
     da#misc#set_double_buffered false;
-    da#set_size ~width ~height;
+    da#set_size ~width:metrics.full_width ~height:metrics.full_height;
     da#misc#set_can_focus true ;
     da#event#add [ `BUTTON_MOTION; `POINTER_MOTION;
                    `BUTTON_PRESS; `BUTTON_RELEASE ];
@@ -583,7 +600,6 @@ let init2 init_files =
     da#event#connect#configure 
       ~callback:(configure loc top_window desc metrics da) |> ignore;
     da#event#connect#expose ~callback:(expose) |> ignore;
-
 
     (*-------------------------------------------------------------------*)
     (* status bar *)
