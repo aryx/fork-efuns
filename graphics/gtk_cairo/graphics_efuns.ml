@@ -656,7 +656,21 @@ let init2 init_files =
   ) |> ignore;
 
   da#event#connect#button_press (fun ev ->
-    raise Todo
+    let (x, y) = GdkEvent.Button.x ev, GdkEvent.Button.y ev in
+
+    (match GdkEvent.get_type ev with
+    | `BUTTON_PRESS ->
+        (* TODO should get the latest version *)
+        let metrics = metrics in
+        let button = GdkEvent.Button.button ev in
+        let x = (x / metrics.font_width) |> int_of_float in
+        let y = (y / metrics.font_height) |> int_of_float in
+        pr2 (spf "click on x = %d, y = %d " x y);
+        let evt = Xtypes.XTButtonPress(!modifiers, button, x, y) in
+        Top_window.handler top_window evt
+    | _ -> ()
+    );
+    true
   ) |> ignore;
 
   (*-------------------------------------------------------------------*)

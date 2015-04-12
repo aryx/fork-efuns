@@ -14,14 +14,14 @@ let xk_Return = 13
 
 
 
+(* must at least not conflict with other characters *)
+let xk_Pointer_Button_Dflt = 2000
+let xk_Pointer_Button1 = xk_Pointer_Button_Dflt + 1
+let xk_Pointer_Button2 = xk_Pointer_Button_Dflt + 2
+let xk_Pointer_Button3 = xk_Pointer_Button_Dflt + 3
 
-let xk_Pointer_Button_Dflt = 0
-let xk_Pointer_Button1 = 0
-let xk_Pointer_Button2 = 0
-let xk_Pointer_Button3 = 0
-
-let xk_Pointer_Button4 = 0
-let xk_Pointer_Button5 = 0
+let xk_Pointer_Button4 = xk_Pointer_Button_Dflt + 4
+let xk_Pointer_Button5 = xk_Pointer_Button_Dflt + 5
 
 let xk_Pointer_Drag_Dflt = 0
 let xk_Pointer_Drag1 = 0
