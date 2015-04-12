@@ -739,7 +739,7 @@ let goto_point _text p1 p2 =
 (*e: function Text.goto_point *)
 
 (*s: function Text.move_point_to *)
-let move_point_to text point pos =
+let move_point_to_pos text point pos =
   let _x,y = find_xy text text.gpoint.pos text.gpoint.line pos in
   point.pos <- pos;
   point.line <- y
@@ -979,7 +979,7 @@ let get_position text point =
 
 (*s: function Text.set_position *)
 let set_position text point pos =
-  move_point_to text point
+  move_point_to_pos text point
     (if pos > text.gpoint.pos 
      then pos + text.gsize
      else pos
@@ -1309,7 +1309,7 @@ let point_to_line text point line =
     then text.text_size
     else text.text_newlines.(line).position
   in
-  move_point_to text point pos
+  move_point_to_pos text point pos
 (*e: function Text.point_to_line *)
 
 

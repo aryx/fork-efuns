@@ -544,7 +544,7 @@ let blit str text point len =
 
 <<function Text.set_position>>=
 let set_position text point pos =
-  move_point_to text point
+  move_point_to_pos text point
     (if pos > text.gpoint.pos 
      then pos + text.gsize
      else pos

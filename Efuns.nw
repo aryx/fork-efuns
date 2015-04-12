@@ -2450,13 +2450,7 @@ let size text =
 % gsize is 0 at the very beginning
 
 
-
-
-\section{Points}
-
-% seen Point type in core DS chapter with Buffer type.
-
-% they are used as "cursors" that goes through the text.
+\section{Positions}
 
 <<misc actions>>=
 define_action "describe_position" Complexe.describe_position;
@@ -2476,6 +2470,8 @@ let describe_position frame =
        (Text.get_position frame.frm_buffer.buf_text frame.frm_point))
 @
 
+% seen Point type in core DS chapter with Buffer type.
+
 <<function Text.get_position>>=
 let get_position text point = 
   (* gap handling *)
@@ -2486,6 +2482,11 @@ let get_position text point =
 % note that point can never be in the middle of the hole.
 % either it's the gpoint, or it's before or after the hole.
 
+\section{Points}
+
+% seen Point type in core DS chapter with Buffer type.
+
+% they are used as "cursors" that goes through the text.
 
 
 <<[[Text.text]] other fields>>=
@@ -2540,13 +2541,12 @@ let goto_point _text p1 p2 =
 
 % ?? -> <>
 <<function Text.move_point_to>>=
-let move_point_to text point pos =
+let move_point_to_pos text point pos =
   let _x,y = find_xy text text.gpoint.pos text.gpoint.line pos in
   point.pos <- pos;
   point.line <- y
 @
-% find_xy???
-%less: rename move_point_to_pos
+%old: was move_point_to but better rename to move_point_to_pos
 
 
 \section{Delta}
@@ -4709,7 +4709,7 @@ let cursor_to_point frame x y =
   col, line
 @
 % useful for? the mouse?
-
+% rename cursor_to_coord
 
 
 <<[[Frame.cursor_to_point()]] sanity check parameters in range>>=
@@ -4879,7 +4879,10 @@ end
 
 %todo: so code setting frm_force_start actually set frm_cursor_x
 % and frm_cursor_y? apparently no code does this, so why
-% this code?
+% this code? for the mouse? that actually set x/y but does not set
+% frm_point? so this is a way to set frm_point from the cursor.
+% a bit ugly, could do that instead in the mouse handler?
+
 
 \subsection{Scrollbar}
 
@@ -6414,7 +6417,7 @@ let point_to_line text point line =
     then text.text_size
     else text.text_newlines.(line).position
   in
-  move_point_to text point pos
+  move_point_to_pos text point pos
 @
 
 
