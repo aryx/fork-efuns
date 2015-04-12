@@ -364,15 +364,16 @@ let display_line graphic frame repr_string y =
   iter 0 (frm_line.first_box_extra_offset + frame.frm_x_offset) frm_line.frmline_boxes
 (*e: function Frame.display_line *)
 
-(*s: function Frame.set_cursor *)
-let set_cursor frame =
+(*s: function Frame.point_to_xy_opt *)
+let point_to_xy_opt frame point =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
-  let point = frame.frm_point in
-  let col = point_col text point in
   let x_nocut = point_to_x_when_no_cutline buf point in
   let line = Ebuffer.compute_representation buf (point_line text point) in
+
+  let xref = ref 0 in
+  let yref = ref 0 in
   
   try
     for i = 0 to frame.frm_height - 1 do
@@ -382,36 +383,54 @@ let set_cursor frame =
           if x_nocut = 0 
           then 0,i
           else
-            (*s: [[Frame.set_cursor()]] x y value handling overflow lines *)
+            (*s: [[Frame.point_to_xy_opt()]] x y value handling overflow lines *)
             ((x_nocut-1) mod frame.frm_cutline) + 1, i + (x_nocut-1) / frame.frm_cutline
-            (*e: [[Frame.set_cursor()]] x y value handling overflow lines *)
+            (*e: [[Frame.point_to_xy_opt()]] x y value handling overflow lines *)
         in
-        frame.frm_cursor_x <- x;
-        frame.frm_cursor_y <- y;
+        xref := x;
+        yref := y;
         raise Exit
-    done;      
-    (* insert cursor is not on frame *)
-    frame.frm_cursor.[0] <- '\000'
-    
-  with Exit -> 
-    let rec iter boxes =
-      match boxes with
-      | [] -> 
-          frame.frm_cursor.[0] <- ' '
-      | box :: tail ->
-          if box.box_pos <= col && box.box_pos + box.box_len > col
-          then begin
-            let pos =
-              box.box_pos_repr + box.box_charsize * 
-              (col - box.box_pos)
-            in
-            frame.frm_cursor.[0] <- line.repr_string.[pos];
-            frame.frm_cursor_attr <- box.box_attr;
-          end else
-            iter tail
-    in
-    let frm_line = frame.frm_table.(frame.frm_cursor_y) in
-    iter frm_line.frmline_boxes
+    done;
+    None
+  with Exit ->
+    Some (!xref, !yref)
+(*e: function Frame.point_to_xy_opt *)
+
+(*s: function Frame.set_cursor *)
+let set_cursor frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+
+  let point = frame.frm_point in
+  match point_to_xy_opt frame point with
+  | None ->
+      (* insert cursor is not on frame *)
+      frame.frm_cursor.[0] <- '\000'
+  | Some (x, y) ->
+      frame.frm_cursor_x <- x;
+      frame.frm_cursor_y <- y;
+      let col = point_col text point in
+      let line_ = point_line text point in
+      let line = Ebuffer.compute_representation buf line_ in
+
+      let rec iter boxes =
+        match boxes with
+        | [] -> 
+            frame.frm_cursor.[0] <- ' '
+        | box :: tail ->
+            if box.box_pos <= col && box.box_pos + box.box_len > col
+            then begin
+              let pos =
+                box.box_pos_repr + box.box_charsize * 
+                (col - box.box_pos)
+              in
+              frame.frm_cursor.[0] <- line.repr_string.[pos];
+              frame.frm_cursor_attr <- box.box_attr;
+            end else
+              iter tail
+      in
+      let frm_line = frame.frm_table.(frame.frm_cursor_y) in
+      iter frm_line.frmline_boxes
 (*e: function Frame.set_cursor *)
 
 (*s: function Frame.update_table *)

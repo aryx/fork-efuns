@@ -4621,9 +4621,8 @@ graphic.Xdraw.draw_string
 % the / at the end of the line!
 
 
-\subsection{Cursor}
-% an output, but strongly related
-% also to input devices (input device feedback essentially)
+\subsection{Cursor display}
+% Focus just on cursor display? will see more code in the Mouse section?
 
 % The flow is that some functions modify top_active_frame.frm_point
 % (and sometimes also modify first top_active_frame), and now we need to put
@@ -4633,6 +4632,8 @@ graphic.Xdraw.draw_string
 % we need to redo some of the logic done by update_table where
 % we need to manage frm_cutline because we don't want to polluate
 % update_table with cursor issues I think.
+
+%\subsection{Cursor on}
 
 % Top_window.update_display -> Frame.display ; ...;  <>
 <<function Top_window.cursor_on>>=
@@ -4667,6 +4668,7 @@ mutable frm_cursor_attr : Text.attribute;
 <<function Top_window.set_cursor_on>>=
 let set_cursor_on top_window frame = 
   Frame.set_cursor frame;
+
   if frame.frm_cursor.[0] <> '\000' then
     let graphic = Efuns.backend top_window in
     graphic.Xdraw.draw_string
@@ -4683,9 +4685,48 @@ let set_cursor frame =
   let text = buf.buf_text in
 
   let point = frame.frm_point in
-  let col = point_col text point in
+  match point_to_xy_opt frame point with
+  | None ->
+      (* insert cursor is not on frame *)
+      frame.frm_cursor.[0] <- '\000'
+  | Some (x, y) ->
+      frame.frm_cursor_x <- x;
+      frame.frm_cursor_y <- y;
+      let col = point_col text point in
+      let line_ = point_line text point in
+      let line = Ebuffer.compute_representation buf line_ in
+
+      let rec iter boxes =
+        match boxes with
+        | [] -> 
+            frame.frm_cursor.[0] <- ' '
+        | box :: tail ->
+            if box.box_pos <= col && box.box_pos + box.box_len > col
+            then begin
+              let pos =
+                box.box_pos_repr + box.box_charsize * 
+                (col - box.box_pos)
+              in
+              frame.frm_cursor.[0] <- line.repr_string.[pos];
+              frame.frm_cursor_attr <- box.box_attr;
+            end else
+              iter tail
+      in
+      let frm_line = frame.frm_table.(frame.frm_cursor_y) in
+      iter frm_line.frmline_boxes
+@
+
+
+<<function Frame.point_to_xy_opt>>=
+let point_to_xy_opt frame point =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+
   let x_nocut = point_to_x_when_no_cutline buf point in
   let line = Ebuffer.compute_representation buf (point_line text point) in
+
+  let xref = ref 0 in
+  let yref = ref 0 in
   
   try
     for i = 0 to frame.frm_height - 1 do
@@ -4695,38 +4736,21 @@ let set_cursor frame =
           if x_nocut = 0 
           then 0,i
           else
-            <<[[Frame.set_cursor()]] x y value handling overflow lines>>
+            <<[[Frame.point_to_xy_opt()]] x y value handling overflow lines>>
         in
-        frame.frm_cursor_x <- x;
-        frame.frm_cursor_y <- y;
+        xref := x;
+        yref := y;
         raise Exit
-    done;      
-    (* insert cursor is not on frame *)
-    frame.frm_cursor.[0] <- '\000'
-    
-  with Exit -> 
-    let rec iter boxes =
-      match boxes with
-      | [] -> 
-          frame.frm_cursor.[0] <- ' '
-      | box :: tail ->
-          if box.box_pos <= col && box.box_pos + box.box_len > col
-          then begin
-            let pos =
-              box.box_pos_repr + box.box_charsize * 
-              (col - box.box_pos)
-            in
-            frame.frm_cursor.[0] <- line.repr_string.[pos];
-            frame.frm_cursor_attr <- box.box_attr;
-          end else
-            iter tail
-    in
-    let frm_line = frame.frm_table.(frame.frm_cursor_y) in
-    iter frm_line.frmline_boxes
+    done;
+    None
+  with Exit ->
+    Some (!xref, !yref)
 @
+%history: I added this function. This simplify Frame.set_cursor by 
+% extracting lots of code from it
 
 % x is not 0
-<<[[Frame.set_cursor()]] x y value handling overflow lines>>=
+<<[[Frame.point_to_xy_opt()]] x y value handling overflow lines>>=
 ((x_nocut-1) mod frame.frm_cutline) + 1, i + (x_nocut-1) / frame.frm_cutline
 @
 % ex: x = 1, cutline = 80 => x = 1, y = i, x = 80 => x = 80, y = i
@@ -4753,61 +4777,13 @@ let point_to_x_when_no_cutline buf point =
 % remember that the boxes are sorted in reverse, head is last box
 %old: was point_to_cursor, but it's actually just one part
 % of the cursor, and it's not even an x! it's an x when have no cutline
-
-%still? have a point_to_y where do the iteration over frm_table?
-% but harder cos point_to_y will also compute point_to_x
-%todo: but at least can simplify Frame.set_cursor by extracting
-% this part in point_to_xy_opt
-
-% x,y display -> text (colxline) (reverse of display_line stuff)
-% Frame.display (when frm_force_start) -> <>
-<<function Frame.cursor_to_point>>=
-let cursor_to_coord frame x y =
-  <<[[Frame.cursor_to_point()]] sanity check parameters in range>>
-  let frm_line = frame.frm_table.(y) in
-  let line = frm_line.lineidx_in_text in
-  let rec iter x boxes default =
-    match boxes with
-      [] -> default
-    | box :: tail -> 
-        if x < box.box_size
-        then box.box_pos +   x / box.box_charsize
-        else iter (x - box.box_size) tail (box.box_pos + box.box_len)
-  in
-  let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
-    frm_line.frmline_boxes 0 
-  in
-  { Text.c_col = col; Text.c_line = line }
-@
-% useful for? the mouse?
-%old: was cursor_to_point, but it was returning a coord
-%less why not return an actual point then? it's more a (line x col) actually
-
-
-<<[[Frame.cursor_to_point()]] sanity check parameters in range>>=
-if (y < 0) || (x<0) || (y >= frame.frm_height-1) || (x>frame.frm_cutline) 
-then raise Not_found;
-@
-
-
-
-
-% for the mouse
-% x y are actually screen coordinates!
-<<function Frame.move_point>>=
-let move_point frame point x y =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let coord = cursor_to_coord frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
-  Text.goto_line text point coord.Text.c_line;
-  Text.fmove text point coord.Text.c_col |> ignore
-@
-%less: could have instead a cursor_to_point and do a Text.goto_point
-
-
+%note: have a point_to_y where do the iteration over frm_table?
+% but harder cos point_to_y will also compute point_to_x, so the
+% best I can do is point_to_xy_opt that calls point_to_x_...
 
 
 %\subsection{[[Top_window.clean_display()]]}
+%\subsection{Cursor off}
 
 % event loop -> ... -> handle_key -> ...; <>; Top_window.update_display()
 <<function Top_window.clean_display>>=
@@ -5743,6 +5719,59 @@ let mouse_save_then_kill frame =
     clear_message top_window;
     update_display ()
 @          
+
+\subsection{Cursor}
+% an output, but strongly related also to input devices 
+% (input device feedback essentially)
+
+% for the mouse
+% x y are actually screen coordinates!
+% ??? -> <>
+<<function Frame.move_point>>=
+let move_point frame point x y =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let coord = cursor_to_coord frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
+  Text.goto_line text point coord.Text.c_line;
+  Text.fmove text point coord.Text.c_col |> ignore
+@
+%less: could have instead a cursor_to_point and do a Text.goto_point
+
+
+% x,y display -> text (colxline coord) (reverse of display_line stuff)
+% Frame.display (when frm_force_start) -> <>
+<<function Frame.cursor_to_point>>=
+let cursor_to_coord frame x y =
+  <<[[Frame.cursor_to_point()]] sanity check parameters in range>>
+  let frm_line = frame.frm_table.(y) in
+  let line = frm_line.lineidx_in_text in
+  let rec iter x boxes default =
+    match boxes with
+      [] -> default
+    | box :: tail -> 
+        if x < box.box_size
+        then box.box_pos +   x / box.box_charsize
+        else iter (x - box.box_size) tail (box.box_pos + box.box_len)
+  in
+  let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
+    frm_line.frmline_boxes 0 
+  in
+  { Text.c_col = col; Text.c_line = line }
+@
+% useful for? the mouse?
+%old: was cursor_to_point, but it was returning a coord
+%less why not return an actual point then? it's more a (line x col) actually
+
+
+<<[[Frame.cursor_to_point()]] sanity check parameters in range>>=
+if (y < 0) || (x<0) || (y >= frame.frm_height-1) || (x>frame.frm_cutline) 
+then raise Not_found;
+@
+
+
+
+
+
 
 
 \section{Interactive select}

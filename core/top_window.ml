@@ -82,6 +82,7 @@ let try_map frame key =
 (*s: function Top_window.set_cursor_on *)
 let set_cursor_on top_window frame = 
   Frame.set_cursor frame;
+
   if frame.frm_cursor.[0] <> '\000' then
     let graphic = Efuns.backend top_window in
     graphic.Xdraw.draw_string

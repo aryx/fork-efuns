@@ -1565,6 +1565,8 @@ open Text (* for the line fields *)
 
 <<function Frame.display_line>>
 
+<<function Frame.point_to_xy_opt>>
+
 <<function Frame.set_cursor>>
 
 <<function Frame.update_table>>
