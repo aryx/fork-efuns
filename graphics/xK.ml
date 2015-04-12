@@ -15,15 +15,16 @@ let xk_Return = 13
 
 
 
+let xk_Pointer_Button_Dflt = 0
 let xk_Pointer_Button1 = 0
 let xk_Pointer_Button2 = 0
 let xk_Pointer_Button3 = 0
+
 let xk_Pointer_Button4 = 0
 let xk_Pointer_Button5 = 0
 
-let xk_Pointer_Drag1 = 0
-let xk_Pointer_Button_Dflt = 0
 let xk_Pointer_Drag_Dflt = 0
+let xk_Pointer_Drag1 = 0
 
 let xk_Menu = 0
 

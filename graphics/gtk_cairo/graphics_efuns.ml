@@ -307,6 +307,9 @@ let draw_string loc cr pg   col line  str  offset len   attr =
   Pango_cairo.show_layout cr ly;
   ()
 
+(*****************************************************************************)
+(* Final view rendering *)
+(*****************************************************************************)
 
 let assemble_layers w =
   let surface_src = w.base in
@@ -326,12 +329,17 @@ let backend w win =
   let loc = w.loc in
   { Xdraw. 
     clear_eol = (fun a b c -> 
-      clear_eol cr pg (conv a) (conv b) c); 
+      clear_eol cr pg (conv a) (conv b) c
+    ); 
     draw_string = (fun a b c d e f -> 
-      draw_string loc cr pg (conv a) (conv b) c d e f);
+      draw_string loc cr pg (conv a) (conv b) c d e f
+    );
+
     update_display = (fun () -> 
       if !Globals.debug_graphics
       then pr2 ("backend.update_display()");
+
+      (* minimap update *)
       let active_frame = active_frame_info w in
       if active_frame <> w.last_top_frame_info
       then begin 
@@ -340,28 +348,81 @@ let backend w win =
         w.last_top_frame_info <- active_frame;
       end;
       draw_minimap_overlay w;
+
       assemble_layers w;
-      GtkBase.Widget.queue_draw win#as_widget;
+      (*GtkBase.Widget.queue_draw win#as_widget;*)
     );
   }
 
 
 (*****************************************************************************)
-(* Final view rendering *)
+(* paint/configure/expose *)
 (*****************************************************************************)
 
 let paint () =
-  if !Globals.debug_graphics
-  then pr2 "paint";
   (* this will trigger backend.update_display *)
   Top_window.update_display () 
 
-(* for the special key, Control, Meta, etc *)
-let modifiers = ref 0
+
+let configure loc top_window desc metrics da ev =
+  let width = GdkEvent.Configure.width ev in
+  let height = GdkEvent.Configure.height ev in
+
+  (* todo: metrics should be recomputed *)
+
+  (*-------------------------------------------------------------------*)
+  (* Cairo/pango graphics backend setup *)
+  (*-------------------------------------------------------------------*)
+  let cr = Cairo_lablgtk.create (*px#pixmap*) da#misc#window in
+
+  let surface = Cairo.get_target cr in
+  let layout = Pango_cairo.create_layout cr in
+  Pango.Layout.set_font_description layout desc;
+  Pango_cairo.update_layout cr layout;
+
+  let w = {
+    loc = loc;
+    base = 
+      Cairo.surface_create_similar surface Cairo.CONTENT_COLOR_ALPHA
+        width height;
+    overlay = 
+      Cairo.surface_create_similar surface Cairo.CONTENT_COLOR_ALPHA
+        width height;
+    final = Cairo.get_target cr;
+    ly = layout;
+    metrics;
+    last_top_frame_info = ("", -1, -1);
+  }
+  in
+  top_window.graphics <- Some (backend w da); 
+
+  let cr = Cairo.create w.base in
+  fill_rectangle_xywh ~cr ~x:0. ~y:0. 
+    ~w:(float_of_int width) ~h:(float_of_int height)
+    ~color:"DarkSlateGray" ();
+  (* todo: force a redraw for all the frame after a resize?
+   * w.base has changed!
+   *)
+(*
+  let pg = (layout, metrics) in
+  for i = 0 to (Globals.location()).loc_height -.. 1 do
+    clear_eol cr pg 0. (float_of_int i) 80;
+  done;
+*)
+
+  paint ();
+  true
+
+let expose _ev =
+  paint ();
+  true
 
 (*****************************************************************************)
 (* The main UI *)
 (*****************************************************************************)
+
+(* for the special key, Control, Meta, etc *)
+let modifiers = ref 0
 
 let init2 init_files =
 
@@ -414,7 +475,7 @@ let init2 init_files =
   }
   in
 
-  (* those are the dimensions for the main view, the pixmap *)
+  (* those are the dimensions for the main view, the drawing area *)
   let width = 
     metrics.main_width + metrics.mini_width |> ceil |> int_of_float
     (* 1320 *)
@@ -504,47 +565,30 @@ let init2 init_files =
     (* main view *)
     (*-------------------------------------------------------------------*)
 
+    let da = GMisc.drawing_area ~packing:vbox#add () in
+    (* we manage ourselves layers with cairo *)
+    da#misc#set_double_buffered false;
+    da#set_size ~width ~height;
+    da#misc#set_can_focus true ;
+    da#event#add [ `BUTTON_MOTION; `POINTER_MOTION;
+                   `BUTTON_PRESS; `BUTTON_RELEASE ];
+    (* `KEY_PRESS; ? or let the even go to the window ? *)
+(*
     let px = GDraw.pixmap ~width ~height ~window:win () in
     px#set_foreground `BLACK;
     px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
     GMisc.pixmap px ~packing:vbox#add () |> ignore;
+*)
+
+    da#event#connect#configure 
+      ~callback:(configure loc top_window desc metrics da) |> ignore;
+    da#event#connect#expose ~callback:(expose) |> ignore;
+
 
     (*-------------------------------------------------------------------*)
     (* status bar *)
     (*-------------------------------------------------------------------*)
     let _statusbar = GMisc.statusbar ~packing:vbox#add () in
-
-  (*-------------------------------------------------------------------*)
-  (* Cairo/pango graphics backend setup *)
-  (*-------------------------------------------------------------------*)
-
-  let cr = Cairo_lablgtk.create px#pixmap in
-  let surface = Cairo.get_target cr in
-  let layout = Pango_cairo.create_layout cr in
-  Pango.Layout.set_font_description layout desc;
-  Pango_cairo.update_layout cr layout;
-
-  let w = {
-    loc = loc;
-    base = 
-      Cairo.surface_create_similar surface Cairo.CONTENT_COLOR_ALPHA
-        width height;
-    overlay = 
-      Cairo.surface_create_similar surface Cairo.CONTENT_COLOR_ALPHA
-        width height;
-    final = Cairo.get_target cr;
-    ly = layout;
-    metrics;
-    last_top_frame_info = ("", -1, -1);
-  }
-  in
-  top_window.graphics <- Some (backend w win); 
-
-  let pg = (layout, metrics) in
-  for i = 0 to (Globals.location()).loc_height -.. 1 do
-    clear_eol cr pg 0. (float_of_int i) 80;
-  done;
-  paint ();
 
   (*-------------------------------------------------------------------*)
   (* Events *)
@@ -593,6 +637,10 @@ let init2 init_files =
     | _ -> ()
     );
     true
+  ) |> ignore;
+
+  da#event#connect#button_press (fun ev ->
+    raise Todo
   ) |> ignore;
 
   (*-------------------------------------------------------------------*)
