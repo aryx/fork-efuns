@@ -142,7 +142,7 @@ and action =
 type t = text
 
 (*****************************************************************************)
-(* Helpers *)
+(* Global properties *)
 (*****************************************************************************)
   
 (*s: function Text.version *)
@@ -159,6 +159,10 @@ let nbre_lines text =
 let size text = 
   text.text_size - text.gsize
 (*e: function Text.size *)
+
+(*****************************************************************************)
+(* Line x Col *)
+(*****************************************************************************)
   
 (*s: function Text.point_col *)
 let point_col text point = 
@@ -170,6 +174,88 @@ let point_col text point =
   then pos - bol - text.gsize
   else pos - bol
 (*e: function Text.point_col *)
+
+(*s: function Text.point_line *)
+let point_line _text point = 
+  point.line
+(*e: function Text.point_line *)
+
+let point_coord text point =
+  { c_col = point_col text point;
+    c_line = point_line text point;
+  }
+
+
+
+(*s: function Text.find_xy *)
+let find_xy text point line pos =
+  let gpos = text.gpoint.pos in
+  let gline = text.gpoint.line in
+  let gap_end = gpos + text.gsize in
+
+  let y,x =
+    if pos >= gap_end then
+      (* go forward *)
+      let rec iter line =
+        if line >= text.text_nlines 
+        then text.text_nlines - 1
+        else
+          if text.text_newlines.(line).position > pos 
+          then line - 1
+          else iter (line + 1)
+      in
+      let line = 
+        if point > gap_end && pos > point 
+        then iter (line+1) 
+        else iter (gline+1) 
+      in
+      if line = gline 
+      then
+        let gchars = gpos - text.text_newlines.(gline).position in
+        line, gchars + pos - gap_end
+      else
+        line, pos - text.text_newlines.(line).position
+    else
+    (* go backward *)
+    let rec iter line =
+      if line > 0 
+      then
+        if text.text_newlines.(line).position > pos 
+        then iter (line - 1)
+        else line
+      else 0
+    in
+    let line = 
+      if point < gpos && pos <= point 
+      then iter line 
+      else iter gline in
+    line, pos - text.text_newlines.(line).position
+  in
+  x,y
+(*e: function Text.find_xy *)
+
+
+(*****************************************************************************)
+(* Helpers *)
+(*****************************************************************************)
+
+(*s: function Text.mk_line_with_pos *)
+let mk_line_with_pos pos = 
+  {
+   position = pos; 
+
+   boxes = []; 
+   repr_string = ""; 
+   repr_len = 0; 
+   line_modified = true; 
+  }
+(*e: function Text.mk_line_with_pos *)
+
+(*s: function Text.cancel_repr *)
+let cancel_repr text _point n =
+  let line = text.text_newlines.(n) in
+  line.line_modified <- true
+(*e: function Text.cancel_repr *)
 
 (*****************************************************************************)
 (* Attributes *)
@@ -193,21 +279,66 @@ let direct_attr =  make_attr 0 1 0 false
 let inverse_attr =  make_attr 1 0 0 false
 (*e: constant Text.inverse_attr *)
 
-(*****************************************************************************)
-(* Line *)
-(*****************************************************************************)
+(*s: function Text.unset_attr *)
+let unset_attr text =
+  Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
+  text.text_newlines |> Array.iter (fun line -> line.line_modified <- true)
+(*e: function Text.unset_attr *)
 
-(*s: function Text.mk_line_with_pos *)
-let mk_line_with_pos pos = 
-  {
-   position = pos; 
+(*s: function Text.set_attr *)
+let set_attr text point len attr = (* should not exceed one line *)
+  if len > 0 then
+    let gap_end = text.gpoint.pos + text.gsize in
 
-   boxes = []; 
-   repr_string = ""; 
-   repr_len = 0; 
-   line_modified = true; 
-  }
-(*e: function Text.mk_line_with_pos *)
+    let x,y = find_xy text text.gpoint.pos text.gpoint.line point.pos in
+    cancel_repr text point.pos y;
+
+    let pos = point.pos in
+    let gpos = text.gpoint.pos in
+    let before, after, after_pos =
+      if pos > gap_end then
+        0, (min (text.text_size - pos) len), pos
+      else
+      if pos + len <= gpos then
+        0, len, pos
+      else
+      let before = gpos - pos in
+      let after = min (len - before) (text.text_size - gap_end) in
+      before, after, gap_end
+    in
+    if before > 0 
+    then Array.fill text.text_attrs pos before attr;
+    Array.fill text.text_attrs after_pos after attr
+(*e: function Text.set_attr *)
+
+(*s: function Text.get_attr *)
+let get_attr text point =
+  let pos = 
+    (* gap handling *)
+    if point.pos = text.gpoint.pos
+    then point.pos + text.gsize 
+    else point.pos
+  in
+  if pos < text.text_size 
+  then text.text_attrs.(pos)
+  else direct_attr
+(*e: function Text.get_attr *)
+
+
+(*s: function Text.set_char_attr *)
+let set_char_attr text point attr =
+  let y = point.line in
+  let pos = 
+    (* gap handling *)
+    if point.pos = text.gpoint.pos
+    then point.pos + text.gsize 
+    else point.pos
+  in
+  if pos < text.text_size then begin
+    cancel_repr text pos y;
+    text.text_attrs.(pos) <- attr
+  end
+(*e: function Text.set_char_attr *)
 
 (*****************************************************************************)
 (* Gap *)
@@ -257,11 +388,6 @@ let move_gpoint_to text pos =
     end
 (*e: function Text.move_gpoint_to *)
 
-(*s: function Text.cancel_repr *)
-let cancel_repr text _point n =
-  let line = text.text_newlines.(n) in
-  line.line_modified <- true
-(*e: function Text.cancel_repr *)
 
 (*s: constant Text.add_amount *)
 let add_amount = define_option ["add_amount"] "Size of the gap in the buffer"
@@ -472,6 +598,40 @@ let undo text =
       rev_action
 (*e: function Text.undo *)
 
+(*s: function Text.start_session *)
+let start_session text =   
+  text.text_modified
+(*e: function Text.start_session *)
+  
+(*s: function Text.commit_session *)
+let commit_session text session_date =
+  if text.text_modified > session_date then
+    let rec iter session history =
+      match history with
+        [] -> assert false
+      | action :: history ->
+          let date =
+            match action with
+              Session _ -> failwith "Can not commit nested sessions"
+            | Insertion (_,_,date) -> date
+            | Deletion (_,_,date) -> date
+          in
+          if date = session_date then
+            text.text_history <- (Session (List.rev (action::session)))
+            :: history
+          else
+            iter (action::session) history
+    in
+    iter [] text.text_history
+(*e: function Text.commit_session *)
+
+let with_session f text =
+  let session = start_session text in
+  let res = f () in
+  commit_session text session;
+  res
+
+
 (*****************************************************************************)
 (* Insert/delete public API *)
 (*****************************************************************************)
@@ -555,57 +715,6 @@ let create str =
 (*e: function Text.create *)
   
 (*****************************************************************************)
-(* Misc *)
-(*****************************************************************************)
-
-(*s: function Text.find_xy *)
-let find_xy text point line pos =
-  let gpos = text.gpoint.pos in
-  let gline = text.gpoint.line in
-  let gap_end = gpos + text.gsize in
-
-  let y,x =
-    if pos >= gap_end then
-      (* go forward *)
-      let rec iter line =
-        if line >= text.text_nlines 
-        then text.text_nlines - 1
-        else
-          if text.text_newlines.(line).position > pos 
-          then line - 1
-          else iter (line + 1)
-      in
-      let line = 
-        if point > gap_end && pos > point 
-        then iter (line+1) 
-        else iter (gline+1) 
-      in
-      if line = gline 
-      then
-        let gchars = gpos - text.text_newlines.(gline).position in
-        line, gchars + pos - gap_end
-      else
-        line, pos - text.text_newlines.(line).position
-    else
-    (* go backward *)
-    let rec iter line =
-      if line > 0 
-      then
-        if text.text_newlines.(line).position > pos 
-        then iter (line - 1)
-        else line
-      else 0
-    in
-    let line = 
-      if point < gpos && pos <= point 
-      then iter line 
-      else iter gline in
-    line, pos - text.text_newlines.(line).position
-  in
-  x,y
-(*e: function Text.find_xy *)
-
-(*****************************************************************************)
 (* Points *)
 (*****************************************************************************)
 
@@ -674,41 +783,6 @@ let save text outc =
   (text.text_size - gpos - gsize)
 (*e: function Text.save *)
 
-(*****************************************************************************)
-(* Attributes *)
-(*****************************************************************************)
-
-(*s: function Text.unset_attr *)
-let unset_attr text =
-  Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
-  text.text_newlines |> Array.iter (fun line -> line.line_modified <- true)
-(*e: function Text.unset_attr *)
-
-(*s: function Text.set_attr *)
-let set_attr text point len attr = (* should not exceed one line *)
-  if len > 0 then
-    let gap_end = text.gpoint.pos + text.gsize in
-
-    let x,y = find_xy text text.gpoint.pos text.gpoint.line point.pos in
-    cancel_repr text point.pos y;
-
-    let pos = point.pos in
-    let gpos = text.gpoint.pos in
-    let before, after, after_pos =
-      if pos > gap_end then
-        0, (min (text.text_size - pos) len), pos
-      else
-      if pos + len <= gpos then
-        0, len, pos
-      else
-      let before = gpos - pos in
-      let after = min (len - before) (text.text_size - gap_end) in
-      before, after, gap_end
-    in
-    if before > 0 
-    then Array.fill text.text_attrs pos before attr;
-    Array.fill text.text_attrs after_pos after attr
-(*e: function Text.set_attr *)
 
 (*****************************************************************************)
 (* Distance, delta *)
@@ -741,7 +815,7 @@ let compare text p1 p2 =
 (*e: function Text.compare *)
 
 (*****************************************************************************)
-(* Text/attr Getters/setters *)
+(* Text Getters/setters *)
 (*****************************************************************************)
   
 (*s: function Text.get_char *)
@@ -758,34 +832,6 @@ let get_char text point =
   else '\000'
 (*e: function Text.get_char *)
 
-(*s: function Text.get_attr *)
-let get_attr text point =
-  let pos = 
-    (* gap handling *)
-    if point.pos = text.gpoint.pos
-    then point.pos + text.gsize 
-    else point.pos
-  in
-  if pos < text.text_size 
-  then text.text_attrs.(pos)
-  else direct_attr
-(*e: function Text.get_attr *)
-
-
-(*s: function Text.set_char_attr *)
-let set_char_attr text point attr =
-  let y = point.line in
-  let pos = 
-    (* gap handling *)
-    if point.pos = text.gpoint.pos
-    then point.pos + text.gsize 
-    else point.pos
-  in
-  if pos < text.text_size then begin
-    cancel_repr text pos y;
-    text.text_attrs.(pos) <- attr
-  end
-(*e: function Text.set_char_attr *)
 
 (*****************************************************************************)
 (* Moving *)
@@ -875,25 +921,21 @@ let fmove text p delta =
   fmove_res text p delta |> ignore
 (*e: function Text.fmove *)
 
+(*s: function Text.move_res *)
+let move_res text point n =
+  if n > 0 
+  then fmove_res text point n
+  else bmove_res text point (-n)
+(*e: function Text.move_res *)
+
+(*s: function Text.move *)
+let move text point n = 
+  move_res text point n |> ignore
+(*e: function Text.move *)
+
 (*****************************************************************************)
 (* Misc *)
 (*****************************************************************************)
-  
-(*s: function Text.to_string *)
-let to_string text =
-  let len = text.text_size - text.gsize in
-  if len = 0 
-  then "" 
-  else begin
-    let str = String.create len in
-    let gpos = text.gpoint.pos in
-    let gap_end = gpos + text.gsize in
-    String.blit text.text_string 0 str 0 gpos;
-    String.blit text.text_string gap_end str gpos (len- gpos);
-    str
-  end
-(*e: function Text.to_string *)
-
 
 (*s: function Text.clean_text *)
 let clean_text text =
@@ -922,6 +964,7 @@ let blit str text point len =
   len
 (*e: function Text.blit *)
 
+
 (*****************************************************************************)
 (* Position *)
 (*****************************************************************************)
@@ -943,6 +986,17 @@ let set_position text point pos =
      )
 (*e: function Text.set_position *)
 
+(*s: function Text.goto_line *)
+let goto_line text point y =
+  if text.text_nlines - 1 <= y 
+  then set_position text point (size text)
+  else begin
+    let line = text.text_newlines.(y) in
+    point.pos <- line.position;
+    point.line <- y
+  end
+(*e: function Text.goto_line *)
+
 (*****************************************************************************)
 (* Sub content  *)
 (*****************************************************************************)
@@ -953,6 +1007,13 @@ let sub text point len =
   blit str text point len |> ignore;
   str
 (*e: function Text.sub *)
+
+(*s: function Text.region *)
+let rec region text p1 p2 =
+  if p1>p2 
+  then region text p2 p1
+  else sub text p1 (distance text p1 p2)
+(*e: function Text.region *)
 
 (*****************************************************************************)
 (* Search/replace  *)
@@ -1227,18 +1288,6 @@ let point_to_bof text point =
   low_distance text 0 point.pos
 (*e: function Text.point_to_bof *)
 
-(*s: function Text.move_res *)
-let move_res text point n =
-  if n > 0 
-  then fmove_res text point n
-  else bmove_res text point (-n)
-(*e: function Text.move_res *)
-
-(*s: function Text.move *)
-let move text point n = 
-  move_res text point n |> ignore
-(*e: function Text.move *)
-
 (*s: function Text.point_to_lof *)
 let point_to_lof text point n =
   if n > 0 
@@ -1263,48 +1312,32 @@ let point_to_line text point line =
   move_point_to text point pos
 (*e: function Text.point_to_line *)
 
+
+(*****************************************************************************)
+(* Misc  *)
+(*****************************************************************************)
+
+(*s: function Text.to_string *)
+let to_string text =
+  let len = text.text_size - text.gsize in
+  if len = 0 
+  then "" 
+  else begin
+    let str = String.create len in
+    let gpos = text.gpoint.pos in
+    let gap_end = gpos + text.gsize in
+    String.blit text.text_string 0 str 0 gpos;
+    String.blit text.text_string gap_end str gpos (len- gpos);
+    str
+  end
+(*e: function Text.to_string *)
+
 (*s: function Text.clear *)
 let clear text =
   low_delete text 0 (text.text_size - text.gsize) |> ignore;
   text.text_history <- [];
   List.iter (fun p -> p.pos <- 0; p.line <- 0) text.text_points
 (*e: function Text.clear *)
-
-(*****************************************************************************)
-(* Line x col  *)
-(*****************************************************************************)
-
-(*s: function Text.point_line *)
-let point_line _text point = 
-  point.line
-(*e: function Text.point_line *)
-
-(*s: function Text.goto_line *)
-let goto_line text point y =
-  if text.text_nlines - 1 <= y 
-  then set_position text point (size text)
-  else begin
-    let line = text.text_newlines.(y) in
-    point.pos <- line.position;
-    point.line <- y
-  end
-(*e: function Text.goto_line *)
-
-let point_coord text point =
-  { c_col = point_col text point;
-    c_line = point_line text point;
-  }
-
-(*****************************************************************************)
-(* Misc  *)
-(*****************************************************************************)
-
-(*s: function Text.region *)
-let rec region text p1 p2 =
-  if p1>p2 
-  then region text p2 p1
-  else sub text p1 (distance text p1 p2)
-(*e: function Text.region *)
 
 (*s: function Text.update *)
 let update text str =
@@ -1343,39 +1376,6 @@ let lexing text curseur end_point =
       len
   )
 (*e: function Text.lexing *)
-
-(*s: function Text.start_session *)
-let start_session text =   
-  text.text_modified
-(*e: function Text.start_session *)
-  
-(*s: function Text.commit_session *)
-let commit_session text session_date =
-  if text.text_modified > session_date then
-    let rec iter session history =
-      match history with
-        [] -> assert false
-      | action :: history ->
-          let date =
-            match action with
-              Session _ -> failwith "Can not commit nested sessions"
-            | Insertion (_,_,date) -> date
-            | Deletion (_,_,date) -> date
-          in
-          if date = session_date then
-            text.text_history <- (Session (List.rev (action::session)))
-            :: history
-          else
-            iter (action::session) history
-    in
-    iter [] text.text_history
-(*e: function Text.commit_session *)
-
-let with_session f text =
-  let session = start_session text in
-  let res = f () in
-  commit_session text session;
-  res
 
     
 (*s: function Text.readonly *)

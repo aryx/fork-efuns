@@ -704,7 +704,7 @@ type coord = {
 type t = text
 
 (*****************************************************************************)
-(* Helpers *)
+(* Global properties *)
 (*****************************************************************************)
   
 <<function Text.version>>
@@ -712,8 +712,32 @@ type t = text
 <<function Text.nbre_lines>>
   
 <<function Text.size>>
+
+(*****************************************************************************)
+(* Line x Col *)
+(*****************************************************************************)
   
 <<function Text.point_col>>
+
+<<function Text.point_line>>
+
+let point_coord text point =
+  { c_col = point_col text point;
+    c_line = point_line text point;
+  }
+
+
+
+<<function Text.find_xy>>
+
+
+(*****************************************************************************)
+(* Helpers *)
+(*****************************************************************************)
+
+<<function Text.mk_line_with_pos>>
+
+<<function Text.cancel_repr>>
 
 (*****************************************************************************)
 (* Attributes *)
@@ -724,11 +748,14 @@ type t = text
 <<constant Text.direct_attr>>
 <<constant Text.inverse_attr>>
 
-(*****************************************************************************)
-(* Line *)
-(*****************************************************************************)
+<<function Text.unset_attr>>
 
-<<function Text.mk_line_with_pos>>
+<<function Text.set_attr>>
+
+<<function Text.get_attr>>
+
+
+<<function Text.set_char_attr>>
 
 (*****************************************************************************)
 (* Gap *)
@@ -736,7 +763,6 @@ type t = text
 
 <<function Text.move_gpoint_to>>
 
-<<function Text.cancel_repr>>
 
 <<constant Text.add_amount>>
 <<function Text.extend_gap>>
@@ -754,6 +780,17 @@ type t = text
 (*****************************************************************************)
 
 <<function Text.undo>>
+
+<<function Text.start_session>>
+  
+<<function Text.commit_session>>
+
+let with_session f text =
+  let session = start_session text in
+  let res = f () in
+  commit_session text session;
+  res
+
 
 (*****************************************************************************)
 (* Insert/delete public API *)
@@ -777,12 +814,6 @@ type t = text
 
 <<function Text.create>>
   
-(*****************************************************************************)
-(* Misc *)
-(*****************************************************************************)
-
-<<function Text.find_xy>>
-
 (*****************************************************************************)
 (* Points *)
 (*****************************************************************************)
@@ -814,13 +845,6 @@ let with_new_point text f =
 
 <<function Text.save>>
 
-(*****************************************************************************)
-(* Attributes *)
-(*****************************************************************************)
-
-<<function Text.unset_attr>>
-
-<<function Text.set_attr>>
 
 (*****************************************************************************)
 (* Distance, delta *)
@@ -833,15 +857,11 @@ let with_new_point text f =
 <<function Text.compare>>
 
 (*****************************************************************************)
-(* Text/attr Getters/setters *)
+(* Text Getters/setters *)
 (*****************************************************************************)
   
 <<function Text.get_char>>
 
-<<function Text.get_attr>>
-
-
-<<function Text.set_char_attr>>
 
 (*****************************************************************************)
 (* Moving *)
@@ -857,17 +877,19 @@ let with_new_point text f =
 
 <<function Text.fmove>>
 
+<<function Text.move_res>>
+
+<<function Text.move>>
+
 (*****************************************************************************)
 (* Misc *)
 (*****************************************************************************)
-  
-<<function Text.to_string>>
-
 
 <<function Text.clean_text>>
 
 
 <<function Text.blit>>
+
 
 (*****************************************************************************)
 (* Position *)
@@ -877,11 +899,15 @@ let with_new_point text f =
 
 <<function Text.set_position>>
 
+<<function Text.goto_line>>
+
 (*****************************************************************************)
 (* Sub content  *)
 (*****************************************************************************)
     
 <<function Text.sub>>
+
+<<function Text.region>>
 
 (*****************************************************************************)
 (* Search/replace  *)
@@ -926,50 +952,24 @@ let with_new_point text f =
 
 <<function Text.point_to_bof>>
 
-<<function Text.move_res>>
-
-<<function Text.move>>
-
 <<function Text.point_to_lof>>
 
 <<function Text.point_to_lol>>
 
 <<function Text.point_to_line>>
 
-<<function Text.clear>>
-
-(*****************************************************************************)
-(* Line x col  *)
-(*****************************************************************************)
-
-<<function Text.point_line>>
-
-<<function Text.goto_line>>
-
-let point_coord text point =
-  { c_col = point_col text point;
-    c_line = point_line text point;
-  }
 
 (*****************************************************************************)
 (* Misc  *)
 (*****************************************************************************)
 
-<<function Text.region>>
+<<function Text.to_string>>
+
+<<function Text.clear>>
 
 <<function Text.update>>
 
 <<function Text.lexing>>
-
-<<function Text.start_session>>
-  
-<<function Text.commit_session>>
-
-let with_session f text =
-  let session = start_session text in
-  let res = f () in
-  commit_session text session;
-  res
 
     
 <<function Text.readonly>>
