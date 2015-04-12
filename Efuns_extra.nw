@@ -3606,26 +3606,6 @@ let mode = Ebuffer.new_major_mode "Compilation" [install]
 
 
 
-<<function Top_window.resize_window>>=
-let rec resize_window window xpos ypos width height =
-  let old_width = window.win_width in
-  let old_height = window.win_height in
-  window.win_xpos <- xpos;
-  window.win_ypos <- ypos;
-  window.win_width <- width;
-  window.win_height <- height;
-  match window.win_down with
-    WFrame frame -> Frame.install window frame
-  | NoFrame -> assert false
-  | HComb (w1,w2) ->
-      let wi1 = w1.win_width * width / old_width in
-      resize_window w1 xpos ypos wi1 height;
-      resize_window w2 (xpos + wi1) ypos (width - wi1) height
-  | VComb (w1,w2) ->
-      let he1 = w1.win_height * height / old_height in
-      resize_window w1 xpos ypos width he1;
-      resize_window w2 xpos (ypos + he1) width (height - he1)
-@
 
 
 

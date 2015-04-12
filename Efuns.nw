@@ -5395,10 +5395,15 @@ let message top_window msg =
 %less: do a sleep 0.2?
 
 
+%\section{Status bar}
+% in Gtk, but status line is enough
 
 \chapter{Input Managment}
 
 \section{Keyboard}
+
+% see before Map, event loop, handle_key, keypressed global,
+% and start of key dispatch where finally call try_map!
 
 \subsection{Keys to action, [[try_map()]]}
 
@@ -5633,7 +5638,6 @@ Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
   "set_active_frame" Mouse.mouse_set_frame;
 @
 
-
 <<function Simple.mouse_set_frame>>=
 let mouse_set_frame frame =
   let top_window = Window.top frame.frm_window in
@@ -5655,7 +5659,12 @@ let mouse_set_active top_window =
   Frame.move_point frame frame.frm_point x y;
   frame
 @
+% this move_point is special! it's in screen coordinates
 
+\subsubsection{Frame selection}
+% but will see more later in Multi_frames section
+
+% can select different frame!
 <<function Top_window.find_selected_frame>>=
 let find_selected_frame top_window =
   let x = !mouse_x in
@@ -5689,7 +5698,9 @@ let rec find_frame window x y =
 @
 %old: was assert false, but seems more logic to raise Not_found
 
-\subsection{Cursor}
+\subsubsection{Point selection}
+
+%\subsection{Cursor}
 % an output, but strongly related also to input devices 
 % (input device feedback essentially)
 
@@ -5750,6 +5761,8 @@ then raise Not_found;
     mouse_y := y;
     handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
 @
+
+%todo: should highlight!
 
 \subsection{Mouse copy/paste}
 
@@ -5826,6 +5839,27 @@ let mouse_save_then_kill frame =
     clear_message top_window;
     update_display ()
 @          
+
+<<function Top_window.resize_window>>=
+let rec resize_window window xpos ypos width height =
+  let old_width = window.win_width in
+  let old_height = window.win_height in
+  window.win_xpos <- xpos;
+  window.win_ypos <- ypos;
+  window.win_width <- width;
+  window.win_height <- height;
+  match window.win_down with
+    WFrame frame -> Frame.install window frame
+  | NoFrame -> assert false
+  | HComb (w1,w2) ->
+      let wi1 = w1.win_width * width / old_width in
+      resize_window w1 xpos ypos wi1 height;
+      resize_window w2 (xpos + wi1) ypos (width - wi1) height
+  | VComb (w1,w2) ->
+      let he1 = w1.win_height * height / old_height in
+      resize_window w1 xpos ypos width he1;
+      resize_window w2 xpos (ypos + he1) width (height - he1)
+@
 
 \section{Interactive select}
 % here?
@@ -6858,6 +6892,8 @@ define_action "insert_killed"  Simple.insert_killed;
 define_action "insert_next_killed"  Simple.insert_next_killed;
 define_action "copy_region"  Simple.copy_region;
 @
+
+%related are the mouse selection and copy paste seen before
 
 \subsection{Mark}
 
