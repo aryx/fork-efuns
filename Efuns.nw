@@ -24,7 +24,9 @@
 % - more cohesion, e.g. Select and Simple buffer stuff in 
 %   Multi_buffers instead, split Efuns to have also Vars and Actions,
 %   mv colors and fonts from Window to Attrs
-%   
+% - more consistency with coord, position, point, line x col, xy
+%   so less confusing (when uses sometimes xy for colxline and sometimes
+%   for frame coordinates)
 
 %thx to codemap/codegraph/scheck:
 % - SEMI use cg to reduce backward deps, introduce globals.c, utils.c,
@@ -399,6 +401,9 @@ Options:
 %
 % redisplay engine (actually incremental line oriented display)
 % triggered after each event (clean_display, handle key, update_display)
+
+% nice archi where an action just have to modify some field such
+% as frame.frm_point, and the rest is automatic (recentering, cursor).
 
 %todo: choose between windows or frames term, pro/cons.
 % - frames
@@ -1676,7 +1681,7 @@ let describe_variable frame =
 define_action "describe_variable"  Complexe.describe_variable;
 @
 % was called get_variable
-% will see select far later.
+% will see Select far later.
 
 \section{Hooks}
 % essentially a set of list refs
@@ -2190,12 +2195,13 @@ let create_at_top xpos ypos width height =
   window
 @
 % let rec!! because it's used to bootstrap!
-%less: could do without if were defining window, frame, and top_window
-% with a 'let rec ... and ...'?
-% or if were using globals for top_window, would need that? why
-% we need the win_up field that makes things mutually recursive and
+%less: rename? it has actually no_top ... it's a fake_win_up.
+% but it's true it has no win_down so in some sense it's at the top
+%note: could do without if were defining window, frame, and top_window
+% with a 'let rec ... and ...'? or if were using globals for top_window?
+% Do we need the win_up field that makes things mutually recursive and
 % slightly complicated?
-% update: I think there is no choice, need win_up for certain actions.
+% I think there is no choice, we need win_up for certain actions.
 
 
 %<<[[Top_window.create()]] create graphical window with right dimensions>>=
@@ -2332,7 +2338,7 @@ let handle_key top_window modifiers keysym =
 
   Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();
 
-  update_display ()
+  update_display () (* will set cursor back on and many other things *)
 @
 % seen top_active_frame buffer!
 % update_display() again!! each key down trigger a redisplay action
@@ -2653,7 +2659,7 @@ let find_line_of_pos text pos =
      in
      iter gline
 @
-
+%opti: could use binary search instead of linear iteration
 
 \section{Inserting characters}
 
@@ -3514,6 +3520,10 @@ box_pos_repr : int;  (* pos of box in representation string *)
 % of repr_string (boxes are used as index over repr_string with
 % the attr info)
 
+% this allow to handle variable-size characters in some sense
+% e.g. 'a' vs '^M' vs 'TABS' so maybe this model can be used
+% also for unicode?
+
 <<function Text.compute_representation>>=
 (* On devrait reprendre la representation la ou elle est ... *)
 let compute_representation text charreprs n =
@@ -3849,7 +3859,8 @@ let load_buffer frame =
   )
 @
 % see later select_filename, quite complicated, use minibuffer
-% and completion buffer.
+% and completion buffer. But nice that can use the buffer
+% machinery for more complex interactions :)
 
 %\subsection{Helpers}
 
@@ -4312,6 +4323,8 @@ mutable frm_redraw : bool;
 frame.frm_redraw
 @
 
+% if you modify frm_start, you want to redraw, even if
+% the point is always in the range frm_start..frm_end
 
 \subsubsection{Redraw}
 
@@ -4320,7 +4333,9 @@ if !Globals.debug_display
 then pr2 "redraw";
 <<[[Frame.display()]] redraw, possibly update frm_y_offset>>
 <<[[Frame.display()]] redraw, possibly update frm_x_offset>>
+(* invariant: now frm_start is at a bol *)
 update_table frame;
+(* invariant: now frm_end has been correctly set *)
 
 if (point > frame.frm_end) || (point < start) then begin
     <<[[Frame.display()]] redraw, if frm_force_start>>
@@ -4328,6 +4343,7 @@ if (point > frame.frm_end) || (point < start) then begin
       (* center around point *)
       Text.goto_point text start point;
       <<[[Frame.display()]] redraw, update frm_y_offset again>>
+      (* invariant: now frm_start is at a bol again *)
       update_table frame;
    end
 end;
@@ -4365,7 +4381,6 @@ frame.frm_redraw <- false
 % lead to a different repr_string which then when too longs leads
 % to multiple frm_line for one of text_newlines.
 
-
 % frame have a width!
 
 <<[[Efuns.frame]] other fields>>=
@@ -4378,6 +4393,10 @@ mutable frm_cutline : int; (* max_int for no, else length *)
 if frame.frm_cutline < max_int 
 then frame.frm_cutline <- window.win_width - 1;
 @
+
+% below we will try to consistently use col line (text_string) vs xy (repr)
+% and actually there is even xy in frame, and xy in screen
+% (see Frame.move_point). Need more types!
 
 
 \subsubsection{The frame table}
@@ -4423,9 +4442,10 @@ and frm_line =
 <<[[Efuns.frm_line]] other fields>>=
 mutable lineidx_in_text : int;
 @
-% why need that? frm_text_line not enough?
-% for cursor_to_point?
+% why need that? frm_text_line not enough? for cursor_to_coord?
 %less: mv later?
+% anyway can be good to show that frm_line do not match directly
+% text_newlines table
 
 
 <<[[Frame.install()]] set frm_table>>=
@@ -4448,6 +4468,7 @@ frame.frm_table <- (Array.init window.win_height (fun i ->
 % y goes from 0 to height below, which are the entries
 % for frm_table that we need to fill.
 
+% pre? start is at a bol?
 % Top_window.update_display -> Frame.display -> <>
 <<function Frame.update_table>>=
 let update_table frame =
@@ -4489,6 +4510,7 @@ let rec iter_line y n line =
   end
   else Text.goto_line text frame.frm_end (n-1)
 @
+% setting frm_end!!
 
 <<function Frame.update_table.iter_repr>>=
 and iter_repr xcutline y n line boxes =
@@ -4600,7 +4622,6 @@ graphic.Xdraw.draw_string
 
 
 \subsection{Cursor}
-
 % an output, but strongly related
 % also to input devices (input device feedback essentially)
 
@@ -4627,7 +4648,9 @@ let cursor_on top_window =
 
 
 <<[[Efuns.frame]] other fields>>=
+(* frame coordinates, so x is between 0 and frm_width - 1 *)
 mutable frm_cursor_x : int;
+(* frame coordinates, so y is between 0 and frm_height - 1 *)
 mutable frm_cursor_y : int;
 
 mutable frm_cursor : string;
@@ -4660,8 +4683,8 @@ let set_cursor frame =
   let text = buf.buf_text in
 
   let point = frame.frm_point in
-  let x = point_to_cursor buf point in
-  let ptcol = point_col text point in
+  let col = point_col text point in
+  let x_nocut = point_to_x_when_no_cutline buf point in
   let line = Ebuffer.compute_representation buf (point_line text point) in
   
   try
@@ -4669,7 +4692,7 @@ let set_cursor frame =
       let line_repr = frame.frm_table.(i) in
       if line_repr.frm_text_line == line then
         let x,y =
-          if x = 0 
+          if x_nocut = 0 
           then 0,i
           else
             <<[[Frame.set_cursor()]] x y value handling overflow lines>>
@@ -4687,11 +4710,11 @@ let set_cursor frame =
       | [] -> 
           frame.frm_cursor.[0] <- ' '
       | box :: tail ->
-          if box.box_pos <= ptcol && box.box_pos + box.box_len > ptcol
+          if box.box_pos <= col && box.box_pos + box.box_len > col
           then begin
             let pos =
               box.box_pos_repr + box.box_charsize * 
-              (ptcol - box.box_pos)
+              (col - box.box_pos)
             in
             frame.frm_cursor.[0] <- line.repr_string.[pos];
             frame.frm_cursor_attr <- box.box_attr;
@@ -4704,7 +4727,7 @@ let set_cursor frame =
 
 % x is not 0
 <<[[Frame.set_cursor()]] x y value handling overflow lines>>=
-((x-1) mod frame.frm_cutline) + 1, i + (x-1) / frame.frm_cutline
+((x_nocut-1) mod frame.frm_cutline) + 1, i + (x_nocut-1) / frame.frm_cutline
 @
 % ex: x = 1, cutline = 80 => x = 1, y = i, x = 80 => x = 80, y = i
 %  x = 82 => x =  2, y = i + 1
@@ -4713,7 +4736,7 @@ let set_cursor frame =
 
 % set_cursor -> <>
 <<function Frame.point_to_cursor>>=
-let point_to_cursor buf point =
+let point_to_x_when_no_cutline buf point =
   let text = buf.buf_text in
   let line = Ebuffer.compute_representation buf (Text.point_line text point) in
   let xpos = Text.point_col text point in
@@ -4728,15 +4751,18 @@ let point_to_cursor buf point =
   iter line.Text.boxes
 @
 % remember that the boxes are sorted in reverse, head is last box
-%less: rename point_to_x ?
+%old: was point_to_cursor, but it's actually just one part
+% of the cursor, and it's not even an x! it's an x when have no cutline
 
-%todo: have a point_to_y where do the iteration over frm_table
+%still? have a point_to_y where do the iteration over frm_table?
+% but harder cos point_to_y will also compute point_to_x
+%todo: but at least can simplify Frame.set_cursor by extracting
+% this part in point_to_xy_opt
 
 % x,y display -> text (colxline) (reverse of display_line stuff)
-% why not return an actual point then? it's more a (line x col) actually
 % Frame.display (when frm_force_start) -> <>
 <<function Frame.cursor_to_point>>=
-let cursor_to_point frame x y =
+let cursor_to_coord frame x y =
   <<[[Frame.cursor_to_point()]] sanity check parameters in range>>
   let frm_line = frame.frm_table.(y) in
   let line = frm_line.lineidx_in_text in
@@ -4745,16 +4771,17 @@ let cursor_to_point frame x y =
       [] -> default
     | box :: tail -> 
         if x < box.box_size
-        then box.box_pos + x / box.box_charsize
+        then box.box_pos +   x / box.box_charsize
         else iter (x - box.box_size) tail (box.box_pos + box.box_len)
   in
   let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
     frm_line.frmline_boxes 0 
   in
-  col, line
+  { Text.c_col = col; Text.c_line = line }
 @
 % useful for? the mouse?
-% rename cursor_to_coord
+%old: was cursor_to_point, but it was returning a coord
+%less why not return an actual point then? it's more a (line x col) actually
 
 
 <<[[Frame.cursor_to_point()]] sanity check parameters in range>>=
@@ -4765,7 +4792,17 @@ then raise Not_found;
 
 
 
-
+% for the mouse
+% x y are actually screen coordinates!
+<<function Frame.move_point>>=
+let move_point frame point x y =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let coord = cursor_to_coord frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
+  Text.goto_line text point coord.Text.c_line;
+  Text.fmove text point coord.Text.c_col |> ignore
+@
+%less: could have instead a cursor_to_point and do a Text.goto_point
 
 
 
@@ -4819,16 +4856,24 @@ mutable frm_x_offset : int;
 
 <<[[Frame.display()]] redraw, possibly update frm_y_offset>>=
 let start = frame.frm_start in
-let start_c = point_to_cursor buf start in
+let start_c = point_to_x_when_no_cutline buf start in
 if start_c > 0 then begin
   frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
   Text.bmove text start start_c |> ignore
 end;
 @
+% when can this happen? someone mv frm_start to a col > 0?
+% in which case we adjust to the bol? but why need
+% to adjust frm_y_offset? 
+
+
+% do 'Text.goto_point text start point', when want to recenter
+% on the point that moved outside the current frame, so for
+% sure start may not be in col 0, so need to adjust.
 
 <<[[Frame.display()]] redraw, update frm_y_offset again>>=
 frame.frm_y_offset <- - height / 2;
-let start_c = point_to_cursor buf start in
+let start_c = point_to_x_when_no_cutline buf start in
 if start_c > 0 then begin
   frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
   Text.bmove text start start_c |> ignore
@@ -4872,7 +4917,7 @@ then frame.frm_y_offset <- 0;
 \subsubsection{X offset}
 
 <<[[Frame.display()]] redraw, possibly update frm_x_offset>>=
-let point_c = point_to_cursor buf point in
+let point_c = point_to_x_when_no_cutline buf point in
 if point_c < frame.frm_x_offset then begin
     frame.frm_x_offset <- max (point_c - width / 2) 0;
     frame.frm_redraw <- true;
@@ -4910,14 +4955,12 @@ mutable frm_force_start : bool;
 
 <<[[Frame.display()]] redraw, if frm_force_start>>=
 if frame.frm_force_start then begin
-  let col,line = 
-    cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
-  in
-  Text.goto_line text frame.frm_point line;
-  Text.fmove text frame.frm_point col |> ignore
+  let coord = cursor_to_coord frame frame.frm_cursor_x frame.frm_cursor_y in
+  Text.goto_line text frame.frm_point coord.Text.c_line;
+  Text.fmove text frame.frm_point coord.Text.c_col |> ignore
 end 
 @
-% why not return a point and just to goto_point?
+%todo: why not return a point and just to goto_point?
 %old: was let x,y but confusing! it's col x line, but 
 % we should not confuse them when frame coord (the cursor actually)
 % where we use x and y.

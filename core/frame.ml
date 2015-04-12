@@ -277,7 +277,7 @@ let create_inactive window buf =
 
 
 (*s: function Frame.point_to_cursor *)
-let point_to_cursor buf point =
+let point_to_x_when_no_cutline buf point =
   let text = buf.buf_text in
   let line = Ebuffer.compute_representation buf (Text.point_line text point) in
   let xpos = Text.point_col text point in
@@ -293,7 +293,7 @@ let point_to_cursor buf point =
 (*e: function Frame.point_to_cursor *)
 
 (*s: function Frame.cursor_to_point *)
-let cursor_to_point frame x y =
+let cursor_to_coord frame x y =
   (*s: [[Frame.cursor_to_point()]] sanity check parameters in range *)
   if (y < 0) || (x<0) || (y >= frame.frm_height-1) || (x>frame.frm_cutline) 
   then raise Not_found;
@@ -305,13 +305,13 @@ let cursor_to_point frame x y =
       [] -> default
     | box :: tail -> 
         if x < box.box_size
-        then box.box_pos + x / box.box_charsize
+        then box.box_pos +   x / box.box_charsize
         else iter (x - box.box_size) tail (box.box_pos + box.box_len)
   in
   let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
     frm_line.frmline_boxes 0 
   in
-  col, line
+  { Text.c_col = col; Text.c_line = line }
 (*e: function Frame.cursor_to_point *)
 
 
@@ -347,8 +347,8 @@ let set_cursor frame =
   let text = buf.buf_text in
 
   let point = frame.frm_point in
-  let x = point_to_cursor buf point in
-  let ptcol = point_col text point in
+  let col = point_col text point in
+  let x_nocut = point_to_x_when_no_cutline buf point in
   let line = Ebuffer.compute_representation buf (point_line text point) in
   
   try
@@ -356,11 +356,11 @@ let set_cursor frame =
       let line_repr = frame.frm_table.(i) in
       if line_repr.frm_text_line == line then
         let x,y =
-          if x = 0 
+          if x_nocut = 0 
           then 0,i
           else
             (*s: [[Frame.set_cursor()]] x y value handling overflow lines *)
-            ((x-1) mod frame.frm_cutline) + 1, i + (x-1) / frame.frm_cutline
+            ((x_nocut-1) mod frame.frm_cutline) + 1, i + (x_nocut-1) / frame.frm_cutline
             (*e: [[Frame.set_cursor()]] x y value handling overflow lines *)
         in
         frame.frm_cursor_x <- x;
@@ -376,11 +376,11 @@ let set_cursor frame =
       | [] -> 
           frame.frm_cursor.[0] <- ' '
       | box :: tail ->
-          if box.box_pos <= ptcol && box.box_pos + box.box_len > ptcol
+          if box.box_pos <= col && box.box_pos + box.box_len > col
           then begin
             let pos =
               box.box_pos_repr + box.box_charsize * 
-              (ptcol - box.box_pos)
+              (col - box.box_pos)
             in
             frame.frm_cursor.[0] <- line.repr_string.[pos];
             frame.frm_cursor_attr <- box.box_attr;
@@ -522,14 +522,14 @@ let display top_window frame =
     then pr2 "redraw";
     (*s: [[Frame.display()]] redraw, possibly update frm_y_offset *)
     let start = frame.frm_start in
-    let start_c = point_to_cursor buf start in
+    let start_c = point_to_x_when_no_cutline buf start in
     if start_c > 0 then begin
       frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
       Text.bmove text start start_c |> ignore
     end;
     (*e: [[Frame.display()]] redraw, possibly update frm_y_offset *)
     (*s: [[Frame.display()]] redraw, possibly update frm_x_offset *)
-    let point_c = point_to_cursor buf point in
+    let point_c = point_to_x_when_no_cutline buf point in
     if point_c < frame.frm_x_offset then begin
         frame.frm_x_offset <- max (point_c - width / 2) 0;
         frame.frm_redraw <- true;
@@ -540,16 +540,16 @@ let display top_window frame =
         frame.frm_redraw <- true;
     end;
     (*e: [[Frame.display()]] redraw, possibly update frm_x_offset *)
+    (* invariant: now frm_start is at a bol *)
     update_table frame;
+    (* invariant: now frm_end has been correctly set *)
 
     if (point > frame.frm_end) || (point < start) then begin
         (*s: [[Frame.display()]] redraw, if frm_force_start *)
         if frame.frm_force_start then begin
-          let col,line = 
-            cursor_to_point frame frame.frm_cursor_x frame.frm_cursor_y
-          in
-          Text.goto_line text frame.frm_point line;
-          Text.fmove text frame.frm_point col |> ignore
+          let coord = cursor_to_coord frame frame.frm_cursor_x frame.frm_cursor_y in
+          Text.goto_line text frame.frm_point coord.Text.c_line;
+          Text.fmove text frame.frm_point coord.Text.c_col |> ignore
         end 
         (*e: [[Frame.display()]] redraw, if frm_force_start *)
         else begin
@@ -557,12 +557,13 @@ let display top_window frame =
           Text.goto_point text start point;
           (*s: [[Frame.display()]] redraw, update frm_y_offset again *)
           frame.frm_y_offset <- - height / 2;
-          let start_c = point_to_cursor buf start in
+          let start_c = point_to_x_when_no_cutline buf start in
           if start_c > 0 then begin
             frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
             Text.bmove text start start_c |> ignore
           end;
           (*e: [[Frame.display()]] redraw, update frm_y_offset again *)
+          (* invariant: now frm_start is at a bol again *)
           update_table frame;
        end
     end;
@@ -677,9 +678,9 @@ let unkill window frame =
 let move_point frame point x y =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  let x, y = cursor_to_point frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
-  goto_line text point y;
-  fmove text point x |> ignore
+  let coord = cursor_to_coord frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
+  Text.goto_line text point coord.Text.c_line;
+  Text.fmove text point coord.Text.c_col |> ignore
 (*e: function Frame.move_point *)
 
 (*s: function Frame.current_dir *)

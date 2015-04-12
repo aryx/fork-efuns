@@ -50,9 +50,10 @@ val status_name : Efuns.frame -> string -> unit
 
 val set_cursor : Efuns.frame -> unit
 
-val point_to_cursor : Efuns.buffer -> Text.point -> int
-val cursor_to_point : Efuns.frame -> int -> int -> int * int
+val point_to_x_when_no_cutline : Efuns.buffer -> Text.point -> int
+val cursor_to_coord : Efuns.frame -> int -> int -> Text.coord
 
+(* x y screen coordinates *)
 val move_point : Efuns.frame -> Text.point -> int -> int -> unit
 
 (* getters/setters *)

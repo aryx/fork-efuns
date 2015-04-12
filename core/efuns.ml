@@ -197,7 +197,9 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_table : frm_line array;
     (*x: [[Efuns.frame]] other fields *)
+    (* frame coordinates, so x is between 0 and frm_width - 1 *)
     mutable frm_cursor_x : int;
+    (* frame coordinates, so y is between 0 and frm_height - 1 *)
     mutable frm_cursor_y : int;
 
     mutable frm_cursor : string;

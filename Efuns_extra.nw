@@ -1473,14 +1473,6 @@ let unkill window frame =
   frame.frm_killed <- false
 @
 
-<<function Frame.move_point>>=
-let move_point frame point x y =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let x, y = cursor_to_point frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
-  goto_line text point y;
-  fmove text point x |> ignore
-@
 
 
 <<exception Frame.FoundFrame>>=

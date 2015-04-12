@@ -305,7 +305,7 @@ let handle_key top_window modifiers keysym =
 
   Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();
 
-  update_display ()
+  update_display () (* will set cursor back on and many other things *)
 (*e: function Top_window.handle_key *)
 
   (* We can receive events from different sources. In particular, some of
