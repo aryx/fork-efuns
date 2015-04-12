@@ -309,54 +309,56 @@ let insert_at_end text str =
 
 
 
-<<function Text.find_xy>>=
-let find_xy text point line pos =
-  let gpos = text.gpoint.pos in
-  let gline = text.gpoint.line in
-  let gap_end = gpos + text.gsize in
-
-  let y,x =
-    if pos >= gap_end then
-      (* go forward *)
-      let rec iter line =
-        if line >= text.text_nlines 
-        then text.text_nlines - 1
-        else
-          if text.text_newlines.(line).position > pos 
-          then line - 1
-          else iter (line + 1)
-      in
-      let line = 
-        if point > gap_end && pos > point 
-        then iter (line+1) 
-        else iter (gline+1) 
-      in
-      if line = gline 
-      then
-        let gchars = gpos - text.text_newlines.(gline).position in
-        line, gchars + pos - gap_end
-      else
-        line, pos - text.text_newlines.(line).position
-    else
-    (* go backward *)
-    let rec iter line =
-      if line > 0 
-      then
-        if text.text_newlines.(line).position > pos 
-        then iter (line - 1)
-        else line
-      else 0
-    in
-    let line = 
-      if point < gpos && pos <= point 
-      then iter line 
-      else iter gline in
-    line, pos - text.text_newlines.(line).position
-  in
-  x,y
-@
+%<<function Text.find_xy>>=
+%let find_xy text point line pos =
+%  let gpos = text.gpoint.pos in
+%  let gline = text.gpoint.line in
+%  let gap_end = gpos + text.gsize in
+%
+%  let y,x =
+%    if pos >= gap_end then
+%      (* go forward *)
+%      let rec iter line =
+%        if line >= text.text_nlines 
+%        then text.text_nlines - 1
+%        else
+%          if text.text_newlines.(line).position > pos 
+%          then line - 1
+%          else iter (line + 1)
+%      in
+%      let line = 
+%        if point > gap_end && pos > point 
+%        then iter (line+1) 
+%        else iter (gline+1) 
+%      in
+%      if line = gline 
+%      then
+%        let gchars = gpos - text.text_newlines.(gline).position in
+%        line, gchars + pos - gap_end
+%      else
+%        line, pos - text.text_newlines.(line).position
+%    else
+%    (* go backward *)
+%    let rec iter line =
+%      if line > 0 
+%      then
+%        if text.text_newlines.(line).position > pos 
+%        then iter (line - 1)
+%        else line
+%      else 0
+%    in
+%    let line = 
+%      if point < gpos && pos <= point 
+%      then iter line 
+%      else iter gline in
+%    line, pos - text.text_newlines.(line).position
+%  in
+%  x,y
+%@
 % was called find_xy, but confusing with xy used in efuns where
 % they are more screen coordinates with ^M and 80col adjustments
+% and anyway callsites can be translated to calls to the simpler
+% find_line_of_pos.
 
 <<function Text.read>>=
 let read inc =
@@ -678,10 +680,7 @@ open Utils
 
 <<type Text.point>>
 
-type coord = {
-  c_col: int;
-  c_line: int;
-}
+<<type Text.coord>>
 
 <<type Text.delta>>
 
@@ -721,15 +720,9 @@ type t = text
 
 <<function Text.point_line>>
 
-let point_coord text point =
-  { c_col = point_col text point;
-    c_line = point_line text point;
-  }
+<<function Text.point_coord>>
 
-
-
-<<function Text.find_xy>>
-
+<<function Text.find_line_of_pos>>
 
 (*****************************************************************************)
 (* Helpers *)

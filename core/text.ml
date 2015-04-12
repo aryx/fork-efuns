@@ -44,10 +44,12 @@ type point = {
 }
 (*e: type Text.point *)
 
+(*s: type Text.coord *)
 type coord = {
   c_col: int;
   c_line: int;
 }
+(*e: type Text.coord *)
 
 (*s: type Text.delta *)
 type delta = int
@@ -180,60 +182,42 @@ let point_line _text point =
   point.line
 (*e: function Text.point_line *)
 
+(*s: function Text.point_coord *)
 let point_coord text point =
   { c_col = point_col text point;
     c_line = point_line text point;
   }
+(*e: function Text.point_coord *)
 
-
-
-(*s: function Text.find_xy *)
-let find_xy text point line pos =
+(*s: function Text.find_line_of_pos *)
+let find_line_of_pos text pos =
   let gpos = text.gpoint.pos in
   let gline = text.gpoint.line in
   let gap_end = gpos + text.gsize in
 
-  let y,x =
-    if pos >= gap_end then
-      (* go forward *)
-      let rec iter line =
-        if line >= text.text_nlines 
-        then text.text_nlines - 1
-        else
-          if text.text_newlines.(line).position > pos 
-          then line - 1
-          else iter (line + 1)
-      in
-      let line = 
-        if point > gap_end && pos > point 
-        then iter (line+1) 
-        else iter (gline+1) 
-      in
-      if line = gline 
-      then
-        let gchars = gpos - text.text_newlines.(gline).position in
-        line, gchars + pos - gap_end
-      else
-        line, pos - text.text_newlines.(line).position
-    else
-    (* go backward *)
+  if pos >= gap_end then
+    (* go forward *)
     let rec iter line =
-      if line > 0 
-      then
+      if line >= text.text_nlines 
+      then text.text_nlines - 1
+      else
         if text.text_newlines.(line).position > pos 
-        then iter (line - 1)
-        else line
-      else 0
+        then line - 1
+        else iter (line + 1)
     in
-    let line = 
-      if point < gpos && pos <= point 
-      then iter line 
-      else iter gline in
-    line, pos - text.text_newlines.(line).position
-  in
-  x,y
-(*e: function Text.find_xy *)
-
+    iter (gline+1) 
+  else
+     (* go backward *)
+     let rec iter line =
+       if line > 0 
+       then
+         if text.text_newlines.(line).position > pos 
+         then iter (line - 1)
+         else line
+      else 0
+     in
+     iter gline
+(*e: function Text.find_line_of_pos *)
 
 (*****************************************************************************)
 (* Helpers *)
@@ -290,8 +274,7 @@ let set_attr text point len attr = (* should not exceed one line *)
   if len > 0 then
     let gap_end = text.gpoint.pos + text.gsize in
 
-    let x,y = find_xy text text.gpoint.pos text.gpoint.line point.pos in
-    cancel_repr text point.pos y;
+    cancel_repr text point.pos point.line;
 
     let pos = point.pos in
     let gpos = text.gpoint.pos in
@@ -740,9 +723,8 @@ let goto_point _text p1 p2 =
 
 (*s: function Text.move_point_to *)
 let move_point_to_pos text point pos =
-  let _x,y = find_xy text text.gpoint.pos text.gpoint.line pos in
   point.pos <- pos;
-  point.line <- y
+  point.line <- find_line_of_pos text pos
 (*e: function Text.move_point_to *)
 
 (*s: function Text.remove_point *)
