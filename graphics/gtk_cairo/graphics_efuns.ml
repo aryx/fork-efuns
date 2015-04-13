@@ -456,9 +456,14 @@ let configure loc top_window desc metrics da ev =
   fill_rectangle_xywh ~cr ~x:0. ~y:0. 
     ~w:(float_of_int width) ~h:(float_of_int height)
     ~color:"DarkSlateGray" ();
-  (* todo: force a redraw for all the frame after a resize?
-   * w.base has changed!
-   *)
+  (* force a redraw for all the frame after a resize. w.base has changed! *)
+  (Globals.location()).top_windows |> List.iter (fun top_window ->
+     top_window.window |> Window.iter(fun frm -> frm.frm_redraw <- true;);
+     (match top_window.top_mini_buffers with
+      | [] -> ()
+      | frm :: _ -> frm.frm_redraw <- true;
+     );
+  ); 
 (*
   let pg = (layout, metrics) in
   for i = 0 to (Globals.location()).loc_height -.. 1 do
