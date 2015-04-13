@@ -30,7 +30,7 @@ type map =
     mutable complex_bindings : (key * binding) list;
 
     (*s: [[Efuns.map]] other fields *)
-    mutable interactives : (string * (action * prefix option)) list;
+    mutable interactives : (action_name * (action * prefix option)) list;
     (*e: [[Efuns.map]] other fields *)
   } 
 (*e: type Efuns.map *)

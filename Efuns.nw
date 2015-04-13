@@ -5890,6 +5890,7 @@ let call_interactive frame =
 let meta_hist = ref []
 @
 
+% call_interactive -> <>
 <<function Interactive.buf_interactives>>=
 let buf_interactives buf =
   let interactives = 
@@ -5903,7 +5904,10 @@ let buf_interactives buf =
 % mapping in the major, minors, or buffer. A single global
 % interactive seems simpler. To have a consistent M-x compile
 % that always bind to the same action (and have this action then
-% possibly use buffer/major/minor variables)
+% possibly use buffer/major/minor variables).
+%less: what could have been nice is a way to change
+% an action_name e.g. in eshell to have begin_of_line means something
+% slightly different (to just go after the prompt)
 
 
 <<function Interactive.exec_interactive>>=
@@ -5917,7 +5921,8 @@ let exec_interactive interactives frame name =
     let top_window = Window.top frame.frm_window in
     Top_window.message top_window ("No interactive command "^name)
 @
-
+%less: I think it should just use the actions, no need for this intermediate
+% interactive thing.
 
 <<[[Interactive.exec_interactive()]] display if has a keybinding>>=
 key |> Common.do_option (fun key_list ->
@@ -5936,7 +5941,7 @@ key |> Common.do_option (fun key_list ->
 % in addition to char_map and complex_binding
 
 <<[[Efuns.map]] other fields>>=
-mutable interactives : (string * (action * prefix option)) list;
+mutable interactives : (action_name * (action * prefix option)) list;
 @
 % record key so useful so can display the list of bindings?
 
@@ -6631,8 +6636,8 @@ let point_to_line text point line =
 % meta!
 % could be in advanced topic
 
-%pad: when you do big jump in a file, it's hard to "undo". You need
-% to keep a history. It's easy to undo a forward screen,
+%when you do big jump in a file, it's hard to "undo" what you did. You need
+% to keep a history for such moves. It's easy to undo a forward screen,
 % just do backward screen. It's not so easy to undo
 % a goto begin_of_file, or a C-s. Enter buf_history_pos.
 
@@ -6651,7 +6656,6 @@ let history_pos_max = 10
 <<save current pos from frame for position history navigation>>=
 Simple.save_current_pos frame;
 @
-
 \ifallcode
 <<save current pos from frame for position history navigation (in simple.ml)>>=
 save_current_pos frame;
@@ -6661,14 +6665,18 @@ save_current_pos frame;
 <<function Simple.save_current_pos>>=
 let save_current_pos frame =
   let buf = frame.frm_buffer in
+  let text = buf.buf_text in
   let point = frame.frm_point in
   if Array.length buf.buf_history_pos < history_pos_max
   then buf.buf_history_pos <- Array.create history_pos_max None;
   let arr = buf.buf_history_pos in
+  arr.(history_pos_max -1) |> Common.do_option (fun pt ->
+     Text.remove_point text pt
+  );
   Array.blit arr 0 arr 1 (history_pos_max - 1);
   arr.(0) <- Some (Text.dup_point buf.buf_text point)
 @
-
+%bugfix: don't forget to remove_point! otherwise leak
 
 <<navigating keys>>=
 [ControlMap, Char.code 'u'; ControlMap, Char.code ' '], 
@@ -6690,11 +6698,13 @@ let goto_last_saved_pos frame =
   let arr = buf.buf_history_pos in
   let head = arr.(0) in
   Array.blit arr 1 arr 0 (history_pos_max - 1);
+  arr.(history_pos_max - 1) <- None;
   match head with
   | Some pt -> Text.goto_point text frame.frm_point pt
   | None -> failwith "No position history"
 @
-
+%bugfix: don't forget to set to None otherwise will have duped
+% point and will remove something that has been freed already
 
 % see also search later which is also a form of navigation.
 

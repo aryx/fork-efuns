@@ -630,10 +630,14 @@ let history_pos_max = 10
 (*s: function Simple.save_current_pos *)
 let save_current_pos frame =
   let buf = frame.frm_buffer in
+  let text = buf.buf_text in
   let point = frame.frm_point in
   if Array.length buf.buf_history_pos < history_pos_max
   then buf.buf_history_pos <- Array.create history_pos_max None;
   let arr = buf.buf_history_pos in
+  arr.(history_pos_max -1) |> Common.do_option (fun pt ->
+     Text.remove_point text pt
+  );
   Array.blit arr 0 arr 1 (history_pos_max - 1);
   arr.(0) <- Some (Text.dup_point buf.buf_text point)
 (*e: function Simple.save_current_pos *)
@@ -647,6 +651,7 @@ let goto_last_saved_pos frame =
   let arr = buf.buf_history_pos in
   let head = arr.(0) in
   Array.blit arr 1 arr 0 (history_pos_max - 1);
+  arr.(history_pos_max - 1) <- None;
   match head with
   | Some pt -> Text.goto_point text frame.frm_point pt
   | None -> failwith "No position history"
