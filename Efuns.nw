@@ -27,6 +27,8 @@
 % - more consistency with coord, position, point, line x col, xy
 %   so less confusing (when uses sometimes xy for colxline and sometimes
 %   for frame coordinates)
+% - differentiate position and position2 types! helped find commenting bugs
+%   and confusing names
 
 %thx to codemap/codegraph/scheck:
 % - SEMI use cg to reduce backward deps, introduce globals.c, utils.c,
@@ -2515,6 +2517,7 @@ let get_position text point =
 % note that point can never be in the middle of the hole.
 % either it's the gpoint, or it's before or after the hole.
 
+% so from a position2 in point to a regular position!
 
 \subsection{Internal positions}
 
@@ -2594,6 +2597,8 @@ type delta = int
 
 % helper often used when want compute a delta from 2 pos
 
+% user delta! not just p2.pos - p1.pos
+
 <<function Text.distance>>=
 let distance text p1 p2 =
   low_distance text p1.pos p2.pos
@@ -2627,6 +2632,10 @@ type coord = {
   c_line: int;
 }
 @
+
+% we will see actually later than have also the notions of screen coord (x y),
+% and even frame coord and that they are different than col x line
+% because of lines cut and ^M.
 
 % status line display the line of the cursor -> <>
 <<function Text.point_line>>=
@@ -3232,33 +3241,6 @@ let highlighted = ref None
 let highlighted_chars = ref []
 @
 
-<<function Simple.unhightlight>>=
-let unhightlight _frame =
-  !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
-    let text = buf.buf_text in
-    Text.set_char_attr text curseur attr;
-    buf.buf_modified <- buf.buf_modified + 1;
-    Text.remove_point text curseur
-  );
-  highlighted_chars := [];
-  match !highlighted with
-  | None -> ()
-  | Some (frame,debut,fin) -> 
-     (*   if !keypressed <> XK.xk_Pointer_Drag1 then *)
-     highlighted := None;
-     let buf = frame.frm_buffer in
-     let text = buf.buf_text in
-     Text.with_new_point text (fun curseur ->
-     Text.with_new_point text (fun final ->
-       Text.set_position text curseur debut;
-       Text.set_position text final fin;
-       let str = Text.region text curseur final in
-       Simple.kill_string str;
-       (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
-     ));
-     unhightlight_region buf debut fin
-@
-
 <<function Simple.highlight>>=
 let highlight frame =
   let frame =
@@ -3295,6 +3277,34 @@ let highlight frame =
   highlighted := Some (frame, pos1, pos2);
   hightlight_region buf debut fin
 @
+
+<<function Simple.unhightlight>>=
+let unhightlight _frame =
+  !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
+    let text = buf.buf_text in
+    Text.set_char_attr text curseur attr;
+    buf.buf_modified <- buf.buf_modified + 1;
+    Text.remove_point text curseur
+  );
+  highlighted_chars := [];
+  match !highlighted with
+  | None -> ()
+  | Some (frame,debut,fin) -> 
+     (*   if !keypressed <> XK.xk_Pointer_Drag1 then *)
+     highlighted := None;
+     let buf = frame.frm_buffer in
+     let text = buf.buf_text in
+     Text.with_new_point text (fun curseur ->
+     Text.with_new_point text (fun final ->
+       Text.set_position text curseur debut;
+       Text.set_position text final fin;
+       let str = Text.region text curseur final in
+       Simple.kill_string str;
+       (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
+     ));
+     unhightlight_region buf debut fin
+@
+
 
 
 
@@ -3488,7 +3498,7 @@ and box =
 % number with repr_line_pos! types ftw!
 
 
-\subsection{Characters representation}
+\subsection{Characters representation, handling [[^M]]}
 
 % text.text_string is a string, an array of chars where
 % a char is a byte. But while some chars
@@ -4420,7 +4430,7 @@ frame.frm_redraw <- false
 % seems unecessary. Then we could have a proper if then else with
 % the second update_table.
 
-\subsection{Line display}
+\subsection{Line display, cutting long lines}
 
 % text -> x,y display (and cursor below is the reverse)
 
@@ -5883,7 +5893,8 @@ let mouse_save_then_kill frame =
 *)
 @
 
-\subsection{General clipboard}
+\subsection{System clipboard}
+% snarf for plan9?
 
 \subsection{Resize}
 
@@ -9169,9 +9180,9 @@ let next_error top_frame =
 
 \section{Efuns server and client}
 
-% dual of previous chapter in some sense since this time
-% it's external command that call in efuns instead of efuns
-% calling external commands
+% dual of previous sections in some sense since this time
+% it's external commands that calls efuns instead of efuns
+% calling external commands.
 
 <<misc actions>>=
 define_action "start_server" Server.start;

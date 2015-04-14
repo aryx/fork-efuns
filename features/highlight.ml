@@ -106,9 +106,9 @@ let highlight frame =
     match !highlighted with
     | None -> pos1,pos2
     | Some (frame,d,f) ->
-        if d < pos1 
+        if pos1 > d
         then unhightlight_region buf d pos1; 
-        if f > pos2 
+        if pos2 < f
         then unhightlight_region buf pos2 f;
         if pos1 < d 
         then  pos1,d

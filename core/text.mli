@@ -188,3 +188,8 @@ val dummy_line : line
 type charreprs = string array
 
 val compute_representation : t -> charreprs -> int -> line
+
+(* 
+move_point_to_pos: t -> point -> position2 -> unit 
+find_line_of_pos: t -> position2 -> int
+*)
