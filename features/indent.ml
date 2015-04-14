@@ -24,7 +24,7 @@ let set_indent text point offset =
           (Text.fmove text curseur 1; iter (offset - 1))
         else
         if c = '\t' then
-          (Text.delete text curseur 1 |> ignore;
+          (Text.delete text curseur 1;
            iter offset)
         else
           (Text.insert text curseur (String.make offset ' '))

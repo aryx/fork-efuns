@@ -569,7 +569,7 @@ let display top_window frame =
     let start_c = point_to_x_when_no_cutline buf start in
     if start_c > 0 then begin
       frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
-      Text.bmove text start start_c |> ignore
+      Text.bmove text start start_c
     end;
     (*e: [[Frame.display()]] redraw, possibly update frm_y_offset *)
     (*s: [[Frame.display()]] redraw, possibly update frm_x_offset *)
@@ -593,7 +593,7 @@ let display top_window frame =
         if frame.frm_force_start then begin
           let coord = cursor_to_coord frame frame.frm_cursor_x frame.frm_cursor_y in
           Text.goto_line text frame.frm_point coord.Text.c_line;
-          Text.fmove text frame.frm_point coord.Text.c_col |> ignore
+          Text.fmove text frame.frm_point coord.Text.c_col
         end 
         (*e: [[Frame.display()]] redraw, if frm_force_start *)
         else begin
@@ -604,7 +604,7 @@ let display top_window frame =
           let start_c = point_to_x_when_no_cutline buf start in
           if start_c > 0 then begin
             frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
-            Text.bmove text start start_c |> ignore
+            Text.bmove text start start_c
           end;
           (*e: [[Frame.display()]] redraw, update frm_y_offset again *)
           (* invariant: now frm_start is at a bol again *)
@@ -728,7 +728,7 @@ let move_point frame point x y =
   let text = buf.buf_text in
   let coord = cursor_to_coord frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
   Text.goto_line text point coord.Text.c_line;
-  Text.fmove text point coord.Text.c_col |> ignore
+  Text.fmove text point coord.Text.c_col
 (*e: function Frame.move_point *)
 
 (*s: function Frame.current_dir *)

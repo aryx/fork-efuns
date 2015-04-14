@@ -4947,7 +4947,7 @@ let start = frame.frm_start in
 let start_c = point_to_x_when_no_cutline buf start in
 if start_c > 0 then begin
   frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
-  Text.bmove text start start_c |> ignore
+  Text.bmove text start start_c
 end;
 @
 % when can this happen? someone mv frm_start to a col > 0?
@@ -4964,7 +4964,7 @@ frame.frm_y_offset <- - height / 2;
 let start_c = point_to_x_when_no_cutline buf start in
 if start_c > 0 then begin
   frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
-  Text.bmove text start start_c |> ignore
+  Text.bmove text start start_c
 end;
 @
 
@@ -5045,7 +5045,7 @@ mutable frm_force_start : bool;
 if frame.frm_force_start then begin
   let coord = cursor_to_coord frame frame.frm_cursor_x frame.frm_cursor_y in
   Text.goto_line text frame.frm_point coord.Text.c_line;
-  Text.fmove text frame.frm_point coord.Text.c_col |> ignore
+  Text.fmove text frame.frm_point coord.Text.c_col
 end 
 @
 %todo: why not return a point and just to goto_point?
@@ -5836,7 +5836,7 @@ let move_point frame point x y =
   let text = buf.buf_text in
   let coord = cursor_to_coord frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
   Text.goto_line text point coord.Text.c_line;
-  Text.fmove text point coord.Text.c_col |> ignore
+  Text.fmove text point coord.Text.c_col
 @
 %less: could have instead a cursor_to_point and do a Text.goto_point
 
@@ -5906,7 +5906,7 @@ failwith "Simple.mouse_yank_at_click: TODO"
   let point = frame.frm_point in
   let xterm = Window.xterm top_window in
   let str = WX_xterm.get_cutbuffer xterm in
-  Text.insert text point str |> ignore;
+  Text.insert text point str;
   Text.fmove text point (String.length str)
 *)
 @
@@ -5928,7 +5928,7 @@ let mouse_save_then_kill frame =
       let (start,term) =
         if point < mark then (point,mark) else (mark,point) 
       in
-      Text.delete text start (Text.distance text start term) |> ignore
+      Text.delete text start (Text.distance text start term)
     end else begin
       let xterm = Window.xterm top_window in
       goto_point text mark point;
@@ -6859,8 +6859,8 @@ let insert_char frame char =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
   single_char.[0] <- char;
-  Text.insert text point single_char |> ignore;
-  Text.fmove text point 1 |> ignore
+  Text.insert text point single_char;
+  Text.fmove text point 1
 @
 
 
@@ -6925,13 +6925,13 @@ define_action "kill_end_of_line"  Simple.kill_end_of_line;
 let delete_backspace_char frame =
   let text = frame.frm_buffer.buf_text in
   if Text.bmove_res text frame.frm_point 1 <> 0 
-  then Text.delete text frame.frm_point 1 |> ignore
+  then Text.delete text frame.frm_point 1
 @
 
 <<function Simple.delete_char>>=
 let delete_char frame =
   let text = frame.frm_buffer.buf_text in
-  Text.delete text frame.frm_point 1 |> ignore
+  Text.delete text frame.frm_point 1
 @
 
 <<function Text.delete>>=
@@ -6956,7 +6956,7 @@ let delete_backward_word buf point =
   let text = buf.buf_text in
   Text.with_dup_point text point (fun old_point ->
     backward_word buf point;
-    Text.delete text point (Text.distance text point old_point) |> ignore
+    Text.delete text point (Text.distance text point old_point)
   )
 @
 
@@ -6967,7 +6967,7 @@ let delete_forward_word buf point =
     forward_word buf point;
     let len = Text.distance text old_point point in
     Text.bmove text point len;
-    Text.delete text point len |> ignore
+    Text.delete text point len
   )
 @
 
@@ -7194,7 +7194,7 @@ let insert_next_killed frame =
         else n+1 
       in
       Text.bmove text point len;
-      Text.delete text point len |> ignore;
+      Text.delete text point len;
       let pos, len =  Text.insert_res text point kill_ring.(n) in
       Text.fmove text point len;
       last_insert := Some(frame,pos,n,len)
@@ -7465,7 +7465,7 @@ let isearch to_regexp sens frame =
         let len = Text.search_forward text regexp point in
      (* Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
         print_newline ();*)
-        Text.fmove text point len |> ignore
+        Text.fmove text point len
   in
   let set_last mini_frame =
     if !string = "" then begin
@@ -9355,7 +9355,7 @@ let dabbrev_expand frame =
             if Text.bmove_res curr_text mark 1 <> 0 then
               if syntax.(Char.code (Text.get_char curr_text mark)) 
               then begin Text.fmove curr_text mark 1; restart () end
-              else Text.fmove curr_text mark 1 |> ignore
+              else Text.fmove curr_text mark 1
             else
               ()
         in
@@ -9480,7 +9480,7 @@ let transpose_chars buf point =
     Text.bmove text point 1;
     let pos,c1 = Text.delete_res text point 1 in
     Text.fmove text point 1;
-    Text.insert text point c1 |> ignore;
+    Text.insert text point c1;
   );
   Text.fmove text point 1;
   ()
@@ -9504,8 +9504,8 @@ let transpose_words buf point =
       Text.with_dup_point text point (fun pos2 ->
         to_end_of_word text point syntax;
         let _,word2 = Text.delete_res text pos2 (Text.distance text pos2 point) in    
-        Text.insert text pos1 word2 |> ignore;
-        Text.insert text pos2 word1 |> ignore;
+        Text.insert text pos1 word2;
+        Text.insert text pos2 word1;
         Text.fmove text point (String.length word1);
   )))
 @
@@ -9521,7 +9521,7 @@ let on_word buf point f =
       to_end_of_word text point syntax;
       let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
       let w = f word1 in
-      Text.insert text pos1 w |> ignore;
+      Text.insert text pos1 w;
       Text.fmove text point (String.length w);
     )
   )
@@ -9542,7 +9542,7 @@ let fill_paragraph frame =
       forward_paragraph buf fin;
 
       simplify text start fin;
-      Text.insert text start "\n" |> ignore;
+      Text.insert text start "\n";
       let rec iter count last_space =
         if Text.compare text start fin < 0 then
         if Text.fmove_res text start 1 = 1 then 
@@ -9562,7 +9562,7 @@ let fill_paragraph frame =
               iter (count+1) (last_space+1)
       in
       iter 0 0;  
-      Text.insert text fin "\n" |> ignore;
+      Text.insert text fin "\n";
   )))
 @
 
@@ -10333,6 +10333,8 @@ let get_parameter frame =
 
 \section{Paren}
 % useful! edwin power!
+% right now it's only working when you activated the minor mode,
+% and when you type a closing paren.
 
 <<constant Paren_mode.mode>>=
 let mode = Ebuffer.new_minor_mode "paren" []
@@ -10350,6 +10352,9 @@ let _ =
     Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
   ) 
 @
+
+% todo: do also a show_paren mode? so when hover paren it highlights the
+% matching one
 
 <<toplevel Paren_mode._2>>=
 let _ = 
@@ -10390,6 +10395,7 @@ let highlight_paren frame =
   then ()
   else
   let c = Text.get_char text curseur in
+  (* right now highlighting only when type a closing paren *)
   if not (is_paren_end c) 
   then ()
   else
@@ -10420,7 +10426,7 @@ let highlight_paren frame =
 
 
 
-
+\ifallcode
 <<[[Simple.is_paren_end()]] extra conditions>>=
   ||  (!htmlp && c == '>')
 @
@@ -10433,6 +10439,7 @@ let htmlp = ref false
 <<[[Simple.highlight_paren()]] special code for HTML modes>>=
 htmlp := (!Top_window.keypressed = Char.code '>');
 @
+\fi
 
 \section{Tab}
 
@@ -10447,27 +10454,43 @@ let overwrite_mode = Ebuffer.new_minor_mode "Over" []
 @
 
 <<Simple toplevel setup>>=
-  Action.define_buffer_action "overwrite_mode" (fun buf -> 
-      let mode = overwrite_mode in
-      if Ebuffer.modep buf mode 
-      then Ebuffer.del_minor_mode buf mode
-      else Ebuffer.set_minor_mode buf mode
-  );
+Action.define_buffer_action "overwrite_mode" (fun buf -> 
+    let mode = overwrite_mode in
+    if Ebuffer.modep buf mode 
+    then Ebuffer.del_minor_mode buf mode
+    else Ebuffer.set_minor_mode buf mode
+);
 @
 % should be in start_hook?
-
+<<misc keys>>=
+[NormalMap, XK.xk_Insert], "overwrite_mode";
+@
 <<[[interactives_map]] initial entries>>=
 "overwrite_mode";
 @
 
-<<misc keys>>=
-[NormalMap, XK.xk_Insert], "overwrite_mode";
-@
 
 <<[[Simple.self_insert_command()]] if overwrite mode>>=
 if Ebuffer.modep buf overwrite_mode 
 then insert_at_place frame char
 @
+
+<<function Simple.insert_at_place>>=
+let insert_at_place frame char =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let c = Text.get_char text point in
+  if c = '\n' 
+  then insert_char frame char
+  else begin
+    Text.delete text point 1;
+    single_char.[0] <- char;    
+    Text.insert text point single_char;
+    Text.fmove text point 1
+  end
+@
+%old:  let _sessionTODOBUG = Text.start_session text in
 
 \chapter{Extra Code}
 

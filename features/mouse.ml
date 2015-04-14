@@ -80,7 +80,7 @@ failwith "Simple.mouse_yank_at_click: TODO"
   let point = frame.frm_point in
   let xterm = Window.xterm top_window in
   let str = WX_xterm.get_cutbuffer xterm in
-  Text.insert text point str |> ignore;
+  Text.insert text point str;
   Text.fmove text point (String.length str)
 *)
 (*e: function Simple.mouse_yank_at_click *)
@@ -101,7 +101,7 @@ let mouse_save_then_kill frame =
       let (start,term) =
         if point < mark then (point,mark) else (mark,point) 
       in
-      Text.delete text start (Text.distance text start term) |> ignore
+      Text.delete text start (Text.distance text start term)
     end else begin
       let xterm = Window.xterm top_window in
       goto_point text mark point;

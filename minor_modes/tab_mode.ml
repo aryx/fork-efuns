@@ -20,7 +20,7 @@ let mode = Ebuffer.new_minor_mode "tab" []
   
 (*s: function Tab_mode.insert_tab *)
 let insert_tab frame = 
-  insert_string frame "\t" |> ignore
+  insert_string frame "\t"
 (*e: function Tab_mode.insert_tab *)
   
 (*s: toplevel Tab_mode._1 *)

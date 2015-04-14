@@ -264,7 +264,7 @@ let isearch to_regexp sens frame =
         let len = Text.search_forward text regexp point in
      (* Printf.printf  "Found at %d len %d" (Text.get_position text point) len;
         print_newline ();*)
-        Text.fmove text point len |> ignore
+        Text.fmove text point len
   in
   let set_last mini_frame =
     if !string = "" then begin

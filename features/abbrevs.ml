@@ -88,7 +88,7 @@ let dabbrev_expand frame =
             if Text.bmove_res curr_text mark 1 <> 0 then
               if syntax.(Char.code (Text.get_char curr_text mark)) 
               then begin Text.fmove curr_text mark 1; restart () end
-              else Text.fmove curr_text mark 1 |> ignore
+              else Text.fmove curr_text mark 1
             else
               ()
         in

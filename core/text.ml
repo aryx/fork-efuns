@@ -1358,7 +1358,7 @@ let lexing text curseur end_point =
     (fun str len ->
       let len = min len (distance text curseur end_point) in
       let len = blit str text curseur len in
-      fmove text curseur len |> ignore;
+      fmove text curseur len;
       len
   )
 (*e: function Text.lexing *)

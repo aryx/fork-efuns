@@ -48,6 +48,7 @@ let highlight_paren frame =
   then ()
   else
   let c = Text.get_char text curseur in
+  (* right now highlighting only when type a closing paren *)
   if not (is_paren_end c) 
   then ()
   else

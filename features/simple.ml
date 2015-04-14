@@ -22,8 +22,8 @@ open Xtypes
 let insert_string frame str =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  Text.insert text point str |> ignore;
-  Text.fmove text point (String.length str) |> ignore
+  Text.insert text point str;
+  Text.fmove text point (String.length str)
 (*e: function Simple.insert_string *)
   
 (*s: constant Simple.single_char *)
@@ -35,8 +35,8 @@ let insert_char frame char =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
   single_char.[0] <- char;
-  Text.insert text point single_char |> ignore;
-  Text.fmove text point 1 |> ignore
+  Text.insert text point single_char;
+  Text.fmove text point 1
 (*e: function Simple.insert_char *)
 
 (*s: function Simple.insert_return *)
@@ -51,7 +51,7 @@ let previous_char frame =
   let point = frame.frm_point in
   if Text.bmove_res text point 1 = 0 then raise Not_found;
   let c = Text.get_char text point in
-  Text.fmove text point 1 |> ignore;
+  Text.fmove text point 1;
   c
 (*e: function Simple.previous_char *)
 
@@ -68,13 +68,14 @@ let insert_at_place frame char =
   let text = buf.buf_text in
   let point = frame.frm_point in
   let c = Text.get_char text point in
-  if c = '\n' then
-    insert_char frame char
-  else
-  Text.delete text point 1 |> ignore;
-  single_char.[0] <- char;    
-  Text.insert text point single_char |> ignore;
-  Text.fmove text point 1 |> ignore
+  if c = '\n' 
+  then insert_char frame char
+  else begin
+    Text.delete text point 1;
+    single_char.[0] <- char;    
+    Text.insert text point single_char;
+    Text.fmove text point 1
+  end
 (*e: function Simple.insert_at_place *)
 
 
@@ -111,14 +112,14 @@ let char_insert_command char frame =
 (*s: function Simple.delete_char *)
 let delete_char frame =
   let text = frame.frm_buffer.buf_text in
-  Text.delete text frame.frm_point 1 |> ignore
+  Text.delete text frame.frm_point 1
 (*e: function Simple.delete_char *)
 
 (*s: function Simple.delete_backspace_char *)
 let delete_backspace_char frame =
   let text = frame.frm_buffer.buf_text in
   if Text.bmove_res text frame.frm_point 1 <> 0 
-  then Text.delete text frame.frm_point 1 |> ignore
+  then Text.delete text frame.frm_point 1
 (*e: function Simple.delete_backspace_char *)
 
 (*s: function Simple.hungry_char *)
@@ -329,7 +330,7 @@ let insert_next_killed frame =
         else n+1 
       in
       Text.bmove text point len;
-      Text.delete text point len |> ignore;
+      Text.delete text point len;
       let pos, len =  Text.insert_res text point kill_ring.(n) in
       Text.fmove text point len;
       last_insert := Some(frame,pos,n,len)
@@ -464,7 +465,7 @@ let delete_backward_word buf point =
   let text = buf.buf_text in
   Text.with_dup_point text point (fun old_point ->
     backward_word buf point;
-    Text.delete text point (Text.distance text point old_point) |> ignore
+    Text.delete text point (Text.distance text point old_point)
   )
 (*e: function Simple.delete_backward_word *)
 
@@ -475,7 +476,7 @@ let delete_forward_word buf point =
     forward_word buf point;
     let len = Text.distance text old_point point in
     Text.bmove text point len;
-    Text.delete text point len |> ignore
+    Text.delete text point len
   )
 (*e: function Simple.delete_forward_word *)
 
@@ -489,7 +490,7 @@ let on_word buf point f =
       to_end_of_word text point syntax;
       let _,word1 = Text.delete_res text pos1 (Text.distance text pos1 point) in
       let w = f word1 in
-      Text.insert text pos1 w |> ignore;
+      Text.insert text pos1 w;
       Text.fmove text point (String.length w);
     )
   )
@@ -510,8 +511,8 @@ let transpose_words buf point =
       Text.with_dup_point text point (fun pos2 ->
         to_end_of_word text point syntax;
         let _,word2 = Text.delete_res text pos2 (Text.distance text pos2 point) in    
-        Text.insert text pos1 word2 |> ignore;
-        Text.insert text pos2 word1 |> ignore;
+        Text.insert text pos1 word2;
+        Text.insert text pos2 word1;
         Text.fmove text point (String.length word1);
   )))
 (*e: function Simple.transpose_words *)
@@ -524,7 +525,7 @@ let transpose_chars buf point =
     Text.bmove text point 1;
     let pos,c1 = Text.delete_res text point 1 in
     Text.fmove text point 1;
-    Text.insert text point c1 |> ignore;
+    Text.insert text point c1;
   );
   Text.fmove text point 1;
   ()
@@ -775,7 +776,7 @@ let electric_insert_space frame =
         while (backward_word buf mark;
             Text.point_to_bol text mark > 75) do () done;
         forward_word buf mark; backward_word buf mark;
-        Text.insert text mark "\n" |> ignore
+        Text.insert text mark "\n"
       with Not_found -> ()
     )
 (*e: function Simple.electric_insert_space *)
@@ -787,11 +788,11 @@ let simplify text start point =
       if start < point then
         let c = Text.get_char text start in
         if c = ' ' || c = '\n' || c = '\t' then
-          ( Text.delete text start 1 |> ignore;
+          ( Text.delete text start 1;
             iter ' ')
         else
         if last_c = ' ' then
-          ( Text.insert text start " " |> ignore;
+          ( Text.insert text start " ";
             Text.fmove text start 2;
             iter 'a')
         else
@@ -819,7 +820,7 @@ let fill_paragraph frame =
       forward_paragraph buf fin;
 
       simplify text start fin;
-      Text.insert text start "\n" |> ignore;
+      Text.insert text start "\n";
       let rec iter count last_space =
         if Text.compare text start fin < 0 then
         if Text.fmove_res text start 1 = 1 then 
@@ -839,7 +840,7 @@ let fill_paragraph frame =
               iter (count+1) (last_space+1)
       in
       iter 0 0;  
-      Text.insert text fin "\n" |> ignore;
+      Text.insert text fin "\n";
   )))
 (*e: function Simple.fill_paragraph *)
   
@@ -937,12 +938,12 @@ let binding_option = tuple2_option (smalllist_option key_option, string_option)
 (*s: toplevel Simple._1 *)
 let _ =
   (*s: Simple toplevel setup *)
-    Action.define_buffer_action "overwrite_mode" (fun buf -> 
-        let mode = overwrite_mode in
-        if Ebuffer.modep buf mode 
-        then Ebuffer.del_minor_mode buf mode
-        else Ebuffer.set_minor_mode buf mode
-    );
+  Action.define_buffer_action "overwrite_mode" (fun buf -> 
+      let mode = overwrite_mode in
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+  );
   (*e: Simple toplevel setup *)
   Hook.add_start_hook (fun () ->
     let loc = Globals.location () in
