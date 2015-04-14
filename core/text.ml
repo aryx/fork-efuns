@@ -11,23 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-
-(* A FAIRE:
-On doit faire converger ce text vers un text directement affichable par
-WX_text. Pour cela:
-
-Modifier WX_text pour qu'il se satisfasse de l'interface de Text.
-En particulier, il doit n'utiliser que les fonctions suivantes:
-
-Text.representation text line --> string (buffer or copy) * int (position)
-Text.items line -> item array
-  
-Il doit aussi utiliser la structure un peu particuliere de l'arbre utiliser
-ici.
-  
-*)
 open Options
-open Utils
 
 (*****************************************************************************)
 (* Types *)
@@ -37,7 +21,9 @@ open Utils
 type position = int
 (*e: type Text.position *)
 
+(*s: type Text.position2 *)
 type position2 = int
+(*e: type Text.position2 *)
 
 (*s: type Text.point *)
 type point = {
@@ -87,7 +73,7 @@ type line = {
   } 
 (*e: type Text.line *)
 
-(*s: type Text.repr *)
+(*s: type Text.box *)
 and box = 
   { 
     box_col : int;        (* col of box *)
@@ -101,7 +87,7 @@ and box =
     box_pos_repr : int;  (* pos of box in representation string *)
     (*e: [[Text.box]] other fields *)
   } 
-(*e: type Text.repr *)
+(*e: type Text.box *)
 
 (*s: type Text.text *)
 type text = {
@@ -247,7 +233,9 @@ let cancel_repr text _point n =
 (* Attributes *)
 (*****************************************************************************)
 
+(*s: constant Text.highlight_bit *)
 let highlight_bit = 1 lsl 24
+(*e: constant Text.highlight_bit *)
 
 (*s: function Text.make_attr *)
 let make_attr fg bg font highlighted =
@@ -267,13 +255,12 @@ let direct_attr =  make_attr 0 1 0 false
 let inverse_attr =  make_attr 1 0 0 false
 (*e: constant Text.inverse_attr *)
 
-(*s: function Text.unset_attr *)
+(*s: function Text.unset_attrs *)
 let unset_attrs text =
   Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
   text.text_newlines |> Array.iter (fun line -> line.line_modified <- true)
-(*e: function Text.unset_attr *)
-
-(*s: function Text.set_attr *)
+(*e: function Text.unset_attrs *)
+(*s: function Text.set_attrs *)
 let set_attrs text point len attr = (* should not exceed one line *)
   if len > 0 then
     let gap_end = text.gpoint.pos + text.gsize in
@@ -296,7 +283,7 @@ let set_attrs text point len attr = (* should not exceed one line *)
     if before > 0 
     then Array.fill text.text_attrs pos before attr;
     Array.fill text.text_attrs after_pos after attr
-(*e: function Text.set_attr *)
+(*e: function Text.set_attrs *)
 
 (*s: function Text.get_attr *)
 let get_attr text point =
@@ -310,9 +297,7 @@ let get_attr text point =
   then text.text_attrs.(pos)
   else direct_attr
 (*e: function Text.get_attr *)
-
-
-(*s: function Text.set_char_attr *)
+(*s: function Text.set_attr *)
 let set_attr text point attr =
   let y = point.line in
   let pos = 
@@ -325,7 +310,7 @@ let set_attr text point attr =
     cancel_repr text pos y;
     text.text_attrs.(pos) <- attr
   end
-(*e: function Text.set_char_attr *)
+(*e: function Text.set_attr *)
 
 (*****************************************************************************)
 (* Gap *)
@@ -376,7 +361,6 @@ let move_gpoint_to text pos =
       (*e: [[Text.move_gpoint_to()]] when pos is after gpos *)
     end
 (*e: function Text.move_gpoint_to *)
-
 
 (*s: constant Text.add_amount *)
 let add_amount = define_option ["add_amount"] "Size of the gap in the buffer"
@@ -614,23 +598,18 @@ let commit_session text session_date =
     iter [] text.text_history
 (*e: function Text.commit_session *)
 
+(*s: function Text.with_session *)
 let with_session f text =
   let session = start_session text in
   let res = f () in
   commit_session text session;
   res
+(*e: function Text.with_session *)
 
 
 (*****************************************************************************)
 (* Insert/delete public API *)
 (*****************************************************************************)
-
-(*s: function Text.insert_at_end *)
-let insert_at_end text str =
-  low_insert text text.text_size str |> ignore;
-  text.text_history <- [];
-  text.text_modified <- text.text_modified + 1
-(*e: function Text.insert_at_end *)
 
 (*s: function Text.insert_res *)
 let insert_res text point str =
@@ -657,6 +636,14 @@ let delete_res text point len =
 let delete text point len = 
   delete_res text point len |> ignore
 (*e: function Text.delete *)
+
+(*s: function Text.insert_at_end *)
+let insert_at_end text str =
+  low_insert text text.text_size str |> ignore;
+  text.text_history <- [];
+  text.text_modified <- text.text_modified + 1
+(*e: function Text.insert_at_end *)
+
 
 (*****************************************************************************)
 (* Constructor *)
@@ -743,13 +730,17 @@ let remove_point text p =
     ) []
 (*e: function Text.remove_point *)
 
+(*s: function Text.with_dup_point *)
 let with_dup_point text point f =
   let p = dup_point text point in
   Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+(*e: function Text.with_dup_point *)
 
+(*s: function Text.with_new_point *)
 let with_new_point text f =
   let p = new_point text in
   Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+(*e: function Text.with_new_point *)
 
 
 (*****************************************************************************)
@@ -770,7 +761,6 @@ let save text outc =
   (* skipping the gap *)
   output outc str (gpos + gsize) (text.text_size - gpos - gsize)
 (*e: function Text.save *)
-
 
 (*****************************************************************************)
 (* Distance, delta *)
@@ -820,7 +810,6 @@ let get_char text point =
   else '\000'
 (*e: function Text.get_char *)
 
-
 (*****************************************************************************)
 (* Moving *)
 (*****************************************************************************)
@@ -860,8 +849,6 @@ let fmove_res text p delta =
   p.line <- y;
   low_distance text old_pos pos
 (*e: function Text.fmove_res *)
-
-
 
 (*s: function Text.bmove_res *)
 let bmove_res text p delta =
@@ -909,6 +896,7 @@ let fmove text p delta =
   fmove_res text p delta |> ignore
 (*e: function Text.fmove *)
 
+
 (*s: function Text.move_res *)
 let move_res text point n =
   if n > 0 
@@ -920,39 +908,6 @@ let move_res text point n =
 let move text point n = 
   move_res text point n |> ignore
 (*e: function Text.move *)
-
-(*****************************************************************************)
-(* Misc *)
-(*****************************************************************************)
-
-(*s: function Text.clean_text *)
-let clean_text text =
-  if not text.text_clean then begin
-    let size = text.text_size in
-    let gsize = text.gsize in
-    let string = text.text_string in
-    move_gpoint_to text size;
-    String.fill string (size - gsize) gsize '\000';
-    text.text_clean <- true
-  end
-(*e: function Text.clean_text *)
-
-
-(*s: function Text.blit *)
-let blit str text point len =
-  let pos = point.pos in
-  let len = min len (low_distance text pos text.text_size) in
-  let gpos = text.gpoint.pos in
-  let gap_end = gpos + text.gsize in
-  if pos+len >= gpos && pos < gap_end 
-  then clean_text text;
-  (try
-    String.blit text.text_string pos str 0 len
-   with e -> raise e
-   );
-  len
-(*e: function Text.blit *)
-
 
 (*****************************************************************************)
 (* Position *)
@@ -989,6 +944,35 @@ let goto_line text point y =
 (*****************************************************************************)
 (* Sub content  *)
 (*****************************************************************************)
+
+(* should be in search/replace, but it's used by blit too *)
+(*s: function Text.clean_text *)
+let clean_text text =
+  if not text.text_clean then begin
+    let size = text.text_size in
+    let gsize = text.gsize in
+    let string = text.text_string in
+    move_gpoint_to text size;
+    String.fill string (size - gsize) gsize '\000';
+    text.text_clean <- true
+  end
+(*e: function Text.clean_text *)
+    
+
+(*s: function Text.blit *)
+let blit str text point len =
+  let pos = point.pos in
+  let len = min len (low_distance text pos text.text_size) in
+  let gpos = text.gpoint.pos in
+  let gap_end = gpos + text.gsize in
+  if pos+len >= gpos && pos < gap_end 
+  then clean_text text;
+  (try
+     String.blit text.text_string pos str 0 len
+   with e -> raise e
+   );
+  len
+(*e: function Text.blit *)
     
 (*s: function Text.sub *)
 let sub text point len =
@@ -1007,7 +991,7 @@ let rec region text p1 p2 =
 (*****************************************************************************)
 (* Search/replace  *)
 (*****************************************************************************)
-    
+
 (*s: function Text.search_forward *)
 let search_forward text regexp point =
   let gsize = text.gsize in
@@ -1103,6 +1087,7 @@ let search_backward_groups text regexp point groups =
 (*s: constant Text.repr_string *)
 let repr_string = ref ""
 (*e: constant Text.repr_string *)
+
 (*s: constant Text.repr_size *)
 let repr_len = ref 0
 (*e: constant Text.repr_size *)
@@ -1291,6 +1276,7 @@ let point_to_lol text point n =
   else point_to_bol text point
 (*e: function Text.point_to_lol *)
 
+
 (*s: function Text.point_to_line *)
 let point_to_line text point line =
   let pos = 
@@ -1357,12 +1343,11 @@ let update text str =
 (*s: function Text.lexing *)
 let lexing text curseur end_point =
   clean_text text;
-  Lexing.from_function 
-    (fun str len ->
-      let len = min len (distance text curseur end_point) in
-      let len = blit str text curseur len in
-      fmove text curseur len;
-      len
+  Lexing.from_function (fun str len ->
+    let len = min len (distance text curseur end_point) in
+    let len = blit str text curseur len in
+    fmove text curseur len;
+    len
   )
 (*e: function Text.lexing *)
 

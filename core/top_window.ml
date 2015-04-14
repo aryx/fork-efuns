@@ -335,8 +335,10 @@ let wrap top_window f () =
 (*e: function Top_window.wrap *)
 
 (*s: function Top_window.wrap_item *)
+(*
 let wrap_item top_window (n,f) =
   n, wrap top_window (fun top_window -> f top_window.top_active_frame)
+*)
 (*e: function Top_window.wrap_item *)
         
 (*s: function Top_window.handler *)
@@ -381,6 +383,7 @@ let buffers_menu = ref
 (*e: constant Top_window.buffers_menu *)
 
 (*s: function Top_window.scroll_to_frame *)
+(*
 let scroll_to_frame ady top_window =
   let frame = top_window.top_active_frame in
   let buf = frame.frm_buffer in
@@ -398,13 +401,16 @@ let scroll_to_frame ady top_window =
       frame.frm_redraw <- true;
       Text.set_position text frame.frm_start y
     end
+*)
 (*e: function Top_window.scroll_to_frame *)
 
 
 (*s: constant Top_window.menus *)
+(*
 let menus = define_option ["menus"] ""
     (list_option (tuple2_option (string_option, list_option string2_option)))
   []
+*)
 (*e: constant Top_window.menus *)
 (*s: constant Top_window.file_menu *)
 let file_menu = define_option ["file_menu"] "" (list_option string2_option) []

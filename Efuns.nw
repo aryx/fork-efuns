@@ -2565,6 +2565,11 @@ let get_position text point =
 
 \subsection{Internal positions}
 
+
+<<type Text.position2>>=
+type position2 = int
+@
+
 % pos is user pos!
 <<function Text.set_position>>=
 let set_position text point pos =
@@ -2640,6 +2645,18 @@ let compare text p1 p2 =
 % but actually no code almost is using it (except fill()),
 % and they use the generic < which should work
 
+
+<<function Text.with_dup_point>>=
+let with_dup_point text point f =
+  let p = dup_point text point in
+  Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+@
+
+<<function Text.with_new_point>>=
+let with_new_point text f =
+  let p = new_point text in
+  Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+@
 
 
 \section{Delta}
@@ -2848,6 +2865,18 @@ let bmove text p delta =
 <<function Text.fmove>>=
 let fmove text p delta = 
   fmove_res text p delta |> ignore
+@
+
+<<function Text.move_res>>=
+let move_res text point n =
+  if n > 0 
+  then fmove_res text point n
+  else bmove_res text point (-n)
+@
+
+<<function Text.move>>=
+let move text point n = 
+  move_res text point n |> ignore
 @
 
 
@@ -3154,6 +3183,10 @@ let inverse_attr =  make_attr 1 0 0 false
 % highlight bit dead? just use inverse_attr? could, but different
 % purpose and actually we will use a different color (cyan).
 
+<<constant Text.highlight_bit>>=
+let highlight_bit = 1 lsl 24
+@
+
 
 <<function Text.get_attr>>=
 let get_attr text point =
@@ -3169,7 +3202,7 @@ let get_attr text point =
 @
 %less: could print a warning if overflow no?
 
-<<function Text.set_char_attr>>=
+<<function Text.set_attr>>=
 let set_attr text point attr =
   let y = point.line in
   let pos = 
@@ -3186,7 +3219,7 @@ let set_attr text point attr =
 % cancel_repr? a cache.
 %old: was called set_char_attr, but better to use set_attr for that
 
-<<function Text.set_attr>>=
+<<function Text.set_attrs>>=
 let set_attrs text point len attr = (* should not exceed one line *)
   if len > 0 then
     let gap_end = text.gpoint.pos + text.gsize in
@@ -3217,7 +3250,7 @@ let set_attrs text point len attr = (* should not exceed one line *)
 %old: was called set_attr, but I prefer set_char_attr to be the set_attr
 
 
-<<function Text.unset_attr>>=
+<<function Text.unset_attrs>>=
 let unset_attrs text =
   Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
   text.text_newlines |> Array.iter (fun line -> line.line_modified <- true)
@@ -3443,13 +3476,16 @@ let unhightlight _frame =
      highlighted := None;
      let buf = frame.frm_buffer in
      let text = buf.buf_text in
+
      Text.with_new_point text (fun curseur ->
      Text.with_new_point text (fun final ->
        Text.set_position text curseur debut;
        Text.set_position text final fin;
+
        let str = Text.region text curseur final in
        Simple.kill_string str;
        (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
+
      ));
      unhightlight_region buf debut fin
 @
@@ -3662,7 +3698,7 @@ mutable boxes : box list; (* sorted in reverse; head is last box on the line *)
 % commands? can put every chars using the same attribute together?
 % well we need anyway the repr_string at least, for ^M special display.
 
-<<type Text.repr>>=
+<<type Text.box>>=
 and box = 
   { 
     box_col : int;        (* col of box *)
@@ -4145,26 +4181,8 @@ let read inc =
   create (Utils.read_string inc)
 @
 
-
-
-
-
-<<loading keys>>=
-[c_x; NormalMap, Char.code 'i'], "insert_file";
-@
-<<loading actions>>=
-(* C-x map *)
-define_action "insert_file"  Complexe.insert_file;
-@
-
-<<function Complex.insert_file>>=
-let insert_file frame =
-  Select.select_filename frame "Insert file: " (fun str ->
-    let inc = open_in str in
-    Simple.insert_string frame (Utils.read_string inc);
-    close_in inc
-  )
-@
+%\subsubsection{Normalized filenames}
+% realpath? Utils.normal_name?
 
 
 
@@ -4205,6 +4223,29 @@ let insert_file frame =
 %  query#show
 %*)
 %@
+
+
+
+\subsubsection{Inserting a file}
+% not in the menu, but related
+
+<<loading keys>>=
+[c_x; NormalMap, Char.code 'i'], "insert_file";
+@
+<<loading actions>>=
+(* C-x map *)
+define_action "insert_file"  Complexe.insert_file;
+@
+
+<<function Complex.insert_file>>=
+let insert_file frame =
+  Select.select_filename frame "Insert file: " (fun str ->
+    let inc = open_in str in
+    Simple.insert_string frame (Utils.read_string inc);
+    close_in inc
+  )
+@
+
 
 
 
@@ -4366,6 +4407,38 @@ let save_buffer frame =
   Ebuffer.save frame.frm_buffer
 @
 % dead?
+
+
+
+<<exception Ebuffer.BufferAlreadyOpened>>=
+exception BufferAlreadyOpened
+@
+
+% like for Ebuffer.read, ensure some unicity for filename
+<<function Ebuffer.change_name>>=
+let change_name buf filename =
+  let loc = Globals.location() in
+  Hashtbl.remove loc.loc_buffers buf.buf_name;
+  buf.buf_filename |> Common.do_option (fun filename ->
+    Hashtbl.remove loc.loc_files filename
+  );
+  let filename = 
+    if Filename.is_relative filename 
+    then Filename.concat loc.loc_dirname filename
+    else filename
+  in
+  if Utils.hashtbl_mem loc.loc_files filename
+  then raise BufferAlreadyOpened;
+  let filename = Utils.normal_name loc.loc_dirname filename in
+  let name = get_unique_name filename in
+  Hashtbl.add loc.loc_buffers name buf;
+  Hashtbl.add loc.loc_files filename buf;
+  buf.buf_filename <- Some filename;
+  buf.buf_name <- name
+@
+% realpath here too? normal_name seems good,
+% but why do the test on the hashtbl before??
+
 
 
 \subsubsection{Exit}
@@ -5259,6 +5332,7 @@ end
 %todo: comment? need that?
 
 <<function Top_window.scroll_to_frame>>=
+(*
 let scroll_to_frame ady top_window =
   let frame = top_window.top_active_frame in
   let buf = frame.frm_buffer in
@@ -5276,6 +5350,7 @@ let scroll_to_frame ady top_window =
       frame.frm_redraw <- true;
       Text.set_position text frame.frm_start y
     end
+*)
 @
 %(*
 %    Text.set_position text point y;
@@ -6644,6 +6719,7 @@ let beginning_of_word buf point =
 @
 
 
+
 \subsection{Lines}
 
 <<function Simple.beginning_of_line>>=
@@ -7353,6 +7429,37 @@ let copy_region frame =
 @
 
 
+
+<<function Text.sub>>=
+let sub text point len =
+  let str = String.create len in
+  blit str text point len |> ignore;
+  str
+@
+
+<<function Text.blit>>=
+let blit str text point len =
+  let pos = point.pos in
+  let len = min len (low_distance text pos text.text_size) in
+  let gpos = text.gpoint.pos in
+  let gap_end = gpos + text.gsize in
+  if pos+len >= gpos && pos < gap_end 
+  then clean_text text;
+  (try
+     String.blit text.text_string pos str 0 len
+   with e -> raise e
+   );
+  len
+@
+% why need clean_text?
+
+<<function Text.region>>=
+let rec region text p1 p2 =
+  if p1>p2 
+  then region text p2 p1
+  else sub text p1 (distance text p1 p2)
+@
+
 \subsection{Paste}
 
 
@@ -7550,6 +7657,14 @@ let commit_session text session_date =
             iter (action::session) history
     in
     iter [] text.text_history
+@
+
+<<function Text.with_session>>=
+let with_session f text =
+  let session = start_session text in
+  let res = f () in
+  commit_session text session;
+  res
 @
 
 \chapter{Search and Replace}
@@ -10544,6 +10659,17 @@ let get_parameter frame =
 %\chapter{Major Language Modes Examples}
 \section{Lisp mode}
 
+<<function Text.lexing>>=
+let lexing text curseur end_point =
+  clean_text text;
+  Lexing.from_function (fun str len ->
+    let len = min len (distance text curseur end_point) in
+    let len = blit str text curseur len in
+    fmove text curseur len;
+    len
+  )
+@
+
 \chapter{Minor Mode Examples}
 
 
@@ -10738,6 +10864,8 @@ BOL  = Beginning Of Line
 EOL  = End Of Line
 BOF  = Beginning Of File
 EOF  = End Of File
+LOF  = ??
+LOL  = ??
 \end{verbatim}
 
 \chapter*{Indexes}

@@ -59,8 +59,10 @@ let exn f e =
     flush oc
   end
 
+(*
 let catch format f =
   try f () with e -> exn format e
       
 let watch format f =
   try f () with e -> exn format e; raise e
+*)

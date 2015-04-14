@@ -296,141 +296,27 @@ open Options
 \subsection*{[[core/text.ml]]}
 
 
-<<function Text.blit>>=
-let blit str text point len =
-  let pos = point.pos in
-  let len = min len (low_distance text pos text.text_size) in
-  let gpos = text.gpoint.pos in
-  let gap_end = gpos + text.gsize in
-  if pos+len >= gpos && pos < gap_end 
-  then clean_text text;
-  (try
-    String.blit text.text_string pos str 0 len
-   with e -> raise e
-   );
-  len
-@
 
-
-
-<<function Text.sub>>=
-let sub text point len =
-  let str = String.create len in
-  blit str text point len |> ignore;
-  str
-@
-
-
-
-
-
-
-
-
-
-<<function Text.move_res>>=
-let move_res text point n =
-  if n > 0 
-  then fmove_res text point n
-  else bmove_res text point (-n)
-@
-
-<<function Text.move>>=
-let move text point n = 
-  move_res text point n |> ignore
-@
-
-
-<<function Text.clear>>=
-let clear text =
-  low_delete text 0 (text.text_size - text.gsize) |> ignore;
-  text.text_history <- [];
-  List.iter (fun p -> p.pos <- 0; p.line <- 0) text.text_points
-@
-
-
-
-<<function Text.region>>=
-let rec region text p1 p2 =
-  if p1>p2 
-  then region text p2 p1
-  else sub text p1 (distance text p1 p2)
-@
-
-%<<function Text.goto_xy>>=
-%(*
-%let goto_xy text point x y =
-%%  let y =
-%    if y < text.text_nlines then y
-%    else text.text_nlines - 1
-%  in
-%  point.pos <- text.text_newlines.(y).position;
-%  point.line <- y;
-%  fmove text point x |> ignore
+%(* A FAIRE:
+%On doit faire converger ce text vers un text directement affichable par
+%WX_text. Pour cela:
+%
+%Modifier WX_text pour qu'il se satisfasse de l'interface de Text.
+%En particulier, il doit n'utiliser que les fonctions suivantes:
+%
+%Text.representation text line --> string (buffer or copy) * int (position)
+%Text.items line -> item array
+%  
+%Il doit aussi utiliser la structure un peu particuliere de l'arbre utiliser
+%ici.
+%  
 %*)
-%@
-
-<<function Text.update>>=
-let update text str =
-  let newlines = compute_newlines str in
-  let len = String.length str in
-  text.text_points |> List.iter (fun point -> 
-    point.pos <- get_position text point
-  );
-  text.text_string <- str;
-  text.text_attrs <- (Array.create len direct_attr);
-  text.text_size <- len;
-  text.gpoint <- { pos = 0; line = 0 };
-  text.gsize <- 0;
-  text.text_newlines <- newlines;
-  text.text_nlines <- Array.length newlines;
-  text.text_modified <- text.text_modified + 1 ;
-  text.text_clean <- true;
-  text.text_history <- [];
-  text.text_points |> List.iter (fun point -> 
-      let pos = point.pos in
-      point.pos <- 0;
-      point.line <- 0;
-      set_position text point pos
-  ) 
-  
-@
-
-<<function Text.lexing>>=
-let lexing text curseur end_point =
-  clean_text text;
-  Lexing.from_function 
-    (fun str len ->
-      let len = min len (distance text curseur end_point) in
-      let len = blit str text curseur len in
-      fmove text curseur len;
-      len
-  )
-@
-
-
 
 %-------------------------------------------------------------
 
 <<core/text.ml>>=
 <<copyright header2>>
-
-(* A FAIRE:
-On doit faire converger ce text vers un text directement affichable par
-WX_text. Pour cela:
-
-Modifier WX_text pour qu'il se satisfasse de l'interface de Text.
-En particulier, il doit n'utiliser que les fonctions suivantes:
-
-Text.representation text line --> string (buffer or copy) * int (position)
-Text.items line -> item array
-  
-Il doit aussi utiliser la structure un peu particuliere de l'arbre utiliser
-ici.
-  
-*)
 open Options
-open Utils
 
 (*****************************************************************************)
 (* Types *)
@@ -438,7 +324,7 @@ open Utils
 
 <<type Text.position>>
 
-type position2 = int
+<<type Text.position2>>
 
 <<type Text.point>>
 
@@ -456,7 +342,7 @@ type position2 = int
 
 <<type Text.line>>
 
-<<type Text.repr>>
+<<type Text.box>>
 
 <<type Text.text>>
   
@@ -498,28 +384,24 @@ type t = text
 (* Attributes *)
 (*****************************************************************************)
 
-let highlight_bit = 1 lsl 24
+<<constant Text.highlight_bit>>
 
 <<function Text.make_attr>>
 
 <<constant Text.direct_attr>>
 <<constant Text.inverse_attr>>
 
-<<function Text.unset_attr>>
-
-<<function Text.set_attr>>
+<<function Text.unset_attrs>>
+<<function Text.set_attrs>>
 
 <<function Text.get_attr>>
-
-
-<<function Text.set_char_attr>>
+<<function Text.set_attr>>
 
 (*****************************************************************************)
 (* Gap *)
 (*****************************************************************************)
 
 <<function Text.move_gpoint_to>>
-
 
 <<constant Text.add_amount>>
 <<function Text.extend_gap>>
@@ -542,18 +424,12 @@ let highlight_bit = 1 lsl 24
   
 <<function Text.commit_session>>
 
-let with_session f text =
-  let session = start_session text in
-  let res = f () in
-  commit_session text session;
-  res
+<<function Text.with_session>>
 
 
 (*****************************************************************************)
 (* Insert/delete public API *)
 (*****************************************************************************)
-
-<<function Text.insert_at_end>>
 
 <<function Text.insert_res>>
 
@@ -562,6 +438,9 @@ let with_session f text =
 <<function Text.delete_res>>
 
 <<function Text.delete>>
+
+<<function Text.insert_at_end>>
+
 
 (*****************************************************************************)
 (* Constructor *)
@@ -585,13 +464,9 @@ let with_session f text =
 
 <<function Text.remove_point>>
 
-let with_dup_point text point f =
-  let p = dup_point text point in
-  Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+<<function Text.with_dup_point>>
 
-let with_new_point text f =
-  let p = new_point text in
-  Common.finalize (fun () -> f p) (fun () -> remove_point text p)
+<<function Text.with_new_point>>
 
 
 (*****************************************************************************)
@@ -601,7 +476,6 @@ let with_new_point text f =
 <<function Text.read>>
 
 <<function Text.save>>
-
 
 (*****************************************************************************)
 (* Distance, delta *)
@@ -619,14 +493,11 @@ let with_new_point text f =
   
 <<function Text.get_char>>
 
-
 (*****************************************************************************)
 (* Moving *)
 (*****************************************************************************)
 
 <<function Text.fmove_res>>
-
-
 
 <<function Text.bmove_res>>
 
@@ -634,19 +505,10 @@ let with_new_point text f =
 
 <<function Text.fmove>>
 
+
 <<function Text.move_res>>
 
 <<function Text.move>>
-
-(*****************************************************************************)
-(* Misc *)
-(*****************************************************************************)
-
-<<function Text.clean_text>>
-
-
-<<function Text.blit>>
-
 
 (*****************************************************************************)
 (* Position *)
@@ -661,6 +523,12 @@ let with_new_point text f =
 (*****************************************************************************)
 (* Sub content  *)
 (*****************************************************************************)
+
+(* should be in search/replace, but it's used by blit too *)
+<<function Text.clean_text>>
+    
+
+<<function Text.blit>>
     
 <<function Text.sub>>
 
@@ -669,7 +537,7 @@ let with_new_point text f =
 (*****************************************************************************)
 (* Search/replace  *)
 (*****************************************************************************)
-    
+
 <<function Text.search_forward>>
 
 <<function Text.replace_matched>>
@@ -687,6 +555,7 @@ let with_new_point text f =
 (*****************************************************************************)
 
 <<constant Text.repr_string>>
+
 <<constant Text.repr_size>>
 
 <<constant Text.dummy_line>>
@@ -713,6 +582,7 @@ let with_new_point text f =
 
 <<function Text.point_to_lol>>
 
+
 <<function Text.point_to_line>>
 
 
@@ -734,6 +604,19 @@ let with_new_point text f =
 <<function Text.toggle_readonly>>
   
 @
+
+%<<function Text.goto_xy>>=
+%(*
+%let goto_xy text point x y =
+%%  let y =
+%    if y < text.text_nlines then y
+%    else text.text_nlines - 1
+%  in
+%  point.pos <- text.text_newlines.(y).position;
+%  point.line <- y;
+%  fmove text point x |> ignore
+%*)
+%@
 
 %<<function Text.add>>=
 %(*
@@ -917,39 +800,8 @@ let with_new_point text f =
 \subsection*{[[core/ebuffer.ml]]}
 
 
-
-<<exception Ebuffer.BufferAlreadyOpened>>=
-exception BufferAlreadyOpened
-@
-
-<<function Ebuffer.change_name>>=
-let change_name buf filename =
-  let loc = Globals.location() in
-  Hashtbl.remove loc.loc_buffers buf.buf_name;
-  buf.buf_filename |> Common.do_option (fun filename ->
-    Hashtbl.remove loc.loc_files filename
-  );
-  let filename = 
-    if Filename.is_relative filename then
-      Filename.concat loc.loc_dirname filename
-    else
-      filename
-  in
-  if Utils.hashtbl_mem loc.loc_files filename 
-  then raise BufferAlreadyOpened;
-  let filename = Utils.normal_name loc.loc_dirname filename in
-  let name = get_unique_name filename in
-  Hashtbl.add loc.loc_buffers name buf;
-  Hashtbl.add loc.loc_files filename buf;
-  buf.buf_filename <- Some filename;
-  buf.buf_name <- name
-@
-
-
-
-
-
 <<function Ebuffer.catch>>=
+(*
 let catch format buf f =
   try
     f ()
@@ -962,6 +814,7 @@ let catch format buf f =
       Text.insert_at_end buf.buf_text (m ^ "\n");
     with Not_found ->
       create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
+*)
 @
 
 
@@ -2320,6 +2173,32 @@ let display_completions frame list =
     ) |> ignore
 @
 
+<<function Text.update>>=
+let update text str =
+  let newlines = compute_newlines str in
+  let len = String.length str in
+  text.text_points |> List.iter (fun point -> 
+    point.pos <- get_position text point
+  );
+  text.text_string <- str;
+  text.text_attrs <- (Array.create len direct_attr);
+  text.text_size <- len;
+  text.gpoint <- { pos = 0; line = 0 };
+  text.gsize <- 0;
+  text.text_newlines <- newlines;
+  text.text_nlines <- Array.length newlines;
+  text.text_modified <- text.text_modified + 1 ;
+  text.text_clean <- true;
+  text.text_history <- [];
+  text.text_points |> List.iter (fun point -> 
+      let pos = point.pos in
+      point.pos <- 0;
+      point.line <- 0;
+      set_position text point pos
+  ) 
+  
+@
+
 <<function Select.remove_completions>>=
 let remove_completions frame =
   try
@@ -2357,6 +2236,13 @@ let set_history map string history =
       Simple.insert_string mini_frame ele; ()
     end
   )
+@
+
+<<function Text.clear>>=
+let clear text =
+  low_delete text 0 (text.text_size - text.gsize) |> ignore;
+  text.text_history <- [];
+  List.iter (fun p -> p.pos <- 0; p.line <- 0) text.text_points
 @
 
 
@@ -3257,6 +3143,7 @@ let find_error_gen re text error_point =
 
 
 <<function Compil.set_compilation_buffer>>=
+(*
 let set_compilation_buffer frame comp_buf cdir =
   (*let error_point = new_point comp_buf.buf_text in*)
   let window =
@@ -3272,6 +3159,7 @@ let set_compilation_buffer frame comp_buf cdir =
   let error_point = Text.new_point comp_buf.buf_text in
   let comp_frame = Frame.create window None comp_buf in
   compilation_frame := Some (comp_frame, error_point, cdir)
+*)
 @
 
 <<constant Compil.grep_command>>=
@@ -3423,8 +3311,10 @@ let wrap top_window f () =
 @
 
 <<function Top_window.wrap_item>>=
+(*
 let wrap_item top_window (n,f) =
   n, wrap top_window (fun top_window -> f top_window.top_active_frame)
+*)
 @
 
 
@@ -3436,9 +3326,11 @@ let buffers_menu = ref
 
 
 <<constant Top_window.menus>>=
+(*
 let menus = define_option ["menus"] ""
     (list_option (tuple2_option (string_option, list_option string2_option)))
   []
+*)
 @
 
 
@@ -4923,7 +4815,7 @@ open Ocaml_env
 \subsection*{[[ipc/server.ml]]}
 
 <<constant Server.efuns_property>>=
-let efuns_property = "_EFUNS_SERVER"  
+(*let efuns_property = "_EFUNS_SERVER"  *)
 @
 
 <<constant Server.user>>=

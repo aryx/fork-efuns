@@ -260,12 +260,11 @@ let change_name buf filename =
     Hashtbl.remove loc.loc_files filename
   );
   let filename = 
-    if Filename.is_relative filename then
-      Filename.concat loc.loc_dirname filename
-    else
-      filename
+    if Filename.is_relative filename 
+    then Filename.concat loc.loc_dirname filename
+    else filename
   in
-  if Utils.hashtbl_mem loc.loc_files filename 
+  if Utils.hashtbl_mem loc.loc_files filename
   then raise BufferAlreadyOpened;
   let filename = Utils.normal_name loc.loc_dirname filename in
   let name = get_unique_name filename in
@@ -444,6 +443,7 @@ let message buf m =
 (*e: function Ebuffer.message *)
 
 (*s: function Ebuffer.catch *)
+(*
 let catch format buf f =
   try
     f ()
@@ -456,6 +456,7 @@ let catch format buf f =
       Text.insert_at_end buf.buf_text (m ^ "\n");
     with Not_found ->
       create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
+*)
 (*e: function Ebuffer.catch *)
           
       

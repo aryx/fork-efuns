@@ -228,6 +228,7 @@ let compile frame =
 (*e: function Compil.compile *)
 
 (*s: function Compil.set_compilation_buffer *)
+(*
 let set_compilation_buffer frame comp_buf cdir =
   (*let error_point = new_point comp_buf.buf_text in*)
   let window =
@@ -243,6 +244,7 @@ let set_compilation_buffer frame comp_buf cdir =
   let error_point = Text.new_point comp_buf.buf_text in
   let comp_frame = Frame.create window None comp_buf in
   compilation_frame := Some (comp_frame, error_point, cdir)
+*)
 (*e: function Compil.set_compilation_buffer *)
   
 (*s: constant Compil.grep_command *)

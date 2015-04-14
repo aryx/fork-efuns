@@ -15,7 +15,7 @@ open Efuns
 open Unix  
   
 (*s: constant Server.efuns_property *)
-let efuns_property = "_EFUNS_SERVER"  
+(*let efuns_property = "_EFUNS_SERVER"  *)
 (*e: constant Server.efuns_property *)
 (*s: constant Server.user *)
 let user = 

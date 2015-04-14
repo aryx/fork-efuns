@@ -74,13 +74,16 @@ let unhightlight _frame =
      highlighted := None;
      let buf = frame.frm_buffer in
      let text = buf.buf_text in
+
      Text.with_new_point text (fun curseur ->
      Text.with_new_point text (fun final ->
        Text.set_position text curseur debut;
        Text.set_position text final fin;
+
        let str = Text.region text curseur final in
        Simple.kill_string str;
        (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
+
      ));
      unhightlight_region buf debut fin
 (*e: function Simple.unhightlight *)
