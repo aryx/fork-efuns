@@ -185,29 +185,29 @@ let tex_color_buffer buf =
       | COMMENT
         ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len comment_attr;
+          Text.set_attrs text curseur len comment_attr;
           mode
       | MATHMODE ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len string_attr;
+          Text.set_attrs text curseur len string_attr;
           (match mode with
               Math_mode -> Normal_mode
             | _ -> Math_mode)
       | STARTMATH ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len string_attr;
+          Text.set_attrs text curseur len string_attr;
           Math_mode          
       | ENDMATH
         ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len string_attr;
+          Text.set_attrs text curseur len string_attr;
           Normal_mode
       | STARTTABBING
       | ENDTABBING
       | KWDTABBING
         ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len gray_attr;
+          Text.set_attrs text curseur len gray_attr;
           mode
       | STARTARRAY
       | ENDARRAY
@@ -220,25 +220,25 @@ let tex_color_buffer buf =
       | COMMAND
       | FONT ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len keyword_attr;
+          Text.set_attrs text curseur len keyword_attr;
           mode
       | LBRACE ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len keyword_attr;
+          Text.set_attrs text curseur len keyword_attr;
           Arg_mode
       | RBRACE ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len keyword_attr;
+          Text.set_attrs text curseur len keyword_attr;
           Normal_mode
       | _ -> 
           match mode with
             Math_mode -> 
               Text.set_position text curseur pos;
-              Text.set_attr text curseur len string_attr;
+              Text.set_attrs text curseur len string_attr;
               mode
           | Arg_mode ->
               Text.set_position text curseur pos;
-              Text.set_attr text curseur len gray_attr;
+              Text.set_attrs text curseur len gray_attr;
               mode
           | _ -> mode
     in

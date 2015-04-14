@@ -434,16 +434,16 @@ let c_color_region buf start_point end_point =
       | EXTERN
         -> 
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len keyword_attr
+          Text.set_attrs text curseur len keyword_attr
       | EOFCOMMENT 
       | COMMENT ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len comment_attr
+          Text.set_attrs text curseur len comment_attr
       | EOFSTRING
       | CHAR 
       | STRING ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len string_attr
+          Text.set_attrs text curseur len string_attr
       | M_IFDEF
       | M_DEFINE
       | M_ELSE
@@ -451,7 +451,7 @@ let c_color_region buf start_point end_point =
       | M_INCLUDE
       | M_ENDIF -> 
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len preprocessor_attr          
+          Text.set_attrs text curseur len preprocessor_attr          
       | IDENT -> ()
       | _ -> ()
           );

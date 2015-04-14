@@ -128,11 +128,11 @@ val direct_attr : attribute
 val inverse_attr : attribute
 
 val make_attr: int -> int -> int -> bool -> attribute
-val set_attr : t -> point -> delta -> attribute -> unit
-val unset_attr : t -> unit
+val set_attrs : t -> point -> delta -> attribute -> unit
+val unset_attrs : t -> unit
 
 val get_attr : t -> point -> attribute
-val set_char_attr : t -> point -> attribute -> unit
+val set_attr : t -> point -> attribute -> unit
 
 (* search *)
 

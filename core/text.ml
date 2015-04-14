@@ -90,7 +90,7 @@ type line = {
 (*s: type Text.repr *)
 and box = 
   { 
-    box_col : int;        (* pos of box in Text.t string? NO col of box *)
+    box_col : int;        (* col of box *)
     box_len : int;        (* len of box in Text.t string *)
     mutable box_attr : int;    (* common attribute *)
 
@@ -266,13 +266,13 @@ let inverse_attr =  make_attr 1 0 0 false
 (*e: constant Text.inverse_attr *)
 
 (*s: function Text.unset_attr *)
-let unset_attr text =
+let unset_attrs text =
   Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
   text.text_newlines |> Array.iter (fun line -> line.line_modified <- true)
 (*e: function Text.unset_attr *)
 
 (*s: function Text.set_attr *)
-let set_attr text point len attr = (* should not exceed one line *)
+let set_attrs text point len attr = (* should not exceed one line *)
   if len > 0 then
     let gap_end = text.gpoint.pos + text.gsize in
 
@@ -311,7 +311,7 @@ let get_attr text point =
 
 
 (*s: function Text.set_char_attr *)
-let set_char_attr text point attr =
+let set_attr text point attr =
   let y = point.line in
   let pos = 
     (* gap handling *)

@@ -629,7 +629,7 @@ and buffer =
     mutable buf_name : string;
     mutable buf_filename : string option;
 
-    <<[[Efuns.buffer]] current position fields>>
+    <<[[Efuns.buffer]] position fields>>
     <<[[Efuns.buffer]] history fields>>
     <<[[Efuns.buffer]] other fields>>
   } 
@@ -668,17 +668,19 @@ type point = {
 % all the cursors in the text and when you modify the text you update
 % all the cursors. We'll see more later about this.
 
-<<[[Efuns.buffer]] current position fields>>=
+<<[[Efuns.buffer]] position fields>>=
 mutable buf_point : Text.point;
 mutable buf_start : Text.point;
 @
 % current!
-% which will be the saved value from frm_point
+% this will contain the saved value from frm_point
 % when switch between buffers; the current frame is a view
 % on different buffers, but when you go back to a buffer you
 % want the cursor to be at the same position you used to be
 % (and the screen start at the same starting point too).
 %later: (hence the need for M-x pad-make-indirect-buffer)
+%note: it's not really current position fields, it's more saved
+% position fields
 
 % there are also a list of points maintained by the Text itself, why?
 % because of the gap things can move so you need to update all
@@ -2459,6 +2461,10 @@ match () with
 
 % already seen Text.text_size, Text.text_string in core DS chapter
 
+% So the gap buffer is a good amortized DS. You pay the first insertion,
+% but later one are cheap. And in practice when you edit a file you usually
+% type lots of characters after one another, so the gap buffer optimizes
+% for this!
 
 
 <<[[Text.text]] gap fields>>=
@@ -2530,6 +2536,7 @@ let set_position text point pos =
      else pos
      )
 @
+% rename move_point_to_pos2?
 
 \section{Points}
 
@@ -2674,7 +2681,7 @@ let move_point_to_pos text point pos =
   point.line <- find_line_of_pos text pos
 @
 %old: was move_point_to but better rename to move_point_to_pos
-%todo: or maybe move_point_to_pos_internal ?
+%todo: or maybe move_point_to_pos_internal ? and find_line_of_pos_intern?
 %old: let _x,y = find_xy text text.gpoint.pos text.gpoint.line pos in
 % but xy should be reserved for screen coord, and anyway find_xy
 % is too complex for what we need
@@ -3026,7 +3033,7 @@ let get_attr text point =
 %less: could print a warning if overflow no?
 
 <<function Text.set_char_attr>>=
-let set_char_attr text point attr =
+let set_attr text point attr =
   let y = point.line in
   let pos = 
     (* gap handling *)
@@ -3040,10 +3047,10 @@ let set_char_attr text point attr =
   end
 @
 % cancel_repr? a cache.
-
+%old: was called set_char_attr, but better to use set_attr for that
 
 <<function Text.set_attr>>=
-let set_attr text point len attr = (* should not exceed one line *)
+let set_attrs text point len attr = (* should not exceed one line *)
   if len > 0 then
     let gap_end = text.gpoint.pos + text.gsize in
 
@@ -3070,13 +3077,15 @@ let set_attr text point len attr = (* should not exceed one line *)
 % on where is the covered area regarding the hole
 %old:  let x,y = find_xy text text.gpoint.pos text.gpoint.line point.pos in
 % but point.line should be enough ...
+%old: was called set_attr, but I prefer set_char_attr to be the set_attr
 
 
 <<function Text.unset_attr>>=
-let unset_attr text =
+let unset_attrs text =
   Array.fill text.text_attrs 0 (Array.length text.text_attrs) direct_attr;
   text.text_newlines |> Array.iter (fun line -> line.line_modified <- true)
 @
+%old: was called unset_attr
 
 <<misc actions>>=
 define_action "unset_attr" Simple.unset_attr;
@@ -3087,7 +3096,7 @@ define_action "unset_attr" Simple.unset_attr;
 let unset_attr frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  Text.unset_attr text
+  Text.unset_attrs text
 @
 % does not trigger redisplay?
 
@@ -3169,7 +3178,7 @@ let color buf regexp strict attr =
                          buf.buf_syntax_table.(Char.code after))) then
         begin
           Text.bmove text point len;
-          Text.set_attr text point len attr;
+          Text.set_attrs text point len attr;
           Text.fmove text point len;
           ()
         end
@@ -3206,7 +3215,7 @@ let hightlight_region buf debut fin =
     Text.set_position text final fin;
     while curseur < final do
       let attr = Text.get_attr text curseur in
-      Text.set_char_attr text curseur (attr lor highlight_bit);
+      Text.set_attr text curseur (attr lor highlight_bit);
       Text.fmove text curseur 1
     done;
     buf.buf_modified <- buf.buf_modified + 1
@@ -3223,7 +3232,7 @@ let unhightlight_region buf debut fin =
     Text.set_position text final fin;
     while curseur < final do
       let attr = Text.get_attr text curseur in
-      Text.set_char_attr text curseur (attr land (lnot highlight_bit));
+      Text.set_attr text curseur (attr land (lnot highlight_bit));
       Text.fmove text curseur 1;
     done;
     buf.buf_modified <- buf.buf_modified + 1
@@ -3263,9 +3272,9 @@ let highlight frame =
     match !highlighted with
     | None -> pos1,pos2
     | Some (frame,d,f) ->
-        if d < pos1 
+        if pos1 > d
         then unhightlight_region buf d pos1; 
-        if f > pos2 
+        if pos2 < f
         then unhightlight_region buf pos2 f;
         if pos1 < d 
         then  pos1,d
@@ -3282,7 +3291,7 @@ let highlight frame =
 let unhightlight _frame =
   !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
     let text = buf.buf_text in
-    Text.set_char_attr text curseur attr;
+    Text.set_attr text curseur attr;
     buf.buf_modified <- buf.buf_modified + 1;
     Text.remove_point text curseur
   );
@@ -10326,7 +10335,7 @@ let highlight_paren frame =
       | [] -> (* found matching par *)
           let attr = Text.get_attr text curseur in
           H.highlighted_chars := (buf,curseur,attr) :: !H.highlighted_chars;
-          Text.set_char_attr text curseur (attr lor H.highlight_bit);
+          Text.set_attr text curseur (attr lor H.highlight_bit);
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack

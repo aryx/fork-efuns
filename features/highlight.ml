@@ -30,7 +30,7 @@ let unhightlight_region buf debut fin =
     Text.set_position text final fin;
     while curseur < final do
       let attr = Text.get_attr text curseur in
-      Text.set_char_attr text curseur (attr land (lnot highlight_bit));
+      Text.set_attr text curseur (attr land (lnot highlight_bit));
       Text.fmove text curseur 1;
     done;
     buf.buf_modified <- buf.buf_modified + 1
@@ -46,7 +46,7 @@ let hightlight_region buf debut fin =
     Text.set_position text final fin;
     while curseur < final do
       let attr = Text.get_attr text curseur in
-      Text.set_char_attr text curseur (attr lor highlight_bit);
+      Text.set_attr text curseur (attr lor highlight_bit);
       Text.fmove text curseur 1
     done;
     buf.buf_modified <- buf.buf_modified + 1
@@ -61,7 +61,7 @@ let highlighted_chars = ref []
 let unhightlight _frame =
   !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
     let text = buf.buf_text in
-    Text.set_char_attr text curseur attr;
+    Text.set_attr text curseur attr;
     buf.buf_modified <- buf.buf_modified + 1;
     Text.remove_point text curseur
   );

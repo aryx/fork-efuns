@@ -158,19 +158,19 @@ let html_color_region buf start_point end_point =
         EOF  -> raise Exit
       | COMMENT ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len comment_attr
+          Text.set_attrs text curseur len comment_attr
       | ERROR ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len error_attr
+          Text.set_attrs text curseur len error_attr
       
       | OPEN_TAG
       | CLOSE_TAG ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len keyword_attr
+          Text.set_attrs text curseur len keyword_attr
       | AMPERSAND
       | DOCTYPE ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len gray_attr            
+          Text.set_attrs text curseur len gray_attr            
       | _ -> ());
     iter token lexbuf
   in

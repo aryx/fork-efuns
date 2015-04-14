@@ -59,7 +59,7 @@ let previous_char frame =
 let unset_attr frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  Text.unset_attr text
+  Text.unset_attrs text
 (*e: function Simple.unset_attr *)
   
 (*s: function Simple.insert_at_place *)
@@ -730,7 +730,7 @@ let color buf regexp strict attr =
                          buf.buf_syntax_table.(Char.code after))) then
         begin
           Text.bmove text point len;
-          Text.set_attr text point len attr;
+          Text.set_attrs text point len attr;
           Text.fmove text point len;
           ()
         end

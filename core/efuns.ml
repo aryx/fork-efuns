@@ -88,10 +88,10 @@ and buffer =
     mutable buf_name : string;
     mutable buf_filename : string option;
 
-    (*s: [[Efuns.buffer]] current position fields *)
+    (*s: [[Efuns.buffer]] position fields *)
     mutable buf_point : Text.point;
     mutable buf_start : Text.point;
-    (*e: [[Efuns.buffer]] current position fields *)
+    (*e: [[Efuns.buffer]] position fields *)
     (*s: [[Efuns.buffer]] history fields *)
     mutable buf_modified : int; (* version? *)
     (*x: [[Efuns.buffer]] history fields *)

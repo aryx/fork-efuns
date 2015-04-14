@@ -57,7 +57,7 @@ let highlight_paren frame =
       | [] -> (* found matching par *)
           let attr = Text.get_attr text curseur in
           H.highlighted_chars := (buf,curseur,attr) :: !H.highlighted_chars;
-          Text.set_char_attr text curseur (attr lor H.highlight_bit);
+          Text.set_attr text curseur (attr lor H.highlight_bit);
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack

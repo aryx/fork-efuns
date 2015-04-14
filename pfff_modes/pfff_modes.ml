@@ -89,6 +89,6 @@ let colorize funcs buf file =
 
     let str = PI.str_of_info info in
     let len = String.length str in
-    Text.set_attr text cursor len attr
+    Text.set_attrs text cursor len attr
   ) prefs 
   )

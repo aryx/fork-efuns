@@ -522,19 +522,19 @@ let ocaml_color_region buf start_point end_point =
       | AND | OR | TYPE | VAL | CLASS | SIG | INHERIT | OBJECT
       | EXCEPTION | RULE | METHOD | EXTERNAL -> 
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len keyword_attr
+          Text.set_attrs text curseur len keyword_attr
       | EOFCOMMENT 
       | COMMENT ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len comment_attr
+          Text.set_attrs text curseur len comment_attr
       | EOFSTRING
       | CHAR 
       | STRING ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len string_attr
+          Text.set_attrs text curseur len string_attr
       | UIDENT ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len gray_attr            
+          Text.set_attrs text curseur len gray_attr            
       | _ -> ()
     );
     iter lexbuf
@@ -549,7 +549,7 @@ let ocaml_color_region buf start_point end_point =
 
 let ocaml_color_buffer buf =
   let text = buf.buf_text in
-  Text.unset_attr text;
+  Text.unset_attrs text;
   let start_point = Text.new_point text in
   let end_point = Text.new_point text in
   Text.set_position text end_point (Text.size text);

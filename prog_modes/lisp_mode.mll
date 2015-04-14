@@ -219,14 +219,14 @@ let lisp_color_region buf start_point end_point =
         EOF _ -> raise Exit
       | COMMENT ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len comment_attr
+          Text.set_attrs text curseur len comment_attr
       | EOFSTRING
       | STRING ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len string_attr
+          Text.set_attrs text curseur len string_attr
       | IDENT when prev_tok = QUOTE ->
           Text.set_position text curseur pos;
-          Text.set_attr text curseur len gray_attr            
+          Text.set_attrs text curseur len gray_attr            
       | _ -> ());
     iter token lexbuf
   in
