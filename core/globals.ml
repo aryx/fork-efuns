@@ -25,11 +25,13 @@ let location () =
   | Some x -> x
 (*e: function Efuns.location *)
 
+(*s: function Efuns.with_lock *)
 let with_lock f =
   let loc = location () in
   Mutex.lock loc.loc_mutex;
   Common.finalize f (fun () -> Mutex.unlock loc.loc_mutex)
-  
+(*e: function Efuns.with_lock *)
+
 (*s: function Efuns.error *)
 let error f x =
   print_string ("error: ");
@@ -130,6 +132,4 @@ let displayname = ref ""
   let _ = Printf.printf "%d %d %s %s %s" !width !height !font !fg !bg; 
   print_newline () 
 *)
-  
-
 (*e: core/globals.ml *)

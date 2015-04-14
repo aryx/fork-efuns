@@ -1130,6 +1130,10 @@ and generic_action =
 % setting up the major mode is a buffer operation and buffer property!
 % A frame is more temporary.
 
+<<type Efuns.action_name>>=
+and action_name = string
+@
+
 <<global Efuns.actions>>=
 let (actions : (action_name, generic_action) Hashtbl.t) = 
   Hashtbl.create 63
@@ -1331,6 +1335,10 @@ type map =
 
 <<type Efuns.key>>=
 and key = mod_ident * keySym
+@
+
+<<type Efuns.keys>>=
+and keys = key list
 @
 
 <<type Efuns.mod_ident>>=
@@ -2327,6 +2335,14 @@ let handler top_window event =
 %pad: I factorized code with with_lock
 
 
+<<function Efuns.with_lock>>=
+let with_lock f =
+  let loc = location () in
+  Mutex.lock loc.loc_mutex;
+  Common.finalize f (fun () -> Mutex.unlock loc.loc_mutex)
+@  
+
+
 \subsection{[[Top_window.handle_key()]]}
 
 <<[[Top_window.handler()]] match event cases>>=
@@ -2486,6 +2502,28 @@ let size text =
 % gsize is 0 at the very beginning
 
 
+
+% the cursor may be on the empty gap, but when
+% code want to access what is under the cursor we actually
+% want what is after!
+<<function Text.get_char>>=
+let get_char text point =
+  let pos = point.pos in
+  let gpos = text.gpoint.pos in
+  let pos = 
+    if pos = gpos 
+    then pos + text.gsize 
+    else pos
+  in
+  if pos < text.text_size 
+  then text.text_string.[pos]
+  else '\000'
+@
+
+% because of this gap lots of functions has to be modified
+% to handle the gap, insertion, deletion, but also search, blit,
+% setting and getting positions, etc.
+
 \section{Positions}
 
 \subsection{User positions}
@@ -2592,6 +2630,16 @@ let goto_point _text p1 p2 =
   p1.line <- p2.line
 @
 % order of argument is not super good, not very readable.
+
+\ifallcode
+<<function Text.compare>>=
+let compare text p1 p2 = 
+  compare p1.pos p2.pos
+@
+\fi
+% but actually no code almost is using it (except fill()),
+% and they use the generic < which should work
+
 
 
 \section{Delta}
@@ -2717,6 +2765,92 @@ let find_line_of_pos text pos =
 @
 %opti: could use binary search instead of linear iteration
 
+
+% when moving the cursor, the work to do is to maintain the line field
+
+<<function Text.fmove_res>>=
+let fmove_res text p delta =
+  if delta = 0 then 0 else
+  let gpos = text.gpoint.pos in
+  let size = text.text_size in
+  let gap_end = gpos + text.gsize in
+  let gline = text.gpoint.line in
+  let pos = p.pos in
+  let old_pos = pos in
+  let lines = text.text_newlines in
+  let rec iter y point end_point =
+    if end_point > point 
+    then
+      let end_line = lines.(y+1).position in
+      if end_point >= end_line 
+      then iter (y+1) end_line end_point
+      else (y, end_point)
+    else (y,point)
+  in
+  let (y,pos) = 
+    if pos + delta <= gpos 
+    then iter p.line pos (pos+delta)
+    else
+      if pos >= gap_end 
+      then
+        let delta = min delta (size - pos) in
+        iter p.line pos (pos + delta)
+      else
+        let delta = min (delta - (gpos - pos)) (size - gap_end) in
+        iter gline gap_end (gap_end + delta) 
+  in
+  p.pos <- pos;
+  p.line <- y;
+  low_distance text old_pos pos
+@
+
+<<function Text.bmove_res>>=
+let bmove_res text p delta =
+  if delta = 0 then 0 else
+  let gpos = text.gpoint.pos in
+  let gap_end = gpos + text.gsize in
+  let gline = text.gpoint.line in
+  let pos = p.pos in
+  let old_pos = pos in
+  let lines = text.text_newlines in
+  let rec iter y end_point =
+    let start_line = lines.(y).position in
+    if end_point >= start_line then
+      (y, end_point)
+    else
+      iter (y-1) end_point
+  in
+  let (y,pos) = 
+    if pos - delta >= gap_end then
+      if pos - delta < lines.(gline+1).position then
+        (
+          gline, pos - delta)
+      else
+        iter p.line (pos-delta)
+    else
+    if pos <= gpos then
+      let delta = min delta pos in
+      iter p.line (pos - delta)
+    else
+    let delta = min (delta - (pos - gap_end)) gpos in
+    iter gline (gpos - delta) 
+  in
+  p.pos <- pos;
+  p.line <- y;
+  low_distance text pos old_pos
+@
+
+
+<<function Text.bmove>>=
+let bmove text p delta = 
+  bmove_res text p delta |> ignore
+@
+<<function Text.fmove>>=
+let fmove text p delta = 
+  fmove_res text p delta |> ignore
+@
+
+
 \section{Inserting characters}
 
 % -> <>
@@ -2778,7 +2912,7 @@ let move_gpoint_to text pos =
   let gline = text.gpoint.line in
   let gap_end = gpos + gsize in
 
-  text.text_clean <- false;
+  <<[[Text.move_gpoint_to()]] reset text_clean>>
   if pos <> gpos then
     if pos < gpos then begin
       <<[[Text.move_gpoint_to()]] when pos is before gpos>>
@@ -2827,7 +2961,8 @@ text.gpoint <- { pos = pos - gsize; line = gline + delta_line }
 % no because it was pos in the text where the gap was before, but
 % now that the gap has moved, it's pos - gsize!
 
-
+% blit but what about the content of the moved gap? clean_text
+% reset it lazily as it's needed only for certain things (search)
 
 
 \subsection{extending the gap}
@@ -3981,6 +4116,38 @@ let load_file window filename =
 %note: most of the time nobody uses the returned frame, but the server
 % and eval_library uses it.
 
+% what if file already opened
+<<function Ebuffer.read>>=
+let read filename local_map =
+  let loc = Globals.location() in
+  let filename = Utils.normal_name loc.loc_dirname filename in
+  try
+    Hashtbl.find loc.loc_files filename
+  with Not_found ->
+    let text =
+      try
+        let inc = open_in filename in
+        let text = Text.read inc in         
+        close_in inc; 
+        text
+      with _ -> 
+        Globals.error "error reading file %s" filename;
+        Text.create ""
+    in
+    let buf = create filename (Some filename) text local_map in
+    Hashtbl.add loc.loc_files filename buf;
+    buf
+@
+%todo: use realpath? normal_name?
+
+<<function Text.read>>=
+let read inc =
+  create (Utils.read_string inc)
+@
+
+
+
+
 
 <<loading keys>>=
 [c_x; NormalMap, Char.code 'i'], "insert_file";
@@ -4081,6 +4248,16 @@ let save buf =
   buf.buf_last_saved <- Text.version buf.buf_text;
 
   Hook.exec_named_buf_hooks !!saved_buffer_hooks buf
+@
+
+<<function Text.save>>=
+let save text outc =
+  let str = text.text_string in
+  let gpos = text.gpoint.pos in
+  let gsize = text.gsize in
+  output outc str 0 gpos;
+  (* skipping the gap *)
+  output outc str (gpos + gsize) (text.text_size - gpos - gsize)
 @
 
 
@@ -4523,7 +4700,7 @@ mutable frm_table : frm_line array;
 % some some Text.line corresponds sometimes to 2 frm_line, but
 % with different repr_xxx values.
 
-<<type Efuns.line_repr>>=
+<<type Efuns.frm_line>>=
 and frm_line =
   { 
     mutable frm_text_line : Text.line;
@@ -4535,7 +4712,7 @@ and frm_line =
     <<[[Efuns.frm_line]] other fields>>
   } 
 @
-%old: was repr_line, but there was also line_repr, so better
+%old: was line_repr (or repr_line), but there was also line_repr, so better
 % rename this frm_line. otherwise had line_repr.repr_line.boxes.box_pos, hmmm
 %old: was repr_y, repr_x, repr_offset, but again, there was
 % too many repr_xxx where actually you don't know what they reference
@@ -6203,6 +6380,23 @@ let incremental_mini_buffer
 %todo: sure top_second_cursor get reseted? if do C-g in minibuffer?
 % if exn?
 
+
+
+<<function Text.to_string>>=
+let to_string text =
+  let len = text.text_size - text.gsize in
+  if len = 0 
+  then "" 
+  else begin
+    let str = String.create len in
+    let gpos = text.gpoint.pos in
+    let gap_end = gpos + text.gsize in
+    String.blit text.text_string 0 str 0 gpos;
+    String.blit text.text_string gap_end str gpos (len- gpos);
+    str
+  end
+@
+
 \subsection{Secondary cursor}
 
 % cursor is output, but strongly related to input, because it's
@@ -7409,6 +7603,31 @@ let isearch_backward_regexp = isearch Regexp Backward
 
 \subsection{Secondary cursor}
 
+\subsection{Gap managment}
+
+<<[[Text.text]] other fields>>=
+mutable text_clean : bool;
+@
+% useful for?
+
+<<[[Text.move_gpoint_to()]] reset text_clean>>=
+text.text_clean <- false;
+@
+
+% search_xxx -> <>
+<<function Text.clean_text>>=
+let clean_text text =
+  if not text.text_clean then begin
+    let size = text.text_size in
+    let gsize = text.gsize in
+    let string = text.text_string in
+    move_gpoint_to text size;
+    String.fill string (size - gsize) gsize '\000';
+    text.text_clean <- true
+  end
+@
+% when we move the gap we blit but we should reset the content
+% of the gap so that search function still works.
 
 \subsection{Helpers}
 
@@ -7635,6 +7854,8 @@ let search_backward_groups text regexp point groups =
   set_position text point pos;
   array
 @
+
+
 
 
 
@@ -8945,6 +9166,14 @@ let open_process cmd =
       Unix.close out_read;
       Unix.close in_write;
       (pid, inchan, outchan)
+@
+
+
+<<function Text.insert_at_end>>=
+let insert_at_end text str =
+  low_insert text text.text_size str |> ignore;
+  text.text_history <- [];
+  text.text_modified <- text.text_modified + 1
 @
 
 \subsection{Threads and mutex}

@@ -79,7 +79,7 @@ let reload frame =
     None -> ()
   | Some file ->
       let inc = open_in file in
-      let s = read_string inc in
+      let s = Utils.read_string inc in
       close_in inc;
       let point = frame.frm_point in
       let pos = Text.get_position text point in

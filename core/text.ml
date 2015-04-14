@@ -127,9 +127,9 @@ type text = {
     (*s: [[Text.text]] other fields *)
     mutable text_points : point list;
     (*x: [[Text.text]] other fields *)
-    mutable text_readonly : bool;
-    (*x: [[Text.text]] other fields *)
     mutable text_clean : bool;
+    (*x: [[Text.text]] other fields *)
+    mutable text_readonly : bool;
     (*e: [[Text.text]] other fields *)
   } 
 (*e: type Text.text *)
@@ -338,7 +338,9 @@ let move_gpoint_to text pos =
   let gline = text.gpoint.line in
   let gap_end = gpos + gsize in
 
+  (*s: [[Text.move_gpoint_to()]] reset text_clean *)
   text.text_clean <- false;
+  (*e: [[Text.move_gpoint_to()]] reset text_clean *)
   if pos <> gpos then
     if pos < gpos then begin
       (*s: [[Text.move_gpoint_to()]] when pos is before gpos *)
@@ -756,7 +758,7 @@ let with_new_point text f =
 
 (*s: function Text.read *)
 let read inc =
-  create (read_string inc)
+  create (Utils.read_string inc)
 (*e: function Text.read *)
 
 (*s: function Text.save *)
@@ -765,8 +767,8 @@ let save text outc =
   let gpos = text.gpoint.pos in
   let gsize = text.gsize in
   output outc str 0 gpos;
-  output outc str (gpos + gsize) 
-  (text.text_size - gpos - gsize)
+  (* skipping the gap *)
+  output outc str (gpos + gsize) (text.text_size - gpos - gsize)
 (*e: function Text.save *)
 
 
@@ -834,25 +836,25 @@ let fmove_res text p delta =
   let old_pos = pos in
   let lines = text.text_newlines in
   let rec iter y point end_point =
-    if end_point > point then
+    if end_point > point 
+    then
       let end_line = lines.(y+1).position in
-      if end_point >= end_line then
-        iter (y+1) end_line end_point
-      else
-        (y, end_point)
-    else
-      (y,point)
+      if end_point >= end_line 
+      then iter (y+1) end_line end_point
+      else (y, end_point)
+    else (y,point)
   in
   let (y,pos) = 
-    if pos + delta <= gpos then
-      iter p.line pos (pos+delta)
+    if pos + delta <= gpos 
+    then iter p.line pos (pos+delta)
     else
-    if pos >= gap_end then
-      let delta = min delta (size - pos) in
-      iter p.line pos (pos + delta)
-    else
-    let delta = min (delta - (gpos - pos)) (size - gap_end) in
-    iter gline gap_end (gap_end + delta) 
+      if pos >= gap_end 
+      then
+        let delta = min delta (size - pos) in
+        iter p.line pos (pos + delta)
+      else
+        let delta = min (delta - (gpos - pos)) (size - gap_end) in
+        iter gline gap_end (gap_end + delta) 
   in
   p.pos <- pos;
   p.line <- y;
@@ -925,13 +927,14 @@ let move text point n =
 
 (*s: function Text.clean_text *)
 let clean_text text =
-  if not text.text_clean then
+  if not text.text_clean then begin
     let size = text.text_size in
     let gsize = text.gsize in
     let string = text.text_string in
     move_gpoint_to text size;
     String.fill string (size - gsize) gsize '\000';
     text.text_clean <- true
+  end
 (*e: function Text.clean_text *)
 
 

@@ -20,7 +20,7 @@ val update : t -> string -> unit
 val size : t -> int
 val nbre_lines : t -> int
 
-(* position and points *)
+(* positions, points, line x col coordinates *)
 
 type position = int
 
@@ -41,14 +41,12 @@ type coord = {
   c_line: int;
 }
 
-(* point creation *)
+(* point creation/deletion *)
 
 val new_point : t -> point
 val dup_point : t -> point -> point
 val with_dup_point: t -> point -> (point -> 'a) -> 'a
 val with_new_point: t -> (point -> 'a) -> 'a
-
-(* point deletion *)
 
 val remove_point : t -> point -> unit
 
@@ -72,18 +70,16 @@ val point_to_bol : t -> point -> int
 val point_to_eol : t -> point -> int
 val point_to_bof : t -> point -> int
 val point_to_eof : t -> point -> int
-
 (* ?? *)
 val point_to_lof : t -> point -> int -> int
 val point_to_lol : t -> point -> int -> int
-
 (* ?? *)
 val point_to_line : t -> point -> int -> unit
 
 (* move *)
 
-val move_res : t -> point -> int -> int
 val move : t -> point -> int -> unit
+val move_res : t -> point -> int -> int
 
 (* relative move *)
 
@@ -91,10 +87,10 @@ type delta = int
 
 val distance : t -> point -> point -> delta
 
-val bmove_res : t -> point -> delta -> delta
-val fmove_res : t -> point -> delta -> delta
 val bmove : t -> point -> delta -> unit
 val fmove : t -> point -> delta -> unit
+val bmove_res : t -> point -> delta -> delta
+val fmove_res : t -> point -> delta -> delta
 
 (* access *)
 
@@ -104,12 +100,12 @@ val sub : t -> point -> delta -> string
 
 (* insertion/deletion *)
 
-val insert_at_end : t -> string -> unit
-
-val insert_res : t -> point -> string -> position * int
-val delete_res : t -> point -> delta -> position * string
 val insert : t -> point -> string -> unit
 val delete : t -> point -> delta -> unit
+val insert_res : t -> point -> string -> position * int
+val delete_res : t -> point -> delta -> position * string
+
+val insert_at_end : t -> string -> unit
 
 (* undo *)
 
@@ -130,11 +126,11 @@ val inverse_attr : attribute
 val highlight_bit : int
 
 val make_attr: int -> int -> int -> bool -> attribute
-val set_attrs : t -> point -> delta -> attribute -> unit
-val unset_attrs : t -> unit
-
 val get_attr : t -> point -> attribute
 val set_attr : t -> point -> attribute -> unit
+
+val set_attrs : t -> point -> delta -> attribute -> unit
+val unset_attrs : t -> unit
 
 (* search *)
 

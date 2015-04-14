@@ -206,7 +206,9 @@ let read filename local_map =
         let text = Text.read inc in         
         close_in inc; 
         text
-      with _ -> Text.create ""
+      with _ -> 
+        Globals.error "error reading file %s" filename;
+        Text.create ""
     in
     let buf = create filename (Some filename) text local_map in
     Hashtbl.add loc.loc_files filename buf;

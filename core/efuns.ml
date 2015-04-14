@@ -13,13 +13,14 @@
 (*e: copyright header2 *)
 (* Useful types for Efuns *)
 
-(*s: exception Efuns.UnboundKey *)
-exception UnboundKey
-(*e: exception Efuns.UnboundKey *)
-
 (*************************************************************************)
 (* Keymaps and actions *)
 (*************************************************************************)
+
+(* actually used only by top_window.ml *)
+(*s: exception Efuns.UnboundKey *)
+exception UnboundKey
+(*e: exception Efuns.UnboundKey *)
 
 (*s: type Efuns.map *)
 type map =
@@ -45,7 +46,9 @@ and key = mod_ident * keySym
 and action = frame -> unit
 (*e: type Efuns.action *)
 
+(*s: type Efuns.action_name *)
 and action_name = string
+(*e: type Efuns.action_name *)
 
 (*s: type Efuns.generic_action *)
 and generic_action =
@@ -61,7 +64,9 @@ and mod_ident =
 | ControlMetaMap
 (*e: type Efuns.mod_ident *)
 
+(*s: type Efuns.keys *)
 and keys = key list
+(*e: type Efuns.keys *)
 
 (*s: type Efuns.prefix *)
 and prefix = key list
@@ -255,7 +260,7 @@ and status =
   }
 (*e: type Efuns.status *)
 
-(*s: type Efuns.line_repr *)
+(*s: type Efuns.frm_line *)
 and frm_line =
   { 
     mutable frm_text_line : Text.line;
@@ -272,7 +277,7 @@ and frm_line =
     mutable prev_frmline_boxes : Text.box list;
     (*e: [[Efuns.frm_line]] other fields *)
   } 
-(*e: type Efuns.line_repr *)
+(*e: type Efuns.frm_line *)
 
 (*************************************************************************)
 (* Windows *)
@@ -381,16 +386,8 @@ type location =
 (*e: type Efuns.location *)
 
 (*************************************************************************)
-(* Misc *)
+(* Regexps *)
 (*************************************************************************)
-
-(* used by frame, so can't be in top_window.ml *)
-(*s: function Efuns.backend *)
-let backend top_window =
-  match top_window.graphics with
-    None -> raise Not_found
-  | Some x -> x
-(*e: function Efuns.backend *)
 
 (*s: type Efuns.sens *)
 type sens = 
@@ -414,4 +411,17 @@ let regexp_option = define_option_class "Regexp"
         Value s ->  string_to_regex s | _ -> raise Not_found)
   (fun (s,_r) -> Value s)
 (*e: constant Efuns.regexp_option *)
+
+(*************************************************************************)
+(* Misc *)
+(*************************************************************************)
+
+(* used by frame, so can't be in top_window.ml *)
+(*s: function Efuns.backend *)
+let backend top_window =
+  match top_window.graphics with
+    None -> raise Not_found
+  | Some x -> x
+(*e: function Efuns.backend *)
+
 (*e: core/efuns.ml *)
