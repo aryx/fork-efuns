@@ -2982,8 +2982,9 @@ text.text_nlines <- text.text_nlines - nbr_newlines;
 type attribute = int
 @
 % int, because need to be efficient!
-% attribute is an encoded int, direct_attr = black fg, white bg, no highlight
-% regular font. Want efficient representation here because each
+% attribute is an encoded int, 
+% direct_attr = black fg, white bg, no highlight regular font. 
+% Want efficient representation here because each
 % character will have this attribute.
 %old: was used only in .mli before, but now I used it
 % in in Text.text.attrs too
@@ -3000,7 +3001,7 @@ let make_attr fg bg font highlighted =
      fg + 
      (bg lsl 8) + 
      (font lsl 16) + 
-     (if highlighted then 1 lsl 24 else 0)
+     (if highlighted then highlight_bit else 0)
   in
   attr
 @
@@ -3015,7 +3016,8 @@ let inverse_attr =  make_attr 1 0 0 false
 @
 % let no_attr = 0?
 
-% dead: highlight bit? just use inverse_attr?
+% highlight bit dead? just use inverse_attr? could, but different
+% purpose and actually we will use a different color (cyan).
 
 
 <<function Text.get_attr>>=
@@ -3102,7 +3104,7 @@ let unset_attr frame =
 
 
 
-\section{Colors}
+\subsection{Colors}
 
 % color map
 
@@ -3194,18 +3196,18 @@ let color buf regexp strict attr =
 
 % todo: have also a region variant, start/end
 
-\section{Highlights}
+\subsection{Highlights}
 
 <<constant Main.highlight_color>>=
 let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 @
-% color 2 by convention
+% color 2 by convention, see main misc initializations
 
 <<constant Simple.highlight_bit>>=
-let highlight_bit = 1 lsl 24
 @
 % see also make_attr
 
+% highlight | ??? -> <>
 <<function Simple.hightlight_region>>=
 let hightlight_region buf debut fin =
   let text = buf.buf_text in
@@ -3215,7 +3217,7 @@ let hightlight_region buf debut fin =
     Text.set_position text final fin;
     while curseur < final do
       let attr = Text.get_attr text curseur in
-      Text.set_attr text curseur (attr lor highlight_bit);
+      Text.set_attr text curseur (attr lor Text.highlight_bit);
       Text.fmove text curseur 1
     done;
     buf.buf_modified <- buf.buf_modified + 1
@@ -3223,6 +3225,7 @@ let hightlight_region buf debut fin =
 @
 %todo: have Text.iter_range_pos ?
 
+% unhighlight -> <>
 <<function Simple.unhightlight_region>>=
 let unhightlight_region buf debut fin =
   let text = buf.buf_text in
@@ -3232,7 +3235,7 @@ let unhightlight_region buf debut fin =
     Text.set_position text final fin;
     while curseur < final do
       let attr = Text.get_attr text curseur in
-      Text.set_attr text curseur (attr land (lnot highlight_bit));
+      Text.set_attr text curseur (attr land (lnot Text.highlight_bit));
       Text.fmove text curseur 1;
     done;
     buf.buf_modified <- buf.buf_modified + 1
@@ -3241,61 +3244,63 @@ let unhightlight_region buf debut fin =
 % could factorize code with previous func
 
 
+% some stuff can highlight, but we need to remember it
+% because when we type a key we want to unhighlight because
+% highlights are usually very temporary
+
+
+%val highlighted : (Efuns.frame * Text.position * Text.position) option ref
 <<constant Simple.highlighted>>=
 (* hightlighting of regions *)  
 let highlighted = ref None
 @
 
-<<constant Simple.highlighted_chars>>=
-let highlighted_chars = ref []
-@
-
+% Simple.mouse_save_then_kill -> <>
 <<function Simple.highlight>>=
 let highlight frame =
   let frame =
     match !highlighted with
     | None -> frame
-    | Some (frame,d,f) -> frame
+    | Some (frame, _d, _f) -> frame
   in    
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
   let text = buf.buf_text in
   let mark = Ebuffer.get_mark buf point in
-  let debut, fin =
+  let pt_debut, pt_fin =
     if point < mark 
-    then point,mark
-    else mark,point
+    then point, mark
+    else mark, point
   in
-  let pos1 = Text.get_position text debut in
-  let pos2 = Text.get_position text fin in
-  let debut,fin =
+  let pos1 = Text.get_position text pt_debut in
+  let pos2 = Text.get_position text pt_fin in
+  let pos_debut_to_hl, pos_fin_to_hl =
     match !highlighted with
-    | None -> pos1,pos2
-    | Some (frame,d,f) ->
+    | None -> pos1, pos2
+    | Some (frame, d, f) ->
         if pos1 > d
         then unhightlight_region buf d pos1; 
         if pos2 < f
         then unhightlight_region buf pos2 f;
         if pos1 < d 
-        then  pos1,d
+        then pos1, d
         else
           if pos2 > f 
           then f, pos2
-          else pos1,pos1
+          else pos1, pos1
   in
   highlighted := Some (frame, pos1, pos2);
-  hightlight_region buf debut fin
+  hightlight_region buf pos_debut_to_hl pos_fin_to_hl
 @
+% was using debut/fin for some position and some position2, so confusing
+%less: useful this opti? can't just unhighlight the min/max and then rehighlight
+% the new part?
 
+% Top_window.handle_key -> <> 
+% (as hook <- Top_window.handle_key_start_hook <- Highlight._)
 <<function Simple.unhightlight>>=
 let unhightlight _frame =
-  !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
-    let text = buf.buf_text in
-    Text.set_attr text curseur attr;
-    buf.buf_modified <- buf.buf_modified + 1;
-    Text.remove_point text curseur
-  );
-  highlighted_chars := [];
+  <<[[Simple.unhightlight()]] handle highlighted chars>>
   match !highlighted with
   | None -> ()
   | Some (frame,debut,fin) -> 
@@ -3314,11 +3319,45 @@ let unhightlight _frame =
      unhightlight_region buf debut fin
 @
 
+<<toplevel Highlight._>>=
+let _ =
+  Hook.add_start_hook (fun () ->
+    (* unhightlight region *)
+    Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
+  )
+@
+
+% so for instance in paren_mode we will highlight some chars
+% and each key stroked we want to undo that, enter highlighted chars
+% global
+
+
+<<[[Simple.highlight_paren()]] remember highlighted chars>>=
+H.highlighted_chars := (buf,curseur,attr) :: !H.highlighted_chars;
+@
+
+%val highlighted_chars : (Efuns.buffer * Text.point * Text.attribute) list ref
+<<constant Simple.highlighted_chars>>=
+let highlighted_chars = ref []
+@
+% who sets that? highlight_paren!
+
+<<[[Simple.unhightlight()]] handle highlighted chars>>=
+!highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
+  let text = buf.buf_text in
+  Text.set_attr text curseur attr;
+  buf.buf_modified <- buf.buf_modified + 1;
+  Text.remove_point text curseur
+);
+highlighted_chars := [];
+@
+% because if you move or type anything you want to reset what
+% was highlighted!
 
 
 
-%\section{Highlighting}
-%
+
+
 %<<[[Text.line]] other fields>>=
 %mutable line_hlt : int; (* highlighting *)
 %@
@@ -3416,7 +3455,7 @@ let unhightlight _frame =
 %line.boxes <- iter line.boxes []
 %@
 
-\section{Fonts}
+\subsection{Fonts}
 % with an 's'?
 
 <<[[Efuns.location]] other fields>>=
@@ -5843,7 +5882,8 @@ then raise Not_found;
     handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
 @
 
-%todo: should highlight!
+%todo: should highlight! actually Highlight.highlight
+% has some Drag button related code.
 
 \subsection{Mouse copy/paste}
 
@@ -5901,6 +5941,8 @@ let mouse_save_then_kill frame =
   )
 *)
 @
+
+
 
 \subsection{System clipboard}
 % snarf for plan9?
@@ -10292,26 +10334,56 @@ let get_parameter frame =
 \section{Paren}
 % useful! edwin power!
 
+<<constant Paren_mode.mode>>=
+let mode = Ebuffer.new_minor_mode "paren" []
+@
+
+<<function Paren_mode.find_matching>>=
+let find_matching frame = 
+  self_insert_command frame; 
+  highlight_paren frame
+@
+
+<<toplevel Paren_mode._1>>=
+let _ = 
+  [ ')'; '}'; ']' ] |> List.iter (fun key -> 
+    Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
+  ) 
+@
+
+<<toplevel Paren_mode._2>>=
+let _ = 
+  Action.define_buffer_action "paren_mode" 
+    (fun buf -> 
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+    )
+@
+
+
+
 <<function Simple.is_paren_end>>=
 let is_paren_end c = (c == '}') || (c == ']') || (c == ')')
-  ||  (!htmlp && c == '>')
+  <<[[Simple.is_paren_end()]] extra conditions>>
 @
 
 <<function Simple.is_paren_begin>>=
 let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
-  ||  (!htmlp && c == '<')
+  <<[[Simple.is_paren_begin()]] extra conditions>>
+
 @
 
-<<constant Simple.htmlp>>=
-let htmlp = ref false
-@
 
+
+% Paren_mode.find_matching | Abbrevs_mode.find_matching -> <>
 <<function Simple.highlight_paren>>=
 let highlight_paren frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  htmlp := (!Top_window.keypressed = Char.code '>');
+
+  <<[[Simple.highlight_paren()]] special code for HTML modes>>
 
   Text.with_dup_point text point (fun curseur ->
   if Text.bmove_res text curseur 1 = 0 
@@ -10334,8 +10406,8 @@ let highlight_paren frame =
       match stack with
       | [] -> (* found matching par *)
           let attr = Text.get_attr text curseur in
-          H.highlighted_chars := (buf,curseur,attr) :: !H.highlighted_chars;
-          Text.set_attr text curseur (attr lor H.highlight_bit);
+          <<[[Simple.highlight_paren()]] remember highlighted chars>>
+          Text.set_attr text curseur (attr lor Text.highlight_bit);
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack
@@ -10343,6 +10415,23 @@ let highlight_paren frame =
   in
   iter []
   )
+@
+
+
+
+
+
+<<[[Simple.is_paren_end()]] extra conditions>>=
+  ||  (!htmlp && c == '>')
+@
+<<[[Simple.is_paren_begin()]] extra conditions>>=
+  ||  (!htmlp && c == '<')
+@
+<<constant Simple.htmlp>>=
+let htmlp = ref false
+@
+<<[[Simple.highlight_paren()]] special code for HTML modes>>=
+htmlp := (!Top_window.keypressed = Char.code '>');
 @
 
 \section{Tab}

@@ -18,7 +18,6 @@ open Efuns
 let highlighted = ref None
 (*e: constant Simple.highlighted *)
 (*s: constant Simple.highlight_bit *)
-let highlight_bit = 1 lsl 24
 (*e: constant Simple.highlight_bit *)
 
 (*s: function Simple.unhightlight_region *)
@@ -30,7 +29,7 @@ let unhightlight_region buf debut fin =
     Text.set_position text final fin;
     while curseur < final do
       let attr = Text.get_attr text curseur in
-      Text.set_attr text curseur (attr land (lnot highlight_bit));
+      Text.set_attr text curseur (attr land (lnot Text.highlight_bit));
       Text.fmove text curseur 1;
     done;
     buf.buf_modified <- buf.buf_modified + 1
@@ -46,7 +45,7 @@ let hightlight_region buf debut fin =
     Text.set_position text final fin;
     while curseur < final do
       let attr = Text.get_attr text curseur in
-      Text.set_attr text curseur (attr lor highlight_bit);
+      Text.set_attr text curseur (attr lor Text.highlight_bit);
       Text.fmove text curseur 1
     done;
     buf.buf_modified <- buf.buf_modified + 1
@@ -59,6 +58,7 @@ let highlighted_chars = ref []
 
 (*s: function Simple.unhightlight *)
 let unhightlight _frame =
+  (*s: [[Simple.unhightlight()]] handle highlighted chars *)
   !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
     let text = buf.buf_text in
     Text.set_attr text curseur attr;
@@ -66,6 +66,7 @@ let unhightlight _frame =
     Text.remove_point text curseur
   );
   highlighted_chars := [];
+  (*e: [[Simple.unhightlight()]] handle highlighted chars *)
   match !highlighted with
   | None -> ()
   | Some (frame,debut,fin) -> 
@@ -89,41 +90,43 @@ let highlight frame =
   let frame =
     match !highlighted with
     | None -> frame
-    | Some (frame,d,f) -> frame
+    | Some (frame, _d, _f) -> frame
   in    
   let buf = frame.frm_buffer in
   let point = frame.frm_point in
   let text = buf.buf_text in
   let mark = Ebuffer.get_mark buf point in
-  let debut, fin =
+  let pt_debut, pt_fin =
     if point < mark 
-    then point,mark
-    else mark,point
+    then point, mark
+    else mark, point
   in
-  let pos1 = Text.get_position text debut in
-  let pos2 = Text.get_position text fin in
-  let debut,fin =
+  let pos1 = Text.get_position text pt_debut in
+  let pos2 = Text.get_position text pt_fin in
+  let pos_debut_to_hl, pos_fin_to_hl =
     match !highlighted with
-    | None -> pos1,pos2
-    | Some (frame,d,f) ->
+    | None -> pos1, pos2
+    | Some (frame, d, f) ->
         if pos1 > d
         then unhightlight_region buf d pos1; 
         if pos2 < f
         then unhightlight_region buf pos2 f;
         if pos1 < d 
-        then  pos1,d
+        then pos1, d
         else
           if pos2 > f 
           then f, pos2
-          else pos1,pos1
+          else pos1, pos1
   in
   highlighted := Some (frame, pos1, pos2);
-  hightlight_region buf debut fin
+  hightlight_region buf pos_debut_to_hl pos_fin_to_hl
 (*e: function Simple.highlight *)
 
+(*s: toplevel Highlight._ *)
 let _ =
   Hook.add_start_hook (fun () ->
     (* unhightlight region *)
     Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
   )
+(*e: toplevel Highlight._ *)
 (*e: features/highlight.ml *)

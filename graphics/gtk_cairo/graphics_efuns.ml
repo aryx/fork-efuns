@@ -353,6 +353,11 @@ let draw_string loc cr pg   col line  str  offset len   attr =
               col line str offset len attr);
   let bgcolor = 
     let idx = (attr lsr 8) land 255 in
+    let idx = 
+      if attr land Text.highlight_bit > 0
+      then 2
+      else idx
+    in
     loc.loc_colors_names.(idx)
   in
   clear_eol ~color:bgcolor cr pg col line len;

@@ -21,11 +21,16 @@ let htmlp = ref false
 (*e: constant Simple.htmlp *)
 (*s: function Simple.is_paren_end *)
 let is_paren_end c = (c == '}') || (c == ']') || (c == ')')
-  ||  (!htmlp && c == '>')
+  (*s: [[Simple.is_paren_end()]] extra conditions *)
+    ||  (!htmlp && c == '>')
+  (*e: [[Simple.is_paren_end()]] extra conditions *)
 (*e: function Simple.is_paren_end *)
 (*s: function Simple.is_paren_begin *)
 let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
-  ||  (!htmlp && c == '<')
+  (*s: [[Simple.is_paren_begin()]] extra conditions *)
+    ||  (!htmlp && c == '<')
+  (*e: [[Simple.is_paren_begin()]] extra conditions *)
+
 (*e: function Simple.is_paren_begin *)
 
 (*s: function Simple.highlight_paren *)
@@ -33,7 +38,10 @@ let highlight_paren frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
+
+  (*s: [[Simple.highlight_paren()]] special code for HTML modes *)
   htmlp := (!Top_window.keypressed = Char.code '>');
+  (*e: [[Simple.highlight_paren()]] special code for HTML modes *)
 
   Text.with_dup_point text point (fun curseur ->
   if Text.bmove_res text curseur 1 = 0 
@@ -56,8 +64,10 @@ let highlight_paren frame =
       match stack with
       | [] -> (* found matching par *)
           let attr = Text.get_attr text curseur in
+          (*s: [[Simple.highlight_paren()]] remember highlighted chars *)
           H.highlighted_chars := (buf,curseur,attr) :: !H.highlighted_chars;
-          Text.set_attr text curseur (attr lor H.highlight_bit);
+          (*e: [[Simple.highlight_paren()]] remember highlighted chars *)
+          Text.set_attr text curseur (attr lor Text.highlight_bit);
           buf.buf_modified <- buf.buf_modified + 1
       | _ :: stack -> (* don't try to match *)
           iter stack
@@ -66,8 +76,6 @@ let highlight_paren frame =
   iter []
   )
 (*e: function Simple.highlight_paren *)
-
-
 
 
 (*s: constant Paren_mode.mode *)

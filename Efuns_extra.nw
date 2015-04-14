@@ -730,6 +730,8 @@ type t = text
 (* Attributes *)
 (*****************************************************************************)
 
+let highlight_bit = 1 lsl 24
+
 <<function Text.make_attr>>
 
 <<constant Text.direct_attr>>
@@ -1621,11 +1623,7 @@ open Efuns
   
 <<function Simple.highlight>>
 
-let _ =
-  Hook.add_start_hook (fun () ->
-    (* unhightlight region *)
-    Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
-  )
+<<toplevel Highlight._>>
 @
 
 \subsection*{[[features/parameter.ml]]}
@@ -4558,32 +4556,6 @@ open Efuns
 
 \subsection*{[[minor_modes/paren_mode.ml]]}
 
-<<constant Paren_mode.mode>>=
-let mode = Ebuffer.new_minor_mode "paren" []
-@
-
-<<function Paren_mode.find_matching>>=
-let find_matching frame = 
-  self_insert_command frame; 
-  highlight_paren frame
-@
-
-<<toplevel Paren_mode._1>>=
-let _ = 
-  [ ')'; '}'; ']' ] |> List.iter (fun key -> 
-    Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
-  ) 
-@
-
-<<toplevel Paren_mode._2>>=
-let _ = 
-  Action.define_buffer_action "paren_mode" 
-    (fun buf -> 
-      if Ebuffer.modep buf mode 
-      then Ebuffer.del_minor_mode buf mode
-      else Ebuffer.set_minor_mode buf mode
-    )
-@
 
 
 %-------------------------------------------------------------
@@ -4600,8 +4572,6 @@ module H = Highlight
 <<function Simple.is_paren_begin>>
 
 <<function Simple.highlight_paren>>
-
-
 
 
 <<constant Paren_mode.mode>>

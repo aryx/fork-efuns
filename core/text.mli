@@ -126,6 +126,8 @@ val with_session: (unit -> 'a) -> t -> 'a
 type attribute = int
 val direct_attr : attribute
 val inverse_attr : attribute
+(* for use by other files, e.g. paren_mode.ml *)
+val highlight_bit : int
 
 val make_attr: int -> int -> int -> bool -> attribute
 val set_attrs : t -> point -> delta -> attribute -> unit

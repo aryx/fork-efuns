@@ -5,11 +5,10 @@ val unhightlight_region :
   Efuns.buffer -> Text.position -> Text.position -> unit
 
 (* highlight between mark and point *)
+(*
 val highlight : Efuns.action
 val unhightlight : Efuns.action
-
-(* for use by other files, e.g. paren_mode.ml *)
-val highlight_bit : int
+*)
 (* see Text.make_attr *)
 val highlighted_chars : (Efuns.buffer * Text.point * Text.attribute) list ref
 
