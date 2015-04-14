@@ -306,9 +306,9 @@ let point_to_x_when_no_cutline buf point =
     match boxes with
     | [] -> 0
     | box :: tail ->
-        if xpos < box.box_pos
+        if xpos < box.box_col
         then iter tail
-        else box.box_pos_repr + box.box_charsize *  (xpos - box.box_pos)
+        else box.box_pos_repr + box.box_charsize *  (xpos - box.box_col)
   in
   iter line.Text.boxes
 (*e: function Frame.point_to_cursor *)
@@ -326,8 +326,8 @@ let cursor_to_coord frame x y =
       [] -> default
     | box :: tail -> 
         if x < box.box_size
-        then box.box_pos +   x / box.box_charsize
-        else iter (x - box.box_size) tail (box.box_pos + box.box_len)
+        then box.box_col +   x / box.box_charsize
+        else iter (x - box.box_size) tail (box.box_col + box.box_len)
   in
   let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
     frm_line.frmline_boxes 0 
@@ -420,13 +420,13 @@ let set_cursor frame =
         | [] -> 
             frame.frm_cursor.[0] <- ' '
         | box :: tail ->
-            if box.box_pos <= col && box.box_pos + box.box_len > col
+            if box.box_col <= col && box.box_col + box.box_len > col
             then begin
-              let pos =
+              let pos_repr =
                 box.box_pos_repr + box.box_charsize * 
-                (col - box.box_pos)
+                (col - box.box_col)
               in
-              frame.frm_cursor.[0] <- line.repr_string.[pos];
+              frame.frm_cursor.[0] <- line.repr_string.[pos_repr];
               frame.frm_cursor_attr <- box.box_attr;
             end else
               iter tail
@@ -673,8 +673,8 @@ let display top_window frame =
         (buf.buf_name ^ 
          String.make (max 1 ((width / 3) - String.length buf.buf_name)) ' ')
         (match () with
-        | _ when point.pos = 0 -> "Top"
-        | _ when point.pos = Text.size text -> "Bot"
+        | _ when Text.get_position text point = 0 -> "Top"
+        | _ when Text.get_position text point = Text.size text -> "Bot"
         | _ -> spf "%2d%%" 
           (Text.point_line text point * 100 / Text.nbre_lines text)
         )

@@ -504,8 +504,12 @@ type line = {
     <<[[Text.line]] other fields>>
   } 
 @
-%TODO: position_user or position_with_gap?
-% see Text.set_position! many apis are taking position_user!
+% position2! see Text.set_position! many apis are taking position!
+%  but internally Text manipulates position2
+%  but need to delay explanation when will explain the gap
+%less: position_user vs position_with_gap? positiong? position_intern?
+%less: rename position here to bol (because now confusing anyway to
+% have position: position2)
 
 %old: was Line.position type
 %$<<type Text.direct>>=
@@ -3199,7 +3203,7 @@ let hightlight_region buf debut fin =
     buf.buf_modified <- buf.buf_modified + 1
   ))
 @
-%todo: have Text.iter_range ?
+%todo: have Text.iter_range_pos ?
 
 <<function Simple.unhightlight_region>>=
 let unhightlight_region buf debut fin =
@@ -3468,7 +3472,7 @@ mutable boxes : box list; (* sorted in reverse; head is last box on the line *)
 <<type Text.repr>>=
 and box = 
   { 
-    box_pos : position2;   (* pos of box in Text.t string *)
+    box_col : int;        (* col of box *)
     box_len : int;        (* len of box in Text.t string *)
     mutable box_attr : int;    (* common attribute *)
 
@@ -3477,6 +3481,11 @@ and box =
 @
 %old: I renamed things, clearer, there was too many line_repr or repr_line
 % so repr -> box, repr_line_pos -> box_pos, repr_line_len -> box_len, etc
+%bugfix: the comment about repr_line_pos was (*pos of box in Text.t string *)
+% but it's not a pos, it's actually
+% a column! I found the bug when putting position2 here and making
+% abstract position2 in text.mli which help find code comparing column
+% number with repr_line_pos! types ftw!
 
 
 \subsection{Characters representation}
@@ -3636,7 +3645,7 @@ do
 done;
 
 let box = {
-  box_pos = !line_start;
+  box_col = !box_col_start;
   box_len = !box_len;
   box_attr = charattr;
 
@@ -3645,7 +3654,7 @@ let box = {
   box_pos_repr = !repr_start;
 } in
 repr_start := !repr_cursor;
-line_start := !line_start + !box_len;
+box_col_start := !box_col_start + !box_len;
 boxes := box :: !boxes;
 @
 
@@ -3654,7 +3663,7 @@ boxes := box :: !boxes;
 
 
 <<[[Text.compute_representation()]] locals>>=
-let line_start = ref 0 in
+let box_col_start = ref 0 in
 let repr_start = ref 0 in
 
 let char_repr = ref "" in
@@ -4745,13 +4754,13 @@ let set_cursor frame =
         | [] -> 
             frame.frm_cursor.[0] <- ' '
         | box :: tail ->
-            if box.box_pos <= col && box.box_pos + box.box_len > col
+            if box.box_col <= col && box.box_col + box.box_len > col
             then begin
-              let pos =
+              let pos_repr =
                 box.box_pos_repr + box.box_charsize * 
-                (col - box.box_pos)
+                (col - box.box_col)
               in
-              frame.frm_cursor.[0] <- line.repr_string.[pos];
+              frame.frm_cursor.[0] <- line.repr_string.[pos_repr];
               frame.frm_cursor_attr <- box.box_attr;
             end else
               iter tail
@@ -4812,13 +4821,14 @@ let point_to_x_when_no_cutline buf point =
     match boxes with
     | [] -> 0
     | box :: tail ->
-        if xpos < box.box_pos
+        if xpos < box.box_col
         then iter tail
-        else box.box_pos_repr + box.box_charsize *  (xpos - box.box_pos)
+        else box.box_pos_repr + box.box_charsize *  (xpos - box.box_col)
   in
   iter line.Text.boxes
 @
-% remember that the boxes are sorted in reverse, head is last box
+%todo: compare xpos to box.box_pos????? when is a col, the other a position2
+%note: remember that the boxes are sorted in reverse, head is last box
 %old: was point_to_cursor, but it's actually just one part
 % of the cursor, and it's not even an x! it's an x when have no cutline
 %note: have a point_to_y where do the iteration over frm_table?
@@ -5260,8 +5270,8 @@ let str = spf "-%s- %s  %s L%-6d (%s) --"
   (buf.buf_name ^ 
    String.make (max 1 ((width / 3) - String.length buf.buf_name)) ' ')
   (match () with
-  | _ when point.pos = 0 -> "Top"
-  | _ when point.pos = Text.size text -> "Bot"
+  | _ when Text.get_position text point = 0 -> "Top"
+  | _ when Text.get_position text point = Text.size text -> "Bot"
   | _ -> spf "%2d%%" 
     (Text.point_line text point * 100 / Text.nbre_lines text)
   )
@@ -5785,8 +5795,8 @@ let cursor_to_coord frame x y =
       [] -> default
     | box :: tail -> 
         if x < box.box_size
-        then box.box_pos +   x / box.box_charsize
-        else iter (x - box.box_size) tail (box.box_pos + box.box_len)
+        then box.box_col +   x / box.box_charsize
+        else iter (x - box.box_size) tail (box.box_col + box.box_len)
   in
   let col = iter (x + frame.frm_x_offset + frm_line.first_box_extra_offset) 
     frm_line.frmline_boxes 0 

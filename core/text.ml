@@ -90,7 +90,7 @@ type line = {
 (*s: type Text.repr *)
 and box = 
   { 
-    box_pos : position2;   (* pos of box in Text.t string *)
+    box_col : int;        (* pos of box in Text.t string? NO col of box *)
     box_len : int;        (* len of box in Text.t string *)
     mutable box_attr : int;    (* common attribute *)
 
@@ -1155,7 +1155,7 @@ let compute_representation text charreprs n =
       let end_pos = text.text_newlines.(n+1).position - 1 in
 
       (*s: [[Text.compute_representation()]] locals *)
-      let line_start = ref 0 in
+      let box_col_start = ref 0 in
       let repr_start = ref 0 in
 
       let char_repr = ref "" in
@@ -1222,7 +1222,7 @@ let compute_representation text charreprs n =
         done;
 
         let box = {
-          box_pos = !line_start;
+          box_col = !box_col_start;
           box_len = !box_len;
           box_attr = charattr;
 
@@ -1231,7 +1231,7 @@ let compute_representation text charreprs n =
           box_pos_repr = !repr_start;
         } in
         repr_start := !repr_cursor;
-        line_start := !line_start + !box_len;
+        box_col_start := !box_col_start + !box_len;
         boxes := box :: !boxes;
         (*e: [[Text.compute_representation()]] loop text_cursor to end_pos *)
       done;

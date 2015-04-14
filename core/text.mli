@@ -24,13 +24,18 @@ val nbre_lines : t -> int
 
 type position = int
 
-(* should be abstract *)
+(* should be abstract, but can be useful to have public for ocamldebug *)
+(* 
 type position2 = int
-(* normally abstract! but useful to have it public for ocamldebug *)
 type point = {
     mutable pos : position2;
     mutable line : int;
 }
+*)
+type point
+
+type position2 (* for line *)
+
 type coord = {
   c_col: int;
   c_line: int;
@@ -57,7 +62,6 @@ val goto_point : t -> point -> point -> unit
 
 val point_line : t -> point -> int
 val point_col : t -> point -> int
-
 val point_coord: t -> point -> coord
 
 val goto_line : t -> point -> int -> unit
@@ -160,7 +164,7 @@ val compare : t -> point -> point -> int
 
 type line =
   { 
-    mutable position : position;
+    mutable position : position2;
 
     mutable boxes : box list;
     mutable repr_string : string;
@@ -169,7 +173,7 @@ type line =
   }
 
   and box = { 
-    box_pos : position;   (* pos of box in Text.t string *)
+    box_col : int;        (* col of box *)
     box_len : int;        (* len of box in Text.t string *)
     mutable box_attr : int;    (* common attribute *)
 
