@@ -24,9 +24,11 @@ val nbre_lines : t -> int
 
 type position = int
 
+(* should be abstract *)
+type position2 = int
 (* normally abstract! but useful to have it public for ocamldebug *)
 type point = {
-    mutable pos : position;
+    mutable pos : position2;
     mutable line : int;
 }
 type coord = {

@@ -203,7 +203,10 @@ let active_frame_info w =
 
   buf.buf_name, Text.version text, startpage
 
-
+(* minimap, a la Code Thumbnails, Sublime text, or many regular app
+ * like powerpoint, Preview, etc where have thumbnails preview.
+ * Focus+context!
+ *)
 let draw_minimap w =
 
   let cr = Cairo.create w.base in

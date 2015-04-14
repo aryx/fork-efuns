@@ -506,7 +506,6 @@ let _ =
         (* Misc *)
         (* -------------------------------------------------------- *)
         (*s: misc keys *)
-        [NormalMap, XK.xk_Insert], "overwrite_mode";
         [c_x; NormalMap, Char.code 'F'], "change_font";
         (*x: misc keys *)
         [c_h; NormalMap, Char.code 'v'], "describe_variable";
@@ -530,6 +529,8 @@ let _ =
         [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
         [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
         (*e: window managment keys *)
+        (*x: misc keys *)
+        [NormalMap, XK.xk_Insert], "overwrite_mode";
         (*e: misc keys *)
         (*e: [[global_map]] initial entries *)
       ]
@@ -571,10 +572,11 @@ let _ =
         "abbrevs_mode";
         "fill_mode";
         "tab_mode";
-        "overwrite_mode";
         (*"accents_mode";*)
         "ocaml_minor_mode";
         (*"ocaml_compiler_mode";*)
+        (*x: [[interactives_map]] initial entries *)
+        "overwrite_mode";
         (*e: [[interactives_map]] initial entries *)
       ]
     end    

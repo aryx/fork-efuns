@@ -156,14 +156,14 @@ let main () =
 
       loc_vars = Local.vars ();
     
-      loc_fonts = Hashtbl.create 37;
+      loc_colors_names = Array.create 256 "";
+      loc_colors = Hashtbl.create 37;
+      loc_colors_n = 0;
+
       loc_fonts_names = Array.create 256 "";
+      loc_fonts = Hashtbl.create 37;
       loc_fonts_n = 0;
 
-      loc_colors = Hashtbl.create 37;
-      loc_colors_names = Array.create 256 "";
-      loc_colors_n = 0;
-    
       loc_mutex = Mutex.create ()
   } in
   (*e: [[main()]] initial location *)

@@ -87,16 +87,20 @@ let overwrite_mode = Ebuffer.new_minor_mode "Over" []
 let self_insert_command frame =
   let char = Char.chr !Top_window.keypressed in
   let buf = frame.frm_buffer in
+  (*s: [[Simple.self_insert_command()]] if overwrite mode *)
   if Ebuffer.modep buf overwrite_mode 
   then insert_at_place frame char
+  (*e: [[Simple.self_insert_command()]] if overwrite mode *)
   else insert_char frame char
 (*e: function Simple.self_insert_command *)
     
 (*s: function Simple.char_insert_command *)
 let char_insert_command char frame =
   let buf = frame.frm_buffer in
+  (*s: [[Simple.self_insert_command()]] if overwrite mode *)
   if Ebuffer.modep buf overwrite_mode 
   then insert_at_place frame char
+  (*e: [[Simple.self_insert_command()]] if overwrite mode *)
   else insert_char frame char
 (*e: function Simple.char_insert_command *)
 
@@ -932,13 +936,14 @@ let binding_option = tuple2_option (smalllist_option key_option, string_option)
   
 (*s: toplevel Simple._1 *)
 let _ =
-  Action.define_buffer_action "overwrite_mode" (fun buf -> 
-      let mode = overwrite_mode in
-      if Ebuffer.modep buf mode 
-      then Ebuffer.del_minor_mode buf mode
-      else Ebuffer.set_minor_mode buf mode
-  );
-
+  (*s: Simple toplevel setup *)
+    Action.define_buffer_action "overwrite_mode" (fun buf -> 
+        let mode = overwrite_mode in
+        if Ebuffer.modep buf mode 
+        then Ebuffer.del_minor_mode buf mode
+        else Ebuffer.set_minor_mode buf mode
+    );
+  (*e: Simple toplevel setup *)
   Hook.add_start_hook (fun () ->
     let loc = Globals.location () in
     let gmap = loc.loc_map in

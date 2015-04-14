@@ -435,11 +435,10 @@ let create () =
       window = window;
       top_active_frame = frame;
 
-      top_name = "window";
+      top_name = buf.buf_name;
 
       top_mini_buffers = [];
       top_second_cursor = None;
-
 
       graphics = None;
     } 

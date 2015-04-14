@@ -413,6 +413,9 @@ Options:
 %   * cons: they are not really windows in the traditional sense;
 %     they are more tiled automatically windows
 %   * pro: other tools like 'sam' use windows for that
+% But maybe we can keep both DS, frame and window, in which case
+% we use frame for the things related to the display of a window, 
+% and window for the things related to subwindows.
 
 
 
@@ -495,12 +498,14 @@ type position = int
 
 <<type Text.line>>=
 type line = {
-    mutable position : position; (* bol (beginning of line) *)
+    mutable position : position2; (* bol (beginning of line) *)
 
     <<[[Text.line]] representation fields>>
     <<[[Text.line]] other fields>>
   } 
 @
+%TODO: position_user or position_with_gap?
+% see Text.set_position! many apis are taking position_user!
 
 %old: was Line.position type
 %$<<type Text.direct>>=
@@ -599,6 +604,7 @@ let mk_line_with_pos pos =
 @
 % was line_modified = 0
 % will see those fields later
+%history: I introduced this function; it factorized code
 
 
 \section{[[Buffer]]}
@@ -638,7 +644,7 @@ and buffer =
 % point is an important notion!
 <<type Text.point>>=
 type point = {
-    mutable pos : position;
+    mutable pos : position2;
     mutable line : int;
 }
 @
@@ -808,6 +814,7 @@ let create_without_top window mini buf =
       frm_point = point;
       frm_end = frm_end;
 
+      (* this will be set later in set_cursor called from update_display *)
       frm_cursor_x = 0;
       frm_cursor_y = 0;
       frm_cursor = String.make 1 ' ';
@@ -817,10 +824,11 @@ let create_without_top window mini buf =
       frm_last_buf_updated = 0;
 
       frm_redraw = true; (* ! *)
+      frm_cutline = window.win_width - 1; (* ! *)
+
       frm_force_start = false;
       frm_x_offset = 0;
       frm_y_offset = 0;
-      frm_cutline = window.win_width - 1;
       frm_table = [||];
 
       frm_has_scrollbar = 0;
@@ -840,7 +848,9 @@ let create_without_top window mini buf =
   frame
 @
 % many many fields ...
-%todo: install!! what does it do?
+% we will see install later, which prepares the frame for display
+% by setting frm_table, adjusting frm_cutline if needed.
+% less: should rename this install to prepare_for_display
 
 \section{[[Window]]}
 
@@ -930,7 +940,7 @@ let create mini up_window xpos ypos width height =
   win_mini = mini;
   }
 @
-%todo: will see mini later (but seems redundant with frame.frm_mini_buffer)
+%todo: will see mini later (but seems redundant with frame.frm_mini_buffer?)
 
 
 \section{The [[Top_window]]}
@@ -1338,7 +1348,7 @@ and binding =
 | Unbound
 @
 % mutually recursive type! find map again
-%less: need Prefix? could just each time give the full list?
+%less: need Prefix? could just each time gives the full list?
 % or it's convenient if want to rebind a big set of keys to another
 % prefix?
 
@@ -1561,7 +1571,6 @@ let c_h = (ControlMap, Char.code 'h')
 
 %XXX
 <<misc keys>>=
-[NormalMap, XK.xk_Insert], "overwrite_mode";
 [c_x; NormalMap, Char.code 'F'], "change_font";
 @
 
@@ -1682,6 +1691,12 @@ define_action "describe_variable"  Complexe.describe_variable;
 @
 % was called get_variable
 % will see Select far later.
+%todo: use get_var instead of this Local.print thing?
+
+<<constant Complex.variable_hist>>=
+let variable_hist = ref []
+@
+
 
 \section{Hooks}
 % essentially a set of list refs
@@ -1981,18 +1996,19 @@ let location = {
 
     loc_vars = Local.vars ();
     
-    loc_fonts = Hashtbl.create 37;
+    loc_colors_names = Array.create 256 "";
+    loc_colors = Hashtbl.create 37;
+    loc_colors_n = 0;
+
     loc_fonts_names = Array.create 256 "";
+    loc_fonts = Hashtbl.create 37;
     loc_fonts_n = 0;
 
-    loc_colors = Hashtbl.create 37;
-    loc_colors_names = Array.create 256 "";
-    loc_colors_n = 0;
-    
     loc_mutex = Mutex.create ()
 } in
 @
 %less: need those loc_fonts_xxx and loc_colors_xxx?
+%256 because of make_attr() that uses 8 bits for the colors or the fonts.
 
 \section{Startup hooks}
 % hooks on location creation, hence they they a location in parameter
@@ -2097,11 +2113,10 @@ let create () =
       window = window;
       top_active_frame = frame;
 
-      top_name = "window";
+      top_name = buf.buf_name;
 
       top_mini_buffers = [];
       top_second_cursor = None;
-
 
       graphics = None;
     } 
@@ -2113,7 +2128,8 @@ let create () =
 
   top_window
 @
-% a few notes:
+%old: was "window" instead of buf.buf_name but more consistent to use buf_name
+%notes: a few notes:
 % - top_active_frame!
 % - loc_height -1 for the minibuffer.
 % - top_mini_buffers is empty at first, the minibuffer is created
@@ -2150,6 +2166,8 @@ let default name =
     in
     create name None (Text.create str) (Keymap.create ())
 @
+%todo: maybe simpler to remove Ebuffer.default and have a separate
+% find_buffer_of_name and an adhoc create_help_buffer?
 %(*
 %"
 %Version is " ^ Version.efuns_version ^"
@@ -2188,7 +2206,7 @@ let create_at_top xpos ypos width height =
     win_height = height;
 
     win_down = NoFrame; 
-    win_up = Window window; (* this will be adjust in the caller *)
+    win_up = Window window; (* this will be adjusted in the caller *)
 
     win_mini = false;
   } in
@@ -2458,6 +2476,11 @@ let size text =
 
 \section{Positions}
 
+\subsection{User positions}
+
+% point.pos are actually not really the final charpos position;
+% the gap has to be taken care of.
+
 <<misc actions>>=
 define_action "describe_position" Complexe.describe_position;
 @
@@ -2487,6 +2510,19 @@ let get_position text point =
 @
 % note that point can never be in the middle of the hole.
 % either it's the gpoint, or it's before or after the hole.
+
+
+\subsection{Internal positions}
+
+% pos is user pos!
+<<function Text.set_position>>=
+let set_position text point pos =
+  move_point_to_pos text point
+    (if pos > text.gpoint.pos 
+     then pos + text.gsize
+     else pos
+     )
+@
 
 \section{Points}
 
@@ -2542,19 +2578,6 @@ let goto_point _text p1 p2 =
   p1.line <- p2.line
 @
 % order of argument is not super good, not very readable.
-
-%\section{The gap}
-
-% ?? -> <>
-<<function Text.move_point_to>>=
-let move_point_to_pos text point pos =
-  point.pos <- pos;
-  point.line <- find_line_of_pos text pos
-@
-%old: was move_point_to but better rename to move_point_to_pos
-%old: let _x,y = find_xy text text.gpoint.pos text.gpoint.line pos in
-% but xy should be reserved for screen coord, and anyway find_xy
-% is too complex for what we need
 
 
 \section{Delta}
@@ -2629,6 +2652,19 @@ let point_coord text point =
     c_line = point_line text point;
   }
 @
+
+
+% ?? -> <>
+<<function Text.move_point_to>>=
+let move_point_to_pos text point pos =
+  point.pos <- pos;
+  point.line <- find_line_of_pos text pos
+@
+%old: was move_point_to but better rename to move_point_to_pos
+%todo: or maybe move_point_to_pos_internal ?
+%old: let _x,y = find_xy text text.gpoint.pos text.gpoint.line pos in
+% but xy should be reserved for screen coord, and anyway find_xy
+% is too complex for what we need
 
 <<function Text.find_line_of_pos>>=
 let find_line_of_pos text pos =
@@ -3049,8 +3085,8 @@ let unset_attr frame =
 % color map
 
 <<[[Efuns.location]] other fields>>=
-loc_colors : (string,int) Hashtbl.t;
 loc_colors_names : string array;
+loc_colors : (string,int) Hashtbl.t;
 mutable loc_colors_n : int;
 @
 % 0 1 are used!
@@ -3086,6 +3122,8 @@ Attr.get_color !!background |> ignore;
 (* color 2 is highlight *)
 Attr.get_color !!highlight_color |> ignore;
 @
+% actually if some of the color are identical it will not increment
+% the counter ...
 
 % standard! just like stdin/stdout/stderr convention. Sometimes
 % conventions are convenient.
@@ -3430,7 +3468,7 @@ mutable boxes : box list; (* sorted in reverse; head is last box on the line *)
 <<type Text.repr>>=
 and box = 
   { 
-    box_pos : position;   (* pos of box in Text.t string *)
+    box_pos : position2;   (* pos of box in Text.t string *)
     box_len : int;        (* len of box in Text.t string *)
     mutable box_attr : int;    (* common attribute *)
 
@@ -4170,7 +4208,8 @@ Top_window.help_menu := [|
 
 
 
-\section{Sub-windows/Frames}
+\section{Sub-windows}
+% Frames
 
 \subsection{Frames and windows creation}
 
@@ -4203,6 +4242,11 @@ let install window frame =
   frame.frm_redraw <- true
 @
 %less: rename prepare_for_display?
+
+\subsection{Windows display}
+
+% Seen before the iteration Window.iter in Top_window.update_display.
+% Will focus on one window (frame) display.
 
 \subsection{Frame display}
 
@@ -5241,6 +5285,14 @@ graphic.Xdraw.draw_string
 
 % way to ask for user input (that is different from the text user input).
 
+% Alternative would be to have some popup windows, with some forms,
+% but minibuffer was a way maybe in terminal world to make it easy
+% to enter additional info.
+% Sublime does not have this area, instead it uses popup windows
+% or inline windows.
+% An advantage of the minibuffer is that it does not clutter your
+% main window.
+
 \subsection{Minubuffer creation}
 
 % when it's created? each time enter M-x or use some Select.xxx functions.
@@ -6118,6 +6170,7 @@ top_window.top_second_cursor |> Common.do_option (fun frame ->
 
 
 \chapter{Basic Features}
+% Generic features?
 
 \section{Navigating}
 
@@ -6632,7 +6685,7 @@ let point_to_line text point line =
 @
 
 
-\subsection{Position history}
+\subsection{Positions history}
 % meta!
 % could be in advanced topic
 
@@ -6761,10 +6814,13 @@ let insert_res text point str =
 let self_insert_command frame =
   let char = Char.chr !Top_window.keypressed in
   let buf = frame.frm_buffer in
-  if Ebuffer.modep buf overwrite_mode 
-  then insert_at_place frame char
+  <<[[Simple.self_insert_command()]] if overwrite mode>>
   else insert_char frame char
 @
+
+%\subsection{Overwrite mode}
+% see minor mode section
+
 
 \section{Deleting}
 
@@ -7101,6 +7157,7 @@ let point_at_mark frame =
 @
 
 \section{Undo}
+% Undo history?
 
 %todo: and redo?
 
@@ -7137,8 +7194,8 @@ let undo frame =
 
 <<type Text.action>>=
 and action =
-  Insertion of int * int * int
-| Deletion of int * string * int
+  Insertion of position * int * int
+| Deletion of position * string * int
 <<[[Text.action]] other cases>>
 @
 % who generates that? the very low-level basic text operations!
@@ -7151,12 +7208,12 @@ let undo text =
     let gsize = text.gsize in
     match action with
     | Insertion(point_pos, len, modified) ->
-        let point = if gpos < point_pos then point_pos + gsize else point_pos in
+        let point = if point_pos > gpos then point_pos + gsize else point_pos in
         let (pos,str,modif) = low_delete text point len in
         text.text_modified <- modified;
         Deletion(pos,str,modif), point_pos, 0
     | Deletion (point_pos, str, modified) ->
-        let point = if gpos < point_pos then point_pos + gsize else point_pos in
+        let point = if point_pos > gpos then point_pos + gsize else point_pos in
         let (pos,len,modif) = low_insert text point str in
         text.text_modified <- modified;
         Insertion(pos,len,modif), point_pos, String.length str
@@ -7727,7 +7784,7 @@ let buffer_list frame =
 @
 
 
-\section{Buffer names}
+%\section{Buffer names}
 
 % can have ambiguity?
 % no buf_name should be unique, so using it as a key to
@@ -7763,6 +7820,8 @@ let get_unique_name filename =
 
 \section{Buffers menu}
 
+%\subsection{Graphical popup menu}
+
 <<[[Std_efunsrc]] buffers menu setup>>=
 Top_window.buffers_menu := (fun top_window button () ->
     let buffers = ref [] in
@@ -7785,6 +7844,8 @@ Top_window.buffers_menu := (fun top_window button () ->
     failwith "Std_menu: show menus TODO"
     )
 @
+
+%\subsection{Frame menu}
 
 <<buffer managment keys>>=
 (* pad: *)
@@ -7983,7 +8044,8 @@ let up_buffer frame =
   Frame.change_buffer frame.frm_window !up_buffer
 @
 
-\chapter{Multi-Windows/Frames}
+\chapter{Multi-Windows}
+% fra,es?
 
 % recall window_down type!
 
@@ -8245,6 +8307,10 @@ let rec prev f window =
 
 \chapter{Major Modes}
 
+% have seen very generic features before, navigating, insert/delete,
+% search/replace. Now we will see more specific features. File
+% specific features!
+
 <<[[Efuns.buffer]] other fields>>=
 mutable buf_major_mode : major_mode;
 @
@@ -8431,15 +8497,22 @@ let add_major_key major =
 Local.get buf.buf_major_mode.maj_vars var
 @
 
-\section{Colors}
+\section{Customization examples}
+
+% the variable and keymap seen before is already the way
+% to have some customization. But there are more.
+
+\subsection{Colors}
+% Attributes.
 
 % see section on colors in Text chapter
 
-\section{Indentation}
+\subsection{Indentation}
 
-\section{Abbrevs}
+\subsection{Abbrevs}
 
-\section{Structures}
+\subsection{Structures}
+%less: merge with abbrevs?
 
 %ex: data passed to install_structures
 %      [c_c; n'; NormalMap, Char.code 'b'], "begin ^^ end^^";
@@ -8491,11 +8564,11 @@ let install_structures buf list =
   )
 @
 
-\section{Compilation}
+\subsection{Compilation}
 
 % next error variable
 
-\section{Outline}
+\subsection{Outline}
 % or put with minor mode? after all it's a bit similar
 % to paren_mode where each major mode can customize what
 % is a paren-able character.
@@ -9084,8 +9157,6 @@ let next_error top_frame =
         Top_window.message top_window "No more errors"
 @
 
-\section{Shell mode}
-
 \section{Efuns server and client}
 
 % dual of previous chapter in some sense since this time
@@ -9296,8 +9367,6 @@ let escaped s =
 
 \section{Colored files and directories}
 
-\section{Buffers menu}
-
 \section{Transforming}
 % maybe move in extra features?
 
@@ -9462,7 +9531,8 @@ let toggle_readonly text =
 \section{Tabs}
 
 % This should not exist I think. It complicates stuff.
-% Which is why I put it in advanced topics
+% Which is why I put it in advanced topics.
+% But maybe I should put it closer to the ^M representation stuff.
 
 %(* for J.G. Malecki: tabs have a different representation depending
 % * their position in the text (as in xterms) 
@@ -9624,7 +9694,7 @@ let _ =
 
 
 
-\section{Multiple toplevel windows}
+\section{Multiple top windows}
 % called actually frame in emacs terminology, but confusing I think.
 % I don't think this feature is very useful.
 
@@ -10145,7 +10215,7 @@ let get_parameter frame =
 
 
 
-\chapter{Major mode examples}
+\chapter{Major Mode Examples}
 
 % not here:
 %  - makefile
@@ -10164,18 +10234,23 @@ let get_parameter frame =
 @
 %todo: should be in their start_hook instead of here
 
+\section{Shell mode}
+
+\section{Buffers menu}
+
 \section{Dired}
 
+%\chapter{Major Language Modes Examples}
 \section{Lisp mode}
 
-\chapter{Minor mode examples}
+\chapter{Minor Mode Examples}
+
 
 <<[[interactives_map]] initial entries>>=
 "paren_mode";
 "abbrevs_mode";
 "fill_mode";
 "tab_mode";
-"overwrite_mode";
 (*"accents_mode";*)
 "ocaml_minor_mode";
 (*"ocaml_compiler_mode";*)
@@ -10246,7 +10321,34 @@ let highlight_paren frame =
 
 %\section{Accents}
 
+\section{Overwrite mode}
 
+<<constant Simple.overwrite_mode>>=
+let overwrite_mode = Ebuffer.new_minor_mode "Over" []
+@
+
+<<Simple toplevel setup>>=
+  Action.define_buffer_action "overwrite_mode" (fun buf -> 
+      let mode = overwrite_mode in
+      if Ebuffer.modep buf mode 
+      then Ebuffer.del_minor_mode buf mode
+      else Ebuffer.set_minor_mode buf mode
+  );
+@
+% should be in start_hook?
+
+<<[[interactives_map]] initial entries>>=
+"overwrite_mode";
+@
+
+<<misc keys>>=
+[NormalMap, XK.xk_Insert], "overwrite_mode";
+@
+
+<<[[Simple.self_insert_command()]] if overwrite mode>>=
+if Ebuffer.modep buf overwrite_mode 
+then insert_at_place frame char
+@
 
 \chapter{Extra Code}
 

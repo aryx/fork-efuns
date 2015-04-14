@@ -232,6 +232,7 @@ let create_without_top window mini buf =
       frm_point = point;
       frm_end = frm_end;
 
+      (* this will be set later in set_cursor called from update_display *)
       frm_cursor_x = 0;
       frm_cursor_y = 0;
       frm_cursor = String.make 1 ' ';
@@ -241,10 +242,11 @@ let create_without_top window mini buf =
       frm_last_buf_updated = 0;
 
       frm_redraw = true; (* ! *)
+      frm_cutline = window.win_width - 1; (* ! *)
+
       frm_force_start = false;
       frm_x_offset = 0;
       frm_y_offset = 0;
-      frm_cutline = window.win_width - 1;
       frm_table = [||];
 
       frm_has_scrollbar = 0;

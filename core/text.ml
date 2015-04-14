@@ -37,9 +37,11 @@ open Utils
 type position = int
 (*e: type Text.position *)
 
+type position2 = int
+
 (*s: type Text.point *)
 type point = {
-    mutable pos : position;
+    mutable pos : position2;
     mutable line : int;
 }
 (*e: type Text.point *)
@@ -71,7 +73,7 @@ type session = int
 
 (*s: type Text.line *)
 type line = {
-    mutable position : position; (* bol (beginning of line) *)
+    mutable position : position2; (* bol (beginning of line) *)
 
     (*s: [[Text.line]] representation fields *)
     mutable boxes : box list; (* sorted in reverse; head is last box on the line *)
@@ -88,7 +90,7 @@ type line = {
 (*s: type Text.repr *)
 and box = 
   { 
-    box_pos : position;   (* pos of box in Text.t string *)
+    box_pos : position2;   (* pos of box in Text.t string *)
     box_len : int;        (* len of box in Text.t string *)
     mutable box_attr : int;    (* common attribute *)
 
@@ -134,8 +136,8 @@ type text = {
   
 (*s: type Text.action *)
 and action =
-  Insertion of int * int * int
-| Deletion of int * string * int
+  Insertion of position * int * int
+| Deletion of position * string * int
 (*s: [[Text.action]] other cases *)
 | Session of action list
 (*e: [[Text.action]] other cases *)
@@ -549,12 +551,12 @@ let undo text =
     let gsize = text.gsize in
     match action with
     | Insertion(point_pos, len, modified) ->
-        let point = if gpos < point_pos then point_pos + gsize else point_pos in
+        let point = if point_pos > gpos then point_pos + gsize else point_pos in
         let (pos,str,modif) = low_delete text point len in
         text.text_modified <- modified;
         Deletion(pos,str,modif), point_pos, 0
     | Deletion (point_pos, str, modified) ->
-        let point = if gpos < point_pos then point_pos + gsize else point_pos in
+        let point = if point_pos > gpos then point_pos + gsize else point_pos in
         let (pos,len,modif) = low_insert text point str in
         text.text_modified <- modified;
         Insertion(pos,len,modif), point_pos, String.length str

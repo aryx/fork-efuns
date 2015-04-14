@@ -367,8 +367,8 @@ type location =
     (*x: [[Efuns.location]] other fields *)
     loc_vars : Local.vars;
     (*x: [[Efuns.location]] other fields *)
-    loc_colors : (string,int) Hashtbl.t;
     loc_colors_names : string array;
+    loc_colors : (string,int) Hashtbl.t;
     mutable loc_colors_n : int;
     (*x: [[Efuns.location]] other fields *)
     loc_fonts : (string,int) Hashtbl.t;

@@ -544,14 +544,6 @@ let blit str text point len =
 @
 
 
-<<function Text.set_position>>=
-let set_position text point pos =
-  move_point_to_pos text point
-    (if pos > text.gpoint.pos 
-     then pos + text.gsize
-     else pos
-     )
-@
 
 <<function Text.sub>>=
 let sub text point len =
@@ -677,6 +669,8 @@ open Utils
 (*****************************************************************************)
 
 <<type Text.position>>
+
+type position2 = int
 
 <<type Text.point>>
 
@@ -1838,16 +1832,13 @@ let insert_at_place frame char =
 @
 %old:  let _sessionTODOBUG = Text.start_session text in
 
-<<constant Simple.overwrite_mode>>=
-let overwrite_mode = Ebuffer.new_minor_mode "Over" []
-@
 
 
+% Simple.toplevel for add_start_hook for azerty keys -> <>
 <<function Simple.char_insert_command>>=
 let char_insert_command char frame =
   let buf = frame.frm_buffer in
-  if Ebuffer.modep buf overwrite_mode 
-  then insert_at_place frame char
+  <<[[Simple.self_insert_command()]] if overwrite mode>>
   else insert_char frame char
 @
 
@@ -2146,13 +2137,7 @@ let insert_special_char frame =
 
 <<toplevel Simple._1>>=
 let _ =
-  Action.define_buffer_action "overwrite_mode" (fun buf -> 
-      let mode = overwrite_mode in
-      if Ebuffer.modep buf mode 
-      then Ebuffer.del_minor_mode buf mode
-      else Ebuffer.set_minor_mode buf mode
-  );
-
+  <<Simple toplevel setup>>
   Hook.add_start_hook (fun () ->
     let loc = Globals.location () in
     let gmap = loc.loc_map in
@@ -3022,9 +3007,6 @@ let mkdir frame =
 @
 
 
-<<constant Complex.variable_hist>>=
-let variable_hist = ref []
-@
 
 <<constant Complex.value_hist>>=
 let value_hist = ref []

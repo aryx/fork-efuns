@@ -22,7 +22,7 @@ let create_at_top xpos ypos width height =
     win_height = height;
 
     win_down = NoFrame; 
-    win_up = Window window; (* this will be adjust in the caller *)
+    win_up = Window window; (* this will be adjusted in the caller *)
 
     win_mini = false;
   } in

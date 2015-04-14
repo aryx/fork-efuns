@@ -4,6 +4,7 @@
 
 val create : 
   Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
+(* diff? *)
 val create_without_top :
   Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
 val create_inactive : 
