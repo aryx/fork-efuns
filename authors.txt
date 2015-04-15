@@ -5,6 +5,7 @@ With contributions from:
     * dircolors
     * buffer_menu (C-M-Tab and C-M-l)
     * eshell (poor's man version)
+    * outline (poor's man version)
     * pfff-based modes for ocaml, C, noweb/tex
     * goal column, C-s C-w, M-down/up/right/left scrolling, 
-    * minimap instead of scrollbar (a la Sublime)
+    * minimap instead of scrollbar (a la Sublime Text)

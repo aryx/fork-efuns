@@ -2,6 +2,8 @@
 
 * 0.20 (Q2 2015)
 
+** a new Outline module
+
 ** compilation mode
 working M-x compile, with colors, C-n
 (and internally using variables rather than major mode interactives patches)
@@ -9,7 +11,7 @@ working M-x compile, with colors, C-n
 ** shell mode
 better ls in eshell, multi cols, correctly sorted
 
-** minimap a la Sublime Text (a la code thumbnails in visual studio)
+** a new minimap (a la Sublime Text, code thumbnails in visual studio, etc)
 with variable font size for important entities (for pfff-based major modes)
 
 ** adjustments to emacs behavior
@@ -25,7 +27,6 @@ scroll other windows
 buffer menu C-M-Tab, C-M-l and right order
 
 ** refactoring
-
 - split efuns.ml and simple.ml in many more modules
 - add more .mli
 - more use of with_dup_point, with_new_point, with_session

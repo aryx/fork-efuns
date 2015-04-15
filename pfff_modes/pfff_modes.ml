@@ -22,8 +22,14 @@ module PI = Parse_info
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-(* Common code to the different pfff-based efuns modes
-*)
+(* Common code to the different pfff-based efuns programming language modes,
+ * for coloring, and for outline.
+ * 
+ * todo: 
+ *  - indentation, 
+ *  - codegraph based navig, 
+ *  - ?
+ *)
 
 
 (*****************************************************************************)
@@ -58,6 +64,7 @@ let color_of_categ categ =
 (* dupe of pfff/code_map/style.ml#size_font_multiplier_of_categ *)
 (* this is part of the attribute, so it must be an int between
  * 0 and 255. Right now 0 means default size.
+ * This is used only for the minimap for now.
  *)
 let size_of_categ categ =
   match categ with
@@ -71,24 +78,62 @@ let size_of_categ categ =
 
   | _ -> 0
 
+(* for outline *)
+let level_of_categ categ =
+  match categ with
+  | HC.CommentSection0 -> 1
 
-let colorize funcs buf file =
+  (* maybe module def should be 1 too *)
+  | HC.Entity (_kind, HC.Def2 _) -> 2
+
+  | HC.CommentSection1 -> 2
+  | HC.CommentSection2 -> 2
+  | HC.CommentSection3 -> 2
+  | HC.CommentSection4 -> 2
+
+  | _ -> 0
+
+
+let colorize_and_set_outlines funcs buf file =
   let xs = funcs.parse file in
   let prefs = Highlight_code.default_highlighter_preferences in
-
   let text = buf.buf_text in
-  let cursor = Text.new_point text in
 
-  xs |> List.iter (fun x -> x |> funcs.highlight ~tag_hook:(fun info categ->
-    let color = color_of_categ categ in
-    let fontsize = size_of_categ categ in
+  (* for outline *)
+  let outline_points = ref [] in
+  let hcovered_lines = Hashtbl.create 101 in
 
-    let pos = PI.pos_of_info info in
-    Text.set_position text cursor pos;
-    let attr = Text.make_attr (Attr.get_color color) 1 fontsize false in
+  Text.with_new_point text (fun cursor ->
+    xs |> List.iter (fun x -> 
+      x |> funcs.highlight ~tag_hook:(fun info categ->
+        let color = color_of_categ categ in
+        let fontsize = size_of_categ categ in
+        let lvl = level_of_categ categ in
+        
+        let pos = PI.pos_of_info info in
+        Text.set_position text cursor pos;
+        let line = PI.line_of_info info in
 
-    let str = PI.str_of_info info in
-    let len = String.length str in
-    Text.set_attrs text cursor len attr
-  ) prefs 
-  )
+        if lvl > 0 && not (Hashtbl.mem hcovered_lines line) then begin
+          Hashtbl.add hcovered_lines line true;
+          Common.push (lvl, Text.dup_point text cursor) outline_points;
+        end;
+
+        let attr = Text.make_attr (Attr.get_color color) 1 fontsize false in
+        let str = PI.str_of_info info in
+        let len = String.length str in
+        Text.set_attrs text cursor len attr
+      ) prefs 
+    )
+  );
+  (* less: need to set a finalizer for the points stored in outline_points?
+   * meh
+   *)
+  let outline_points = 
+    match List.rev !outline_points with
+    (* to avoid some index out of bounds create at least one point *)
+    | [] -> [0, Text.new_point text]
+    | xs -> xs
+  in
+  Var.set_local buf Outline_mode.outline_var outline_points;
+  ()

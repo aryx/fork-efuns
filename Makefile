@@ -65,6 +65,7 @@ SRC=\
  major_modes/dired.ml\
  major_modes/buffer_menu.ml\
  major_modes/shell.ml\
+ major_modes/outline_mode.ml\
  \
  prog_modes/pl_colors.ml\
  prog_modes/makefile_mode.ml\

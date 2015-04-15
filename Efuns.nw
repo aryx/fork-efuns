@@ -2655,6 +2655,10 @@ let set_position text point pos =
 
 % they are used as "cursors" that goes through the text.
 
+%todo: could add to which text they belong to avoid
+% bugs where use point of a text to another text
+% (easy mistake)
+
 
 <<[[Text.text]] other fields>>=
 mutable text_points : point list;

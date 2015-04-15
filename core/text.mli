@@ -17,7 +17,7 @@ val to_string : t -> string
 val clear : t -> unit
 val update : t -> string -> unit
 
-val size : t -> int
+val size : t -> int (* can be used also as a position *)
 val nbre_lines : t -> int
 
 (* positions, points, line x col coordinates *)
@@ -38,7 +38,7 @@ type position2 (* for line *)
 
 type coord = {
   c_col: int;
-  c_line: int;
+  c_line: int; (* 0-based *)
 }
 
 (* point creation/deletion *)
@@ -58,7 +58,7 @@ val goto_point : t -> point -> point -> unit
 
 (* Line x col *)
 
-val point_line : t -> point -> int
+val point_line : t -> point -> int (* 0-based *)
 val point_col : t -> point -> int
 val point_coord: t -> point -> coord
 
@@ -91,6 +91,8 @@ val bmove : t -> point -> delta -> unit
 val fmove : t -> point -> delta -> unit
 val bmove_res : t -> point -> delta -> delta
 val fmove_res : t -> point -> delta -> delta
+
+val iter: t -> point -> int -> (point -> unit) -> unit
 
 (* access *)
 

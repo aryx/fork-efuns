@@ -945,6 +945,29 @@ let goto_line text point y =
 (* Sub content  *)
 (*****************************************************************************)
 
+let iter text cursor delta f =
+  with_dup_point text cursor (fun cursor ->
+    for _i = 0 to delta - 1 do
+      f cursor;
+      fmove text cursor 1
+    done
+  )
+
+(*
+let iter buf debut fin =
+  let text = buf.buf_text in
+  Text.with_new_point text (fun curseur ->
+  Text.with_new_point text (fun final ->
+    Text.set_position text curseur debut;
+    Text.set_position text final fin;
+    while curseur < final do
+      let attr = Text.get_attr text curseur in
+      Text.set_attr text curseur (attr lor Text.highlight_bit);
+      Text.fmove text curseur 1
+    done;
+*)
+
+
 (* should be in search/replace, but it's used by blit too *)
 (*s: function Text.clean_text *)
 let clean_text text =

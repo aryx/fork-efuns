@@ -59,7 +59,7 @@ let caml_color_buffer buf =
   in
       
   Common2.with_tmp_file ~str:s ~ext (fun file ->
-    Pfff_modes.colorize funcs buf file
+    Pfff_modes.colorize_and_set_outlines funcs buf file
   )
 
 
