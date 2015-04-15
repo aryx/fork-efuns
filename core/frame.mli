@@ -2,11 +2,14 @@
 
 (* creation *)
 
+(* this will also make the new frame the top active frame *)
 val create : 
   Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
-(* diff? *)
+(* not top active frame *)
+
 val create_without_top :
   Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
+(* alias for create_without_top *)
 val create_inactive : 
   Efuns.window -> Efuns.buffer -> Efuns.frame
 
@@ -14,7 +17,14 @@ val create_inactive :
 
 val load_file : Efuns.window -> string -> Efuns.frame
 
-(* ugly: you may want to use Multi_buffers.set_previous_frame just before *)
+(* ugly: you may want to use Multi_buffers.set_previous_frame just before.
+ * note: you can't maintain a reference to the old frame as in
+ *   let frm = ... in 
+ *    Frame.change_buffer frm.window buf; 
+ *    frm.frm_buffer... <- ...
+ * because the old frm reference is now dead. If you want to capture
+ * back the frame you'll have to grab the (new) top active frame.
+ *)
 val change_buffer : Efuns.window -> string -> unit
 val change_buffer_hooks: Efuns.action_name list Options.option_record
 
@@ -22,6 +32,7 @@ val save_buffer : Efuns.frame -> unit
 
 val kill : Efuns.frame -> unit
 val kill_all : Efuns.window -> unit
+
 exception BufferKilled
 val unkill : Efuns.window -> Efuns.frame -> unit
 
@@ -33,7 +44,7 @@ val find_buffer_frame : Efuns.buffer -> Efuns.frame
 
 val display : Efuns.top_window -> Efuns.frame -> unit
 
-(* ?? *)
+(* prepare the frame for display, setup cutline, frm_table, etc *)
 val install : Efuns.window -> Efuns.frame -> unit
 
 (* status line *)
@@ -66,10 +77,13 @@ val current_dir : Efuns.frame -> string
 
 val to_frame : (Efuns.buffer -> Text.point -> 'a) -> Efuns.frame -> 'a
 
+(* navigation *)
+
+val active : Efuns.frame -> unit
+
 (* misc *)
 
 val editname : string
-val active : Efuns.frame -> unit
 exception FoundFrame of Efuns.frame
 
 val bindings_help : Efuns.frame -> unit

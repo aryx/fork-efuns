@@ -112,11 +112,12 @@ let outline_num frame =
     let text_outline = buf.buf_text in
     let line_outline = Text.point_line text_outline frame.frm_point in
     let pt_origin = points_origin.(line_outline) in
-    Frame.change_buffer frame.frm_window bufname_origin;
-    let text = frame.frm_buffer.buf_text in
-    Text.goto_point text frame.frm_point pt_origin;
-    (* less: kill outline buffer? gc all the points? *)
-    ()
+    Ebuffer.find_buffer_opt bufname_origin |> Common.do_option (fun buf ->
+      let text = buf.buf_text in
+      Text.goto_point text buf.buf_point pt_origin;
+      Frame.change_buffer frame.frm_window bufname_origin;
+      (* less: kill outline buffer? gc all the points? *)
+    )
   end
   else begin
     let buf_name = spf "*Outline-%d-%s*" lvl buf.buf_name in
