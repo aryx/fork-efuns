@@ -2950,7 +2950,7 @@ let move text point n =
 
 \section{Inserting characters}
 
-% -> <>
+% insert | ... -> <>
 <<function Text.low_insert>>=
 let low_insert text pos str =
   let strlen = String.length str in
@@ -2993,6 +2993,8 @@ let low_insert text pos str =
 
 %TODO: unit test the condition
 
+% will see higher insert API later in Basic features chapter.
+% (insert, insert_res, ...)
 
 \subsection{Moving the gap}
 
@@ -3158,7 +3160,7 @@ text.text_newlines <- new_cache;
 
 \section{Deleting characters}
 
-% ??? -> <>
+% delete | ... -> <>
 <<function Text.low_delete>>=
 let low_delete text pos len =
   <<[[Text.low_insert()]] fail if readonly buffer>>
@@ -3207,6 +3209,9 @@ Array.blit
  (text.text_nlines - gline - nbr_newlines - 1);
 text.text_nlines <- text.text_nlines - nbr_newlines;
 @
+
+% will see higher delete API later in Basic features chapter
+% (delete_res, delete, ...)
 
 \section{Attributes}
 
