@@ -28,7 +28,13 @@ open Common
  * ; so if you try C-x b TAB or C-x C-f, you will see directories in blue
  * ; c source files in yellow, object files in gray, ....
  * ; It helps to visually find the file you want to open.
+ * 
+ * todo: factorize code with pfff/commons/file_type.ml ? 
  *)
+
+(*****************************************************************************)
+(* Colors *)
+(*****************************************************************************)
 
 (* less: could be some define_option *)
 let dir_color = "CornflowerBlue"

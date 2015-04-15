@@ -15,6 +15,8 @@
 open Common
 open Efuns
 
+module FT = File_type
+
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
@@ -81,6 +83,14 @@ let columnize width xs =
   done;
   Buffer.contents buf
 
+let is_obj_file file =
+  try
+    let typ = FT.file_type_of_file file in
+    match typ with
+    | FT.Obj _ -> true
+    | _ -> false
+  with _ -> false
+
 (*****************************************************************************)
 (* Scrolling *)
 (*****************************************************************************)
@@ -146,7 +156,7 @@ let display_prompt buf =
    *)
   colorize buf
 
-let builtin_ls ?(show_dotfiles=false) frame =
+let builtin_ls ?(show_dotfiles=false) ?(show_objfiles=false) frame =
   let buf = frame.frm_buffer in
   let dir = pwd buf in
   let files = Utils.file_list dir |> List.sort (fun a b ->
@@ -157,6 +167,11 @@ let builtin_ls ?(show_dotfiles=false) frame =
     if show_dotfiles
     then files
     else files |> Common.exclude (fun s -> s =~ "^\\.")
+  in
+  let files =
+    if show_objfiles
+    then files
+    else files |> Common.exclude is_obj_file
   in
 
   (* similar to Select.complete_filename *)
@@ -275,8 +290,8 @@ let interpret frame s =
   (match s with
 
   (* dir listing *)
-  | "ls" -> builtin_ls ~show_dotfiles:true frame
-  | "f" -> builtin_ls ~show_dotfiles:false frame
+  | "ls" -> builtin_ls ~show_dotfiles:true ~show_objfiles:true frame
+  | "f" -> builtin_ls ~show_dotfiles:false ~show_objfiles:false frame
   | "l" -> builtin_l frame
 
   (* dir navig *)
