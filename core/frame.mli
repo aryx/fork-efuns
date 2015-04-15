@@ -33,7 +33,6 @@ val find_buffer_frame : Efuns.buffer -> Efuns.frame
 
 val display : Efuns.top_window -> Efuns.frame -> unit
 
-val resize : Efuns.frame -> unit
 (* ?? *)
 val install : Efuns.window -> Efuns.frame -> unit
 
@@ -73,10 +72,10 @@ val editname : string
 val active : Efuns.frame -> unit
 exception FoundFrame of Efuns.frame
 
-val print_list : string list -> string
 val bindings_help : Efuns.frame -> unit
 
 (*
 val display_line : Efuns.top_window -> Efuns.frame -> string -> int -> unit
 val update_table : 'a -> Efuns.frame -> unit
+val resize : Efuns.frame -> unit 
 *)

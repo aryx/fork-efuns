@@ -215,9 +215,11 @@ let read filename local_map =
     buf
 (*e: function Ebuffer.read *)
 
+(*s: function Ebuffer.find_buffer_opt *)
 let find_buffer_opt name =
   try Some (Hashtbl.find (Globals.location()).loc_buffers name)
   with Not_found -> None
+(*e: function Ebuffer.find_buffer_opt *)
 
 (*s: constant Ebuffer.help_buffer_content *)
 let help_buffer_content = 
@@ -242,7 +244,6 @@ let default name =
     create name None (Text.create str) (Keymap.create ())
 (*e: function Ebuffer.default *)
       
-
 (*s: function Ebuffer.compute_representation *)
 let compute_representation buf n =
   Text.compute_representation buf.buf_text buf.buf_charreprs n
@@ -273,7 +274,6 @@ let change_name buf filename =
   buf.buf_filename <- Some filename;
   buf.buf_name <- name
 (*e: function Ebuffer.change_name *)
-  
   
 (*s: function Ebuffer.set_mark *)
 let set_mark buf point =
@@ -441,24 +441,6 @@ let message buf m =
   with Not_found ->
     create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore
 (*e: function Ebuffer.message *)
-
-(*s: function Ebuffer.catch *)
-(*
-let catch format buf f =
-  try
-    f ()
-  with e ->
-    let loc = Globals.location() in
-    let name = "*Messages*" in
-    let m = Printf.sprintf format (Utils.printexn e) in
-    try
-      let buf = Hashtbl.find loc.loc_buffers name in
-      Text.insert_at_end buf.buf_text (m ^ "\n");
-    with Not_found ->
-      create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
-*)
-(*e: function Ebuffer.catch *)
-          
       
 (*s: toplevel Ebuffer._1 *)
 let _ =

@@ -52,7 +52,6 @@ let buf_create text local_map =
   }
 (*e: function Minibuffer.buf_create *)
 
-
 (*s: function Minibuffer.kill *)
 let kill mini_frame old_frame =
   let window = mini_frame.frm_window in

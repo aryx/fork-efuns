@@ -62,15 +62,6 @@ let status_col frame col =
   end
 (*e: function Frame.status_col *)
 
-(*s: function Frame.print_list *)
-let rec print_list list =
-  match list with
-    [] -> ""
-  | [ele] -> ele
-  | ele :: ( (_ :: _) as tail) ->
-      ele ^ " " ^ (print_list tail)
-(*e: function Frame.print_list *)
-
 (*s: function Frame.status_major_mode *)
 let status_major_mode frame  =
   let buf = frame.frm_buffer in
@@ -82,7 +73,7 @@ let status_major_mode frame  =
       status.stat_modes <- buf.buf_minor_modes;
       status.stat_mode <- buf.buf_major_mode;
       status_print status (Printf.sprintf "(%s)" 
-          (print_list
+          (String.concat " "
             (buf.buf_major_mode.maj_name ::
             (List.map (fun m -> m.min_name) status.stat_modes))))
       StatMode;
@@ -115,7 +106,9 @@ let status_name frame name =
 let kill frame = 
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
+  (*s: [[Frame.kill()]] setting frm_killed field *)
   frame.frm_killed <- true;
+  (*e: [[Frame.kill()]] setting frm_killed field *)
   buf.buf_shared <- buf.buf_shared - 1;
   Text.remove_point text buf.buf_point;
   Text.remove_point text buf.buf_start;
@@ -173,11 +166,6 @@ let install window frame =
   (*e: [[Frame.install()]] set frm_table *)
   frame.frm_redraw <- true
 (*e: function Frame.install *)
-
-(*s: function Frame.resize *)
-let resize frame =
-  install frame.frm_window frame
-(*e: function Frame.resize *)
 
 (*****************************************************************************)
 (* Constructor *)
@@ -279,12 +267,13 @@ let active frame =
   )
 (*e: function Frame.active *)
       
-      
 (*s: function Frame.create *)
 let create window mini buf =
-  let top_window = Window.top window in
   let frame = create_without_top window mini buf in
+  (*s: [[Frame.create()]] adjust active frame *)
+  let top_window = Window.top window in
   top_window.top_active_frame <- frame;
+  (*e: [[Frame.create()]] adjust active frame *)
   frame
 (*e: function Frame.create *)
 
@@ -529,7 +518,6 @@ let update_table frame =
   iter_line (- frame.frm_y_offset) !current_n !current_line
 (*e: function Frame.update_table *)
 
-
 (*s: function Frame.display *)
 let display top_window frame =
   let buf = frame.frm_buffer in
@@ -710,8 +698,9 @@ exception BufferKilled
 (*e: exception Frame.BufferKilled *)
 (*s: function Frame.unkill *)
 let unkill window frame =
-  let buf = frame.frm_buffer  in
-  if buf.buf_shared < 0 then raise BufferKilled;
+  let buf = frame.frm_buffer in
+  if buf.buf_shared < 0 
+  then raise BufferKilled;
   let text = buf.buf_text in
   install window frame;
   frame.frm_start <- Text.dup_point text buf.buf_start;
@@ -738,7 +727,6 @@ let current_dir frame =
   | Some filename -> Filename.dirname filename ^ "/"
   | None -> (Globals.location()).loc_dirname ^ "/"
 (*e: function Frame.current_dir *)
-
 
 (*s: exception Frame.FoundFrame *)
 exception FoundFrame of frame
@@ -772,7 +760,6 @@ let load_file window filename =
   frame
 (*e: function Frame.load_file *)
 
-  
 (*s: function Frame.change_buffer *)
 let change_buffer window name = 
   try

@@ -217,11 +217,11 @@ and frame  =
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_force_start : bool;
     (*x: [[Efuns.frame]] other fields *)
+    mutable frm_killed : bool;
+    (*x: [[Efuns.frame]] other fields *)
     mutable frm_prefix : key list;
     (*x: [[Efuns.frame]] other fields *)
     mutable frm_last_action : action;
-    (*x: [[Efuns.frame]] other fields *)
-    mutable frm_killed : bool;
     (*e: [[Efuns.frame]] other fields *)
   } 
 (*e: type Efuns.frame *)

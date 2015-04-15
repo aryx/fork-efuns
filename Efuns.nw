@@ -796,6 +796,24 @@ mutable buf_shared : int; (* number of frames for that buffer *)
 @
 %less: why need that? ocaml has a gc anyway ...
 
+
+% v_cut_frame | start_command | ... -> <>
+<<function Frame.create>>=
+let create window mini buf =
+  let frame = create_without_top window mini buf in
+  <<[[Frame.create()]] adjust active frame>>
+  frame
+@
+
+\ifallcode
+% for completion, but useful really? -> <>
+<<function Frame.create_inactive>>=
+let create_inactive window buf =
+  create_without_top window None buf
+@
+\fi
+
+
 % Top_window.create | Frame.create | Frame.create_inactive -> <>
 <<function Frame.create_without_top>>=
 let create_without_top window mini buf =
@@ -860,6 +878,7 @@ let create_without_top window mini buf =
 % by setting frm_table, adjusting frm_cutline if needed.
 % less: should rename this install to prepare_for_display
 
+
 \section{[[Window]]}
 
 % It's a window in Emacs terminology. And it's really
@@ -919,19 +938,6 @@ and window_up =
 % this makes the structures mutually recursive!
 % from a top_window -> window and can get back the top_window back
 
-
-<<function Window.top>>=
-let rec top window = 
-  match window.win_up with
-  | TopWindow top_window -> top_window
-  | Window window -> top window
-@
-%old: was used to access the location, but
-% not sure why you need that since the location
-% is also accessible in the frame and buffer
-% Anyway now location is a global, so you need this function a bit less
-%note: since an action takes a frame and many actions have effect
-% on the top window, you need this function.
 
 <<function Window.create>>=
 let create mini up_window xpos ypos width height =
@@ -997,6 +1003,28 @@ mutable top_active_frame : frame;
 %current!
 % so C-x o (C-tab) should change this field
 % this will be used for the cursor display too.
+
+
+<<[[Frame.create()]] adjust active frame>>=
+let top_window = Window.top window in
+top_window.top_active_frame <- frame;
+@
+% kill_frame will reset top_active_frame?
+
+<<function Window.top>>=
+let rec top window = 
+  match window.win_up with
+  | TopWindow top_window -> top_window
+  | Window window -> top window
+@
+%old: was used to access the location, but
+% not sure why you need that since the location
+% is also accessible in the frame and buffer
+% Anyway now location is a global, so you need this function a bit less
+%note: since an action takes a frame and many actions have effect
+% on the top window, you need this function.
+
+
 
 \section{The world, [[Location]]}
 % full state
@@ -1095,6 +1123,39 @@ Hashtbl.add (Globals.location()).loc_buffers name buf;
 % well as with buffer, window, and even top_window we
 % need to go up sometimes. and a top window needs to know
 % the active frame.
+
+
+
+% sometimes have the buffer and want to find the frame
+% (opposite of frame.frm_buffer)
+
+% ??? -> <>
+<<function Frame.find_buffer_frame>>=
+let find_buffer_frame buf =
+  try
+    (Globals.location()).top_windows |> List.iter (fun top_window ->
+      top_window.window |> Window.iter (fun frame -> 
+        if frame.frm_buffer == buf 
+        then raise (FoundFrame frame)
+      )
+    );
+    raise Not_found
+  with FoundFrame frame -> frame
+@
+
+<<exception Frame.FoundFrame>>=
+exception FoundFrame of frame
+@
+
+%ex:
+%<<function Select.find_completion_frame>>=
+%let find_completion_frame frame =
+%  let buf = Ebuffer.default "*Completions*" in
+%  Frame.find_buffer_frame buf
+%@
+%but really it should be 
+%  buf_name -> buffer -> frame
+% with find_buffer_opt
 
 \section{[[Action]] and [[actions]]}
 
@@ -2200,6 +2261,13 @@ let default name =
 %See changes in "^ Version.efuns_lib ^"/Changes
 %"
 %*)
+
+% right now used by shell.ml only
+<<function Ebuffer.find_buffer_opt>>=
+let find_buffer_opt name =
+  try Some (Hashtbl.find (Globals.location()).loc_buffers name)
+  with Not_found -> None
+@
 
 <<constant Ebuffer.help_buffer_content>>=
 let help_buffer_content = 
@@ -5443,6 +5511,10 @@ let status = {
 String.blit editname 0 status.status_string 5 (String.length editname);
 @
 
+<<constant Frame.dummy_mode>>=
+let dummy_mode = Ebuffer.new_major_mode "" []
+@
+
 <<constant Frame.editname>>=
 let editname = "Efuns:"
 @
@@ -5706,6 +5778,7 @@ end;
 @
 
 
+\subsection{Minubuffer kill}
 
 <<function Minibuffer.kill>>=
 let kill mini_frame old_frame =
@@ -5717,6 +5790,33 @@ let kill mini_frame old_frame =
   then Frame.unkill window old_frame;
   top_window.top_active_frame <- old_frame;
   Frame.kill mini_frame
+@
+
+<<exception Frame.BufferKilled>>=
+exception BufferKilled
+@
+
+<<function Frame.unkill>>=
+let unkill window frame =
+  let buf = frame.frm_buffer in
+  if buf.buf_shared < 0 
+  then raise BufferKilled;
+  let text = buf.buf_text in
+  install window frame;
+  frame.frm_start <- Text.dup_point text buf.buf_start;
+  frame.frm_end <- Text.dup_point text buf.buf_start;
+  frame.frm_point <- Text.dup_point text buf.buf_point;
+  frame.frm_y_offset <- 0;
+  buf.buf_shared <- buf.buf_shared + 1;
+  frame.frm_killed <- false
+@
+
+<<[[Efuns.frame]] other fields>>=
+mutable frm_killed : bool;
+@
+
+<<[[Frame.kill()]] setting frm_killed field>>=
+frame.frm_killed <- true;
 @
 
 \subsection{Minibuffer display}
@@ -6374,6 +6474,16 @@ map.interactives <- (name, (f, Some keylist)) :: map.interactives;
 %less: should look for duplicates
 
 
+% used only in pad's modes right now, but I should
+% use more
+<<function Keymap.define_interactive_action>>=
+let define_interactive_action action_name action_fun =
+  Action.define_action action_name action_fun;
+  let map = (Globals.location()).loc_map in
+  add_interactive map action_name action_fun
+@
+%less: rename add_interactive_action?
+
 \subsection{[[Select.select()]]}
 
 <<function Select.select>>=
@@ -6452,8 +6562,24 @@ let incremental_mini_buffer
     end_action frame str
   )
 @
+
+<<function Minibuffer.create_return>>=
+let create_return frame local_map request default action =
+  let mini_frame = create frame local_map request in
+  Simple.insert_string mini_frame default;
+  Keymap.add_binding local_map [NormalMap, XK.xk_Return] 
+    (return action frame);
+  mini_frame
+@
 %todo: sure top_second_cursor get reseted? if do C-g in minibuffer?
 % if exn?
+
+<<function Minibuffer.return>>=
+let return action old_frame mini_frame =
+  let repstr = Text.to_string mini_frame.frm_buffer.buf_text in
+  kill mini_frame old_frame;
+  action old_frame repstr
+@
 
 
 
@@ -7886,6 +8012,22 @@ Keymap.add_binding ismap [ControlMap, Char.code 'e']
 @
 
 
+<<function Minibuffer.update_request>>=
+let update_request frame request =
+  let qlen = String.length request in
+  let window = frame.frm_window in
+  let top_window = Window.top window in
+  let _mini_window = Window.create true window.win_up
+      qlen window.win_ypos
+      (top_window.top_width - qlen) 1
+  in
+  frame.frm_width <- top_window.top_width - qlen;
+  frame.frm_xpos <- qlen;
+  frame.frm_mini_buffer <- Some request;
+  frame.frm_redraw <- true
+@
+
+
 <<function Text.search_forward>>=
 let search_forward text regexp point =
   let gsize = text.gsize in
@@ -8591,32 +8733,29 @@ let delete_frame frame =
   then
     let window = frame.frm_window in
     match window.win_up with
-      TopWindow _ -> ()
+    | TopWindow _ -> ()
     | Window upwin ->
         Frame.install upwin frame;
         Frame.active frame
 @
+% upper window gets active
 
 
 
 
-<<[[Efuns.frame]] other fields>>=
-mutable frm_killed : bool;
-@
-
-%XXX
 % Minibuffer.kill | ??? -> <>
 <<function Frame.kill>>=
 let kill frame = 
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  frame.frm_killed <- true;
+  <<[[Frame.kill()]] setting frm_killed field>>
   buf.buf_shared <- buf.buf_shared - 1;
   Text.remove_point text buf.buf_point;
   Text.remove_point text buf.buf_start;
   buf.buf_point <- frame.frm_point;
   buf.buf_start <- frame.frm_start
 @
+
 
 % ??? -> <>
 <<function Multi_frames.remove_frame>>=
@@ -8873,12 +9012,22 @@ let status_major_mode frame  =
       status.stat_modes <- buf.buf_minor_modes;
       status.stat_mode <- buf.buf_major_mode;
       status_print status (Printf.sprintf "(%s)" 
-          (print_list
+          (String.concat " "
             (buf.buf_major_mode.maj_name ::
             (List.map (fun m -> m.min_name) status.stat_modes))))
       StatMode;
     end
 @
+
+%<<function Frame.print_list>>=
+%let rec print_list list =
+%  match list with
+%    [] -> ""
+%  | [ele] -> ele
+%  | ele :: ( (_ :: _) as tail) ->
+%      ele ^ " " ^ (print_list tail)
+%@
+% common.join " ", or String.concat " "
 
 \section{Major mode variables and keys}
 

@@ -73,7 +73,7 @@ let delete_frame frame =
   then
     let window = frame.frm_window in
     match window.win_up with
-      TopWindow _ -> ()
+    | TopWindow _ -> ()
     | Window upwin ->
         Frame.install upwin frame;
         Frame.active frame

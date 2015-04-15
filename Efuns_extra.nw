@@ -800,22 +800,22 @@ type t = text
 \subsection*{[[core/ebuffer.ml]]}
 
 
-<<function Ebuffer.catch>>=
-(*
-let catch format buf f =
-  try
-    f ()
-  with e ->
-    let loc = Globals.location() in
-    let name = "*Messages*" in
-    let m = Printf.sprintf format (Utils.printexn e) in
-    try
-      let buf = Hashtbl.find loc.loc_buffers name in
-      Text.insert_at_end buf.buf_text (m ^ "\n");
-    with Not_found ->
-      create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
-*)
-@
+%<<function Ebuffer.catch>>=
+%(*
+%let catch format buf f =
+%  try
+%    f ()
+%  with e ->
+%    let loc = Globals.location() in
+%    let name = "*Messages*" in
+%    let m = Printf.sprintf format (Utils.printexn e) in
+%    try
+%      let buf = Hashtbl.find loc.loc_buffers name in
+%      Text.insert_at_end buf.buf_text (m ^ "\n");
+%    with Not_found ->
+%      create name None (Text.create (m^"\n")) (Keymap.create ())  |>ignore
+%*)
+%@
 
 
 
@@ -859,21 +859,17 @@ open Options
  
 <<function Ebuffer.read>>
 
-let find_buffer_opt name =
-  try Some (Hashtbl.find (Globals.location()).loc_buffers name)
-  with Not_found -> None
+<<function Ebuffer.find_buffer_opt>>
 
 <<constant Ebuffer.help_buffer_content>>
 
 <<function Ebuffer.default>>
       
-
 <<function Ebuffer.compute_representation>>
 
 <<exception Ebuffer.BufferAlreadyOpened>>
 
 <<function Ebuffer.change_name>>
-  
   
 <<function Ebuffer.set_mark>>
 
@@ -899,9 +895,6 @@ let find_buffer_opt name =
 <<function Ebuffer.get_binding>>
 
 <<function Ebuffer.message>>
-
-<<function Ebuffer.catch>>
-          
       
 <<toplevel Ebuffer._1>>
 @
@@ -922,30 +915,30 @@ let find_buffer_opt name =
 %dead: let keysym_to_name = []
 % (it's in XK now)
 
+%(*
+%La gestion des keymaps est inadapte'e a` la modification dynamique.
+%En effet, on aurait envie de pouvoir modifier les bindings selon divers
+%  crite`res, tels que le buffer (possible), le mode(pas possible).
+%*)
+% ???
+
 %-------------------------------------------------------------
 
 <<core/keymap.ml>>=
 <<copyright header2>>
 open Efuns
 
-(*
-La gestion des keymaps est inadapte'e a` la modification dynamique.
-En effet, on aurait envie de pouvoir modifier les bindings selon divers
-  crite`res, tels que le buffer (possible), le mode(pas possible).
-*)
-
-
 <<function Keymap.dummy_action>>
 
 <<function Keymap.create>>
 
+
 <<function Keymap.print_key>>
             
 <<function Keymap.print_key_list>>
-
    
+
 <<function Keymap.get_binding>>
-          
           
 <<function Keymap.set_binding>>
 
@@ -968,47 +961,13 @@ En effet, on aurait envie de pouvoir modifier les bindings selon divers
 <<function Keymap.add_minor_key>>
 <<function Keymap.add_major_key>>
 
-let define_interactive_action action_name action_fun =
-  Action.define_action action_name action_fun;
-  let map = (Globals.location()).loc_map in
-  add_interactive map action_name action_fun
+<<function Keymap.define_interactive_action>>
+
 @
 
 
 \subsection*{[[core/minibuffer.ml]]}
 
-
-<<function Minibuffer.return>>=
-let return action old_frame mini_frame =
-  let repstr = Text.to_string mini_frame.frm_buffer.buf_text in
-  kill mini_frame old_frame;
-  action old_frame repstr
-@
-
-
-<<function Minibuffer.create_return>>=
-let create_return frame local_map request default action =
-  let mini_frame = create frame local_map request in
-  Simple.insert_string mini_frame default;
-  Keymap.add_binding local_map [NormalMap, XK.xk_Return] 
-    (return action frame);
-  mini_frame
-@
-
-<<function Minibuffer.update_request>>=
-let update_request frame request =
-  let qlen = String.length request in
-  let window = frame.frm_window in
-  let top_window = Window.top window in
-  let _mini_window = Window.create true window.win_up
-      qlen window.win_ypos
-      (top_window.top_width - qlen) 1
-  in
-  frame.frm_width <- top_window.top_width - qlen;
-  frame.frm_xpos <- qlen;
-  frame.frm_mini_buffer <- Some request;
-  frame.frm_redraw <- true
-@
 
 
 %-------------------------------------------------------------
@@ -1021,7 +980,6 @@ open Efuns
 <<toplevel Minibuffer._1>>
 
 <<function Minibuffer.buf_create>>
-
 
 <<function Minibuffer.kill>>
 
@@ -1068,89 +1026,11 @@ open Efuns
 
 \subsection*{[[core/frame.ml]]}
 
-<<function Frame.print_list>>=
-let rec print_list list =
-  match list with
-    [] -> ""
-  | [ele] -> ele
-  | ele :: ( (_ :: _) as tail) ->
-      ele ^ " " ^ (print_list tail)
-@
 
-
-
-<<function Frame.resize>>=
-let resize frame =
-  install frame.frm_window frame
-@
-
-
-<<constant Frame.dummy_mode>>=
-let dummy_mode = Ebuffer.new_major_mode "" []
-@
-
-
-
-<<function Frame.create>>=
-let create window mini buf =
-  let top_window = Window.top window in
-  let frame = create_without_top window mini buf in
-  top_window.top_active_frame <- frame;
-  frame
-@
-
-<<function Frame.create_inactive>>=
-let create_inactive window buf =
-  create_without_top window None buf
-@
-
-
-
-
-
-
-
-
-
-
-<<exception Frame.BufferKilled>>=
-exception BufferKilled
-@
-
-<<function Frame.unkill>>=
-let unkill window frame =
-  let buf = frame.frm_buffer  in
-  if buf.buf_shared < 0 then raise BufferKilled;
-  let text = buf.buf_text in
-  install window frame;
-  frame.frm_start <- Text.dup_point text buf.buf_start;
-  frame.frm_end <- Text.dup_point text buf.buf_start;
-  frame.frm_point <- Text.dup_point text buf.buf_point;
-  frame.frm_y_offset <- 0;
-  buf.buf_shared <- buf.buf_shared + 1;
-  frame.frm_killed <- false
-@
-
-
-
-<<exception Frame.FoundFrame>>=
-exception FoundFrame of frame
-@
-
-<<function Frame.find_buffer_frame>>=
-let find_buffer_frame buf =
-  try
-    (Globals.location()).top_windows |> List.iter (fun top_window ->
-      top_window.window |> Window.iter (fun frame -> 
-        if frame.frm_buffer == buf 
-        then raise (FoundFrame frame)
-      )
-    );
-    raise Not_found
-  with FoundFrame frame -> frame
-@
-
-
+%<<function Frame.resize>>=
+%let resize frame =
+%  install frame.frm_window frame
+%@
 
 
 %-------------------------------------------------------------
@@ -1176,8 +1056,6 @@ open Text (* for the line fields *)
 
 <<function Frame.status_col>>
 
-<<function Frame.print_list>>
-
 <<function Frame.status_major_mode>>
 
 <<function Frame.status_line>>
@@ -1198,8 +1076,6 @@ open Text (* for the line fields *)
 
 <<function Frame.install>>
 
-<<function Frame.resize>>
-
 (*****************************************************************************)
 (* Constructor *)
 (*****************************************************************************)
@@ -1210,7 +1086,6 @@ open Text (* for the line fields *)
 <<function Frame.create_without_top>>
 
 <<function Frame.active>>
-      
       
 <<function Frame.create>>
 
@@ -1237,7 +1112,6 @@ open Text (* for the line fields *)
 
 <<function Frame.update_table>>
 
-
 <<function Frame.display>>
 
 (*****************************************************************************)
@@ -1251,7 +1125,6 @@ open Text (* for the line fields *)
 
 <<function Frame.current_dir>>
 
-
 <<exception Frame.FoundFrame>>
 
 <<function Frame.find_buffer_frame>>
@@ -1260,7 +1133,6 @@ open Text (* for the line fields *)
 
 <<function Frame.load_file>>
 
-  
 <<function Frame.change_buffer>>
 
 <<function Frame.save_buffer>>
@@ -1273,6 +1145,8 @@ open Text (* for the line fields *)
 
 
 \section{[[features/]]}
+
+
 
 \subsection*{[[features/highlight.ml]]}
 

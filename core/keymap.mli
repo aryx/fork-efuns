@@ -19,10 +19,11 @@ val add_major_key:
 val add_minor_key: 
   Efuns.minor_mode -> Efuns.keys -> Efuns.action_name -> Efuns.action -> unit
 
+val define_interactive_action: 
+  Efuns.action_name -> Efuns.action -> unit
+
 val add_interactive: 
   Efuns.map -> Efuns.action_name -> Efuns.action -> unit
-val define_interactive_action: 
-               Efuns.action_name -> Efuns.action -> unit
 
 val get_binding: Efuns.map -> Efuns.keys -> Efuns.binding
 
