@@ -13,6 +13,7 @@
 (*e: copyright header2 *)
 open Utils
 open Options
+
 open Efuns
 open Action
 
@@ -99,8 +100,9 @@ let _ =
   define_action "delete_forward_word"  (Frame.to_frame Simple.delete_forward_word);
   define_action "delete_backward_word"  (Frame.to_frame Simple.delete_backward_word);
 
-  define_action "hungry_electric_delete"  Simple.hungry_electric_delete;
   define_action "kill_end_of_line"  Simple.kill_end_of_line;
+  (*x: deleting actions *)
+  define_action "hungry_electric_delete"  Simple.hungry_electric_delete;
   (*e: deleting actions *)
   (* ------------------------- *)
   (* Moving (Cut, copy, paste) *)
@@ -376,8 +378,9 @@ let _ =
         [MetaMap, Char.code 'd' ], "delete_forward_word";
         [MetaMap, XK.xk_BackSpace ], "delete_backward_word";
 
-        [ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
         [ControlMap, Char.code 'k'], "kill_end_of_line";
+        (*x: deleting keys *)
+        [ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
         (*e: deleting keys *)
         (* ------------------------------ *)
         (* Moving (Cut, copy, paste) *)
@@ -571,6 +574,7 @@ let _ =
         "paren_mode";
         "abbrevs_mode";
         "fill_mode";
+
         "tab_mode";
         (*"accents_mode";*)
         "ocaml_minor_mode";
@@ -619,7 +623,6 @@ let init_global_map () =
   ()
 (*e: function Std_efunsrc.init_global_map *)
   
-(*open WX_filesel*)
  
 (*s: toplevel Std_efunsrc._4 *)
 let _ =

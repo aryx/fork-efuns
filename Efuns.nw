@@ -2494,7 +2494,7 @@ match () with
 % which are big pieces to understand that we have not seen.
 
 
-
+%less: put here the binding for the very basic keys? 'a', 'b', etc?
 
 \chapter{Text Managment}
 
@@ -3730,6 +3730,20 @@ Attr.get_font !!Globals.font |> ignore;
 
 
 
+\ifallcode
+<<function Complex.change_font>>=
+let change_font frame =
+  Minibuffer.create_return frame (Keymap.create ()) "Find font: " "fixed"
+    (fun old_frame name ->
+      let window = frame.frm_window in
+      let _top_window = Window.top window in
+      (*WX_xterm.change_font xterm name*)
+      failwith "Complex.change_font: TODO"
+  ) |> ignore
+@
+\fi
+
+
 \section{Line representation}
 % Line display?
 
@@ -4314,6 +4328,13 @@ let insert_file frame =
   )
 @
 
+<<function Simple.insert_string>>=
+let insert_string frame str =
+  let text = frame.frm_buffer.buf_text in
+  let point = frame.frm_point in
+  Text.insert text point str;
+  Text.fmove text point (String.length str)
+@
 
 
 
@@ -5958,6 +5979,7 @@ frame.frm_last_action <- f
 
 \subsection{Action to keys, [[add_binding()]]}
 
+% basic key bindings | ... -> <>
 <<function Keymap.add_binding>>=
 let rec add_binding map key_list binding =
   match key_list with
@@ -5993,6 +6015,47 @@ let set_binding map key binding =
       map.complex_bindings <- (key,binding) :: map.complex_bindings
 @
 
+\subsection{Basic key bindings}
+
+<<[[Simple._]] start hook>>=
+(* standard chars *)
+for key = 32 to 127 do
+  Keymap.add_binding gmap [NormalMap, key] self_insert_command
+done;
+@
+
+<<function Simple.self_insert_command>>=
+let self_insert_command frame =
+  let char = Char.chr !Top_window.keypressed in
+  let buf = frame.frm_buffer in
+  <<[[Simple.self_insert_command()]] if overwrite mode>>
+  else insert_char frame char
+@
+
+\subsection{Entering special chars, [[^M]]}
+
+% seen how to display them, but how to enter them?
+
+<<[[Simple._]] start hook>>=
+let c_q = (ControlMap, Char.code 'q') in
+(* Keymap.add_prefix gmap [c_q]; *)
+for key = 65 to 65+25 do
+  Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
+done;
+for key = 97 to 97+25 do
+  Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
+done;
+@
+
+<<function Simple.insert_special_char>>=
+let insert_special_char frame =
+  let key = !Top_window.keypressed in
+  let char = Char.chr key in
+  if char >= 'a' && char <= 'z' 
+  then insert_char frame (Char.chr (key - 97))
+  else insert_char frame (Char.chr (key - 65))
+@
+% should also set attribute to blue, so can not confuse ControlM with ^M 
 
 \subsection{Bindings display}
 
@@ -6101,6 +6164,13 @@ let mouse_y = ref 0
     mouse_x := x;
     mouse_y := y;
     handle_key top_window modifiers (XK.xk_Pointer_Button_Dflt + button)
+@
+
+<<[[Top_window.handler()]] match event cases>>=
+| Xtypes.XTMouseMotion (modifiers,button,x,y) ->
+    mouse_x := x;
+    mouse_y := y;
+    handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
 @
 
 \subsection{Mouse navigation}
@@ -6227,15 +6297,76 @@ then raise Not_found;
 
 \subsection{Mouse selection}
 
-<<[[Top_window.handler()]] match event cases>>=
-| Xtypes.XTMouseMotion (modifiers,button,x,y) ->
-    mouse_x := x;
-    mouse_y := y;
-    handle_key top_window modifiers (XK.xk_Pointer_Drag_Dflt + button)
-@
-
 %todo: should highlight! actually Highlight.highlight
 % has some Drag button related code.
+
+<<toplevel Mouse._>>=
+let _ =
+  Hook.add_start_hook (fun () ->
+    Keymap.add_global_key [NormalMap, XK.xk_Pointer_Drag1]
+      "mouse_drag_region" mouse_drag_region;
+  )
+@
+% why not put instead in this chunk?
+%<<[[Std_efunsrc.init_global_map()]] mouse keys setup>>=
+
+<<function Simple.mouse_drag_region>>=
+(* C'est tout simple. On arrive dans cette fonction quand on est en train
+de bouger la souris avec le bouton appuyer. La frame courante est donc 
+correcte. On peut utiliser la position de la souris pour trouver la 
+nouvelle position du curseur dans la frame. Si on en sort, on peut
+ou prendre la derniere position, ou la premiere.
+*)
+let mouse_drag_region frame =
+  failwith "Simple.mouse_drag_region: TODO"
+(*
+  let top_window = Window.top frame.frm_window in
+  let point = frame.frm_point in
+  begin
+    try
+      move_point frame point !mouse_x !mouse_y
+    with
+      Not_found ->
+        let buf = frame.frm_buffer in
+        let text = buf.buf_text in
+        let y = !mouse_y - frame.frm_ypos in
+        if y < 0 then
+          ( scroll_line frame (y-1);
+            goto_point text point frame.frm_start;
+            bmove text point 1; ())
+        else
+        if y >= frame.frm_height - 1 then
+          (
+            scroll_line frame (y - frame.frm_height + 2);
+            goto_point text point frame.frm_end;
+            fmove text point 1; ())
+  end;
+  highlight frame;
+  let top_window = Window.top frame.frm_window in
+  let xterm = top_window.top_term in
+  Selection.setSelection xterm#display xterm#window XA.xa_primary
+    (fun target ->
+      if target = XA.xa_string then 
+        match !highlighted with
+          None -> raise Not_found
+        | Some (frame,debut,fin) -> 
+            let buf = frame.frm_buffer in
+            let text = buf.buf_text in
+            let curseur = new_point text in
+            let final = new_point text in
+            set_position text curseur debut;
+            set_position text final fin;
+            let str = Text.region text curseur final in
+            remove_point text curseur;
+            remove_point text final;
+            
+            1, str
+      else raise Not_found
+  ) !Eloop.event_time
+*)
+@
+
+% seen highlight in previous chapter
 
 \subsection{Mouse copy/paste}
 
@@ -7231,6 +7362,8 @@ let goto_last_saved_pos frame =
 
 \section{Inserting}
 
+% have seen already before low_insert
+
 <<inserting keys>>=
 [NormalMap, XK.xk_Return], "insert_return"; 
 @
@@ -7249,6 +7382,7 @@ let single_char = String.make 1 ' '
 @
 % thread-safe?
 
+% basic key bindings -> self_insert_command -> <>
 <<function Simple.insert_char>>=
 (* could factorize and just call insert_string? *)
 let insert_char frame char =
@@ -7278,19 +7412,14 @@ let insert_res text point str =
 
 
 
-<<function Simple.self_insert_command>>=
-let self_insert_command frame =
-  let char = Char.chr !Top_window.keypressed in
-  let buf = frame.frm_buffer in
-  <<[[Simple.self_insert_command()]] if overwrite mode>>
-  else insert_char frame char
-@
 
 %\subsection{Overwrite mode}
 % see minor mode section
 
 
 \section{Deleting}
+
+% have seen already before low_delete
 
 <<deleting keys>>=
 [NormalMap, XK.xk_BackSpace], "delete_before_point"; 
@@ -7300,7 +7429,6 @@ let self_insert_command frame =
 [MetaMap, Char.code 'd' ], "delete_forward_word";
 [MetaMap, XK.xk_BackSpace ], "delete_backward_word";
 
-[ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
 [ControlMap, Char.code 'k'], "kill_end_of_line";
 @
 
@@ -7311,9 +7439,9 @@ define_action "delete_at_point"  Simple.delete_char;
 define_action "delete_forward_word"  (Frame.to_frame Simple.delete_forward_word);
 define_action "delete_backward_word"  (Frame.to_frame Simple.delete_backward_word);
 
-define_action "hungry_electric_delete"  Simple.hungry_electric_delete;
 define_action "kill_end_of_line"  Simple.kill_end_of_line;
 @
+
 
 \subsection{Characters}
 
@@ -7376,35 +7504,6 @@ let kill_end_of_line frame =
   let eol = point_to_end frame in
   let len = if eol = 0 then 1 else eol in
   kill_text text frame.frm_point len
-@
-
-%\subsection{XXX}
-
-<<function Simple.hungry_char>>=
-let hungry_char c = 
-  c = ' ' || c = '\n' || c = '\t'
-@
-
-<<function Simple.hungry_electric_delete>>=
-let hungry_electric_delete frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  text |> Text.with_session (fun () ->
-   let c1 = previous_char frame in
-   delete_backspace_char frame;
-   let c2 = previous_char frame in
-   if hungry_char c1 && hungry_char c2 then
-     try
-       delete_backspace_char frame;
-       while 
-         let c = previous_char frame in
-         hungry_char c        
-       do
-         delete_backspace_char frame
-       done;
-       insert_char frame ' '
-     with Not_found -> ()
-  )
 @
 
 
@@ -9728,12 +9827,170 @@ let next_error top_frame =
 % it's external commands that calls efuns instead of efuns
 % calling external commands.
 
+\subsection{The server}
+
 <<misc actions>>=
 define_action "start_server" Server.start;
 @
 <<[[interactives_map]] initial entries>>=
 "start_server";
 @
+
+<<constant Server.user>>=
+let user = 
+  try Sys.getenv "USER" 
+  with _ -> "noname"
+@
+
+<<constant Server.socket_name>>=
+let socket_name = 
+  (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user !Globals.displayname)
+@
+
+<<constant Server.started>>=
+let started = ref false
+@
+
+<<type Server.proto>>=
+type proto =
+  LoadFile of string * int * string
+@
+
+<<function Server.read_command>>=
+let read_command fd frame =
+  let inc = in_channel_of_descr fd in
+  try
+    let cmd = input_value inc in
+    match cmd with
+    | LoadFile (name,pos,str) ->
+        let window = frame.frm_window in
+        let top_window = Window.top window in
+        (*wrap*) top_window |> (fun top_window ->
+            let frame = Frame.load_file window name in
+            if pos <> 0 then begin
+              let buf = frame.frm_buffer in
+              let text = buf.buf_text in
+              let point = frame.frm_point in
+              try
+                if str = "" 
+                then raise Not_found 
+                else                  
+                  let regexp = Str.regexp_string str in
+                  Text.search_forward text regexp point |> ignore
+              with Not_found -> 
+                Text.set_position text point pos
+            end;
+            Top_window.update_display () 
+        ) (*()*)
+  with
+    _ -> Concur.Thread.remove_reader fd 
+@
+
+<<function Server.module_accept>>=
+let module_accept s frame = 
+  let fd,_ = accept s in
+  Unix.set_close_on_exec fd;
+  Concur.Thread.add_reader fd (fun _ -> read_command fd frame)
+@
+
+<<function Server.start>>=
+let start frame =
+  if not !started then
+  (*let top_window = Window.top frame.frm_window in*)
+  Utils.catchexn "Efuns server:" (fun _ ->
+      let s = Unix.socket PF_UNIX SOCK_STREAM 0 in
+      if Sys.file_exists socket_name then Unix.unlink socket_name;
+      Unix.bind s (ADDR_UNIX socket_name);
+      Unix.listen s 254;
+      Unix.set_nonblock s;
+      Unix.set_close_on_exec s;
+      (*let display = top_window.top_root#display  in *)
+      Concur.Thread.add_reader s (fun _ -> 
+        started := true;
+        module_accept s frame
+      );
+      (*
+      let atom = X.internAtom display efuns_property false in
+      X.changeProperty display top_window.top_root#window 
+        PropModeReplace atom XA.xa_string 1 socket_name;
+      *)
+  )  
+@
+% todo: no M-x server-start?
+
+\subsection{The client, [[efuns_client]]}
+
+
+<<constant Efuns_client.pos>>=
+let pos = ref 0
+@
+
+<<constant Efuns_client.string>>=
+let string = ref ""
+@
+
+<<constant Efuns_client.filename>>=
+let filename = ref None
+@
+
+<<toplevel Efuns_client._1>>=
+let _ = Arg.parse [
+    "-pos", Arg.Int (fun i -> pos := i)," <int>: set position";
+    "-str", Arg.String (fun s -> string := s)," <string>: search string";
+  ] (fun name -> filename := Some name)
+  "efuns_server: connect to efuns"
+@
+
+<<constant Efuns_client.pos (client/efuns_client.ml)>>=
+let pos = !pos    
+@
+
+<<constant Efuns_client.filename (client/efuns_client.ml)>>=
+let filename = match !filename with
+    None -> failwith "efuns_server: filename missing"
+  | Some s -> s
+@
+
+<<constant Efuns_client.string (client/efuns_client.ml)>>=
+let string = !string
+@
+
+<<constant Efuns_client.filename (client/efuns_client.ml)2>>=
+let filename = 
+  if Filename.is_relative filename 
+  then Filename.concat (Sys.getcwd ()) filename 
+  else filename
+@
+
+
+<<constant Efuns_client.display>>=
+let display = 
+  ""
+  (*Xlib.openDisplay "" *)
+@
+
+<<constant Efuns_client.socket_name>>=
+let user = 
+  try Sys.getenv "USER" 
+  with _ -> "noname"
+
+let socket_name = 
+  (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user display)
+  (* (Xlib.getWholeProperty display root atom).gp_value *)
+@
+
+<<toplevel Efuns_client._2>>=
+let _ =  if not (Sys.file_exists socket_name) then raise Not_found
+@
+
+
+<<toplevel Efuns_client._3>>=
+let (inc,outc) = Unix.open_connection (Unix.ADDR_UNIX socket_name)
+let _ =  
+  output_value outc (Server.LoadFile (filename,pos,string)); 
+  flush outc
+@
+
 
 \section{[[M-x eval]]}
 
@@ -9887,6 +10144,25 @@ let dabbrev_expand frame =
   iter buf pos; ()
 @
 
+<<function Simple.next_buffer>>=
+(* useful when want to iterate over all buffers, e.g. in dabbrev_expand *)
+let next_buffer buf =
+  let buf_list = Utils.list_of_hash (Globals.location()).loc_buffers in
+  let rec iter list =
+    match list with
+      [] -> raise Not_found 
+    | (name,b) :: tail ->
+        if b == buf 
+        then 
+          match tail with
+          | [] -> snd (List.hd buf_list) (* go back to head *)
+          | (_,b)::_ -> b
+        else
+          iter tail
+  in
+  iter buf_list
+@
+
 
 <<constant Abbrevs.dabbrev_buf>>=
 let dabbrev_buf = ref None
@@ -10022,6 +10298,13 @@ let on_word buf point f =
 
 \subsection{Filling}
 
+%less: mv to fill_mode.ml?
+
+<<constant Simple.line_comment>>=
+let line_comment = Local.create_abstr "Fill_mode.line_comment"
+@
+% dead?
+
 <<function Simple.fill_paragraph>>=
 (* We will have to modify this to handle line_comment soon !! *)
 let fill_paragraph frame =
@@ -10059,8 +10342,105 @@ let fill_paragraph frame =
   )))
 @
 
+<<function Simple.simplify>>=
+let simplify text start point =
+  Text.with_dup_point text start (fun start ->
+    let rec iter last_c =
+      if start < point then
+        let c = Text.get_char text start in
+        if c = ' ' || c = '\n' || c = '\t' then
+          ( Text.delete text start 1;
+            iter ' ')
+        else
+        if last_c = ' ' then
+          ( Text.insert text start " ";
+            Text.fmove text start 2;
+            iter 'a')
+        else
+          ( Text.fmove text start 1;
+            iter 'a')
+    in
+    iter 'a'
+  )
+@
+
 
 \section{Misc}
+
+\subsection{Electric}
+
+% for fill_mode
+<<function Simple.electric_insert_space>>=
+let electric_insert_space frame =
+  self_insert_command frame;
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  let line_len = Text.point_to_bol text point in
+  if line_len > 75 then
+    Text.with_dup_point text point (fun mark ->
+      try
+        while (backward_word buf mark;
+            Text.point_to_bol text mark > 75) do () done;
+        forward_word buf mark; backward_word buf mark;
+        Text.insert text mark "\n"
+      with Not_found -> ()
+    )
+@
+
+\subsection{Hungry}
+% advanced topic?
+
+<<deleting keys>>=
+[ControlMap, XK.xk_BackSpace], "hungry_electric_delete";
+@
+<<deleting actions>>=
+define_action "hungry_electric_delete"  Simple.hungry_electric_delete;
+@
+
+
+<<function Simple.hungry_char>>=
+let hungry_char c = 
+  c = ' ' || c = '\n' || c = '\t'
+@
+
+% seems similar to M-backspace
+
+% C-backspace
+<<function Simple.hungry_electric_delete>>=
+let hungry_electric_delete frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  text |> Text.with_session (fun () ->
+   let c1 = previous_char frame in
+   delete_backspace_char frame;
+   let c2 = previous_char frame in
+   if hungry_char c1 && hungry_char c2 then
+     try
+       delete_backspace_char frame;
+       while 
+         let c = previous_char frame in
+         hungry_char c        
+       do
+         delete_backspace_char frame
+       done;
+       insert_char frame ' '
+     with Not_found -> ()
+  )
+@
+% hungry and electric?
+
+<<function Simple.previous_char>>=
+let previous_char frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  if Text.bmove_res text point 1 = 0 then raise Not_found;
+  let c = Text.get_char text point in
+  Text.fmove text point 1;
+  c
+@
+
 
 \subsection{Read-only}
 
@@ -10157,6 +10537,35 @@ let _ =
 \section{Unicode}
 
 % charreprs?
+
+\section{Accents and AZERTY}
+
+% Simple.toplevel for add_start_hook for azerty keys -> <>
+<<function Simple.char_insert_command>>=
+let char_insert_command char frame =
+  let buf = frame.frm_buffer in
+  <<[[Simple.self_insert_command()]] if overwrite mode>>
+  else insert_char frame char
+@
+
+<<[[Simple._]] start hook>>=
+    (* special for AZERTY keyboards *)
+    Array.iter (fun (key, char) ->
+        Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
+    ) [| 
+(*
+        (XK.xk_eacute, 'é');
+        (XK.xk_egrave, 'è');
+        (XK.xk_ccedilla, 'ç');
+        (XK.xk_agrave, 'à');
+        (XK.xk_ugrave, 'ù');
+        (XK.xk_mu, 'µ'); 
+        (XK.xk_sterling, '£');
+        (XK.xk_section, '§');
+        (XK.xk_degree,  '°');
+*)
+        |];
+@
 
 \section{Signals}
 
@@ -10826,12 +11235,14 @@ let lexing text curseur end_point =
 "paren_mode";
 "abbrevs_mode";
 "fill_mode";
+
 "tab_mode";
 (*"accents_mode";*)
 "ocaml_minor_mode";
 (*"ocaml_compiler_mode";*)
 @
 %todo: should be in their start_hook instead of here
+%less: tab_mode??
 
 \section{Abbrevs}
 
@@ -10944,8 +11355,6 @@ let htmlp = ref false
 htmlp := (!Top_window.keypressed = Char.code '>');
 @
 \fi
-
-\section{Tab}
 
 \section{Fill}
 

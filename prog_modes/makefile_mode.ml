@@ -34,8 +34,6 @@ let rules_color = define_option ["makefile_mode";"rules_color"] ""
 let target_color = define_option ["makefile_mode"; "target_color"] ""
     string_option "MediumAquamarine"
 (*e: constant Makefile_mode.target_color *)
-(*s: constant Makefile_mode.vars_color *)
-(*e: constant Makefile_mode.vars_color *)
 (*s: function Makefile_mode.makefile_color *)
 let makefile_color buf =
   Simple.color buf mkfile_rules false
@@ -49,10 +47,6 @@ let makefile_color buf =
   ()
 (*e: function Makefile_mode.makefile_color *)
  
-(*s: constant Makefile_mode.c_c *)
-let c_c = (ControlMap,Char.code 'c')
-(*e: constant Makefile_mode.c_c *)
-
 (*s: function Makefile_mode.install *)
 let install buf =
   makefile_color buf;
@@ -78,6 +72,7 @@ let interactives_map = define_option ["makefile_mode"; "interactives_map"] ""
 (* let insert_tab frame = ignore (insert_string frame "\t") *)
  
 (*s: toplevel Makefile_mode._1 *)
+open Keymap (* c_c *)
 let _ =
   if !!local_map = [] then
     local_map =:= [

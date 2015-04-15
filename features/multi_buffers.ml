@@ -18,7 +18,6 @@ let buffer_list frame =
   (Globals.location()).loc_buffers |> Common.hash_to_list |> List.map fst
 (*e: function Simple.buffer_list *)
 
-
 (*s: constant Select.prev_buffers *)
 (* todo: maybe this should be in frame.ml, next to change_buffer,
  * so change_buffer can maintain it instead of imposing to everyone
@@ -27,8 +26,6 @@ let buffer_list frame =
  *)
 let prev_buffers = ref []
 (*e: constant Select.prev_buffers *)
-(*s: constant Select.next_default *)
-(*e: constant Select.next_default *)
 (*s: function Select.set_previous_frame *)
 let set_previous_frame frame = 
   let name = frame.frm_buffer.buf_name in

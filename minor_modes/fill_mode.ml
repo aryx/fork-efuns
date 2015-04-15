@@ -54,5 +54,4 @@ let _ =
      );
 (*e: toplevel Fill_mode._2 *)
     
-    
 (*e: minor_modes/fill_mode.ml *)

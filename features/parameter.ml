@@ -11,8 +11,6 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header efuns *)
-
-  
 open Options
 
 (*s: type Simple.parameter *)

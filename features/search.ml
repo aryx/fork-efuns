@@ -347,8 +347,6 @@ let isearch to_regexp sens frame =
 (*e: function Search.isearch *)
 
 
-
-
 (*s: constant Search.isearch_forward_regexp *)
 let isearch_forward_regexp = isearch Regexp Forward
 (*e: constant Search.isearch_forward_regexp *)

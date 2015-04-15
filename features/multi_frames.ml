@@ -13,7 +13,6 @@
 (*e: copyright header2 *)
 open Efuns
   
-
 (*s: function Multi_frames.cut_frame *)
 let cut_frame frame =
   let window = frame.frm_window in

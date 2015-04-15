@@ -11,8 +11,8 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-open Simple
 open Efuns
+open Simple
 
 module H = Highlight
 

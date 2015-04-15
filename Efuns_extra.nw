@@ -1150,6 +1150,8 @@ open Text (* for the line fields *)
 
 \subsection*{[[features/highlight.ml]]}
 
+%-------------------------------------------------------------
+
 <<features/highlight.ml>>=
 <<copyright header efuns>>
 open Efuns
@@ -1172,10 +1174,10 @@ open Efuns
 
 \subsection*{[[features/parameter.ml]]}
 
+%-------------------------------------------------------------
+
 <<features/parameter.ml>>=
 <<copyright header efuns>>
-
-  
 open Options
 
 <<type Simple.parameter>>
@@ -1193,6 +1195,8 @@ open Options
 
 \subsection*{[[features/mouse.ml]]}
 
+%-------------------------------------------------------------
+
 <<features/mouse.ml>>=
 <<copyright header efuns>>
 open Efuns
@@ -1205,15 +1209,13 @@ open Efuns
 
 <<function Simple.mouse_set_frame>>
 
-let _ =
-  Hook.add_start_hook (fun () ->
-    Keymap.add_global_key [NormalMap, XK.xk_Pointer_Drag1]
-      "mouse_drag_region" mouse_drag_region;
-  )
+<<toplevel Mouse._>>
 
 @
 
 \subsection*{[[features/indent.ml]]}
+
+%-------------------------------------------------------------
 
 <<features/indent.ml>>=
 <<copyright header efuns>>
@@ -1223,6 +1225,8 @@ let _ =
 @
 
 \subsection*{[[features/structure.ml]]}
+
+%-------------------------------------------------------------
 
 <<features/structure.ml>>=
 <<copyright header efuns>>
@@ -1239,7 +1243,7 @@ open Efuns
 
 \subsection*{[[features/simple.ml]]}
 
-% ?? -> <>
+% value_to_key -> <>
 <<function Simple.string_to_modifier>>=
 let string_to_modifier s =  
   let mask = ref 0 in
@@ -1255,23 +1259,6 @@ let string_to_modifier s =
   !mask
 @
 
-<<function Simple.modifier_to_string>>=
-@
-
-%<<function Simple.modifier_to_string>>=
-%(*
-%let modifier_to_string mask = 
-%  let s = if mask land shiftMask = 0 then "" else "S" in
-%  let s = if mask land controlMask = 0 then s else "C" ^ s in
-%  let s = if mask land mod1Mask = 0 then s else "M" ^ s in
-%  let s = if mask land mod2Mask = 0 then s else "2" ^ s in
-%  let s = if mask land mod3Mask = 0 then s else "3" ^ s in
-%  let s = if mask land mod4Mask = 0 then s else "4" ^ s in
-%  let s = if mask land mod5Mask = 0 then s else "5" ^ s in
-%  s
-%*)
-%@
-
 <<constant Simple.name_to_keysym>>=
 let name_to_keysym = 
   ("Button1", XK.xk_Pointer_Button1) ::
@@ -1282,26 +1269,6 @@ let name_to_keysym =
   XK.name_to_keysym
 @
 
-<<function Simple.value_to_keysym>>=
-@
-
-%<<function Simple.value_to_keysym>>=
-%(*
-%let value_to_keysym v =
-%  match v with
-%    Value v -> List.assoc v name_to_keysym
-%  | _ -> raise Not_found
-%*)
-%@
-
-<<function Simple.keysym_to_value>>=
-@
-%<<function Simple.keysym_to_value>>=
-%(*
-%let keysym_to_value k =
-%  Value (List.assoc k XK.keysym_to_name)
-%*)
-%@
 
 <<function Simple.value_to_key>>=
 (* form: SC-Button1 *)
@@ -1335,42 +1302,6 @@ let key_to_value k = Value (Keymap.print_key k)
 
 
 
-<<function Simple.insert_string>>=
-let insert_string frame str =
-  let text = frame.frm_buffer.buf_text in
-  let point = frame.frm_point in
-  Text.insert text point str;
-  Text.fmove text point (String.length str)
-@
-
-
-
-
-<<function Simple.previous_char>>=
-let previous_char frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  if Text.bmove_res text point 1 = 0 then raise Not_found;
-  let c = Text.get_char text point in
-  Text.fmove text point 1;
-  c
-@
-
-
-
-
-
-% Simple.toplevel for add_start_hook for azerty keys -> <>
-<<function Simple.char_insert_command>>=
-let char_insert_command char frame =
-  let buf = frame.frm_buffer in
-  <<[[Simple.self_insert_command()]] if overwrite mode>>
-  else insert_char frame char
-@
-
-
-
 
 <<function Simple.line_size>>=
 let line_size frame =
@@ -1378,15 +1309,9 @@ let line_size frame =
 @
 
 
-
-
-
-
 <<constant Simple.last_kill>>=
 let last_kill = ref None
 @
-
-
 
 <<function Simple.kill_text>>=
 let kill_text text point len =
@@ -1420,206 +1345,17 @@ let kill_bol buf point =
       kill_text text point len)
 @
 
-
-<<function Simple.format_to>>=
-@
-%<<function Simple.format_to>>=
-%let format_to frame =
-%  let point = frame.frm_point in
-%  let buf = frame.frm_buffer in
-%  let text = buf.buf_text in
-%  Format.set_formatter_output_functions 
-%    (fun str pos len ->
-%      let s = String.sub str pos len in
-%      Text.insert text point s;
-%      Text.fmove text point len)
-%  (fun () -> ())
-%@
-%
-
-<<function Simple.format_to_string>>=
-@
-%<<function Simple.format_to_string>>=
-%let format_to_string () =
-%  let string = ref "" in
-%  Format.set_formatter_output_functions 
-%    (fun str pos len ->
-%      let s = String.sub str pos len in
-%      string := !string ^ s)
-%  (fun () -> ());
-%  string
-%@
-
-
 <<function Simple.to_frame>>=
 let to_frame f frame =
   f frame.frm_buffer frame.frm_point
 @
 
 
-
-%<<function Simple.current_word>>=
-%(*
-%let current_word buf point =
-%  let text = buf.buf_text in
-%  let syntax = buf.buf_syntax_table in
-%  let start = dup_point text point in
-%  to_begin_of_word text start syntax;
-%  let term = dup_point text point in
-%  to_end_of_word text term syntax;
-%  let word = Text.region text start term in
-%  remove_point text start;
-%  remove_point text term;
-%  word
-%*)
-%@
-
 <<function Simple.current_word>>=
 let current_word buf point =
   (beginning_of_word buf point) ^ (end_of_word buf point)
 @
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<<function Simple.mouse_drag_region>>=
-(* C'est tout simple. On arrive dans cette fonction quand on est en train
-de bouger la souris avec le bouton appuyer. La frame courante est donc 
-correcte. On peut utiliser la position de la souris pour trouver la 
-nouvelle position du curseur dans la frame. Si on en sort, on peut
-ou prendre la derniere position, ou la premiere.
-*)
-let mouse_drag_region frame =
-  failwith "Simple.mouse_drag_region: TODO"
-(*
-  let top_window = Window.top frame.frm_window in
-  let point = frame.frm_point in
-  begin
-    try
-      move_point frame point !mouse_x !mouse_y
-    with
-      Not_found ->
-        let buf = frame.frm_buffer in
-        let text = buf.buf_text in
-        let y = !mouse_y - frame.frm_ypos in
-        if y < 0 then
-          ( scroll_line frame (y-1);
-            goto_point text point frame.frm_start;
-            bmove text point 1; ())
-        else
-        if y >= frame.frm_height - 1 then
-          (
-            scroll_line frame (y - frame.frm_height + 2);
-            goto_point text point frame.frm_end;
-            fmove text point 1; ())
-  end;
-  highlight frame;
-  let top_window = Window.top frame.frm_window in
-  let xterm = top_window.top_term in
-  Selection.setSelection xterm#display xterm#window XA.xa_primary
-    (fun target ->
-      if target = XA.xa_string then 
-        match !highlighted with
-          None -> raise Not_found
-        | Some (frame,debut,fin) -> 
-            let buf = frame.frm_buffer in
-            let text = buf.buf_text in
-            let curseur = new_point text in
-            let final = new_point text in
-            set_position text curseur debut;
-            set_position text final fin;
-            let str = Text.region text curseur final in
-            remove_point text curseur;
-            remove_point text final;
-            
-            1, str
-      else raise Not_found
-  ) !Eloop.event_time
-*)
-@
-
-
-
-<<function Simple.next_buffer>>=
-(* useful when want to iterate over all buffers, e.g. in dabbrev_expand *)
-let next_buffer buf =
-  let buf_list = Utils.list_of_hash (Globals.location()).loc_buffers in
-  let rec iter list =
-    match list with
-      [] -> raise Not_found 
-    | (name,b) :: tail ->
-        if b == buf 
-        then 
-          match tail with
-          | [] -> snd (List.hd buf_list) (* go back to head *)
-          | (_,b)::_ -> b
-        else
-          iter tail
-  in
-  iter buf_list
-@
-
-
-
-
-
-
-
-
-<<function Simple.electric_insert_space>>=
-let electric_insert_space frame =
-  self_insert_command frame;
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-  let line_len = Text.point_to_bol text point in
-  if line_len > 75 then
-    Text.with_dup_point text point (fun mark ->
-      try
-        while (backward_word buf mark;
-            Text.point_to_bol text mark > 75) do () done;
-        forward_word buf mark; backward_word buf mark;
-        Text.insert text mark "\n"
-      with Not_found -> ()
-    )
-@
-
-<<function Simple.simplify>>=
-let simplify text start point =
-  Text.with_dup_point text start (fun start ->
-    let rec iter last_c =
-      if start < point then
-        let c = Text.get_char text start in
-        if c = ' ' || c = '\n' || c = '\t' then
-          ( Text.delete text start 1;
-            iter ' ')
-        else
-        if last_c = ' ' then
-          ( Text.insert text start " ";
-            Text.fmove text start 2;
-            iter 'a')
-        else
-          ( Text.fmove text start 1;
-            iter 'a')
-    in
-    iter 'a'
-  )
-@
-
-<<constant Simple.line_comment>>=
-let line_comment = Local.create_abstr "Fill_mode.line_comment"
-@
 
 
 <<function Simple.set_indent>>=
@@ -1647,21 +1383,6 @@ let set_indent text point offset =
   )
 @
 
-<<function Simple.insert_special_char>>=
-let insert_special_char frame =
-  let key = !Top_window.keypressed in
-  let char = Char.chr key in
-  if char >= 'a' && char <= 'z' then
-    insert_char frame (Char.chr (key - 97))
-  else
-    insert_char frame (Char.chr (key - 65))
-@
-
-
-
-
-
-
 <<toplevel Simple._1>>=
 let _ =
   <<Simple toplevel setup>>
@@ -1669,41 +1390,14 @@ let _ =
     let loc = Globals.location () in
     let gmap = loc.loc_map in
 
-    (* standard chars *)
-    for key = 32 to 127 do
-      Keymap.add_binding gmap [NormalMap, key] self_insert_command
-    done;
+    <<[[Simple._]] start hook>>
 
-    (* special for AZERTY keyboards *)
-    Array.iter (fun (key, char) ->
-        Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
-    ) [| 
-(*
-        (XK.xk_eacute, 'é');
-        (XK.xk_egrave, 'è');
-        (XK.xk_ccedilla, 'ç');
-        (XK.xk_agrave, 'à');
-        (XK.xk_ugrave, 'ù');
-        (XK.xk_mu, 'µ'); 
-        (XK.xk_sterling, '£');
-        (XK.xk_section, '§');
-        (XK.xk_degree,  '°');
-*)
-        |];
-      let c_q = (ControlMap, Char.code 'q') in
-      (* Keymap.add_prefix gmap [c_q]; *)
-      for key = 65 to 65+25 do
-        Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
-      done;
-      for key = 97 to 97+25 do
-        Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
-      done;
 
-      Keymap.add_interactive (loc.loc_map) "fondamental_mode" 
-        (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
-            Ebuffer.fondamental_mode);
+    Keymap.add_interactive (loc.loc_map) "fondamental_mode" 
+      (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
+          Ebuffer.fondamental_mode);
 
-      Var.set_global line_comment ""
+    Var.set_global line_comment ""
   )
 @
 
@@ -1943,13 +1637,7 @@ open Options
 
 <<function Simple.string_to_modifier>>
   
-<<function Simple.modifier_to_string>>
-      
 <<constant Simple.name_to_keysym>>
-  
-<<function Simple.value_to_keysym>>
-      
-<<function Simple.keysym_to_value>>
   
 <<function Simple.value_to_key>>
   
@@ -1988,6 +1676,82 @@ open Options
 %let move_forward frame = 
 %  Functions.move_forward frame 1; () 
 %*) 
+
+
+
+
+%<<function Simple.modifier_to_string>>=
+%(*
+%let modifier_to_string mask = 
+%  let s = if mask land shiftMask = 0 then "" else "S" in
+%  let s = if mask land controlMask = 0 then s else "C" ^ s in
+%  let s = if mask land mod1Mask = 0 then s else "M" ^ s in
+%  let s = if mask land mod2Mask = 0 then s else "2" ^ s in
+%  let s = if mask land mod3Mask = 0 then s else "3" ^ s in
+%  let s = if mask land mod4Mask = 0 then s else "4" ^ s in
+%  let s = if mask land mod5Mask = 0 then s else "5" ^ s in
+%  s
+%*)
+%@
+
+%<<function Simple.value_to_keysym>>=
+%(*
+%let value_to_keysym v =
+%  match v with
+%    Value v -> List.assoc v name_to_keysym
+%  | _ -> raise Not_found
+%*)
+%@
+
+%<<function Simple.keysym_to_value>>=
+%(*
+%let keysym_to_value k =
+%  Value (List.assoc k XK.keysym_to_name)
+%*)
+%@
+
+%<<function Simple.format_to>>=
+%let format_to frame =
+%  let point = frame.frm_point in
+%  let buf = frame.frm_buffer in
+%  let text = buf.buf_text in
+%  Format.set_formatter_output_functions 
+%    (fun str pos len ->
+%      let s = String.sub str pos len in
+%      Text.insert text point s;
+%      Text.fmove text point len)
+%  (fun () -> ())
+%@
+%
+
+%<<function Simple.format_to_string>>=
+%let format_to_string () =
+%  let string = ref "" in
+%  Format.set_formatter_output_functions 
+%    (fun str pos len ->
+%      let s = String.sub str pos len in
+%      string := !string ^ s)
+%  (fun () -> ());
+%  string
+%@
+
+
+
+%<<function Simple.current_word>>=
+%(*
+%let current_word buf point =
+%  let text = buf.buf_text in
+%  let syntax = buf.buf_syntax_table in
+%  let start = dup_point text point in
+%  to_begin_of_word text start syntax;
+%  let term = dup_point text point in
+%  to_end_of_word text term syntax;
+%  let word = Text.region text start term in
+%  remove_point text start;
+%  remove_point text term;
+%  word
+%*)
+%@
 
 
 \subsection*{[[features/select.ml]]}
@@ -2301,8 +2065,6 @@ let select_filename frame request action =
 @
 
 
-<<constant Select.next_default>>=
-@
 
 
 <<function Select.get_previous_frame>>=
@@ -2502,20 +2264,6 @@ let reload frame =
 
 
 
-<<function Complex.change_font>>=
-let change_font frame =
-  Minibuffer.create_return 
-    frame (Keymap.create ()) "Find font: " "fixed"
-    (fun old_frame name ->
-      let window = frame.frm_window in
-      let _top_window = Window.top window in
-      (*WX_xterm.change_font xterm name*)
-      failwith "Complex.change_font: TODO"
-  ) |> ignore
-@
-
-<<function Complex.color>>=
-@
 
 <<constant Complex.display_hist>>=
 (*let display_hist = ref []*)
@@ -2630,9 +2378,8 @@ let _ =
 
 <<features/complexe.ml>>=
 <<copyright header2>>
-open Unix
-open Utils
 open Efuns
+open Unix
 
 <<function Complex.save_buffers_and_action>>
 
@@ -2661,8 +2408,6 @@ open Efuns
 <<function Complex.window_change_buffer>>
 
 <<function Complex.change_font>>
-
-<<function Complex.color>>
 
 <<constant Complex.display_hist>>
 <<function Complex.open_display>>
@@ -2704,7 +2449,7 @@ open Options
   
 <<function Complex.get_parameter>>
 
-  
+ 
 <<toplevel Complex._1>>
   
 @
@@ -2834,8 +2579,6 @@ open Efuns
 <<function Search.isearch>>
 
 
-
-
 <<constant Search.isearch_forward_regexp>>
 <<constant Search.isearch_forward>>
 <<constant Search.isearch_backward>>
@@ -2909,9 +2652,7 @@ open Efuns
 
 <<function Simple.buffer_list>>
 
-
 <<constant Select.prev_buffers>>
-<<constant Select.next_default>>
 <<function Select.set_previous_frame>>
 <<function Select.get_previous_frame>>
 
@@ -2952,7 +2693,6 @@ let switch_to_other_buffer frame =
 <<copyright header2>>
 open Efuns
   
-
 <<function Multi_frames.cut_frame>>
 
 <<function Multi_frames.remove_frame>>
@@ -2971,7 +2711,6 @@ open Efuns
 
 
 \subsection*{[[features/compil.ml]]}
-
 
 <<type Compil.error>>=
 type error = {
@@ -3011,30 +2750,25 @@ let find_error_gen re text error_point =
 
 
 
-
-
-
-
-
-<<function Compil.set_compilation_buffer>>=
-(*
-let set_compilation_buffer frame comp_buf cdir =
-  (*let error_point = new_point comp_buf.buf_text in*)
-  let window =
-    match !compilation_frame with
-    | None -> 
-        Multi_frames.cut_frame frame
-    | Some (frame,point, _) ->
-        Text.remove_point frame.frm_buffer.buf_text point;  
-        if frame.frm_killed 
-        then Multi_frames.cut_frame frame 
-        else frame.frm_window
-  in
-  let error_point = Text.new_point comp_buf.buf_text in
-  let comp_frame = Frame.create window None comp_buf in
-  compilation_frame := Some (comp_frame, error_point, cdir)
-*)
-@
+%<<function Compil.set_compilation_buffer>>=
+%(*
+%let set_compilation_buffer frame comp_buf cdir =
+%  (*let error_point = new_point comp_buf.buf_text in*)
+%  let window =
+%    match !compilation_frame with
+%    | None -> 
+%        Multi_frames.cut_frame frame
+%    | Some (frame,point, _) ->
+%        Text.remove_point frame.frm_buffer.buf_text point;  
+%        if frame.frm_killed 
+%        then Multi_frames.cut_frame frame 
+%        else frame.frm_window
+%  in
+%  let error_point = Text.new_point comp_buf.buf_text in
+%  let comp_frame = Frame.create window None comp_buf in
+%  compilation_frame := Some (comp_frame, error_point, cdir)
+%*)
+%@
 
 <<constant Compil.grep_command>>=
 let grep_command = define_option ["compil"; "grep_command"] "" string_option
@@ -3102,23 +2836,11 @@ let mode = Ebuffer.new_major_mode "Compilation" [install]
 <<constant Compil.make_hist>>
 <<function Compil.compile>>
 
-<<function Compil.set_compilation_buffer>>
-  
 <<constant Compil.grep_command>>
   
 <<constant Compil.grep_hist>>
 <<function Compil.grep>>
 @
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -3145,13 +2867,6 @@ let mode = Ebuffer.new_major_mode "Compilation" [install]
 %  then frame.frm_repeat_action + 1
 %  else 0;
 %@
-
-
-
-
-
-
-
 
 
 
@@ -3184,12 +2899,6 @@ let wrap top_window f () =
   Mutex.unlock loc.loc_mutex
 @
 
-<<function Top_window.wrap_item>>=
-(*
-let wrap_item top_window (n,f) =
-  n, wrap top_window (fun top_window -> f top_window.top_active_frame)
-*)
-@
 
 
 <<constant Top_window.buffers_menu>>=
@@ -3207,8 +2916,12 @@ let menus = define_option ["menus"] ""
 *)
 @
 
-
-
+<<function Top_window.wrap_item>>=
+(*
+let wrap_item top_window (n,f) =
+  n, wrap top_window (fun top_window -> f top_window.top_active_frame)
+*)
+@
 
 <<constant Top_window.check_abort>>=
 (*let check_abort = ref 0*)
@@ -3335,6 +3048,7 @@ open Efuns
 <<copyright header2>>
 open Utils
 open Options
+
 open Efuns
 open Action
 
@@ -3355,13 +3069,13 @@ open Keymap (* c_xxx *)
     
 <<function Std_efunsrc.init_global_map>>
   
-(*open WX_filesel*)
  
 <<toplevel Std_efunsrc._4>>
   
 <<toplevel Std_efunsrc._5>>
 @
 
+%(*open WX_filesel*)
 
 \subsection*{[[main.ml]]}
 
@@ -4118,7 +3832,6 @@ open Efuns
   
 <<toplevel Fill_mode._2>>
     
-    
 @
 
 
@@ -4130,8 +3843,8 @@ open Efuns
 
 <<minor_modes/paren_mode.ml>>=
 <<copyright header2>>
-open Simple
 open Efuns
+open Simple
 
 module H = Highlight
 
@@ -4153,6 +3866,8 @@ module H = Highlight
 
 
 \subsection*{[[minor_modes/tab_mode.ml]]}
+
+% what does this do??
 
 <<constant Tab_mode.mode>>=
 let mode = Ebuffer.new_minor_mode "tab" []
@@ -4217,8 +3932,6 @@ let mkfile_rules= Str.regexp "^\t.*$"
 @
 %$
 
-<<constant Makefile_mode.vars_color>>=
-@
 <<constant Makefile_mode.target_color>>=
 let target_color = define_option ["makefile_mode"; "target_color"] ""
     string_option "MediumAquamarine"
@@ -4254,10 +3967,6 @@ let mode = Ebuffer.new_major_mode "Makefile" [makefile_color]
 
 \subsubsection{Keys and actions}
 
-<<constant Makefile_mode.c_c>>=
-let c_c = (ControlMap,Char.code 'c')
-@
-
 % its own configuration!
 <<constant Makefile_mode.local_map>>=
 let local_map = define_option ["makefile_mode"; "local_map"] ""
@@ -4282,6 +3991,7 @@ let _ =
 % why not use define_buffer_action for color_buffer?
 
 <<toplevel Makefile_mode._1>>=
+open Keymap (* c_c *)
 let _ =
   if !!local_map = [] then
     local_map =:= [
@@ -4356,11 +4066,8 @@ let mkfile_comments= Str.regexp "^#.*$"
 
 <<constant Makefile_mode.rules_color>>
 <<constant Makefile_mode.target_color>>
-<<constant Makefile_mode.vars_color>>
 <<function Makefile_mode.makefile_color>>
  
-<<constant Makefile_mode.c_c>>
-
 <<function Makefile_mode.install>>
   
 <<constant Makefile_mode.mode>>
@@ -4654,6 +4361,7 @@ open Location
 open Compat_comp
 open Type
 open Ocaml_env
+(* pad: that's a lots of open ... *)
   
 <<function Ocaml_toplevel.type_buffer>>
 
@@ -4692,88 +4400,6 @@ open Ocaml_env
 (*let efuns_property = "_EFUNS_SERVER"  *)
 @
 
-<<constant Server.user>>=
-let user = 
-  try Sys.getenv "USER" 
-  with _ -> "noname"
-@
-
-<<constant Server.socket_name>>=
-let socket_name = 
-  (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user !Globals.displayname)
-@
-
-<<constant Server.started>>=
-let started = ref false
-@
-
-<<type Server.proto>>=
-type proto =
-  LoadFile of string * int * string
-@
-
-<<function Server.read_command>>=
-let read_command fd frame =
-  let inc = in_channel_of_descr fd in
-  try
-    let cmd = input_value inc in
-    match cmd with
-    | LoadFile (name,pos,str) ->
-        let window = frame.frm_window in
-        let top_window = Window.top window in
-        (*wrap*) top_window |> (fun top_window ->
-            let frame = Frame.load_file window name in
-            if pos <> 0 then begin
-              let buf = frame.frm_buffer in
-              let text = buf.buf_text in
-              let point = frame.frm_point in
-              try
-                if str = "" 
-                then raise Not_found 
-                else                  
-                  let regexp = Str.regexp_string str in
-                  Text.search_forward text regexp point |> ignore
-              with Not_found -> 
-                Text.set_position text point pos
-            end;
-            Top_window.update_display () 
-        ) (*()*)
-  with
-    _ -> Concur.Thread.remove_reader fd 
-@
-
-<<function Server.module_accept>>=
-let module_accept s frame = 
-  let fd,_ = accept s in
-  Unix.set_close_on_exec fd;
-  Concur.Thread.add_reader fd (fun _ -> read_command fd frame)
-@
-
-<<function Server.start>>=
-let start frame =
-  if not !started then
-  (*let top_window = Window.top frame.frm_window in*)
-  Utils.catchexn "Efuns server:" (fun _ ->
-      let s = Unix.socket PF_UNIX SOCK_STREAM 0 in
-      if Sys.file_exists socket_name then Unix.unlink socket_name;
-      Unix.bind s (ADDR_UNIX socket_name);
-      Unix.listen s 254;
-      Unix.set_nonblock s;
-      Unix.set_close_on_exec s;
-      (*let display = top_window.top_root#display  in *)
-      Concur.Thread.add_reader s (fun _ -> 
-        started := true;
-        module_accept s frame
-      );
-      (*
-      let atom = X.internAtom display efuns_property false in
-      X.changeProperty display top_window.top_root#window 
-        PropModeReplace atom XA.xa_string 1 socket_name;
-      *)
-  )  
-@
-% todo: no M-x server-start?
-
 %-------------------------------------------------------------
 
 <<ipc/server.ml>>=
@@ -4801,55 +4427,8 @@ open Unix
 
 \subsection*{[[ipc/efuns_client.ml]]}
 
-<<constant Efuns_client.pos>>=
-let pos = ref 0
-@
-
-<<constant Efuns_client.string>>=
-let string = ref ""
-@
-
-<<constant Efuns_client.filename>>=
-let filename = ref None
-@
-
-<<toplevel Efuns_client._1>>=
-let _ = Arg.parse [
-    "-pos", Arg.Int (fun i -> pos := i)," <int>: set position";
-    "-str", Arg.String (fun s -> string := s)," <string>: search string";
-  ] (fun name -> filename := Some name)
-  "efuns_server: connect to efuns"
-@
-
-<<constant Efuns_client.pos (client/efuns_client.ml)>>=
-let pos = !pos    
-@
-
-<<constant Efuns_client.filename (client/efuns_client.ml)>>=
-let filename = match !filename with
-    None -> failwith "efuns_server: filename missing"
-  | Some s -> s
-@
-
-<<constant Efuns_client.string (client/efuns_client.ml)>>=
-let string = !string
-@
-
-<<constant Efuns_client.filename (client/efuns_client.ml)2>>=
-let filename = 
-  if Filename.is_relative filename 
-  then Filename.concat (Sys.getcwd ()) filename 
-  else filename
-@
-
 <<constant Efuns_client.efuns_property>>=
 let efuns_property = "_EFUNS_SERVER"  
-@
-
-<<constant Efuns_client.display>>=
-let display = 
-  ""
-  (*Xlib.openDisplay "" *)
 @
 
 <<constant Efuns_client.root>>=
@@ -4858,27 +4437,6 @@ let display =
 
 <<constant Efuns_client.atom>>=
 (*let atom = X.internAtom display efuns_property false*)
-@
-
-<<constant Efuns_client.socket_name>>=
-let user = 
-  try Sys.getenv "USER" 
-  with _ -> "noname"
-
-let socket_name = 
-  (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user display)
-  (* (Xlib.getWholeProperty display root atom).gp_value *)
-@
-
-<<toplevel Efuns_client._2>>=
-let _ =  if not (Sys.file_exists socket_name) then raise Not_found
-@
-
-<<toplevel Efuns_client._3>>=
-let (inc,outc) = Unix.open_connection (Unix.ADDR_UNIX socket_name)
-let _ =  
-  output_value outc (Server.LoadFile (filename,pos,string)); 
-  flush outc
 @
 
 
@@ -5329,7 +4887,6 @@ let eval_buffer frame =
 
 <<dynamic/eval.ml>>=
 <<copyright header2>>
-
 open Efuns
 open Text
 open Frame

@@ -11,9 +11,8 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-open Unix
-open Utils
 open Efuns
+open Unix
 
 (*s: function Complex.save_buffers_and_action *)
 let rec save_buffers_and_action frame buffers action =
@@ -190,8 +189,7 @@ let window_change_buffer frame =
 
 (*s: function Complex.change_font *)
 let change_font frame =
-  Minibuffer.create_return 
-    frame (Keymap.create ()) "Find font: " "fixed"
+  Minibuffer.create_return frame (Keymap.create ()) "Find font: " "fixed"
     (fun old_frame name ->
       let window = frame.frm_window in
       let _top_window = Window.top window in
@@ -199,9 +197,6 @@ let change_font frame =
       failwith "Complex.change_font: TODO"
   ) |> ignore
 (*e: function Complex.change_font *)
-
-(*s: function Complex.color *)
-(*e: function Complex.color *)
 
 (*s: constant Complex.display_hist *)
 (*let display_hist = ref []*)
@@ -388,7 +383,7 @@ let get_parameter frame =
           print !!param)))
 (*e: function Complex.get_parameter *)
 
-  
+ 
 (*s: toplevel Complex._1 *)
 let _ =
   Hook.add_start_hook (fun () ->

@@ -848,10 +848,9 @@ let fill_paragraph frame =
 let insert_special_char frame =
   let key = !Top_window.keypressed in
   let char = Char.chr key in
-  if char >= 'a' && char <= 'z' then
-    insert_char frame (Char.chr (key - 97))
-  else
-    insert_char frame (Char.chr (key - 65))
+  if char >= 'a' && char <= 'z' 
+  then insert_char frame (Char.chr (key - 97))
+  else insert_char frame (Char.chr (key - 65))
 (*e: function Simple.insert_special_char *)
 
 (*****************************************************************************)
@@ -874,9 +873,6 @@ let string_to_modifier s =
   !mask
 (*e: function Simple.string_to_modifier *)
   
-(*s: function Simple.modifier_to_string *)
-(*e: function Simple.modifier_to_string *)
-      
 (*s: constant Simple.name_to_keysym *)
 let name_to_keysym = 
   ("Button1", XK.xk_Pointer_Button1) ::
@@ -886,12 +882,6 @@ let name_to_keysym =
   ("Button5", XK.xk_Pointer_Button5) ::
   XK.name_to_keysym
 (*e: constant Simple.name_to_keysym *)
-  
-(*s: function Simple.value_to_keysym *)
-(*e: function Simple.value_to_keysym *)
-      
-(*s: function Simple.keysym_to_value *)
-(*e: function Simple.keysym_to_value *)
   
 (*s: function Simple.value_to_key *)
 (* form: SC-Button1 *)
@@ -949,41 +939,45 @@ let _ =
     let loc = Globals.location () in
     let gmap = loc.loc_map in
 
+    (*s: [[Simple._]] start hook *)
     (* standard chars *)
     for key = 32 to 127 do
       Keymap.add_binding gmap [NormalMap, key] self_insert_command
     done;
+    (*x: [[Simple._]] start hook *)
+    let c_q = (ControlMap, Char.code 'q') in
+    (* Keymap.add_prefix gmap [c_q]; *)
+    for key = 65 to 65+25 do
+      Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
+    done;
+    for key = 97 to 97+25 do
+      Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
+    done;
+    (*x: [[Simple._]] start hook *)
+        (* special for AZERTY keyboards *)
+        Array.iter (fun (key, char) ->
+            Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
+        ) [| 
+    (*
+            (XK.xk_eacute, 'é');
+            (XK.xk_egrave, 'è');
+            (XK.xk_ccedilla, 'ç');
+            (XK.xk_agrave, 'à');
+            (XK.xk_ugrave, 'ù');
+            (XK.xk_mu, 'µ'); 
+            (XK.xk_sterling, '£');
+            (XK.xk_section, '§');
+            (XK.xk_degree,  '°');
+    *)
+            |];
+    (*e: [[Simple._]] start hook *)
 
-    (* special for AZERTY keyboards *)
-    Array.iter (fun (key, char) ->
-        Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
-    ) [| 
-(*
-        (XK.xk_eacute, 'é');
-        (XK.xk_egrave, 'è');
-        (XK.xk_ccedilla, 'ç');
-        (XK.xk_agrave, 'à');
-        (XK.xk_ugrave, 'ù');
-        (XK.xk_mu, 'µ'); 
-        (XK.xk_sterling, '£');
-        (XK.xk_section, '§');
-        (XK.xk_degree,  '°');
-*)
-        |];
-      let c_q = (ControlMap, Char.code 'q') in
-      (* Keymap.add_prefix gmap [c_q]; *)
-      for key = 65 to 65+25 do
-        Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
-      done;
-      for key = 97 to 97+25 do
-        Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
-      done;
 
-      Keymap.add_interactive (loc.loc_map) "fondamental_mode" 
-        (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
-            Ebuffer.fondamental_mode);
+    Keymap.add_interactive (loc.loc_map) "fondamental_mode" 
+      (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
+          Ebuffer.fondamental_mode);
 
-      Var.set_global line_comment ""
+    Var.set_global line_comment ""
   )
 (*e: toplevel Simple._1 *)
   

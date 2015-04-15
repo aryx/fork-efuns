@@ -30,6 +30,7 @@ open Location
 open Compat_comp
 open Type
 open Ocaml_env
+(* pad: that's a lots of open ... *)
   
 (*s: function Ocaml_toplevel.type_buffer *)
 let type_buffer buf =
