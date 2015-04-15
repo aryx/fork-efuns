@@ -133,7 +133,9 @@ let colorize_and_set_outlines funcs buf file =
     match List.rev !outline_points with
     (* to avoid some index out of bounds create at least one point *)
     | [] -> [0, Text.new_point text]
-    | xs -> xs
+    | xs -> 
+      (* we have no guarantee in which order the hooks are called *)
+      xs |> List.sort (fun (_, pt_a) (_, pt_b) -> compare pt_a pt_b)
   in
   Var.set_local buf Outline_mode.outline_var outline_points;
   ()

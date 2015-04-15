@@ -1,6 +1,13 @@
 
 type ('ast, 'token) for_helper = {
   parse: Common.filename -> ('ast * 'token list) list;
+
+  (* note: there is no guarantee in which order the hooks are called as
+   * some pfff modes visit first the AST and then the tokens
+   * in which case some hooks for early tokens might be called
+   * after tokens that come later but were present in the 
+   * AST and visited.
+   *)
   highlight: tag_hook:(Parse_info.info -> Highlight_code.category -> unit) ->
              Highlight_code.highlighter_preferences -> 'ast * 'token list ->
              unit;
