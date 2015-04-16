@@ -11,8 +11,14 @@ val create_buf_hook : (Efuns.buffer -> unit) list Local.var
 (* load/save/kill *)
 
 val read : string -> Efuns.map -> Efuns.buffer
-val kill : Efuns.buffer -> unit
 val save : Efuns.buffer -> unit
+
+(* This should not be used in plugins and hoping it will kill a buffer.
+ * What you want is kill the frame managing the buffer, and then
+ * once you're sure there are no more reference to the buf
+ * then you can kill it.
+ *)
+val kill : Efuns.buffer -> unit
 
 (* find *)
 

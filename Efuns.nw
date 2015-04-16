@@ -15,17 +15,18 @@
 % - better decomposition than simple.ml, complex.ml, good TOC
 % - removed deadcode (frm_force_point, frm_force_cursor, loc_counter, 
 %    resname, buf_history, line_hlt and its huge compute_representation code,
-%    repr_x), redundant funcs (Top_window.dummy_action)
+%    repr_x)
+% - removed some redundant functions (Top_window.dummy_action)
 % - cleaner conventions and field names between point and position, no more
 %   let point = point.point uglyness
 % - use global for location instead of all those fields
 % - removed useless opti around representation, and rename line_repr,
 %   repr_line; use boxes instead. 'repr' was used for too many things.
 % - more cohesion, e.g. Select and Simple buffer stuff in 
-%   Multi_buffers instead, split Efuns to have also Vars and Actions,
-%   mv colors and fonts from Window to Attrs
+%   Multi_buffers instead, split Efuns to have also Var and Action,
+%   mv colors and fonts from Window to Attr
 % - more consistency with coord, position, point, line x col, xy
-%   so less confusing (when uses sometimes xy for colxline and sometimes
+%   so less confusing (when uses sometimes xy for col x line and sometimes
 %   for frame coordinates)
 % - differentiate position and position2 types! helped find commenting bugs
 %   and confusing names
@@ -46,13 +47,13 @@
 % - representation string vs original string, tabs and ^M display handling
 % - TODO how the mark get changed when you do big move?
 % - TODO the global vs local variables, I always get confused about
-%    local variables
+%    local variables in emacs
 
 %history LP-ization:
 % - skeleton, mostly copy paste of Template.nw skeleton
 % - put all content of files in the Extra section, via 'pfff -lpize'
 %   which also now split in chunks!
-%    * function, global, struct, enum, constant, macro(actually function)
+%    * function, global, type, constant
 %    * TODO ctor/dtor, dumper
 %    * TODO action
 %    * [[xxx]] other fields, [[xxx]] extra fields
@@ -192,9 +193,9 @@ Here are other candidates that were considered but ultimately discarded:
 
 % vs emacs:
 %  - see http://www.emacswiki.org/emacs/EfunsEditor
-%  - no extension language (lisp) to extend the editor with plugins.
+%  - no extension language (Lisp) to extend the editor with plugins.
 %    It made sense for Emacs because the implementation language
-%    was C, which is more error prone than lisp, but by using OCaml
+%    was C, which is more error prone than Lisp, but by using OCaml
 %    for the implementation language we don't need so much another 
 %    language to extend the core. You can just add a module! Yes you need
 %    to recompile, but so what? less dynamic, but anyway
@@ -203,11 +204,20 @@ Here are other candidates that were considered but ultimately discarded:
 %    programmer)
 %  - easier to debug! can use ocamldebug, no more -debug-on-error
 %    and binary search in .emacs when have a paren pb
-%  - easier to program, ocaml > lisp! can also use ocamlyacc, my
+%  - easier to program, Ocaml > Lisp! can also use ocamlyacc, my
 %    pfff real parsers. More colors. More structure. Can use threads!
 
 % see also other ocaml editors?
 %  - https://github.com/diml/zed (seems just an "engine")
+
+%todo: look atom flight manual for its TOC?
+
+
+% better stuff now in efuns than in emacs:
+% - pfff-based modes highlighters
+% - minimap
+% - f that does not list object files
+
 
 \section{Getting started}
 
@@ -460,6 +470,9 @@ Options:
 
 \section{[[Text]]}
 
+
+
+
 % text -> string | (lines -> ... boxes)
 % with attrs at different level (text_attr, box_attr)
 
@@ -663,10 +676,12 @@ type point = {
 % consistent to have point_line. It was also ugly to have point.point
 % everywhere and code like let point = point.point. It was confusing
 % two notions, a position and a point!
-%subtle: this is a cursor that needs to be maintained in sync!
+%subtle: this is actually a cursor that is maintained in sync!
 % things can change, text can be modified, so the trick is to remember
-% all the cursors in the text and when you modify the text you update
+% all the points/cursors in the text and when you modify the text you update
 % all the cursors. We'll see more later about this.
+% The line can change too, so again a point needs to be maintained to
+% be consistent with the text it references.
 
 <<[[Efuns.buffer]] position fields>>=
 mutable buf_point : Text.point;
@@ -731,7 +746,7 @@ let create name filename text local_map =
   <<[[Ebuffer.create()]] run hooks>>
   buf
 @
-
+% buf_shared to 0 at first because not associated with any frame
 
 
 \section{[[Frame]]}
@@ -790,11 +805,6 @@ mutable frm_point : Text.point;
 % event loop) the screen will move to that place if it's not visible
 % => API for actions are simple, just set the position and
 % the redisplay will be automatic.
-
-<<[[Efuns.buffer]] other fields>>=
-mutable buf_shared : int; (* number of frames for that buffer *)
-@
-%less: why need that? ocaml has a gc anyway ...
 
 
 % v_cut_frame | start_command | ... -> <>
@@ -877,6 +887,11 @@ let create_without_top window mini buf =
 % we will see install later, which prepares the frame for display
 % by setting frm_table, adjusting frm_cutline if needed.
 % less: should rename this install to prepare_for_display
+
+<<[[Efuns.buffer]] other fields>>=
+mutable buf_shared : int; (* number of frames for that buffer *)
+@
+%less: why need that? ocaml has a gc anyway ...
 
 
 \section{[[Window]]}
@@ -2648,6 +2663,10 @@ let set_position text point pos =
      )
 @
 % rename move_point_to_pos2?
+
+% note that if you extend the gap, move, you need
+% to update pos, but also line! because this can change too
+% which makes points really dependent of the text it references.
 
 \section{Points}
 
@@ -8553,9 +8572,13 @@ let change_buffer window name =
   with Not_found -> ()
 @
 
-
+% what about the old frame? should be killed no?
+% so that it gets a change to kill its associated buffer too
 
 \section{Killing the buffer}
+
+% how kill a buffer? it's connected to a frame, so need
+% to kill the frame? but then buffer is gc'ed?
 
 <<file menu entries>>=
 "Kill Buffer", "kill_buffer";
@@ -8590,7 +8613,16 @@ let kill_buffer frame =
   if buf.buf_shared = 0 
   then Ebuffer.kill buf
 @
-% can aspectize the prev_buffers things, so that more stuff together
+%less: can aspectize the prev_buffers things, so that more stuff together
+%note: when buf_shared gets down to 0? With Frame.kill.
+% But who calls Frame.kill? Frame.install!
+% Ebuffer.kill below should not be used in plugins and hoping it will
+% kill a buffer.
+% What you want is kill the frame managing the buffer, and then
+% once you're sure there are no more reference to the buf
+% then you can kill it.
+% Which is what kill_buffer above does.
+
 
 <<function Ebuffer.kill>>=
 let kill buf =
@@ -8603,7 +8635,9 @@ let kill buf =
   Gc.compact ();
   buf.buf_shared <- -1
 @
-
+% let the gc do its work! put to -1 because maybe
+% some code still has a ref to the buffer, in which case
+% it will raise BufferKilled exn
 
 
 \section{Cycling buffers}
@@ -8851,7 +8885,7 @@ let delete_frame frame =
 
 
 
-% Minibuffer.kill | ??? -> <>
+% (Frame.create -> Frame.install) | Minibuffer.kill  -> <>
 <<function Frame.kill>>=
 let kill frame = 
   let buf = frame.frm_buffer in
@@ -8863,6 +8897,9 @@ let kill frame =
   buf.buf_point <- frame.frm_point;
   buf.buf_start <- frame.frm_start
 @
+% this will be called when you create a new frame for an existing
+% window in which case Frame.install iter over all frames in
+% the window and kill them all.
 
 
 % ??? -> <>

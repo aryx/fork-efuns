@@ -165,18 +165,6 @@ let point_col text point =
   else pos - bol
 (*e: function Text.point_col *)
 
-(*s: function Text.point_line *)
-let point_line _text point = 
-  point.line
-(*e: function Text.point_line *)
-
-(*s: function Text.point_coord *)
-let point_coord text point =
-  { c_col = point_col text point;
-    c_line = point_line text point;
-  }
-(*e: function Text.point_coord *)
-
 (*s: function Text.find_line_of_pos *)
 let find_line_of_pos text pos =
   let gpos = text.gpoint.pos in
@@ -206,6 +194,20 @@ let find_line_of_pos text pos =
      in
      iter gline
 (*e: function Text.find_line_of_pos *)
+
+(*s: function Text.point_line *)
+let point_line text point = 
+  (* defensive: *)
+  assert(point.line = find_line_of_pos text point.pos);
+  point.line
+(*e: function Text.point_line *)
+
+(*s: function Text.point_coord *)
+let point_coord text point =
+  { c_col = point_col text point;
+    c_line = point_line text point;
+  }
+(*e: function Text.point_coord *)
 
 (*****************************************************************************)
 (* Helpers *)
@@ -470,10 +472,9 @@ let low_insert text pos str =
   end;
   let gline = text.gpoint.line in
   text.text_points |> List.iter (fun p ->
-    if p.pos > gpos then
-      (* todo? why this extra condition?? BUG?? unit test? *)
-      if p.line = gline 
-      then p.line <- p.line + nbr_newlines;
+    if p.pos > gpos 
+      (* bugfix: there was extra condition line = gline. But bug! unit test *)
+    then p.line <- p.line + nbr_newlines;
 
   );
   text.gpoint <- { pos = gpos + strlen; line = gline + nbr_newlines };
@@ -710,6 +711,7 @@ let dup_point text point =
 
 (*s: function Text.goto_point *)
 let goto_point _text p1 p2 =
+  (* less: could assert they references the same text *)
   p1.pos <- p2.pos;
   p1.line <- p2.line
 (*e: function Text.goto_point *)

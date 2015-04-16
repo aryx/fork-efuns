@@ -22,11 +22,11 @@ open Efuns
  *   
  * I call it a poor's man outline because we actually generate
  * a new buffer. You can move, and when you switch back
- * it goes back to previous buffer at the adjusted place.
+ * it goes back to the previous buffer at the adjusted place.
  * But you can't really copy paste, move things around, or
  * even edit the outline headers.
  * But it's good enough for moving around things quickly at least!
- * good first step.
+ * It's a good first step.
  *  
  * Called outline_mode.ml so no conflict with pfff/h_files_format/outline.ml
  * 
@@ -36,6 +36,8 @@ open Efuns
  *    let regexp = Str.regexp "\\(\\input\\|\\section\\|\\subsection\\|\\subsubsection\\|\\chapter\\)[*]?{\\([^}]+\\)}"
  *    look efuns_textbrowser
  * 
+ * conventions: I use orig/origin and outl/outline to talk about the original
+ * buffer and outl for the outline buffer.
  *)
 
 (*****************************************************************************)
@@ -138,27 +140,33 @@ let outline_num frame =
   let buf = frame.frm_buffer in
   if buf.buf_major_mode.maj_name = mode_name
   then begin
-    let (bufname_origin, points_origin) = Var.get_var buf outline_origin in
-    let text_outline = buf.buf_text in
-    let line_outline = Text.point_line text_outline frame.frm_point in
-    let pt_origin = points_origin.(line_outline) in
-    Ebuffer.find_buffer_opt bufname_origin |> Common.do_option (fun buf ->
-      let text = buf.buf_text in
-      Text.goto_point text buf.buf_point pt_origin;
-      Frame.change_buffer frame.frm_window bufname_origin;
-
-      (* does not work ???
-      Ebuffer.kill buf;
-      Frame.kill frame;
-      *)
-      points_origin |> Array.iter (fun pt -> Text.remove_point text pt);
+    let buf_outl = buf in
+    let (bufname_orig, points_orig) = Var.get_var buf_outl outline_origin in
+    let text_outl = buf_outl.buf_text in
+    let line_outl = Text.point_line text_outl frame.frm_point in
+    let pt_orig = points_orig.(line_outl) in
+    Ebuffer.find_buffer_opt bufname_orig |> Common.do_option (fun buf_orig ->
+      let text_orig = buf_orig.buf_text in
+      Text.goto_point text_orig buf_orig.buf_point pt_orig;
+      Frame.change_buffer frame.frm_window bufname_orig;
+      (* after change_buffer the old frame should have been killed
+       * and so the outline buffer should have no more references to it,
+       * except if the user did a split window in which case
+       * we can't gc it
+       *)
+      if buf_outl.buf_shared = 0 
+      then begin 
+        Ebuffer.kill buf_outl;
+        points_orig |> Array.iter (fun pt -> Text.remove_point text_orig pt);
+      end;
     )
   end
   else begin
-    let buf_name = spf "*Outline-%d-%s*" lvl buf.buf_name in
-    let current_line = Text.point_line buf.buf_text frame.frm_point in
-    let buf = create_outline_buffer lvl current_line buf_name buf in
-    Frame.change_buffer frame.frm_window buf.buf_name
+    let buf_orig = buf in
+    let bufname_outl = spf "*Outline-%d-%s*" lvl buf_orig.buf_name in
+    let line_orig = Text.point_line buf_orig.buf_text frame.frm_point in
+    let buf_outl = create_outline_buffer lvl line_orig bufname_outl buf_orig in
+    Frame.change_buffer frame.frm_window buf_outl.buf_name
   end
 
 
