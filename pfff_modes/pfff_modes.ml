@@ -70,7 +70,7 @@ let size_of_categ categ =
   match categ with
   | HC.Entity (_kind, HC.Def2 _) -> 3
 
-  | HC.CommentSection0 -> 6
+  | HC.CommentSection0 -> 5
   | HC.CommentSection1 -> 4
   | HC.CommentSection2 -> 2
   | HC.CommentSection3 -> 1

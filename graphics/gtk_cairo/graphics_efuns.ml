@@ -247,22 +247,40 @@ let draw_minimap w =
         let idx = attr land 255 in
         w.loc.loc_colors_names.(idx)
       in
-      let _fontsize = (attr lsr 16) land 255 in
+      let fontsize = (attr lsr 16) land 255 in
       set_source_color ~cr ~color:fgcolor ();
 
-      Pango.Layout.set_text w.ly  (prepare_string str);
-      Pango_cairo.update_layout cr w.ly;
-      Pango_cairo.show_layout cr w.ly;
+      let ly = 
+        if fontsize = 0 
+        then w.ly
+        else begin
+          (* def of func is fontsize 3 *)
+          let size = 30 +.. 20 *.. fontsize in
+          (* Does not have to be "fixed ..." here, we want to optimize for
+           * readability. Actually we can move to the bol
+           * so preceding long tokens like \subsubsection do not push
+           * us too much to the right.
+           *)
+          Cairo.move_to cr 0. y;
+          let desc = Pango.Font.from_string (spf "Serif %d" size) in
+          pango_layout cr desc
+        end
+      in
+      Pango.Layout.set_text ly  (prepare_string str);
+      Pango_cairo.update_layout cr ly;
+      Pango_cairo.show_layout cr ly;
 
 (*
   this generate some out_of_memory error when run directly efuns
   on lexer_nw.mll. weird, but cairo text api is known to be buggy.
-
+*)
+(*
       Cairo.select_font_face cr "serif"
         Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
       Cairo.set_font_size cr (38. + 25. * (float_of_int fontsize));
       Cairo.show_text cr (prepare_string str);
 *)
+
     )
   done;
   ()
@@ -293,8 +311,8 @@ let draw_minimap_overlay w =
   let h = (float_of_int w.loc.loc_height) * w.metrics.font_height in
 
   Cairo.set_line_width cr ((Cairo.get_line_width cr) * w.metrics.mini_factor);
-  draw_rectangle_xywh ~cr ~x ~y ~w:w.metrics.main_width ~h
-    ~color:"black" ();
+  fill_rectangle_xywh ~alpha:0.2 ~cr ~x ~y ~w:w.metrics.main_width ~h
+    ~color:"white" ();
   ()
 
 (*****************************************************************************)
