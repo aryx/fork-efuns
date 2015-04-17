@@ -1994,7 +1994,7 @@ let save_options frame =
  
 <<constants Main options>>=
 let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
+let height = define_option ["height"] "" int_option 27 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 @
@@ -2714,7 +2714,11 @@ let remove_point text p =
         if point == p 
         then points 
         else point :: points
-    ) []
+    ) [];
+  (* being defensive *)
+  p.pos <- -1;
+  p.line <- -1;
+  ()
 @
 %note: use of == not =
 %note: you should use with_dup_point() if you can, instead of manually using
@@ -2722,6 +2726,7 @@ let remove_point text p =
 
 <<function Text.goto_point>>=
 let goto_point _text p1 p2 =
+  (* less: could assert they references the same text *)
   p1.pos <- p2.pos;
   p1.line <- p2.line
 @
@@ -2802,7 +2807,9 @@ type coord = {
 
 % status line display the line of the cursor -> <>
 <<function Text.point_line>>=
-let point_line _text point = 
+let point_line text point = 
+  (* defensive: *)
+  assert(point.line = find_line_of_pos text point.pos);
   point.line
 @
 % note that it's 0 based! status_line displays it as starting
@@ -3001,10 +3008,9 @@ let low_insert text pos str =
   end;
   let gline = text.gpoint.line in
   text.text_points |> List.iter (fun p ->
-    if p.pos > gpos then
-      (* todo? why this extra condition?? BUG?? unit test? *)
-      if p.line = gline 
-      then p.line <- p.line + nbr_newlines;
+    if p.pos > gpos 
+      (* bugfix: there was extra condition line = gline. But bug! unit test *)
+    then p.line <- p.line + nbr_newlines;
 
   );
   text.gpoint <- { pos = gpos + strlen; line = gline + nbr_newlines };
