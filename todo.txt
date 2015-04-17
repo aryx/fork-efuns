@@ -1,12 +1,11 @@
 -*- org -*-
 
-
 ** small
 
 *** small bugs but useful stuff
 
-**** it gets slow in eshell after a make and gets lots
-of long lines. profile?
+**** it gets slow in eshell after a make when gets lots
+of long lines. profile? Common.profile?
 
 and also it seems buggy after 2 compilations of efuns, the screen
 just stall.
@@ -17,6 +16,8 @@ because Simple.color? want a color_region instead?
 and also does not show when hover a paren
 
 **** ./efuns from eshell
+
+**** use realpath? so C-n does a better job?
 
 *** small features but useful stuff
 
@@ -30,8 +31,6 @@ e.g. C-g in minibuffer, second Tab in completion, Up/Down keeping bool,
 C-x C-f and / should start display
 
 **** C-y in replace query
-
-**** use realpath? so C-n does a better job?
 
 **** C-x C-f listing is just 2 cols not sorted correctly,
 use the same thing I did for eshell?

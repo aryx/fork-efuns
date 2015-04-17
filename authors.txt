@@ -1,11 +1,11 @@
-Fabrice Lefessant (most of the code)
+Fabrice Le Fessant (most of the code)
 
 With contributions from:
  - Yoann Padioleau 
     * dircolors
     * buffer_menu (C-M-Tab and C-M-l)
-    * eshell (poor's man version)
-    * outline (poor's man version)
+    * eshell (poor's man version, M-1, M-2, ...)
+    * outline (poor's man version, C-M-1, C-M-2, ...)
     * pfff-based modes for ocaml, C, noweb/tex
-    * goal column, C-s C-w, M-down/up/right/left scrolling, 
     * minimap instead of scrollbar (a la Sublime Text)
+    * goal column, C-s C-w, M-down/up/right/left scrolling, etc

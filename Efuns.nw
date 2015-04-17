@@ -214,12 +214,15 @@ Here are other candidates that were considered but ultimately discarded:
 
 %todo: look atom flight manual for its TOC?
 
-
 % better stuff now in efuns than in emacs:
 % - pfff-based modes highlighters
 % - minimap
 % - f that does not list object files
 
+%Good to vary a bit, not always C, and code written by the same people.
+%Help also to explore concepts for Editor.nw.
+%(or actually might become Editor.nw) 
+%(or actually in the end I might actually switch to efuns!!)
 
 \section{Getting started}
 
@@ -6059,6 +6062,7 @@ let set_binding map key binding =
 @
 
 \subsection{Basic key bindings}
+% how get the basic keys!
 
 <<[[Simple._]] start hook>>=
 (* standard chars *)
