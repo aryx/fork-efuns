@@ -212,6 +212,9 @@ let file_hist = ref []
 (*e: constant Select.file_hist *)
 
 (*s: constant Select.dont_complete *)
+(* todo: could use File_type.is_obj_file to unify the treatment of obj file
+ * in C-x C-f and shell
+ *)
 let dont_complete = define_option ["avoid_filenames"] ""
     (list_option string_option) 
   [ ".*\\.o$"; ".*\\.cm.$";".*\\.cmxa$";".*~";".*\\.a$";"core$";"\\..*"]

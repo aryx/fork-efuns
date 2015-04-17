@@ -140,7 +140,7 @@ let extensions = [
 
 let colorize buf = 
   Simple.color buf 
-    (Str.regexp ("[a-zA-Z0-9_\\-]*/")) false
+    (Str.regexp ("[a-zA-Z0-9_\\-\\.]*/")) false
     (Text.make_attr (Attr.get_color dir_color) 1 0 false);
 
   (* a bit brute force, but seems fast enough *)
