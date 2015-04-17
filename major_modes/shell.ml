@@ -101,27 +101,27 @@ let is_obj_file file =
  * later: do like in rc/eshell and scroll until can
  *)
 
-(* todo: this is buggy when have overflow lines *)
+(* assumes have done a Simple.end_of_file frame before *)
 let scroll_to_end frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
   let height = frame.frm_height - frame.frm_has_status_line in
-  let nlines = Text.nbre_lines text in
-
   let point = frame.frm_point in
+  let start = frame.frm_start in
 
   frame.frm_redraw <- true;
-
-  if nlines > height then begin
-    let current_line = Text.point_line text point in
-    let start_line = current_line - height in
-    pr2_gen (current_line, start_line);
-    Text.goto_line text frame.frm_start start_line;
-    pr2_gen frame.frm_start;
-    frame.frm_force_start <- true;
-    frame.frm_y_offset <- 2;
-  end
+  frame.frm_force_start <- true;
+  (* the problem is that when goes back to the shell buffer then
+   * the saved frm_start with be the last line, not the last line
+   * - height + 2.
+   * todo: actually compute the right frm_start instead of playing
+   * with frm_y_offset?
+   *)
+  Text.goto_point text start point;
+  (* if put just +1 then the cursor goes to a weird place *)
+  frame.frm_y_offset <- - height + 2;
+  ()
 
 let scroll_until_not_pass_prompt frame =
   let height = frame.frm_height in
