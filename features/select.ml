@@ -214,7 +214,7 @@ let file_hist = ref []
 (*s: constant Select.dont_complete *)
 let dont_complete = define_option ["avoid_filenames"] ""
     (list_option string_option) 
-  [ ".*\\.o"; ".*\\.cm.";".*\\.cmxa";".*~";".*\\.a";"core";"\\..*"]
+  [ ".*\\.o$"; ".*\\.cm.$";".*\\.cmxa$";".*~";".*\\.a$";"core$";"\\..*"]
 (*e: constant Select.dont_complete *)
   
 (*s: constant Select.dont_complete_regexps *)
