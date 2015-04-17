@@ -1,0 +1,231 @@
+-*- org -*-
+
+
+** small
+
+*** small bugs but useful stuff
+
+**** it gets slow in eshell after a make and gets lots
+of long lines. profile?
+
+and also it seems buggy after 2 compilations of efuns, the screen
+just stall.
+
+because Simple.color? want a color_region instead?
+
+**** bug paren_mode does not hide highlight
+and also does not show when hover a paren
+
+**** ./efuns from eshell
+
+*** small features but useful stuff
+
+**** 4 cols Tabs, better when edit plan9 .nw files
+
+**** highlight C-s results at least
+
+*** small diffs with emacs
+lots of different behaviors to fix,
+e.g. C-g in minibuffer, second Tab in completion, Up/Down keeping bool,
+C-x C-f and / should start display
+
+**** C-y in replace query
+
+**** use realpath? so C-n does a better job?
+
+**** C-x C-f listing is just 2 cols not sorted correctly,
+use the same thing I did for eshell?
+
+**** C-s that higlight the matched stuff, pretty useful
+(could also do like in firefox where get a thumbnail of the match
+in the scrollbar)
+
+**** C-x C-f TAB C-g does not work
+
+**** C-s C-w C-w
+
+**** C-x k that prompt first?
+or maybe better like this.
+but at least if buffer was modified ask for save it before
+
+
+*** bench!
+editing text is becoming really slow.
+because of all those points? those asserts?
+because of layout?
+
+** new modes
+
+*** org mode
+.org outline mode, simple one
+but pfff has one too
+
+so will have minimap over my todos :) 
+can maybe highlight the EASY in bigger size
+
+*** later: project.ml
+see atom, textmate, sublime, and also my project.el
+
+*** magit mode
+complicated? but at least can be far faster than what I have?
+
+** old modes
+
+*** ocaml
+
+**** EASY Typedef Def -> Entity (Type, Def) !!
+so better color for types in efuns and codemap
+
+*** eshell
+
+**** SEMI understand frm_y_offset and frm_x_offset in Frame.display()
+=> can improve eshell?
+=> can use make ... from eshell, finally
+
+**** SEMI fix scroll_line to fix issues with overflow lines and eshell
+or simply use right frm_start?
+but still need to handle pb that you don't know how many lines
+before because of the 80col thing
+
+**** SEMI eshell: do not keep at center of the frame,
+goto the end of the buffer
+but need understand frm_y_offset
+
+**** eshell: auto go to end when type anything
+
+**** arrow for history
+
+*** noweb
+
+**** could make AST at least where parenized correctly,
+so they easier to colorize groups with right scope
+
+** stuff not in emacs
+more visual stuff where escape the terminal-compatibility barrier
+
+*** later: minimap
+
+**** mouse: click on it to scroll there
+
+**** fix: when searching do not consider the minibuffer as the active frame
+
+**** show searched highlights! on minimap! a la firefox!
+
+*** later: f8 nuclide demos
+syntax highlighting (actually buggy on xhp)
+autocomplete (big deal in their demo)
+flycheck (big deal)
+click goto-def
+build integration, colored output
+file explorer
+remote file explorer (fbide remote connect)
+
+*** later: codemap integration?
+
+*** visual align-guides like in atom
+just do via overlay? after frm_table has been updated
+just go through all frm_table and look if space?
+
+*** clean utf-8
+look at uemacs/utf8.c code?
+
+It's in emacs, but it's not clean. It always confused me.
+
+** stuff in emacs to port
+
+*** later
+
+**** rectangles!!! how can it be called emacs
+at least C-x r t, or M-x comment
+
+or use the multi-cursor thing of sublime text?
+
+**** visual beep (e.g. when incremental search done)
+
+**** make save_hook to recolor, anyway good
+to do syntactic check to prepare for running make
+
+**** still? want incremental coloring! or save_hook good enough?
+font-lock is complicated 
+maybe look at his ancestor? hilit19?
+just do after-modif-hook and try to colorize the whole buffer.
+
+**** highlight when put mark
+
+**** highlight parens when hover arounnd, show_paren mode so when cursor
+around paren it shows the matching one
+and make default mode?
+
+**** cua mode, S-down
+
+**** C-h k
+and then the key.
+may need a special thing though to do that.
+
+**** C-x =
+to see current position
+
+**** macros!!! how can it be called emacs
+without macros!
+
+**** less: widen/narrow
+
+**** less: pad-make-indirect-buffer
+
+**** less: configure event, recompute height and width
+maybe clean background with darkslategray before
+
+**** less: put name of current buffer in window title!
+hook? as part of the backend?
+
+** Internals
+
+*** refactoring 
+
+**** rewrite display to not have terminal backward compatibility
+constraint. Simpler? Can do multi-fonts more easily?
+
+**** sure? remove dupes between actions and keys, have keys
+define also the action, and have another thing that defines
+an action and add it to interactives
+
+not sure also to have configurable interactives ...
+ok for the keys, but for interactives??
+can allow to change name of interactives things depending on major
+mode. It can be good. for instance M-x colorize in a ocaml buffer
+is in fact caml_colorize
+
+**** sure? merge actions and keys?
+dki ? define key and interactive?
+
+**** less: remove windows C-n 5 ? init_frame
+
+*** unit testing
+too many bugs? time for some unit tests? at least to
+avoid further regression whens refactoring code?
+
+**** include ounit.ml and have a -test?
+
+*** checking
+
+**** add check for useless export, so can have even smaller .mli
+
+*** less: lpize with ocaml support for globals, typed constants
+also have arrays in ast? pfff -lpize split weird
+when constant is an array
+
+*** bench
+vs emacs, vs qemacs
+
+**** can handle files of multi megabytes?
+attr representation efficient?
+
+**** startup time?
+
+** misc
+
+*** see my emacs-news.txt? see my .emacs?
+
+*** look at the 7 habits of effective editing talk,
+can implement all the necessary features!
+also there is similar video for sublime!
