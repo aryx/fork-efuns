@@ -124,9 +124,11 @@
 \title{{\Huge Principia Softwarica: The Text Editor Efuns}\\{version 0.1}}
 
 \author{
-Yoann Padioleau\\\texttt{yoann.padioleau@gmail.com}\\
+Yoann Padioleau\\
+\texttt{yoann.padioleau@gmail.com}\\
 \\
-with code from\\Fabrice Le Fessant
+with code from\\
+Fabrice Le Fessant
 }
 
 
@@ -3186,6 +3188,7 @@ text.text_newlines <- new_cache;
 @
 % not sure needs this subtle line_modified = - 1 
 
+%\subsection{Adjusting points}
 
 \section{Deleting characters}
 
@@ -4683,6 +4686,10 @@ let install window frame =
 @
 %less: rename prepare_for_display?
 
+% kill all the frame! that's how you get the buffer ref down to zero.
+% so by using Frame.create frm.frm_window you in effect kill the
+% previous frame.
+
 \subsection{Windows display}
 
 % Seen before the iteration Window.iter in Top_window.update_display.
@@ -5117,7 +5124,7 @@ graphic.Xdraw.draw_string
 % we need to manage frm_cutline because we don't want to polluate
 % update_table with cursor issues I think.
 
-%\subsection{Cursor on}
+\subsubsection{Cursor on}
 
 % Top_window.update_display -> Frame.display ; ...;  <>
 <<function Top_window.cursor_on>>=
@@ -5200,6 +5207,7 @@ let set_cursor frame =
       iter frm_line.frmline_boxes
 @
 
+\subsubsection{Point coordinates vs xy screen coordinates}
 
 <<function Frame.point_to_xy_opt>>=
 let point_to_xy_opt frame point =
@@ -5268,7 +5276,7 @@ let point_to_x_when_no_cutline buf point =
 
 
 %\subsection{[[Top_window.clean_display()]]}
-%\subsection{Cursor off}
+\subsubsection{Cursor off}
 
 % event loop -> ... -> handle_key -> ...; <>; Top_window.update_display()
 <<function Top_window.clean_display>>=
@@ -5299,13 +5307,13 @@ let set_cursor_off top_window frame =
 
 \subsection{Frame offsets}
 
-
 <<[[Efuns.frame]] other fields>>=
 (* offset(+/-) of screen-lines after frm_start *)
 mutable frm_y_offset : int;
 (* ?? *)
 mutable frm_x_offset : int;
 @
+% screen lines! not text lines
 
 % why not modify instead frm_start and decrement its line?
 % because we don't know how many text lines translate in frame lines
@@ -5325,7 +5333,8 @@ end;
 @
 % when can this happen? someone mv frm_start to a col > 0?
 % in which case we adjust to the bol? but why need
-% to adjust frm_y_offset? 
+% to adjust frm_y_offset?
+% because we may have used already a screenline by relocating frm_start?
 
 
 % do 'Text.goto_point text start point', when want to recenter
@@ -5409,10 +5418,10 @@ let recenter frame =
   frame.frm_y_offset <- - frame.frm_height/2
 @
 
-% not sure it's related only to scrollbar thing
 <<[[Efuns.frame]] other fields>>=
 mutable frm_force_start : bool;
 @
+% I thought it was related only to scrollbar thing, but it's not
 
 <<[[Frame.display()]] redraw, if frm_force_start>>=
 if frame.frm_force_start then begin
@@ -5429,7 +5438,7 @@ end
 %todo: so code setting frm_force_start actually set frm_cursor_x
 % and frm_cursor_y? apparently no code does this, so why
 % this code? for the mouse? that actually set x/y but does not set
-% frm_point? so this is a way to set frm_point from the cursor.
+% frm_point? so this is a way to set frm_point from the cursor?
 % a bit ugly, could do that instead in the mouse handler?
 
 
@@ -7161,6 +7170,7 @@ let backward_screen frame =
   frame.frm_y_offset <- frame.frm_y_offset - frame.frm_height + 2
 @
 %less: seems redundant a bit frm_force_start and frm_redraw no?
+% +2?
 
 <<function Simple.forward_screen>>=
 let forward_screen frame =

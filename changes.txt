@@ -21,6 +21,7 @@ C-s C-w (incomplete though)
 Top|Bot|% for line in status line
 C-u C-space (position history navigation)
 correct order for history of visited buffers
+blinking cursor (using a simple thread)
 
 ** pad's stuff
 scroll other windows
