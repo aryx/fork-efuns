@@ -28,7 +28,11 @@ open Efuns
  * But it's good enough for moving around things quickly at least!
  * It's a good first step.
  *  
- * Called outline_mode.ml so no conflict with pfff/h_files_format/outline.ml
+ * Called outline_mode.ml so no conflict with pfff/h_files_format/outline.ml.
+ * This should be a minor mode that makes some parts of the text as invisible,
+ * but efuns does not (yet?) support those attributes, and so outline
+ * instead is implemented via a new buffer with a special major mode.
+ * If you want a major mode to edit org files use org_mode.ml
  * 
  * 
  * todo:
