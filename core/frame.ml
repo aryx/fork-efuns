@@ -517,6 +517,8 @@ let update_table frame =
 
   iter_line (- frame.frm_y_offset) !current_n !current_line
 (*e: function Frame.update_table *)
+let update_table a = Common.profile_code "Frame.update_table"
+  (fun () -> update_table a)
 
 (*s: function Frame.display *)
 let display top_window frame =
@@ -688,6 +690,8 @@ let display top_window frame =
       (*e: [[Frame.display()]] draw minibuffer request string *)
   (*e: [[Frame.display()]] draw status line or minibuffer *)
 (*e: function Frame.display *)
+let display a = Common.profile_code "Frame.display"
+  (fun () -> display a)
 
 (*****************************************************************************)
 (* Misc  *)

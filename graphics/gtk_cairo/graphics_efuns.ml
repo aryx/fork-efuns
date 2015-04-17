@@ -186,6 +186,17 @@ let pango_layout cr desc =
   Pango.Layout.set_font_description layout desc;
   Pango_cairo.update_layout cr layout;
   layout
+let pango_layout a b =
+  Common.profile_code "G.pango_layout" (fun () -> pango_layout a b)
+
+
+let pango_show_text ly cr str =
+  Pango.Layout.set_text ly  (prepare_string str);
+  Pango_cairo.update_layout cr ly;
+  Pango_cairo.show_layout cr ly
+
+let pango_show_text a b c =
+  Common.profile_code "G.pango_show_text" (fun () -> pango_show_text a b c)
 
 (*****************************************************************************)
 (* Minimap *)
@@ -266,9 +277,7 @@ let draw_minimap w =
           pango_layout cr desc
         end
       in
-      Pango.Layout.set_text ly  (prepare_string str);
-      Pango_cairo.update_layout cr ly;
-      Pango_cairo.show_layout cr ly;
+      pango_show_text ly cr str
 
 (*
   this generate some out_of_memory error when run directly efuns
@@ -284,7 +293,9 @@ let draw_minimap w =
     )
   done;
   ()
-  
+
+let draw_minimap a = Common.profile_code "G.draw_minimap" 
+  (fun () -> draw_minimap a)
 
 let draw_minimap_overlay w =
 
@@ -314,6 +325,9 @@ let draw_minimap_overlay w =
   fill_rectangle_xywh ~alpha:0.2 ~cr ~x ~y ~w:w.metrics.main_width ~h
     ~color:"white" ();
   ()
+
+let draw_minimap_overlay a = Common.profile_code "G.draw_minimap_overlay" 
+  (fun () -> draw_minimap_overlay a)
 
 (*****************************************************************************)
 (* Draw Efuns API *)

@@ -147,6 +147,8 @@ let update_display () =
      graphic.Xdraw.update_display();
   ) 
 (*e: function Top_window.update_display *)
+let update_display () = Common.profile_code "Top_window.update_display" 
+  (fun () -> update_display () )
 
 (*s: function Top_window.clean_display *)
 let clean_display () =
