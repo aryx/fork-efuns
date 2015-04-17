@@ -68,7 +68,11 @@ let color_of_categ categ =
  *)
 let size_of_categ categ =
   match categ with
-  | HC.Entity (_kind, HC.Def2 _) -> 3
+  | HC.Entity (kind, HC.Def2 _) ->
+    (match kind with
+    | E.Field | E.Method | E.ClassConstant | E.Constructor -> 1
+    | _ -> 3
+    )
 
   | HC.CommentSection0 -> 5
   | HC.CommentSection1 -> 4
@@ -78,15 +82,20 @@ let size_of_categ categ =
 
   | _ -> 0
 
-(* for outline *)
+(* for outline, maybe could factorize with level_of_categ *)
 let level_of_categ categ =
   match categ with
-  | HC.CommentSection0 -> 1
+  | HC.CommentSection0 -> 0
 
   (* maybe module def should be 1 too *)
-  | HC.Entity (_kind, HC.Def2 _) -> 2
+  | HC.Entity (kind, HC.Def2 _) -> 
+    (match kind with
+    | E.Field | E.Method | E.ClassConstant | E.Constructor -> 3
+    | _ -> 2
+    )
 
-  | HC.CommentSection1 -> 2
+  | HC.CommentSection1 -> 1
+
   | HC.CommentSection2 -> 2
   | HC.CommentSection3 -> 2
   | HC.CommentSection4 -> 2
