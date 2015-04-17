@@ -729,7 +729,11 @@ let remove_point text p =
         if point == p 
         then points 
         else point :: points
-    ) []
+    ) [];
+  (* being defensive *)
+  p.pos <- -1;
+  p.line <- -1;
+  ()
 (*e: function Text.remove_point *)
 
 (*s: function Text.with_dup_point *)
