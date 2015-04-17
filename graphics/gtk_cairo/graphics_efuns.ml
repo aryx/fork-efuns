@@ -333,7 +333,7 @@ let move_to cr pg col line =
  *)
 
 let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
-(*  pr2 (spf "WX_xterm.clear_eol: %.f %.f %d" col line len); *)
+  (*pr2 (spf "WX_xterm.clear_eol: %.f %.f %d, color = %s" col line len color);*)
   let (_, metrics) = pg in
   let w = metrics.font_width in
   let h = metrics.font_height in
@@ -391,21 +391,6 @@ let draw_string loc cr pg   col line  str  offset len   attr =
   Pango_cairo.show_layout cr ly;
   ()
 
-(*****************************************************************************)
-(* Final view rendering *)
-(*****************************************************************************)
-
-let assemble_layers w =
-  let surface_src = w.base in
-  let cr_final = Cairo.create w.final in
-  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
-  Cairo.set_source_surface cr_final surface_src 0. 0.;
-  Cairo.paint cr_final;
-  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
-  Cairo.set_source_surface cr_final w.overlay 0. 0.;
-  Cairo.paint cr_final;
-  ()
-
 let backend w win = 
   let conv x = float_of_int x in
 
@@ -421,6 +406,7 @@ let backend w win =
       draw_string loc cr pg (conv a) (conv b) c d e f
     );
 
+    (* refresh drawing area *)
     update_display = (fun () -> 
       if !Globals.debug_graphics
       then pr2 ("backend.update_display()");
@@ -435,8 +421,8 @@ let backend w win =
       end;
       draw_minimap_overlay w;
 
-      assemble_layers w;
-      (*GtkBase.Widget.queue_draw win#as_widget;*)
+      (* this will trigger the expose event *)
+      GtkBase.Widget.queue_draw win#as_widget;
     );
   }
 
@@ -449,6 +435,8 @@ let paint () =
   (* this will trigger backend.update_display *)
   Top_window.update_display () 
 
+
+let get_w = ref (fun () -> failwith "no w yet, configure has been called?")
 
 let configure loc top_window desc metrics da ev =
   let width = GdkEvent.Configure.width ev in
@@ -477,6 +465,7 @@ let configure loc top_window desc metrics da ev =
   }
   in
   top_window.graphics <- Some (backend w da); 
+  get_w := (fun () -> w);
 
   let cr = Cairo.create w.base in
   fill_rectangle_xywh ~cr ~x:0. ~y:0. 
@@ -500,9 +489,49 @@ let configure loc top_window desc metrics da ev =
   paint ();
   true
 
+
+
+let assemble_layers w =
+  let surface_src = w.base in
+  let cr_final = Cairo.create w.final in
+  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
+  Cairo.set_source_surface cr_final surface_src 0. 0.;
+  Cairo.paint cr_final;
+  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
+  Cairo.set_source_surface cr_final w.overlay 0. 0.;
+  Cairo.paint cr_final;
+  ()
+
+(* expose should do very little, it should be fast, because
+ * this may be called every second after an update to some
+ * graphics, e.g. the cursor thread
+ *)
 let expose _ev =
-  paint ();
+  let w = !get_w() in
+  assemble_layers w;
   true
+
+(*****************************************************************************)
+(* The cursor *)
+(*****************************************************************************)
+let cnt = ref 0
+let start_cursor_thread () =
+  Thread.create (fun () ->
+    while true do
+      incr cnt;
+      (*pr2 (spf "%d" !cnt);*)
+      Thread.delay 0.5;
+      Globals.with_lock (fun () ->
+        (Globals.location()).top_windows |> List.iter (fun top_window ->
+          if !cnt mod 2 = 0
+          then Top_window.cursor_on top_window
+          else Top_window.cursor_off top_window;
+          let graphic = Efuns.backend top_window in
+          graphic.Xdraw.update_display();
+        )
+      )
+    done
+  ) ()
 
 (*****************************************************************************)
 (* The main UI *)
@@ -538,7 +567,6 @@ let init2 init_files =
   (*-------------------------------------------------------------------*)
 
   let win = GWindow.window ~title:"Efuns" () in
-  let quit () = GMain.Main.quit (); in
 
   (*-------------------------------------------------------------------*)
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
@@ -707,6 +735,7 @@ let init2 init_files =
   (*-------------------------------------------------------------------*)
   (* End *)
   (*-------------------------------------------------------------------*)
+  let cursor_thread = start_cursor_thread() in
 
   GtkSignal.user_handler := (fun exn -> 
     pr2 "fucking callback";
@@ -718,7 +747,10 @@ let init2 init_files =
 *)
     raise exn
   );
-
+  let quit () = 
+    Thread.kill cursor_thread;
+    GMain.Main.quit (); 
+  in
   win#connect#destroy ~callback:quit |> ignore;
   win#show ();
   GMain.main()
