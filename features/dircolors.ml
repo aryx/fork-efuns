@@ -157,6 +157,9 @@ let colorize buf =
     )
   )
 
+let colorize a = Common.profile_code "Dircolors.colorize" 
+  (fun () -> colorize a)
+
 
 let _ = 
   Hook.add_start_hook (fun () ->

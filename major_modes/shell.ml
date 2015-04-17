@@ -124,9 +124,9 @@ let scroll_to_end frame =
   ()
 
 let scroll_until_not_pass_prompt frame =
-  let height = frame.frm_height in
-  let y = frame.frm_y_offset in
-  pr2_gen (height, y);
+  let _height = frame.frm_height in
+  let _y = frame.frm_y_offset in
+  (*pr2_gen (height, y); *)
   ()
 
 (*****************************************************************************)

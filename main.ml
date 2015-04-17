@@ -83,7 +83,7 @@ let main () =
     raise SigInt
   ));
   (*e: [[main()]] set signal handlers *)
-  Arg.parse [
+  Arg.parse ([
     (*s: [[main()]] command line options *)
     "-width"  , Arg.Int (fun i -> width_opt := Some i), "<len>: Width in chars";
     "-height" , Arg.Int (fun i -> height_opt := Some i), "<len>: Height in chars";
@@ -116,7 +116,9 @@ let main () =
       Globals.debug := true;
     ), " for debugging";
     (*e: [[main()]] command line options *)
-   ]
+   ] @  Common2.cmdline_flags_devel ()
+   )
+
    (fun name -> initial_files := name :: !initial_files) 
    usage_str;
   (*s: [[main()]] set options *)
@@ -190,7 +192,9 @@ let main () =
 
 (*s: toplevel Main._ *)
 let _ =
-  main ()
+  Common.main_boilerplate (fun () ->
+    main () 
+  )
 (*e: toplevel Main._ *)
 
 (*e: main.ml *)

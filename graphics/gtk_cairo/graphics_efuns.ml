@@ -735,22 +735,27 @@ let init2 init_files =
   (*-------------------------------------------------------------------*)
   (* End *)
   (*-------------------------------------------------------------------*)
-  let cursor_thread = start_cursor_thread() in
+  let _cursor_thread = start_cursor_thread() in
 
-  GtkSignal.user_handler := (fun exn -> 
-    pr2 "fucking callback";
-    let s = Printexc.get_backtrace () in
-    pr2 s;
-(*
-    let pb = "pb: " ^ Common.exn_to_s exn in
-    G.dialog_text ~text:pb ~title:"pb";
-*)
-    raise exn
-  );
   let quit () = 
-    Thread.kill cursor_thread;
+    (*Thread.kill cursor_thread;*)
     GMain.Main.quit (); 
   in
+
+  GtkSignal.user_handler := (fun exn -> 
+    (match exn with
+    | Common.UnixExit _ -> quit ()
+    | _ ->
+        pr2 "fucking callback";
+        let s = Printexc.get_backtrace () in
+        pr2 s;
+        (*
+          let pb = "pb: " ^ Common.exn_to_s exn in
+          G.dialog_text ~text:pb ~title:"pb";
+        *)
+        raise exn
+    )
+  );
   win#connect#destroy ~callback:quit |> ignore;
   win#show ();
   GMain.main()

@@ -741,6 +741,8 @@ let color buf regexp strict attr =
     buf.buf_modified <- buf.buf_modified + 1
   )
 (*e: function Simple.color *)
+let color a b c d = Common.profile_code "Simple.color" 
+  (fun () -> color a b c d)
 
 (*****************************************************************************)
 (* Points *)

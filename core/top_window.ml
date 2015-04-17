@@ -290,6 +290,7 @@ let handle_key top_window modifiers keysym =
             (Keymap.print_key_list (frame.frm_prefix @ [key])));
         frame.frm_prefix <- [];
     | Failure str -> message top_window str
+    | (Common.UnixExit _) as x -> raise x
     (*x: [[Top_window.handle_key()]] handle exception of try_map *)
     | e -> 
         let str = spf "Uncaught exception %s" (Utils.printexn e) in
