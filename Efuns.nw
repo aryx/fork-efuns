@@ -1921,7 +1921,9 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 
 <<toplevel Main._>>=
 let _ =
-  main ()
+  Common.main_boilerplate (fun () ->
+    main () 
+  )
 @
 
 
@@ -1936,9 +1938,11 @@ let initial_files = ref []
 <<function Main.main>>=
 let main () =
   <<[[main()]] set signal handlers>>
-  Arg.parse [
+  Arg.parse ([
     <<[[main()]] command line options>>
-   ]
+   ] @  Common2.cmdline_flags_devel ()
+   )
+
    (fun name -> initial_files := name :: !initial_files) 
    usage_str;
   <<[[main()]] set options>>
@@ -4585,7 +4589,7 @@ let exit_efuns frame =
   let buffers = Utils.list_of_hash (Globals.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
-    exit 0
+    raise (Common.UnixExit 0)
   )
 @
 %    (*Graphics.close_graph ();*)
@@ -6012,6 +6016,7 @@ let rec get_binding map keylist =
         (Keymap.print_key_list (frame.frm_prefix @ [key])));
     frame.frm_prefix <- [];
 | Failure str -> message top_window str
+| (Common.UnixExit _) as x -> raise x
 @
 
 

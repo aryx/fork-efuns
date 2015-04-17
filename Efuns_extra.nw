@@ -1631,6 +1631,8 @@ let move_forward frame =
 (*****************************************************************************)
 
 <<function Simple.color>>
+let color a b c d = Common.profile_code "Simple.color" 
+  (fun () -> color a b c d)
 
 (*****************************************************************************)
 (* Points *)
@@ -1913,9 +1915,12 @@ let file_hist = ref []
 @
 
 <<constant Select.dont_complete>>=
+(* todo: could use File_type.is_obj_file to unify the treatment of obj file
+ * in C-x C-f and shell
+ *)
 let dont_complete = define_option ["avoid_filenames"] ""
     (list_option string_option) 
-  [ ".*\\.o"; ".*\\.cm.";".*\\.cmxa";".*~";".*\\.a";"core";"\\..*"]
+  [ ".*\\.o$"; ".*\\.cm.$";".*\\.cmxa$";".*~";".*\\.a$";"core$";"\\..*"]
 @
 
 <<constant Select.dont_complete_regexps>>=
