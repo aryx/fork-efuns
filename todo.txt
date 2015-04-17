@@ -68,12 +68,17 @@ see atom, textmate, sublime, and also my project.el
 *** magit mode
 complicated? but at least can be far faster than what I have?
 
+but do not show the stash section in magit!
+
 ** old modes
 
 *** ocaml
 
 **** EASY Typedef Def -> Entity (Type, Def) !!
 so better color for types in efuns and codemap
+
+**** fix indent issues in tuareg mode, put 4 indent sick of it
+or do it in efuns!!
 
 *** eshell
 
@@ -100,7 +105,9 @@ but need understand frm_y_offset
 so they easier to colorize groups with right scope
 
 ** stuff not in emacs
-more visual stuff where escape the terminal-compatibility barrier
+More visual stuff where escape the terminal-compatibility barrier.
+Some of the stuff are actually available as plugins (e.g. autocomplete),
+ but they are complicated and so I might do a better job
 
 *** later: minimap
 
@@ -121,6 +128,10 @@ remote file explorer (fbide remote connect)
 
 *** later: codemap integration?
 
+*** later: try ahupp mural for ocaml? 
+
+*** later: try merlin?
+
 *** visual align-guides like in atom
 just do via overlay? after frm_table has been updated
 just go through all frm_table and look if space?
@@ -131,6 +142,10 @@ look at uemacs/utf8.c code?
 It's in emacs, but it's not clean. It always confused me.
 
 ** stuff in emacs to port
+
+*** indentation
+
+
 
 *** later
 
@@ -176,6 +191,9 @@ maybe clean background with darkslategray before
 
 **** less: put name of current buffer in window title!
 hook? as part of the backend?
+
+**** try howdoi? or codesnippet?
+https://github.com/gleitz/howdoi
 
 ** Internals
 
@@ -225,6 +243,3 @@ attr representation efficient?
 
 *** see my emacs-news.txt? see my .emacs?
 
-*** look at the 7 habits of effective editing talk,
-can implement all the necessary features!
-also there is similar video for sublime!
