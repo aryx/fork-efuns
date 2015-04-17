@@ -225,6 +225,9 @@ let builtin_cd frame s =
   match stat.Unix.st_kind with
   | Unix.S_DIR -> 
       Var.set_local buf pwd_var newdir;
+      (* so C-x C-f and other stuff starts from this directory *)
+      let loc = Globals.location () in
+      loc.loc_dirname <- newdir;
       builtin_ls frame
   | _ -> failwith (spf "%s is not a directory" newdir)
 
