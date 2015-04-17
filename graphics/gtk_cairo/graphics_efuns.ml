@@ -202,18 +202,6 @@ let pango_show_text a b c =
 (* Minimap *)
 (*****************************************************************************)
 
-(* opti to avoid recompute/redraw expensive minimap *)
-let active_frame_info w =
-  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-
-  let line = Text.point_line text frame.frm_start in
-  (* ex: linemax = 400, line = 10 => startpage = 0; line = 410 => page = 1 *)
-  let startpage = line /.. w.metrics.linemax in
-
-  buf.buf_name, Text.version text, startpage
-
 (* minimap, a la Code Thumbnails, Sublime text, or many regular app
  * like powerpoint, Preview, etc where have thumbnails preview.
  * Focus+context!
@@ -245,6 +233,12 @@ let draw_minimap w =
     let line = Text.compute_representation text buf.buf_charreprs i in
     let repr_str = line.Text.repr_string in
     line.Text.boxes |> List.rev |> List.iter (fun box ->
+      (* opti: no need to spend time on long lines, their tail is not
+       * displayed. Useful in eshell buffers with long compilation lines.
+       *)
+      if box.Text.box_col >= 100
+      then () 
+      else  begin
       let h = w.metrics.font_height in
       let x = float_of_int box.Text.box_pos_repr * w.metrics.font_width in
       let line_in_page = i mod w.metrics.linemax in
@@ -289,7 +283,7 @@ let draw_minimap w =
       Cairo.set_font_size cr (38. + 25. * (float_of_int fontsize));
       Cairo.show_text cr (prepare_string str);
 *)
-
+      end
     )
   done;
   ()
@@ -328,6 +322,49 @@ let draw_minimap_overlay w =
 
 let draw_minimap_overlay a = Common.profile_code "G.draw_minimap_overlay" 
   (fun () -> draw_minimap_overlay a)
+
+
+
+
+(* opti to avoid recompute/redraw expensive minimap *)
+let active_frame_info w =
+  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+
+  let line = Text.point_line text frame.frm_start in
+  (* ex: linemax = 400, line = 10 => startpage = 0; line = 410 => page = 1 *)
+  let startpage = line /.. w.metrics.linemax in
+
+  buf.buf_name, Text.version text, startpage
+
+let idle_minimap = ref None
+
+let draw_minimap_when_idle w win =
+  !idle_minimap |> Common.do_option (fun x ->
+    GMain.Timeout.remove x;
+  );
+  idle_minimap := 
+    Some (GMain.Timeout.add ~ms:50 ~callback:(fun () ->
+
+      (* opti: avoid redrawing if nothing was modified and we just moved
+       * the cursor 
+       *)
+      let active_frame = active_frame_info w in
+      if active_frame <> w.last_top_frame_info
+      then begin 
+        (* todo: do in a thread when idle *)
+        draw_minimap w;
+        w.last_top_frame_info <- active_frame;
+      end;
+      draw_minimap_overlay w;
+
+      (* this will trigger the expose event *)
+      GtkBase.Widget.queue_draw win#as_widget;
+      (* avoid double Idle.remove *)
+      idle_minimap := None;
+      false
+    ))
 
 (*****************************************************************************)
 (* Draw Efuns API *)
@@ -425,16 +462,7 @@ let backend w win =
       if !Globals.debug_graphics
       then pr2 ("backend.update_display()");
 
-      (* minimap update *)
-      let active_frame = active_frame_info w in
-      if active_frame <> w.last_top_frame_info
-      then begin 
-        (* todo: do in a thread when idle *)
-        draw_minimap w;
-        w.last_top_frame_info <- active_frame;
-      end;
-      draw_minimap_overlay w;
-
+      draw_minimap_when_idle w win;
       (* this will trigger the expose event *)
       GtkBase.Widget.queue_draw win#as_widget;
     );

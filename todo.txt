@@ -4,14 +4,6 @@
 
 *** small bugs but useful stuff
 
-**** it gets slow in eshell after a make when gets lots
-of long lines. profile? Common.profile?
-
-and also it seems buggy after 2 compilations of efuns, the screen
-just stall.
-
-because Simple.color? want a color_region instead?
-
 **** bug paren_mode does not hide highlight
 and also does not show when hover a paren
 
