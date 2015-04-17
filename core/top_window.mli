@@ -39,6 +39,12 @@ val clear_message : Efuns.top_window -> unit
 
 val mini_message : Efuns.frame -> string -> unit
 
+(* cursor *)
+(* used by cursor thread *)
+val cursor_on: Efuns.top_window -> unit
+val cursor_off: Efuns.top_window -> unit
+
+
 (* misc *)
 val wrap : Efuns.top_window -> (Efuns.top_window -> unit) -> unit -> unit
 val check_abort : 'a -> 'b
