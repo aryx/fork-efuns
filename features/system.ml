@@ -5,8 +5,12 @@ open Unix
 
 type end_action = (Efuns.buffer -> int -> unit)
 
+(* Takes pwd in parameter. The alternative is to do
+ * a Unix.chdir just before the command.
+ *)
+
 (*s: function System.open_process *)
-let open_process cmd =
+let open_process pwd cmd =
   let (in_read, in_write) = pipe() in
   let (out_read, out_write) = pipe() in
   let inchan = in_channel_of_descr in_read in
@@ -25,6 +29,8 @@ let open_process cmd =
         close in_write 
       end;
       List.iter close [in_read;out_write];
+      (* I prefer to do it here than in the caller *)
+      Sys.chdir pwd;
       execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
       (*      exit 127 *)
   | pid -> 
@@ -34,8 +40,8 @@ let open_process cmd =
 (*e: function System.open_process *)
 
 (*s: function System.system *)
-let system buf_name cmd end_action =
-  let (pid,inc,outc) = open_process cmd in
+let system pwd buf_name cmd end_action =
+  let (pid,inc,outc) = open_process pwd cmd in
   let text = Text.create "" in
   let curseur = Text.new_point text in
   let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
@@ -108,13 +114,13 @@ let system buf_name cmd end_action =
 (*e: function System.system *)
 
 (*s: function System.start_command *)
-let start_command buf_name window cmd end_action_opt =
+let start_command pwd buf_name window cmd end_action_opt =
   let end_action =
     match end_action_opt with
     | None  -> (fun _buf _status -> ())
     | Some f -> f
   in
-  let buf = system buf_name cmd end_action in
+  let buf = system pwd buf_name cmd end_action in
   let frame = Frame.create window None buf in
   frame
 (*e: function System.start_command *)
@@ -125,7 +131,8 @@ let shell_hist = ref []
 (*s: function System.shell_command *)
 let shell_command frame =
   Select.select_string frame "Run command:" shell_hist "" (fun cmd -> 
-    start_command "*Command*" (Multi_frames.cut_frame frame) cmd |> ignore)
+    let pwd = (Globals.location()).loc_dirname in
+    start_command pwd "*Command*" (Multi_frames.cut_frame frame) cmd |> ignore)
 (*e: function System.shell_command *)
   
 (*e: features/system.ml *)

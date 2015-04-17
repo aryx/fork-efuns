@@ -40,6 +40,7 @@ module FT = File_type
 (* Helpers *)
 (*****************************************************************************)
 
+(* pwd of the shell buffer *)
 let pwd_var = Local.create_string "pwd_var"
 let pwd buf =
   Var.get_local buf pwd_var
@@ -253,7 +254,7 @@ let run_cmd frame cmd =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
-  let (pid,inc,outc) = System.open_process cmd in
+  let (pid,inc,outc) = System.open_process (pwd buf) cmd in
   let loc = Globals.location () in
 
   let end_action buf _s = 

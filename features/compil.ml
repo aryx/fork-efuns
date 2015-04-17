@@ -195,9 +195,8 @@ let compile frame =
             then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
-      Unix.chdir cdir;
       let comp_frame = 
-        System.start_command "*Compile*" comp_window cmd 
+        System.start_command cdir "*Compile*" comp_window cmd 
         (Some (fun buf _status -> color_buffer buf))
       in
       Frame.active frame;
@@ -255,8 +254,8 @@ let grep frame =
             then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
-      Unix.chdir cdir;
-      let comp_frame = System.start_command "*Grep*" comp_window cmd None in
+      let comp_frame = System.start_command cdir "*Grep*" comp_window cmd None
+      in
       Frame.active frame;
       let buf = comp_frame.frm_buffer in
       let error_point = Text.new_point buf.buf_text in
