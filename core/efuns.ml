@@ -137,6 +137,12 @@ and major_mode = {
 
     mutable maj_hooks : (buffer -> unit) list;
     mutable maj_vars : Local.vars;
+
+    (* another customization is the syntax table! don't forget
+     * to call Ebuffer.create_syntax_table and modify
+     * buf.buf_syntax_table otherwise you'll modify
+     * the shared syntax table
+     *)
   }
 (*e: type Efuns.major_mode *)
 

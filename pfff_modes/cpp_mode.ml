@@ -57,7 +57,9 @@ let cpp_color_buffer buf =
 
 let install buf =
   cpp_color_buffer buf; 
-  buf.buf_syntax_table.(Char.code '_') <- true;
+  let tbl = Ebuffer.create_syntax_table () in
+  buf.buf_syntax_table <- tbl;
+  tbl.(Char.code '_') <- true;
   ()
 
 let mode =  Ebuffer.new_major_mode "C" [install]

@@ -336,9 +336,11 @@ let key_return frame =
 let install buf =
   (* loc_dirname should be the dirname of the file in active frame *)
   Var.set_local buf pwd_var  (Globals.location()).loc_dirname;
-  buf.buf_syntax_table.(Char.code '_') <- true;
-  buf.buf_syntax_table.(Char.code '-') <- true;
-  buf.buf_syntax_table.(Char.code '.') <- true;
+  let tbl = Ebuffer.create_syntax_table () in
+  buf.buf_syntax_table <- tbl;
+  tbl.(Char.code '_') <- true;
+  tbl.(Char.code '-') <- true;
+  tbl.(Char.code '.') <- true;
   display_prompt buf;
   let text = buf.buf_text in
   Text.set_position text buf.buf_point (Text.size text);

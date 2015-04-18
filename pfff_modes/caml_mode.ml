@@ -69,8 +69,11 @@ let caml_color_buffer buf =
 
 let install buf =
   caml_color_buffer buf; 
-  buf.buf_syntax_table.(Char.code '_') <- true;
-  buf.buf_syntax_table.(Char.code '\'') <- true;
+  let tbl = Ebuffer.create_syntax_table () in
+  buf.buf_syntax_table <- tbl;
+  tbl.(Char.code '_') <- true;
+  tbl.(Char.code '\'') <- true;
+  tbl.(Char.code '.') <- false;
   ()
 
 let mode =  Ebuffer.new_major_mode "Caml" [install]

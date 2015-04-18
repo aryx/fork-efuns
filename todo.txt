@@ -7,10 +7,6 @@
 **** bug paren_mode does not hide highlight
 and also does not show when hover a paren
 
-**** ./efuns from eshell
-
-**** use realpath? so C-n does a better job?
-
 *** small features but useful stuff
 
 **** 4 cols Tabs, better when edit plan9 .nw files
@@ -137,8 +133,6 @@ It's in emacs, but it's not clean. It always confused me.
 
 *** indentation
 
-
-
 *** later
 
 **** rectangles!!! how can it be called emacs
@@ -186,6 +180,10 @@ hook? as part of the backend?
 
 **** try howdoi? or codesnippet?
 https://github.com/gleitz/howdoi
+
+*** misc
+
+**** use realpath? so C-n does a better job?
 
 ** Internals
 
