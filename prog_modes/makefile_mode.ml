@@ -76,7 +76,7 @@ open Keymap (* c_c *)
 let _ =
   if !!local_map = [] then
     local_map =:= [
-      [c_c; ControlMap, Char.code 'c'], "makefile_mode.compile";    
+      [c_c; ControlMap, Char.code 'c'], "compile";    
       [ControlMap, Char.code 'l'], "makefile_mode.color_buffer";
      (*  [NormalMap, XK.xk_Tab], "insert_tab"; *)
     ];
@@ -101,7 +101,7 @@ let _ =
 (*e: toplevel Makefile_mode._2 *)
 
 (*s: toplevel Makefile_mode._3 *)
-let _ =
+let setup_maps () =
   let map = mode.maj_map in
   !!local_map |> List.iter (fun (keys, action) ->
       try
@@ -127,6 +127,7 @@ let _ =
 let _ = 
   (* Keymap.add_prefix mode.maj_map [c_c];   *)
   Hook.add_start_hook (fun () ->
+    setup_maps();
     let alist = Var.get_global Ebuffer.modes_alist in
     Var.set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
     
