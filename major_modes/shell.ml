@@ -250,11 +250,27 @@ let builtin_v frame s =
 (* Interpreter *)
 (*****************************************************************************)
 
+let pid_external = ref None
+
+let kill_external frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  match !pid_external with
+  | None ->  
+      failwith "No external process to kill"
+  | Some pid ->
+      Unix.kill pid 9;
+      Text.insert_at_end text (spf "Killed %d, signal 9" pid);
+      display_prompt buf
+      
+  
+
 let run_cmd frame cmd =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
   let (pid,inc,outc) = System.open_process (pwd buf) cmd in
+  pid_external := Some pid;
   let loc = Globals.location () in
 
   let end_action buf _s = 
@@ -275,8 +291,11 @@ let run_cmd frame cmd =
             Text.insert_at_end text (spf "Exited with status %d" s); 
             close_in inc;
             close_out outc;
+            pid_external := None;
             (try end_action buf s with _ -> ())
-        | _ -> Text.insert_at_end text "Broken pipe" 
+        | _ -> 
+          Text.insert_at_end text "Broken pipe";
+          display_prompt buf
         );
         finished := true;
       end
@@ -393,4 +412,6 @@ let _ =
       Simple.end_of_file frame;
       scroll_to_end frame;
     );
+    Keymap.add_binding map [Keymap.c_c; (ControlMap, Char.code 'k')] 
+      kill_external;
   )
