@@ -98,6 +98,11 @@ but need understand frm_y_offset
 **** could make AST at least where parenized correctly,
 so they easier to colorize groups with right scope
 
+*** makefile
+
+**** outline! and more colors for big sections
+regexp = ****\n* [^\n]+\n****
+
 ** stuff not in emacs
 More visual stuff where escape the terminal-compatibility barrier.
 Some of the stuff are actually available as plugins (e.g. autocomplete),

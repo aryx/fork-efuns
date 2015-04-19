@@ -171,9 +171,14 @@ Why? Because I think it makes you a better programmer if
 you fully understand how things work under the hood.
 
 % I chose efuns, an emacs clone, simple, elegant. Also different language
-% than previous books. Written in ocaml! more high level than C, and while
+% than previous books. Written in Ocaml! more high level than C, and while
 % you want to write a kernel in C, it makes more sense for an app
-% to use a higher level language like ocaml!
+% to use a higher level language like Ocaml!
+
+%%Good to vary a bit, not always C, and code written by the same people.
+%%Help also to explore concepts for Editor.nw.
+%%(or actually might become Editor.nw) 
+%%(or actually in the end I might actually switch to efuns!!)
 
 Here are other candidates that were considered but ultimately discarded:
 \begin{itemize}
@@ -217,15 +222,15 @@ Here are other candidates that were considered but ultimately discarded:
 
 % better stuff now in efuns than in emacs:
 % - pfff-based modes highlighters
+%   * better colors (more colors to differentiate different kinds of idents)
+%   * correct colors (e.g. no need %$ trick for noweb)
 % - minimap
 % - f in eshell that does not list object files
 % - lefessant: find makefile automatically in parent dir in M-x compile
 % - working syntax tables for my different modes for the word separation
+% - dircolors also in eshell and compile/grep buffers
 
-%Good to vary a bit, not always C, and code written by the same people.
-%Help also to explore concepts for Editor.nw.
-%(or actually might become Editor.nw) 
-%(or actually in the end I might actually switch to efuns!!)
+
 
 \section{Getting started}
 
@@ -5531,8 +5536,8 @@ mutable top_name : string;
 <<[[Top_window.cursor_on()]] set top window name>>=
 let name = frame.frm_buffer.buf_name in
 if name <> top_window.top_name then begin
-  Common.pr2_once "Top_window.top_apply#setWM_NAME";
-  (* top_window.top_appli#setWM_NAME name; *)
+  let graphic = Efuns.backend top_window in
+  graphic.Xdraw.update_window_title name;
   top_window.top_name <- name
 end;
 @
@@ -9053,6 +9058,12 @@ and major_mode = {
 
     mutable maj_hooks : (buffer -> unit) list;
     mutable maj_vars : Local.vars;
+
+    (* another customization is the syntax table! don't forget
+     * to call Ebuffer.create_syntax_table and modify
+     * buf.buf_syntax_table otherwise you'll modify
+     * the shared syntax table
+     *)
   }
 @
 
@@ -9504,26 +9515,27 @@ let shell_hist = ref []
 <<function System.shell_command>>=
 let shell_command frame =
   Select.select_string frame "Run command:" shell_hist "" (fun cmd -> 
-    start_command "*Command*" (Multi_frames.cut_frame frame) cmd |> ignore)
+    let pwd = (Globals.location()).loc_dirname in
+    start_command pwd "*Command*" (Multi_frames.cut_frame frame) cmd |> ignore)
 @
 
 
 <<function System.start_command>>=
-let start_command buf_name window cmd end_action_opt =
+let start_command pwd buf_name window cmd end_action_opt =
   let end_action =
     match end_action_opt with
     | None  -> (fun _buf _status -> ())
     | Some f -> f
   in
-  let buf = system buf_name cmd end_action in
+  let buf = system pwd buf_name cmd end_action in
   let frame = Frame.create window None buf in
   frame
 @
 
 
 <<function System.system>>=
-let system buf_name cmd end_action =
-  let (pid,inc,outc) = open_process cmd in
+let system pwd buf_name cmd end_action =
+  let (pid,inc,outc) = open_process pwd cmd in
   let text = Text.create "" in
   let curseur = Text.new_point text in
   let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
@@ -9588,7 +9600,7 @@ let system buf_name cmd end_action =
 
 
 <<function System.open_process>>=
-let open_process cmd =
+let open_process pwd cmd =
   let (in_read, in_write) = pipe() in
   let (out_read, out_write) = pipe() in
   let inchan = in_channel_of_descr in_read in
@@ -9607,6 +9619,8 @@ let open_process cmd =
         close in_write 
       end;
       List.iter close [in_read;out_write];
+      (* I prefer to do it here than in the caller *)
+      Sys.chdir pwd;
       execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
       (*      exit 127 *)
   | pid -> 
@@ -9708,8 +9722,8 @@ let grep frame =
             then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
-      Unix.chdir cdir;
-      let comp_frame = System.start_command "*Grep*" comp_window cmd None in
+      let comp_frame = System.start_command cdir "*Grep*" comp_window cmd None
+      in
       Frame.active frame;
       let buf = comp_frame.frm_buffer in
       let error_point = Text.new_point buf.buf_text in
@@ -9769,9 +9783,8 @@ let compile frame =
             then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
-      Unix.chdir cdir;
       let comp_frame = 
-        System.start_command "*Compile*" comp_window cmd 
+        System.start_command cdir "*Compile*" comp_window cmd 
         (Some (fun buf _status -> color_buffer buf))
       in
       Frame.active frame;

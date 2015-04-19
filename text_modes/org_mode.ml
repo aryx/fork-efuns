@@ -13,7 +13,6 @@
  * license.txt for more details.
  *)
 open Efuns
-module PI = Parse_info
 
 (*****************************************************************************)
 (* Prelude *)
@@ -24,6 +23,9 @@ module PI = Parse_info
  * alt: could use the highlighter from pfff in lang_text/org_mode.ml there
  * but it adds a dependency to pfff and this file anyway is not that big.
  * We can reproduce its functionality here and tailor it more for efuns.
+ *
+ * todo:
+ *  - C-M-up and down, to move around sections
  *)
 
 
@@ -37,6 +39,7 @@ module PI = Parse_info
 (* map length( '*' ) -> color *)
 let colors = [|
   "impossible_color_0_indexed";
+
   "coral";
   "orange";
   "LimeGreen";
@@ -67,13 +70,16 @@ let color_buffer_and_set_outlines buf =
         let lvl = len_stars in
         Common.push (lvl, Text.dup_point text point) outline_points;
 
+        (* just highlight the last star, like in org mode *)
         for _i = 0 to len_stars - 2 do
           let attr = Text.make_attr (Attr.get_color "black") 1 0 false in
           Text.set_attr text point attr;
           Text.fmove text point 1;
         done;
         Text.fmove text point 1;
-        (*Text.fmove text point (len_stars+1); *)
+        (* old: Text.fmove text point (len_stars+1); 
+         * but already did some fmove before so just have to fmove 1
+         *)
       done
 
     with Not_found -> ()

@@ -1031,10 +1031,12 @@ let rec region text p1 p2 =
 let search_forward text regexp point =
   let gsize = text.gsize in
   let gap_end = text.gpoint.pos + gsize in
+
   if point.pos = text.gpoint.pos 
   then point.pos <- gap_end;
   if point.pos < gap_end 
   then clean_text text;
+
   let gap_end = text.gpoint.pos + gsize in  
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.pos in
@@ -1052,10 +1054,12 @@ let replace_matched text repl =
 let search_forward_matched text regexp point =
   let gsize = text.gsize in
   let gap_end = text.gpoint.pos + gsize in
+
   if point.pos = text.gpoint.pos 
   then point.pos <- gap_end;
   if point.pos < gap_end 
   then clean_text text;
+
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.pos in
   let pos = 
@@ -1071,10 +1075,12 @@ let search_forward_matched text regexp point =
 let search_forward_groups text regexp point groups =
   let gsize = text.gsize in
   let gap_end = text.gpoint.pos + gsize in
+
   if point.pos = text.gpoint.pos 
   then point.pos <- gap_end;
   if point.pos < gap_end 
   then clean_text text;
+
   let gap_end = text.gpoint.pos + gsize in  
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.pos in

@@ -12,7 +12,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
  * license.txt for more details.
  *)
-open Common
 open Efuns
 
 module E = Entity_code
@@ -52,7 +51,7 @@ type ('ast, 'token) for_helper = {
 (* dupe of pfff/code_map/draw_microlevel.ml *)
 let color_of_categ categ =
   let attrs = Highlight_code.info_of_category categ in
-  attrs +> Common.find_some (fun attr ->
+  attrs |> Common.find_some (fun attr ->
     match attr with
     | `FOREGROUND s 
     | `BACKGROUND s (* todo: should really draw the background of the text *)
