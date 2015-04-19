@@ -234,6 +234,7 @@ let builtin_cd frame s =
 
 let builtin_v frame s =
   let buf = frame.frm_buffer in
+  let text = buf.buf_text in
 
   let dir = pwd buf in
   let file = 
@@ -241,7 +242,9 @@ let builtin_v frame s =
     then Filename.concat dir s
     else s
   in
+  Text.insert_at_end text (spf "Visiting %s" s);
   display_prompt buf;
+
   Multi_buffers.set_previous_frame frame;
   Frame.load_file frame.frm_window file |> ignore
   
@@ -309,6 +312,7 @@ let run_cmd frame cmd =
   ) () |> ignore
 
 let interpret frame s =
+ try 
   (* very rudimentary parsing, hmm *)
   (match s with
 
@@ -323,7 +327,15 @@ let interpret frame s =
   | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
 
   (* file editing *)
-  | _ when s =~ "v[ ]+\\(.*\\)" -> builtin_v frame (Common.matched1 s)
+  | _ when s =~ "v[ ]+\\(.*\\)" -> 
+    builtin_v frame (Common.matched1 s);
+    Simple.end_of_file frame;
+  (* do not scroll_to_end() here! Indeed this will change frm_start
+   * and frm_y_offset, but only frm_start is saved in the
+   * buffer, and so a restore to the eshell buffer will have a wrong
+   * frm_start.
+   *)
+    raise Exit
 
   (* general case *)
   | cmd -> run_cmd frame cmd
@@ -331,6 +343,7 @@ let interpret frame s =
   Simple.end_of_file frame;
   scroll_to_end frame;
   ()
+ with Exit -> ()
 
 (*****************************************************************************)
 (* Keys *)
