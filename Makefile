@@ -85,6 +85,7 @@ SRC=\
  ipc/server.ml \
  \
  std_efunsrc.ml\
+ pad.ml\
  $(BACKENDDIR)/graphics_efuns.ml \
  main.ml \
 
