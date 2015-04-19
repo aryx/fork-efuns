@@ -2,11 +2,13 @@
 
 (* creation *)
 
-(* this will also make the new frame the top active frame *)
+(* this will also make the new frame the top active frame, and
+ * kill all the previous frames that were in the window.
+ *)
 val create : 
   Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
-(* not top active frame *)
 
+(* without_top means does not make the frame the top active frame *)
 val create_without_top :
   Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
 (* alias for create_without_top *)

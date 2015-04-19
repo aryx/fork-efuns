@@ -1,5 +1,7 @@
 -*- org -*-
 
+* Last
+
 ** small
 
 *** small bugs but useful stuff
@@ -62,7 +64,7 @@ but do not show the stash section in magit!
 
 *** org mode
 
-maybe highlight the EASY in bigger size
+**** maybe highlight the EASY in bigger size, the TODO
 
 *** ocaml
 
@@ -70,7 +72,7 @@ maybe highlight the EASY in bigger size
 so better color for types in efuns and codemap
 
 **** fix indent issues in tuareg mode, put 4 indent sick of it
-or do it in efuns!!
+do it in efuns!! finally!
 
 *** eshell
 
