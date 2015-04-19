@@ -108,8 +108,8 @@ let cursor_on top_window =
   (*s: [[Top_window.cursor_on()]] set top window name *)
   let name = frame.frm_buffer.buf_name in
   if name <> top_window.top_name then begin
-    Common.pr2_once "Top_window.top_apply#setWM_NAME";
-    (* top_window.top_appli#setWM_NAME name; *)
+    let graphic = Efuns.backend top_window in
+    graphic.Xdraw.update_window_title name;
     top_window.top_name <- name
   end;
   (*e: [[Top_window.cursor_on()]] set top window name *)

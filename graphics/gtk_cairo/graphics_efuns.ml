@@ -442,7 +442,7 @@ let draw_string loc cr pg   col line  str  offset len   attr =
   Pango_cairo.show_layout cr ly;
   ()
 
-let backend w win = 
+let backend w da top_gtk_win = 
   let conv x = float_of_int x in
 
   let cr = Cairo.create w.base in
@@ -462,9 +462,12 @@ let backend w win =
       if !Globals.debug_graphics
       then pr2 ("backend.update_display()");
 
-      draw_minimap_when_idle w win;
+      draw_minimap_when_idle w da;
       (* this will trigger the expose event *)
-      GtkBase.Widget.queue_draw win#as_widget;
+      GtkBase.Widget.queue_draw da#as_widget;
+    );
+    update_window_title = (fun s ->
+      top_gtk_win#set_title s
     );
   }
 
@@ -480,7 +483,8 @@ let paint () =
 
 let get_w = ref (fun () -> failwith "no w yet, configure has been called?")
 
-let configure loc top_window desc metrics da ev =
+let configure loc top_window desc metrics da top_gtk_win =
+ fun ev ->
   let width = GdkEvent.Configure.width ev in
   let height = GdkEvent.Configure.height ev in
 
@@ -506,7 +510,7 @@ let configure loc top_window desc metrics da ev =
     last_top_frame_info = ("", -1, -1);
   }
   in
-  top_window.graphics <- Some (backend w da); 
+  top_window.graphics <- Some (backend w da top_gtk_win); 
   get_w := (fun () -> w);
 
   let cr = Cairo.create w.base in
@@ -699,7 +703,7 @@ let init2 init_files =
 *)
 
     da#event#connect#configure 
-      ~callback:(configure loc top_window desc metrics da) |> ignore;
+      ~callback:(configure loc top_window desc metrics da win) |> ignore;
     da#event#connect#expose ~callback:(expose) |> ignore;
 
     (*-------------------------------------------------------------------*)
