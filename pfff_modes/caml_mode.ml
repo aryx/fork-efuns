@@ -14,6 +14,7 @@
  *)
 open Common
 open Options
+
 open Efuns
 module PI = Parse_info
 
@@ -45,7 +46,7 @@ let funcs = { Pfff_modes.
 (* Colors *)
 (*****************************************************************************)
 
-let caml_color_buffer buf =
+let color_buffer buf =
   let s = Text.to_string buf.buf_text in
   (* we need to keep the extension because Parse_ml.parse behaves
    * differently on ml and mli files
@@ -68,7 +69,7 @@ let caml_color_buffer buf =
 (*****************************************************************************)
 
 let install buf =
-  caml_color_buffer buf; 
+  color_buffer buf; 
   let tbl = Ebuffer.create_syntax_table () in
   buf.buf_syntax_table <- tbl;
   tbl.(Char.code '_') <- true;

@@ -48,6 +48,7 @@
 % - TODO how the mark get changed when you do big move?
 % - TODO the global vs local variables, I always get confused about
 %    local variables in emacs
+% - syntax table and the word specification
 
 %history LP-ization:
 % - skeleton, mostly copy paste of Template.nw skeleton
@@ -217,8 +218,9 @@ Here are other candidates that were considered but ultimately discarded:
 % better stuff now in efuns than in emacs:
 % - pfff-based modes highlighters
 % - minimap
-% - f that does not list object files
+% - f in eshell that does not list object files
 % - lefessant: find makefile automatically in parent dir in M-x compile
+% - working syntax tables for my different modes for the word separation
 
 %Good to vary a bit, not always C, and code written by the same people.
 %Help also to explore concepts for Editor.nw.
@@ -7158,6 +7160,7 @@ let backward_paragraph buf point =
     Text.fmove text point 1
   with Not_found -> Text.set_position text point 0
 @
+% so simple regexp :)
 
 <<function Simple.forward_paragraph>>=
 let forward_paragraph buf point =
@@ -7730,7 +7733,8 @@ let blit str text point len =
    );
   len
 @
-% why need clean_text?
+% why need clean_text? because the gap can contain undefined
+% chars! clean_text will set the gap content to 0000 everywhere.
 
 <<function Text.region>>=
 let rec region text p1 p2 =
@@ -8023,6 +8027,8 @@ let clean_text text =
 % when we move the gap we blit but we should reset the content
 % of the gap so that search function still works.
 
+%TODO: but the Str search function will manage this special value?????
+
 \subsection{Helpers}
 
 <<constant Search.last_search>>=
@@ -8185,10 +8191,12 @@ let update_request frame request =
 let search_forward text regexp point =
   let gsize = text.gsize in
   let gap_end = text.gpoint.pos + gsize in
+
   if point.pos = text.gpoint.pos 
   then point.pos <- gap_end;
   if point.pos < gap_end 
   then clean_text text;
+
   let gap_end = text.gpoint.pos + gsize in  
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.pos in
@@ -8202,10 +8210,12 @@ let search_forward text regexp point =
 let search_forward_matched text regexp point =
   let gsize = text.gsize in
   let gap_end = text.gpoint.pos + gsize in
+
   if point.pos = text.gpoint.pos 
   then point.pos <- gap_end;
   if point.pos < gap_end 
   then clean_text text;
+
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.pos in
   let pos = 
@@ -8221,10 +8231,12 @@ let search_forward_matched text regexp point =
 let search_forward_groups text regexp point groups =
   let gsize = text.gsize in
   let gap_end = text.gpoint.pos + gsize in
+
   if point.pos = text.gpoint.pos 
   then point.pos <- gap_end;
   if point.pos < gap_end 
   then clean_text text;
+
   let gap_end = text.gpoint.pos + gsize in  
   let string = text.text_string in
   let pos = Str.search_forward regexp string point.pos in

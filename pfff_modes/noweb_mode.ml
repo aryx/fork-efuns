@@ -42,7 +42,7 @@ let funcs = { Pfff_modes.
 (* Colors *)
 (*****************************************************************************)
 
-let noweb_color_buffer buf =
+let color_buffer buf =
   let s = Text.to_string buf.buf_text in
   Common2.with_tmp_file ~str:s ~ext:"c" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
@@ -53,7 +53,7 @@ let noweb_color_buffer buf =
 (*****************************************************************************)
 
 let install buf =
-  noweb_color_buffer buf; 
+  color_buffer buf; 
   let tbl = Ebuffer.create_syntax_table () in
   buf.buf_syntax_table <- tbl;
   (* true in code usually, not necesseraly for tex itself, but have

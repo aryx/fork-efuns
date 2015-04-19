@@ -85,7 +85,13 @@ let size_of_categ categ =
 (* for outline, maybe could factorize with level_of_categ *)
 let level_of_categ categ =
   match categ with
-  | HC.CommentSection0 -> 0
+  | HC.CommentSection0 -> 1
+
+  | HC.CommentSection1 -> 2
+
+  | HC.CommentSection2 -> 3
+  | HC.CommentSection3 -> 4
+  | HC.CommentSection4 -> 5
 
   (* maybe module def should be 1 too *)
   | HC.Entity (kind, HC.Def2 _) -> 
@@ -94,12 +100,7 @@ let level_of_categ categ =
     | _ -> 2
     )
 
-  | HC.CommentSection1 -> 1
-
-  | HC.CommentSection2 -> 2
-  | HC.CommentSection3 -> 2
-  | HC.CommentSection4 -> 2
-
+  (* should be max_int? *)
   | _ -> 0
 
 

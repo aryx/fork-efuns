@@ -80,6 +80,7 @@ SRC=\
  \
  text_modes/tex_mode.ml\
  text_modes/html_mode.ml\
+ text_modes/org_mode.ml\
  \
  ipc/server.ml \
  \

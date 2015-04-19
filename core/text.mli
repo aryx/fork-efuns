@@ -137,6 +137,9 @@ val unset_attrs : t -> unit
 
 (* search *)
 
+(* the point is modified as a side effect to point to the start of the
+ * matched regexp.
+ *)
 val search_forward : t -> Str.regexp -> point -> delta
 val search_backward : t -> Str.regexp -> point -> delta
 

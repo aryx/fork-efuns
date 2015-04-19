@@ -4,10 +4,12 @@
 
 *** small bugs but useful stuff
 
-**** bug paren_mode does not hide highlight
-and also does not show when hover a paren
+**** TODO bug paren_mode does not hide highlight
 
 *** small features but useful stuff
+
+**** TODO show when hover a paren
+quite useful indeed
 
 **** 4 cols Tabs, better when edit plan9 .nw files
 
@@ -43,15 +45,13 @@ because of layout?
 
 ** new modes
 
-*** org mode
-.org outline mode, simple one
-but pfff has one too
-
-so will have minimap over my todos :) 
-can maybe highlight the EASY in bigger size
-
 *** later: project.ml
 see atom, textmate, sublime, and also my project.el
+
+so can have fuzzy file finder?
+and fuzzy file search?
+or do it based on graph_code.marshall?
+and provide completion a la codemap!!
 
 *** magit mode
 complicated? but at least can be far faster than what I have?
@@ -59,6 +59,10 @@ complicated? but at least can be far faster than what I have?
 but do not show the stash section in magit!
 
 ** old modes
+
+*** org mode
+
+maybe highlight the EASY in bigger size
 
 *** ocaml
 

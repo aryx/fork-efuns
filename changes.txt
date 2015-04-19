@@ -2,6 +2,8 @@
 
 * 0.20 (Q2 2015)
 
+** a new Org module
+
 ** a new Outline module
 
 ** compilation mode
