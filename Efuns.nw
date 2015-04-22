@@ -122,7 +122,8 @@
 
 \begin{document}
 
-\title{{\Huge Principia Softwarica: The Text Editor Efuns}\\{version 0.1}}
+\title{{\Huge The Text Editor Efuns}\\{version 0.1}}
+%PSica
 
 \author{
 Yoann Padioleau\\
@@ -228,7 +229,7 @@ Here are other candidates that were considered but ultimately discarded:
 % - f in eshell that does not list object files
 % - lefessant: find makefile automatically in parent dir in M-x compile
 % - working syntax tables for my different modes for the word separation
-% - dircolors also in eshell and compile/grep buffers
+% - dircolors also in eshell and compile/grep buffers :) actually quite nice!
 
 
 
@@ -8822,6 +8823,7 @@ let active frame =
 [c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
 [c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
 @
+% a bit like fork! and then can use C-x b to exec :)
 
 <<frame managment actions>>=
 (* C-x map *)
