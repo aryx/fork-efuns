@@ -1,6 +1,17 @@
 
+\chapter{Hello}
+
+\section{And welcome}
 
 <<foo>>=
 this is some text
 <<and some nested chunk>>
+
+but this should not be considered << a nested chunk.
 @
+
+Here is some [[noweb]] entities.
+
+\section{[[this should not be colored as an entity though]]}
+Because section coloring should have priority.
+
