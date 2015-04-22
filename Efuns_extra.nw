@@ -4517,6 +4517,8 @@ let efuns_property = "_EFUNS_SERVER"
 
 
 \subsection*{[[misc/efuns_filebrowser.ml]]}
+% in some sense codemap is a more fancy variant of this efuns_filebrowser,
+% a special "speedbar"
 
 <<constant Efuns_filebrowser.argv>>=
 let argv = Array.to_list Sys.argv
