@@ -6,7 +6,9 @@ With contributions from:
     * buffer_menu (C-M-Tab and C-M-l)
     * eshell (poor's man version, M-1, M-2, ...)
     * outline (poor's man version, C-M-1, C-M-2, ...)
-    * org (poor's man version)
-    * pfff-based modes for ocaml, C, noweb/tex
-    * minimap instead of scrollbar (a la Sublime Text)
-    * goal column, C-s C-w, M-down/up/right/left scrolling, etc
+    * org mode (poor's man version)
+    * pfff-based modes for ocaml, C, noweb/tex (colors, outlines)
+    * minimap instead of scrollbar (a la Sublime Text), with bigger font
+      for important (outline) stuff (a la Code Thumbnails)
+    * emacs behavior port: goal column, C-s C-w, M-w, Top|Bot|%, ...
+    * pad's stuff M-down/up/right/left scrolling, M-x gtd

@@ -101,14 +101,16 @@
 
 \title{
 {\Huge 
-Principia Softwarica: Plan9 XXX
+XXX
 }\\
 {version 0.1}
 }
 
 \author{
 Yoann Padioleau\\
-\texttt{yoann.padioleau@gmail.com}
+\texttt{yoann.padioleau@gmail.com}\\
+with code from\\
+XXX and YYY
 }
 
 \maketitle 
@@ -164,7 +166,7 @@ Here are other candidates that were considered but ultimately discarded:
 
 \section{Copyright}
 
-Most of this document is actually source code from Plan9, so
+Most of this document is actually source code from XXX, so
 those parts are copyright by Lucent Technologies Inc.
 The prose is mine and is licensed under the GNU Free Documentation
 License.

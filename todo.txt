@@ -22,8 +22,6 @@ lots of different behaviors to fix,
 e.g. C-g in minibuffer, second Tab in completion, Up/Down keeping bool,
 C-x C-f and / should start display
 
-**** C-y in replace query
-
 **** C-x C-f listing is just 2 cols not sorted correctly,
 use the same thing I did for eshell?
 
@@ -71,7 +69,7 @@ but do not show the stash section in magit!
 **** EASY Typedef Def -> Entity (Type, Def) !!
 so better color for types in efuns and codemap
 
-**** fix indent issues in tuareg mode, put 4 indent sick of it
+**** !!!! fix indent issues in tuareg mode, put 4 indent sick of it
 do it in efuns!! finally!
 
 *** eshell
@@ -106,7 +104,7 @@ regexp = ****\n* [^\n]+\n****
 ** stuff not in emacs
 More visual stuff where escape the terminal-compatibility barrier.
 Some of the stuff are actually available as plugins (e.g. autocomplete),
- but they are complicated and so I might do a better job
+ but they are complicated and so I might do a better job for myself.
 
 *** later: minimap
 
@@ -142,7 +140,7 @@ It's in emacs, but it's not clean. It always confused me.
 
 ** stuff in emacs to port
 
-*** indentation
+*** !!indentation!!
 
 *** later
 
@@ -156,7 +154,7 @@ or use the multi-cursor thing of sublime text?
 **** make save_hook to recolor, anyway good
 to do syntactic check to prepare for running make
 
-**** still? want incremental coloring! or save_hook good enough?
+**** still? want incremental coloring! 
 font-lock is complicated 
 maybe look at his ancestor? hilit19?
 just do after-modif-hook and try to colorize the whole buffer.

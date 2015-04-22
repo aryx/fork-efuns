@@ -90,6 +90,10 @@ let set_source_color ?(alpha=1.) ~cr ~color () =
 (*let re_space = Str.regexp "^[ ]+$"*)
 
 (* !does side effect on the (mutable) string! *)
+(* the code below is necessary when using the (limited/buggy) toy cairo text
+ * api. It seems also necessary when using pango as I get some
+ * Pango warning about UTF-8 characters and ugly display.
+ *)
 let prepare_string s = 
 (*  if s ==~ re_space then  s ^ s (* double it *) else  *)
   begin

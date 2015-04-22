@@ -2,19 +2,21 @@
 
 * 0.20 (Q2 2015)
 
-** a new Org module
+** a new Org mode
 
-** a new Outline module
+** a new Outline mode
+with special support for pfff-based modes
 
 ** compilation mode
-working M-x compile, with colors, C-n
-(and internally using variables rather than major mode interactives patches)
+working M-x compile, with colors, with C-n working (for ocaml errors)
+and internally using variables rather than major mode interactives patches
 
 ** shell mode
-better ls in eshell, multi cols, correctly sorted
+better ls in eshell, multi cols, correctly sorted, hiding object files
 
-** a new minimap (a la Sublime Text, code thumbnails in visual studio, etc)
-with variable font size for important entities (for pfff-based major modes)
+** a new minimap (a la Sublime Text)
+with variable font size for important entities 
+(a la Code thumbnails of visual studio) for pfff-based major modes
 
 ** adjustments to emacs behavior
 M-w (copy_region)
@@ -33,23 +35,25 @@ buffer menu C-M-Tab, C-M-l and right order
 - split efuns.ml and simple.ml in many more modules
 - add more .mli
 - more use of with_dup_point, with_new_point, with_session
+- lots of renaming to make it easier to explain things in Efuns.nw
 
 * 0.19 (Q1 2015)
 
-** a new Dircolors module
+** fork efuns (after 15 years), and port it to gtk/cairo
+also use pfff/commons/simple_color.ml for emacs style color names
 
-** a new Buffer_menu module
+** a new Dircolors module (based on my dircolors.el plugin for emacs)
 
-** a new (eshell inspired) Shell module
+** a new Buffer_menu mode
+
+** a new (eshell inspired) Shell mode
 
 ** new programming language major modes using pfff for parsing
-for Caml, C/C++, and TeX/Noweb
+for Caml, C/C++, and TeX/Noweb, with correct and more highlightings
+for identifiers (e.g. differentiate fields from parameters from locals).
 
 ** adjustments to emacs behavior
 - maintain a "goal column" when goes up and down in a file, similar to emacs
-
-** port to gtk/cairo
-- also use pfff/commons/simple_color.ml for emacs style color names
 
 ** refactoring
 

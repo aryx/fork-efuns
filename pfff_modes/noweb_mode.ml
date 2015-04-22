@@ -22,6 +22,8 @@ module PI = Parse_info
 (*
  * Using the TeX/Noweb parser and highlighters in pfff (used for codemap)
  * for efuns.
+ *
+ * todo: look at tex_mode.mll? some good ideas? useful keys?
  *)
 
 (*****************************************************************************)

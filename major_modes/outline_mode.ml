@@ -18,27 +18,29 @@ open Efuns
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-(* A poor's man outline mode.
+(* A (poor's man) outline mode.
  *   
- * I call it a poor's man outline because we actually generate
- * a new buffer. You can move, and when you switch back
- * it goes back to the previous buffer at the adjusted place.
- * But you can't really copy paste, move things around, or
+ * I call it "poor's man" because we actually generate
+ * a new buffer; you can move in this new buffer, and when you switch back
+ * it goes back to the previous buffer at the adjusted place,
+ * but you can't really copy paste, move things around, or
  * even edit the outline headers.
- * But it's good enough for moving around things quickly at least!
+ * But it's good enough for navigating around quickly at least!
  * It's a good first step.
  *  
- * Called outline_mode.ml so no conflict with pfff/h_files_format/outline.ml.
- * This should be a minor mode that makes some parts of the text as invisible,
- * but efuns does not (yet?) support those attributes, and so outline
- * instead is implemented via a new buffer with a special major mode.
- * If you want a major mode to edit org files use org_mode.ml
- * 
- * 
+ * The file is named outline_mode.ml to no conflict with 
+ * pfff/h_files_format/outline.ml.
+ *
  * todo:
- *  - do a regexp-based outliner
+ *  - This should be a minor mode that makes some parts of the text as
+ *    invisible. We can use one bit of make_attr for that. Then
+ *    compute_representation or update_table needs to be modified to
+ *    take into account this attribute.
+ *  - do a regexp-based outliner in addition to the pfff-based one.
  *    let regexp = Str.regexp "\\(\\input\\|\\section\\|\\subsection\\|\\subsubsection\\|\\chapter\\)[*]?{\\([^}]+\\)}"
  *    look efuns_textbrowser
+
+ * Note that if you want a major mode to edit org files use org_mode.ml
  * 
  * conventions: I use orig/origin and outl/outline to talk about the original
  * buffer and outl for the outline buffer.
@@ -57,9 +59,11 @@ type outline_points = (level * Text.point) list
 type outline_origin_points =
     string (* original buf_name *) * Text.point array (* line number -> point *)
 
+(* variable in the origin buffer *)
 let (outline_var: outline_points Local.var) = 
   Local.create_abstr "outline_var"
 
+(* variable in the outline buffer *)
 let (outline_origin: outline_origin_points Local.var) = 
   Local.create_abstr "outline_origin"
 
@@ -182,6 +186,7 @@ let _ =
   Hook.add_start_hook (fun () ->
     Action.define_action "outline_num" outline_num;
 
+    (* will use keypressed global to differentiate *)
     Keymap.add_global_key [ControlMetaMap, Char.code '1'] 
       "outline_num" outline_num;
     Keymap.add_global_key [ControlMetaMap, Char.code '2'] 

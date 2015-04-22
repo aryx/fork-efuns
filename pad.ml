@@ -7,7 +7,19 @@ open Efuns
 
 let _ =
   Hook.add_start_hook (fun () ->
+
+    (* special functions *)
+
     Keymap.define_interactive_action "gtd" (fun frame ->
       Frame.load_file frame.frm_window "/home/pad/mobile/GTD/gtd.org" |> ignore
-    )  
+    );
+
+    (* ~/.login like *)
+    Unix.putenv "PFFF_HOME" "/home/pad/pfff";
+    Unix.putenv "PATH" (
+       "/home/pad/.opam/4.01.0/bin:" ^
+        (Unix.getenv "PATH") ^ 
+       ":/home/pad/bin"
+     );
+    
   )
