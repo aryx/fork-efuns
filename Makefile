@@ -33,6 +33,7 @@ COMMONCMA=$(LIBROOT)/pfff-commons/lib.cma
 PFFF_LIBS=\
  config\
  external-jsonwheel\
+ h_visualization\
  h_files-format\
  h_program-lang \
  matcher\
