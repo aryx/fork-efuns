@@ -2533,7 +2533,7 @@ match () with
 
 % text.ml
 
-\section{Gap buffer}
+\section{The gap buffer}
 
 %from guide.txt:
 %The Text.t type implements a gap-buffer. A gap-buffer is a buffer with
@@ -10305,7 +10305,9 @@ let escaped s =
   ss
 @
 
-\section{Colored files and directories}
+\section{Colored filenames}
+% and directories
+% dircolors.ml
 
 \section{Transforming}
 % maybe move in extra features?
