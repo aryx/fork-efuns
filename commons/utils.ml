@@ -426,21 +426,28 @@ let load_directory filename =
 (* This function format filenames so that directory names end with / *)
 let normal_name curdir filename =
   let fullname = 
-    if Filename.is_relative filename then
-      Filename.concat curdir filename
-    else
-      filename
+    if Filename.is_relative filename 
+    then Filename.concat curdir filename
+    else filename
   in
   let rec iter name list level =
     let b = Filename.basename name in
     let d = Filename.dirname name in
-    if b = "." || b = "" then 
-      if d = "/" || d = "." then list else
-        iter d list level else
-    if b = ".." then iter d list (level+1) else
-    if b = "/" then list else
-    if level > 0 then iter d list (level-1) else
-      iter d (b :: list) 0
+    if b = "." || b = "" 
+    then 
+      if d = "/" || d = "." 
+      then list 
+      else iter d list level 
+    else
+      if b = ".." 
+      then iter d list (level+1) 
+      else
+        if b = "/" 
+        then list 
+        else
+          if level > 0 
+          then iter d list (level-1) 
+          else iter d (b :: list) 0
   in
   let list = iter fullname [] 0 in
   match list with
