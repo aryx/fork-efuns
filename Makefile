@@ -46,6 +46,8 @@ endif
 
 ifeq ($(USE_PFFF),0)
 COMMONS_PFFF_ML=commons/common.ml commons/file_type.ml commons/simple_color.ml
+COBJS=commons/realpath.o
+CFLAGS=-I$(LIBROOT)/ocaml
 endif
 
 # gtk/cairo, only working backend available right now
@@ -180,13 +182,13 @@ all:: $(CMIS) $(PROGS)
 opt: $(PROGS:=.opt)
 
 # need -linkall!
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) $(COBJS)
 	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ \
-      $(LIBS) $(GTKLOOP) $(OBJS)
+      $(LIBS) $(GTKLOOP) $(OBJS) $(COBJS)
 
-$(TARGET).opt: $(OPTOBJS) 
+$(TARGET).opt: $(OPTOBJS) $(COBJS)
 	$(OCAMLOPT) $(STATIC) -cclib -L/opt/X11/lib -o $@ \
-      $(LIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $(OPTOBJS)
+      $(LIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $(OPTOBJS) $(COBJS)
 
 #clean::
 #	@rm -f $(OBJS) $(OBJS:.cmo=.cmi) $(OBJS:.cmo=.cmx) $(OBJS:.cmo=.o) \
