@@ -116,7 +116,8 @@ let main () =
       Globals.debug := true;
     ), " for debugging";
     (*e: [[main()]] command line options *)
-   ] @  Common2.cmdline_flags_devel ()
+   ] 
+   (* @  Common2.cmdline_flags_devel () *)
    )
 
    (fun name -> initial_files := name :: !initial_files) 
