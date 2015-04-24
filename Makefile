@@ -1,6 +1,7 @@
 #############################################################################
 # Configuration section
 #############################################################################
+-include Makefile.config
 
 #############################################################################
 # Variables
@@ -10,10 +11,59 @@ TOP=$(shell pwd)
 TARGET=efuns
 PROGS=$(TARGET) efuns_client
 
-BACKENDDIR=graphics/gtk_cairo
+#------------------------------------------------------------------------------
+#package dependencies
+#------------------------------------------------------------------------------
+
+LIBROOT=$(shell ocamlc -where)/..
+#/Users/pad/.opam/4.01.0/lib/
+
+# pfff
+ifeq ($(USE_PFFF),1)
+PFFF_MODES=\
+ pfff_modes/pfff_modes.ml\
+ pfff_modes/caml_mode.ml\
+ pfff_modes/cpp_mode.ml\
+ pfff_modes/noweb_mode.ml\
+
+COMMONDIR=$(LIBROOT)/pfff-commons
+COMMONCMA=$(LIBROOT)/pfff-commons/lib.cma
+
+# many dirs are here just because of -linkall
+PFFF_LIBS=\
+ config\
+ external-jsonwheel\
+ h_files-format\
+ h_program-lang \
+ matcher\
+ lang_ml lang_ml-visual \
+ lang_cpp lang_cpp-analyze \
+ lang_nw lang_nw-analyze \
+
+PFFFDIRS=$(PFFF_LIBS:%=$(LIBROOT)/pfff-%/)
+PFFFCMAS=$(PFFFDIRS:%=%/lib.cma)
+endif
+
+ifeq ($(USE_PFFF),0)
+COMMONS_PFFF_ML=commons/common.ml commons/file_type.ml commons/simple_color.ml
+endif
+
+# gtk/cairo, only working backend available right now
+GRAPHICSDIRS=$(LIBROOT)/lablgtk2 $(LIBROOT)/cairo
+GRAPHICSLIBS=lablgtk.cma cairo.cma   cairo_lablgtk.cma pango_cairo.cma
+GTKLOOP=gtkThread.cmo
+#alt:
+#BACKENDDIR=graphics/ocamlgraphics
+#OTHERSYSLIBS=graphics.cma
+#$(shell ocamlfind query cairo)
+
+
+#------------------------------------------------------------------------------
+# Main variables
+#------------------------------------------------------------------------------
 
 SRC=\
- commons/simple_color.ml\
+ $(COMMONS_PFFF_ML) \
  \
  commons/utils.ml commons/str2.ml\
  commons/log.ml\
@@ -73,10 +123,7 @@ SRC=\
  prog_modes/c_mode.ml\
  prog_modes/lisp_mode.ml\
  \
- pfff_modes/pfff_modes.ml\
- pfff_modes/caml_mode.ml\
- pfff_modes/cpp_mode.ml\
- pfff_modes/noweb_mode.ml\
+ $(PFFF_MODES) \
  \
  text_modes/tex_mode.ml\
  text_modes/html_mode.ml\
@@ -106,42 +153,6 @@ CMIS=\
  features/simple.cmi\
  features/select.cmi\
  features/search.cmi\
-
-#------------------------------------------------------------------------------
-#package dependencies
-#------------------------------------------------------------------------------
-
-LIBROOT=/Users/pad/.opam/4.01.0/lib/
-
-GRAPHICSDIRS=$(LIBROOT)/lablgtk2 $(LIBROOT)/cairo
-GRAPHICSLIBS=lablgtk.cma cairo.cma   cairo_lablgtk.cma pango_cairo.cma
-GTKLOOP=gtkThread.cmo
-#alt:
-#BACKENDDIR=graphics/ocamlgraphics
-#OTHERSYSLIBS=graphics.cma
-#$(shell ocamlfind query cairo)
-
-COMMONDIR=$(LIBROOT)/pfff-commons
-COMMONCMA=$(LIBROOT)/pfff-commons/lib.cma
-
-# many dirs are here just because of -linkall
-PFFF_LIBS=\
- config\
- external-jsonwheel\
- h_files-format\
- h_program-lang \
- matcher\
- lang_ml lang_ml-visual \
- lang_cpp lang_cpp-analyze \
- lang_nw lang_nw-analyze \
-
-PFFFDIRS=$(PFFF_LIBS:%=$(LIBROOT)/pfff-%/)
-PFFFCMAS=$(PFFFDIRS:%=%/lib.cma)
-
-
-#------------------------------------------------------------------------------
-# Main variables
-#------------------------------------------------------------------------------
 
 SYSLIBS=unix.cma str.cma threads.cma nums.cma bigarray.cma
 
