@@ -2,7 +2,7 @@ Fabrice Le Fessant (most of the code)
 
 With contributions from:
  - Yoann Padioleau 
-    * dircolors
+    * dircolors (see C-x C-f TAB)
     * buffer_menu (C-M-Tab and C-M-l)
     * eshell (poor's man version, M-1, M-2, ...)
     * outline (poor's man version, C-M-1, C-M-2, ...)
