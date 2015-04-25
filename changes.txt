@@ -7,6 +7,9 @@
 ** a new Outline mode
 with special support for pfff-based modes
 
+** code navigation a la Tags (M-.) 
+but using pfff code database instead of TAGS file
+
 ** compilation mode
 working M-x compile, with colors, with C-n working (for ocaml errors)
 and internally using variables rather than major mode interactives patches
