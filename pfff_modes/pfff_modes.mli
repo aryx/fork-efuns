@@ -21,3 +21,10 @@ type ('ast, 'token) for_helper = {
 val colorize_and_set_outlines: 
   ('ast, 'token) for_helper -> Efuns.buffer -> Common.filename ->
   unit
+
+(* maintain some dir -> db information *)
+val load_database_code: Efuns.action
+val load_graph_code: Efuns.action
+
+val goto_def: Efuns.action
+

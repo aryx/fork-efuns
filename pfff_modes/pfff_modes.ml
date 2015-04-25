@@ -12,17 +12,20 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
  * license.txt for more details.
  *)
+open Common
 open Efuns
 
 module E = Entity_code
 module HC = Highlight_code
 module PI = Parse_info
+module Db = Database_code
 
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-(* Common code to the different pfff-based efuns programming language modes,
- * for coloring, and for outline.
+(* 
+ * Common code to the different pfff-based efuns programming language modes,
+ * for coloring, outline, tags, ...
  * 
  * todo: 
  *  - indentation, 
@@ -45,7 +48,7 @@ type ('ast, 'token) for_helper = {
 }
 
 (*****************************************************************************)
-(* Helpers *)
+(* Highlight and outline *)
 (*****************************************************************************)
 
 (* dupe of pfff/code_map/draw_microlevel.ml *)
@@ -148,3 +151,101 @@ let colorize_and_set_outlines funcs buf file =
   in
   Var.set_local buf Outline_mode.outline_var outline_points;
   ()
+
+
+(*****************************************************************************)
+(* Database_code *)
+(*****************************************************************************)
+
+let dir_to_db = ref []
+
+let load_database_code frame =
+  Select.select_filename frame "Load database code file: " (fun file ->
+    let dir = Filename.dirname file in
+    let db = Database_code.load_database file in
+    let entities = 
+      Database_code.files_and_dirs_and_sorted_entities_for_completion 
+        ~threshold_too_many_entities:250000 db
+    in
+    let idx = Big_grep.build_index entities in
+    Common.push (dir, (db, dir, entities, idx)) dir_to_db
+  )
+
+
+let db_for_frame _frame =
+  (* todo: look for loc_dirname, try to find a matching one,
+   * if not then try to load one automatically,
+   * if not then ask user for a db
+   *)
+  List.hd !dir_to_db |> snd
+
+let def_hist = ref []
+
+let goto_def frame =
+  let (db, root, entities, _idx) = db_for_frame frame in
+
+  let xs = entities |> List.map (fun e -> 
+    if e.Db.e_fullname = "" 
+    then e.Db.e_name, e
+    else e.Db.e_fullname, e
+  )
+  in
+  let h = Common.hash_of_list xs in
+  let ys = xs |> List.map fst in
+
+  Select.select frame "Def for: " def_hist ""
+    (fun _ -> ys)
+    (fun s -> s)
+    (fun str -> 
+      let e = Hashtbl.find h str in
+      let file = Filename.concat root e.Db.e_file in
+      let new_frame = Frame.load_file frame.frm_window file in
+      let pt = new_frame.frm_point in
+      let text = new_frame.frm_buffer.buf_text in
+      let re_str = (spf "\\b%s\\b" e.Db.e_name) in
+      try 
+        Text.search_forward text (Str.regexp re_str) pt |> ignore
+      with Not_found ->
+        failwith (spf "Could not find entity %s (with re = %s)" 
+                    e.Db.e_name re_str)
+    )
+
+(* todo: 
+ * - fuzzy file finder
+ * - fuzzy entity finder
+ * - start from what is under the cursor
+ * - correct jump to right place in the file
+ * - inline completion in the text
+ *)
+
+
+(*****************************************************************************)
+(* Graph_code *)
+(*****************************************************************************)
+
+let dir_to_graph = ref []
+
+let load_graph_code frame =
+  Select.select_filename frame "Load graph file: " (fun file ->
+    let dir = Filename.dirname file in
+    let g = Graph_code.load file in
+    Common.push (dir, g) dir_to_graph
+  )
+
+
+(*****************************************************************************)
+(* Setup *)
+(*****************************************************************************)
+
+let setup () =
+  Keymap.define_interactive_action "load_database_code" load_database_code;
+  Keymap.define_interactive_action "load_graph_code" load_graph_code;
+  Keymap.add_global_key [MetaMap, Char.code '.'] 
+    "goto_def" goto_def;
+  ()
+
+
+let _ =
+  Hook.add_start_hook (fun () ->
+    setup()
+  )

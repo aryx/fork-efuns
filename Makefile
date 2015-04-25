@@ -26,23 +26,23 @@ PFFF_MODES=\
  pfff_modes/cpp_mode.ml\
  pfff_modes/noweb_mode.ml\
 
-COMMONDIR=$(LIBROOT)/pfff-commons
-COMMONCMA=$(LIBROOT)/pfff-commons/lib.cma
-
 # many dirs are here just because of -linkall
 PFFF_LIBS=\
+ commons\
  config\
  external-jsonwheel\
  h_visualization\
  h_files-format\
  h_program-lang \
+ commons-graph \
+ graph_code \
  matcher\
  lang_ml lang_ml-visual \
  lang_cpp lang_cpp-analyze \
  lang_nw lang_nw-analyze \
 
 PFFFDIRS=$(PFFF_LIBS:%=$(LIBROOT)/pfff-%/)
-PFFFCMAS=$(PFFFDIRS:%=%/lib.cma)
+PFFFCMAS=$(LIBROOT)/ocamlgraph/ocamlgraph.cma $(PFFFDIRS:%=%/lib.cma) 
 endif
 
 ifeq ($(USE_PFFF),0)
@@ -159,7 +159,6 @@ LIBS=$(SYSLIBS) $(COMMONCMA) $(PFFFCMAS) $(GRAPHICSLIBS)
 # we don't want files to compile against commons/simple_color.ml
 # but instead to compile against pfff-h_visualization/simple_color.cmi
 INCLUDEDIRS=\
-  $(COMMONDIR) \
   $(PFFFDIRS) \
   commons\
   core features\
