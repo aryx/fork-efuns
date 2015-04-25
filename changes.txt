@@ -43,7 +43,7 @@ buffer menu C-M-Tab, C-M-l and right order
 * 0.19 (Q1 2015)
 
 ** fork efuns (after 15 years), and port it to gtk/cairo
-also use pfff/commons/simple_color.ml for emacs style color names
+also use pfff/h_visualization/simple_color.ml for emacs style color names
 
 ** a new Dircolors module (based on my dircolors.el plugin for emacs)
 
