@@ -126,6 +126,7 @@ remote file explorer (fbide remote connect)
 *** later: codemap integration?
 
 *** later: try ahupp mural for ocaml? 
+still need? efuns.opt not fast enough to "serve" tags?
 
 *** later: try merlin?
 
