@@ -112,7 +112,8 @@
 % Config
 %------------------------------------------------------------------------------
 \allcodefalse
-% used for redundant copyrights, pad special keybindings
+% used for redundant copyrights, pad special keybindings,
+%  the mostly boilerplate of buffer_action vs frame_action
 
 %\setcounter{tocdepth}{1}
 
@@ -230,6 +231,7 @@ Here are other candidates that were considered but ultimately discarded:
 % - lefessant: find makefile automatically in parent dir in M-x compile
 % - working syntax tables for my different modes for the word separation
 % - dircolors also in eshell and compile/grep buffers :) actually quite nice!
+% - can use threads to program extensions! e.g. cursor blinking was easy.
 
 
 
@@ -711,6 +713,8 @@ mutable buf_start : Text.point;
 %note: it's not really current position fields, it's more saved
 % position fields
 
+%FIGURE: with start and current illustration
+
 % there are also a list of points maintained by the Text itself, why?
 % because of the gap things can move so you need to update all
 % the points. See section on Points later.
@@ -967,6 +971,9 @@ and window_up =
 % this makes the structures mutually recursive!
 % from a top_window -> window and can get back the top_window back
 
+%FIGURE: illustration of how get from frame to window and back
+% from window to another frame, or even to the top_window information.
+% Window acts as an intermediate.
 
 <<function Window.create>>=
 let create mini up_window xpos ypos width height =
@@ -1075,7 +1082,7 @@ type location =
     (* key is buffer name (made unique via get_unique_name()) *)
     mutable loc_buffers : (string, buffer) Hashtbl.t;
     (* key is filename (should be unique? todo: use realpath?) *)
-    mutable loc_files : (string, buffer) Hashtbl.t;
+    mutable loc_files : (Common.filename, buffer) Hashtbl.t;
 
     (* list when have one efuns running multiple top windows *)
     mutable top_windows : top_window list;
@@ -1135,7 +1142,10 @@ let location () =
 <<[[Ebuffer.create()]] adjust location global fields>>=
 Hashtbl.add (Globals.location()).loc_buffers name buf;
 @
-
+%less: what about loc_files? Ebuffer.create can be passed
+% a Some file, in which case we should perhaps modify
+% loc_files in Ebuffer.create (instead of doing it in
+% the caller each time)
 
 
 
@@ -1187,6 +1197,9 @@ exception FoundFrame of frame
 % with find_buffer_opt
 
 \section{[[Action]] and [[actions]]}
+
+% have seen the data mostly, loc, frame, buffer, text.
+% now how modify all of that? the control?
 
 <<type Efuns.action>>=
 and action = frame -> unit
@@ -1240,11 +1253,13 @@ let define_action action_name action_fun =
   Hashtbl.add actions action_name (FrameAction action_fun)
 @
 
+\ifallcode
 <<function Efuns.define_buffer_action>>=
 let define_buffer_action action_name action_fun =
   <<sanity check action defined twice>>
   Hashtbl.add actions action_name (BufferAction action_fun)
 @
+\fi
 
 <<sanity check action defined twice>>=
 (try 
@@ -1279,6 +1294,7 @@ let execute_action action =
 % and then we can't in -debug find the action_name corresponding
 % to an action in try_map, hence my rewrite.
 
+\ifallcode
 % exec_named_buf_hooks -> <>
 <<function Efuns.execute_buffer_action>>=
 let execute_buffer_action action buf =
@@ -1287,6 +1303,7 @@ let execute_buffer_action action buf =
   | FrameAction _f -> 
       Globals.error "Can't apply action %s on buffer" action
 @
+\fi
 
 
 <<function Keymap.dummy_action>>=
@@ -1389,6 +1406,11 @@ define_action "change_font"  Complexe.change_font;
 
 
 \section{Keyboard [[Map]]}
+
+% have seen ocaml code corresponding to actions
+% but how trigger those actions? via keyboard! binding!
+
+
 % keyboard handling is important for an editor!
 % different possibilities:
 %  - emacs spirit: combos, prefix maps, minibuffer for multi entries
@@ -1778,6 +1800,7 @@ let get_var buf var =
 @
 
 % can't understand yet everything (so move it later??)
+% but this is an action! it takes a frame!
 <<function Complex.get_variable>>=
 let describe_variable frame = 
   Select.select frame "get_variable : " variable_hist "" 
@@ -1934,6 +1957,7 @@ let _ =
     main () 
   )
 @
+%remove Common.main_boilerplate for explanation?
 
 
 % init files are not the .efunsrc, but the first set of files to open
@@ -1963,7 +1987,7 @@ let main () =
   <<[[main()]] run the UI>>
   ()
 @
-
+% Common2.cmdline_flags_devel for -profile?
 
 
 
