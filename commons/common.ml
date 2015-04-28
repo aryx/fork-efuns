@@ -109,7 +109,7 @@ let save_excursion reference newv f =
   reference := newv;
   finalize f (fun _ -> reference := old;)
 
-let memoized ?(use_cache=true) h k f =
+let memoized (*?(use_cache=true)*) use_cache h k f =
   if not use_cache
   then f ()
   else
@@ -174,6 +174,7 @@ let pr2_once s = xxx_once pr2 s
  * By Richard W.M. Jones (rich@annexia.org).
  * dumper.ml 1.2 2005/02/06 12:38:21 rich Exp
  *)
+(*
 open Obj
 
 let rec dump2 r =
@@ -255,11 +256,13 @@ let rec dump2 r =
 let dump v = dump2 (repr v)
 
 (* end of dumper.ml *)
+*)
 
 (*
 let (dump : 'a -> string) = fun x ->
   Dumper.dump x
 *)
+let dump _x = "dump:TODO"
 
 let pr2_gen x = pr2 (dump x)
 
@@ -378,12 +381,15 @@ let profile_diagnostic () =
 
 
 let report_if_take_time timethreshold s f =
+  failwith "TODO: report_if_take_time, float_of_int"
+(*
   let t = Unix.gettimeofday () in
   let res = f () in
   let t' = Unix.gettimeofday () in
   if (t' -. t  > float_of_int timethreshold)
   then pr2 (Printf.sprintf "Note: processing took %7.1fs: %s" (t' -. t) s);
   res
+*)
 
 let profile_code2 category f =
   profile_code category (fun () ->
@@ -429,6 +435,8 @@ let write_value valu filename =
 (*****************************************************************************)
 (* Arguments/options and command line (cocci and acomment) *)
 (*****************************************************************************)
+
+(*
 
 (*
  * todo? isn't unison or scott-mcpeak-lib-in-cil handles that kind of
@@ -490,10 +498,10 @@ let arg_align2 xs =
   Arg.align xs +> List.rev +> drop 2 +> List.rev
 
 
-let short_usage usage_msg  ~short_opt =
+let short_usage usage_msg  (*~*)short_opt =
   usage usage_msg short_opt
 
-let long_usage  usage_msg  ~short_opt ~long_opt  =
+let long_usage  usage_msg  (*~*)short_opt (*~*)long_opt  =
   pr usage_msg;
   pr "";
   let all_options_with_title =
@@ -594,6 +602,7 @@ let mk_action_4_arg f =
 
 let mk_action_n_arg f = f
 
+*)
 (*****************************************************************************)
 (* Equality *)
 (*****************************************************************************)
@@ -724,7 +733,7 @@ let _memo_compiled_regexp = Hashtbl.create 101
 let candidate_match_func s re =
   (* old: Str.string_match (Str.regexp re) s 0 *)
   let compile_re =
-    memoized _memo_compiled_regexp re (fun () -> Str.regexp re)
+    memoized true _memo_compiled_regexp re (fun () -> Str.regexp re)
   in
   Str.string_match compile_re s 0
 
@@ -777,7 +786,7 @@ let filename_without_leading_path prj_path s =
     failwith
       (spf "cant find filename_without_project_path: %s  %s" prj_path s)
 
-let readable ~root s =
+let readable (*~*)root s =
   filename_without_leading_path root s
 
 let is_directory file =
@@ -799,7 +808,7 @@ let command2 s = ignore(Sys.command s)
 
 exception CmdError of Unix.process_status * string
 
-let process_output_to_list2 ?(verbose=false) command =
+let process_output_to_list2 (*?(verbose=false)*) verbose command =
   let chan = Unix.open_process_in command in
   let res = ref ([] : string list) in
   let rec process_otl_aux () =
@@ -811,8 +820,8 @@ let process_output_to_list2 ?(verbose=false) command =
   with End_of_file ->
     let stat = Unix.close_process_in chan in (List.rev !res,stat)
 
-let cmd_to_list ?verbose command =
-  let (l,exit_status) = process_output_to_list2 ?verbose command in
+let cmd_to_list (*?*)verbose command =
+  let (l,exit_status) = process_output_to_list2 (*?*)verbose command in
   match exit_status with
   | Unix.WEXITED 0 -> l
   | _ -> raise (CmdError (exit_status,
@@ -842,7 +851,7 @@ let read_file file =
   close_in ic;
   buf
 
-let write_file ~file s =
+let write_file (*~*)file s =
   let chan = open_out file in
   (output_string chan s; close_out chan)
 
@@ -866,7 +875,9 @@ let realpath path =
  * want put the cache_computation funcall in comment, so just easier to
  * pass this extra option.
  *)
-let cache_computation2 ?(verbose=false) ?(use_cache=true) file ext_cache f =
+let cache_computation2 
+(*?(verbose=false) ?(use_cache=true) file ext_cache f *)
+ verbose use_cache file ext_cache f =
   if not use_cache
   then f ()
   else begin
@@ -890,9 +901,9 @@ let cache_computation2 ?(verbose=false) ?(use_cache=true) file ext_cache f =
       end
     end
   end
-let cache_computation ?verbose ?use_cache a b c =
+let cache_computation (*?*)verbose (*?*)use_cache a b c =
   profile_code "Common.cache_computation" (fun () ->
-    cache_computation2 ?verbose ?use_cache a b c)
+    cache_computation2 (*?*)verbose (*?*)use_cache a b c)
 
 
 (* emacs/lisp inspiration (eric cooper and yaron minsky use that too) *)
@@ -932,7 +943,7 @@ let (with_open_infile: filename -> ((in_channel) -> 'a) -> 'a) = fun file f ->
  *
  * question: can we have a signal and so exn when in a exn handler ?
  *)
-let timeout_function ?(verbose=false) timeoutval = fun f ->
+let timeout_function (*?(verbose=false)*) verbose timeoutval = fun f ->
   try
     begin
       Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Timeout ));
@@ -1241,7 +1252,7 @@ let files_of_dir_or_files_no_vcs_nofilter xs =
       let cmd = (spf "find %s '%s' -noleaf -type f %s"
             (arg_symlink()) x grep_dash_v_str) in
       let (xs, status) =
-        cmd_to_list_and_status cmd in
+        cmd_to_list_and_status false cmd in
       (match status with
       | Unix.WEXITED 0 -> xs
       | _ -> raise (CmdError (status,
@@ -1256,5 +1267,7 @@ let files_of_dir_or_files_no_vcs_nofilter xs =
 (* Maps *)
 (*****************************************************************************)
 
+(*
 module SMap = Map.Make (String)
 type 'a smap = 'a SMap.t
+*)

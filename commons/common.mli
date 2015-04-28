@@ -51,7 +51,7 @@ type path = string
 
 val cat :      filename -> string list
 
-val write_file : file:filename -> string -> unit
+val write_file : (*file:*)filename -> string -> unit
 val read_file : filename -> string
 
 val with_open_outfile : 
@@ -61,9 +61,9 @@ val with_open_infile :
 
 exception CmdError of Unix.process_status * string
 val command2 : string -> unit
-val cmd_to_list :  ?verbose:bool -> string -> string list (* alias *)
+val cmd_to_list :  (*?verbose:*)bool -> string -> string list (* alias *)
 val cmd_to_list_and_status:
-  ?verbose:bool -> string -> string list * Unix.process_status
+  (*?verbose:*)bool -> string -> string list * Unix.process_status
 
 val null : 'a list -> bool
 val exclude : ('a -> bool) -> 'a list -> 'a list
@@ -120,7 +120,7 @@ val partition_either3 :
     ('a -> ('b, 'c, 'd) either3) -> 'a list -> 'b list * 'c list * 'd list
 
 
-
+(*
 type arg_spec_full = Arg.key * Arg.spec * Arg.doc
 type cmdline_options = arg_spec_full list
 
@@ -139,9 +139,9 @@ val usage : Arg.usage_msg -> cmdline_options -> unit
  * list of command line switches.
  *)
 val short_usage : 
-  Arg.usage_msg -> short_opt:cmdline_options -> unit
+  Arg.usage_msg -> (*short_opt:*)cmdline_options -> unit
 val long_usage : 
-  Arg.usage_msg -> short_opt:cmdline_options -> long_opt:cmdline_sections -> 
+  Arg.usage_msg -> (*short_opt:*)cmdline_options -> (*long_opt:*)cmdline_sections -> 
   unit
 
 (* With the options_with_title way, we don't want the default -help and --help
@@ -177,6 +177,7 @@ val do_action:
 val action_list: 
   cmdline_actions -> Arg.key list
 
+*)
 
 (* if set then will not do certain finalize so faster to go back in replay *)
 val debugger : bool ref
@@ -189,13 +190,13 @@ val finalize :       (unit -> 'a) -> (unit -> 'b) -> 'a
 val save_excursion : 'a ref -> 'a -> (unit -> 'b) -> 'b
 
 val memoized : 
-  ?use_cache:bool -> ('a, 'b) Hashtbl.t -> 'a -> (unit -> 'b) -> 'b
+  (*?use_cache:*)bool -> ('a, 'b) Hashtbl.t -> 'a -> (unit -> 'b) -> 'b
 
 exception UnixExit of int 
 
 exception Timeout
 val timeout_function :
-  ?verbose:bool ->
+  (*?verbose:*)bool ->
   int -> (unit -> 'a) -> 'a
 
 type prof = ProfAll | ProfNone | ProfSome of string list
@@ -223,11 +224,11 @@ val erase_this_temp_file : filename -> unit
 val realpath: filename -> filename
 
 val cache_computation : 
-  ?verbose:bool -> ?use_cache:bool -> filename  -> string (* extension *) -> 
+  (*?verbose:*)bool -> (*?use_cache:*)bool -> filename  -> string (* extension *) -> 
   (unit -> 'a) -> 'a
 
 val filename_without_leading_path : string -> filename -> filename
-val readable: root:string -> filename -> filename
+val readable: (*root:*)string -> filename -> filename
 
 val follow_symlinks: bool ref
 val files_of_dir_or_files_no_vcs_nofilter:
@@ -237,6 +238,7 @@ val files_of_dir_or_files_no_vcs_nofilter:
 val main_boilerplate : (unit -> unit) -> unit
 
 (* type of maps from string to `a *)
+(*
 module SMap : Map.S with type key = String.t
 type 'a smap = 'a SMap.t
-
+*)
