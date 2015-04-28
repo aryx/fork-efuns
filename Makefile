@@ -195,6 +195,9 @@ $(TARGET).opt: $(OPTOBJS) $(COBJS)
 clean::
 	rm -f */*.cm[ioxa] */*.[oa] */*.cmxa */*.annot */*.cmt*
 
+clean::
+	rm -f $(PROGS) *.opt
+
 
 efuns_client: ipc/efuns_client.cmo
 	$(OCAMLC) $(BYTECODE_STATIC) -o $@ $(LIBS) $^
