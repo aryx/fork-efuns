@@ -1,5 +1,4 @@
 
-
 SRC=\
  commons/common.ml commons/simple_color.ml \
  \
@@ -84,7 +83,9 @@ INCLUDEDIRS==commons core features graphics \
 INCLUDES=-I commons -I core -I features -I graphics \
  -I major_modes -I minor_modes -I prog_modes -I text_modes -I ipc
 
-OCAMLC=ocamlc -thread $INCLUDES
+#OCAMLC=ocamlc -thread $INCLUDES
+OCAMLC=/usr/local/bin/ocamlc -thread $INCLUDES
+OCAMLLEX=/usr/local/bin/ocamllex
 
 all:V: efuns.byte
 
@@ -99,7 +100,7 @@ efuns.byte: $OBJS
 	$OCAMLC -c $stem.mli
 
 clean:V:
-	rm $OBJS
+	rm -f $OBJS ${OBJS:%.cmo=%.cmi}
 
 
 
@@ -109,15 +110,15 @@ MODES= \
 
 beforedepend:: $MODES
 prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
-	ocamllex $prereq
+	$OCAMLLEX $prereq
 prog_modes/c_mode.ml: prog_modes/c_mode.mll
-	ocamllex $prereq
+	$OCAMLLEX $prereq
 prog_modes/lisp_mode.ml: prog_modes/lisp_mode.mll
-	ocamllex $prereq
+	$OCAMLLEX $prereq
 text_modes/tex_mode.ml: text_modes/tex_mode.mll
-	ocamllex $prereq
+	$OCAMLLEX $prereq
 text_modes/html_mode.ml: text_modes/html_mode.mll
-	ocamllex $prereq
+	$OCAMLLEX $prereq
 
 depend:V: $MODES
 	ocamldep $INCLUDES *.ml* */*.ml* > .depend
