@@ -161,7 +161,8 @@ let display_prompt buf =
    *)
   colorize buf
 
-let builtin_ls ?(show_dotfiles=false) ?(show_objfiles=false) frame =
+let builtin_ls (*?(show_dotfiles=false) ?(show_objfiles=false)*)
+ show_dotfiles show_objfiles frame =
   let buf = frame.frm_buffer in
   let dir = pwd buf in
   let files = Utils.file_list dir |> List.sort (fun a b ->
@@ -233,7 +234,7 @@ let builtin_cd frame s =
       (* so C-x C-f and other stuff starts from this directory *)
       let loc = Globals.location () in
       loc.loc_dirname <- newdir;
-      builtin_ls frame
+      builtin_ls false false frame
   | _ -> failwith (spf "%s is not a directory" newdir)
 
 let builtin_v frame s =
@@ -321,8 +322,8 @@ let interpret frame s =
   (match s with
 
   (* dir listing *)
-  | "ls" -> builtin_ls ~show_dotfiles:true ~show_objfiles:true frame
-  | "f" -> builtin_ls ~show_dotfiles:false ~show_objfiles:false frame
+  | "ls" -> builtin_ls (*~show_dotfiles:*)true (*~show_objfiles:*)true frame
+  | "f" -> builtin_ls (*~show_dotfiles:*)false (*~show_objfiles:*)false frame
   | "l" -> builtin_l frame
 
   (* dir navig *)

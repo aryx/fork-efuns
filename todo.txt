@@ -58,6 +58,9 @@ complicated? but at least can be far faster than what I have?
 
 but do not show the stash section in magit!
 
+*** magit-blame!
+actually does not work on my mac :)
+
 ** old modes
 
 *** org mode

@@ -306,7 +306,7 @@ let file_type_of_file2 file =
   | _ when b = ".depend" -> Obj "depend"
   | _ when b = ".emacs" -> PL (Lisp (Elisp))
 
-  | _ when Common2.filesize file > 300_000 -> Obj e
+(*  | _ when Common2.filesize file > 300_000 -> Obj e *)
   | _ -> Other e
 
 let file_type_of_file a = 

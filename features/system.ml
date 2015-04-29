@@ -32,7 +32,7 @@ let open_process pwd cmd =
       (* I prefer to do it here than in the caller *)
       Sys.chdir pwd;
       execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
-      (*      exit 127 *)
+      exit 127 (* for ocaml light *)
   | pid -> 
       Unix.close out_read;
       Unix.close in_write;

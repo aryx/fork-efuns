@@ -1,6 +1,6 @@
 
 SRC=\
- commons/common.ml commons/simple_color.ml \
+ commons/common.ml commons/file_type.ml commons/simple_color.ml \
  \
  commons/utils.ml commons/str2.ml\
  commons/log.ml\
@@ -56,12 +56,7 @@ SRC=\
  \
  prog_modes/pl_colors.ml\
  prog_modes/makefile_mode.ml\
- prog_modes/ocaml_mode.ml\
- prog_modes/c_mode.ml\
- prog_modes/lisp_mode.ml\
  \
- text_modes/tex_mode.ml\
- text_modes/html_mode.ml\
  text_modes/org_mode.ml\
  \
  ipc/server.ml \
@@ -72,25 +67,34 @@ SRC=\
 
 # main.ml \
 
+# syntax error special chars
+# prog_modes/ocaml_mode.ml\
+# prog_modes/lisp_mode.ml\
+# prog_modes/c_mode.ml\
+# text_modes/tex_mode.ml\
+# text_modes/html_mode.ml\
+
 OBJS=${SRC:%.ml=%.cmo}
+CMIS=${OBJS:%.cmo=%.cmi}
 
-#SYSLIBS=unix.cma str.cma threads.cma nums.cma bigarray.cma
+COBJS=commons/realpath.o
+CFLAGS=-I/usr/local/lib/ocaml/
 
+#SYSLIBS=str.cma unix.cma  threads.cma
 
-INCLUDEDIRS==commons core features graphics \
- major_modes minor_modes prog_modes text_modes pfff_modes ipc
-#TODO: INCLUDES=${INCLUDEDIRS:%=-I  %}
+#INCLUDEDIRS=commons core features graphics \
+# major_modes minor_modes prog_modes text_modes pfff_modes ipc
+#INCLUDES=${INCLUDEDIRS:%=-I  %} does not work :(
 INCLUDES=-I commons -I core -I features -I graphics \
  -I major_modes -I minor_modes -I prog_modes -I text_modes -I ipc
 
-#OCAMLC=ocamlc -thread $INCLUDES
-OCAMLC=/usr/local/bin/ocamlc -thread $INCLUDES
-OCAMLLEX=/usr/local/bin/ocamllex
+OCAMLC=/usr/local/bin/ocamlrun /usr/local/bin/ocamlc -thread $INCLUDES
+OCAMLLEX=/usr/local/bin/ocamlrun /usr/local/bin/ocamllex
 
 all:V: efuns.byte
 
-efuns.byte: $OBJS
-	$OCAMLC  $prereq -o $target
+efuns.byte: $OBJS $COBJS
+	$OCAMLC str.cma unix.cma threads.cma  -custom -cclib -lstr -cclib -lunix -cclib -lthreads $COBJS  $OBJS -o $target
 
 # do not use prereq or it will include also the .cmi in the command line
 %.cmo: %.ml
@@ -99,9 +103,12 @@ efuns.byte: $OBJS
 %.cmi: %.mli
 	$OCAMLC -c $stem.mli
 
-clean:V:
-	rm -f $OBJS ${OBJS:%.cmo=%.cmi}
+%.o: %.c
+	cc $CFLAGS -c $stem.c -o $stem.o
 
+
+clean:V:
+	rm -f $OBJS $CMIS
 
 
 MODES= \
