@@ -127,8 +127,10 @@ text_modes/tex_mode.ml: text_modes/tex_mode.mll
 text_modes/html_mode.ml: text_modes/html_mode.mll
 	$OCAMLLEX $prereq
 
-depend:V: $MODES
-	ocamldep $INCLUDES *.ml* */*.ml* > .depend
+#$MODES
 
-<.depend
+depend:V: 
+	ocamldep $INCLUDES *.ml* */*.ml* | grep -v -e '.* :$' > .depend2
+
+<.depend2
 
