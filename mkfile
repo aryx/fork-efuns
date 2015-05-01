@@ -1,3 +1,4 @@
+</$objtype/mkfile
 
 BACKENDDIR=graphics/libdraw
 
@@ -79,7 +80,7 @@ OBJS=${SRC:%.ml=%.cmo}
 CMIS=${OBJS:%.cmo=%.cmi}
 
 #COBJS=commons/realpath.o
-CFLAGS=-I/usr/local/lib/ocaml/
+#CFLAGS=-I/usr/local/lib/ocaml/
 
 #SYSLIBS=str.cma unix.cma  threads.cma
 
@@ -89,8 +90,11 @@ CFLAGS=-I/usr/local/lib/ocaml/
 INCLUDES=-I commons -I core -I features -I graphics \
  -I major_modes -I minor_modes -I prog_modes -I text_modes -I ipc -I $BACKENDDIR
 
-OCAMLC=/usr/local/bin/ocamlrun /usr/local/bin/ocamlc -thread $INCLUDES
-OCAMLLEX=/usr/local/bin/ocamlrun /usr/local/bin/ocamllex
+BINDIR=/usr/local/bin/
+LIBDIR=/usr/local/lib/ocaml/
+
+OCAMLC=$BINDIR/ocamlrun $BINDIR/ocamlc -thread $INCLUDES
+OCAMLLEX=$BINDIR/ocamlrun $BINDIR/ocamllex
 
 all:V: efuns.byte
 
@@ -99,11 +103,7 @@ all:V: efuns.byte
 #old:$OCAMLC str.cma unix.cma threads.cma  -custom -cclib -lstr -cclib -lunix -cclib -lthreads $COBJS  $OBJS -o $target
 
 efuns.byte: $OBJS $COBJS
-	$OCAMLC str.cma unix.cma threads.cma  -custom /usr/local/lib/ocaml/libstr.a /usr/local/lib/ocaml/libunix.a /usr/local/lib/ocaml/libthreads.a $COBJS  $OBJS -o $target
-
-link:V:
-	$OCAMLC str.cma unix.cma threads.cma  -custom /usr/local/lib/ocaml/libstr.a /usr/local/lib/ocaml/libunix.a /usr/local/lib/ocaml/libthreads.a $COBJS  $OBJS -o $target
-
+	$OCAMLC -verbose -custom str.cma unix.cma threads.cma  $LIBDIR/libstr.a $LIBDIR/libunix.a $LIBDIR/libthreads.a $COBJS  $OBJS -o $target
 
 # do not use prereq or it will include also the .cmi in the command line
 %.cmo: %.ml
@@ -112,8 +112,13 @@ link:V:
 %.cmi: %.mli
 	$OCAMLC -c $stem.mli
 
+CC=pcc
+LD=pcc
+CINCLUDES= -I$LIBDIR
+CFLAGS=-FV -D_POSIX_SOURCE -D_BSD_EXTENSION -D_PLAN9_SOURCE $CINCLUDES
+
 %.o: %.c
-	cc $CFLAGS -c $stem.c -o $stem.o
+	$CC $CFLAGS -c $stem.c -o $stem.o
 
 
 clean:V:
