@@ -18,7 +18,7 @@ let _ =
     Unix.putenv "PFFF_HOME" "/home/pad/pfff";
     Unix.putenv "PATH" (
        "/home/pad/.opam/4.01.0/bin:" ^
-        (Unix.getenv "PATH") ^ 
+        (try (Unix.getenv "PATH") with Not_found -> "/bin") ^ 
        ":/home/pad/bin"
      );
 
