@@ -409,11 +409,15 @@ let load_directory filename =
             )
           in
           let owner = stats.st_uid in
+          let group = stats.st_gid in
+(* does not work under plan9
           let owner = try (getpwuid owner).pw_name 
             with _ -> string_of_int owner in
-          let group = stats.st_gid in
           let group = try (getgrgid group).gr_name
             with _ -> string_of_int group in
+*)
+          let owner = Printf.sprintf "uid:%d" owner in
+          let group = Printf.sprintf "gid:%d" group in
           let size = stats.st_size in
           Printf.sprintf "%s %s   %8s %8s   %8d   %s   %s%s\n"
             s rights owner group size date entry 
