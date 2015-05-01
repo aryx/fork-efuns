@@ -1,4 +1,6 @@
 
+BACKENDDIR=graphics/libdraw
+
 SRC=\
  commons/common.ml commons/file_type.ml commons/simple_color.ml \
  \
@@ -64,8 +66,7 @@ SRC=\
  std_efunsrc.ml\
  pad.ml\
  graphics/libdraw/graphics_efuns.ml \
-
-# main.ml \
+ main.ml
 
 # syntax error special chars
 # prog_modes/ocaml_mode.ml\
@@ -77,7 +78,7 @@ SRC=\
 OBJS=${SRC:%.ml=%.cmo}
 CMIS=${OBJS:%.cmo=%.cmi}
 
-COBJS=commons/realpath.o
+#COBJS=commons/realpath.o
 CFLAGS=-I/usr/local/lib/ocaml/
 
 #SYSLIBS=str.cma unix.cma  threads.cma
@@ -86,15 +87,23 @@ CFLAGS=-I/usr/local/lib/ocaml/
 # major_modes minor_modes prog_modes text_modes pfff_modes ipc
 #INCLUDES=${INCLUDEDIRS:%=-I  %} does not work :(
 INCLUDES=-I commons -I core -I features -I graphics \
- -I major_modes -I minor_modes -I prog_modes -I text_modes -I ipc
+ -I major_modes -I minor_modes -I prog_modes -I text_modes -I ipc -I $BACKENDDIR
 
 OCAMLC=/usr/local/bin/ocamlrun /usr/local/bin/ocamlc -thread $INCLUDES
 OCAMLLEX=/usr/local/bin/ocamlrun /usr/local/bin/ocamllex
 
 all:V: efuns.byte
 
+# currently pcc does not accept -L so I replaced -cclib -unix by
+# the more explicit /usr/local/lib/ocaml/libunix.a
+#old:$OCAMLC str.cma unix.cma threads.cma  -custom -cclib -lstr -cclib -lunix -cclib -lthreads $COBJS  $OBJS -o $target
+
 efuns.byte: $OBJS $COBJS
-	$OCAMLC str.cma unix.cma threads.cma  -custom -cclib -lstr -cclib -lunix -cclib -lthreads $COBJS  $OBJS -o $target
+	$OCAMLC str.cma unix.cma threads.cma  -custom /usr/local/lib/ocaml/libstr.a /usr/local/lib/ocaml/libunix.a /usr/local/lib/ocaml/libthreads.a $COBJS  $OBJS -o $target
+
+link:V:
+	$OCAMLC str.cma unix.cma threads.cma  -custom /usr/local/lib/ocaml/libstr.a /usr/local/lib/ocaml/libunix.a /usr/local/lib/ocaml/libthreads.a $COBJS  $OBJS -o $target
+
 
 # do not use prereq or it will include also the .cmi in the command line
 %.cmo: %.ml
