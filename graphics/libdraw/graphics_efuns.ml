@@ -18,7 +18,9 @@ let move_to col line =
   
 
 let clear_eol col line len =
-  pr2 (spf "clear_eol: %d %d %d" col line len);
+  if !Globals.debug_graphics
+  then pr2 (spf "clear_eol: %d %d %d" col line len);
+  Draw.clear_eol col line len;
 (*
   move_to col line;
   let (w,h) = Graphics.text_size "d" in
@@ -29,14 +31,18 @@ let clear_eol col line len =
   ()
 
 let draw_string col line  str  offset len   attr =
-  pr2 (spf "draw_string %d %d %s %d %d %d"
+  if !Globals.debug_graphics
+  then pr2 (spf "draw_string %d %d %s %d %d %d"
          col line str offset len attr);
+  Draw.clear_eol col line len;
+  Draw.draw_string col line (String.sub str offset len);
 (*
-  let (w,h) = Graphics.text_size "d" in
   move_to col line;
+  let (w,h) = Graphics.text_size "d" in
   Graphics.set_color Graphics.white;
   Graphics.fill_rect (Graphics.current_x()) (Graphics.current_y())
     (w * len) h;
+
   Graphics.set_color Graphics.black;
   move_to col line;
   Graphics.draw_string (String.sub str offset len);
@@ -44,7 +50,8 @@ let draw_string col line  str  offset len   attr =
   ()
 
 let update_display () =
-  pr2 ("update_displays")
+  if !Globals.debug_graphics
+  then pr2 ("update_displays")
 
 let backend = { 
   clear_eol = clear_eol; 
@@ -73,9 +80,6 @@ let init init_files =
   (*-------------------------------------------------------------------*)
   (* Window creation *)
   (*-------------------------------------------------------------------*)
-
-  Draw.set_color 10 10 10 255;
-  Draw.line 10 10 100 100;
 
   (*-------------------------------------------------------------------*)
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
@@ -109,10 +113,6 @@ let init init_files =
   (*-------------------------------------------------------------------*)
   (* End *)
   (*-------------------------------------------------------------------*)
-
-
-
-  Draw.string 200 200 "this is an ocaml test";
 
   Unix.sleep 5;
   ()

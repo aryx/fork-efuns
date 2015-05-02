@@ -33,3 +33,30 @@ void caml_draw_string(value x, value y, value str) {
          String_val(str));
   flushimage(display, 1);
 }
+
+
+void caml_draw_clear_eol(value c, value l, value length) {
+  int w = font->width;
+  int h = font->height;
+  int col = Int_val(c);
+  int line = Int_val(l);
+  int len = Int_val(length);
+  int x = col * w;
+  int y = line * h;
+
+  draw(view, Rect(x, y, x + len * w, y + h), display->white, nil, ZP);
+  flushimage(display, 1);
+}
+
+void caml_draw_draw_string(value c, value l, value s) {
+  int w = font->width;
+  int h = font->height;
+  int col = Int_val(c);
+  int line = Int_val(l);
+  char *str = String_val(s);
+  int x = col * w;
+  int y = line * h;
+
+  string(view, Pt(x, y), display->black, ZP, font, str);
+  flushimage(display, 1);
+}
