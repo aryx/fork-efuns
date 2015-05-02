@@ -66,6 +66,7 @@ SRC=\
  \
  std_efunsrc.ml\
  pad.ml\
+ graphics/libdraw/draw.ml \
  graphics/libdraw/graphics_efuns.ml \
  main.ml
 
@@ -81,6 +82,8 @@ CMIS=${OBJS:%.cmo=%.cmi}
 
 #COBJS=commons/realpath.o
 #CFLAGS=-I/usr/local/lib/ocaml/
+
+COBJS=graphics/libdraw/draw.$O
 
 #SYSLIBS=str.cma unix.cma  threads.cma
 
@@ -117,12 +120,13 @@ LD=pcc
 CINCLUDES= -I$LIBDIR
 CFLAGS=-FV -D_POSIX_SOURCE -D_BSD_EXTENSION -D_PLAN9_SOURCE $CINCLUDES
 
-%.o: %.c
-	$CC $CFLAGS -c $stem.c -o $stem.o
+%.$O: %.c
+	$CC $CFLAGS -c $stem.c -o $stem.$O
 
 
 clean:V:
 	rm -f $OBJS $CMIS
+    rm -f *.[58] *.byte
 
 
 MODES= \
@@ -144,7 +148,7 @@ text_modes/html_mode.ml: text_modes/html_mode.mll
 #$MODES
 
 depend:V: 
-	ocamldep $INCLUDES *.ml* */*.ml* | grep -v -e '.* :$' > .depend2
+	ocamldep $INCLUDES *.ml* */*.ml* v $BACKENDDIR/*.ml* | grep -v -e '.* :$' > .depend2
 
 <.depend2
 
