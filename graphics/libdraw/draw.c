@@ -8,7 +8,7 @@ Image *colors[256];
 Image *current_color = NULL;
 
 int mk_color(int red, int green, int blue) {
-  return (red <<3*8) |  (green <<2*8) |  (blue <<1*8);
+  return (red <<3*8) |  (green <<2*8) |  (blue <<1*8) | 0xFF;
 }
 
 void caml_draw_initdraw(value x, value y) {
@@ -23,12 +23,17 @@ void caml_draw_initdraw(value x, value y) {
       colors[i] = NULL;
   }
 
-  // DarkSlateGray
+  // fg: wheat
   colors[0] = allocimage(display, Rect(0,0,1,1), view->chan, 1,
-                         mk_color(47, 79, 79));
-  // wheat
-  colors[1] = allocimage(display, Rect(0,0,1,1), view->chan, 1,
                          mk_color(245, 222, 179));
+
+  // bg: DarkSlateGray
+  colors[1] = allocimage(display, Rect(0,0,1,1), view->chan, 1,
+                         mk_color(47, 79, 79));
+
+  // highlight: 
+  colors[2] = allocimage(display, Rect(0,0,1,1), view->chan, 1,
+                         DCyan);
 
 }
 
@@ -78,6 +83,40 @@ void caml_draw_string(value x, value y, value str) {
 // Efuns backend
 //**************************************************************************
 
+Image *current_fg = NULL;
+Image *current_bg = NULL;
+
+void set_color_idx(int idx, int red, int green, int blue) {
+  if (colors[idx] == NULL) {
+    colors[idx] = allocimage(display, Rect(0,0,1,1), view->chan, 1, 
+                             mk_color(red, green, blue));
+
+  }
+}
+
+// used to be just current_bg = colors[0]
+void caml_draw_set_bg_color(value i, value r, value g, value b) {
+  int idx = Int_val(i);
+  int red = Int_val(r);
+  int green = Int_val(g);
+  int blue = Int_val(b);
+
+  set_color_idx(idx, red, green, blue);
+  current_bg = colors[idx];
+}
+
+// used to be just current_fg = colors[1]
+void caml_draw_set_fg_color(value i, value r, value g, value b) {
+  int idx = Int_val(i);
+  int red = Int_val(r);
+  int green = Int_val(g);
+  int blue = Int_val(b);
+
+  set_color_idx(idx, red, green, blue);
+  current_fg = colors[idx];
+}
+
+
 void caml_draw_clear_eol(value c, value l, value length) {
   int w = font->width;
   int h = font->height;
@@ -88,7 +127,7 @@ void caml_draw_clear_eol(value c, value l, value length) {
   int y = line * h;
   Rectangle r = Rect(x, y, x + len * w, y + h);
 
-  draw(view, rectaddpt(r, view->r.min), colors[0], nil, ZP);
+  draw(view, rectaddpt(r, view->r.min), current_bg, nil, ZP);
   flushimage(display, 1);
 }
 
@@ -101,7 +140,7 @@ void caml_draw_draw_string(value c, value l, value s) {
   int x = col * w;
   int y = line * h;
   Point pt = Pt(x, y);
-  string(view, addpt(pt, view->r.min) , colors[1], ZP, font, str);
+  string(view, addpt(pt, view->r.min) , current_fg, ZP, font, str);
   flushimage(display, 1);
 }
 

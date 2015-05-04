@@ -14,7 +14,12 @@
  *)
 open Common
 
+module Color = Simple_color
 open Efuns
+
+(*****************************************************************************)
+(* Helpers *)
+(*****************************************************************************)
 
 (*****************************************************************************)
 (* Draw API *)
@@ -22,16 +27,34 @@ open Efuns
 open Xdraw (* for the fields *)
 
 let clear_eol col line len =
+  let loc = Globals.location () in
   if !Globals.debug_graphics
   then pr2 (spf "clear_eol: %d %d %d" col line len);
+  let (r,g,b) = Color.rgb_of_string loc.loc_colors_names.(1) in
+  Draw.set_bg_color 1 r g b;
   Draw.clear_eol col line len
 
 let draw_string col line  str  offset len   attr =
+  let loc = Globals.location () in
   if !Globals.debug_graphics
   then pr2 (spf "draw_string %d %d %s %d %d %d"
          col line str offset len attr);
 
+  let bgcolor_idx = 
+    let idx = (attr lsr 8) land 255 in
+    if attr land Text.highlight_bit > 0
+    then 2
+    else idx
+  in
+  let bgcolor = loc.loc_colors_names.(bgcolor_idx) in
+  let (r,g,b) = Color.rgb_of_string bgcolor in
+  Draw.set_bg_color bgcolor_idx r g b;
   Draw.clear_eol col line len;
+
+  let fgcolor_idx = (attr) land 255 in
+  let fgcolor = loc.loc_colors_names.(fgcolor_idx) in
+  let (r,g,b) = Color.rgb_of_string fgcolor in
+  Draw.set_fg_color fgcolor_idx r g b;
   Draw.draw_string col line (String.sub str offset len);
   ()
 
