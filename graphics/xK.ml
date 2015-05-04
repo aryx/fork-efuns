@@ -10,6 +10,7 @@ let xk_Next = 6
 
 let xk_BackSpace = 8
 let xk_Tab = 9
+(* on some machines it's C-m (13), on some it's C-j (10) *)
 let xk_Return = 13
 
 
@@ -23,6 +24,7 @@ let xk_Pointer_Button3 = xk_Pointer_Button_Dflt + 3
 let xk_Pointer_Button4 = xk_Pointer_Button_Dflt + 4
 let xk_Pointer_Button5 = xk_Pointer_Button_Dflt + 5
 
+(* TODO *)
 let xk_Pointer_Drag_Dflt = 0
 let xk_Pointer_Drag1 = 0
 
@@ -30,7 +32,6 @@ let xk_Menu = 0
 
 let xk_Shift_L = 0
 let xk_Hyper_R = 0
-
 
 let xk_Insert = 0
 let xk_Delete = 0

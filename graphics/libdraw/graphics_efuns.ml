@@ -1,3 +1,17 @@
+(* Yoann Padioleau
+ * 
+ * Copyright (C) 2015 Yoann Padioleau
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation, with the
+ * special exception on linking described in file license.txt.
+ * 
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
+ * license.txt for more details.
+ *)
 open Common
 
 open Efuns
@@ -5,48 +19,20 @@ open Efuns
 (*****************************************************************************)
 (* Draw API *)
 (*****************************************************************************)
-open Xdraw
-
-(* helper *)
-let move_to col line =
-  ()
-(*
-  let (w,h) = Graphics.text_size "d" in
-  let size_y = Graphics.size_y () in
-  Graphics.moveto (w * col) (size_y - h - (line * h))
-*)
-  
+open Xdraw (* for the fields *)
 
 let clear_eol col line len =
   if !Globals.debug_graphics
   then pr2 (spf "clear_eol: %d %d %d" col line len);
-  Draw.clear_eol col line len;
-(*
-  move_to col line;
-  let (w,h) = Graphics.text_size "d" in
-  Graphics.set_color Graphics.white;
-  Graphics.fill_rect (Graphics.current_x()) (Graphics.current_y())
-    (w * len) h;
-*)
-  ()
+  Draw.clear_eol col line len
 
 let draw_string col line  str  offset len   attr =
   if !Globals.debug_graphics
   then pr2 (spf "draw_string %d %d %s %d %d %d"
          col line str offset len attr);
+
   Draw.clear_eol col line len;
   Draw.draw_string col line (String.sub str offset len);
-(*
-  move_to col line;
-  let (w,h) = Graphics.text_size "d" in
-  Graphics.set_color Graphics.white;
-  Graphics.fill_rect (Graphics.current_x()) (Graphics.current_y())
-    (w * len) h;
-
-  Graphics.set_color Graphics.black;
-  move_to col line;
-  Graphics.draw_string (String.sub str offset len);
-*)
   ()
 
 let update_display () =
@@ -59,7 +45,6 @@ let backend = {
   update_display = update_display;
   update_window_title = (fun _ -> ());
 }
-
 
 (*****************************************************************************)
 (* paint/configure/expose *)
@@ -74,7 +59,6 @@ let init init_files =
   (*-------------------------------------------------------------------*)
   (* Graphics initialisation *)
   (*-------------------------------------------------------------------*)
-
   Draw.initdraw None "test_draw_ml";
 
   (*-------------------------------------------------------------------*)
@@ -110,38 +94,42 @@ let init init_files =
   (* Events *)
   (*-------------------------------------------------------------------*)
 
+  let escape = ref false in
+
+  (* Main loop *)
+  while true do
+    let code = Draw.ekbd () in
+    (*Printf.printf "key = %d" code;*)
+
+    let modifiers, code = 
+      match code with
+      (* control-j *)
+      | 10 -> 0, XK.xk_Return
+      | 8 | 9 | 13  -> 0, code
+      | _ when code >= 1 && code <= 26 -> 
+          Xtypes.controlMask, code - 1 + Char.code 'a'
+      (* escape key *)
+      | 27 -> 0, 27
+
+      (* see keyboard.h *)
+      | 63488 -> 0, XK.xk_Down
+      | 61454 -> 0, XK.xk_Up
+      | 61457 -> 0, XK.xk_Left
+      | 61458 -> 0, XK.xk_Right
+
+      | _ -> 0, code
+    in
+    if code = 27
+    then escape := true
+    else begin
+      let modifiers = modifiers lor (if !escape then Xtypes.mod1Mask else 0) in
+      escape := false;
+      let evt = Xtypes.XTKeyPress (modifiers, spf "%d" code, code) in
+      Top_window.handler top_window evt
+    end
+  done;
+  ()
+
   (*-------------------------------------------------------------------*)
   (* End *)
   (*-------------------------------------------------------------------*)
-
-  Unix.sleep 5;
-  ()
-
-
-(*
-let init location displayname =
-
-  (* Main loop *)
-  let rec loop () =
-    Graphics.loop_at_exit [
-      Graphics.Button_down;
-      Graphics.Key_pressed;
-    ] (fun status ->
-      if status.Graphics.keypressed
-      then 
-        let charkey = status.Graphics.key in
-        let code = Char.code charkey in
-        pr2 (spf "key: %c, %d" charkey code);
-        let modifiers, code = 
-          match code with
-          | 8 | 9 | 13  -> 0, code
-          | _ when code >= 1 && code <= 26 -> 
-            Xtypes.controlMask, code - 1 + Char.code 'a'
-          | _ -> 0, code
-        in
-        let evt = Xtypes.XTKeyPress (modifiers, spf "%c" charkey, code) in
-        Top_window.handler top_window () evt
-    )
-  in
-  loop ()
-*)

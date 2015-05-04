@@ -1,4 +1,5 @@
 
+(* pretty limited needs *)
 
 type graphics_backend = {
   (* drawing text boxes *)
@@ -8,5 +9,6 @@ type graphics_backend = {
   (* flush the display *)
   update_display: unit -> unit;
 
+  (* windowing system interaction *)
   update_window_title: string -> unit;
 }
