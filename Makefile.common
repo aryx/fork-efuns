@@ -30,18 +30,15 @@ OPTOBJS?= $(SRC:.ml=.cmx)
 #-4  allow | _ patterns in match
 #-6  allow omit labels
 #-29 alow multiline strings
-#-45 allow shadowing open (TODO: fix them though)
-#-41 allow ambiguous constructor in 2 opned modules (TODO: fix them though)
+#-41 allow ambiguous constructor in 2 opened modules (TODO: fix them though)
 #-44 allow shadow module identifier (TODO: fix them)
+#-45 allow shadowing open (TODO: fix them though)
 #-48 allow eliminating optional arguments, unclear how to fix without wide
 #    changes
-#TODO temporary! 27: unused variables  21: statement never returns, 
+#TODO temporary! 27: unused variables  21: statement never returns (for olight)
 #  31: dupe Map.cma and stdlib.cma(Map)
 #fixed: 32: dead code 21: ??
-WARNING_FLAGS?=-w +A-4-29-6-45-41-44-48-27-21-31 -warn-error +a 
-
-# -w A
-#WARNING_FLAGS= -w -21
+WARNING_FLAGS?=-w +A-4-6-29-41-44-45-48-27-21-31 -warn-error +a 
 
 #dont use -custom, it makes the bytecode unportable.
 OCAMLCFLAGS?=-g -dtypes -absname -bin-annot -thread $(WARNING_FLAGS)

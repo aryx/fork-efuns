@@ -864,10 +864,9 @@ let write_file (*~*)file s =
 let filemtime file =
   (Unix.stat file).Unix.st_mtime
 
-external c_realpath: string -> string option = "caml_realpath" 
+external c_realpath: string -> string option = "caml_realpath"
 
 let realpath2 path =
-(*  failwith "c_realpath not linked"*)
   match c_realpath path with
   | Some s -> s
   | None -> failwith (spf "problem with realpath on %s" path)

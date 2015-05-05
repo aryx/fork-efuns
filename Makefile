@@ -150,8 +150,8 @@ SRC=\
 
 
 
-
-SYSLIBS=unix.cma str.cma threads.cma nums.cma bigarray.cma
+# bigarray is used by cairo
+SYSLIBS=unix.cma str.cma threads.cma bigarray.cma
 
 LIBS=$(SYSLIBS) $(COMMONCMA) $(PFFFCMAS) $(GRAPHICSLIBS) 
 

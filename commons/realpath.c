@@ -16,7 +16,8 @@ Val_some( value v )
   CAMLreturn( some );
 }
 
-CAMLprim value
+//CAMLprim 
+value
 caml_realpath(value v) {
   char *input;
   char output[PATH_MAX];
@@ -25,7 +26,9 @@ caml_realpath(value v) {
   CAMLparam1(v);
 
   input = String_val(v);
+
   result = realpath(input, output);
+
   if (result == NULL) {
     CAMLreturn(Val_none);
   } else {
