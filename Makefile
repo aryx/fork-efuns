@@ -71,7 +71,7 @@ endif
 SRC=\
  $(COMMONS_PFFF_ML) \
  \
- commons/utils.ml commons/str2.ml\
+ commons/map.ml commons/utils.ml commons/str2.ml\
  commons/log.ml\
  commons/options.ml\
  commons/local.ml\
