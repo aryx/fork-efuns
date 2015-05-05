@@ -98,9 +98,10 @@ let is_executable file =
   stat.Unix.st_kind =*= Unix.S_REG &&
   (perms land 0o011 <> 0)
 
+(*
 let filesize file =
   (unix_stat file).Unix.st_size
-
+*)
 end
 
 (*****************************************************************************)
