@@ -5155,6 +5155,9 @@ graphic.Xdraw.draw_string
 \subsection{Cursor display}
 % Focus just on cursor display? will see more code in the Mouse section?
 
+% pretty important :) when I did the plan9 port there was no cursor
+% at the beginning and it's really annoying
+
 % The flow is that some functions modify top_active_frame.frm_point
 % (and sometimes also modify first top_active_frame), and now we need to put
 % the cursor at the right place.
