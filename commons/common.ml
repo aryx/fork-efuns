@@ -95,6 +95,7 @@ let finalize f cleanup =
 let (_unlines: string list -> string) = fun s ->
   (String.concat "\n" s) ^ "\n"
 
+(*
 let (lines: string -> string list) = fun s ->
   let rec lines_aux = function
     | [] -> []
@@ -103,6 +104,7 @@ let (lines: string -> string list) = fun s ->
         x::lines_aux xs
   in
   Str.split_delim (Str.regexp "\n") s +> lines_aux
+*)
 
 let save_excursion reference newv f =
   let old = !reference in
@@ -147,8 +149,10 @@ let pr2 s =
   prerr_string "\n";
   flush stderr
 
+(*
 let pr_xxxxxxxxxxxxxxxxx () =
   pr "-----------------------------------------------------------------------"
+*)
 
 let _pr2_xxxxxxxxxxxxxxxxx () =
   pr2 "-----------------------------------------------------------------------"
