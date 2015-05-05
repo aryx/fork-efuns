@@ -20,16 +20,11 @@ type 'a var = string
 (*e: type Local.var *)
 
 (*s: module Local.Vars *)
-module Vars = Map.Make 
- (struct  
-      type t = string
-      let compare = compare 
- end)
+module Vars = Map
 (*e: module Local.Vars *)
 
 (*s: type Local.vars *)
-(* (string * Obj.t ref) Map ref *)
-type vars = Obj.t ref Vars.t ref
+type vars = (string, Obj.t ref) Vars.t ref
 (*e: type Local.vars *)
 (*s: function Local.vars *)
 let vars () = 
