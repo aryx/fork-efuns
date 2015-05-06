@@ -1,11 +1,18 @@
+#############################################################################
+# Configuration section
+#############################################################################
 </$objtype/mkfile
+
+#############################################################################
+# Variables
+#############################################################################
 
 BACKENDDIR=graphics/libdraw
 
 SRC=\
  commons/common.ml commons/file_type.ml commons/simple_color.ml \
  \
- commons/utils.ml commons/str2.ml\
+ commons/map.ml commons/utils.ml commons/str2.ml\
  commons/log.ml\
  commons/options.ml\
  commons/local.ml\
@@ -77,15 +84,9 @@ SRC=\
 # text_modes/tex_mode.ml\
 # text_modes/html_mode.ml\
 
-OBJS=${SRC:%.ml=%.cmo}
-CMIS=${OBJS:%.cmo=%.cmi}
+COBJS=commons/realpath.$O graphics/libdraw/draw.$O
 
-#COBJS=commons/realpath.o
-#CFLAGS=-I/usr/local/lib/ocaml/
-
-COBJS=graphics/libdraw/draw.$O
-
-#SYSLIBS=str.cma unix.cma  threads.cma
+SYSLIBS=str.cma unix.cma  threads.cma
 
 #INCLUDEDIRS=commons core features graphics \
 # major_modes minor_modes prog_modes text_modes pfff_modes ipc
@@ -93,11 +94,27 @@ COBJS=graphics/libdraw/draw.$O
 INCLUDES=-I commons -I core -I features -I graphics \
  -I major_modes -I minor_modes -I prog_modes -I text_modes -I ipc -I $BACKENDDIR
 
+##############################################################################
+# Generic variables
+##############################################################################
+
 BINDIR=/usr/local/bin/
 LIBDIR=/usr/local/lib/ocaml/
 
 OCAMLC=$BINDIR/ocamlrun $BINDIR/ocamlc -thread $INCLUDES
 OCAMLLEX=$BINDIR/ocamlrun $BINDIR/ocamllex
+
+OBJS=${SRC:%.ml=%.cmo}
+CMIS=${OBJS:%.cmo=%.cmi}
+
+CC=pcc
+LD=pcc
+CINCLUDES= -I$LIBDIR
+CFLAGS=-FV -D_POSIX_SOURCE -D_BSD_EXTENSION -D_PLAN9_SOURCE $CINCLUDES
+
+##############################################################################
+# Top rules
+##############################################################################
 
 all:V: efuns.byte
 
@@ -106,27 +123,12 @@ all:V: efuns.byte
 #old:$OCAMLC str.cma unix.cma threads.cma  -custom -cclib -lstr -cclib -lunix -cclib -lthreads $COBJS  $OBJS -o $target
 
 efuns.byte: $OBJS $COBJS
-	$OCAMLC -verbose -custom str.cma unix.cma threads.cma  $LIBDIR/libstr.a $LIBDIR/libunix.a $LIBDIR/libthreads.a $COBJS  $OBJS -o $target
-
-# do not use prereq or it will include also the .cmi in the command line
-%.cmo: %.ml
-	$OCAMLC -c $stem.ml
-
-%.cmi: %.mli
-	$OCAMLC -c $stem.mli
-
-CC=pcc
-LD=pcc
-CINCLUDES= -I$LIBDIR
-CFLAGS=-FV -D_POSIX_SOURCE -D_BSD_EXTENSION -D_PLAN9_SOURCE $CINCLUDES
-
-%.$O: %.c
-	$CC $CFLAGS -c $stem.c -o $stem.$O
-
+	$OCAMLC -verbose -custom $SYSLIBS $LIBDIR/libstr.a $LIBDIR/libunix.a $LIBDIR/libthreads.a $COBJS  $OBJS -o $target
 
 clean:V:
 	rm -f $OBJS $CMIS
     rm -f *.[58] *.byte
+
 
 
 MODES= \
@@ -149,6 +151,21 @@ text_modes/html_mode.ml: text_modes/html_mode.mll
 
 depend:V: 
 	ocamldep $INCLUDES *.ml* */*.ml* v $BACKENDDIR/*.ml* | grep -v -e '.* :$' > .depend2
+
+##############################################################################
+# Generic rules
+##############################################################################
+
+# do not use prereq or it will include also the .cmi in the command line
+%.cmo: %.ml
+	$OCAMLC -c $stem.ml
+
+%.cmi: %.mli
+	$OCAMLC -c $stem.mli
+
+%.$O: %.c
+	$CC $CFLAGS -v -c $stem.c -o $stem.$O
+
 
 <.depend2
 
