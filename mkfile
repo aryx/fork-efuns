@@ -101,7 +101,7 @@ INCLUDES=-I commons -I core -I features -I graphics \
 BINDIR=/usr/local/bin/
 LIBDIR=/usr/local/lib/ocaml/
 
-OCAMLC=$BINDIR/ocamlrun $BINDIR/ocamlc -thread $INCLUDES
+OCAMLC=$BINDIR/ocamlrun $BINDIR/ocamlc -g -thread $INCLUDES
 OCAMLLEX=$BINDIR/ocamlrun $BINDIR/ocamllex
 
 OBJS=${SRC:%.ml=%.cmo}
