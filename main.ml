@@ -194,6 +194,11 @@ let main () =
 (*s: toplevel Main._ *)
 let _ =
   Common.main_boilerplate (fun () ->
+(*
+    let r = Gc.get () in
+    r.Gc.verbose <- true;
+    Gc.set r;
+*)
     main () 
   )
 (*e: toplevel Main._ *)

@@ -110,7 +110,9 @@ CMIS=${OBJS:%.cmo=%.cmi}
 CC=pcc
 LD=pcc
 CINCLUDES= -I$LIBDIR
-CFLAGS=-FV -D_POSIX_SOURCE -D_BSD_EXTENSION -D_PLAN9_SOURCE $CINCLUDES
+# -B to disable the check for missing return, which is flagged
+# because of CAMLReturn
+CFLAGS=-FVB -D_POSIX_SOURCE -D_BSD_EXTENSION -D_PLAN9_SOURCE $CINCLUDES
 
 ##############################################################################
 # Top rules
@@ -128,6 +130,7 @@ efuns.byte: $OBJS $COBJS
 clean:V:
 	rm -f $OBJS $CMIS
     rm -f *.[58] *.byte
+	rm -f $COBJS
 
 
 

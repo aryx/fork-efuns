@@ -25,7 +25,6 @@ Val_some( value v )
   CAMLreturn( some );
 }
 
-//CAMLprim 
 value
 caml_realpath(value v) {
   char *input;
