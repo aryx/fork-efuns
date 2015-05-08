@@ -156,7 +156,7 @@ let kill buf =
     Hashtbl.remove location.loc_files filename
   );
   List.iter (fun f -> f () ) buf.buf_finalizers;
-  Gc.compact ();
+(* TODO Gc.compact (); this cause some segfault under plan9 with ocaml light *)
   buf.buf_shared <- -1
 (*e: function Ebuffer.kill *)
 
