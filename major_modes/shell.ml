@@ -75,7 +75,9 @@ let columnize width xs =
       let idx = i + j * nblines in
       let s =
         try arr.(idx)
-        with Invalid_argument "index out of bounds" -> ""
+        with Invalid_argument 
+            (* it's Array.get in ocaml light :) *)
+            ("index out of bounds" | "Array.get") -> ""
       in
       let len = String.length s in
       Buffer.add_string buf s;
