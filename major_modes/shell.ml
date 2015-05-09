@@ -98,6 +98,13 @@ let is_obj_file file =
     | _ -> false
   with _ -> false
 
+(* ugly patching for plan9 *)
+let vfat_patch x =
+  if x =~ "^[A-Z0-9_]*\\.[A-Z0-9_]+$" ||
+     x =~ "^[A-Z0-9_]+$"
+  then String.lowercase x
+  else x
+
 (*****************************************************************************)
 (* Scrolling *)
 (*****************************************************************************)
@@ -167,7 +174,10 @@ let builtin_ls (*?(show_dotfiles=false) ?(show_objfiles=false)*)
  show_dotfiles show_objfiles frame =
   let buf = frame.frm_buffer in
   let dir = pwd buf in
-  let files = Utils.file_list dir |> List.sort (fun a b ->
+  let files = 
+    Utils.file_list dir 
+    |> List.map vfat_patch
+    |> List.sort (fun a b ->
     compare a b (* (String.lowercase a) (String.lowercase b)*)
   )
   in
