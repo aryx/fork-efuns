@@ -8039,7 +8039,6 @@ let isearch_backward_regexp = isearch Regexp Backward
 <<[[Text.text]] other fields>>=
 mutable text_clean : bool;
 @
-% useful for?
 
 <<[[Text.move_gpoint_to()]] reset text_clean>>=
 text.text_clean <- false;
@@ -8058,9 +8057,9 @@ let clean_text text =
   end
 @
 % when we move the gap we blit but we should reset the content
-% of the gap so that search function still works.
-
-%TODO: but the Str search function will manage this special value?????
+% of the gap so that search function dont look for content in
+% this zone. Also we need to put the gap at the end. Otherwise
+% the Str search function would not work.
 
 \subsection{Helpers}
 
