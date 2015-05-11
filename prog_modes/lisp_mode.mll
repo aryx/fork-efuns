@@ -496,12 +496,13 @@ let lisp_regexp_string =
 let lisp_error_regexp = Str.regexp lisp_regexp_string
 
 
+open Compil
 let lisp_find_error text error_point =
   let groups = 
     Text.search_forward_groups text lisp_error_regexp 
       error_point 4 in
   let error =
-    { Compil. 
+    { 
       err_msg = Text.get_position text error_point;
       err_filename = groups.(0);
       err_line = (int_of_string groups.(1)) - 1;
@@ -563,7 +564,7 @@ let _ =
         (fun frame -> install frame.frm_buffer);
     let alist = Var.get_global Ebuffer.modes_alist in
     Var.set_global Ebuffer.modes_alist
-      ((".*\\.\\(el\\|gwm\\)$", mode):: alist);
+      ((".*\\.\\(el\\|gwm\\|lisp\\)$", mode):: alist);
     setup ();
   )
 } 

@@ -315,6 +315,7 @@ let filename_after_point text point =
   filename
 
   
+open Compil
   
 let tex_find_error text error_point = 
   let groups = 
@@ -341,13 +342,13 @@ let tex_find_error text error_point =
     let bol = Text.point_to_bol text error_point in
     Text.bmove text error_point bol;
   done;
-  { Compil. 
-      err_msg = Text.get_position text error_point;
-      err_filename = filename;
-      err_line = int_of_string groups.(0) - 1;
-      err_begin = 0;
-      err_end = 0
-      }
+  { 
+    err_msg = Text.get_position text error_point;
+    err_filename = filename;
+    err_line = int_of_string groups.(0) - 1;
+    err_begin = 0;
+    err_end = 0
+  }
 
   
 let syntax = define_option ["tex_mode"; "syntax"] 

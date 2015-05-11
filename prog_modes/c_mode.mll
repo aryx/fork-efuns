@@ -370,13 +370,14 @@ let c_regexp_string =
   "^\\([^:\n]+\\):\\([0-9]+\\):.*$"
 let c_error_regexp = Str.regexp c_regexp_string
 
+open Compil
 
 let c_find_error text error_point =
   let groups = 
     Text.search_forward_groups text c_error_regexp 
       error_point 2 in
   let error =
-    { Compil.  
+    { 
       err_msg = Text.get_position text error_point;
       err_filename = groups.(0);
       err_line = (int_of_string groups.(1)) - 1;
@@ -825,7 +826,7 @@ let c_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
   
 let mode_regexp = define_option ["c_mode"; "mode_regexp"] ""
     (list_option string_option) [ 
-    (*".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$"*)
+    ".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$"
   ]
   
 let local_map = define_option ["c_mode"; "local_map"] ""

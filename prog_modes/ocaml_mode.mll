@@ -1261,13 +1261,15 @@ then used to find the word.
 let ocaml_error_regexp = define_option ["ocaml_mode"; "error_regexp"] ""
     regexp_option (string_to_regex
     "File \"\\(.*\\)\", line \\([0-9]+\\), characters \\([0-9]+\\)[-]\\([0-9]*\\):")
+
+open Compil
   
 let ocaml_find_error text error_point =
   let groups = 
     Text.search_forward_groups text (snd !!ocaml_error_regexp) 
       error_point 4 in
   let error =
-    { Compil. 
+    { 
       err_msg = Text.get_position text error_point;
       err_filename = groups.(0);
       err_line = (int_of_string groups.(1)) - 1;
@@ -1413,7 +1415,7 @@ let setup () =
 
 let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
     (list_option string_option) 
-    [(*".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)"*)]
+    [".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)"]
   
 let _ =  
   Hook.add_start_hook (fun () ->

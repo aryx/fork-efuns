@@ -12,7 +12,7 @@ BACKENDDIR=graphics/libdraw
 SRC=\
  commons/common.ml commons/file_type.ml commons/simple_color.ml \
  \
- commons/map.ml commons/utils.ml commons/str2.ml\
+ commons/utils.ml commons/str2.ml\
  commons/log.ml\
  commons/options.ml\
  commons/local.ml\
@@ -23,12 +23,12 @@ SRC=\
  graphics/xK.ml\
  \
  core/text.ml\
+ core/efuns.ml\
   core/globals.ml\
   core/var.ml\
   core/attr.ml\
   core/action.ml\
   core/hook.ml\
- core/efuns.ml\
  core/keymap.ml\
  core/ebuffer.ml\
  core/window.ml\
@@ -66,8 +66,13 @@ SRC=\
  \
  prog_modes/pl_colors.ml\
  prog_modes/makefile_mode.ml\
+ prog_modes/ocaml_mode.ml\
+ prog_modes/lisp_mode.ml\
+ prog_modes/c_mode.ml\
  \
  text_modes/org_mode.ml\
+ text_modes/tex_mode.ml\
+ text_modes/html_mode.ml\
  \
  ipc/server.ml \
  \
@@ -77,12 +82,6 @@ SRC=\
  graphics/libdraw/graphics_efuns.ml \
  main.ml
 
-# syntax error special chars
-# prog_modes/ocaml_mode.ml\
-# prog_modes/lisp_mode.ml\
-# prog_modes/c_mode.ml\
-# text_modes/tex_mode.ml\
-# text_modes/html_mode.ml\
 
 COBJS=commons/realpath.$O graphics/libdraw/draw.$O
 
@@ -91,21 +90,26 @@ SYSLIBS=str.cma unix.cma  threads.cma
 #INCLUDEDIRS=commons core features graphics \
 # major_modes minor_modes prog_modes text_modes pfff_modes ipc
 #INCLUDES=${INCLUDEDIRS:%=-I  %} does not work :(
-INCLUDES=-I commons -I core -I features -I graphics \
- -I major_modes -I minor_modes -I prog_modes -I text_modes -I ipc -I $BACKENDDIR
+INCLUDES=\
+ -I commons \
+ -I core -I features -I ipc \
+ -I major_modes -I minor_modes -I prog_modes -I text_modes \
+ -I graphics -I $BACKENDDIR
 
 ##############################################################################
 # Generic variables
 ##############################################################################
 
-BINDIR=/usr/local/bin/
-LIBDIR=/usr/local/lib/ocaml/
+BINDIR=/usr/local/bin
+LIBDIR=/usr/local/lib/ocaml
 
 OCAMLC=$BINDIR/ocamlrun $BINDIR/ocamlc -g -thread $INCLUDES
 OCAMLLEX=$BINDIR/ocamlrun $BINDIR/ocamllex
+OCAMLDEP=$BINDIR/ocamlrun $BINDIR/ocamldep
 
 OBJS=${SRC:%.ml=%.cmo}
 CMIS=${OBJS:%.cmo=%.cmi}
+SYSCLIBS=${SYSLIBS:%.cma=$LIBDIR/lib%.a}
 
 CC=pcc
 LD=pcc
@@ -125,20 +129,18 @@ all:V: efuns.byte
 #old:$OCAMLC str.cma unix.cma threads.cma  -custom -cclib -lstr -cclib -lunix -cclib -lthreads $COBJS  $OBJS -o $target
 
 efuns.byte: $OBJS $COBJS
-	$OCAMLC -verbose -custom $SYSLIBS $LIBDIR/libstr.a $LIBDIR/libunix.a $LIBDIR/libthreads.a $COBJS  $OBJS -o $target
+	$OCAMLC -verbose -custom $SYSLIBS $SYSCLIBS $COBJS  $OBJS -o $target
 
 clean:V:
-	rm -f $OBJS $CMIS
+	rm -f $OBJS $CMIS $COBJS
     rm -f *.[58] *.byte
-	rm -f $COBJS
-
 
 
 MODES= \
  prog_modes/ocaml_mode.ml prog_modes/c_mode.ml prog_modes/lisp_mode.ml \
  text_modes/tex_mode.ml text_modes/html_mode.ml
 
-beforedepend:: $MODES
+beforedepend: $MODES
 prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
 	$OCAMLLEX $prereq
 prog_modes/c_mode.ml: prog_modes/c_mode.mll
@@ -150,16 +152,18 @@ text_modes/tex_mode.ml: text_modes/tex_mode.mll
 text_modes/html_mode.ml: text_modes/html_mode.mll
 	$OCAMLLEX $prereq
 
-#$MODES
 
-depend:V: 
-	ocamldep $INCLUDES *.ml* */*.ml* v $BACKENDDIR/*.ml* | grep -v -e '.* :$' > .depend2
+MLIS=${SRC:%.ml=%.mli}
+
+depend:V: $MODES
+	$OCAMLDEP $INCLUDES $SRC $MLIS  | grep -v -e '.* :$' > .depend2
 
 ##############################################################################
 # Generic rules
 ##############################################################################
 
 # do not use prereq or it will include also the .cmi in the command line
+# because of the .depend file that also define some rules
 %.cmo: %.ml
 	$OCAMLC -c $stem.ml
 
@@ -171,4 +175,3 @@ depend:V:
 
 
 <.depend2
-
