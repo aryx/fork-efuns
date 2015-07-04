@@ -199,6 +199,9 @@ Here are other candidates that were considered but ultimately discarded:
 %http://homepage.boetes.org/software/mg/
 \end{itemize}
 
+% see also other ocaml editors?
+%  - https://github.com/diml/zed (seems just an "engine")
+
 % see Editor.nw for more choices
 
 % vs emacs:
@@ -217,8 +220,6 @@ Here are other candidates that were considered but ultimately discarded:
 %  - easier to program, Ocaml > Lisp! can also use ocamlyacc, my
 %    pfff real parsers. More colors. More structure. Can use threads!
 
-% see also other ocaml editors?
-%  - https://github.com/diml/zed (seems just an "engine")
 
 %todo: look atom flight manual for its TOC?
 
@@ -234,6 +235,7 @@ Here are other candidates that were considered but ultimately discarded:
 % - can use threads to program extensions! e.g. cursor blinking was easy.
 
 
+%http://www.jwz.org/doc/emacs-timeline.html
 
 \section{Getting started}
 
@@ -485,9 +487,6 @@ Options:
 % text -> buffer -> frame/window -> top_window
 
 \section{[[Text]]}
-
-
-
 
 % text -> string | (lines -> ... boxes)
 % with attrs at different level (text_attr, box_attr)
@@ -2712,6 +2711,9 @@ let set_position text point pos =
 
 \section{Points}
 
+% optimizing markers:
+% http://blog.atom.io/2015/06/16/optimizing-an-important-atom-primitive.html
+
 % seen Point type in core DS chapter with Buffer type.
 
 % they are used as "cursors" that goes through the text.
@@ -4738,6 +4740,11 @@ let install window frame =
 \subsection{Frame display}
 
 % the redisplay function!!!
+
+%todo: 
+% tile-based opti
+% see http://blog.atom.io/2015/06/24/rendering-improvements.html
+
 
 \subsubsection{[[Frame.display()]]}
 
@@ -8061,6 +8068,10 @@ let clean_text text =
 % this zone. Also we need to put the gap at the end. Otherwise
 % the Str search function would not work.
 
+%TODO: but if search for 'abc' and the gap is before 'b',
+% then the text_string will be  a00000000bc so
+% the Str function will work?
+
 \subsection{Helpers}
 
 <<constant Search.last_search>>=
@@ -8775,6 +8786,7 @@ let set_previous_frame frame =
 
 
 \section{Pinning buffers}
+% lefessant extension I think
 
 <<buffer navigating actions>>=
 (* C-M map *)
@@ -8807,7 +8819,7 @@ let up_buffer frame =
 @
 
 \chapter{Multi-Windows}
-% fra,es?
+% frames?
 
 % recall window_down type!
 
@@ -9286,6 +9298,10 @@ Local.get buf.buf_major_mode.maj_vars var
 
 % see section on colors in Text chapter
 
+%https://github.com/sublimehq/Packages/blob/master/OCaml/OCaml.sublime-syntax
+% but in the end longer than the ocamllex spec of ocaml :)
+% (ok maybe it's more fault tolerant, but still)
+
 \subsection{Indentation}
 
 \subsection{Abbrevs}
@@ -9560,6 +9576,7 @@ let start_command pwd buf_name window cmd end_action_opt =
   frame
 @
 
+% we can use threads! no more emacs lisp limitations
 
 <<function System.system>>=
 let system pwd buf_name cmd end_action =
@@ -10895,6 +10912,9 @@ let init_frames = ref []
 
 
 
+\section{Mini maps}
+
+% Yeah!
 
 \chapter{Conclusion}
 
@@ -10913,12 +10933,13 @@ let init_frames = ref []
 
 <<function Efuns.error>>=
 let error f x =
-  print_string ("error: ");
+  Printf.printf "error: ";
   Printf.printf f x;
-  print_newline ()
+  Printf.printf "\n"
 @
+% this is actually now Globals.error
+% better to not mix print_xxx with printf, so let's use printf everywhere
 
-% is actually now Globals.error
 
 \section{[[*Messages*]]}
 
@@ -11009,6 +11030,7 @@ then begin
   then pr2 ("action not found");
 end;
 @
+%less: alternative is to store the function name in FrameAction
 
 \section{Graphics commands trace, [[-debug_graphics]]}
 
@@ -11317,6 +11339,10 @@ let get_parameter frame =
 
 
 \chapter{Major Mode Examples}
+
+%https://elpa.gnu.org/packages/
+%https://atom.io/packages
+%https://github.com/sublimehq/Packages
 
 % not here:
 %  - makefile
