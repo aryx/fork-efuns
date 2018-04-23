@@ -38,3 +38,6 @@ lpdistclean::
 
 clean::
 	rm -f *.aux *.toc *.log *.brf *.out
+
+loc:
+	wc -l $(SRC_VIEWS)
