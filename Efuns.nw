@@ -1,4 +1,4 @@
-\documentclass[twocolumn]{report}
+\documentclass[twocolumn, landscape]{report}
 
 %******************************************************************************
 % Prelude
@@ -81,27 +81,13 @@
 %note: required by noweblatexpad for the \t \l \n in this file
 \usepackage{fancyvrb}
 \usepackage{url}
-\iffinal
 \usepackage{hyperref}
  \hypersetup{colorlinks=true}
-\fi
 \usepackage[pageref]{backref}
  \def\backref{{\footnotesize cited page(s)}~}
-%\usepackage{cleveref} %\cref
-%\usepackage{multirow}
 \usepackage{booktabs} 
  \newcommand{\otoprule}{\midrule[\heavyrulewidth]}
 \usepackage{graphicx}
- %\usepackage[margin=0.5in]{geometry}
- %  but eat the bottom when very low
- %\usepackage{fullpage} is deprecated 
- % => do the more manual below:
- \addtolength{\oddsidemargin}{-.850in}
- \addtolength{\evensidemargin}{-.850in}
- \addtolength{\textwidth}{1.70in}
- \addtolength{\topmargin}{-.850in}
- \addtolength{\textheight}{1.70in}
-%\usepackage{minitoc}
 
 %------------------------------------------------------------------------------
 % Macros
@@ -112,19 +98,26 @@
 % Config
 %------------------------------------------------------------------------------
 \allcodefalse
-% used for redundant copyrights, pad special keybindings,
-%  the mostly boilerplate of buffer_action vs frame_action
+% ifallcode is used for:
+%  - redundant copyrights, pad special keybindings,
+%    the mostly boilerplate of buffer_action vs frame_action
 
 %\setcounter{tocdepth}{1}
 
+\addtolength{\topmargin}{-.850in}
+\addtolength{\textheight}{1.70in}
+
+\begin{document}
 %******************************************************************************
 % Title
 %******************************************************************************
-
-\begin{document}
-
-\title{{\Huge The Text Editor Efuns}\\{version 0.1}}
-%PSica
+\title{
+{\Huge 
+The Text Editor Efuns
+}\\
+{version 0.1}
+}
+%PSica, actually it should be The Screen Text Editor
 
 \author{
 Yoann Padioleau\\
@@ -134,30 +127,22 @@ with code from\\
 Fabrice Le Fessant
 }
 
-
 \maketitle 
 \onecolumn
 \hrule
 \begin{quote}
-    Copyright \copyright{} 2015 Yoann Padioleau \\
-    Permission is granted to copy, distribute and/or modify this document,
-    except all the source code it contains, under the terms of the GNU Free
-    Documentation License, Version 1.3.
+Copyright \copyright{} 2015 Yoann Padioleau \\
+All Rights Reserved.
 \end{quote}
 \hrule
+\twocolumn
 
-%CONFIG: \dominitoc
 
-\iffinal
 \begingroup
 \hypersetup{linkcolor=blue}
 % need to s/onecolumn/twocolumn in report.cls :) for \tableofcontents
-\twocolumn
 \tableofcontents
 \endgroup
-\else
-\tableofcontents
-\fi
 
 %******************************************************************************
 % Body
@@ -165,12 +150,34 @@ Fabrice Le Fessant
 
 \chapter{Introduction}
 
+The goal of this book is to present in full details the source code of
+a {text editor}.
+
 \section{Motivations}
 
-The goal of this book is to present in full details the source code of
-a text editor.
-Why? Because I think it makes you a better programmer if
-you fully understand how things work under the hood.
+Why a text editor? Because I think you are a better programmer if
+you fully understand how things work under the hood, and
+the editor is probably the tool a programmer uses the most.
+
+Even if kernels and compilers are essential to run and produce software,
+and are the subjects of many textbooks, the text editor is also
+an essential software. Indeed,
+The source code of almost all software, including kernels and compilers,
+was first entered in a computer by a programmer using a text editor. 
+In fact, text editors are used to enter the code of text editors, leading to
+bootstrapping issues, just like for a compiler.
+\l history: punch card before, and line editor before screen text editors
+
+Here are a few questions I hope this book will answer:
+\begin{itemize}
+\item How the text of a file is represented in memory? 
+Which data structure is used?
+\n Gap buffer
+
+
+\end{itemize}
+
+\section{The text editor [[efuns]]}
 
 % I chose efuns, an emacs clone, simple, elegant. Also different language
 % than previous books. Written in Ocaml! more high level than C, and while
@@ -181,28 +188,6 @@ you fully understand how things work under the hood.
 %%Help also to explore concepts for Editor.nw.
 %%(or actually might become Editor.nw) 
 %%(or actually in the end I might actually switch to efuns!!)
-
-Here are other candidates that were considered but ultimately discarded:
-\begin{itemize}
-\item Emacs
-%too big, xdisp.c is a single file of 30 000 LOC ... more than the whole
-% efuns
-%todo: look at emacs lisp manual, and emacs manual to see the concepts though
-\item Microemacs
-% the source of many forks apparently, so maybe the code is cleaner?
-% uemacs, one of them, used by torvalds, is 20 000 LOC so not bad
-\item Qemacs
-% unicode support! complex html/css visualization, multi fonts
-% size? 
-\item mg
-%mg, micro gnu emacs, 20 000 LOC
-%http://homepage.boetes.org/software/mg/
-\end{itemize}
-
-% see also other ocaml editors?
-%  - https://github.com/diml/zed (seems just an "engine")
-
-% see Editor.nw for more choices
 
 % vs emacs:
 %  - see http://www.emacswiki.org/emacs/EfunsEditor
@@ -220,9 +205,6 @@ Here are other candidates that were considered but ultimately discarded:
 %  - easier to program, Ocaml > Lisp! can also use ocamlyacc, my
 %    pfff real parsers. More colors. More structure. Can use threads!
 
-
-%todo: look atom flight manual for its TOC?
-
 % better stuff now in efuns than in emacs:
 % - pfff-based modes highlighters
 %   * better colors (more colors to differentiate different kinds of idents)
@@ -234,8 +216,59 @@ Here are other candidates that were considered but ultimately discarded:
 % - dircolors also in eshell and compile/grep buffers :) actually quite nice!
 % - can use threads to program extensions! e.g. cursor blinking was easy.
 
+\section{Other editors}
+% QED "online editor" by Butler Lampson
+
+\subsection{Other Emacs-like editors}
+
+Here are other Emacs clones that were considered for this book
+but were ultimately discarded:
+\begin{itemize}
+
+\item Emacs
+%too big, xdisp.c is a single file of 30 000 LOC ... more than the whole
+% efuns
+%todo: look at emacs lisp manual, and emacs manual to see the concepts though
+
+\item Microemacs
+% the source of many forks apparently, so maybe the code is cleaner?
+% uemacs, one of them, used by torvalds, is 20 000 LOC so not bad
+
+\item Qemacs
+% unicode support! complex html/css visualization, multi fonts
+% size? 
+
+\item mg
+%mg, micro gnu emacs, 20 000 LOC
+%http://homepage.boetes.org/software/mg/
+
+\end{itemize}
+
+% see Editor.nw for more choices
+
+%other:
+% - jed (Pixel and then I were using that one at first on Linux)
+%other ocaml editors:
+% - https://github.com/diml/zed (seems just an "engine")
+% - https://github.com/janestreet/ecaml can write emacs plugins in ocaml
+
+%todo: look atom flight manual for its TOC?
+
 
 %http://www.jwz.org/doc/emacs-timeline.html
+
+% multics emacs, history and design:
+%  http://www.multicians.org/mepap.html
+
+%notes on how to write an editor
+%http://ned.rubyforge.org/doc/editor-101.txt
+%http://ned.rubyforge.org/doc/editor-102.txt
+
+%Design and implementation of a win32 text editor
+%http://www.catch22.net/tuts/neatpad
+
+% bench? compare efuns vs famous editors:
+%https://blog.xinhong.me/post/sublime-text-vs-vscode-vs-atom-performance-dec-2016/
 
 \section{Getting started}
 
@@ -248,8 +281,8 @@ Here are other candidates that were considered but ultimately discarded:
 
 Most of this document is actually source code from INRIA, so
 those parts are copyright by INRIA.
-The prose is mine and is licensed under the GNU Free Documentation
-License.
+%The prose is mine and is licensed under the GNU Free Documentation
+%License.
 
 <<copyright header efuns>>=
 (***********************************************************************)
@@ -294,16 +327,20 @@ License.
 
 \section{Acknowledgments}
 
-I would like to thank of course Fabrice Le Fessant,
-the main author of Efuns.
+We would like to thank of course Fabrice Le Fessant,
+the main author of Efuns, who wrote in some sense most of this book.
+
+% Stallman, original author, inspiration of Efuns, nice design.
 
 \chapter{Overview}
 
 \section{Text editor principles}
 
-%history:
-% as opposed to ed, can actually see the content! and update it
+%history: punch cards, line editor ed (imaginary cursor) (cf wikipedia page)
+%Important is can edit! move anywhere, and do backspace!
+% As opposed to ed, can actually see the content! and update it
 % and get feedback in real-time. wysiwyg!
+
 
 % navigating in file (fast, different granularities), random access!
 % editing (inserting/deleting/moving/cut-copy-paste/transposing)
@@ -350,7 +387,9 @@ the main author of Efuns.
 % - keyboard (self insert, keybinding, M-x)
 % - mouse (menu, window clicks to quickly navigate)
 
-\section{[[efuns]] services}
+\section{[[efuns]] interfaces}
+
+\subsection{Command-line interface}
 
 % ./efuns foo.txt
 
@@ -365,6 +404,8 @@ Options:
 % see also *help* buffer
 
 % see also efuns_client later so can cooperate with other programs (e.g. cm)
+
+\subsection{Graphical user interface}
 
 \section{Code organization}
 
@@ -449,11 +490,11 @@ Options:
 
 
 
-\section{Trace of a file loading}
+\subsection{Trace of a file loading}
 
 % scenario
 
-\section{Trace of a line rendering}
+\subsection{Trace of a line rendering}
 
 % also important is the flow from the text string to the screen:
 % data on disk -> 
@@ -464,7 +505,7 @@ Options:
 %   boxes + frm_line that handles overflow lines ->
 % screen
 
-\section{Trace of a key press}
+\subsection{Trace of a key press}
 
 % event, event loop, keyboard dispatch, 
 % try_map, find right map
@@ -478,6 +519,16 @@ Options:
 
 % The cool thing is that the code of M->  just has to care about
 % moving a point, the rest is then automatic!
+
+%\section{Bootstrapping}
+% how entered code of very first text editor??
+
+\section{Book structure}
+
+% core DS. top-down main
+% bottom up core DS functions. top-down again ui perspective.
+
+
 
 
 %###############################################################################
@@ -1366,9 +1417,9 @@ let _ =
 (* ----------------------------------------------------------- *)
 (* Buffers/windows/frames *)
 (* ----------------------------------------------------------- *)
-<<buffer managment actions>>
+<<buffer management actions>>
 <<buffer navigating actions>>
-<<frame managment actions>>
+<<frame management actions>>
 <<frame navigation actions>>
 (* ----------------------------------------------------------- *)
 (* Meta *)
@@ -1675,9 +1726,9 @@ let c_h = (ControlMap, Char.code 'h')
 (* -------------------------------------------------------- *)
 (* Buffers/windows/frames *)
 (* -------------------------------------------------------- *)
-<<buffer managment keys>>
+<<buffer management keys>>
 <<buffer navigating keys>>
-<<frame managment keys>>
+<<frame management keys>>
 <<frame navigation keys>>
 
 (* -------------------------------------------------------- *)
@@ -2552,9 +2603,18 @@ match () with
 
 %less: put here the binding for the very basic keys? 'a', 'b', etc?
 
-\chapter{Text Managment}
+\chapter{Text Management}
 
 % text.ml
+
+%How moe, sam, vi, emacs, gedit manage their textual data:
+% http://ecc-comp.blogspot.com/2015/05/a-brief-glance-at-how-5-text-editors.html
+% https://news.ycombinator.com/item?id=11244103
+
+% apparently emacs is using a gap buffer too.
+
+%A few alternatives (including gap buffer)
+% http://www.averylaird.com/programming/editor/2017/09/30/the-piece-table/
 
 \section{The gap buffer}
 
@@ -2598,6 +2658,12 @@ match () with
 %http://scienceblogs.com/goodmath/2009/02/18/gap-buffers-or-why-bother-with-1/
 %alternative used in emacs:
 %http://en.wikipedia.org/wiki/Rope_(data_structure)
+%
+%http://ned.rubyforge.org/doc/buffer-gap.txt
+
+%'Gap Buffers Are Not Optimized for Multiple Cursors'
+%http://nullprogram.com/blog/2017/09/07/
+
 
 % already seen Text.text_size, Text.text_string in core DS chapter
 
@@ -3838,7 +3904,7 @@ let change_font frame =
 
 \subsection{Line boxes}
 % (cached) representation
-%less: mv later? Keep Text Managment section to be only about text_string?
+%less: mv later? Keep Text Management section to be only about text_string?
 
 % text.text_newlines is array of Text.line, where have seen
 % already the line.position which is the bol pos.
@@ -4093,7 +4159,7 @@ line.line_modified <- false;
 % was line_modified <- -1; which now is false
 % !repr_cursor maybe be smaller than !repr_len ?
 
-\subsubsection{Gap managment}
+\subsubsection{Gap management}
 
 <<[[Text.compute_representation()]] locals>>=
 let gpos = text.gpoint.pos in
@@ -5984,7 +6050,7 @@ let message top_window msg =
 %\section{Status bar}
 % in Gtk, but status line is enough
 
-\chapter{Input Managment}
+\chapter{Input Management}
 
 \section{Keyboard}
 
@@ -8041,7 +8107,7 @@ let isearch_backward_regexp = isearch Regexp Backward
 
 \subsection{Secondary cursor}
 
-\subsection{Gap managment}
+\subsection{Gap management}
 
 <<[[Text.text]] other fields>>=
 mutable text_clean : bool;
@@ -8527,7 +8593,7 @@ let replace flag frame query str repl =
 @
 
 
-\chapter{Multi-Buffers}
+\chapter{Multiple Buffers}
 
 % will present 4 different ways to switch buffers:
 %  - menu
@@ -8605,7 +8671,7 @@ Top_window.buffers_menu := (fun top_window button () ->
 
 %\subsection{Frame menu}
 
-<<buffer managment keys>>=
+<<buffer management keys>>=
 (* pad: *)
 [ControlMetaMap, XK.xk_Tab], "buffer_menu";
 @
@@ -8618,16 +8684,16 @@ define_action "buffer_menu"  Buffer_menu.menu;
 
 %\section{Navigation}
 
-<<buffer managment keys>>=
+<<buffer management keys>>=
 [c_x; NormalMap, Char.code 'b'], "change_buffer";
 (* pad: *)
 [ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
 @
-<<buffer managment actions>>=
+<<buffer management actions>>=
 (* C-x map *)
 define_action "change_buffer"  Multi_buffers.change_buffer;
 @
-<<buffer managment actions>>=
+<<buffer management actions>>=
 define_action "switch_to_other_buffer"  Multi_buffers.switch_to_other_buffer;
 @
 
@@ -8665,10 +8731,10 @@ let change_buffer window name =
 "Kill Buffer", "kill_buffer";
 @
 
-<<buffer managment keys>>=
+<<buffer management keys>>=
 [c_x; NormalMap, Char.code 'k'], "kill_buffer";
 @
-<<buffer managment actions>>=
+<<buffer management actions>>=
 (* C-x map *)
 define_action "kill_buffer"  Multi_buffers.kill_buffer;
 @
@@ -8818,7 +8884,7 @@ let up_buffer frame =
   Frame.change_buffer frame.frm_window !up_buffer
 @
 
-\chapter{Multi-Windows}
+\chapter{Multiple Windows}
 % frames?
 
 % recall window_down type!
@@ -8857,13 +8923,13 @@ let active frame =
 "Cut Frame", "vertical_cut_frame";
 @
 
-<<frame managment keys>>=
+<<frame management keys>>=
 [c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
 [c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
 @
 % a bit like fork! and then can use C-x b to exec :)
 
-<<frame managment actions>>=
+<<frame management actions>>=
 (* C-x map *)
 define_action "vertical_cut_frame"  Multi_frames.v_cut_frame;    
 (* C-x map *)
@@ -8926,12 +8992,12 @@ let cut_frame frame =
 "Delete Frame", "delete_frame";
 @
 %bug? not sure v_cut_frame will work!
-<<frame managment keys>>=
+<<frame management keys>>=
 [c_x; NormalMap, Char.code '1'], "one_frame";
 [c_x; NormalMap, Char.code '0'], "delete_frame";
 @
 
-<<frame managment actions>>=
+<<frame management actions>>=
 (* C-x map *)
 define_action "one_frame"  Multi_frames.one_frame;
 (* C-x map *)
@@ -9081,6 +9147,9 @@ let rec prev f window =
 
 
 \chapter{Major Modes}
+
+% structured vs text editor and more
+%https://github.com/shaunlebron/history-of-lisp-editing
 
 % have seen very generic features before, navigating, insert/delete,
 % search/replace. Now we will see more specific features. File
@@ -9293,6 +9362,21 @@ Local.get buf.buf_major_mode.maj_vars var
 % the variable and keymap seen before is already the way
 % to have some customization. But there are more.
 
+% https://channel9.msdn.com/Blogs/Seth-Juarez/Anders-Hejlsberg-on-Modern-Compiler-Construction
+% needs of IDE/editor:
+%  - syntax coloring -> lexer enough
+%  - folding -> need parser
+%  - error checking, method completion -> need type checker
+% analysis mode:
+%  - push-mode: compiler go down the tree carrying info from top
+%  - pull-mode: completion tool go up the tree to pull out information
+%    incrementally. Erase the world each time. Just save the ASTs in memory.
+%    (julien does more, he typecheck the whole world each time)
+% We can put a language intelligence in one external tool, and editor can
+% communicate with it. Editor does not have to know anything about the langage.
+% Just need a protocol (using JSON for instance) to communicate with the
+% external program.
+
 \subsection{Colors}
 % Attributes.
 
@@ -9359,7 +9443,7 @@ let install_structures buf list =
   )
 @
 
-\subsection{Compilation}
+\subsection{Compilation and errors}
 
 % next error variable
 
@@ -9367,6 +9451,9 @@ let install_structures buf list =
 % or put with minor mode? after all it's a bit similar
 % to paren_mode where each major mode can customize what
 % is a paren-able character.
+
+\subsection{Completion}
+% simple completion, smart (contextual) completion
 
 \chapter{Minor Modes}
 
@@ -9539,6 +9626,10 @@ iter buf.buf_minor_modes
 
 
 \chapter{Extra Features}
+
+%todo:
+% - multiple cursors (but does not work well with gap buffer)
+%   http://emacsrocks.com/e13.html
 
 \section{Running external commands}
 
@@ -10822,11 +10913,11 @@ let _ =
 %todo: this is why have list top_window in location.top_windows?
 
 <<misc keys>>=
-<<window managment keys>>
+<<window management keys>>
 @
 
 <<misc actions>>=
-<<window managment actions>>
+<<window management actions>>
 @
 
 <<constant Std_efunsrc.n_5>>=
@@ -10837,14 +10928,14 @@ let n_5 = (NormalMap, Char.code '5')
 let n_5 = (NormalMap, Char.code '5')
 @
 
-<<window managment keys>>=
+<<window management keys>>=
 (* less: delete *)
 [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
 [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
 [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
 @
 
-<<window managment actions>>=
+<<window management actions>>=
 (* C-x 5 map *)
 define_action "window_load_buffer"  Complexe.window_load_buffer;
 (* C-x 5 map *)
@@ -10927,7 +11018,7 @@ let init_frames = ref []
 
 \appendix
 
-\chapter{Error Managment}
+\chapter{Error Management}
 
 \section{Logging}
 
