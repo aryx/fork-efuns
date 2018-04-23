@@ -608,7 +608,7 @@ let init2 init_files =
     "Menlo 18" <- current
 *)
   in
-  Pango.Font.set_weight desc `ULTRABOLD; 
+  (*Pango.Font.set_weight desc `ULTRABOLD;XXX *)
 
   let metrics = compute_metrics loc desc in
 
