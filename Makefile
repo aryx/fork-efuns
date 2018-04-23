@@ -58,6 +58,8 @@ GRAPHICSDIRS=$(LIBROOT)/lablgtk2 $(LIBROOT)/cairo
 #$(shell ocamlfind query cairo)
 GRAPHICSLIBS=lablgtk.cma cairo.cma   cairo_lablgtk.cma pango_cairo.cma
 GTKLOOP=gtkThread.cmo
+# because of -linkall and the use of libcairo, but should not be required
+EXTRA=-cclib -lfontconfig
 endif
 
 #alt:
@@ -165,6 +167,9 @@ INCLUDEDIRS=\
   graphics $(BACKENDDIR) $(GRAPHICSDIRS)  \
   major_modes minor_modes prog_modes text_modes pfff_modes ipc
 
+INCLUDEDIRS2= commons core features \
+  major_modes minor_modes prog_modes text_modes pfff_modes ipc
+INCLUDEDEPS=$(INCLUDEDIRS2:%=-I %)
 
 ##############################################################################
 # Generic variables
@@ -183,7 +188,7 @@ opt: $(PROGS:=.opt)
 # need -linkall! otherwise the let _ = add_start_hook will not be run.
 $(TARGET): $(OBJS) $(COBJS)
 	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ \
-      $(LIBS) $(GTKLOOP) $(OBJS) $(COBJS)
+      $(LIBS) $(GTKLOOP) $(OBJS) $(COBJS) $(EXTRA)
 
 $(TARGET).opt: $(OPTOBJS) $(COBJS)
 	$(OCAMLOPT) $(STATIC) -cclib -L/opt/X11/lib -o $@ \
@@ -233,7 +238,7 @@ clean::
 ##############################################################################
 
 visual:
-	~/pfff/codemap -no_legend -ss 2 -filter pfff .
+	~/pfff/codemap -no_legend -screen_size 2 -filter pfff .
 
 graph:
 	~/pfff/codegraph -derived_data -lang cmt -build .
@@ -247,6 +252,7 @@ check:
 
 include $(TOP)/docs/latex/Makefile.common
 
+VERSION=3
 TEXMAIN=Efuns.nw
 TEX=Efuns.tex
 
