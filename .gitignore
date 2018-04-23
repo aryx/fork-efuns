@@ -1,19 +1,42 @@
+
+external/stdlib/*
+
 # ocaml object files
 
 *.o
 *.cm*
 *.annot
-.depend
-*.so
-*.a
-
 *.opt
 *.byte
 
-external/stdlib/*
+# c object files
+*.so
+*.a
+
+# make object files
+.depend
+
+# syncweb object files
+.md5sum_*
+
+# latex object files
+*.aux
+*.brf
+*.log
+*.out
+*.toc
 
 # pfff and tools
 /TAGS
+/.pfff/*
+#/PFFF_DB.json
+#/PFFF_DB.marshall
+#/graph_code.marshall
+#/graph_code.marshall.opti
+#/layer_bottomup.json
+#/layer_graphcode_stats.json
+#/layer_topdown.json
+
 
 # lex and yacc
 ocaml_mode.ml
@@ -22,38 +45,24 @@ c_mode.ml
 lisp_mode.ml
 html_mode.ml
 
-# syncweb
-.md5sum_*
 
-# binaries
-efuns.byte
-efuns
-efuns.opt
-efuns_server
-efuns_filebrowser
-efuns_texbrowser
-
-#MISC
-efuns.opt.gz
-
-*.cfg
-*.ps
-*.idx
-/.DS_Store
-/Efuns.aux
-/Efuns.brf
-/Efuns.log
-/Efuns.out
+# doc
 /Efuns.pdf
 /Efuns.tex
-/Efuns.toc
-/PFFF_DB.json
-/PFFF_DB.marshall
-/graph_code.marshall
-/graph_code.marshall.opti
-/layer_bottomup.json
-/layer_graphcode_stats.json
-/layer_topdown.json
-/gitlog
+
+# binaries
+/efuns
+/efuns_server
+/efuns_filebrowser
+/efuns_texbrowser
 /efuns_client
-/.depend2
+
+#MISC
+#efuns.opt.gz
+#*.cfg
+#*.ps
+#*.idx
+#/gitlog
+#/.depend2
+
+# ?????
