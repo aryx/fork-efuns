@@ -34,9 +34,9 @@ let with_lock f =
 
 (*s: function Efuns.error *)
 let error f x =
-  print_string ("error: ");
+  Printf.printf "error: ";
   Printf.printf f x;
-  print_newline ()
+  Printf.printf "\n"
 (*e: function Efuns.error *)
 
 (*************************************************************************)

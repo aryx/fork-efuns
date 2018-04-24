@@ -169,15 +169,15 @@ let _ =
   (* ----------------------------------------------------------- *)
   (* Buffers/windows/frames *)
   (* ----------------------------------------------------------- *)
-  (*s: buffer managment actions *)
+  (*s: buffer management actions *)
   (* C-x map *)
   define_action "change_buffer"  Multi_buffers.change_buffer;
-  (*x: buffer managment actions *)
+  (*x: buffer management actions *)
   define_action "switch_to_other_buffer"  Multi_buffers.switch_to_other_buffer;
-  (*x: buffer managment actions *)
+  (*x: buffer management actions *)
   (* C-x map *)
   define_action "kill_buffer"  Multi_buffers.kill_buffer;
-  (*e: buffer managment actions *)
+  (*e: buffer management actions *)
   (*s: buffer navigating actions *)
   define_action "buffer_menu"  Buffer_menu.menu;
   (*x: buffer navigating actions *)
@@ -191,17 +191,17 @@ let _ =
   (* C-M map *)
   define_action "up_buffer"  Multi_buffers.up_buffer;
   (*e: buffer navigating actions *)
-  (*s: frame managment actions *)
+  (*s: frame management actions *)
   (* C-x map *)
   define_action "vertical_cut_frame"  Multi_frames.v_cut_frame;    
   (* C-x map *)
   define_action "horizontal_cut_frame"  Multi_frames.h_cut_frame;    
-  (*x: frame managment actions *)
+  (*x: frame management actions *)
   (* C-x map *)
   define_action "one_frame"  Multi_frames.one_frame;
   (* C-x map *)
   define_action "delete_frame"  Multi_frames.delete_frame;
-  (*e: frame managment actions *)
+  (*e: frame management actions *)
   (*s: frame navigation actions *)
   (* C-x map *)
   define_action "next_frame"  Multi_frames.next_frame;
@@ -272,14 +272,14 @@ let _ =
   (*x: misc actions *)
   define_action "start_server" Server.start;
   (*x: misc actions *)
-  (*s: window managment actions *)
+  (*s: window management actions *)
   (* C-x 5 map *)
   define_action "window_load_buffer"  Complexe.window_load_buffer;
   (* C-x 5 map *)
   define_action "window_change_buffer"  Complexe.window_change_buffer;
   (* C-x 5 map *)
   define_action "delete_window"  Top_window.delete_window;
-  (*e: window managment actions *)
+  (*e: window management actions *)
   (*e: misc actions *)
   (*e: actions definitions *)
   ()
@@ -457,16 +457,16 @@ let _ =
         (* -------------------------------------------------------- *)
         (* Buffers/windows/frames *)
         (* -------------------------------------------------------- *)
-        (*s: buffer managment keys *)
+        (*s: buffer management keys *)
         (* pad: *)
         [ControlMetaMap, XK.xk_Tab], "buffer_menu";
-        (*x: buffer managment keys *)
+        (*x: buffer management keys *)
         [c_x; NormalMap, Char.code 'b'], "change_buffer";
         (* pad: *)
         [ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
-        (*x: buffer managment keys *)
+        (*x: buffer management keys *)
         [c_x; NormalMap, Char.code 'k'], "kill_buffer";
-        (*e: buffer managment keys *)
+        (*e: buffer management keys *)
         (*s: buffer navigating keys *)
         (* lefessant? in emacs now? *)
         [ControlMetaMap, XK.xk_Left], "left_buffer";
@@ -476,13 +476,13 @@ let _ =
         [ControlMetaMap, XK.xk_Down], "down_buffer";
         [ControlMetaMap, XK.xk_Up], "up_buffer";
         (*e: buffer navigating keys *)
-        (*s: frame managment keys *)
+        (*s: frame management keys *)
         [c_x; NormalMap, Char.code '2'], "vertical_cut_frame";    
         [c_x; NormalMap, Char.code '3'], "horizontal_cut_frame";    
-        (*x: frame managment keys *)
+        (*x: frame management keys *)
         [c_x; NormalMap, Char.code '1'], "one_frame";
         [c_x; NormalMap, Char.code '0'], "delete_frame";
-        (*e: frame managment keys *)
+        (*e: frame management keys *)
         (*s: frame navigation keys *)
         [c_x; NormalMap, Char.code 'o'], "next_frame";
         (* pad: xemacs inspired *)
@@ -527,12 +527,12 @@ let _ =
         [NormalMap, Char.code ' '], "char_expand_abbrev";
         [MetaMap, Char.code '/'], "dabbrev_expand";
         (*x: misc keys *)
-        (*s: window managment keys *)
+        (*s: window management keys *)
         (* less: delete *)
         [c_x; n_5; NormalMap, Char.code 'f'], "window_load_buffer";
         [c_x; n_5; NormalMap, Char.code 'b'], "window_change_buffer";
         [c_x; n_5; NormalMap, Char.code '0'], "delete_window";
-        (*e: window managment keys *)
+        (*e: window management keys *)
         (*x: misc keys *)
         [NormalMap, XK.xk_Insert], "overwrite_mode";
         (*e: misc keys *)

@@ -2004,6 +2004,11 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 <<toplevel Main._>>=
 let _ =
   Common.main_boilerplate (fun () ->
+(*
+    let r = Gc.get () in
+    r.Gc.verbose <- true;
+    Gc.set r;
+*)
     main () 
   )
 @
@@ -2023,7 +2028,8 @@ let main () =
   <<[[main()]] set signal handlers>>
   Arg.parse ([
     <<[[main()]] command line options>>
-   ] @  Common2.cmdline_flags_devel ()
+   ] 
+   (* @  Common2.cmdline_flags_devel () *)
    )
 
    (fun name -> initial_files := name :: !initial_files) 
@@ -8779,7 +8785,7 @@ let kill buf =
     Hashtbl.remove location.loc_files filename
   );
   List.iter (fun f -> f () ) buf.buf_finalizers;
-  Gc.compact ();
+(* TODO Gc.compact (); this cause some segfault under plan9 with ocaml light *)
   buf.buf_shared <- -1
 @
 % let the gc do its work! put to -1 because maybe
@@ -9758,7 +9764,7 @@ let open_process pwd cmd =
       (* I prefer to do it here than in the caller *)
       Sys.chdir pwd;
       execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
-      (*      exit 127 *)
+      exit 127 (* for ocaml light *)
   | pid -> 
       Unix.close out_read;
       Unix.close in_write;
@@ -11182,16 +11188,11 @@ val create_float : string -> float var
 \subsection{[[vars]]}
 
 <<type Local.vars>>=
-(* (string * Obj.t ref) Map ref *)
-type vars = Obj.t ref Vars.t ref
+type vars = (string, Obj.t ref) Vars.t ref
 @
 
 <<module Local.Vars>>=
-module Vars = Map.Make 
- (struct  
-      type t = string
-      let compare = compare 
- end)
+module Vars = Map
 @
 % Map string -> 'a
 

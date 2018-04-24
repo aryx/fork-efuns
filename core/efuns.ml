@@ -355,7 +355,7 @@ type location =
     (* key is buffer name (made unique via get_unique_name()) *)
     mutable loc_buffers : (string, buffer) Hashtbl.t;
     (* key is filename (should be unique? todo: use realpath?) *)
-    mutable loc_files : (string, buffer) Hashtbl.t;
+    mutable loc_files : (Common.filename, buffer) Hashtbl.t;
 
     (* list when have one efuns running multiple top windows *)
     mutable top_windows : top_window list;
