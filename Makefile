@@ -250,6 +250,7 @@ check:
 # Literate Programming rules
 ##############################################################################
 
+SYNCFLAGS=-md5sum_in_auxfile -less_marks -lang ocaml
 include $(TOP)/docs/latex/Makefile.common
 
 VERSION=3

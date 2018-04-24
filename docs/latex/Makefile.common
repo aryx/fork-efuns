@@ -1,43 +1,42 @@
+# -*- Makefile -*-
+
+# assumes the "includer" has defined DOC, SRC_VIEWS, SRC_ORIG 
+# and possibly SYNCFLAGS
 
 ##############################################################################
 # Generic Literate programming variables
 ##############################################################################
 
-SYNCFLAGS=-md5sum_in_auxfile -less_marks -lang ocaml
+SYNCWEB=~/github/syncweb/syncweb.opt
+#SYNCFLAGS=-md5sum_in_auxfile -less_marks -lang ocaml
 #SYNCFLAGS=-less_marks -lang C
-
-# .opt
-SYNCWEB=~/github/syncweb/syncweb.opt $(SYNCFLAGS)
-NOWEB=~/github/syncweb/scripts/noweblatex
-PDFLATEX=pdflatex --shell-escape 
+PDFLATEX=pdflatex
+# --shell-escape 
 
 ##############################################################################
 # Generic rules
 ##############################################################################
 
-lpclean::
-	rm -f *.aux *.toc *.log *.brf *.out
-
-clean::
-	rm -f *.aux *.toc *.log *.brf *.out
-
+#old: was using noweb, then noweblatexpad, now syncweb, which contains weaver
 
 sync:
-	for i in $(SRC_VIEWS); do echo $$i; $(SYNCWEB) $(SRC_ORIG) $$i || exit 1; done 
-
-pdf:
-	$(NOWEB) $(TEXMAIN) > $(TEX)
-	pdflatex $(TEX)
-	pdflatex $(TEX)
+	for i in $(SRC_VIEWS); do echo $$i; $(SYNCWEB) $(SYNCFLAGS) $(SRC_ORIG) $$i || exit 1; done 
 
 lpclean::
-	rm -f $(TEX)
-
-lpdistclean::
-	rm -f $(SRC_VIEWS) .md5sum_* $(TEX)
-
+	rm -f *.aux *.toc *.log *.brf *.out
+	rm -f $(DOC).tex
 clean::
 	rm -f *.aux *.toc *.log *.brf *.out
+
+
+pdf:
+	$(SYNCWEB) -to_tex $(DOC).nw # defs_and_uses.list
+	pdflatex $(DOC).tex
+	pdflatex $(DOC).tex
+
+
+lpdistclean::
+	rm -f $(SRC_VIEWS) .md5sum_* $(DOC).tex
 
 loc:
 	wc -l $(SRC_VIEWS)
