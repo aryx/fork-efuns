@@ -9,11 +9,17 @@
 TOP=$(shell pwd)
 
 TARGET=efuns
-PROGS=$(TARGET) efuns_client
+PROGS=efuns efuns_client
 
 #------------------------------------------------------------------------------
 #package dependencies
 #------------------------------------------------------------------------------
+
+EXTERNAL_LIBS=h_visualization
+
+EXTERNALDIRS=external/commons $(EXTERNAL_LIBS:%=external/pfff-%)
+EXTERNALCMAS=external/commons/commons.cma $(EXTERNAL_LIBS:%=external/pfff-%/lib.cma)
+
 
 LIBROOT=$(shell ocamlc -where)/..
 #/Users/pad/.opam/4.01.0/lib/
@@ -28,10 +34,8 @@ PFFF_MODES=\
 
 # many dirs are here just because of -linkall
 PFFF_LIBS=\
- commons\
  config\
  external-jsonwheel\
- h_visualization\
  h_files-format\
  h_program-lang \
  commons-graph \
@@ -43,12 +47,6 @@ PFFF_LIBS=\
 
 PFFFDIRS=$(PFFF_LIBS:%=$(LIBROOT)/pfff-%/)
 PFFFCMAS=$(LIBROOT)/ocamlgraph/ocamlgraph.cma $(PFFFDIRS:%=%/lib.cma) 
-endif
-
-ifeq ($(USE_PFFF),0)
-COMMONS_PFFF_ML=commons/common.ml commons/file_type.ml commons/simple_color.ml
-COBJS=commons/realpath.o
-CFLAGS=-I$(LIBROOT)/ocaml
 endif
 
 # gtk/cairo is actually the only working backend available right now
@@ -71,9 +69,8 @@ endif
 #------------------------------------------------------------------------------
 
 SRC=\
- $(COMMONS_PFFF_ML) \
  \
- commons/map.ml commons/utils.ml commons/str2.ml\
+ commons/utils.ml commons/str2.ml\
  commons/log.ml\
  commons/options.ml\
  commons/local.ml\
@@ -155,21 +152,22 @@ SRC=\
 # bigarray is used by cairo
 SYSLIBS=unix.cma str.cma threads.cma bigarray.cma
 
-LIBS=$(SYSLIBS) $(COMMONCMA) $(PFFFCMAS) $(GRAPHICSLIBS) 
+LIBS=$(SYSLIBS) $(EXTERNALCMAS) $(PFFFCMAS) $(GRAPHICSLIBS)
 
-# PFFFDIRS has to be before commons because if we use pfff, 
-# we don't want files to compile against commons/simple_color.ml
-# but instead to compile against pfff-h_visualization/simple_color.cmi
-INCLUDEDIRS=\
-  $(PFFFDIRS) \
+DIRS=\
   commons\
   core features\
-  graphics $(BACKENDDIR) $(GRAPHICSDIRS)  \
-  major_modes minor_modes prog_modes text_modes pfff_modes ipc
+  graphics $(BACKENDDIR)\
+  major_modes minor_modes  prog_modes text_modes pfff_modes\
+  ipc
 
-INCLUDEDIRS2= commons core features \
-  major_modes minor_modes prog_modes text_modes pfff_modes ipc
-INCLUDEDEPS=$(INCLUDEDIRS2:%=-I %)
+INCLUDEDIRS=\
+  $(EXTERNALDIRS) \
+  $(PFFFDIRS) \
+  $(GRAPHICSDIRS) \
+  $(DIRS)
+
+OCAMLDEPS=$(DIRS:%=-I %)
 
 ##############################################################################
 # Generic variables
@@ -182,25 +180,22 @@ INCLUDEDEPS=$(INCLUDEDIRS2:%=-I %)
 .PHONY:: all all.opt opt top clean distclean
 
 all:: $(PROGS)
-
 opt: $(PROGS:=.opt)
 
-# need -linkall! otherwise the let _ = add_start_hook will not be run.
-$(TARGET): $(OBJS) $(COBJS)
+# need -linkall! otherwise the 'let _ = add_start_hook ...' will not be run.
+$(TARGET): $(OBJS)
 	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ \
-      $(LIBS) $(GTKLOOP) $(OBJS) $(COBJS) $(EXTRA)
+      $(LIBS) $(GTKLOOP) $(OBJS) $(EXTRA)
 
-$(TARGET).opt: $(OPTOBJS) $(COBJS)
+$(TARGET).opt: $(OPTOBJS)
 	$(OCAMLOPT) $(STATIC) -cclib -L/opt/X11/lib -o $@ \
-      $(LIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $(OPTOBJS) $(COBJS)
+      $(LIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $(OPTOBJS)
 
 #clean::
 #	@rm -f $(OBJS) $(OBJS:.cmo=.cmi) $(OBJS:.cmo=.cmx) $(OBJS:.cmo=.o) \
 #       $(OBJS:.cmo=.annot) $(OBJS:.cmo=.cmt) $(OBJS:.cmo=.cmti)
 clean::
 	rm -f */*.cm[ioxa] */*.[oa] */*.cmxa */*.annot */*.cmt*
-
-clean::
 	rm -f $(PROGS) *.opt
 
 
@@ -212,7 +207,7 @@ efuns_client.opt: ipc/efuns_client.cmx
 
 
 depend::
-	$(OCAMLDEP) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
+	$(OCAMLDEP) $(OCAMLDEPS) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
 
 MODES= \
  prog_modes/ocaml_mode.ml prog_modes/c_mode.ml prog_modes/lisp_mode.ml \
