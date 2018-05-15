@@ -12,7 +12,7 @@
 (***********************************************************************)
 (*e: copyright header efuns *)
 
-(*s: function Simple.set_indent *)
+(*s: function [[Simple.set_indent]] *)
 (* modify the indentation of (point) line. Does not modify point *)
 let set_indent text point offset = 
   Text.with_dup_point text point (fun curseur ->
@@ -35,6 +35,6 @@ let set_indent text point offset =
     in
     iter offset
   )
-(*e: function Simple.set_indent *)
+(*e: function [[Simple.set_indent]] *)
 
 (*e: features/indent.ml *)

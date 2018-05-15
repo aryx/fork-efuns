@@ -18,11 +18,11 @@
 (*************************************************************************)
 
 (* actually used only by top_window.ml *)
-(*s: exception Efuns.UnboundKey *)
+(*s: exception [[Efuns.UnboundKey]] *)
 exception UnboundKey
-(*e: exception Efuns.UnboundKey *)
+(*e: exception [[Efuns.UnboundKey]] *)
 
-(*s: type Efuns.map *)
+(*s: type [[Efuns.map]] *)
 type map =
   { 
     (* 256 array, one character simple key = one action *)
@@ -34,56 +34,56 @@ type map =
     mutable interactives : (action_name * (action * prefix option)) list;
     (*e: [[Efuns.map]] other fields *)
   } 
-(*e: type Efuns.map *)
-(*s: type Efuns.keySym *)
+(*e: type [[Efuns.map]] *)
+(*s: type [[Efuns.keySym]] *)
 and keySym = int
-(*e: type Efuns.keySym *)
-(*s: type Efuns.key *)
+(*e: type [[Efuns.keySym]] *)
+(*s: type [[Efuns.key]] *)
 and key = mod_ident * keySym
-(*e: type Efuns.key *)
+(*e: type [[Efuns.key]] *)
 
-(*s: type Efuns.action *)
+(*s: type [[Efuns.action]] *)
 and action = frame -> unit
-(*e: type Efuns.action *)
+(*e: type [[Efuns.action]] *)
 
-(*s: type Efuns.action_name *)
+(*s: type [[Efuns.action_name]] *)
 and action_name = string
-(*e: type Efuns.action_name *)
+(*e: type [[Efuns.action_name]] *)
 
-(*s: type Efuns.generic_action *)
+(*s: type [[Efuns.generic_action]] *)
 and generic_action =
 | FrameAction of action
 | BufferAction of (buffer -> unit)
-(*e: type Efuns.generic_action *)
+(*e: type [[Efuns.generic_action]] *)
 
-(*s: type Efuns.mod_ident *)
+(*s: type [[Efuns.mod_ident]] *)
 and mod_ident = 
   NormalMap
 | ControlMap
 | MetaMap
 | ControlMetaMap
-(*e: type Efuns.mod_ident *)
+(*e: type [[Efuns.mod_ident]] *)
 
-(*s: type Efuns.keys *)
+(*s: type [[Efuns.keys]] *)
 and keys = key list
-(*e: type Efuns.keys *)
+(*e: type [[Efuns.keys]] *)
 
-(*s: type Efuns.prefix *)
+(*s: type [[Efuns.prefix]] *)
 and prefix = key list
-(*e: type Efuns.prefix *)
+(*e: type [[Efuns.prefix]] *)
 
-(*s: type Efuns.binding *)
+(*s: type [[Efuns.binding]] *)
 and binding = 
   Function of action
 | Prefix of map
 | Unbound
-(*e: type Efuns.binding *)
+(*e: type [[Efuns.binding]] *)
 
 (*************************************************************************)
 (* Buffers *)
 (*************************************************************************)
 
-(*s: type Efuns.buffer *)
+(*s: type [[Efuns.buffer]] *)
 (* a buffer containing a file in Text.t *)
 and buffer =
   { 
@@ -128,9 +128,9 @@ and buffer =
     mutable buf_sync : bool;
     (*e: [[Efuns.buffer]] other fields *)
   } 
-(*e: type Efuns.buffer *)
+(*e: type [[Efuns.buffer]] *)
 
-(*s: type Efuns.major_mode *)
+(*s: type [[Efuns.major_mode]] *)
 and major_mode = {
     maj_name : string;
     maj_map : map;
@@ -144,9 +144,9 @@ and major_mode = {
      * the shared syntax table
      *)
   }
-(*e: type Efuns.major_mode *)
+(*e: type [[Efuns.major_mode]] *)
 
-(*s: type Efuns.minor_mode *)
+(*s: type [[Efuns.minor_mode]] *)
 and minor_mode = {
     min_name : string;
     min_map : map;
@@ -154,13 +154,13 @@ and minor_mode = {
     mutable min_hooks : (buffer -> unit) list;
     mutable min_vars : Local.vars;
   }
-(*e: type Efuns.minor_mode *)
+(*e: type [[Efuns.minor_mode]] *)
 
 (*************************************************************************)
 (* Frames *)
 (*************************************************************************)
   
-(*s: type Efuns.frame *)
+(*s: type [[Efuns.frame]] *)
 (* a frame: a view of a buffer for a window *)
 and frame  =
   {
@@ -230,9 +230,9 @@ and frame  =
     mutable frm_last_action : action;
     (*e: [[Efuns.frame]] other fields *)
   } 
-(*e: type Efuns.frame *)
+(*e: type [[Efuns.frame]] *)
 
-(*s: type Efuns.status_info *)
+(*s: type [[Efuns.status_info]] *)
 and status_info =
 | StatName
 | StatFile
@@ -240,9 +240,9 @@ and status_info =
 | StatCol
 | StatModified
 | StatMode
-(*e: type Efuns.status_info *)
+(*e: type [[Efuns.status_info]] *)
 
-(*s: type Efuns.status *)
+(*s: type [[Efuns.status]] *)
 and status =
   { 
     mutable stat_name : string;
@@ -264,9 +264,9 @@ and status =
     mutable stat_modes : minor_mode list;
     (*e: [[Efuns.status]] other fields *)
   }
-(*e: type Efuns.status *)
+(*e: type [[Efuns.status]] *)
 
-(*s: type Efuns.frm_line *)
+(*s: type [[Efuns.frm_line]] *)
 and frm_line =
   { 
     mutable frm_text_line : Text.line;
@@ -283,13 +283,13 @@ and frm_line =
     mutable prev_frmline_boxes : Text.box list;
     (*e: [[Efuns.frm_line]] other fields *)
   } 
-(*e: type Efuns.frm_line *)
+(*e: type [[Efuns.frm_line]] *)
 
 (*************************************************************************)
 (* Windows *)
 (*************************************************************************)
 
-(*s: type Efuns.top_window *)
+(*s: type [[Efuns.top_window]] *)
 (* an xterm: a window containing some frames *)
 and top_window = 
   { 
@@ -310,9 +310,9 @@ and top_window =
     mutable top_second_cursor : frame option;
     (*e: [[Efuns.top_window]] other fields *)
   } 
-(*e: type Efuns.top_window *)
+(*e: type [[Efuns.top_window]] *)
 
-(*s: type Efuns.window *)
+(*s: type [[Efuns.window]] *)
 and window =
   { 
     mutable win_xpos : int;
@@ -328,28 +328,28 @@ and window =
     mutable win_mini : bool;
     (*e: [[Efuns.window]] other fields *)
   } 
-(*e: type Efuns.window *)
+(*e: type [[Efuns.window]] *)
 
-(*s: type Efuns.window_up *)
+(*s: type [[Efuns.window_up]] *)
 and window_up =
   Window of window
 | TopWindow of top_window
-(*e: type Efuns.window_up *)
+(*e: type [[Efuns.window_up]] *)
 
-(*s: type Efuns.window_down *)
+(*s: type [[Efuns.window_down]] *)
 and window_down =
 | WFrame of frame
 | NoFrame
 
 | HComb of window * window 
 | VComb of window * window
-(*e: type Efuns.window_down *)
+(*e: type [[Efuns.window_down]] *)
 
 (*************************************************************************)
 (* The world *)
 (*************************************************************************)
 
-(*s: type Efuns.location *)
+(*s: type [[Efuns.location]] *)
 type location =
   { 
     (* key is buffer name (made unique via get_unique_name()) *)
@@ -389,45 +389,45 @@ type location =
     loc_mutex : Mutex.t;
     (*e: [[Efuns.location]] other fields *)
   } 
-(*e: type Efuns.location *)
+(*e: type [[Efuns.location]] *)
 
 (*************************************************************************)
 (* Regexps *)
 (*************************************************************************)
 
-(*s: type Efuns.sens *)
+(*s: type [[Efuns.sens]] *)
 type sens = 
 | Backward
 | Forward
-(*e: type Efuns.sens *)
-(*s: type Efuns.to_regexp *)
+(*e: type [[Efuns.sens]] *)
+(*s: type [[Efuns.to_regexp]] *)
 type to_regexp =
   Regexp
 | RegexpString
-(*e: type Efuns.to_regexp *)
+(*e: type [[Efuns.to_regexp]] *)
 
-(*s: function Efuns.string_to_regex *)
+(*s: function [[Efuns.string_to_regex]] *)
 let string_to_regex s = s, Str.regexp s
-(*e: function Efuns.string_to_regex *)
+(*e: function [[Efuns.string_to_regex]] *)
 
 open Options    
-(*s: constant Efuns.regexp_option *)
+(*s: constant [[Efuns.regexp_option]] *)
 let regexp_option = define_option_class "Regexp" 
     (fun v -> match v with
         Value s ->  string_to_regex s | _ -> raise Not_found)
   (fun (s,_r) -> Value s)
-(*e: constant Efuns.regexp_option *)
+(*e: constant [[Efuns.regexp_option]] *)
 
 (*************************************************************************)
 (* Misc *)
 (*************************************************************************)
 
 (* used by frame, so can't be in top_window.ml *)
-(*s: function Efuns.backend *)
+(*s: function [[Efuns.backend]] *)
 let backend top_window =
   match top_window.graphics with
     None -> raise Not_found
   | Some x -> x
-(*e: function Efuns.backend *)
+(*e: function [[Efuns.backend]] *)
 
 (*e: core/efuns.ml *)

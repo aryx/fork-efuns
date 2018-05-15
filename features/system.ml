@@ -9,7 +9,7 @@ type end_action = (Efuns.buffer -> int -> unit)
  * a Unix.chdir just before the command.
  *)
 
-(*s: function System.open_process *)
+(*s: function [[System.open_process]] *)
 let open_process pwd cmd =
   let (in_read, in_write) = pipe() in
   let (out_read, out_write) = pipe() in
@@ -37,9 +37,9 @@ let open_process pwd cmd =
       Unix.close out_read;
       Unix.close in_write;
       (pid, inchan, outchan)
-(*e: function System.open_process *)
+(*e: function [[System.open_process]] *)
 
-(*s: function System.system *)
+(*s: function [[System.system]] *)
 let system pwd buf_name cmd end_action =
   let (pid,inc,outc) = open_process pwd cmd in
   let text = Text.create "" in
@@ -111,9 +111,9 @@ let system pwd buf_name cmd end_action =
   ) :: buf.buf_finalizers;
   (*e: [[System.system()]] set finalizer, to intercept killed frame *)
   buf
-(*e: function System.system *)
+(*e: function [[System.system]] *)
 
-(*s: function System.start_command *)
+(*s: function [[System.start_command]] *)
 let start_command pwd buf_name window cmd end_action_opt =
   let end_action =
     match end_action_opt with
@@ -123,16 +123,16 @@ let start_command pwd buf_name window cmd end_action_opt =
   let buf = system pwd buf_name cmd end_action in
   let frame = Frame.create window None buf in
   frame
-(*e: function System.start_command *)
+(*e: function [[System.start_command]] *)
 
-(*s: constant System.shell_hist *)
+(*s: constant [[System.shell_hist]] *)
 let shell_hist = ref []
-(*e: constant System.shell_hist *)
-(*s: function System.shell_command *)
+(*e: constant [[System.shell_hist]] *)
+(*s: function [[System.shell_command]] *)
 let shell_command frame =
   Select.select_string frame "Run command:" shell_hist "" (fun cmd -> 
     let pwd = (Globals.location()).loc_dirname in
     start_command pwd "*Command*" (Multi_frames.cut_frame frame) cmd |> ignore)
-(*e: function System.shell_command *)
+(*e: function [[System.shell_command]] *)
   
 (*e: features/system.ml *)

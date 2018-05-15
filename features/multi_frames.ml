@@ -13,7 +13,7 @@
 (*e: copyright header2 *)
 open Efuns
   
-(*s: function Multi_frames.cut_frame *)
+(*s: function [[Multi_frames.cut_frame]] *)
 let cut_frame frame =
   let window = frame.frm_window in
   if window.win_height > 3 then
@@ -29,9 +29,9 @@ let cut_frame frame =
     w2 
   else
     window
-(*e: function Multi_frames.cut_frame *)
+(*e: function [[Multi_frames.cut_frame]] *)
 
-(*s: function Multi_frames.remove_frame *)
+(*s: function [[Multi_frames.remove_frame]] *)
 let remove_frame frame =
   if frame.frm_mini_buffer = None then
     let window = frame.frm_window in
@@ -39,15 +39,15 @@ let remove_frame frame =
     | TopWindow _ -> ()
     | Window upwin ->
         Window.prev (Frame.install upwin) window
-(*e: function Multi_frames.remove_frame *)
+(*e: function [[Multi_frames.remove_frame]] *)
 
-(*s: function Multi_frames.v_cut_frame *)
+(*s: function [[Multi_frames.v_cut_frame]] *)
 let v_cut_frame frame =
   if frame.frm_mini_buffer = None 
   then Frame.create (cut_frame frame) None frame.frm_buffer |> ignore
-(*e: function Multi_frames.v_cut_frame *)
+(*e: function [[Multi_frames.v_cut_frame]] *)
 
-(*s: function Multi_frames.h_cut_frame *)
+(*s: function [[Multi_frames.h_cut_frame]] *)
 let h_cut_frame frame =
   if frame.frm_mini_buffer = None 
   then
@@ -64,9 +64,9 @@ let h_cut_frame frame =
       Frame.install w1 frame;
       Frame.create w2 None frame.frm_buffer |> ignore
     end
-(*e: function Multi_frames.h_cut_frame *)
+(*e: function [[Multi_frames.h_cut_frame]] *)
 
-(*s: function Multi_frames.delete_frame *)
+(*s: function [[Multi_frames.delete_frame]] *)
 let delete_frame frame =
   if frame.frm_mini_buffer = None 
   then
@@ -76,9 +76,9 @@ let delete_frame frame =
     | Window upwin ->
         Frame.install upwin frame;
         Frame.active frame
-(*e: function Multi_frames.delete_frame *)
+(*e: function [[Multi_frames.delete_frame]] *)
 
-(*s: function Multi_frames.one_frame *)
+(*s: function [[Multi_frames.one_frame]] *)
 let one_frame frame =
   if frame.frm_mini_buffer = None 
   then
@@ -89,12 +89,12 @@ let one_frame frame =
         Frame.install top_window.window frame;
         Frame.active frame
       end
-(*e: function Multi_frames.one_frame *)
+(*e: function [[Multi_frames.one_frame]] *)
       
       
-(*s: function Multi_frames.next_frame *)
+(*s: function [[Multi_frames.next_frame]] *)
 let next_frame frame =
   let window = frame.frm_window in
   Window.next Frame.active window
-(*e: function Multi_frames.next_frame *)
+(*e: function [[Multi_frames.next_frame]] *)
 (*e: features/multi_frames.ml *)

@@ -23,7 +23,7 @@ deux fonctions principales:
 open Efuns
 
 
-(*s: function Abbrevs.escaped *)
+(*s: function [[Abbrevs.escaped]] *)
 let escaped s =
   let n = ref 0 in
   let len = String.length s in
@@ -47,12 +47,12 @@ let escaped s =
     incr p    
   done;
   ss
-(*e: function Abbrevs.escaped *)
+(*e: function [[Abbrevs.escaped]] *)
   
-(*s: constant Abbrevs.dabbrev_buf *)
+(*s: constant [[Abbrevs.dabbrev_buf]] *)
 let dabbrev_buf = ref None
-(*e: constant Abbrevs.dabbrev_buf *)
-(*s: function Abbrevs.dabbrev_expand *)
+(*e: constant [[Abbrevs.dabbrev_buf]] *)
+(*s: function [[Abbrevs.dabbrev_expand]] *)
 let dabbrev_expand frame = 
   let buf = frame.frm_buffer in
   let syntax = buf.buf_syntax_table in
@@ -125,9 +125,9 @@ let dabbrev_expand frame =
      )
   in
   iter buf pos; ()
-(*e: function Abbrevs.dabbrev_expand *)
+(*e: function [[Abbrevs.dabbrev_expand]] *)
 
-(*s: constant Abbrevs.abbrev_table *)
+(*s: constant [[Abbrevs.abbrev_table]] *)
 let abbrev_table = Local.create "abbrev_table" 
     (fun table ->
       let s = ref "" in 
@@ -137,9 +137,9 @@ let abbrev_table = Local.create "abbrev_table"
       !s
   )
   Local.no_input
-(*e: constant Abbrevs.abbrev_table *)
+(*e: constant [[Abbrevs.abbrev_table]] *)
   
-(*s: function Abbrevs.expand_sabbrev *)
+(*s: function [[Abbrevs.expand_sabbrev]] *)
 let expand_sabbrev frame =
   try
     let point = frame.frm_point in
@@ -161,9 +161,9 @@ let expand_sabbrev frame =
     with
       Not_found -> Text.fmove text point len; ()
   with _ -> ()
-(*e: function Abbrevs.expand_sabbrev *)
+(*e: function [[Abbrevs.expand_sabbrev]] *)
 
-(*s: toplevel Abbrevs._1 *)
+(*s: toplevel [[Abbrevs._1]] *)
 let _ =
   Action.define_action "char_expand_abbrev" (fun frame ->
       expand_sabbrev frame; 
@@ -171,6 +171,6 @@ let _ =
   );
   Action.define_action "dabbrev_expand" dabbrev_expand;
   ()
-(*e: toplevel Abbrevs._1 *)
+(*e: toplevel [[Abbrevs._1]] *)
   
 (*e: features/abbrevs.ml *)

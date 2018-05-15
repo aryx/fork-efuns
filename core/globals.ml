@@ -15,29 +15,29 @@ open Efuns
 
 (* there are other globals: actions, start_hooks, etc *)
 
-(*s: global Efuns.global_location *)
+(*s: global [[Efuns.global_location]] *)
 let global_location = ref None
-(*e: global Efuns.global_location *)
-(*s: function Efuns.location *)
+(*e: global [[Efuns.global_location]] *)
+(*s: function [[Efuns.location]] *)
 let location () =
   match !global_location with
   | None -> failwith "no global location defined"
   | Some x -> x
-(*e: function Efuns.location *)
+(*e: function [[Efuns.location]] *)
 
-(*s: function Efuns.with_lock *)
+(*s: function [[Efuns.with_lock]] *)
 let with_lock f =
   let loc = location () in
   Mutex.lock loc.loc_mutex;
   Common.finalize f (fun () -> Mutex.unlock loc.loc_mutex)
-(*e: function Efuns.with_lock *)
+(*e: function [[Efuns.with_lock]] *)
 
-(*s: function Efuns.error *)
+(*s: function [[Efuns.error]] *)
 let error f x =
   Printf.printf "error: ";
   Printf.printf f x;
   Printf.printf "\n"
-(*e: function Efuns.error *)
+(*e: function [[Efuns.error]] *)
 
 (*************************************************************************)
 (*      Initialization      *)
@@ -46,9 +46,9 @@ let error f x =
 (* Les variables importantes dans le reste du programme. *)
 open Options
 
-(*s: constant Efuns.check *)
+(*s: constant [[Efuns.check]] *)
 let check = ref false
-(*e: constant Efuns.check *)
+(*e: constant [[Efuns.check]] *)
 
 (*s: constants Efuns.debug_xxx *)
 let debug = ref false
@@ -57,17 +57,17 @@ let debug_display = ref false
 let debug_init = ref false
 (*e: constants Efuns.debug_xxx *)
 
-(*s: constant Efuns.load_path *)
+(*s: constant [[Efuns.load_path]] *)
 let load_path = define_option ["efuns_path"] 
   "<load_path> is the path where modules (.cmo and .cma) can be found
   for dynamic linking." path_option []
-(*e: constant Efuns.load_path *)
+(*e: constant [[Efuns.load_path]] *)
 
-(*s: constant Efuns.path *)
+(*s: constant [[Efuns.path]] *)
 let path = (*Dyneval.load_path*) ref []
-(*e: constant Efuns.path *)
+(*e: constant [[Efuns.path]] *)
   
-(*s: constant Efuns.efuns_path *)
+(*s: constant [[Efuns.efuns_path]] *)
 let efuns_path = [ 
       (Filename.concat Utils.homedir ".efuns") ;
 (*
@@ -76,29 +76,29 @@ let efuns_path = [
       Version.ocamllib
 *)
   ]
-(*e: constant Efuns.efuns_path *)
+(*e: constant [[Efuns.efuns_path]] *)
   
-(*s: toplevel Efuns._1 *)
+(*s: toplevel [[Efuns._1]] *)
 let _ = 
   path := !!load_path @ efuns_path;
   option_hook load_path (fun _ -> path := !!load_path @ efuns_path)
-(*e: toplevel Efuns._1 *)
+(*e: toplevel [[Efuns._1]] *)
 
 (* used in some major mode *)
-(*s: constant Efuns.font *)
+(*s: constant [[Efuns.font]] *)
 let font = define_option ["font"] "" string_option "Menlo 18"
-(*e: constant Efuns.font *)
+(*e: constant [[Efuns.font]] *)
   
 (*--------------------    Ressources *)
-(*s: constant Efuns.xdefaults *)
+(*s: constant [[Efuns.xdefaults]] *)
 let xdefaults = try Sys.getenv "XUSERFILESEARCHPATH" with
     Not_found -> Filename.concat Utils.homedir ".Xdefaults"
-(*e: constant Efuns.xdefaults *)
+(*e: constant [[Efuns.xdefaults]] *)
 
-(*s: constant Efuns.x_res *)
+(*s: constant [[Efuns.x_res]] *)
 (*let x_res = Xrm.create ()*)
-(*e: constant Efuns.x_res *)
-(*s: toplevel Efuns._2 *)
+(*e: constant [[Efuns.x_res]] *)
+(*s: toplevel [[Efuns._2]] *)
 (*
 let _ =
   begin    
@@ -117,16 +117,16 @@ let _ =
   end;
   Xrm.safe_load x_res xdefaults
 *)
-(*e: toplevel Efuns._2 *)
+(*e: toplevel [[Efuns._2]] *)
   
-(*s: constant Efuns.t *)
+(*s: constant [[Efuns.t]] *)
 (*let t = x_res*)
-(*e: constant Efuns.t *)
+(*e: constant [[Efuns.t]] *)
 
 (* for ipc/server too *)
-(*s: constant Efuns.displayname *)
+(*s: constant [[Efuns.displayname]] *)
 let displayname = ref ""
-(*e: constant Efuns.displayname *)
+(*e: constant [[Efuns.displayname]] *)
 
 (*
   let _ = Printf.printf "%d %d %s %s %s" !width !height !font !fg !bg; 

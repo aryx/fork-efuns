@@ -17,20 +17,20 @@ open Options
 open Efuns
 open Action
 
-(*s: constant Std_efunsrc.grep_hist *)
+(*s: constant [[Std_efunsrc.grep_hist]] *)
 let grep_hist = ref ["grep -n "]
-(*e: constant Std_efunsrc.grep_hist *)
+(*e: constant [[Std_efunsrc.grep_hist]] *)
 
-(*s: function Std_efunsrc.save_options *)
+(*s: function [[Std_efunsrc.save_options]] *)
 let save_options frame = 
   Options.save ()
-(*e: function Std_efunsrc.save_options *)
-(*s: function Std_efunsrc.fondamental_mode *)
+(*e: function [[Std_efunsrc.save_options]] *)
+(*s: function [[Std_efunsrc.fondamental_mode]] *)
 let fondamental_mode frame =
   Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
-(*e: function Std_efunsrc.fondamental_mode *)
+(*e: function [[Std_efunsrc.fondamental_mode]] *)
 
-(*s: toplevel Std_efunsrc._1 *)
+(*s: toplevel [[Std_efunsrc._1]] *)
 let _ =
   (*s: actions definitions *)
   (* ----------------------------------------------------------- *)
@@ -283,23 +283,23 @@ let _ =
   (*e: misc actions *)
   (*e: actions definitions *)
   ()
-(*e: toplevel Std_efunsrc._1 *)
+(*e: toplevel [[Std_efunsrc._1]] *)
   
 
   
-(*s: constant Std_efunsrc.global_map *)
+(*s: constant [[Std_efunsrc.global_map]] *)
 let global_map = define_option ["global_map"] "" 
   (list_option Simple.binding_option) []
-(*e: constant Std_efunsrc.global_map *)
-(*s: constant Std_efunsrc.interactives_map *)
+(*e: constant [[Std_efunsrc.global_map]] *)
+(*s: constant [[Std_efunsrc.interactives_map]] *)
 let interactives_map = define_option ["interactives_map"] ""
     (list_option string2_option) 
   []
-(*e: constant Std_efunsrc.interactives_map *)
+(*e: constant [[Std_efunsrc.interactives_map]] *)
 
 open Keymap (* c_xxx *)
 
-(*s: toplevel Std_efunsrc._2 *)
+(*s: toplevel [[Std_efunsrc._2]] *)
 let _ = 
   if !!global_map = [] then begin
       global_map =:= [
@@ -586,9 +586,9 @@ let _ =
       ]
     end    
   (*e: [[Std_efunsrc.toplevel]] set interactives_map *)
-(*e: toplevel Std_efunsrc._2 *)
+(*e: toplevel [[Std_efunsrc._2]] *)
     
-(*s: function Std_efunsrc.init_global_map *)
+(*s: function [[Std_efunsrc.init_global_map]] *)
 let init_global_map () = 
   !!global_map |> List.iter (fun (keys, action) ->
       try
@@ -622,10 +622,10 @@ let init_global_map () =
     "insert_at_point" Mouse.mouse_yank_at_click;
   (*e: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
   ()
-(*e: function Std_efunsrc.init_global_map *)
+(*e: function [[Std_efunsrc.init_global_map]] *)
   
  
-(*s: toplevel Std_efunsrc._4 *)
+(*s: toplevel [[Std_efunsrc._4]] *)
 let _ =
   (*s: [[Std_efunsrc]] file menu setup *)
   if !!Top_window.file_menu = [] then begin
@@ -698,9 +698,9 @@ let _ =
       failwith "Std_menu: show menus TODO"
       )
   (*e: [[Std_efunsrc]] buffers menu setup *)
-(*e: toplevel Std_efunsrc._4 *)
+(*e: toplevel [[Std_efunsrc._4]] *)
   
-(*s: toplevel Std_efunsrc._5 *)
+(*s: toplevel [[Std_efunsrc._5]] *)
 let _ =
   Hook.add_start_hook (fun () ->
     (*s: [[Std_efunsrc._5]] start hooks options *)
@@ -709,5 +709,5 @@ let _ =
     (*e: [[Std_efunsrc._5]] start hooks options *)
     init_global_map ()
   )
-(*e: toplevel Std_efunsrc._5 *)
+(*e: toplevel [[Std_efunsrc._5]] *)
 (*e: std_efunsrc.ml *)

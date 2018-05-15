@@ -15,11 +15,11 @@ open Common
 open Options
 open Efuns
 
-(*s: constant Compil.compilation_frame *)
+(*s: constant [[Compil.compilation_frame]] *)
 let compilation_frame = ref None
-(*e: constant Compil.compilation_frame *)
+(*e: constant [[Compil.compilation_frame]] *)
 
-(*s: type Compil.error *)
+(*s: type [[Compil.error]] *)
 type error = {
     (* error location *)    
     err_filename : string;
@@ -29,16 +29,16 @@ type error = {
     (* error message *)
     err_msg : int;
   }
-(*e: type Compil.error *)
+(*e: type [[Compil.error]] *)
 
 type find_error_fun = Text.t -> Text.point -> error
 
-(*s: constant Compil.c_error_regexp *)
+(*s: constant [[Compil.c_error_regexp]] *)
 let c_error_regexp = define_option ["compil"; "error_regexp"] "" regexp_option
   (string_to_regex "^\\([^:\n]+\\):\\([0-9]+\\):.*$")
-(*e: constant Compil.c_error_regexp *)
+(*e: constant [[Compil.c_error_regexp]] *)
 
-(*s: function Compil.c_find_error *)
+(*s: function [[Compil.c_find_error]] *)
 (* todo: vs C_mode.c_find_error? *)
 let find_error_gen re text error_point =
   let groups = 
@@ -54,16 +54,16 @@ let find_error_gen re text error_point =
     } in
   Text.fmove text error_point 1;
   error
-(*e: function Compil.c_find_error *)
+(*e: function [[Compil.c_find_error]] *)
 
-(*s: constant Compil.find_error *)
+(*s: constant [[Compil.find_error]] *)
 let find_error = Local.create_abstr "find_error"
-(*e: constant Compil.find_error *)
+(*e: constant [[Compil.find_error]] *)
 
 let find_error_location_regexp = Local.create_abstr "find_error_loc_regexp"
 let find_error_error_regexp = Local.create_abstr "find_error_err_regexp"
   
-(*s: function Compil.next_error *)
+(*s: function [[Compil.next_error]] *)
 let next_error top_frame =
   let top_window = Window.top top_frame.frm_window in
   match !compilation_frame with
@@ -117,17 +117,17 @@ let next_error top_frame =
           Frame.active frame
       with Not_found ->
         Top_window.message top_window "No more errors"
-(*e: function Compil.next_error *)
+(*e: function [[Compil.next_error]] *)
 
-(*s: constant Compil.compile_find_makefile *)
+(*s: constant [[Compil.compile_find_makefile]] *)
 let compile_find_makefile = define_option ["compil";"find_makefile"] ""
     bool_option true
-(*e: constant Compil.compile_find_makefile *)
+(*e: constant [[Compil.compile_find_makefile]] *)
   
-(*s: constant Compil.make_command *)
+(*s: constant [[Compil.make_command]] *)
 let make_command = define_option ["compil";"make_command"] ""
     string_option "make -k"
-(*e: constant Compil.make_command *)
+(*e: constant [[Compil.make_command]] *)
 
 let color_buffer buf =
   Dircolors.colorize buf;
@@ -152,10 +152,10 @@ let install buf =
 
 let mode = Ebuffer.new_major_mode "Compilation" [install]
   
-(*s: constant Compil.make_hist *)
+(*s: constant [[Compil.make_hist]] *)
 let make_hist = ref [!!make_command]
-(*e: constant Compil.make_hist *)
-(*s: function Compil.compile *)
+(*e: constant [[Compil.make_hist]] *)
+(*s: function [[Compil.compile]] *)
 let compile frame =
   let default = List.hd !make_hist in
   Select.select_string frame 
@@ -224,17 +224,17 @@ let compile frame =
       Ebuffer.set_major_mode buf mode
 
   )
-(*e: function Compil.compile *)
+(*e: function [[Compil.compile]] *)
 
-(*s: constant Compil.grep_command *)
+(*s: constant [[Compil.grep_command]] *)
 let grep_command = define_option ["compil"; "grep_command"] "" string_option
     "grep -n"
-(*e: constant Compil.grep_command *)
+(*e: constant [[Compil.grep_command]] *)
   
-(*s: constant Compil.grep_hist *)
+(*s: constant [[Compil.grep_hist]] *)
 let grep_hist = ref [""]
-(*e: constant Compil.grep_hist *)
-(*s: function Compil.grep *)
+(*e: constant [[Compil.grep_hist]] *)
+(*s: function [[Compil.grep]] *)
 let grep frame =
   let default = List.hd !grep_hist in
   Select.select_string frame 
@@ -261,5 +261,5 @@ let grep frame =
       let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir)
   )
-(*e: function Compil.grep *)
+(*e: function [[Compil.grep]] *)
 (*e: features/compil.ml *)

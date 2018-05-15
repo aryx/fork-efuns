@@ -18,18 +18,18 @@ open Xtypes
 (* Insertion *)
 (*****************************************************************************)
 
-(*s: function Simple.insert_string *)
+(*s: function [[Simple.insert_string]] *)
 let insert_string frame str =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
   Text.insert text point str;
   Text.fmove text point (String.length str)
-(*e: function Simple.insert_string *)
+(*e: function [[Simple.insert_string]] *)
   
-(*s: constant Simple.single_char *)
+(*s: constant [[Simple.single_char]] *)
 let single_char = String.make 1 ' '
-(*e: constant Simple.single_char *)
-(*s: function Simple.insert_char *)
+(*e: constant [[Simple.single_char]] *)
+(*s: function [[Simple.insert_char]] *)
 (* could factorize and just call insert_string? *)
 let insert_char frame char =
   let text = frame.frm_buffer.buf_text in
@@ -37,14 +37,14 @@ let insert_char frame char =
   single_char.[0] <- char;
   Text.insert text point single_char;
   Text.fmove text point 1
-(*e: function Simple.insert_char *)
+(*e: function [[Simple.insert_char]] *)
 
-(*s: function Simple.insert_return *)
+(*s: function [[Simple.insert_return]] *)
 let insert_return frame =
   insert_char frame '\n'
-(*e: function Simple.insert_return *)
+(*e: function [[Simple.insert_return]] *)
 
-(*s: function Simple.previous_char *)
+(*s: function [[Simple.previous_char]] *)
 let previous_char frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -53,16 +53,16 @@ let previous_char frame =
   let c = Text.get_char text point in
   Text.fmove text point 1;
   c
-(*e: function Simple.previous_char *)
+(*e: function [[Simple.previous_char]] *)
 
-(*s: function Simple.unset_attr *)
+(*s: function [[Simple.unset_attr]] *)
 let unset_attr frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   Text.unset_attrs text
-(*e: function Simple.unset_attr *)
+(*e: function [[Simple.unset_attr]] *)
   
-(*s: function Simple.insert_at_place *)
+(*s: function [[Simple.insert_at_place]] *)
 let insert_at_place frame char =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -76,15 +76,15 @@ let insert_at_place frame char =
     Text.insert text point single_char;
     Text.fmove text point 1
   end
-(*e: function Simple.insert_at_place *)
+(*e: function [[Simple.insert_at_place]] *)
 
 
-(*s: constant Simple.overwrite_mode *)
+(*s: constant [[Simple.overwrite_mode]] *)
 let overwrite_mode = Ebuffer.new_minor_mode "Over" []
-(*e: constant Simple.overwrite_mode *)
+(*e: constant [[Simple.overwrite_mode]] *)
   
   
-(*s: function Simple.self_insert_command *)
+(*s: function [[Simple.self_insert_command]] *)
 let self_insert_command frame =
   let char = Char.chr !Top_window.keypressed in
   let buf = frame.frm_buffer in
@@ -93,9 +93,9 @@ let self_insert_command frame =
   then insert_at_place frame char
   (*e: [[Simple.self_insert_command()]] if overwrite mode *)
   else insert_char frame char
-(*e: function Simple.self_insert_command *)
+(*e: function [[Simple.self_insert_command]] *)
     
-(*s: function Simple.char_insert_command *)
+(*s: function [[Simple.char_insert_command]] *)
 let char_insert_command char frame =
   let buf = frame.frm_buffer in
   (*s: [[Simple.self_insert_command()]] if overwrite mode *)
@@ -103,31 +103,31 @@ let char_insert_command char frame =
   then insert_at_place frame char
   (*e: [[Simple.self_insert_command()]] if overwrite mode *)
   else insert_char frame char
-(*e: function Simple.char_insert_command *)
+(*e: function [[Simple.char_insert_command]] *)
 
 (*****************************************************************************)
 (* Deletion *)
 (*****************************************************************************)
 
-(*s: function Simple.delete_char *)
+(*s: function [[Simple.delete_char]] *)
 let delete_char frame =
   let text = frame.frm_buffer.buf_text in
   Text.delete text frame.frm_point 1
-(*e: function Simple.delete_char *)
+(*e: function [[Simple.delete_char]] *)
 
-(*s: function Simple.delete_backspace_char *)
+(*s: function [[Simple.delete_backspace_char]] *)
 let delete_backspace_char frame =
   let text = frame.frm_buffer.buf_text in
   if Text.bmove_res text frame.frm_point 1 <> 0 
   then Text.delete text frame.frm_point 1
-(*e: function Simple.delete_backspace_char *)
+(*e: function [[Simple.delete_backspace_char]] *)
 
-(*s: function Simple.hungry_char *)
+(*s: function [[Simple.hungry_char]] *)
 let hungry_char c = 
   c = ' ' || c = '\n' || c = '\t'
-(*e: function Simple.hungry_char *)
+(*e: function [[Simple.hungry_char]] *)
 
-(*s: function Simple.hungry_electric_delete *)
+(*s: function [[Simple.hungry_electric_delete]] *)
 let hungry_electric_delete frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -147,55 +147,55 @@ let hungry_electric_delete frame =
        insert_char frame ' '
      with Not_found -> ()
   )
-(*e: function Simple.hungry_electric_delete *)
+(*e: function [[Simple.hungry_electric_delete]] *)
 
 (*****************************************************************************)
 (* Navigation *)
 (*****************************************************************************)
 
-(*s: function Simple.move_backward *)
+(*s: function [[Simple.move_backward]] *)
 let move_backward frame delta =
   Text.bmove frame.frm_buffer.buf_text frame.frm_point delta
-(*e: function Simple.move_backward *)
+(*e: function [[Simple.move_backward]] *)
 
-(*s: function Simple.move_forward *)
+(*s: function [[Simple.move_forward]] *)
 let move_forward frame delta =
   Text.fmove frame.frm_buffer.buf_text frame.frm_point delta
-(*e: function Simple.move_forward *)
+(*e: function [[Simple.move_forward]] *)
 
-(*s: function Simple.begin_to_point *)
+(*s: function [[Simple.begin_to_point]] *)
 let begin_to_point frame =
   Text.point_to_bol frame.frm_buffer.buf_text frame.frm_point
-(*e: function Simple.begin_to_point *)
+(*e: function [[Simple.begin_to_point]] *)
 
-(*s: function Simple.point_to_end *)
+(*s: function [[Simple.point_to_end]] *)
 let point_to_end frame =
   Text.point_to_eol frame.frm_buffer.buf_text frame.frm_point
-(*e: function Simple.point_to_end *)
+(*e: function [[Simple.point_to_end]] *)
 
 
-(*s: function Simple.line_size *)
+(*s: function [[Simple.line_size]] *)
 let line_size frame =
   (point_to_end frame) + (point_to_end frame)
-(*e: function Simple.line_size *)
+(*e: function [[Simple.line_size]] *)
 
-(*s: function Simple.beginning_of_line *)
+(*s: function [[Simple.beginning_of_line]] *)
 let beginning_of_line frame =
   move_backward frame (begin_to_point frame) |> ignore
-(*e: function Simple.beginning_of_line *)
+(*e: function [[Simple.beginning_of_line]] *)
 
-(*s: function Simple.end_of_line *)
+(*s: function [[Simple.end_of_line]] *)
 let end_of_line frame =
   move_forward frame (point_to_end frame) |> ignore
-(*e: function Simple.end_of_line *)
+(*e: function [[Simple.end_of_line]] *)
 
 
-(*s: constant Simple.temporary_goal_column *)
+(*s: constant [[Simple.temporary_goal_column]] *)
 let temporary_goal_column = 
   Local.create_abstr "Simple.temporary_goal_column"
-(*e: constant Simple.temporary_goal_column *)
+(*e: constant [[Simple.temporary_goal_column]] *)
 
-(*s: function Simple.goal_column *)
+(*s: function [[Simple.goal_column]] *)
 let rec goal_column frame =
   let cur_col = begin_to_point frame in
   if frame.frm_last_action == forward_line ||
@@ -204,16 +204,16 @@ let rec goal_column frame =
     try Var.get_local frame.frm_buffer temporary_goal_column
     with Not_found -> cur_col
   else cur_col
-(*e: function Simple.goal_column *)
+(*e: function [[Simple.goal_column]] *)
 
-(*s: function Simple.move_to_goal_column *)
+(*s: function [[Simple.move_to_goal_column]] *)
 and move_to_goal_column frame goal_col =
   move_backward frame (begin_to_point frame) |> ignore;
   move_forward frame (min goal_col (point_to_end frame)) |> ignore;
   Var.set_local frame.frm_buffer temporary_goal_column goal_col
-(*e: function Simple.move_to_goal_column *)
+(*e: function [[Simple.move_to_goal_column]] *)
 
-(*s: function Simple.forward_line *)
+(*s: function [[Simple.forward_line]] *)
 and forward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
@@ -223,9 +223,9 @@ and forward_line frame =
     move_forward frame 1 |> ignore;
     move_to_goal_column frame goal_col;
   end
-(*e: function Simple.forward_line *)
+(*e: function [[Simple.forward_line]] *)
 
-(*s: function Simple.backward_line *)
+(*s: function [[Simple.backward_line]] *)
 and backward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
@@ -235,38 +235,38 @@ and backward_line frame =
     move_backward frame 1 |> ignore;
     move_to_goal_column frame goal_col;
   end
-(*e: function Simple.backward_line *)
+(*e: function [[Simple.backward_line]] *)
 
 
 (*****************************************************************************)
 (* Kill *)
 (*****************************************************************************)
 
-(*s: constant Simple.kill_size *)
+(*s: constant [[Simple.kill_size]] *)
 let kill_size = ref 0
-(*e: constant Simple.kill_size *)
-(*s: constant Simple.kill_max *)
+(*e: constant [[Simple.kill_size]] *)
+(*s: constant [[Simple.kill_max]] *)
 let kill_max = 10
-(*e: constant Simple.kill_max *)
-(*s: constant Simple.kill_ring *)
+(*e: constant [[Simple.kill_max]] *)
+(*s: constant [[Simple.kill_ring]] *)
 let kill_ring = Array.create kill_max ""
-(*e: constant Simple.kill_ring *)
-(*s: constant Simple.last_kill *)
+(*e: constant [[Simple.kill_ring]] *)
+(*s: constant [[Simple.last_kill]] *)
 let last_kill = ref None
-(*e: constant Simple.last_kill *)
-(*s: constant Simple.last_insert *)
+(*e: constant [[Simple.last_kill]] *)
+(*s: constant [[Simple.last_insert]] *)
 let last_insert = ref None
-(*e: constant Simple.last_insert *)
+(*e: constant [[Simple.last_insert]] *)
 
-(*s: function Simple.kill_string *)
+(*s: function [[Simple.kill_string]] *)
 let kill_string str =
   Array.blit kill_ring 0 kill_ring 1 (kill_max - 1);
   incr kill_size;
   kill_ring.(0) <- str
-(*e: function Simple.kill_string *)
+(*e: function [[Simple.kill_string]] *)
 
 
-(*s: function Simple.kill_text *)
+(*s: function [[Simple.kill_text]] *)
 let kill_text text point len =
   let point,str = Text.delete_res text point len in
   match !last_kill with
@@ -276,18 +276,18 @@ let kill_text text point len =
   | _ ->
       last_kill := Some (text,point);
       kill_string str
-(*e: function Simple.kill_text *)
+(*e: function [[Simple.kill_text]] *)
 
-(*s: function Simple.kill_end_of_line *)
+(*s: function [[Simple.kill_end_of_line]] *)
 let kill_end_of_line frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let eol = point_to_end frame in
   let len = if eol = 0 then 1 else eol in
   kill_text text frame.frm_point len
-(*e: function Simple.kill_end_of_line *)
+(*e: function [[Simple.kill_end_of_line]] *)
 
-(*s: function Simple.kill_eol *)
+(*s: function [[Simple.kill_eol]] *)
 let kill_eol buf point =
   let text = buf.buf_text in
   let eol = Text.point_to_eol text point in
@@ -295,18 +295,18 @@ let kill_eol buf point =
     if eol = 0 then 1 else eol
   in
   kill_text text point len
-(*e: function Simple.kill_eol *)
+(*e: function [[Simple.kill_eol]] *)
 
-(*s: function Simple.kill_bol *)
+(*s: function [[Simple.kill_bol]] *)
 let kill_bol buf point =
   let text = buf.buf_text in
   let len = Text.point_to_bol text point in
   if len > 0 then
     ( Text.bmove text point len;
       kill_text text point len)
-(*e: function Simple.kill_bol *)
+(*e: function [[Simple.kill_bol]] *)
 
-(*s: function Simple.insert_killed *)
+(*s: function [[Simple.insert_killed]] *)
 let insert_killed frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -314,9 +314,9 @@ let insert_killed frame =
   let pos, len =  Text.insert_res text point kill_ring.(0) in
   Text.fmove text point len; 
   last_insert := Some(frame,pos,0,len)
-(*e: function Simple.insert_killed *)
+(*e: function [[Simple.insert_killed]] *)
 
-(*s: function Simple.insert_next_killed *)
+(*s: function [[Simple.insert_next_killed]] *)
 let insert_next_killed frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -335,10 +335,10 @@ let insert_next_killed frame =
       Text.fmove text point len;
       last_insert := Some(frame,pos,n,len)
   | _ -> ()
-(*e: function Simple.insert_next_killed *)
+(*e: function [[Simple.insert_next_killed]] *)
 
 
-(*s: function Simple.kill_region *)
+(*s: function [[Simple.kill_region]] *)
 let kill_region frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -353,9 +353,9 @@ let kill_region frame =
   in
   let _,region = Text.delete_res text start (Text.distance text start term) in
   kill_string region
-(*e: function Simple.kill_region *)
+(*e: function [[Simple.kill_region]] *)
 
-(*s: function Simple.copy_region *)
+(*s: function [[Simple.copy_region]] *)
 (* copy-region-as-kill-nomark in emacs *)
 let copy_region frame =
   let buf = frame.frm_buffer in
@@ -375,29 +375,29 @@ let copy_region frame =
   kill_string region;
   let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Region saved"
-(*e: function Simple.copy_region *)
+(*e: function [[Simple.copy_region]] *)
   
 
 (*****************************************************************************)
 (* Words *)
 (*****************************************************************************)
 
-(*s: function Simple.in_next_word *)
+(*s: function [[Simple.in_next_word]] *)
 let in_next_word text mark syntax =
   while (not syntax.(Char.code (Text.get_char text mark))) &&
         Text.fmove_res text mark 1 = 1 
   do () done
-(*e: function Simple.in_next_word *)
+(*e: function [[Simple.in_next_word]] *)
 
-(*s: function Simple.in_prev_word *)
+(*s: function [[Simple.in_prev_word]] *)
 let in_prev_word text mark syntax =
   while Text.bmove_res text mark 1 = 1 &&
         (not syntax.(Char.code (Text.get_char text mark)))
   do () done
-(*e: function Simple.in_prev_word *)
+(*e: function [[Simple.in_prev_word]] *)
 
 
-(*s: function Simple.to_begin_of_word *)
+(*s: function [[Simple.to_begin_of_word]] *)
 let to_begin_of_word text mark syntax =
   if Text.bmove_res text mark 1 = 1 then
     begin
@@ -407,33 +407,33 @@ let to_begin_of_word text mark syntax =
       if not syntax.(Char.code (Text.get_char text mark)) 
       then (Text.fmove text mark 1)
     end
-(*e: function Simple.to_begin_of_word *)
+(*e: function [[Simple.to_begin_of_word]] *)
 
-(*s: function Simple.to_end_of_word *)
+(*s: function [[Simple.to_end_of_word]] *)
 let to_end_of_word text mark syntax =
   while syntax.(Char.code (Text.get_char text mark)) &&
        (Text.fmove_res text mark 1) <> 0 
   do () done
-(*e: function Simple.to_end_of_word *)
+(*e: function [[Simple.to_end_of_word]] *)
 
 
-(*s: function Simple.backward_word *)
+(*s: function [[Simple.backward_word]] *)
 let backward_word buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
   in_prev_word text point syntax;
   to_begin_of_word text point syntax
-(*e: function Simple.backward_word *)
+(*e: function [[Simple.backward_word]] *)
 
-(*s: function Simple.forward_word *)
+(*s: function [[Simple.forward_word]] *)
 let forward_word buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
   in_next_word text point syntax;
   to_end_of_word text point syntax
-(*e: function Simple.forward_word *)
+(*e: function [[Simple.forward_word]] *)
 
-(*s: function Simple.beginning_of_word *)
+(*s: function [[Simple.beginning_of_word]] *)
 let beginning_of_word buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
@@ -442,9 +442,9 @@ let beginning_of_word buf point =
     let s = Text.region text mark point in
     s
   )
-(*e: function Simple.beginning_of_word *)
+(*e: function [[Simple.beginning_of_word]] *)
 
-(*s: function Simple.end_of_word *)
+(*s: function [[Simple.end_of_word]] *)
 let end_of_word  buf point =
   let text = buf.buf_text in
   let syntax = buf.buf_syntax_table in
@@ -453,23 +453,23 @@ let end_of_word  buf point =
     let s = Text.region text point mark in
     s
   )
-(*e: function Simple.end_of_word *)
+(*e: function [[Simple.end_of_word]] *)
 
-(*s: function Simple.current_word *)
+(*s: function [[Simple.current_word]] *)
 let current_word buf point =
   (beginning_of_word buf point) ^ (end_of_word buf point)
-(*e: function Simple.current_word *)
+(*e: function [[Simple.current_word]] *)
  
-(*s: function Simple.delete_backward_word *)
+(*s: function [[Simple.delete_backward_word]] *)
 let delete_backward_word buf point =
   let text = buf.buf_text in
   Text.with_dup_point text point (fun old_point ->
     backward_word buf point;
     Text.delete text point (Text.distance text point old_point)
   )
-(*e: function Simple.delete_backward_word *)
+(*e: function [[Simple.delete_backward_word]] *)
 
-(*s: function Simple.delete_forward_word *)
+(*s: function [[Simple.delete_forward_word]] *)
 let delete_forward_word buf point =
   let text = buf.buf_text in
   Text.with_dup_point text point (fun old_point ->
@@ -478,9 +478,9 @@ let delete_forward_word buf point =
     Text.bmove text point len;
     Text.delete text point len
   )
-(*e: function Simple.delete_forward_word *)
+(*e: function [[Simple.delete_forward_word]] *)
 
-(*s: function Simple.on_word *)
+(*s: function [[Simple.on_word]] *)
 let on_word buf point f =
   let text = buf.buf_text in
   text |> Text.with_session (fun () ->
@@ -494,9 +494,9 @@ let on_word buf point f =
       Text.fmove text point (String.length w);
     )
   )
-(*e: function Simple.on_word *)
+(*e: function [[Simple.on_word]] *)
   
-(*s: function Simple.transpose_words *)
+(*s: function [[Simple.transpose_words]] *)
 let transpose_words buf point =
   let text = buf.buf_text in
   text |> Text.with_session (fun () ->
@@ -515,10 +515,10 @@ let transpose_words buf point =
         Text.insert text pos2 word1;
         Text.fmove text point (String.length word1);
   )))
-(*e: function Simple.transpose_words *)
+(*e: function [[Simple.transpose_words]] *)
 
 
-(*s: function Simple.transpose_chars *)
+(*s: function [[Simple.transpose_chars]] *)
 let transpose_chars buf point =
   let text = buf.buf_text in
   text |> Text.with_session (fun () ->
@@ -529,13 +529,13 @@ let transpose_chars buf point =
   );
   Text.fmove text point 1;
   ()
-(*e: function Simple.transpose_chars *)
+(*e: function [[Simple.transpose_chars]] *)
 
 (*****************************************************************************)
 (* Paragraphs *)
 (*****************************************************************************)
 
-(*s: function Simple.backward_paragraph *)
+(*s: function [[Simple.backward_paragraph]] *)
 let backward_paragraph buf point =
   let text = buf.buf_text in
   while Text.bmove_res text point 1 = 1 && 
@@ -545,9 +545,9 @@ let backward_paragraph buf point =
     Text.search_backward text (Str.regexp "\n *\n") point |> ignore;
     Text.fmove text point 1
   with Not_found -> Text.set_position text point 0
-(*e: function Simple.backward_paragraph *)
+(*e: function [[Simple.backward_paragraph]] *)
 
-(*s: function Simple.forward_paragraph *)
+(*s: function [[Simple.forward_paragraph]] *)
 let forward_paragraph buf point =
   let text = buf.buf_text in
   while (let c = Text.get_char text point in c = '\n' || c = ' ') &&
@@ -557,7 +557,7 @@ let forward_paragraph buf point =
     Text.search_forward text (Str.regexp "\n *\n") point |> ignore;
     Text.fmove text point 1
   with Not_found -> Text.set_position text point (Text.size text)
-(*e: function Simple.forward_paragraph *)
+(*e: function [[Simple.forward_paragraph]] *)
 
 (*****************************************************************************)
 (* Scroll *)
@@ -571,50 +571,50 @@ let move_forward frame =
   Functions.move_forward frame 1; () 
 *) 
   
-(*s: function Simple.forward_screen *)
+(*s: function [[Simple.forward_screen]] *)
 let forward_screen frame =
   frame.frm_force_start <- true;
   frame.frm_redraw <- true;
   frame.frm_y_offset <- frame.frm_y_offset + frame.frm_height - 2
-(*e: function Simple.forward_screen *)
+(*e: function [[Simple.forward_screen]] *)
 
-(*s: function Simple.backward_screen *)
+(*s: function [[Simple.backward_screen]] *)
 let backward_screen frame =
   frame.frm_force_start <- true;
   frame.frm_redraw <- true;
   frame.frm_y_offset <- frame.frm_y_offset - frame.frm_height + 2
-(*e: function Simple.backward_screen *)
+(*e: function [[Simple.backward_screen]] *)
 
-(*s: function Simple.scroll_line *)
+(*s: function [[Simple.scroll_line]] *)
 let scroll_line frame n =
   frame.frm_force_start <- true;
   frame.frm_redraw <- true;
   frame.frm_y_offset <- frame.frm_y_offset + n
-(*e: function Simple.scroll_line *)
+(*e: function [[Simple.scroll_line]] *)
 
-(*s: function Simple.scroll_down *)
+(*s: function [[Simple.scroll_down]] *)
 let scroll_down frame =
   scroll_line frame 1;
   forward_line frame
-(*e: function Simple.scroll_down *)
+(*e: function [[Simple.scroll_down]] *)
 
-(*s: function Simple.scroll_up *)
+(*s: function [[Simple.scroll_up]] *)
 let scroll_up frame =
   scroll_line frame (-1);
   backward_line frame
-(*e: function Simple.scroll_up *)
+(*e: function [[Simple.scroll_up]] *)
 
-(*s: function Simple.scroll_other_up *)
+(*s: function [[Simple.scroll_other_up]] *)
 let scroll_other_up frame =
   Window.next scroll_up frame.frm_window
-(*e: function Simple.scroll_other_up *)
+(*e: function [[Simple.scroll_other_up]] *)
 
-(*s: function Simple.scroll_other_down *)
+(*s: function [[Simple.scroll_other_down]] *)
 let scroll_other_down frame =
   Window.next scroll_down frame.frm_window
-(*e: function Simple.scroll_other_down *)
+(*e: function [[Simple.scroll_other_down]] *)
 
-(*s: function Simple.recenter *)
+(*s: function [[Simple.recenter]] *)
 let recenter frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -622,17 +622,17 @@ let recenter frame =
   frame.frm_redraw <- true;
   Text.goto_point text frame.frm_start frame.frm_point;
   frame.frm_y_offset <- - frame.frm_height/2
-(*e: function Simple.recenter *)
+(*e: function [[Simple.recenter]] *)
 
 (*****************************************************************************)
 (* Position history *)
 (*****************************************************************************)
 
-(*s: constant Simple.history_pos_max *)
+(*s: constant [[Simple.history_pos_max]] *)
 let history_pos_max = 10
-(*e: constant Simple.history_pos_max *)
+(*e: constant [[Simple.history_pos_max]] *)
 
-(*s: function Simple.save_current_pos *)
+(*s: function [[Simple.save_current_pos]] *)
 let save_current_pos frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -645,9 +645,9 @@ let save_current_pos frame =
   );
   Array.blit arr 0 arr 1 (history_pos_max - 1);
   arr.(0) <- Some (Text.dup_point buf.buf_text point)
-(*e: function Simple.save_current_pos *)
+(*e: function [[Simple.save_current_pos]] *)
 
-(*s: function Simple.goto_last_saved_pos *)
+(*s: function [[Simple.goto_last_saved_pos]] *)
 let goto_last_saved_pos frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -660,13 +660,13 @@ let goto_last_saved_pos frame =
   match head with
   | Some pt -> Text.goto_point text frame.frm_point pt
   | None -> failwith "No position history"
-(*e: function Simple.goto_last_saved_pos *)
+(*e: function [[Simple.goto_last_saved_pos]] *)
 
 (*****************************************************************************)
 (* File *)
 (*****************************************************************************)
 
-(*s: function Simple.end_of_file *)
+(*s: function [[Simple.end_of_file]] *)
 let end_of_file frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -674,9 +674,9 @@ let end_of_file frame =
   save_current_pos frame;
   (*e: save current pos from frame for position history navigation (in simple.ml) *)
   Text.set_position text frame.frm_point (Text.size text)
-(*e: function Simple.end_of_file *)
+(*e: function [[Simple.end_of_file]] *)
 
-(*s: function Simple.begin_of_file *)
+(*s: function [[Simple.begin_of_file]] *)
 let begin_of_file frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -684,13 +684,13 @@ let begin_of_file frame =
   save_current_pos frame;
   (*e: save current pos from frame for position history navigation (in simple.ml) *)
   Text.set_position text frame.frm_point 0
-(*e: function Simple.begin_of_file *)
+(*e: function [[Simple.begin_of_file]] *)
 
 (*****************************************************************************)
 (* Undo *)
 (*****************************************************************************)
 
-(*s: function Simple.undo *)
+(*s: function [[Simple.undo]] *)
 let undo frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in  
@@ -702,13 +702,13 @@ let undo frame =
   (*e: save current pos from frame for position history navigation (in simple.ml) *)
   Text.set_position text point at_point;
   Text.fmove text point len
-(*e: function Simple.undo *)
+(*e: function [[Simple.undo]] *)
 
 (*****************************************************************************)
 (* Color helpers *)
 (*****************************************************************************)
 
-(*s: function Simple.color *)
+(*s: function [[Simple.color]] *)
 let color buf regexp strict attr =
   let text = buf.buf_text in
   Text.with_new_point text (fun point ->
@@ -740,7 +740,7 @@ let color buf regexp strict attr =
   with Not_found -> 
     buf.buf_modified <- buf.buf_modified + 1
   )
-(*e: function Simple.color *)
+(*e: function [[Simple.color]] *)
 let color a b c d = Common.profile_code "Simple.color" 
   (fun () -> color a b c d)
 
@@ -748,7 +748,7 @@ let color a b c d = Common.profile_code "Simple.color"
 (* Points *)
 (*****************************************************************************)
 
-(*s: function Simple.point_at_mark *)
+(*s: function [[Simple.point_at_mark]] *)
 let point_at_mark frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -758,14 +758,14 @@ let point_at_mark frame =
   let pos = Text.get_position text point in
   Text.goto_point text point mark;
   Text.set_position text mark pos
-(*e: function Simple.point_at_mark *)
+(*e: function [[Simple.point_at_mark]] *)
 
 
 (*****************************************************************************)
 (* Electric *)
 (*****************************************************************************)
 
-(*s: function Simple.electric_insert_space *)
+(*s: function [[Simple.electric_insert_space]] *)
 let electric_insert_space frame =
   self_insert_command frame;
   let buf = frame.frm_buffer in
@@ -781,9 +781,9 @@ let electric_insert_space frame =
         Text.insert text mark "\n"
       with Not_found -> ()
     )
-(*e: function Simple.electric_insert_space *)
+(*e: function [[Simple.electric_insert_space]] *)
 
-(*s: function Simple.simplify *)
+(*s: function [[Simple.simplify]] *)
 let simplify text start point =
   Text.with_dup_point text start (fun start ->
     let rec iter last_c =
@@ -803,13 +803,13 @@ let simplify text start point =
     in
     iter 'a'
   )
-(*e: function Simple.simplify *)
+(*e: function [[Simple.simplify]] *)
 
-(*s: constant Simple.line_comment *)
+(*s: constant [[Simple.line_comment]] *)
 let line_comment = Local.create_abstr "Fill_mode.line_comment"
-(*e: constant Simple.line_comment *)
+(*e: constant [[Simple.line_comment]] *)
 
-(*s: function Simple.fill_paragraph *)
+(*s: function [[Simple.fill_paragraph]] *)
 (* We will have to modify this to handle line_comment soon !! *)
 let fill_paragraph frame =
   let buf = frame.frm_buffer in
@@ -844,23 +844,23 @@ let fill_paragraph frame =
       iter 0 0;  
       Text.insert text fin "\n";
   )))
-(*e: function Simple.fill_paragraph *)
+(*e: function [[Simple.fill_paragraph]] *)
   
-(*s: function Simple.insert_special_char *)
+(*s: function [[Simple.insert_special_char]] *)
 let insert_special_char frame =
   let key = !Top_window.keypressed in
   let char = Char.chr key in
   if char >= 'a' && char <= 'z' 
   then insert_char frame (Char.chr (key - 97))
   else insert_char frame (Char.chr (key - 65))
-(*e: function Simple.insert_special_char *)
+(*e: function [[Simple.insert_special_char]] *)
 
 (*****************************************************************************)
 (* Keys *)
 (*****************************************************************************)
 open Options
 
-(*s: function Simple.string_to_modifier *)
+(*s: function [[Simple.string_to_modifier]] *)
 let string_to_modifier s =  
   let mask = ref 0 in
   for i = 0 to String.length s - 1 do
@@ -873,9 +873,9 @@ let string_to_modifier s =
     )
   done;
   !mask
-(*e: function Simple.string_to_modifier *)
+(*e: function [[Simple.string_to_modifier]] *)
   
-(*s: constant Simple.name_to_keysym *)
+(*s: constant [[Simple.name_to_keysym]] *)
 let name_to_keysym = 
   ("Button1", XK.xk_Pointer_Button1) ::
   ("Button2", XK.xk_Pointer_Button2) ::
@@ -883,9 +883,9 @@ let name_to_keysym =
   ("Button4", XK.xk_Pointer_Button4) ::
   ("Button5", XK.xk_Pointer_Button5) ::
   XK.name_to_keysym
-(*e: constant Simple.name_to_keysym *)
+(*e: constant [[Simple.name_to_keysym]] *)
   
-(*s: function Simple.value_to_key *)
+(*s: function [[Simple.value_to_key]] *)
 (* form: SC-Button1 *)
 let value_to_key v =
   match v with 
@@ -909,25 +909,25 @@ let value_to_key v =
       map, key
       
   | _ -> raise Not_found
-(*e: function Simple.value_to_key *)
+(*e: function [[Simple.value_to_key]] *)
   
-(*s: function Simple.key_to_value *)
+(*s: function [[Simple.key_to_value]] *)
 let key_to_value k = Value (Keymap.print_key k)
-(*e: function Simple.key_to_value *)
+(*e: function [[Simple.key_to_value]] *)
       
-(*s: constant Simple.key_option *)
+(*s: constant [[Simple.key_option]] *)
 let key_option = define_option_class "Key" value_to_key key_to_value
-(*e: constant Simple.key_option *)
+(*e: constant [[Simple.key_option]] *)
 
-(*s: constant Simple.binding_option *)
+(*s: constant [[Simple.binding_option]] *)
 let binding_option = tuple2_option (smalllist_option key_option, string_option)
-(*e: constant Simple.binding_option *)
+(*e: constant [[Simple.binding_option]] *)
 
 (*****************************************************************************)
 (* Toplevel *)
 (*****************************************************************************)
   
-(*s: toplevel Simple._1 *)
+(*s: toplevel [[Simple._1]] *)
 let _ =
   (*s: Simple toplevel setup *)
   Action.define_buffer_action "overwrite_mode" (fun buf -> 
@@ -981,6 +981,6 @@ let _ =
 
     Var.set_global line_comment ""
   )
-(*e: toplevel Simple._1 *)
+(*e: toplevel [[Simple._1]] *)
   
 (*e: features/simple.ml *)

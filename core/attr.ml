@@ -15,7 +15,7 @@ open Efuns
 
 (* see also Text.make_attr *)
 
-(*s: function Window.get_font *)
+(*s: function [[Window.get_font]] *)
 let get_font font_name =
   let location = Globals.location() in
   try
@@ -30,9 +30,9 @@ let get_font font_name =
       Hashtbl.add location.loc_fonts font_name n;
       n
     end
-(*e: function Window.get_font *)
+(*e: function [[Window.get_font]] *)
         
-(*s: function Window.get_color *)
+(*s: function [[Window.get_color]] *)
 let get_color color_name =
   let location = Globals.location() in
   try
@@ -47,6 +47,6 @@ let get_color color_name =
       Hashtbl.add location.loc_colors color_name n;
       n
     end
-(*e: function Window.get_color *)
+(*e: function [[Window.get_color]] *)
 
 (*e: core/attr.ml *)

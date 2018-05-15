@@ -16,56 +16,56 @@ open WX_types
 open WX_tree
 open Unix
 
-(*s: constant Efuns_filebrowser.argv *)
+(*s: constant [[Efuns_filebrowser.argv]] *)
 let argv = Array.to_list Sys.argv
-(*e: constant Efuns_filebrowser.argv *)
-(*s: constant Efuns_filebrowser.regexps *)
+(*e: constant [[Efuns_filebrowser.argv]] *)
+(*s: constant [[Efuns_filebrowser.regexps]] *)
 let regexps = List.map (fun str -> str, 
       Str.regexp (Utils.glob_to_regexp str)) (
     match argv with
       program :: dirname :: strs -> strs
     | _ -> failwith "Usage: efuns_filebrowser dirname [regexps]")
-(*e: constant Efuns_filebrowser.regexps *)
+(*e: constant [[Efuns_filebrowser.regexps]] *)
 
-(*s: constant Efuns_filebrowser.dirname *)
+(*s: constant [[Efuns_filebrowser.dirname]] *)
 let dirname = ref (if Filename.is_relative Sys.argv.(1) then
       Filename.concat (Sys.getcwd ()) Sys.argv.(1) else Sys.argv.(1))
-(*e: constant Efuns_filebrowser.dirname *)
+(*e: constant [[Efuns_filebrowser.dirname]] *)
   
-(*s: constant Efuns_filebrowser.display *)
+(*s: constant [[Efuns_filebrowser.display]] *)
 let display = new WX_display.t ""
-(*e: constant Efuns_filebrowser.display *)
-(*s: constant Efuns_filebrowser.root *)
+(*e: constant [[Efuns_filebrowser.display]] *)
+(*s: constant [[Efuns_filebrowser.root]] *)
 let root = new WX_root.t display 0
-(*e: constant Efuns_filebrowser.root *)
-(*s: constant Efuns_filebrowser.top *)
+(*e: constant [[Efuns_filebrowser.root]] *)
+(*s: constant [[Efuns_filebrowser.top]] *)
 let top = new WX_appli.t root [MinWidth 10; MinHeight 10; MaxHeight (root#height - 200)]
-(*e: constant Efuns_filebrowser.top *)
-(*s: constant Efuns_filebrowser.adx *)
+(*e: constant [[Efuns_filebrowser.top]] *)
+(*s: constant [[Efuns_filebrowser.adx]] *)
 let adx = new WX_adjust.t ()
-(*e: constant Efuns_filebrowser.adx *)
-(*s: constant Efuns_filebrowser.ady *)
+(*e: constant [[Efuns_filebrowser.adx]] *)
+(*s: constant [[Efuns_filebrowser.ady]] *)
 let ady = new WX_adjust.t ()
-(*e: constant Efuns_filebrowser.ady *)
-(*s: constant Efuns_filebrowser.hbar *)
+(*e: constant [[Efuns_filebrowser.ady]] *)
+(*s: constant [[Efuns_filebrowser.hbar]] *)
 let hbar = new WX_bar.h top#container []
-(*e: constant Efuns_filebrowser.hbar *)
-(*s: constant Efuns_filebrowser.viewport *)
+(*e: constant [[Efuns_filebrowser.hbar]] *)
+(*s: constant [[Efuns_filebrowser.viewport]] *)
 let viewport = new WX_viewport.t hbar#container adx ady []
-(*e: constant Efuns_filebrowser.viewport *)
-(*s: constant Efuns_filebrowser.scrollbar *)
+(*e: constant [[Efuns_filebrowser.viewport]] *)
+(*s: constant [[Efuns_filebrowser.scrollbar]] *)
 let scrollbar = new WX_scrollbar.v hbar#container ady []
-(*e: constant Efuns_filebrowser.scrollbar *)
-(*s: constant Efuns_filebrowser.tree *)
+(*e: constant [[Efuns_filebrowser.scrollbar]] *)
+(*s: constant [[Efuns_filebrowser.tree]] *)
 let tree = new WX_tree.t viewport#container []
-(*e: constant Efuns_filebrowser.tree *)
+(*e: constant [[Efuns_filebrowser.tree]] *)
 
-(*s: function Efuns_filebrowser.load *)
+(*s: function [[Efuns_filebrowser.load]] *)
 let load filename =
   Sys.command(Printf.sprintf "efuns_server %s &" filename) |> ignore
-(*e: function Efuns_filebrowser.load *)
+(*e: function [[Efuns_filebrowser.load]] *)
 
-(*s: function Efuns_filebrowser.iter_load *)
+(*s: function [[Efuns_filebrowser.iter_load]] *)
 let rec iter_load closed dirname basename container =
   try
     let dirname = Filename.concat dirname basename in
@@ -121,11 +121,11 @@ let rec iter_load closed dirname basename container =
     )
   with
     _ -> []
-(*e: function Efuns_filebrowser.iter_load *)
+(*e: function [[Efuns_filebrowser.iter_load]] *)
 
 open WX_filesel
   
-(*s: constant Efuns_filebrowser.file_menu *)
+(*s: constant [[Efuns_filebrowser.file_menu]] *)
 let file_menu = [|
     "Open", (fun _ -> 
         let info = {
@@ -145,9 +145,9 @@ let file_menu = [|
         );
     "Quit", (fun _ -> exit 0);
   |]
-(*e: constant Efuns_filebrowser.file_menu *)
+(*e: constant [[Efuns_filebrowser.file_menu]] *)
   
-(*s: toplevel Efuns_filebrowser._1 *)
+(*s: toplevel [[Efuns_filebrowser._1]] *)
 let _ =
   tree#set_desc (iter_load false (Filename.dirname Sys.argv.(1))
     (Filename.basename Sys.argv.(1))
@@ -159,5 +159,5 @@ let _ =
   top#add_menu "File" file_menu;
   top#show;
   loop ()
-(*e: toplevel Efuns_filebrowser._1 *)
+(*e: toplevel [[Efuns_filebrowser._1]] *)
 (*e: misc/efuns_filebrowser.ml *)

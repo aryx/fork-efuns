@@ -13,14 +13,14 @@
 (*e: copyright header efuns *)
 open Efuns
 
-(*s: constant Simple.highlighted *)
+(*s: constant [[Simple.highlighted]] *)
 (* hightlighting of regions *)  
 let highlighted = ref None
-(*e: constant Simple.highlighted *)
-(*s: constant Simple.highlight_bit *)
-(*e: constant Simple.highlight_bit *)
+(*e: constant [[Simple.highlighted]] *)
+(*s: constant [[Simple.highlight_bit]] *)
+(*e: constant [[Simple.highlight_bit]] *)
 
-(*s: function Simple.unhightlight_region *)
+(*s: function [[Simple.unhightlight_region]] *)
 let unhightlight_region buf debut fin =
   let text = buf.buf_text in
   Text.with_new_point text (fun curseur ->
@@ -34,9 +34,9 @@ let unhightlight_region buf debut fin =
     done;
     buf.buf_modified <- buf.buf_modified + 1
   ))
-(*e: function Simple.unhightlight_region *)
+(*e: function [[Simple.unhightlight_region]] *)
 
-(*s: function Simple.hightlight_region *)
+(*s: function [[Simple.hightlight_region]] *)
 let hightlight_region buf debut fin =
   let text = buf.buf_text in
   Text.with_new_point text (fun curseur ->
@@ -50,13 +50,13 @@ let hightlight_region buf debut fin =
     done;
     buf.buf_modified <- buf.buf_modified + 1
   ))
-(*e: function Simple.hightlight_region *)
+(*e: function [[Simple.hightlight_region]] *)
 
-(*s: constant Simple.highlighted_chars *)
+(*s: constant [[Simple.highlighted_chars]] *)
 let highlighted_chars = ref []
-(*e: constant Simple.highlighted_chars *)
+(*e: constant [[Simple.highlighted_chars]] *)
 
-(*s: function Simple.unhightlight *)
+(*s: function [[Simple.unhightlight]] *)
 let unhightlight _frame =
   (*s: [[Simple.unhightlight()]] handle highlighted chars *)
   !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
@@ -86,9 +86,9 @@ let unhightlight _frame =
 
      ));
      unhightlight_region buf debut fin
-(*e: function Simple.unhightlight *)
+(*e: function [[Simple.unhightlight]] *)
   
-(*s: function Simple.highlight *)
+(*s: function [[Simple.highlight]] *)
 let highlight frame =
   let frame =
     match !highlighted with
@@ -123,13 +123,13 @@ let highlight frame =
   in
   highlighted := Some (frame, pos1, pos2);
   hightlight_region buf pos_debut_to_hl pos_fin_to_hl
-(*e: function Simple.highlight *)
+(*e: function [[Simple.highlight]] *)
 
-(*s: toplevel Highlight._ *)
+(*s: toplevel [[Highlight._]] *)
 let _ =
   Hook.add_start_hook (fun () ->
     (* unhightlight region *)
     Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
   )
-(*e: toplevel Highlight._ *)
+(*e: toplevel [[Highlight._]] *)
 (*e: features/highlight.ml *)

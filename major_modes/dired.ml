@@ -14,7 +14,7 @@
 open Efuns
 
 
-(*s: function Dired.update *)
+(*s: function [[Dired.update]] *)
 let update buf =
   let filename = match buf.buf_filename with
       None -> failwith "Not a directory"
@@ -25,13 +25,13 @@ let update buf =
   (* pad extension *)
   Dircolors.colorize buf;
   buf.buf_last_saved <- Text.version text
-(*e: function Dired.update *)
+(*e: function [[Dired.update]] *)
 
-(*s: constant Dired.file_reg *)
+(*s: constant [[Dired.file_reg]] *)
 let file_reg = Str.regexp ".* \\([^ ]+\\)$"
-(*e: constant Dired.file_reg *)
+(*e: constant [[Dired.file_reg]] *)
   
-(*s: function Dired.get_file_line *)
+(*s: function [[Dired.get_file_line]] *)
 let get_file_line frame =
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
     (Globals.location()).loc_dirname <- Filename.dirname filename;
@@ -46,9 +46,9 @@ let get_file_line frame =
     let line = Text.sub text start_point (before + after) in
     line
   )
-(*e: function Dired.get_file_line *)
+(*e: function [[Dired.get_file_line]] *)
     
-(*s: function Dired.select_file *)
+(*s: function [[Dired.select_file]] *)
 let select_file line =
   if line.[0] = ' ' 
   then
@@ -57,29 +57,29 @@ let select_file line =
     else String.sub line 60 (String.length line - 60)
   else
     failwith "Dired: not a file line"
-(*e: function Dired.select_file *)
+(*e: function [[Dired.select_file]] *)
 
-(*s: function Dired.dirname *)
+(*s: function [[Dired.dirname]] *)
 let dirname frame =
   match frame.frm_buffer.buf_filename with
     None -> "."
   | Some dirname -> dirname 
-(*e: function Dired.dirname *)
+(*e: function [[Dired.dirname]] *)
       
-(*s: function Dired.fullname *)
+(*s: function [[Dired.fullname]] *)
 let fullname frame filename = 
   Filename.concat (dirname frame) filename
-(*e: function Dired.fullname *)
+(*e: function [[Dired.fullname]] *)
       
-(*s: function Dired.open_file *)
+(*s: function [[Dired.open_file]] *)
 let open_file frame =
   let filename = fullname frame (select_file (get_file_line frame)) in
   let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = Frame.create  frame.frm_window None buf in
   Frame.active frame
-(*e: function Dired.open_file *)
+(*e: function [[Dired.open_file]] *)
   
-(*s: function Dired.remove *)
+(*s: function [[Dired.remove]] *)
 let remove frame =
   let line = get_file_line frame in   
   let filename = select_file line in
@@ -88,19 +88,19 @@ let remove frame =
           if line.[1] = 'd' then Unix.rmdir filename else
           Unix.unlink filename;
         update frame.frm_buffer) |> ignore
-(*e: function Dired.remove *)
+(*e: function [[Dired.remove]] *)
 
-(*s: constant Dired.view_list *)
+(*s: constant [[Dired.view_list]] *)
 let view_list = ref []
-(*e: constant Dired.view_list *)
-(*s: constant Dired.old_view_list *)
+(*e: constant [[Dired.view_list]] *)
+(*s: constant [[Dired.old_view_list]] *)
 let old_view_list = ref []
-(*e: constant Dired.old_view_list *)
-(*s: constant Dired.compiled_view_list *)
+(*e: constant [[Dired.old_view_list]] *)
+(*s: constant [[Dired.compiled_view_list]] *)
 let compiled_view_list = ref []
-(*e: constant Dired.compiled_view_list *)
+(*e: constant [[Dired.compiled_view_list]] *)
   
-(*s: function Dired.fast_view *)
+(*s: function [[Dired.fast_view]] *)
 let fast_view frame filename =
   if not (!old_view_list == !view_list) then
     begin
@@ -127,15 +127,15 @@ let fast_view frame filename =
 
   with
     Exit -> ()      
-(*e: function Dired.fast_view *)
+(*e: function [[Dired.fast_view]] *)
   
-(*s: function Dired.open_view *)
+(*s: function [[Dired.open_view]] *)
 let open_view frame =
   let filename = select_file (get_file_line frame) in
   fast_view frame filename
-(*e: function Dired.open_view *)
+(*e: function [[Dired.open_view]] *)
   
-(*s: function Dired.mkdir *)
+(*s: function [[Dired.mkdir]] *)
 let mkdir frame =
   failwith "Dired.mkdir: TODO"
 (*
@@ -146,9 +146,9 @@ let mkdir frame =
       Unix.mkdir str file_perm;
       update frame.frm_buffer)
 *)
-(*e: function Dired.mkdir *)
+(*e: function [[Dired.mkdir]] *)
           
-(*s: function Dired.install *)
+(*s: function [[Dired.install]] *)
 let install buf = 
   match buf.buf_filename with
     None -> 
@@ -157,29 +157,29 @@ let install buf =
       if not (Utils.is_directory filename) then 
         failwith (Printf.sprintf "Dired: %s not a directory" filename);
       update buf
-(*e: function Dired.install *)
+(*e: function [[Dired.install]] *)
       
-(*s: constant Dired.mode *)
+(*s: constant [[Dired.mode]] *)
 let mode = Ebuffer.new_major_mode "Dired" [install]
-(*e: constant Dired.mode *)
+(*e: constant [[Dired.mode]] *)
 
-(*s: constant Dired.map *)
+(*s: constant [[Dired.map]] *)
 let map = mode.maj_map
-(*e: constant Dired.map *)
+(*e: constant [[Dired.map]] *)
   
 
-(*s: function Dired.viewer *)
+(*s: function [[Dired.viewer]] *)
 let viewer commande frame filename =
   Sys.command (Printf.sprintf "(%s %s) &" commande filename) |> ignore
-(*e: function Dired.viewer *)
+(*e: function [[Dired.viewer]] *)
 
-(*s: function Dired.commande *)
+(*s: function [[Dired.commande]] *)
 let commande commande frame filename =
   Sys.command (Printf.sprintf commande filename) |> ignore;
   failwith  (Printf.sprintf commande filename)
-(*e: function Dired.commande *)
+(*e: function [[Dired.commande]] *)
   
-(*s: function Dired.unzip_and_view *)
+(*s: function [[Dired.unzip_and_view]] *)
 let unzip_and_view frame filename =
   let new_filename = Printf.sprintf "/tmp/efuns-view-%s" (
       Filename.chop_extension filename) in
@@ -187,9 +187,9 @@ let unzip_and_view frame filename =
       Printf.sprintf "gzip -cd %s > %s" filename new_filename)
   in
   if res = 0 then fast_view frame new_filename
-(*e: function Dired.unzip_and_view *)
+(*e: function [[Dired.unzip_and_view]] *)
     
-(*s: toplevel Dired._1 *)
+(*s: toplevel [[Dired._1]] *)
 let _ = 
   Keymap.interactive map [NormalMap, XK.xk_Return] "dired_open_file" 
     open_file;
@@ -219,5 +219,5 @@ let _ =
     Var.set_global Ebuffer.modes_alist 
       ((".*/$",mode) :: (Var.get_global Ebuffer.modes_alist));
   )   
-(*e: toplevel Dired._1 *)
+(*e: toplevel [[Dired._1]] *)
 (*e: major_modes/dired.ml *)

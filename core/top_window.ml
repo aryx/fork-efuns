@@ -16,7 +16,7 @@ open Options
 open Efuns
 
   
-(*s: function Top_window.message *)
+(*s: function [[Top_window.message]] *)
 let message top_window msg =
   let graphic = Efuns.backend top_window in
   let len = String.length msg in
@@ -32,9 +32,9 @@ let message top_window msg =
       graphic.Xdraw.update_display ();
       (* let _ = Unix.select [] [] [] 0.2 in *)
       mini_buffer.frm_redraw <- true
-(*e: function Top_window.message *)
+(*e: function [[Top_window.message]] *)
 
-(*s: function Top_window.clear_message *)
+(*s: function [[Top_window.clear_message]] *)
 let clear_message top_window =
   match top_window.top_mini_buffers with
   | [] -> 
@@ -43,9 +43,9 @@ let clear_message top_window =
         0 (top_window.top_height - 1) 
         top_window.top_width; 
   | _ -> ()
-(*e: function Top_window.clear_message *)
+(*e: function [[Top_window.clear_message]] *)
 
-(*s: function Top_window.try_map *)
+(*s: function [[Top_window.try_map]] *)
 let try_map frame key =
   let keylist = frame.frm_prefix @ [key] in
   match Ebuffer.get_binding frame.frm_buffer keylist with
@@ -77,9 +77,9 @@ let try_map frame key =
       let top_window = Window.top frame.frm_window in
       message top_window (Keymap.print_key_list frame.frm_prefix);
   | Unbound -> raise UnboundKey
-(*e: function Top_window.try_map *)
+(*e: function [[Top_window.try_map]] *)
 
-(*s: function Top_window.set_cursor_on *)
+(*s: function [[Top_window.set_cursor_on]] *)
 let set_cursor_on top_window frame = 
   Frame.set_cursor frame;
 
@@ -89,9 +89,9 @@ let set_cursor_on top_window frame =
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
       (frame.frm_ypos + frame.frm_cursor_y) 
       frame.frm_cursor 0 1 Text.inverse_attr
-(*e: function Top_window.set_cursor_on *)
+(*e: function [[Top_window.set_cursor_on]] *)
 
-(*s: function Top_window.set_cursor_off *)
+(*s: function [[Top_window.set_cursor_off]] *)
 let set_cursor_off top_window frame =
   if frame.frm_cursor.[0] <> '\000' then
     let graphic = Efuns.backend top_window in
@@ -99,9 +99,9 @@ let set_cursor_off top_window frame =
       (frame.frm_xpos + frame.frm_cursor_x) 
       (frame.frm_ypos + frame.frm_cursor_y) 
       frame.frm_cursor 0 1 frame.frm_cursor_attr
-(*e: function Top_window.set_cursor_off *)
+(*e: function [[Top_window.set_cursor_off]] *)
 
-(*s: function Top_window.cursor_on *)
+(*s: function [[Top_window.cursor_on]] *)
 let cursor_on top_window =
   let frame = top_window.top_active_frame in
   set_cursor_on top_window frame;
@@ -118,9 +118,9 @@ let cursor_on top_window =
     set_cursor_on top_window frame
   )
   (*e: [[Top_window.cursor_on()]] display secondary cursor *)
-(*e: function Top_window.cursor_on *)
+(*e: function [[Top_window.cursor_on]] *)
 
-(*s: function Top_window.cursor_off *)
+(*s: function [[Top_window.cursor_off]] *)
 let cursor_off top_window =
   let frame = top_window.top_active_frame in
   set_cursor_off top_window frame;
@@ -129,10 +129,10 @@ let cursor_off top_window =
     set_cursor_off top_window frame
   )
   (*e: [[Top_window.cursor_off()]] hide secondary cursor *)
-(*e: function Top_window.cursor_off *)
+(*e: function [[Top_window.cursor_off]] *)
 
 
-(*s: function Top_window.update_display *)
+(*s: function [[Top_window.update_display]] *)
 let update_display () =
   (Globals.location()).top_windows |> List.iter (fun top_window ->
      top_window.window |> Window.iter (fun frm -> 
@@ -146,11 +146,11 @@ let update_display () =
      let graphic = Efuns.backend top_window in
      graphic.Xdraw.update_display();
   ) 
-(*e: function Top_window.update_display *)
+(*e: function [[Top_window.update_display]] *)
 let update_display () = Common.profile_code "Top_window.update_display" 
   (fun () -> update_display () )
 
-(*s: function Top_window.clean_display *)
+(*s: function [[Top_window.clean_display]] *)
 let clean_display () =
   (Globals.location()).top_windows |> List.iter (fun top_window ->
      cursor_off top_window;
@@ -165,9 +165,9 @@ let clean_display () =
      )
      (*e: [[clean_display()]] sanity check second cursor and minibuffer *)
    )
-(*e: function Top_window.clean_display *)
+(*e: function [[Top_window.clean_display]] *)
 
-(*s: function Top_window.resize_window *)
+(*s: function [[Top_window.resize_window]] *)
 let rec resize_window window xpos ypos width height =
   let old_width = window.win_width in
   let old_height = window.win_height in
@@ -186,9 +186,9 @@ let rec resize_window window xpos ypos width height =
       let he1 = w1.win_height * height / old_height in
       resize_window w1 xpos ypos width he1;
       resize_window w2 xpos (ypos + he1) width (height - he1)
-(*e: function Top_window.resize_window *)
+(*e: function [[Top_window.resize_window]] *)
 
-(*s: function Top_window.find_frame *)
+(*s: function [[Top_window.find_frame]] *)
 let rec find_frame window x y =
   match window.win_down with
     NoFrame -> raise Not_found
@@ -201,19 +201,19 @@ let rec find_frame window x y =
       if w2.win_ypos > y 
       then find_frame w1 x y
       else find_frame w2 x y
-(*e: function Top_window.find_frame *)
+(*e: function [[Top_window.find_frame]] *)
 
-(*s: constant Top_window.keypressed *)
+(*s: constant [[Top_window.keypressed]] *)
 let keypressed = ref 0
-(*e: constant Top_window.keypressed *)
-(*s: constant Top_window.mouse_x *)
+(*e: constant [[Top_window.keypressed]] *)
+(*s: constant [[Top_window.mouse_x]] *)
 let mouse_x = ref 0
-(*e: constant Top_window.mouse_x *)
-(*s: constant Top_window.mouse_y *)
+(*e: constant [[Top_window.mouse_x]] *)
+(*s: constant [[Top_window.mouse_y]] *)
 let mouse_y = ref 0
-(*e: constant Top_window.mouse_y *)
+(*e: constant [[Top_window.mouse_y]] *)
 
-(*s: function Top_window.find_selected_frame *)
+(*s: function [[Top_window.find_selected_frame]] *)
 let find_selected_frame top_window =
   let x = !mouse_x in
   let y = !mouse_y in
@@ -227,37 +227,37 @@ let find_selected_frame top_window =
   in
   Frame.active frame;
   frame
-(*e: function Top_window.find_selected_frame *)
+(*e: function [[Top_window.find_selected_frame]] *)
 
 
-(*s: function Top_window.mouse_set_active *)
+(*s: function [[Top_window.mouse_set_active]] *)
 let mouse_set_active top_window =
   let x = !mouse_x in
   let y = !mouse_y in
   let frame = find_selected_frame top_window in
   Frame.move_point frame frame.frm_point x y;
   frame
-(*e: function Top_window.mouse_set_active *)
+(*e: function [[Top_window.mouse_set_active]] *)
 
 
-(*s: function Top_window.mini_message *)
+(*s: function [[Top_window.mini_message]] *)
 let mini_message frame msg =
   let top_window = Window.top frame.frm_window in
   message top_window msg
-(*e: function Top_window.mini_message *)
+(*e: function [[Top_window.mini_message]] *)
 
-(*s: constant Top_window.handle_key_start_hook *)
+(*s: constant [[Top_window.handle_key_start_hook]] *)
 let handle_key_start_hook = Local.create_abstr "handle_key_start_hook"
-(*e: constant Top_window.handle_key_start_hook *)
-(*s: constant Top_window.handle_key_end_hook *)
+(*e: constant [[Top_window.handle_key_start_hook]] *)
+(*s: constant [[Top_window.handle_key_end_hook]] *)
 let handle_key_end_hook = Local.create_abstr "handle_key_end_hook"
-(*e: constant Top_window.handle_key_end_hook *)
+(*e: constant [[Top_window.handle_key_end_hook]] *)
   
-(*s: constant Top_window.meta *)
+(*s: constant [[Top_window.meta]] *)
 let meta = ref Xtypes.mod1Mask
-(*e: constant Top_window.meta *)
+(*e: constant [[Top_window.meta]] *)
   
-(*s: function Top_window.handle_key *)
+(*s: function [[Top_window.handle_key]] *)
 let handle_key top_window modifiers keysym =
   keypressed := keysym;
   let frame = top_window.top_active_frame in
@@ -312,13 +312,13 @@ let handle_key top_window modifiers keysym =
   Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();
 
   update_display () (* will set cursor back on and many other things *)
-(*e: function Top_window.handle_key *)
+(*e: function [[Top_window.handle_key]] *)
 
   (* We can receive events from different sources. In particular, some of
   them can be received during the painting (scrollbar ...)
   *)
   
-(*s: function Top_window.wrap *)
+(*s: function [[Top_window.wrap]] *)
 let wrap top_window f () = 
   let loc = Globals.location() in
   Mutex.lock loc.loc_mutex;  
@@ -335,16 +335,16 @@ let wrap top_window f () =
   Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();    
   update_display ();
   Mutex.unlock loc.loc_mutex
-(*e: function Top_window.wrap *)
+(*e: function [[Top_window.wrap]] *)
 
-(*s: function Top_window.wrap_item *)
+(*s: function [[Top_window.wrap_item]] *)
 (*
 let wrap_item top_window (n,f) =
   n, wrap top_window (fun top_window -> f top_window.top_active_frame)
 *)
-(*e: function Top_window.wrap_item *)
+(*e: function [[Top_window.wrap_item]] *)
         
-(*s: function Top_window.handler *)
+(*s: function [[Top_window.handler]] *)
 let handler top_window event =
   Globals.with_lock (fun () ->
     match event with
@@ -376,16 +376,16 @@ let handler top_window event =
         update_display ()
     (*e: [[Top_window.handler()]] match event cases *)
   )
-(*e: function Top_window.handler *)
+(*e: function [[Top_window.handler]] *)
 
 
-(*s: constant Top_window.buffers_menu *)
+(*s: constant [[Top_window.buffers_menu]] *)
 let buffers_menu = ref 
   (fun (top_window : top_window) (button : (*WX_button.t*) unit) ()
   -> ())
-(*e: constant Top_window.buffers_menu *)
+(*e: constant [[Top_window.buffers_menu]] *)
 
-(*s: function Top_window.scroll_to_frame *)
+(*s: function [[Top_window.scroll_to_frame]] *)
 (*
 let scroll_to_frame ady top_window =
   let frame = top_window.top_active_frame in
@@ -405,29 +405,29 @@ let scroll_to_frame ady top_window =
       Text.set_position text frame.frm_start y
     end
 *)
-(*e: function Top_window.scroll_to_frame *)
+(*e: function [[Top_window.scroll_to_frame]] *)
 
 
-(*s: constant Top_window.menus *)
+(*s: constant [[Top_window.menus]] *)
 (*
 let menus = define_option ["menus"] ""
     (list_option (tuple2_option (string_option, list_option string2_option)))
   []
 *)
-(*e: constant Top_window.menus *)
-(*s: constant Top_window.file_menu *)
+(*e: constant [[Top_window.menus]] *)
+(*s: constant [[Top_window.file_menu]] *)
 let file_menu = define_option ["file_menu"] "" (list_option string2_option) []
-(*e: constant Top_window.file_menu *)
-(*s: constant Top_window.edit_menu *)
+(*e: constant [[Top_window.file_menu]] *)
+(*s: constant [[Top_window.edit_menu]] *)
 let edit_menu = define_option ["edit_menu"] "" (list_option string2_option) []
-(*e: constant Top_window.edit_menu *)
-(*s: constant Top_window.help_menu *)
+(*e: constant [[Top_window.edit_menu]] *)
+(*s: constant [[Top_window.help_menu]] *)
 let help_menu = ref ([| |]: (string * action) array)
-(*e: constant Top_window.help_menu *)
+(*e: constant [[Top_window.help_menu]] *)
 
   
   
-(*s: function Top_window.create *)
+(*s: function [[Top_window.create]] *)
 let create () =
   let loc = Globals.location() in
   let buf = 
@@ -458,9 +458,9 @@ let create () =
   loc.top_windows <- top_window :: loc.top_windows;
 
   top_window
-(*e: function Top_window.create *)
+(*e: function [[Top_window.create]] *)
 
-(*s: function Top_window.delete_window *)
+(*s: function [[Top_window.delete_window]] *)
 let delete_window frame =
   failwith "Top_window:delete_window: TODO"
 (*
@@ -474,21 +474,21 @@ let delete_window frame =
     loc.top_windows <- Utils.list_remove loc.top_windows
       top_window
 *)
-(*e: function Top_window.delete_window *)
+(*e: function [[Top_window.delete_window]] *)
 
         
-(*s: constant Top_window.check_abort *)
+(*s: constant [[Top_window.check_abort]] *)
 (*let check_abort = ref 0*)
-(*e: constant Top_window.check_abort *)
-(*s: constant Top_window.check_abort_delay *)
+(*e: constant [[Top_window.check_abort]] *)
+(*s: constant [[Top_window.check_abort_delay]] *)
 (*let check_abort_delay = ref 100*)
-(*e: constant Top_window.check_abort_delay *)
+(*e: constant [[Top_window.check_abort_delay]] *)
 
   (* This function should be used in loops that could be interrupted by
   the user. It returns "true" if the user pressed C-g, and false
   in other cases. *)
   
-(*s: function Top_window.check_abort *)
+(*s: function [[Top_window.check_abort]] *)
 let check_abort frame =
   failwith "Top_window.check_abort: TODO"
 (*
@@ -499,6 +499,6 @@ let check_abort frame =
     xterm#check_abort
   else false
 *)
-(*e: function Top_window.check_abort *)
+(*e: function [[Top_window.check_abort]] *)
 
 (*e: graphics/top_window.ml *)

@@ -21,7 +21,7 @@ open Text (* for the line fields *)
 (* Status line *)
 (*****************************************************************************)
 
-(*s: constant Frame.status_format *)
+(*s: constant [[Frame.status_format]] *)
 let status_format = ref [
     StatModified , (1, 2);
     StatName, (5, 20);
@@ -30,9 +30,9 @@ let status_format = ref [
     StatCol, (70 , 5);
     StatFile, (35,15);
   ]
-(*e: constant Frame.status_format *)
+(*e: constant [[Frame.status_format]] *)
 
-(*s: function Frame.status_print *)
+(*s: function [[Frame.status_print]] *)
 let status_print status str stat_type =
   status.status_modified <- true;
   try
@@ -41,28 +41,28 @@ let status_print status str stat_type =
     String.blit str 0 status.status_string pos len;
     String.fill status.status_string (pos + len) (maxlen - len) ' '
   with Not_found -> ()
-(*e: function Frame.status_print *)
+(*e: function [[Frame.status_print]] *)
 
 
-(*s: function Frame.status_modified *)
+(*s: function [[Frame.status_modified]] *)
 let status_modified frame modified =
   let status = frame.frm_status in
   if status.stat_modified <> modified then begin
     status_print status (if modified then "**" else "--") StatModified;
     status.stat_modified <- modified
   end
-(*e: function Frame.status_modified *)
+(*e: function [[Frame.status_modified]] *)
 
-(*s: function Frame.status_col *)
+(*s: function [[Frame.status_col]] *)
 let status_col frame col =
   let status = frame.frm_status in
   if status.stat_col <> col then begin
     status.stat_col <- col;
     status_print status (Printf.sprintf "C%d" (col+1)) StatCol
   end
-(*e: function Frame.status_col *)
+(*e: function [[Frame.status_col]] *)
 
-(*s: function Frame.status_major_mode *)
+(*s: function [[Frame.status_major_mode]] *)
 let status_major_mode frame  =
   let buf = frame.frm_buffer in
   let status = frame.frm_status in
@@ -78,31 +78,31 @@ let status_major_mode frame  =
             (List.map (fun m -> m.min_name) status.stat_modes))))
       StatMode;
     end
-(*e: function Frame.status_major_mode *)
+(*e: function [[Frame.status_major_mode]] *)
 
-(*s: function Frame.status_line *)
+(*s: function [[Frame.status_line]] *)
 let status_line frame line =
   let status = frame.frm_status in
   if status.stat_line <> line then begin
     status.stat_line <- line;
     status_print status (Printf.sprintf "L%d" (line+1)) StatLine
   end
-(*e: function Frame.status_line *)
+(*e: function [[Frame.status_line]] *)
 
-(*s: function Frame.status_name *)
+(*s: function [[Frame.status_name]] *)
 let status_name frame name =
   let status = frame.frm_status in
   if status.stat_name <> name then begin
     status.stat_name <- name;
     status_print status name StatName
   end
-(*e: function Frame.status_name *)
+(*e: function [[Frame.status_name]] *)
 
 (*****************************************************************************)
 (* Kill *)
 (*****************************************************************************)
 
-(*s: function Frame.kill *)
+(*s: function [[Frame.kill]] *)
 let kill frame = 
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -114,18 +114,18 @@ let kill frame =
   Text.remove_point text buf.buf_start;
   buf.buf_point <- frame.frm_point;
   buf.buf_start <- frame.frm_start
-(*e: function Frame.kill *)
+(*e: function [[Frame.kill]] *)
 
-(*s: function Frame.kill_all *)
+(*s: function [[Frame.kill_all]] *)
 let kill_all window =
   Window.iter kill window
-(*e: function Frame.kill_all *)
+(*e: function [[Frame.kill_all]] *)
 
 (*****************************************************************************)
 (* Display *)
 (*****************************************************************************)
 
-(*s: function Frame.install *)
+(*s: function [[Frame.install]] *)
 let install window frame =
   (*s: [[Frame.install()]] sanity check frame is not a minibuffer *)
   if window.win_mini = (frame.frm_mini_buffer = None) then begin 
@@ -165,20 +165,20 @@ let install window frame =
   ));
   (*e: [[Frame.install()]] set frm_table *)
   frame.frm_redraw <- true
-(*e: function Frame.install *)
+(*e: function [[Frame.install]] *)
 
 (*****************************************************************************)
 (* Constructor *)
 (*****************************************************************************)
 
-(*s: constant Frame.editname *)
+(*s: constant [[Frame.editname]] *)
 let editname = "Efuns:"
-(*e: constant Frame.editname *)
-(*s: constant Frame.dummy_mode *)
+(*e: constant [[Frame.editname]] *)
+(*s: constant [[Frame.dummy_mode]] *)
 let dummy_mode = Ebuffer.new_major_mode "" []
-(*e: constant Frame.dummy_mode *)
+(*e: constant [[Frame.dummy_mode]] *)
   
-(*s: function Frame.create_without_top *)
+(*s: function [[Frame.create_without_top]] *)
 let create_without_top window mini buf =
   let text = buf.buf_text in
 
@@ -256,18 +256,18 @@ let create_without_top window mini buf =
 
   install window frame;
   frame
-(*e: function Frame.create_without_top *)
+(*e: function [[Frame.create_without_top]] *)
 
-(*s: function Frame.active *)
+(*s: function [[Frame.active]] *)
 let active frame =
   let top_window = Window.top frame.frm_window in
   top_window.top_active_frame <- frame;
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
     (Globals.location()).loc_dirname <- Filename.dirname filename
   )
-(*e: function Frame.active *)
+(*e: function [[Frame.active]] *)
       
-(*s: function Frame.create *)
+(*s: function [[Frame.create]] *)
 let create window mini buf =
   let frame = create_without_top window mini buf in
   (*s: [[Frame.create()]] adjust active frame *)
@@ -275,18 +275,18 @@ let create window mini buf =
   top_window.top_active_frame <- frame;
   (*e: [[Frame.create()]] adjust active frame *)
   frame
-(*e: function Frame.create *)
+(*e: function [[Frame.create]] *)
 
-(*s: function Frame.create_inactive *)
+(*s: function [[Frame.create_inactive]] *)
 let create_inactive window buf =
   create_without_top window None buf
-(*e: function Frame.create_inactive *)
+(*e: function [[Frame.create_inactive]] *)
 
 (*****************************************************************************)
 (* Cursor *)
 (*****************************************************************************)
 
-(*s: function Frame.point_to_cursor *)
+(*s: function [[Frame.point_to_cursor]] *)
 let point_to_x_when_no_cutline buf point =
   let text = buf.buf_text in
   let line = Ebuffer.compute_representation buf (Text.point_line text point) in
@@ -300,9 +300,9 @@ let point_to_x_when_no_cutline buf point =
         else box.box_pos_repr + box.box_charsize *  (xpos - box.box_col)
   in
   iter line.Text.boxes
-(*e: function Frame.point_to_cursor *)
+(*e: function [[Frame.point_to_cursor]] *)
 
-(*s: function Frame.cursor_to_point *)
+(*s: function [[Frame.cursor_to_point]] *)
 let cursor_to_coord frame x y =
   (*s: [[Frame.cursor_to_point()]] sanity check parameters in range *)
   if (y < 0) || (x<0) || (y >= frame.frm_height-1) || (x>frame.frm_cutline) 
@@ -322,14 +322,14 @@ let cursor_to_coord frame x y =
     frm_line.frmline_boxes 0 
   in
   { Text.c_col = col; Text.c_line = line }
-(*e: function Frame.cursor_to_point *)
+(*e: function [[Frame.cursor_to_point]] *)
 
 
 (*****************************************************************************)
 (* Display *)
 (*****************************************************************************)
 
-(*s: function Frame.display_line *)
+(*s: function [[Frame.display_line]] *)
 let display_line graphic frame repr_string y = 
   let frm_line = frame.frm_table.(y) in
 
@@ -353,9 +353,9 @@ let display_line graphic frame repr_string y =
       (*e: [[Frame.display_line()]] in iter, line overflow frm_width *)
   in
   iter 0 (frm_line.first_box_extra_offset + frame.frm_x_offset) frm_line.frmline_boxes
-(*e: function Frame.display_line *)
+(*e: function [[Frame.display_line]] *)
 
-(*s: function Frame.point_to_xy_opt *)
+(*s: function [[Frame.point_to_xy_opt]] *)
 let point_to_xy_opt frame point =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -385,9 +385,9 @@ let point_to_xy_opt frame point =
     None
   with Exit ->
     Some (!xref, !yref)
-(*e: function Frame.point_to_xy_opt *)
+(*e: function [[Frame.point_to_xy_opt]] *)
 
-(*s: function Frame.set_cursor *)
+(*s: function [[Frame.set_cursor]] *)
 let set_cursor frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -422,9 +422,9 @@ let set_cursor frame =
       in
       let frm_line = frame.frm_table.(frame.frm_cursor_y) in
       iter frm_line.frmline_boxes
-(*e: function Frame.set_cursor *)
+(*e: function [[Frame.set_cursor]] *)
 
-(*s: function Frame.update_table *)
+(*s: function [[Frame.update_table]] *)
 let update_table frame =
   let buf =  frame.frm_buffer in
   let text = buf.buf_text in
@@ -468,7 +468,7 @@ let update_table frame =
   Text.goto_line text start !current_n; 
 
   (* update frame representation *)
-  (*s: function Frame.update_table.iter_line *)
+  (*s: function [[Frame.update_table.iter_line]] *)
   let rec iter_line y n line =
     if y < height then begin
       let reprs = List.rev line.boxes in
@@ -482,8 +482,8 @@ let update_table frame =
       iter_repr frame.frm_cutline (y+1) n line reprs
     end
     else Text.goto_line text frame.frm_end (n-1)
-  (*e: function Frame.update_table.iter_line *)
-  (*s: function Frame.update_table.iter_repr *)
+  (*e: function [[Frame.update_table.iter_line]] *)
+  (*s: function [[Frame.update_table.iter_repr]] *)
   and iter_repr xcutline y n line boxes =
     (*s: [[Frame.update_table.iter_repr()]] if line too big *)
     if line.repr_len > xcutline then
@@ -513,14 +513,14 @@ let update_table frame =
       let line = Ebuffer.compute_representation buf (n+1) in
       iter_line y (n+1) line
   in
-  (*e: function Frame.update_table.iter_repr *)
+  (*e: function [[Frame.update_table.iter_repr]] *)
 
   iter_line (- frame.frm_y_offset) !current_n !current_line
-(*e: function Frame.update_table *)
+(*e: function [[Frame.update_table]] *)
 let update_table a = Common.profile_code "Frame.update_table"
   (fun () -> update_table a)
 
-(*s: function Frame.display *)
+(*s: function [[Frame.display]] *)
 let display top_window frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -689,7 +689,7 @@ let display top_window frame =
        0 (String.length request) Text.direct_attr
       (*e: [[Frame.display()]] draw minibuffer request string *)
   (*e: [[Frame.display()]] draw status line or minibuffer *)
-(*e: function Frame.display *)
+(*e: function [[Frame.display]] *)
 let display a = Common.profile_code "Frame.display"
   (fun () -> display a)
 
@@ -697,10 +697,10 @@ let display a = Common.profile_code "Frame.display"
 (* Misc  *)
 (*****************************************************************************)
 
-(*s: exception Frame.BufferKilled *)
+(*s: exception [[Frame.BufferKilled]] *)
 exception BufferKilled
-(*e: exception Frame.BufferKilled *)
-(*s: function Frame.unkill *)
+(*e: exception [[Frame.BufferKilled]] *)
+(*s: function [[Frame.unkill]] *)
 let unkill window frame =
   let buf = frame.frm_buffer in
   if buf.buf_shared < 0 
@@ -713,30 +713,30 @@ let unkill window frame =
   frame.frm_y_offset <- 0;
   buf.buf_shared <- buf.buf_shared + 1;
   frame.frm_killed <- false
-(*e: function Frame.unkill *)
+(*e: function [[Frame.unkill]] *)
 
-(*s: function Frame.move_point *)
+(*s: function [[Frame.move_point]] *)
 let move_point frame point x y =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let coord = cursor_to_coord frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
   Text.goto_line text point coord.Text.c_line;
   Text.fmove text point coord.Text.c_col
-(*e: function Frame.move_point *)
+(*e: function [[Frame.move_point]] *)
 
-(*s: function Frame.current_dir *)
+(*s: function [[Frame.current_dir]] *)
 let current_dir frame =
   let buf = frame.frm_buffer in
   match buf.buf_filename with
   | Some filename -> Filename.dirname filename ^ "/"
   | None -> (Globals.location()).loc_dirname ^ "/"
-(*e: function Frame.current_dir *)
+(*e: function [[Frame.current_dir]] *)
 
-(*s: exception Frame.FoundFrame *)
+(*s: exception [[Frame.FoundFrame]] *)
 exception FoundFrame of frame
-(*e: exception Frame.FoundFrame *)
+(*e: exception [[Frame.FoundFrame]] *)
 
-(*s: function Frame.find_buffer_frame *)
+(*s: function [[Frame.find_buffer_frame]] *)
 let find_buffer_frame buf =
   try
     (Globals.location()).top_windows |> List.iter (fun top_window ->
@@ -747,24 +747,24 @@ let find_buffer_frame buf =
     );
     raise Not_found
   with FoundFrame frame -> frame
-(*e: function Frame.find_buffer_frame *)
+(*e: function [[Frame.find_buffer_frame]] *)
 
-(*s: constant Frame.change_buffer_hooks *)
+(*s: constant [[Frame.change_buffer_hooks]] *)
 let change_buffer_hooks = define_option ["change_buffer_hooks"] "" 
     (list_option string_option)
   [ "check_file" ]
-(*e: constant Frame.change_buffer_hooks *)
+(*e: constant [[Frame.change_buffer_hooks]] *)
 
-(*s: function Frame.load_file *)
+(*s: function [[Frame.load_file]] *)
 let load_file window filename =
   let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = create window None buf in
   Hook.exec_named_hooks !!change_buffer_hooks frame;
   status_name frame buf.buf_name;
   frame
-(*e: function Frame.load_file *)
+(*e: function [[Frame.load_file]] *)
 
-(*s: function Frame.change_buffer *)
+(*s: function [[Frame.change_buffer]] *)
 let change_buffer window name = 
   try
     let buf = Hashtbl.find (Globals.location()).loc_buffers name in
@@ -772,22 +772,22 @@ let change_buffer window name =
     Hook.exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name
   with Not_found -> ()
-(*e: function Frame.change_buffer *)
+(*e: function [[Frame.change_buffer]] *)
 
-(*s: function Frame.save_buffer *)
+(*s: function [[Frame.save_buffer]] *)
 let save_buffer frame =
   Ebuffer.save frame.frm_buffer
-(*e: function Frame.save_buffer *)
+(*e: function [[Frame.save_buffer]] *)
 
-(*s: function Frame.bindings_help *)
+(*s: function [[Frame.bindings_help]] *)
 let bindings_help frame =
   let window = frame.frm_window in
   change_buffer window "*bindings*"
-(*e: function Frame.bindings_help *)
+(*e: function [[Frame.bindings_help]] *)
 
-(*s: function Simple.to_frame *)
+(*s: function [[Simple.to_frame]] *)
 let to_frame f frame =
   f frame.frm_buffer frame.frm_point
-(*e: function Simple.to_frame *)
+(*e: function [[Simple.to_frame]] *)
   
 (*e: core/frame.ml *)

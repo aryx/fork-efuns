@@ -14,30 +14,30 @@
 open Efuns
 open Unix  
   
-(*s: constant Server.efuns_property *)
+(*s: constant [[Server.efuns_property]] *)
 (*let efuns_property = "_EFUNS_SERVER"  *)
-(*e: constant Server.efuns_property *)
-(*s: constant Server.user *)
+(*e: constant [[Server.efuns_property]] *)
+(*s: constant [[Server.user]] *)
 let user = 
   try Sys.getenv "USER" 
   with _ -> "noname"
-(*e: constant Server.user *)
-(*s: constant Server.socket_name *)
+(*e: constant [[Server.user]] *)
+(*s: constant [[Server.socket_name]] *)
 let socket_name = 
   (Printf.sprintf "/tmp/efuns-server.%s.%s:0" user !Globals.displayname)
-(*e: constant Server.socket_name *)
+(*e: constant [[Server.socket_name]] *)
 
-(*s: constant Server.started *)
+(*s: constant [[Server.started]] *)
 let started = ref false
-(*e: constant Server.started *)
+(*e: constant [[Server.started]] *)
   
-(*s: type Server.proto *)
+(*s: type [[Server.proto]] *)
 type proto =
   LoadFile of string * int * string
-(*e: type Server.proto *)
+(*e: type [[Server.proto]] *)
 
  
-(*s: function Server.read_command *)
+(*s: function [[Server.read_command]] *)
 let read_command fd frame =
   let inc = in_channel_of_descr fd in
   try
@@ -65,16 +65,16 @@ let read_command fd frame =
         ) (*()*)
   with
     _ -> Concur.Thread.remove_reader fd 
-(*e: function Server.read_command *)
+(*e: function [[Server.read_command]] *)
   
-(*s: function Server.module_accept *)
+(*s: function [[Server.module_accept]] *)
 let module_accept s frame = 
   let fd,_ = accept s in
   Unix.set_close_on_exec fd;
   Concur.Thread.add_reader fd (fun _ -> read_command fd frame)
-(*e: function Server.module_accept *)
+(*e: function [[Server.module_accept]] *)
   
-(*s: function Server.start *)
+(*s: function [[Server.start]] *)
 let start frame =
   if not !started then
   (*let top_window = Window.top frame.frm_window in*)
@@ -96,6 +96,6 @@ let start frame =
         PropModeReplace atom XA.xa_string 1 socket_name;
       *)
   )  
-(*e: function Server.start *)
+(*e: function [[Server.start]] *)
   
 (*e: ipc/server.ml *)

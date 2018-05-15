@@ -14,7 +14,7 @@
 open Efuns
 open Unix
 
-(*s: function Complex.save_buffers_and_action *)
+(*s: function [[Complex.save_buffers_and_action]] *)
 let rec save_buffers_and_action frame buffers action =
   match buffers with
     [] -> let () = action frame in ()
@@ -53,13 +53,13 @@ let rec save_buffers_and_action frame buffers action =
       Keymap.add_binding map [NormalMap, Char.code 'A'] abort;
       Keymap.add_binding map [ControlMap, Char.code 'g'] abort;
       Minibuffer.create frame map request |> ignore
-(*e: function Complex.save_buffers_and_action *)
+(*e: function [[Complex.save_buffers_and_action]] *)
 
-(*s: constant Complex.buf_mtime *)
+(*s: constant [[Complex.buf_mtime]] *)
 let buf_mtime = Local.create "buf_mtime" string_of_float float_of_string
-(*e: constant Complex.buf_mtime *)
+(*e: constant [[Complex.buf_mtime]] *)
 
-(*s: function Complex.update_time *)
+(*s: function [[Complex.update_time]] *)
 let update_time buf =
   try
     buf.buf_filename |> Common.do_option (fun file ->
@@ -68,9 +68,9 @@ let update_time buf =
       then Var.set_local buf buf_mtime st.st_mtime;
     )
   with _ -> ()
-(*e: function Complex.update_time *)
+(*e: function [[Complex.update_time]] *)
       
-(*s: function Complex.reload *)
+(*s: function [[Complex.reload]] *)
 let reload frame = 
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -89,9 +89,9 @@ let reload frame =
       List.iter (fun minor_mode -> List.iter
           (fun f -> f buf) minor_mode.min_hooks) buf.buf_minor_modes;
       Frame.status_modified frame false 
-(*e: function Complex.reload *)
+(*e: function [[Complex.reload]] *)
       
-(*s: function Complex.check_file *)
+(*s: function [[Complex.check_file]] *)
 let check_file frame =
   try
     let buf = frame.frm_buffer in
@@ -113,58 +113,58 @@ let check_file frame =
        with _ -> Var.set_local buf buf_mtime st.st_mtime
     )
   with _ -> ()
-(*e: function Complex.check_file *)
+(*e: function [[Complex.check_file]] *)
     
-(*s: function Complex.exit_efuns *)
+(*s: function [[Complex.exit_efuns]] *)
 let exit_efuns frame =
   let buffers = Utils.list_of_hash (Globals.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
     raise (Common.UnixExit 0)
   )
-(*e: function Complex.exit_efuns *)
+(*e: function [[Complex.exit_efuns]] *)
 
-(*s: function Complex.save_some_buffers *)
+(*s: function [[Complex.save_some_buffers]] *)
 let save_some_buffers frame =
   let buffers = Utils.list_of_hash (Globals.location()).loc_buffers in
   save_buffers_and_action frame buffers (fun _ -> ())
-(*e: function Complex.save_some_buffers *)
+(*e: function [[Complex.save_some_buffers]] *)
 
-(*s: function Complex.load_buffer *)
+(*s: function [[Complex.load_buffer]] *)
 let load_buffer frame = 
   Multi_buffers.set_previous_frame frame;
   Select.select_filename frame "Find file: " (fun str -> 
     Frame.load_file frame.frm_window str |> ignore
   )
-(*e: function Complex.load_buffer *)
+(*e: function [[Complex.load_buffer]] *)
 
-(*s: function Complex.insert_file *)
+(*s: function [[Complex.insert_file]] *)
 let insert_file frame =
   Select.select_filename frame "Insert file: " (fun str ->
     let inc = open_in str in
     Simple.insert_string frame (Utils.read_string inc);
     close_in inc
   )
-(*e: function Complex.insert_file *)
+(*e: function [[Complex.insert_file]] *)
 
-(*s: function Complex.write_buffer *)
+(*s: function [[Complex.write_buffer]] *)
 let write_buffer frame = 
   let buf = frame.frm_buffer in
   Select.select_filename frame "Save file as: " (fun str -> 
     Ebuffer.change_name buf str;
     Ebuffer.save buf
   )
-(*e: function Complex.write_buffer *)
+(*e: function [[Complex.write_buffer]] *)
 
-(*s: function Complex.save_buffer *)
+(*s: function [[Complex.save_buffer]] *)
 let save_buffer frame =
   let buf = frame.frm_buffer in
   match buf.buf_filename with
     Some _ -> Ebuffer.save buf
   | None -> write_buffer frame
-(*e: function Complex.save_buffer *)
+(*e: function [[Complex.save_buffer]] *)
 
-(*s: function Complex.window_load_buffer *)
+(*s: function [[Complex.window_load_buffer]] *)
 let window_load_buffer frame = 
   Select.select_filename frame "Find file: " 
     (fun str -> 
@@ -173,9 +173,9 @@ let window_load_buffer frame =
       in
       Frame.load_file top_window.window str |> ignore
     )
-(*e: function Complex.window_load_buffer *)
+(*e: function [[Complex.window_load_buffer]] *)
 
-(*s: function Complex.window_change_buffer *)
+(*s: function [[Complex.window_change_buffer]] *)
 let window_change_buffer frame =
   Multi_buffers.select_buffer frame "Switch to buffer in new frame: " 
     (Multi_buffers.get_previous_frame ())
@@ -185,9 +185,9 @@ let window_change_buffer frame =
       in
       Frame.change_buffer top_window.window name
   )
-(*e: function Complex.window_change_buffer *)
+(*e: function [[Complex.window_change_buffer]] *)
 
-(*s: function Complex.change_font *)
+(*s: function [[Complex.change_font]] *)
 let change_font frame =
   Minibuffer.create_return frame (Keymap.create ()) "Find font: " "fixed"
     (fun old_frame name ->
@@ -196,12 +196,12 @@ let change_font frame =
       (*WX_xterm.change_font xterm name*)
       failwith "Complex.change_font: TODO"
   ) |> ignore
-(*e: function Complex.change_font *)
+(*e: function [[Complex.change_font]] *)
 
-(*s: constant Complex.display_hist *)
+(*s: constant [[Complex.display_hist]] *)
 (*let display_hist = ref []*)
-(*e: constant Complex.display_hist *)
-(*s: function Complex.open_display *)
+(*e: constant [[Complex.display_hist]] *)
+(*s: function [[Complex.open_display]] *)
 let open_display frame =
   failwith "Complex.open_display: TODO"
 (*
@@ -219,9 +219,9 @@ let open_display frame =
       Top_window.create location display |> ignore
    )
 *)
-(*e: function Complex.open_display *)
+(*e: function [[Complex.open_display]] *)
 
-(*s: function Complex.goto_line *)
+(*s: function [[Complex.goto_line]] *)
 let goto_line frame =
   Select.simple_select frame "goto-line:" (fun name ->
     let line = int_of_string name in
@@ -230,26 +230,26 @@ let goto_line frame =
     (*e: save current pos from frame for position history navigation *)
     Text.goto_line frame.frm_buffer.buf_text frame.frm_point (line - 1)
   )
-(*e: function Complex.goto_line *)
+(*e: function [[Complex.goto_line]] *)
 
-(*s: function Complex.goto_char *)
+(*s: function [[Complex.goto_char]] *)
 let goto_char frame =
   Select.simple_select frame "goto-char:" (fun name ->
     let char = int_of_string name in
     Text.set_position frame.frm_buffer.buf_text frame.frm_point char
   )
-(*e: function Complex.goto_char *)
+(*e: function [[Complex.goto_char]] *)
 
 
-(*s: function Complex.get_pos *)
+(*s: function [[Complex.get_pos]] *)
 let describe_position frame =
   Top_window.message 
     (Window.top frame.frm_window)
     (Printf.sprintf "Char position %d" 
        (Text.get_position frame.frm_buffer.buf_text frame.frm_point))
-(*e: function Complex.get_pos *)
+(*e: function [[Complex.get_pos]] *)
 
-(*s: function Complex.mark_at_point *)
+(*s: function [[Complex.mark_at_point]] *)
 let mark_at_point frame =
   Ebuffer.set_mark frame.frm_buffer frame.frm_point;
   (*s: save current pos from frame for position history navigation *)
@@ -258,31 +258,31 @@ let mark_at_point frame =
   let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Mark set";
   ()
-(*e: function Complex.mark_at_point *)
+(*e: function [[Complex.mark_at_point]] *)
 
-(*s: constant Complex.umask *)
+(*s: constant [[Complex.umask]] *)
 let umask = 
   let old = Unix.umask 0 in 
   Unix.umask old |> ignore;
   old
-(*e: constant Complex.umask *)
+(*e: constant [[Complex.umask]] *)
   
-(*s: constant Complex.file_perm *)
+(*s: constant [[Complex.file_perm]] *)
 let file_perm = Local.create "file_perm" string_of_int int_of_string
-(*e: constant Complex.file_perm *)
-(*s: function Complex.mkdir *)
+(*e: constant [[Complex.file_perm]] *)
+(*s: function [[Complex.mkdir]] *)
 let mkdir frame =
   Select.select_filename frame "Make directory: "
     (fun str -> 
       let file_perm = try Var.get_var frame.frm_buffer file_perm with _ -> 
             0x1ff land (lnot umask) in
       Unix.mkdir str file_perm)
-(*e: function Complex.mkdir *)
+(*e: function [[Complex.mkdir]] *)
 
-(*s: constant Complex.eval_history *)
+(*s: constant [[Complex.eval_history]] *)
 let eval_history = ref []
-(*e: constant Complex.eval_history *)
-(*s: function Complex.eval *)
+(*e: constant [[Complex.eval_history]] *)
+(*s: function [[Complex.eval]] *)
 let eval frame =
   Select.select_string frame "Eval:" eval_history "" (fun str ->
     let top_window = Window.top frame.frm_window in
@@ -294,19 +294,19 @@ let eval frame =
         str ^ " ;;"))
       *)(failwith "Complex.eval: TODO")
     )
-(*e: function Complex.eval *)
+(*e: function [[Complex.eval]] *)
 
-(*s: constant Complex.variable_hist *)
+(*s: constant [[Complex.variable_hist]] *)
 let variable_hist = ref []
-(*e: constant Complex.variable_hist *)
-(*s: constant Complex.value_hist *)
+(*e: constant [[Complex.variable_hist]] *)
+(*s: constant [[Complex.value_hist]] *)
 let value_hist = ref []
-(*e: constant Complex.value_hist *)
+(*e: constant [[Complex.value_hist]] *)
   
-(*s: constant Complex.all_vars *)
+(*s: constant [[Complex.all_vars]] *)
 let all_vars = ref None
-(*e: constant Complex.all_vars *)
-(*s: function Complex.all_variables *)
+(*e: constant [[Complex.all_vars]] *)
+(*s: function [[Complex.all_variables]] *)
 let all_variables frame _ =
   let buf = frame.frm_buffer in
   match !all_vars with
@@ -318,27 +318,27 @@ let all_variables frame _ =
       in
       all_vars := Some (frame, list);
       list
-(*e: function Complex.all_variables *)
+(*e: function [[Complex.all_variables]] *)
   
-(*s: function Complex.set_local_variable *)
+(*s: function [[Complex.set_local_variable]] *)
 let set_local_variable frame = 
   Select.select frame "set_local_variable : " variable_hist
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
           Local.input frame.frm_buffer.buf_vars variable value))
-(*e: function Complex.set_local_variable *)
+(*e: function [[Complex.set_local_variable]] *)
   
-(*s: function Complex.set_global_variable *)
+(*s: function [[Complex.set_global_variable]] *)
 let set_global_variable frame =
   Select.select frame "set_global_variable : " variable_hist
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
           Local.input (Globals.location()).loc_vars variable value))
-(*e: function Complex.set_global_variable *)
+(*e: function [[Complex.set_global_variable]] *)
   
-(*s: function Complex.get_variable *)
+(*s: function [[Complex.get_variable]] *)
 let describe_variable frame = 
   Select.select frame "get_variable : " variable_hist "" 
     (all_variables frame)
@@ -351,15 +351,15 @@ let describe_variable frame =
             Local.print buf.buf_vars variable
           with _ ->
             Local.print (Globals.location()).loc_vars variable)))
-(*e: function Complex.get_variable *)
+(*e: function [[Complex.get_variable]] *)
 
 open Options
   
-(*s: constant Complex.parameters_hist *)
+(*s: constant [[Complex.parameters_hist]] *)
 let parameters_hist = ref []
-(*e: constant Complex.parameters_hist *)
+(*e: constant [[Complex.parameters_hist]] *)
   
-(*s: function Complex.set_parameter *)
+(*s: function [[Complex.set_parameter]] *)
 let set_parameter frame = 
   let parameters = Var.get_global Parameter.parameters_var in
   Select.select frame "set-parameter : " parameters_hist
@@ -369,9 +369,9 @@ let set_parameter frame =
           let (input,print,param) = List.assoc variable parameters
           in
           param =:= input value))
-(*e: function Complex.set_parameter *)
+(*e: function [[Complex.set_parameter]] *)
   
-(*s: function Complex.get_parameter *)
+(*s: function [[Complex.get_parameter]] *)
 let get_parameter frame =
   let parameters = Var.get_global Parameter.parameters_var in  
   Select.select frame "get-parameter : " parameters_hist
@@ -381,10 +381,10 @@ let get_parameter frame =
           let (input,print,param) = List.assoc variable parameters
           in
           print !!param)))
-(*e: function Complex.get_parameter *)
+(*e: function [[Complex.get_parameter]] *)
 
  
-(*s: toplevel Complex._1 *)
+(*s: toplevel [[Complex._1]] *)
 let _ =
   Hook.add_start_hook (fun () ->
     let loc = Globals.location() in
@@ -397,6 +397,6 @@ let _ =
       Keymap.add_interactive loc.loc_map "get_parameter" get_parameter;
       
   )
-(*e: toplevel Complex._1 *)
+(*e: toplevel [[Complex._1]] *)
   
 (*e: features/complexe.ml *)

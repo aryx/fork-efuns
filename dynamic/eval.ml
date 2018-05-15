@@ -50,7 +50,7 @@ and load_interface mod_name =
 
 open Dyneval
 
-(*s: function Eval.try_load *)
+(*s: function [[Eval.try_load]] *)
 let try_load top_window f =
   try
     f (); 
@@ -60,23 +60,23 @@ let try_load top_window f =
       Top_window.message top_window (Dynlink.error_message error)
   | e -> 
       Top_window.message top_window (spf "Exception %s" (Printexc.to_string e))
-(*e: function Eval.try_load *)
+(*e: function [[Eval.try_load]] *)
 
-(*s: function Eval.load *)
+(*s: function [[Eval.load]] *)
 let load top_window mod_name =
   try_load top_window (fun () -> load_module mod_name)
-(*e: function Eval.load *)
+(*e: function [[Eval.load]] *)
 
-(*s: function Eval.load_library *)
+(*s: function [[Eval.load_library]] *)
 let load_library frame =
   select_lib_filename frame "Load library: " 
     (fun str ->
       let top_window = Window.top frame.frm_window in
       try_load top_window (fun () -> load_file str))
-(*e: function Eval.load_library *)
+(*e: function [[Eval.load_library]] *)
 
   
-(*s: function Eval.eval_buffer *)
+(*s: function [[Eval.eval_buffer]] *)
 let eval_buffer frame =
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
@@ -100,5 +100,5 @@ let eval_buffer frame =
         Top_window.message top_window "Error while compiling buffer"
   in
   System.system "*Eval*" location cmd end_action |> ignore
-(*e: function Eval.eval_buffer *)
+(*e: function [[Eval.eval_buffer]] *)
 (*e: dynamic/eval.ml *)

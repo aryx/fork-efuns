@@ -35,7 +35,7 @@ let dirname frame filename =
   | _ -> Filename.dirname str
 
 
-(*s: function Select.select_yes_or_no *)
+(*s: function [[Select.select_yes_or_no]] *)
 let select_yes_or_no frame request action =
   let top_window = Window.top frame.frm_window in
   let map = Keymap.create () in
@@ -56,17 +56,17 @@ let select_yes_or_no frame request action =
   let mini = Minibuffer.create frame map request in
   mini.frm_buffer.buf_map_partial <- false;
   mini
-(*e: function Select.select_yes_or_no *)
+(*e: function [[Select.select_yes_or_no]] *)
 
-(*s: function Select.find_completion_frame *)
+(*s: function [[Select.find_completion_frame]] *)
 let find_completion_frame frame =
   let buf = Ebuffer.default "*Completions*" in
   Frame.find_buffer_frame buf
-(*e: function Select.find_completion_frame *)
+(*e: function [[Select.find_completion_frame]] *)
 
 let completions_buf_hook = Local.create_abstr "completions_buf_hook"
 
-(*s: function Select.display_completions *)
+(*s: function [[Select.display_completions]] *)
 let display_completions frame list =
   let top_window = Window.top frame.frm_window in
   if list = [] 
@@ -89,17 +89,17 @@ let display_completions frame list =
     (try Frame.find_buffer_frame buf
      with Not_found -> Frame.create_inactive (Multi_frames.cut_frame frame) buf
     ) |> ignore
-(*e: function Select.display_completions *)
+(*e: function [[Select.display_completions]] *)
 
-(*s: function Select.remove_completions *)
+(*s: function [[Select.remove_completions]] *)
 let remove_completions frame =
   try
     let frame = find_completion_frame frame in
     Multi_frames.remove_frame frame
   with Not_found -> ()
-(*e: function Select.remove_completions *)
+(*e: function [[Select.remove_completions]] *)
 
-(*s: function Select.set_history *)
+(*s: function [[Select.set_history]] *)
 let set_history map string history =
   let current = ref 0 in
   Keymap.add_binding map [NormalMap, XK.xk_Up] (fun mini_frame ->
@@ -128,9 +128,9 @@ let set_history map string history =
       Simple.insert_string mini_frame ele; ()
     end
   )
-(*e: function Select.set_history *)
+(*e: function [[Select.set_history]] *)
 
-(*s: function Select.incremental_mini_buffer *)
+(*s: function [[Select.incremental_mini_buffer]] *)
 let incremental_mini_buffer 
  frame ismap request default incremental_action end_action =
   let top_window = Window.top frame.frm_window in
@@ -156,9 +156,9 @@ let incremental_mini_buffer
     top_window.top_second_cursor <- None;
     end_action frame str
   )
-(*e: function Select.incremental_mini_buffer *)
+(*e: function [[Select.incremental_mini_buffer]] *)
 
-(*s: function Select.select *)
+(*s: function [[Select.select]] *)
 let select frame request history start completion_fun prefix_fun action =
   let map = Keymap.create () in
   let string = ref "" in
@@ -199,7 +199,7 @@ let select frame request history start completion_fun prefix_fun action =
        remove_completions frame;
        action str
     ) |> ignore
-(*e: function Select.select *)
+(*e: function [[Select.select]] *)
   
   (****************************************************
   
@@ -207,23 +207,23 @@ let select frame request history start completion_fun prefix_fun action =
   
   ****************************************************)
 
-(*s: constant Select.file_hist *)
+(*s: constant [[Select.file_hist]] *)
 let file_hist = ref []
-(*e: constant Select.file_hist *)
+(*e: constant [[Select.file_hist]] *)
 
-(*s: constant Select.dont_complete *)
+(*s: constant [[Select.dont_complete]] *)
 (* todo: could use File_type.is_obj_file to unify the treatment of obj file
  * in C-x C-f and shell
  *)
 let dont_complete = define_option ["avoid_filenames"] ""
     (list_option string_option) 
   [ ".*\\.o$"; ".*\\.cm.$";".*\\.cmxa$";".*~";".*\\.a$";"core$";"\\..*"]
-(*e: constant Select.dont_complete *)
+(*e: constant [[Select.dont_complete]] *)
   
-(*s: constant Select.dont_complete_regexps *)
+(*s: constant [[Select.dont_complete_regexps]] *)
 let dont_complete_regexps = ref ([],Str.regexp "")
-(*e: constant Select.dont_complete_regexps *)
-(*s: function Select.dont_complete_regexp *)
+(*e: constant [[Select.dont_complete_regexps]] *)
+(*s: function [[Select.dont_complete_regexp]] *)
 let dont_complete_regexp () =
   let (old,reg) = !dont_complete_regexps in
   if old == !!dont_complete 
@@ -232,15 +232,15 @@ let dont_complete_regexp () =
     let reg = Str2.regexp_from_list !!dont_complete in
     dont_complete_regexps := (!!dont_complete, reg);
     reg
-(*e: function Select.dont_complete_regexp *)
+(*e: function [[Select.dont_complete_regexp]] *)
 
-(*s: function Select.avoid_completion *)
+(*s: function [[Select.avoid_completion]] *)
 let avoid_completion s =
   let bad_regexp = dont_complete_regexp () in
   not (Str.string_match bad_regexp s 0)
-(*e: function Select.avoid_completion *)
+(*e: function [[Select.avoid_completion]] *)
 
-(*s: function Select.is_userdir *)
+(*s: function [[Select.is_userdir]] *)
 let is_userdir string =
   let n = String.length string in
   (n > 1) && (string.[0] = '~') &&
@@ -249,9 +249,9 @@ let is_userdir string =
       false
    with Not_found -> true
    )
-(*e: function Select.is_userdir *)
+(*e: function [[Select.is_userdir]] *)
 
-(*s: function Select.complete_filename *)
+(*s: function [[Select.complete_filename]] *)
 let complete_filename frame good_file filename =
   if is_userdir filename 
   then (* Parse_file.users *) failwith "Select.complete_filename: TODO"
@@ -286,9 +286,9 @@ let complete_filename frame good_file filename =
         | list -> list
       end
   | _ -> file_list
-(*e: function Select.complete_filename *)
+(*e: function [[Select.complete_filename]] *)
 
-(*s: function Select.select_file *)
+(*s: function [[Select.select_file]] *)
 let select_file frame request history start action =
   let map = Keymap.create () in
   let string = ref "" in
@@ -380,13 +380,13 @@ let select_file frame request history start action =
     string := Text.to_string text            
   );
   ()
-(*e: function Select.select_file *)
+(*e: function [[Select.select_file]] *)
 
-(*s: function Select.select_filename *)
+(*s: function [[Select.select_filename]] *)
 let select_filename frame request action =
   let curdir = Frame.current_dir frame in
   select_file frame request file_hist (Utils.filename_to_string curdir) action
-(*e: function Select.select_filename *)
+(*e: function [[Select.select_filename]] *)
 
 
   (****************************************************
@@ -395,7 +395,7 @@ let select_filename frame request action =
   
   ****************************************************)
 
-(*s: function Select.select_string *)
+(*s: function [[Select.select_string]] *)
 let select_string frame request history default action =
   let map = Keymap.create () in
   let string = ref "" in
@@ -408,15 +408,15 @@ let select_string frame request history default action =
               history := str :: !history);
       action str
     ) |> ignore
-(*e: function Select.select_string *)
+(*e: function [[Select.select_string]] *)
 
 
-(*s: function Select.simple_select *)
+(*s: function [[Select.simple_select]] *)
 let simple_select frame request action =
   let map = Keymap.create () in
   Minibuffer.create_return frame map request "" (fun _ str -> action str) 
    |> ignore
-(*e: function Select.simple_select *)
+(*e: function [[Select.simple_select]] *)
   
   
 (*e: features/select.ml *)

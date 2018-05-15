@@ -13,7 +13,7 @@
 (*e: copyright header efuns *)
 open Efuns
 
-(*s: function Simple.mouse_drag_region *)
+(*s: function [[Simple.mouse_drag_region]] *)
 (* C'est tout simple. On arrive dans cette fonction quand on est en train
 de bouger la souris avec le bouton appuyer. La frame courante est donc 
 correcte. On peut utiliser la position de la souris pour trouver la 
@@ -67,9 +67,9 @@ let mouse_drag_region frame =
       else raise Not_found
   ) !Eloop.event_time
 *)
-(*e: function Simple.mouse_drag_region *)
+(*e: function [[Simple.mouse_drag_region]] *)
 
-(*s: function Simple.mouse_yank_at_click *)
+(*s: function [[Simple.mouse_yank_at_click]] *)
 let  mouse_yank_at_click frame =
 failwith "Simple.mouse_yank_at_click: TODO"
 (*
@@ -83,9 +83,9 @@ failwith "Simple.mouse_yank_at_click: TODO"
   Text.insert text point str;
   Text.fmove text point (String.length str)
 *)
-(*e: function Simple.mouse_yank_at_click *)
+(*e: function [[Simple.mouse_yank_at_click]] *)
 
-(*s: function Simple.mouse_save_then_kill *)
+(*s: function [[Simple.mouse_save_then_kill]] *)
 let mouse_save_then_kill frame =
   failwith "Simple.mouse_save_then_kill: TODO"
 (*
@@ -113,9 +113,9 @@ let mouse_save_then_kill frame =
     end
   )
 *)
-(*e: function Simple.mouse_save_then_kill *)
+(*e: function [[Simple.mouse_save_then_kill]] *)
 
-(*s: function Simple.mouse_set_frame *)
+(*s: function [[Simple.mouse_set_frame]] *)
 let mouse_set_frame frame =
   let top_window = Window.top frame.frm_window in
   let frame = Top_window.mouse_set_active top_window in
@@ -125,14 +125,14 @@ let mouse_set_frame frame =
   let mark = Ebuffer.get_mark buf point in
   Text.goto_point text mark point;
   ()
-(*e: function Simple.mouse_set_frame *)
+(*e: function [[Simple.mouse_set_frame]] *)
 
-(*s: toplevel Mouse._ *)
+(*s: toplevel [[Mouse._]] *)
 let _ =
   Hook.add_start_hook (fun () ->
     Keymap.add_global_key [NormalMap, XK.xk_Pointer_Drag1]
       "mouse_drag_region" mouse_drag_region;
   )
-(*e: toplevel Mouse._ *)
+(*e: toplevel [[Mouse._]] *)
 
 (*e: features/mouse.ml *)

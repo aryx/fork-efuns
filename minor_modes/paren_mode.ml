@@ -16,24 +16,24 @@ open Simple
 
 module H = Highlight
 
-(*s: constant Simple.htmlp *)
+(*s: constant [[Simple.htmlp]] *)
 let htmlp = ref false
-(*e: constant Simple.htmlp *)
-(*s: function Simple.is_paren_end *)
+(*e: constant [[Simple.htmlp]] *)
+(*s: function [[Simple.is_paren_end]] *)
 let is_paren_end c = (c == '}') || (c == ']') || (c == ')')
   (*s: [[Simple.is_paren_end()]] extra conditions *)
     ||  (!htmlp && c == '>')
   (*e: [[Simple.is_paren_end()]] extra conditions *)
-(*e: function Simple.is_paren_end *)
-(*s: function Simple.is_paren_begin *)
+(*e: function [[Simple.is_paren_end]] *)
+(*s: function [[Simple.is_paren_begin]] *)
 let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
   (*s: [[Simple.is_paren_begin()]] extra conditions *)
     ||  (!htmlp && c == '<')
   (*e: [[Simple.is_paren_begin()]] extra conditions *)
 
-(*e: function Simple.is_paren_begin *)
+(*e: function [[Simple.is_paren_begin]] *)
 
-(*s: function Simple.highlight_paren *)
+(*s: function [[Simple.highlight_paren]] *)
 let highlight_paren frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -76,27 +76,27 @@ let highlight_paren frame =
   in
   iter []
   )
-(*e: function Simple.highlight_paren *)
+(*e: function [[Simple.highlight_paren]] *)
 
 
-(*s: constant Paren_mode.mode *)
+(*s: constant [[Paren_mode.mode]] *)
 let mode = Ebuffer.new_minor_mode "paren" []
-(*e: constant Paren_mode.mode *)
+(*e: constant [[Paren_mode.mode]] *)
 
-(*s: function Paren_mode.find_matching *)
+(*s: function [[Paren_mode.find_matching]] *)
 let find_matching frame = 
   self_insert_command frame; 
   highlight_paren frame
-(*e: function Paren_mode.find_matching *)
+(*e: function [[Paren_mode.find_matching]] *)
   
-(*s: toplevel Paren_mode._1 *)
+(*s: toplevel [[Paren_mode._1]] *)
 let _ = 
   [ ')'; '}'; ']' ] |> List.iter (fun key -> 
     Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
   ) 
-(*e: toplevel Paren_mode._1 *)
+(*e: toplevel [[Paren_mode._1]] *)
 
-(*s: toplevel Paren_mode._2 *)
+(*s: toplevel [[Paren_mode._2]] *)
 let _ = 
   Action.define_buffer_action "paren_mode" 
     (fun buf -> 
@@ -104,5 +104,5 @@ let _ =
       then Ebuffer.del_minor_mode buf mode
       else Ebuffer.set_minor_mode buf mode
     )
-(*e: toplevel Paren_mode._2 *)
+(*e: toplevel [[Paren_mode._2]] *)
 (*e: minor_modes/paren_mode.ml *)

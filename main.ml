@@ -14,12 +14,12 @@
 open Options
 open Efuns
 
-(*s: constant Efuns.init_files *)
+(*s: constant [[Efuns.init_files]] *)
 let initial_files = ref []
-(*e: constant Efuns.init_files *)
-(*s: constant Efuns.init_frames *)
+(*e: constant [[Efuns.init_files]] *)
+(*s: constant [[Efuns.init_frames]] *)
 let init_frames = ref []
-(*e: constant Efuns.init_frames *)
+(*e: constant [[Efuns.init_frames]] *)
 
 (*s: constants Main options *)
 let width = define_option ["width"] "" int_option 80
@@ -27,22 +27,22 @@ let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
 let foreground= define_option ["foreground"] "" string_option "wheat"
 let background= define_option ["background"] "" string_option "DarkSlateGray"
 (*e: constants Main options *)
-(*s: constant Main.highlight_color *)
+(*s: constant [[Main.highlight_color]] *)
 let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
-(*e: constant Main.highlight_color *)
+(*e: constant [[Main.highlight_color]] *)
 
-(*s: function Efuns.init *)
+(*s: function [[Efuns.init]] *)
 let init_efuns location =
   Globals.global_location := Some location;
   let hooks = List.rev !Hook.start_hooks in
   Hook.start_hooks := [];
   hooks |> List.iter (fun f -> f ())
 
-(*e: function Efuns.init *)
+(*e: function [[Efuns.init]] *)
 
-(*s: exception Main.SigInt *)
+(*s: exception [[Main.SigInt]] *)
 exception SigInt
-(*e: exception Main.SigInt *)
+(*e: exception [[Main.SigInt]] *)
 
 (*s: constants Main.xxx_opt *)
 let width_opt = ref None
@@ -52,16 +52,16 @@ let bg_opt = ref None
 let font_opt = ref None
 (*e: constants Main.xxx_opt *)
   
-(*s: constant Efuns.usage_str *)
+(*s: constant [[Efuns.usage_str]] *)
 let usage_str =
  "A small editor entirely written in Objective Caml 
 by Fabrice LE FESSANT, INRIA Rocquencourt, FRANCE
 http://pauillac.inria.fr/efuns
 Options:
 "
-(*e: constant Efuns.usage_str *)
+(*e: constant [[Efuns.usage_str]] *)
   
-(*s: function Main.main *)
+(*s: function [[Main.main]] *)
 let main () =
   (*s: [[main()]] set signal handlers *)
   Utils.register_exn (fun e ->
@@ -189,9 +189,9 @@ let main () =
   Graphics_efuns.init !initial_files;
   (*e: [[main()]] run the UI *)
   ()
-(*e: function Main.main *)
+(*e: function [[Main.main]] *)
 
-(*s: toplevel Main._ *)
+(*s: toplevel [[Main._]] *)
 let _ =
   Common.main_boilerplate (fun () ->
 (*
@@ -201,6 +201,6 @@ let _ =
 *)
     main () 
   )
-(*e: toplevel Main._ *)
+(*e: toplevel [[Main._]] *)
 
 (*e: main.ml *)

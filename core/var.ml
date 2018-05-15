@@ -14,15 +14,15 @@
 open Efuns
 open Globals
 
-(*s: function Efuns.set_global *)
+(*s: function [[Efuns.set_global]] *)
 let set_global var value = 
   Local.set (Globals.location()).loc_vars var value
-(*e: function Efuns.set_global *)
-(*s: function Efuns.set_local *)
+(*e: function [[Efuns.set_global]] *)
+(*s: function [[Efuns.set_local]] *)
 let set_local buf var value = 
   Local.set buf.buf_vars var value
-(*e: function Efuns.set_local *)
-(*s: function Efuns.get_var *)
+(*e: function [[Efuns.set_local]] *)
+(*s: function [[Efuns.get_var]] *)
 let get_var buf var = 
   try 
     Local.get buf.buf_vars var 
@@ -46,25 +46,25 @@ let get_var buf var =
         (*e: [[Efuns.get_var()]] try with minor mode variables *)
       with Not_found ->
         Local.get (location()).loc_vars var
-(*e: function Efuns.get_var *)
+(*e: function [[Efuns.get_var]] *)
           
-(*s: function Efuns.get_global *)
+(*s: function [[Efuns.get_global]] *)
 let get_global var = 
   Local.get (location()).loc_vars var
-(*e: function Efuns.get_global *)
-(*s: function Efuns.get_local *)
+(*e: function [[Efuns.get_global]] *)
+(*s: function [[Efuns.get_local]] *)
 let get_local buf var = 
   Local.get buf.buf_vars var
-(*e: function Efuns.get_local *)
+(*e: function [[Efuns.get_local]] *)
   
-(*s: function Efuns.set_minor_var *)
+(*s: function [[Efuns.set_minor_var]] *)
 let set_minor_var min var value = 
   Local.set min.min_vars var value
-(*e: function Efuns.set_minor_var *)
-(*s: function Efuns.set_major_var *)
+(*e: function [[Efuns.set_minor_var]] *)
+(*s: function [[Efuns.set_major_var]] *)
 let set_major_var maj var value = 
   Local.set maj.maj_vars var value
-(*e: function Efuns.set_major_var *)
+(*e: function [[Efuns.set_major_var]] *)
   
 
 (*e: core/var.ml *)
