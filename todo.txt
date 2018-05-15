@@ -1,7 +1,8 @@
--*- org -*-
+# -*- org -*-
 
-from
-https://github.com/Microsoft/vscode-go
+* Copy VsCode or atom
+
+** from https://github.com/Microsoft/vscode-go
 
 Colorization
 Completion Lists (using gocode)
@@ -17,6 +18,15 @@ Build-on-save (using go build and go test)
 Format (using goreturns or goimports or gofmt)
 Add Imports (using gopkgs)
 [partially implemented] Debugging (using delve)
+
+** f8 nuclide demos
+syntax highlighting (actually buggy on xhp)
+autocomplete (big deal in their demo)
+flycheck (big deal)
+click goto-def
+build integration, colored output
+file explorer
+remote file explorer (fbide remote connect)
 
 * Last Last
 
@@ -72,7 +82,7 @@ an unix
 
 *** small bugs but useful stuff
 
-**** EASY realpath so can edit gtd.org in both editors and safe
+**** EASY realpath/fullpath so can edit gtd.org in both editors and safe
 otherwise when modify gtd.org in emacs then efuns
 does not see it
 
@@ -335,15 +345,6 @@ Some of the stuff are actually available as plugins (e.g. autocomplete),
 **** fix: when searching do not consider the minibuffer as the active frame
 
 **** show searched highlights! on minimap! a la firefox!
-
-*** later: f8 nuclide demos
-syntax highlighting (actually buggy on xhp)
-autocomplete (big deal in their demo)
-flycheck (big deal)
-click goto-def
-build integration, colored output
-file explorer
-remote file explorer (fbide remote connect)
 
 *** later: codemap integration?
 
