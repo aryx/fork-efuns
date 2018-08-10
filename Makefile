@@ -21,9 +21,6 @@ EXTERNALDIRS=external/commons $(EXTERNAL_LIBS:%=external/pfff-%)
 EXTERNALCMAS=external/commons/commons.cma $(EXTERNAL_LIBS:%=external/pfff-%/lib.cma)
 
 
-LIBROOT=$(shell ocamlc -where)/..
-#/Users/pad/.opam/4.01.0/lib/
-
 # pfff
 ifeq ($(USE_PFFF),1)
 PFFF_MODES=\
@@ -45,15 +42,14 @@ PFFF_LIBS=\
  lang_cpp lang_cpp-analyze \
  lang_nw lang_nw-analyze \
 
-PFFFDIRS=$(PFFF_LIBS:%=$(LIBROOT)/pfff-%/)
-PFFFCMAS=$(LIBROOT)/ocamlgraph/ocamlgraph.cma $(PFFFDIRS:%=%/lib.cma) 
+PFFFDIRS=$(PFFF_LIBS:%=external/pfff-%/)
+PFFFCMAS=external/ocamlgraph/ocamlgraph.cma $(PFFFDIRS:%=%/lib.cma) 
 endif
 
 # gtk/cairo is actually the only working backend available right now
 ifeq ($(USE_GTKCAIRO), 1)
 BACKENDDIR=graphics/gtk_cairo
-GRAPHICSDIRS=$(LIBROOT)/lablgtk2 $(LIBROOT)/cairo
-#$(shell ocamlfind query cairo)
+GRAPHICSDIRS=external/lablgtk2 external/cairo
 GRAPHICSLIBS=lablgtk.cma cairo.cma   cairo_lablgtk.cma pango_cairo.cma
 GTKLOOP=gtkThread.cmo
 # because of -linkall and the use of libcairo, but should not be required
