@@ -12,7 +12,7 @@ TARGET=efuns
 PROGS=efuns efuns_client
 
 #------------------------------------------------------------------------------
-#package dependencies
+#Library dependencies
 #------------------------------------------------------------------------------
 
 EXTERNAL_LIBS=h_visualization
@@ -69,8 +69,8 @@ endif
 #------------------------------------------------------------------------------
 
 SRC=\
- \
- commons/utils.ml commons/str2.ml\
+ commons/utils.ml\
+ commons/str2.ml\
  commons/log.ml\
  commons/options.ml\
  commons/local.ml\
@@ -128,7 +128,7 @@ SRC=\
  prog_modes/c_mode.ml\
  prog_modes/lisp_mode.ml\
  \
- $(PFFF_MODES) \
+ $(PFFF_MODES)\
  \
  text_modes/tex_mode.ml\
  text_modes/html_mode.ml\
@@ -147,13 +147,6 @@ SRC=\
 # dynamic/eval.ml
 # misc/efuns_xxx.ml
 
-
-
-# bigarray is used by cairo
-SYSLIBS=unix.cma str.cma threads.cma bigarray.cma
-
-LIBS=$(SYSLIBS) $(EXTERNALCMAS) $(PFFFCMAS) $(GRAPHICSLIBS)
-
 DIRS=\
   commons\
   core features\
@@ -168,6 +161,11 @@ INCLUDEDIRS=\
   $(DIRS)
 
 OCAMLDEPS=$(DIRS:%=-I %)
+
+# bigarray is used by cairo
+SYSLIBS=unix.cma str.cma threads.cma bigarray.cma
+
+LIBS=$(SYSLIBS) $(EXTERNALCMAS) $(PFFFCMAS) $(GRAPHICSLIBS)
 
 ##############################################################################
 # Generic variables
