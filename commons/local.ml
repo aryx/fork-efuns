@@ -1,4 +1,4 @@
-(*s: commons2/local.ml *)
+(*s: commons/local.ml *)
 (*s: copyright header *)
 (***********************************************************************)
 (*                                                                     *)
@@ -118,4 +118,4 @@ let print = get_print
 (*s: constant [[Local.input]] *)
 let input = set_input
 (*e: constant [[Local.input]] *)
-(*e: commons2/local.ml *)
+(*e: commons/local.ml *)

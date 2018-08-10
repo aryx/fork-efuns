@@ -1,4 +1,4 @@
-(*s: core/minibuffer.ml *)
+(*s: features/minibuffer.ml *)
 (*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
@@ -127,4 +127,4 @@ let update_request frame request =
   frame.frm_redraw <- true
 (*e: function [[Minibuffer.update_request]] *)
   
-(*e: core/minibuffer.ml *)
+(*e: features/minibuffer.ml *)

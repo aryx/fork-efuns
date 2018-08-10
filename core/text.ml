@@ -327,9 +327,9 @@ let move_gpoint_to text pos =
   let gline = text.gpoint.line in
   let gap_end = gpos + gsize in
 
-  (*s: [[Text.move_gpoint_to()]] reset text_clean *)
+  (*s: [[Text.move_gpoint_to()]] reset [[text_clean]] *)
   text.text_clean <- false;
-  (*e: [[Text.move_gpoint_to()]] reset text_clean *)
+  (*e: [[Text.move_gpoint_to()]] reset [[text_clean]] *)
   if pos <> gpos then
     if pos < gpos then begin
       (*s: [[Text.move_gpoint_to()]] when pos is before gpos *)
@@ -1196,12 +1196,12 @@ let compute_representation text charreprs n =
       let gsize = text.gsize in
       (*e: [[Text.compute_representation()]] locals *)
       
-      (*s: [[Text.compute_representation()]] adjust text_cursor if in gap *)
+      (*s: [[Text.compute_representation()]] adjust [[text_cursor]] if in gap *)
       if !text_cursor >= gpos && !text_cursor < gpos + gsize 
       then text_cursor := !text_cursor + gsize;
-      (*e: [[Text.compute_representation()]] adjust text_cursor if in gap *)
+      (*e: [[Text.compute_representation()]] adjust [[text_cursor]] if in gap *)
       while !text_cursor < end_pos do
-        (*s: [[Text.compute_representation()]] loop text_cursor to end_pos *)
+        (*s: [[Text.compute_representation()]] loop [[text_cursor]] to [[end_pos]] *)
         let charcode = Char.code text.text_string.[!text_cursor] in
         let charattr = text.text_attrs.(!text_cursor) in
         let charrepr =
@@ -1220,17 +1220,17 @@ let compute_representation text charreprs n =
             let char_code = Char.code text.text_string.[!text_cursor] in
             let char_attr = text.text_attrs.(!text_cursor) in
             char_repr := 
-               (*s: [[Text.compute_representation()]] compute char_repr, special char *)
+               (*s: [[Text.compute_representation()]] compute [[char_repr]], special char *)
                if char_code = 9 
                then tabreprs.(!repr_cursor mod 9)
-               (*e: [[Text.compute_representation()]] compute char_repr, special char *)
+               (*e: [[Text.compute_representation()]] compute [[char_repr]], special char *)
                else charreprs.(char_code);
             char_size := String.length !char_repr;
 
             !char_size = charsize && char_attr = charattr
           end
         do
-          (*s: [[Text.compute_representation()]] grow repr_string if needed *)
+          (*s: [[Text.compute_representation()]] grow [[repr_string]] if needed *)
           if !repr_cursor + charsize >= !repr_len then begin
               (* find a better heuristic to realloc the line string *)
               let new_len = !repr_len + 
@@ -1241,15 +1241,15 @@ let compute_representation text charreprs n =
               repr_string := new_repr;
               repr_len := new_len;
           end;
-          (*e: [[Text.compute_representation()]] grow repr_string if needed *)
+          (*e: [[Text.compute_representation()]] grow [[repr_string]] if needed *)
           String.blit !char_repr 0 !repr_string !repr_cursor charsize;
           repr_cursor := !repr_cursor + charsize;
           text_cursor := !text_cursor + 1;
           box_len := !box_len +1;
-          (*s: [[Text.compute_representation()]] adjust text_cursor if reach gap *)
+          (*s: [[Text.compute_representation()]] adjust [[text_cursor]] if reach gap *)
           if !text_cursor = gpos 
           then text_cursor := gpos + gsize;
-          (*e: [[Text.compute_representation()]] adjust text_cursor if reach gap *)
+          (*e: [[Text.compute_representation()]] adjust [[text_cursor]] if reach gap *)
         done;
 
         let box = {
@@ -1264,7 +1264,7 @@ let compute_representation text charreprs n =
         repr_start := !repr_cursor;
         box_col_start := !box_col_start + !box_len;
         boxes := box :: !boxes;
-        (*e: [[Text.compute_representation()]] loop text_cursor to end_pos *)
+        (*e: [[Text.compute_representation()]] loop [[text_cursor]] to [[end_pos]] *)
       done;
       (*s: [[Text.compute_representation()]] adjust line fields after loop *)
       line.boxes <- !boxes;

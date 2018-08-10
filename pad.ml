@@ -1,7 +1,7 @@
 open Efuns
 
 (* 
- * For really pad specific stuff.
+ * For really pad-specific stuff.
  * Hopefully it will be shorter than my .emacs ...
  *)
 
@@ -24,5 +24,4 @@ let _ =
 
     (* projects *)
 
-    
   )

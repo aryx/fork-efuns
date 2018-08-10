@@ -106,9 +106,9 @@ let status_name frame name =
 let kill frame = 
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
-  (*s: [[Frame.kill()]] setting frm_killed field *)
+  (*s: [[Frame.kill()]] setting [[frm_killed]] field *)
   frame.frm_killed <- true;
-  (*e: [[Frame.kill()]] setting frm_killed field *)
+  (*e: [[Frame.kill()]] setting [[frm_killed]] field *)
   buf.buf_shared <- buf.buf_shared - 1;
   Text.remove_point text buf.buf_point;
   Text.remove_point text buf.buf_start;
@@ -146,11 +146,11 @@ let install window frame =
   frame.frm_height <- window.win_height;
   frame.frm_window <- window;
 
-  (*s: [[Frame.install()]] adjust frm_cutline *)
+  (*s: [[Frame.install()]] adjust [[frm_cutline]] *)
   if frame.frm_cutline < max_int 
   then frame.frm_cutline <- window.win_width - 1;
-  (*e: [[Frame.install()]] adjust frm_cutline *)
-  (*s: [[Frame.install()]] set frm_table *)
+  (*e: [[Frame.install()]] adjust [[frm_cutline]] *)
+  (*s: [[Frame.install()]] set [[frm_table]] *)
   frame.frm_table <- (Array.init window.win_height (fun i -> 
      {
        frm_text_line = Text.dummy_line;
@@ -163,7 +163,7 @@ let install window frame =
        prev_frmline_boxes = [];
      } 
   ));
-  (*e: [[Frame.install()]] set frm_table *)
+  (*e: [[Frame.install()]] set [[frm_table]] *)
   frame.frm_redraw <- true
 (*e: function [[Frame.install]] *)
 
@@ -346,11 +346,11 @@ let display_line graphic frame repr_string y =
             box.box_attr;
           iter (x+len) 0 tail
     else
-      (*s: [[Frame.display_line()]] in iter, line overflow frm_width *)
+      (*s: [[Frame.display_line()]] in iter, line overflow [[frm_width]] *)
       graphic.Xdraw.draw_string 
          (frame.frm_width+frame.frm_xpos-1) (y+frame.frm_ypos)
          "/" 0 1 Text.direct_attr
-      (*e: [[Frame.display_line()]] in iter, line overflow frm_width *)
+      (*e: [[Frame.display_line()]] in iter, line overflow [[frm_width]] *)
   in
   iter 0 (frm_line.first_box_extra_offset + frame.frm_x_offset) frm_line.frmline_boxes
 (*e: function [[Frame.display_line]] *)
@@ -435,7 +435,7 @@ let update_table frame =
   let current_n = ref (Text.point_line text start) in
   let current_line = ref (Ebuffer.compute_representation buf !current_n) in
 
-  (*s: [[Frame.update_table()]] adjust current line when frm_y_offset negative *)
+  (*s: [[Frame.update_table()]] adjust current line when [[frm_y_offset]] negative *)
   (* assert frame.frm_y_offset >= 0 *)
 
   while frame.frm_y_offset < 0 && !current_n > 0 do
@@ -446,8 +446,8 @@ let update_table frame =
   done;
   if !current_n = 0 && frame.frm_y_offset <0 
   then frame.frm_y_offset <- 0;
-  (*e: [[Frame.update_table()]] adjust current line when frm_y_offset negative *)
-  (*s: [[Frame.update_table()]] adjust current line when frm_y_offset positive *)
+  (*e: [[Frame.update_table()]] adjust current line when [[frm_y_offset]] negative *)
+  (*s: [[Frame.update_table()]] adjust current line when [[frm_y_offset]] positive *)
   (* assert current_line is the first line *)
 
   while frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
@@ -462,7 +462,7 @@ let update_table frame =
   if !current_n = nbre_lines text && 
      frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
   then frame.frm_y_offset <- !current_line.repr_len / frame.frm_cutline;
-  (*e: [[Frame.update_table()]] adjust current line when frm_y_offset positive *)
+  (*e: [[Frame.update_table()]] adjust current line when [[frm_y_offset]] positive *)
 
   (* update frame.frm_start *)
   Text.goto_line text start !current_n; 
@@ -554,15 +554,15 @@ let display top_window frame =
     (*s: [[Frame.display()]] redraw *)
     if !Globals.debug_display
     then pr2 "redraw";
-    (*s: [[Frame.display()]] redraw, possibly update frm_y_offset *)
+    (*s: [[Frame.display()]] redraw, possibly update [[frm_y_offset]] *)
     let start = frame.frm_start in
     let start_c = point_to_x_when_no_cutline buf start in
     if start_c > 0 then begin
       frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
       Text.bmove text start start_c
     end;
-    (*e: [[Frame.display()]] redraw, possibly update frm_y_offset *)
-    (*s: [[Frame.display()]] redraw, possibly update frm_x_offset *)
+    (*e: [[Frame.display()]] redraw, possibly update [[frm_y_offset]] *)
+    (*s: [[Frame.display()]] redraw, possibly update [[frm_x_offset]] *)
     let point_c = point_to_x_when_no_cutline buf point in
     if point_c < frame.frm_x_offset then begin
         frame.frm_x_offset <- max (point_c - width / 2) 0;
@@ -573,30 +573,30 @@ let display top_window frame =
         frame.frm_x_offset <- point_c - (width / 2);
         frame.frm_redraw <- true;
     end;
-    (*e: [[Frame.display()]] redraw, possibly update frm_x_offset *)
+    (*e: [[Frame.display()]] redraw, possibly update [[frm_x_offset]] *)
     (* invariant: now frm_start is at a bol *)
     update_table frame;
     (* invariant: now frm_end has been correctly set *)
 
     if (point > frame.frm_end) || (point < start) then begin
-        (*s: [[Frame.display()]] redraw, if frm_force_start *)
+        (*s: [[Frame.display()]] redraw, if [[frm_force_start]] *)
         if frame.frm_force_start then begin
           let coord = cursor_to_coord frame frame.frm_cursor_x frame.frm_cursor_y in
           Text.goto_line text frame.frm_point coord.Text.c_line;
           Text.fmove text frame.frm_point coord.Text.c_col
         end 
-        (*e: [[Frame.display()]] redraw, if frm_force_start *)
+        (*e: [[Frame.display()]] redraw, if [[frm_force_start]] *)
         else begin
           (* center around point *)
           Text.goto_point text start point;
-          (*s: [[Frame.display()]] redraw, update frm_y_offset again *)
+          (*s: [[Frame.display()]] redraw, update [[frm_y_offset]] again *)
           frame.frm_y_offset <- - height / 2;
           let start_c = point_to_x_when_no_cutline buf start in
           if start_c > 0 then begin
             frame.frm_y_offset <- frame.frm_y_offset - start_c / frame.frm_cutline;
             Text.bmove text start start_c
           end;
-          (*e: [[Frame.display()]] redraw, update frm_y_offset again *)
+          (*e: [[Frame.display()]] redraw, update [[frm_y_offset]] again *)
           (* invariant: now frm_start is at a bol again *)
           update_table frame;
        end

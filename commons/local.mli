@@ -1,4 +1,4 @@
-(*s: commons2/local.mli *)
+(*s: commons/local.mli *)
 
 (*s: signature type Local.vars *)
 type vars
@@ -11,13 +11,13 @@ val vars : unit -> vars
 (*s: signature type Local.var *)
 type 'a var
 (*e: signature type Local.var *)
-(*s: signature functions Local.create_xxx *)
+(*s: signature functions [[Local.create_xxx]] *)
 val create_int : string -> int var
 val create_string : string -> string var
 val create_float : string -> float var
-(*x: signature functions Local.create_xxx *)
+(*x: signature functions [[Local.create_xxx]] *)
 val create_abstr : string -> 'a var
-(*e: signature functions Local.create_xxx *)
+(*e: signature functions [[Local.create_xxx]] *)
 (* internal *)
 (*s: signature function Local.create *)
 val create : string -> ('a -> string) -> (string -> 'a) -> 'a var
@@ -41,4 +41,4 @@ val list : vars -> string list
 val print : vars -> string -> string
 val input : vars -> string -> string -> unit
 (*e: signature functions Local *)
-(*e: commons2/local.mli *)
+(*e: commons/local.mli *)

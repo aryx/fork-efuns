@@ -539,7 +539,7 @@ let _ =
         (*e: [[global_map]] initial entries *)
       ]
     end;
-  (*s: [[Std_efunsrc.toplevel]] set interactives_map *)
+  (*s: [[Std_efunsrc.toplevel]] set [[interactives_map]] *)
   if !!interactives_map = [] then begin
       interactives_map =:= List.map (fun x -> x, x ) [
         (*s: [[interactives_map]] initial entries *)
@@ -585,7 +585,7 @@ let _ =
         (*e: [[interactives_map]] initial entries *)
       ]
     end    
-  (*e: [[Std_efunsrc.toplevel]] set interactives_map *)
+  (*e: [[Std_efunsrc.toplevel]] set [[interactives_map]] *)
 (*e: toplevel [[Std_efunsrc._2]] *)
     
 (*s: function [[Std_efunsrc.init_global_map]] *)
@@ -598,7 +598,7 @@ let init_global_map () =
         Log.exn "%s\n" e;
   );
 
-  (*s: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
+  (*s: [[Std_efunsrc.init_global_map()]] add interactives from [[interactives_map]] *)
   !!interactives_map |> List.iter (fun (name, action) ->
     try
       Keymap.add_interactive (Globals.location()).loc_map name 
@@ -607,7 +607,7 @@ let init_global_map () =
       Log.printf "Error for action %s" action;
       Log.exn "%s\n" e;
   );
-  (*e: [[Std_efunsrc.init_global_map()]] add interactives from interactives_map *)
+  (*e: [[Std_efunsrc.init_global_map()]] add interactives from [[interactives_map]] *)
     
   (* standard keys *)
 

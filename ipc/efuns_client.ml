@@ -30,12 +30,12 @@ let filename = match !filename with
 let string = !string
 (*e: constant [[Efuns_client.string]]([[(client/efuns_client.ml)]]) *)
     
-(*s: constant Efuns_client.filename (client/efuns_client.ml)2 *)
+(*s: constant [[Efuns_client.filename]] ([[client/efuns_client.ml]])2 *)
 let filename = 
   if Filename.is_relative filename 
   then Filename.concat (Sys.getcwd ()) filename 
   else filename
-(*e: constant Efuns_client.filename (client/efuns_client.ml)2 *)
+(*e: constant [[Efuns_client.filename]] ([[client/efuns_client.ml]])2 *)
     
 (*s: constant [[Efuns_client.efuns_property]] *)
 let efuns_property = "_EFUNS_SERVER"  

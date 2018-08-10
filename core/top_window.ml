@@ -1,4 +1,4 @@
-(*s: graphics/top_window.ml *)
+(*s: core/top_window.ml *)
 (*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
@@ -285,7 +285,7 @@ let handle_key top_window modifiers keysym =
       (* should lead to an action being triggered and modifying things! *)
       try_map frame key
     with
-    (*s: [[Top_window.handle_key()]] handle exception of try_map *)
+    (*s: [[Top_window.handle_key()]] handle exception of [[try_map]] *)
     | UnboundKey -> 
         message top_window
           (Printf.sprintf "Unbound key %s"
@@ -293,7 +293,7 @@ let handle_key top_window modifiers keysym =
         frame.frm_prefix <- [];
     | Failure str -> message top_window str
     | (Common.UnixExit _) as x -> raise x
-    (*x: [[Top_window.handle_key()]] handle exception of try_map *)
+    (*x: [[Top_window.handle_key()]] handle exception of [[try_map]] *)
     | e -> 
         let str = spf "Uncaught exception %s" (Utils.printexn e) in
         let bt = Printexc.get_backtrace () in
@@ -306,7 +306,7 @@ let handle_key top_window modifiers keysym =
         Text.insert_at_end text "\n";
         Text.insert_at_end text bt;
         Text.insert_at_end text "\n"
-    (*e: [[Top_window.handle_key()]] handle exception of try_map *)
+    (*e: [[Top_window.handle_key()]] handle exception of [[try_map]] *)
   end;
 
   Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();
@@ -501,4 +501,4 @@ let check_abort frame =
 *)
 (*e: function [[Top_window.check_abort]] *)
 
-(*e: graphics/top_window.ml *)
+(*e: core/top_window.ml *)

@@ -44,13 +44,13 @@ let init_efuns location =
 exception SigInt
 (*e: exception [[Main.SigInt]] *)
 
-(*s: constants Main.xxx_opt *)
+(*s: constants [[Main.xxx_opt]] *)
 let width_opt = ref None
 let height_opt  = ref None
 let fg_opt = ref None
 let bg_opt = ref None
 let font_opt = ref None
-(*e: constants Main.xxx_opt *)
+(*e: constants [[Main.xxx_opt]] *)
   
 (*s: constant [[Efuns.usage_str]] *)
 let usage_str =

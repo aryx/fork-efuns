@@ -50,12 +50,12 @@ open Options
 let check = ref false
 (*e: constant [[Efuns.check]] *)
 
-(*s: constants Efuns.debug_xxx *)
+(*s: constants [[Efuns.debug_xxx]] *)
 let debug = ref false
 let debug_graphics = ref false
 let debug_display = ref false
 let debug_init = ref false
-(*e: constants Efuns.debug_xxx *)
+(*e: constants [[Efuns.debug_xxx]] *)
 
 (*s: constant [[Efuns.load_path]] *)
 let load_path = define_option ["efuns_path"] 
