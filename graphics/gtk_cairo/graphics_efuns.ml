@@ -165,7 +165,7 @@ let compute_metrics loc desc =
     main_width = float_of_int loc.loc_width * width;
     main_height = float_of_int loc.loc_height * height;
 
-    (* derived from above below *)
+    (* set later; derived from above (see the code below) *)
     linemax = 0;
     mini_width = 0.;
     full_width = 0;
@@ -279,7 +279,7 @@ let draw_minimap w =
 
 (*
   this generate some out_of_memory error when run directly efuns
-  on lexer_nw.mll. weird, but cairo text api is known to be buggy.
+  on lexer_nw.mll. weird, but Cairo text api is known to be buggy.
 *)
 (*
       Cairo.select_font_face cr "serif"
@@ -818,9 +818,9 @@ let init2 init_files =
 let width = 500
 let height = 500
 
-let test_draw cr =
+let test_draw_cairo cr =
   (* [0,0][1,1] world scaled to a width x height screen *)
-(*  Cairo.scale cr (float_of_int width) (float_of_int height); *)
+  Cairo.scale cr (float_of_int width) (float_of_int height);
 
   Cairo.set_source_rgba cr ~red:0.5 ~green:0.5 ~blue:0.5 ~alpha:0.5;
   Cairo.set_line_width cr 0.001;
@@ -865,19 +865,23 @@ let test_draw cr =
     Cairo.stroke cr;
     start := end_;
   done;
+  ()
+
+let test_draw_pango cr =
 
   let layout = Pango_cairo.create_layout cr in
   let ctx = Pango_cairo.FontMap.create_context 
     (Pango_cairo.FontMap.get_default ()) in
 
 
-  Pango.Layout.set_text layout "let x = 1 in main () for x = 1 to 3!";
+  Pango.Layout.set_text layout "WWWWW let x = 1 in main () for x = 1 to 3!";
   let desc = Pango.Font.from_string 
 (*
-    "Sans Bold 25" 
     "Fixed Bold 32"
-*)
     "b&h-Luxi Bold 23"
+    "Arial Bold 30" 
+*)
+    "Fixed 20"
   in
   Pango.Context.set_font_description ctx desc;
   Pango.Layout.set_font_description layout desc;
@@ -901,6 +905,7 @@ let test_draw cr =
   pr2_gen (w, h, ascent, descent);
 
   Cairo.move_to cr 0. h;
+  Pango.Layout.set_text layout "iiiii let x = 1 in main () for x = 1 to 3!";
   Pango_cairo.show_layout cr layout;
 
   ()
@@ -915,7 +920,7 @@ let test_cairo () =
   px#set_foreground `WHITE;
   px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
   let cr = Cairo_lablgtk.create px#pixmap in
-  test_draw cr;
+  test_draw_pango cr;
   (GMisc.pixmap px ~packing:w#add ()) |> ignore;
   w#show ();
   GMain.main()
