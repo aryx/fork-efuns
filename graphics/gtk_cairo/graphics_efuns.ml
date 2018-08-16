@@ -731,6 +731,8 @@ let init2 init_files =
     let code_opt =
       match GdkEvent.Key.keyval key with
 
+      (* special keys *)
+
       | 65289 -> Some XK.xk_Tab
       | 65288 -> Some XK.xk_BackSpace
 
@@ -742,12 +744,20 @@ let init2 init_files =
       | 65364 -> Some XK.xk_Down
       | 65365 -> Some XK.xk_Prior
       | 65366 -> Some XK.xk_Next
+        
+      (* modifiers
+       * coupling: modify also the release event
+      *)
 
       | 65507 -> modifiers := !modifiers lor Xtypes.controlMask; None
-
+      (* on macOS? *)
       | 65511 -> modifiers := !modifiers lor Xtypes.mod1Mask; None
+      (* on Linux: Alt *)
+      | 65513 -> modifiers := !modifiers lor Xtypes.mod1Mask; None
 
       | x when x > 65000 -> None
+
+      (* default *)
 
       | x -> Some x
     in
@@ -763,6 +773,7 @@ let init2 init_files =
     (match GdkEvent.Key.keyval key with
     | 65507 -> modifiers := !modifiers land (lnot Xtypes.controlMask)
     | 65511 -> modifiers := !modifiers land (lnot Xtypes.mod1Mask)
+    | 65513 -> modifiers := !modifiers land (lnot Xtypes.mod1Mask)
     | _ -> ()
     );
     true

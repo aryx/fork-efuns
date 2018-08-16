@@ -11,7 +11,7 @@ let _ =
     (* special functions *)
 
     Keymap.define_interactive_action "gtd" (fun frame ->
-      Frame.load_file frame.frm_window "/home/pad/mobile/GTD/gtd.org" |> ignore
+      Frame.load_file frame.frm_window "/home/pad/GTD/GTD.org" |> ignore
     );
 
     (* ~/.login like *)
