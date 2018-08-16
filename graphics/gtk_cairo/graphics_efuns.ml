@@ -599,16 +599,20 @@ let init2 init_files =
   let loc = Globals.location () in
 
   let desc = Pango.Font.from_string loc.loc_font
+  (* see https://github.com/hbin/top-programming-fonts to install
+   * some nice programming fonts (e.g., Menlo)
+   *)
 (*
+    "Monospace 19"
+    "Monaco 16"
     "Sans Bold 25" 
     "Fixed Bold 32"
-    "Monaco 16"
-    "Menlo 19"
     "Courier 19"
     "Menlo 18" <- current
 *)
   in
-  (*Pango.Font.set_weight desc `ULTRABOLD;XXX *)
+  (* Pango.Font.set_weight desc `ULTRABOLD; *)
+  pr2 (Pango.Font.to_string desc);
 
   let metrics = compute_metrics loc desc in
 
@@ -877,11 +881,14 @@ let test_draw_pango cr =
   Pango.Layout.set_text layout "WWWWW let x = 1 in main () for x = 1 to 3!";
   let desc = Pango.Font.from_string 
 (*
+    "Monospace 18"
     "Fixed Bold 32"
     "b&h-Luxi Bold 23"
     "Arial Bold 30" 
+    "Menlo 18"
 *)
-    "Fixed 20"
+    "Monospace 18"
+
   in
   Pango.Context.set_font_description ctx desc;
   Pango.Layout.set_font_description layout desc;
@@ -905,6 +912,7 @@ let test_draw_pango cr =
   pr2_gen (w, h, ascent, descent);
 
   Cairo.move_to cr 0. h;
+  (* The 'i' should align with the 'W' above if the font is monospace *)
   Pango.Layout.set_text layout "iiiii let x = 1 in main () for x = 1 to 3!";
   Pango_cairo.show_layout cr layout;
 

@@ -86,7 +86,7 @@ let _ =
 
 (* used in some major mode *)
 (*s: constant [[Efuns.font]] *)
-let font = define_option ["font"] "" string_option "Menlo 18"
+let font = define_option ["font"] "" string_option "Monospace 20"
 (*e: constant [[Efuns.font]] *)
   
 (*--------------------    Ressources *)
