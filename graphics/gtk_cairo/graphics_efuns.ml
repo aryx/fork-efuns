@@ -57,7 +57,10 @@ and layout = {
   mutable mini_width: float;
   mutable linemax: int; (* number of lines the minimap can display in a "page"*)
 
-  (* main + mini *)
+  margin_factor: float;
+  mutable margin_width: float;
+
+  (* main + mini _ margin *)
   mutable full_width: int;
   mutable full_height: int;
 }
@@ -154,20 +157,22 @@ let compute_metrics loc desc =
     float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
   let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
   let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
-  let height = (ascent + descent) * 1.1 in
+  let height = (ascent + descent) * 1.05 in
 
   let metrics = { 
     font_width = width; 
     font_height = height;
 
-    mini_factor = 10.;
-
     main_width = float_of_int loc.loc_width * width;
     main_height = float_of_int loc.loc_height * height;
+
+    mini_factor = 10.;
+    margin_factor = 150.;
 
     (* set later; derived from above (see the code below) *)
     linemax = 0;
     mini_width = 0.;
+    margin_width = 0.;
     full_width = 0;
     full_height = 0;
   }
@@ -176,9 +181,12 @@ let compute_metrics loc desc =
    metrics.main_height * metrics.mini_factor / metrics.font_height 
        |> ceil |> int_of_float;
   metrics.mini_width <- metrics.main_width / metrics.mini_factor;
+  metrics.margin_width <- metrics.main_width / metrics.margin_factor;
+
   (* those are the dimensions for the main view, the drawing area *)
   metrics.full_width <- 
-    metrics.main_width + metrics.mini_width |> ceil |>int_of_float;
+    metrics.main_width + metrics.mini_width + metrics.margin_width * 2.
+       |> ceil |>int_of_float;
     (* 1320 *)
   metrics.full_height <- metrics.main_height |> ceil |> int_of_float;
     (* 1400 *)
@@ -213,7 +221,7 @@ let pango_show_text a b c =
 let draw_minimap w =
 
   let cr = Cairo.create w.base in
-  Cairo.translate cr w.metrics.main_width 0.0;
+  Cairo.translate cr (w.metrics.main_width + w.metrics.margin_width *. 2.) 0.0;
 
   fill_rectangle_xywh ~cr ~x:0. ~y:0. 
     ~w:w.metrics.mini_width ~h:w.metrics.main_height
@@ -300,7 +308,7 @@ let draw_minimap_overlay w =
   let cr = Cairo.create w.overlay in
   clear cr;
 
-  Cairo.translate cr w.metrics.main_width 0.0;
+  Cairo.translate cr (w.metrics.main_width + w.metrics.margin_width * 2.) 0.0;
   Cairo.scale cr (1. / w.metrics.mini_factor) (1. / w.metrics.mini_factor);
 
   let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
@@ -450,6 +458,7 @@ let backend w da top_gtk_win =
   let conv x = float_of_int x in
 
   let cr = Cairo.create w.base in
+  Cairo.translate cr (w.metrics.margin_width) 0.0;
   let pg = (w.ly, w.metrics) in
 
   let loc = w.loc in
@@ -518,9 +527,22 @@ let configure loc top_window desc metrics da top_gtk_win =
   get_w := (fun () -> w);
 
   let cr = Cairo.create w.base in
+
+  fill_rectangle_xywh ~cr ~x:0. ~y:0. 
+    ~w:(w.metrics.margin_width) 
+    ~h:(float_of_int height)
+    ~color:"Black" ();
+  Cairo.translate cr (w.metrics.margin_width) 0.0;
   fill_rectangle_xywh ~cr ~x:0. ~y:0. 
     ~w:(float_of_int width) ~h:(float_of_int height)
     ~color:"DarkSlateGray" ();
+  Cairo.translate cr (w.metrics.main_width) 0.0;
+  fill_rectangle_xywh ~cr ~x:0. ~y:0. 
+    ~w:(w.metrics.margin_width) 
+    ~h:(float_of_int height)
+    ~color:"Black" ();
+
+
   (* force a redraw for all the frame after a resize. w.base has changed! *)
   (Globals.location()).top_windows |> List.iter (fun top_window ->
      top_window.window |> Window.iter(fun frm -> frm.frm_redraw <- true;);
