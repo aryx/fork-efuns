@@ -218,7 +218,7 @@ efuns_client.opt: ipc/efuns_client.cmx
 
 
 depend::
-	$(OCAMLDEP) $(OCAMLDEPS) */*.ml*  $(BACKENDDIR)/*.ml* >> .depend
+	$(OCAMLDEP) $(OCAMLDEPS) *.ml* */*.ml*  $(BACKENDDIR)/*.ml* > .depend
 
 MODES= \
  prog_modes/ocaml_mode.ml prog_modes/c_mode.ml prog_modes/lisp_mode.ml \
