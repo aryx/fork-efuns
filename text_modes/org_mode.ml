@@ -18,11 +18,11 @@ open Efuns
 (* Prelude *)
 (*****************************************************************************)
 (*
- * Poor's man port of emacs org mode to efuns.
+ * Poor's man port of Emacs Org mode to Efuns.
  * 
  * alt: could use the highlighter from pfff in lang_text/org_mode.ml there
  * but it adds a dependency to pfff and this file anyway is not that big.
- * We can reproduce its functionality here and tailor it more for efuns.
+ * We can reproduce its functionality here and tailor it more for Efuns.
  *
  * todo:
  *  - C-M-up and down, to move around sections
@@ -70,7 +70,7 @@ let color_buffer_and_set_outlines buf =
         let lvl = len_stars in
         Common.push (lvl, Text.dup_point text point) outline_points;
 
-        (* just highlight the last star, like in org mode *)
+        (* just highlight the last star, like in Org mode *)
         for _i = 0 to len_stars - 2 do
           let attr = Text.make_attr (Attr.get_color "black") 1 0 false in
           Text.set_attr text point attr;

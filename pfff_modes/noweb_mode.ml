@@ -33,10 +33,10 @@ module PI = Parse_info
 let funcs = { Pfff_modes.
   parse = (fun file ->
     let (ast2, _stat) = Parse_nw.parse file in
-    ast2
+    [ast2]
   );
   highlight = (fun ~tag_hook prefs (ast, toks) -> 
-    Highlight_nw.visit_toplevel ~tag_hook prefs (ast, toks)
+    Highlight_nw.visit_program ~tag_hook prefs (ast, toks)
   );
   }
 

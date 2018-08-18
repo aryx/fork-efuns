@@ -15,10 +15,9 @@ PROGS=efuns efuns_client
 #Library dependencies
 #------------------------------------------------------------------------------
 
-EXTERNAL_LIBS=h_visualization
-
-EXTERNALDIRS=external/commons $(EXTERNAL_LIBS:%=external/pfff-%)
-EXTERNALCMAS=external/commons/commons.cma $(EXTERNAL_LIBS:%=external/pfff-%/lib.cma)
+# mandatory dependencies
+EXTERNALDIRS=external/commons external/h_visualization
+EXTERNALCMAS=external/commons/commons.cma external/h_visualization/lib.cma
 
 
 # pfff
@@ -29,21 +28,39 @@ PFFF_MODES=\
  pfff_modes/cpp_mode.ml\
  pfff_modes/noweb_mode.ml\
 
-# many dirs are here just because of -linkall
-PFFF_LIBS=\
- config\
- external-jsonwheel\
- h_files-format\
+# for compilation (for -I)
+PFFF_LIBS1=\
  h_program-lang \
- commons-graph \
  graph_code \
- matcher\
- lang_ml lang_ml-visual \
+ lang_ml  lang_ml-visual \
  lang_cpp lang_cpp-analyze \
- lang_nw lang_nw-analyze \
+ lang_nw  lang_nw-analyze \
 
-PFFFDIRS=$(PFFF_LIBS:%=external/pfff-%/)
-PFFFCMAS=external/ocamlgraph/ocamlgraph.cma $(PFFFDIRS:%=%/lib.cma) 
+# some of those dirs are here just because of -linkall
+PFFF_LIBS0=\
+ config\
+ commons-graph \
+ h_files-format \
+ h_program-lang \
+ matcher \
+
+# for linking
+PFFF_LIBS2=\
+ external/pfff-deps-netsys/netsys_oothr.cma \
+ external/pfff-deps-netsys/netsys.cma \
+ external/pfff-deps-netstring/netstring.cma \
+ external/pfff-deps-json-wheel/jsonwheel.cma \
+ external/pfff-deps-ocamlgraph/graph.cma \
+ external/pfff-deps-commons_core/commons_core.cma \
+
+# for the linker to find the dlls
+PFFF_LIBS3=\
+ external/pfff-deps-netsys
+
+PFFFDIRS=$(PFFF_LIBS1:%=external/pfff-%/) $(PFFF_LIBS3)
+PFFFCMAS=$(PFFF_LIBS2) \
+ $(PFFF_LIBS0:%=external/pfff-%/lib.cma) \
+ $(PFFF_LIBS1:%=external/pfff-%/lib.cma)
 endif
 
 # gtk/cairo is actually the only working backend available right now
