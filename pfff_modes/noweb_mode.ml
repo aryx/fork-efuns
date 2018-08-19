@@ -13,6 +13,7 @@
  * license.txt for more details.
  *)
 open Efuns
+open Options
 
 module PI = Parse_info
 
@@ -48,7 +49,13 @@ let color_buffer buf =
   let s = Text.to_string buf.buf_text in
   Common2.with_tmp_file ~str:s ~ext:"c" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
-  )
+  );
+  Simple.color buf (Str.regexp "^%.*$") false
+    (Text.make_attr (Attr.get_color !!Pl_colors.syncweb_comment_color) 1 0 false);
+  Simple.color buf (Str.regexp "^%[a-zA-Z]+:") false
+    (Text.make_attr (Attr.get_color !!Pl_colors.section_comment_color) 1 0 false);
+  ()
+
 
 (*****************************************************************************)
 (* Installation *)
