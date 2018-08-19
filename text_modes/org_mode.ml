@@ -13,6 +13,7 @@
  * license.txt for more details.
  *)
 open Efuns
+open Options
 
 (*****************************************************************************)
 (* Prelude *)
@@ -92,6 +93,12 @@ let color_buffer_and_set_outlines buf =
     | xs -> xs
   in
   Var.set_local buf Outline_mode.outline_var outline_points;
+
+  (* for other non-outline elements *)
+  Simple.color buf (Str.regexp "^#.*$") false
+    (Text.make_attr (Attr.get_color !!Pl_colors.syncweb_comment_color) 1 0 false);
+  Simple.color buf (Str.regexp "^#[a-zA-Z]+:") false
+    (Text.make_attr (Attr.get_color !!Pl_colors.section_comment_color) 1 0 false);
   ()
 
 

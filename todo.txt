@@ -1,6 +1,7 @@
 # -*- org -*-
+#rule: this is cool
 
-* Copy VsCode or atom
+* Copy VsCode or Atom
 
 ** from https://github.com/Microsoft/vscode-go
 

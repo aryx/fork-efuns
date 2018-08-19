@@ -2,8 +2,8 @@ open Options
 
 (* font-lock-mode like faces for efuns *)
 
-(* pad: pixel choice originally, a long time ago, see my .emacs 
- * see also pfff/highlight_code.ml too
+(* pad: pixel's choice originally, a long time ago (see my .emacs)
+ * related: pfff/highlight_code.ml
  *)
 
 let keyword_color = define_option ["keyword_color"] ""
@@ -36,6 +36,8 @@ let common_functions_color = define_option ["common_functions_color"] ""
     string_option "Violet"
 let syncweb_comment_color = define_option ["syncweb_comment_color"] ""
     string_option "DimGray"
+let section_comment_color = define_option ["section_comment_color"] ""
+    string_option "MistyRose4"
 
 let error_color = define_option ["error_color"] ""
     string_option "red"
@@ -75,9 +77,7 @@ let comment_font = define_option ["comment_font"] ""
     string_option !!font
 let module_font = define_option ["module_font"] ""
     string_option !!font
-*)
 
-(*
     add_option_parameter keyword_font;
     add_option_parameter string_font;
     add_option_parameter comment_font;
