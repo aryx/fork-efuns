@@ -157,7 +157,8 @@ let compute_metrics loc desc =
     float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
   let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
   let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
-  let height = (ascent + descent) * 1.05 in
+  (* CONFIG? *)
+  let height = (ascent + descent) * 1.1 in
 
   let metrics = { 
     font_width = width; 
@@ -393,6 +394,9 @@ let move_to cr pg col line =
 
 (* ugly hacks below but had many graphic glitches; cairo 
  * floats are imprecise?
+ * CONFIG need to position to ascent point! otherwise some of the
+ *  descent part can get erased (look at the 'y','g' chars, often the very
+ *  top is erased)
  *)
 
 let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
