@@ -269,7 +269,7 @@ let store_string_char c =
   
 let char_for_backslash =
   match Sys.os_type with
-  | "Unix" ->
+  | "Unix" | "Cygwin" ->
       begin function
         | 'n' -> '\010'
         | 'r' -> '\013'
@@ -277,7 +277,7 @@ let char_for_backslash =
         | 't' -> '\009'
         | c   -> c
       end
-  | x -> failwith "Lexer: unknown system type"
+  | x -> failwith ("Lexer: unknown system type:" ^ x)
 
 let char_for_decimal_code lexbuf i =
   let c = 

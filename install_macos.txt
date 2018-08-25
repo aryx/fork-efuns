@@ -15,4 +15,3 @@ you may need to first do
 
 => you can now link with lablgtk and ocamlcairo libraries.
 
- 
