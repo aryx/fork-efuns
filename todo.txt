@@ -1,35 +1,102 @@
 # -*- org -*-
-#rule: this is cool
 
-* Copy VsCode or Atom
+* Features
 
-** from https://github.com/Microsoft/vscode-go
+** important (and not too long to implement)
 
-Colorization
-Completion Lists (using gocode)
-Signature Help (using godoc)
-Snippets
-Quick Info (using godef)
-Goto Definition (using godef)
-Find References (using go-find-references)
-File outline (using go-outline)
-Workspace symbol search (using go-symbols)
-Rename (using gorename)
-Build-on-save (using go build and go test)
-Format (using goreturns or goimports or gofmt)
-Add Imports (using gopkgs)
-[partially implemented] Debugging (using delve)
+*** recolorize on save
+policy per mode? save-hook?
 
-** f8 nuclide demos
-syntax highlighting (actually buggy on xhp)
-autocomplete (big deal in their demo)
-flycheck (big deal)
-click goto-def
-build integration, colored output
-file explorer
-remote file explorer (fbide remote connect)
+*** paren_mode: bug does not hide highlight
+show when hover a paren
+quite useful indeed
 
-* Last Last
+*** paren_mode: make it the default for all pfff modes
+
+*** org: moving sections up and down
+need helper function that find and mark sections
+
+*** org: save and move to archive.org
+C-c C-x C-s
+
+*** org: maybe highlight the EASY in bigger size, the TODO
+
+*** highlight C-s
+
+*** highlight marked-region
+
+*** C-x h, to mark the whole buffer
+
+** important but can take a long time
+
+*** rectangle: C-x r k
+so can comment "what was planned" in my colbert report copy of the
+previous week
+
+see tex_mode.mll? tex-comment-region
+
+*** cua, S-down, S-etc
+and highlight
+
+*** macros
+otherwise can't delete those $Id:xxx 
+
+** small bugs but useful stuff
+
+*** EASY realpath/fullpath so can edit gtd.org in both editors and safe
+otherwise when modify gtd.org in emacs then efuns
+does not see it
+
+*** eshell: color_region, because color from scratch
+starts to be expensive when have long eshell session
+still true on fast surface book 2?
+
+*** text: can't insert a Tab in a Makefile? C-q Tab does not work??
+
+*** compile: maximize content display like for eshell, scroll_to_end
+but rename this function though it's more scroll_to_display_more
+
+*** compile: compile mode working for pfff -parse_xxx
+so can C-n on the error
+
+*** compile: C-n working for error message by clang
+
+*** outline: if nothing matched at level x, then try level x+1 ?
+helper function filter_matching_level?
+
+*** C-y in replace query, handling multilines copy
+so can factorize copyright chunks
+
+
+*** eshell: still? eshell unstable M-1, switch cursor between 2 places
+
+*** dircolors: have an interactive function at least, to dircolorize
+a buffer
+
+*** eshell: set loc_dirname?? why C-x C-f from eshell does not start
+at right place?
+still?
+
+*** eshell: command history 
+
+*** eshell: should start from dir of current frame
+so can get multiple eshell window from same dir
+still?
+
+*** dired: when type enter to open a file, do not close dired,
+so when do C-x k you go back to the place
+
+*** compile: when compile window is not shown, use Top_window.message
+to warn when command has finished?
+
+*** eshell: do mv x1 x2 and then get a Broken pipe?
+
+*** eshell: M-1 when have run a cmd is not "stable". Doing multiple
+times M-1 should not move the cursor
+
+*** noweb: 4 cols Tabs, better when edit plan9 .nw files
+
+** less
 
 *** a browser of previous point where you have been
 I use a lot C-u space, but what about if you were doing
@@ -37,215 +104,7 @@ the "Expose" of pevious point exploration? Do full minimap
 of file, maybe in multiple columns so can put more, and indicate
 previous big jumps on it?
 
-*** finish efuns port to plan9!
-so can start to work under plan9!!! in a nice environment!!!
-main issues: keyboard, run process and threads
-
-**** keyboard: handling control-up, control-down, alt-xxx
-KAlt|... KCtlAlt|... ?
-
-**** keyboard: handle control-alt
-need for C-Alt-Tab
-
-**** can't run process, cat foo.txt does not work
-need threads? use simply sigalarm for now? anyway I 
-don't use any alarms right now
-
-**** synchronize screen, got some flickering
-use double buffer?
-
-**** can't open Efuns.tex under efuns, it hangs
-too big already?
-
-**** ----------------------------
-
-**** less: can't go back to regular window (e.g. by C-c C-x)
-apparently ape/test_draw too (when I hit Tab).
-Because use exit instead of exits?
-
-einit? raw mode => complex?
-
-actually diff between _exits and exits
-
-**** later: bug in Gc.compact 
-was originally found when doing C-x C-k, it was crashing efuns under plan9 
-
-**** less: when resize I lost the graphics window
-also the case for /tests/draw
-
-**** -debug_kbd
-
-**** mk install should copy caml/*.h and with the right values
-
-**** later: change os_type to "plan9" ?
-so cleaner to adapt call to linker? need? plan9 looks mostly like
-an unix
-
-*** small bugs but useful stuff
-
-**** EASY realpath/fullpath so can edit gtd.org in both editors and safe
-otherwise when modify gtd.org in emacs then efuns
-does not see it
-
-**** recolor on save
-it's useful
-
-**** color_region, because color from scratch
-starts to be expensive when have long eshell session
-
-**** ---------------------
-
-**** C-x h, to mark the whole buffer
-
-**** text: can't insert a Tab in a Makefile? C-q Tab does not work??
-
-**** compile: maximize content display like for eshell, scroll_to_end
-but rename this function though it's more scroll_to_display_more
-
-**** compile: compile mode working for pfff -parse_xxx
-so can C-n on the error
-
-**** compile: C-n working for error message by clang
-
-**** outline: if nothing matched at level x, then try level x+1 ?
-helper function filter_matching_level?
-
-**** C-y in replace query, handling multilines copy
-so can factorize copyright chunks
-
-**** macros
-otherwise can't delete those $Id:xxx 
-
-**** eshell unstable M-1, switch cursor between 2 places
-
-**** rectangle: C-x r k
-so can comment "what was planned" in my colbert report copy of the
-previous week
-
-see tex_mode.mll? tex-comment-region
-
-
-**** dircolors: have an interactive function at least, to dircolorize
-a buffer
-
-**** eshell: set loc_dirname?? why C-x C-f from eshell does not start
-at right place?
-still?
-
-**** eshell: command history 
-
-**** eshell: should start from dir of current frame
-so can get multiple eshell window from same dir
-still?
-
-**** dired: when type enter to open a file, do not close dired,
-so when do C-x k you go back to the place
-
-**** compile: when compile window is not shown, use Top_window.message
-to warn when command has finished?
-
-**** cua, S-down, S-etc
-and highlight
-
-**** eshell: do mv x1 x2 and then get a Broken pipe?
-
-**** eshell: M-1 when have run a cmd is not "stable". Doing multiple
-times M-1 should not move the cursor
-
-**** org: C-c C-x C-s in org mode
-to add in archive.org
-
-**** paren highlight! and make it the default for all pfff modes at least
-
-*** database_code integration!
-project.el?
-
-**** db_for_name automatic
-fast enough?
-
-**** take what is under the cursor as starting point?
-hmm but need code database with shortname for ocaml code,
-seems buggy right now
-
-**** do that for Tex too?
-create database_code for noweb file?
-
-**** better find_in_file
-what do I do in codemap?
-
-**** project.ml
-projects.ml ?
-
-**** then fuzzy file finder 
-copy what I did in codemap and its fuzzy finder?
-
-**** then fuzzy entity finder
-copy what I did in codemap and its fuzzy finder
-and otherwise have a fuzzy finder where put env and can see
-list of stuff
-
-**** completion
-so when type Sys.tab then you can see if setenv, putenv, etc
-
-maybe will have not that for fields, but then could cheat
-and when use type the type of the struct then you get
-some completions
-
-*** graph_code integration
-
-**** links to pfff dirs in efuns/external/ so can run graphcode
-and later have good jump to def and nice completion!!
-
-*** colorize parameter, local, and globals for ml! check_variable_ml.ml!
-will help for instance in cpp_mode.ml to better see the use of
-mode that looks like a local or param but that is actually
-a reference to a global constant in the file
-
-*** codemap integration?
- 
-*** indentation? or use an automatic formatter? seems to be the futur
-Finally fix tuareg!
-
-also TAB and insert comment prefix star when inside a comment.
-
-*** understanding, lpize
-
-**** pass on Extra for features/ to move stuff to Efuns.nw
-
-**** put more of mli files in Efuns.nw; they help to understand
-redundant sometimes, but redundancy is good
-but actually need to split things first, so can actually
-have some .mli. There is no efuns.mli for instance now.
-
-**** less: ctor xxx, action xxx
-can maybe make clearer that API vs helper
-
-*** cover at least basic features?
-
-**** http://tuhdo.github.io/emacs-tutor.html
-
-**** look at the 7 habits of effective editing talk,
-can implement all the necessary features!
-
-**** there is similar video for sublime!
-
-
-* Last
-
 ** small
-
-*** small bugs but useful stuff
-
-**** TODO bug paren_mode does not hide highlight
-
-*** small features but useful stuff
-
-**** TODO show when hover a paren
-quite useful indeed
-
-**** 4 cols Tabs, better when edit plan9 .nw files
-
-**** highlight C-s results at least
 
 *** small diffs with emacs
 lots of different behaviors to fix,
@@ -268,7 +127,7 @@ or maybe better like this.
 but at least if buffer was modified ask for save it before
 
 
-*** bench!
+** still? bench!
 editing text is becoming really slow.
 because of all those points? those asserts?
 because of layout?
@@ -292,10 +151,6 @@ but do not show the stash section in magit!
 actually does not work on my mac :)
 
 ** old modes
-
-*** org mode
-
-**** maybe highlight the EASY in bigger size, the TODO
 
 *** ocaml
 
@@ -326,7 +181,7 @@ but need understand frm_y_offset
 
 *** noweb
 
-**** could make AST at least where parenized correctly,
+**** could make AST at least where parenthesized correctly,
 so they easier to colorize groups with right scope
 
 *** makefile
@@ -467,3 +322,135 @@ attr representation efficient?
 ** misc
 
 *** see my emacs-news.txt? see my .emacs?
+
+* Ports
+
+** try minimal port using OCaml Graphics
+
+** finish efuns port to plan9!
+so can start to work under plan9!!! in a nice environment!!!
+main issues: keyboard, run process and threads
+
+*** keyboard: handling control-up, control-down, alt-xxx
+KAlt|... KCtlAlt|... ?
+
+*** keyboard: handle control-alt
+need for C-Alt-Tab
+
+*** can't run process, cat foo.txt does not work
+need threads? use simply sigalarm for now? anyway I 
+don't use any alarms right now
+
+*** synchronize screen, got some flickering
+use double buffer?
+
+*** can't open Efuns.tex under efuns, it hangs
+too big already?
+
+*** ----------------------------
+
+*** less: can't go back to regular window (e.g. by C-c C-x)
+apparently ape/test_draw too (when I hit Tab).
+Because use exit instead of exits?
+
+einit? raw mode => complex?
+
+actually diff between _exits and exits
+
+*** later: bug in Gc.compact
+was originally found when doing C-x C-k, it was crashing efuns under plan9 
+
+*** less: when resize I lost the graphics window
+also the case for /tests/draw
+
+*** -debug_kbd
+
+*** mk install should copy caml/*.h and with the right values
+
+*** later: change os_type to "plan9" ?
+so cleaner to adapt call to linker? need? plan9 looks mostly like
+an unix
+
+
+* Copy VsCode or Atom
+
+** from https://github.com/Microsoft/vscode-go
+
+Colorization
+Completion Lists (using gocode)
+Signature Help (using godoc)
+Snippets
+Quick Info (using godef)
+Goto Definition (using godef)
+Find References (using go-find-references)
+File outline (using go-outline)
+Workspace symbol search (using go-symbols)
+Rename (using gorename)
+Build-on-save (using go build and go test)
+Format (using goreturns or goimports or gofmt)
+Add Imports (using gopkgs)
+[partially implemented] Debugging (using delve)
+
+** f8 nuclide demos
+syntax highlighting (actually buggy on xhp)
+autocomplete (big deal in their demo)
+flycheck (big deal)
+click goto-def
+build integration, colored output
+file explorer
+remote file explorer (fbide remote connect)
+
+* Pfff integration
+
+** database_code integration!
+project.el?
+
+*** db_for_name automatic
+fast enough?
+
+*** take what is under the cursor as starting point?
+hmm but need code database with shortname for ocaml code,
+seems buggy right now
+
+*** do that for Tex too?
+create database_code for noweb file?
+
+*** better find_in_file
+what do I do in codemap?
+
+*** project.ml
+projects.ml ?
+
+*** then fuzzy file finder
+copy what I did in codemap and its fuzzy finder?
+
+*** then fuzzy entity finder
+copy what I did in codemap and its fuzzy finder
+and otherwise have a fuzzy finder where put env and can see
+list of stuff
+
+*** completion
+so when type Sys.tab then you can see if setenv, putenv, etc
+
+maybe will have not that for fields, but then could cheat
+and when use type the type of the struct then you get
+some completions
+
+** graph_code integration
+
+*** links to pfff dirs in efuns/external/ so can run graphcode
+and later have good jump to def and nice completion!!
+
+*** colorize parameter, local, and globals for ml! check_variable_ml.ml!
+will help for instance in cpp_mode.ml to better see the use of
+mode that looks like a local or param but that is actually
+a reference to a global constant in the file
+
+** codemap integration?
+ 
+** indentation? or use an automatic formatter? seems to be the futur
+Finally fix tuareg!
+
+also TAB and insert comment prefix star when inside a comment.
+
+

@@ -163,11 +163,9 @@ let kill buf =
 open Options
   
 (*s: constant [[Ebuffer.save_buffer_hooks]] *)
-(*
 let save_buffer_hooks = define_option ["save_buffer_hooks"] "" 
     (list_option string_option)
   [ ]
-*)
 (*e: constant [[Ebuffer.save_buffer_hooks]] *)
   
 (*s: constant [[Ebuffer.saved_buffer_hooks]] *)
@@ -178,7 +176,7 @@ let saved_buffer_hooks = define_option ["saved_buffer_hooks"] ""
 
 (*s: function [[Ebuffer.save]] *)
 let save buf =
-  Hook.exec_named_buf_hooks_with_abort !!saved_buffer_hooks buf;
+  Hook.exec_named_buf_hooks_with_abort !!save_buffer_hooks buf;
 
   let filename =
     match buf.buf_filename with

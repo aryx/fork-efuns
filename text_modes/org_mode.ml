@@ -116,25 +116,25 @@ let install buf =
   ()
 
 let mode =  Ebuffer.new_major_mode "Org" [install]
-let org_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 
 (*****************************************************************************)
 (* Setup *)
 (*****************************************************************************)
 
-let setup () = 
-  Action.define_action "org_mode" org_mode;
-  ()
-
-
-let mode_regexp =
-  [".*\\.\\(txt\\|org\\)"]
+let org_mode frame = 
+  Ebuffer.set_major_mode frame.frm_buffer mode
 
 let _ =
   Hook.add_start_hook (fun () ->
     let alist = Var.get_global Ebuffer.modes_alist in
     Var.set_global Ebuffer.modes_alist 
-      ((List.map (fun s -> s, mode) mode_regexp) @ alist);
+      ((List.map (fun s -> s, mode) [".*\\.\\(txt\\|org\\)"]) @ alist);
     
-    setup();
+    Action.define_action "org_mode" org_mode;
+    Action.define_action "org_colorize" (fun frm ->
+      color_buffer_and_set_outlines frm.frm_buffer);
+(* TODO
+    Var.set_major_var mode Ebuffer.save_buffer_hooks
+      ("org_colorize"::(Vars.get_var Ebuffer.save_buffer_hooks));
+*)
   )
