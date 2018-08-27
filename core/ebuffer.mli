@@ -1,5 +1,6 @@
 
 (* see Efuns.buffer, Efuns.major_mode, Efuns.minor_mode types *)
+type t = Efuns.buffer
 
 (* creation *)
 

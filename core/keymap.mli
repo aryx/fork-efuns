@@ -1,5 +1,5 @@
-
 (* see Efuns.map, Efuns.keys, Efuns.action types *)
+type t = Efuns.map
 
 (* creation *)
 

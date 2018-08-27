@@ -1,4 +1,6 @@
 
+type t = Efuns.action
+
 (* to go from a string to an ocaml function (ocaml does not have eval
  * so we have to assist and define actions) 
  *)

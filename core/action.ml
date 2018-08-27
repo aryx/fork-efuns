@@ -13,6 +13,10 @@
 (*e: copyright header efuns *)
 open Efuns
 
+(*s: type [[Action.t]] *)
+type t = Efuns.action
+(*e: type [[Action.t]] *)
+
 (*s: global [[Efuns.actions]] *)
 let (actions : (action_name, generic_action) Hashtbl.t) = 
   Hashtbl.create 63

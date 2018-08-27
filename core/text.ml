@@ -89,36 +89,36 @@ and box =
   } 
 (*e: type [[Text.box]] *)
 
-(*s: type [[Text.text]] *)
-type text = {
+(*s: type [[Text.t]] *)
+type t = {
     mutable text_string : string;
     mutable text_size : int; (* String.length text.text_string *)
 
     mutable text_newlines : line array;
     mutable text_nlines : int; (* Array.length text.text_newlines *)
 
-    (*s: [[Text.text]] gap fields *)
+    (*s: [[Text.t]] gap fields *)
     (* g for gap *)
     mutable gpoint : point;
     mutable gsize : int;
-    (*e: [[Text.text]] gap fields *)
-    (*s: [[Text.text]] history fields *)
+    (*e: [[Text.t]] gap fields *)
+    (*s: [[Text.t]] history fields *)
     mutable text_modified : version;
-    (*x: [[Text.text]] history fields *)
+    (*x: [[Text.t]] history fields *)
     mutable text_history : action list;
-    (*e: [[Text.text]] history fields *)
-    (*s: [[Text.text]] attribute fields *)
+    (*e: [[Text.t]] history fields *)
+    (*s: [[Text.t]] attribute fields *)
     mutable text_attrs : attribute array;
-    (*e: [[Text.text]] attribute fields *)
-    (*s: [[Text.text]] other fields *)
+    (*e: [[Text.t]] attribute fields *)
+    (*s: [[Text.t]] other fields *)
     mutable text_points : point list;
-    (*x: [[Text.text]] other fields *)
+    (*x: [[Text.t]] other fields *)
     mutable text_clean : bool;
-    (*x: [[Text.text]] other fields *)
+    (*x: [[Text.t]] other fields *)
     mutable text_readonly : bool;
-    (*e: [[Text.text]] other fields *)
+    (*e: [[Text.t]] other fields *)
   } 
-(*e: type [[Text.text]] *)
+(*e: type [[Text.t]] *)
   
 (*s: type [[Text.action]] *)
 and action =
@@ -129,8 +129,6 @@ and action =
 (*e: [[Text.action]] other cases *)
 (*e: type [[Text.action]] *)
 
-type t = text
-
 (*****************************************************************************)
 (* Global properties *)
 (*****************************************************************************)
@@ -140,10 +138,10 @@ let version text =
   text.text_modified
 (*e: function [[Text.version]] *)
   
-(*s: function [[Text.nbre_lines]] *)
-let nbre_lines text = 
+(*s: function [[Text.nbr_lines]] *)
+let nbr_lines text = 
   text.text_nlines - 2
-(*e: function [[Text.nbre_lines]] *)
+(*e: function [[Text.nbr_lines]] *)
   
 (*s: function [[Text.size]] *)
 let size text = 

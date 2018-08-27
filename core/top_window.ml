@@ -15,7 +15,10 @@ open Common
 open Options
 open Efuns
 
-  
+(*s: type [[Top_window.t]] *)
+type t = Efuns.top_window
+(*e: type [[Top_window.t]] *)
+
 (*s: function [[Top_window.message]] *)
 let message top_window msg =
   let graphic = Efuns.backend top_window in

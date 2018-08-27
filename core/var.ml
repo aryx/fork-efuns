@@ -14,6 +14,10 @@
 open Efuns
 open Globals
 
+(*s: type [[Var.t]] *)
+type 'a t = 'a Local.var
+(*e: type [[Var.t]] *)
+
 (*s: function [[Var.set_global]] *)
 let set_global var value = 
   Local.set (Globals.location()).loc_vars var value

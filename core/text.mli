@@ -18,24 +18,22 @@ val clear : t -> unit
 val update : t -> string -> unit
 
 val size : t -> int (* can be used also as a position *)
-val nbre_lines : t -> int
+val nbr_lines : t -> int
 
 (* positions, points, line x col coordinates *)
 
 type position = int
 
 (* should be abstract, but can be useful to have public for ocamldebug *)
- 
+(*
+type point
+type position2 (* for line *)
+*)
 type position2 = int
 type point = {
     mutable pos : position2;
     mutable line : int;
 }
-(*
-type point
-
-type position2 (* for line *)
-*)
 
 type coord = {
   c_col: int;

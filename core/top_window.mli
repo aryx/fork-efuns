@@ -1,4 +1,5 @@
 (* see Efuns.top_window type *)
+type t = Efuns.top_window
 
 (* creation *)
 

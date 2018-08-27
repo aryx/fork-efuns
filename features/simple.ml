@@ -217,7 +217,7 @@ and move_to_goal_column frame goal_col =
 and forward_line frame =
   let text = frame.frm_buffer.buf_text in
   let point = frame.frm_point in
-  if Text.point_line text point < Text.nbre_lines text then begin
+  if Text.point_line text point < Text.nbr_lines text then begin
     let goal_col = goal_column frame in
     end_of_line frame;
     move_forward frame 1 |> ignore;

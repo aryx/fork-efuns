@@ -1,4 +1,5 @@
 (* see Efuns.frame, Efuns.status types *)
+type t = Efuns.frame
 
 (* creation *)
 

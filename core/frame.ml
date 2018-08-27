@@ -17,6 +17,10 @@ open Options
 open Efuns
 open Text (* for the line fields *)
 
+(*s: type [[Frame.t]] *)
+type t = Efuns.frame
+(*e: type [[Frame.t]] *)
+
 (*****************************************************************************)
 (* Status line *)
 (*****************************************************************************)
@@ -451,7 +455,7 @@ let update_table frame =
   (* assert current_line is the first line *)
 
   while frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
-      && !current_n < nbre_lines text
+      && !current_n < nbr_lines text
   do
     frame.frm_y_offset <- frame.frm_y_offset - 
       (!current_line.repr_len / frame.frm_cutline) - 1;
@@ -459,7 +463,7 @@ let update_table frame =
     current_line := Ebuffer.compute_representation buf !current_n;
   done;
 
-  if !current_n = nbre_lines text && 
+  if !current_n = nbr_lines text && 
      frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
   then frame.frm_y_offset <- !current_line.repr_len / frame.frm_cutline;
   (*e: [[Frame.update_table()]] adjust current line when [[frm_y_offset]] positive *)
@@ -666,7 +670,7 @@ let display top_window frame =
         | _ when Text.get_position text point = 0 -> "Top"
         | _ when Text.get_position text point = Text.size text -> "Bot"
         | _ -> spf "%2d%%" 
-          (Text.point_line text point * 100 / Text.nbre_lines text)
+          (Text.point_line text point * 100 / Text.nbr_lines text)
         )
         (Text.point_line text point + 1)
         (let xs = buf.buf_minor_modes |> List.map (fun m -> m.min_name) in

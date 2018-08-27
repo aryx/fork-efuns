@@ -1,4 +1,6 @@
 
+type 'a t = 'a Local.var
+
 val set_global : 'a Local.var -> 'a -> unit
 val set_local : Efuns.buffer -> 'a Local.var -> 'a -> unit
 

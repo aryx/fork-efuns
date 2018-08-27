@@ -13,6 +13,10 @@
 (*e: copyright header2 *)
 open Efuns
 
+(*s: type [[Window.t]] *)
+type t = Efuns.window
+(*e: type [[Window.t]] *)
+
 (*s: function [[Window.create_at_top]] *)
 let create_at_top xpos ypos width height =
   let rec window = {

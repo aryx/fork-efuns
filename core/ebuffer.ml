@@ -14,6 +14,10 @@
 open Common
 open Efuns
 
+(*s: type [[Ebuffer.t]] *)
+type t = Efuns.buffer
+(*e: type [[Ebuffer.t]] *)
+
 (* this file is called ebuffer.ml because buffer.ml already exists in stdlib *)
 
 (*s: constant [[Ebuffer.create_buf_hook]] *)

@@ -13,10 +13,9 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(*         File written in the Objective-CAML language                 *)
-
 val iterator : int ref -> unit
 val poll : unit -> bool
+
 module Mutex :
   sig
     type t
@@ -25,6 +24,7 @@ module Mutex :
     val try_lock : t -> bool
     val unlock : t -> unit
   end
+
 module Condition :
   sig
     type t
@@ -33,12 +33,14 @@ module Condition :
     val signal : t -> unit
     val broadcast : t -> unit
   end
+
 module Thread : sig 
     val add_reader : Unix.file_descr -> (unit -> unit) -> unit 
     val remove_reader : Unix.file_descr -> unit
     val add_timer : float -> (unit -> unit) -> unit
     val fork : unit -> int
   end
+
 module ThreadUnix :
   sig
     val execv : string -> string array -> unit

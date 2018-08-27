@@ -349,8 +349,8 @@ and window_down =
 (* The world *)
 (*************************************************************************)
 
-(*s: type [[Efuns.location]] *)
-type location =
+(*s: type [[Efuns.editor]] *)
+type editor =
   { 
     (* key is buffer name (made unique via get_unique_name()) *)
     mutable loc_buffers : (string, buffer) Hashtbl.t;
@@ -373,23 +373,23 @@ type location =
     mutable loc_bg : string;
     mutable loc_font : string;
 
-    (*s: [[Efuns.location]] other fields *)
+    (*s: [[Efuns.editor]] other fields *)
     loc_map : map;
-    (*x: [[Efuns.location]] other fields *)
+    (*x: [[Efuns.editor]] other fields *)
     loc_vars : Local.vars;
-    (*x: [[Efuns.location]] other fields *)
+    (*x: [[Efuns.editor]] other fields *)
     loc_colors_names : string array;
     loc_colors : (string,int) Hashtbl.t;
     mutable loc_colors_n : int;
-    (*x: [[Efuns.location]] other fields *)
+    (*x: [[Efuns.editor]] other fields *)
     loc_fonts : (string,int) Hashtbl.t;
     loc_fonts_names : string array;
     mutable loc_fonts_n : int;
-    (*x: [[Efuns.location]] other fields *)
+    (*x: [[Efuns.editor]] other fields *)
     loc_mutex : Mutex.t;
-    (*e: [[Efuns.location]] other fields *)
+    (*e: [[Efuns.editor]] other fields *)
   } 
-(*e: type [[Efuns.location]] *)
+(*e: type [[Efuns.editor]] *)
 
 (*************************************************************************)
 (* Regexps *)

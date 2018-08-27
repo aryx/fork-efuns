@@ -13,6 +13,10 @@
 (*e: copyright header2 *)
 open Efuns
 
+(*s: type [[Keymap.t]] *)
+type t = Efuns.map
+(*e: type [[Keymap.t]] *)
+
 (*s: function [[Keymap.dummy_action]] *)
 let dummy_action frame = () 
 (*e: function [[Keymap.dummy_action]] *)

@@ -24,7 +24,7 @@ open Efuns
 
 type world = {
   (* the "model" (but actually accessible also via Globals.location()) *)
-  loc: Efuns.location;
+  loc: Efuns.editor;
 
   (* dimensions *)
   metrics: layout;
@@ -239,7 +239,7 @@ let draw_minimap w =
   let startpage = line /.. w.metrics.linemax in
   let startline = startpage *.. w.metrics.linemax in
   let endline = 
-    min (startline +.. w.metrics.linemax) (Text.nbre_lines text -.. 1) in
+    min (startline +.. w.metrics.linemax) (Text.nbr_lines text -.. 1) in
 
 
   for i = startline to endline do
