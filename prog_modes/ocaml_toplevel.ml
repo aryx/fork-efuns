@@ -45,13 +45,13 @@ let type_buffer buf =
 (*e: function [[Ocaml_toplevel.type_buffer]] *)
 
 (*s: constant [[Ocaml_toplevel.compiled_idents]] *)
-let compiled_idents = Local.create_abstr "compiled_idents"
+let compiled_idents = Store.create_abstr "compiled_idents"
 (*e: constant [[Ocaml_toplevel.compiled_idents]] *)
 
 (*s: function [[Ocaml_toplevel.all_idents]] *)
 let all_idents buf =
   try
-    let (ids, version) = Local.get buf.buf_vars compiled_idents in
+    let (ids, version) = Store.get buf.buf_vars compiled_idents in
     if Text.version buf.buf_text = version then ids else raise Not_found
   with
     _ -> 

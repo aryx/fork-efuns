@@ -45,7 +45,7 @@ let change_buffer_record frame =
   if name <> buflist_name
   then list := name :: Utils.list_removeq !list name
 
-let buflist_array = Local.create_abstr "buffer_menu_buflist"
+let buflist_array = Store.create_abstr "buffer_menu_buflist"
 
 (*****************************************************************************)
 (* Entry points *)

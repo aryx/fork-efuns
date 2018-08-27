@@ -42,7 +42,7 @@ let section_comment_color = define_option ["section_comment_color"] ""
 let error_color = define_option ["error_color"] ""
     string_option "red"
 
-let color_buf_hook = Local.create_abstr "color_buf_hook"
+let color_buf_hook = Store.create_abstr "color_buf_hook"
 
 let color_number_and_punctuation buf =
   Simple.color buf 

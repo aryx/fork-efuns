@@ -17,8 +17,8 @@ val handler : Efuns.top_window -> Xtypes.event -> unit
 (* keyboard event *)
 
 (* internal: handle_key() *)
-val handle_key_start_hook : (Efuns.frame -> unit) list Local.var
-val handle_key_end_hook : (unit -> unit) list Local.var
+val handle_key_start_hook : (Efuns.frame -> unit) list Store.var
+val handle_key_end_hook : (unit -> unit) list Store.var
 
 val keypressed : Efuns.keySym ref
 

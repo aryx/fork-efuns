@@ -1,5 +1,5 @@
 
-val abbrev_table : (string, string) Hashtbl.t Local.var
+val abbrev_table : (string, string) Hashtbl.t Store.var
 
 val expand_sabbrev : Efuns.frame -> unit
 

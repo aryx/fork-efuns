@@ -192,7 +192,7 @@ let end_of_line frame =
 
 (*s: constant [[Simple.temporary_goal_column]] *)
 let temporary_goal_column = 
-  Local.create_abstr "Simple.temporary_goal_column"
+  Store.create_abstr "Simple.temporary_goal_column"
 (*e: constant [[Simple.temporary_goal_column]] *)
 
 (*s: function [[Simple.goal_column]] *)
@@ -806,7 +806,7 @@ let simplify text start point =
 (*e: function [[Simple.simplify]] *)
 
 (*s: constant [[Simple.line_comment]] *)
-let line_comment = Local.create_abstr "Fill_mode.line_comment"
+let line_comment = Store.create_abstr "Fill_mode.line_comment"
 (*e: constant [[Simple.line_comment]] *)
 
 (*s: function [[Simple.fill_paragraph]] *)

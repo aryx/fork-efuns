@@ -21,10 +21,10 @@ type t = Efuns.buffer
 (* this file is called ebuffer.ml because buffer.ml already exists in stdlib *)
 
 (*s: constant [[Ebuffer.create_buf_hook]] *)
-let create_buf_hook = Local.create_abstr "create_buf_hook"
+let create_buf_hook = Store.create_abstr "create_buf_hook"
 (*e: constant [[Ebuffer.create_buf_hook]] *)
 (*s: constant [[Ebuffer.modes_alist]] *)
-let modes_alist = Local.create_abstr "modes_alist"
+let modes_alist = Store.create_abstr "modes_alist"
 (*e: constant [[Ebuffer.modes_alist]] *)
 
 (*s: function [[Ebuffer.create_syntax_table]] *)
@@ -77,7 +77,7 @@ let new_minor_mode name hooks  = {
     min_name = name;
     min_map = Keymap.create ();
     min_hooks = hooks;
-    min_vars = Local.vars ()
+    min_vars = Store.vars ()
   }
 (*e: function [[Ebuffer.new_minor_mode]] *)
 
@@ -86,7 +86,7 @@ let new_major_mode name hooks = {
     maj_name = name;
     maj_map = Keymap.create ();
     maj_hooks = hooks;
-    maj_vars = Local.vars ();
+    maj_vars = Store.vars ();
   }
 (*e: function [[Ebuffer.new_major_mode]] *)
 
@@ -118,7 +118,7 @@ let create name filename text local_map =
 
       buf_syntax_table = default_syntax_table;
       buf_map_partial = true;
-      buf_vars = Local.vars ();
+      buf_vars = Store.vars ();
       buf_major_mode = fondamental_mode;
       buf_minor_modes = [];
 

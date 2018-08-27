@@ -250,10 +250,10 @@ let mini_message frame msg =
 (*e: function [[Top_window.mini_message]] *)
 
 (*s: constant [[Top_window.handle_key_start_hook]] *)
-let handle_key_start_hook = Local.create_abstr "handle_key_start_hook"
+let handle_key_start_hook = Store.create_abstr "handle_key_start_hook"
 (*e: constant [[Top_window.handle_key_start_hook]] *)
 (*s: constant [[Top_window.handle_key_end_hook]] *)
-let handle_key_end_hook = Local.create_abstr "handle_key_end_hook"
+let handle_key_end_hook = Store.create_abstr "handle_key_end_hook"
 (*e: constant [[Top_window.handle_key_end_hook]] *)
   
 (*s: constant [[Top_window.meta]] *)

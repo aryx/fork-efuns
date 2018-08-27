@@ -86,7 +86,7 @@ SRC=\
  commons/str2.ml\
  commons/log.ml\
  commons/options.ml\
- commons/local.ml\
+ commons/store.ml\
  commons/concur.ml\
  \
  graphics/xtypes.ml\

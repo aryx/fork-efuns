@@ -56,7 +56,7 @@ let rec save_buffers_and_action frame buffers action =
 (*e: function [[Complex.save_buffers_and_action]] *)
 
 (*s: constant [[Complex.buf_mtime]] *)
-let buf_mtime = Local.create "buf_mtime" string_of_float float_of_string
+let buf_mtime = Store.create "buf_mtime" string_of_float float_of_string
 (*e: constant [[Complex.buf_mtime]] *)
 
 (*s: function [[Complex.update_time]] *)
@@ -268,7 +268,7 @@ let umask =
 (*e: constant [[Complex.umask]] *)
   
 (*s: constant [[Complex.file_perm]] *)
-let file_perm = Local.create "file_perm" string_of_int int_of_string
+let file_perm = Store.create "file_perm" string_of_int int_of_string
 (*e: constant [[Complex.file_perm]] *)
 (*s: function [[Complex.mkdir]] *)
 let mkdir frame =
@@ -313,8 +313,8 @@ let all_variables frame _ =
     Some (f,l) when f == frame -> l
   | _ ->
       let list = 
-        (Local.list buf.buf_vars) @ 
-        (Local.list (Globals.location()).loc_vars) 
+        (Store.list buf.buf_vars) @ 
+        (Store.list (Globals.location()).loc_vars) 
       in
       all_vars := Some (frame, list);
       list
@@ -326,7 +326,7 @@ let set_local_variable frame =
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
-          Local.input frame.frm_buffer.buf_vars variable value))
+          Store.input frame.frm_buffer.buf_vars variable value))
 (*e: function [[Complex.set_local_variable]] *)
   
 (*s: function [[Complex.set_global_variable]] *)
@@ -335,7 +335,7 @@ let set_global_variable frame =
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
-          Local.input (Globals.location()).loc_vars variable value))
+          Store.input (Globals.location()).loc_vars variable value))
 (*e: function [[Complex.set_global_variable]] *)
   
 (*s: function [[Complex.get_variable]] *)
@@ -348,9 +348,9 @@ let describe_variable frame =
         (Printf.sprintf "%s : %s" variable (
           let buf = frame.frm_buffer in
           try
-            Local.print buf.buf_vars variable
+            Store.print buf.buf_vars variable
           with _ ->
-            Local.print (Globals.location()).loc_vars variable)))
+            Store.print (Globals.location()).loc_vars variable)))
 (*e: function [[Complex.get_variable]] *)
 
 open Options

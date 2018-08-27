@@ -19,7 +19,7 @@ type parameter = (string * ((string -> Obj.t) * (Obj.t -> string) *
 (*e: type [[Simple.parameter]] *)
   
 (*s: constant [[Simple.parameters_var]] *)
-let parameters_var = Local.create_abstr "parameters"
+let parameters_var = Store.create_abstr "parameters"
 (*e: constant [[Simple.parameters_var]] *)
   
 (*s: function [[Simple.add_parameter]] *)

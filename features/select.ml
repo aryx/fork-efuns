@@ -64,7 +64,7 @@ let find_completion_frame frame =
   Frame.find_buffer_frame buf
 (*e: function [[Select.find_completion_frame]] *)
 
-let completions_buf_hook = Local.create_abstr "completions_buf_hook"
+let completions_buf_hook = Store.create_abstr "completions_buf_hook"
 
 (*s: function [[Select.display_completions]] *)
 let display_completions frame list =

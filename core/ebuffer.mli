@@ -7,7 +7,7 @@ type t = Efuns.buffer
 val create : 
   string -> string option -> Text.t -> Efuns.map -> 
   Efuns.buffer
-val create_buf_hook : (Efuns.buffer -> unit) list Local.var
+val create_buf_hook : (Efuns.buffer -> unit) list Store.var
 
 (* load/save/kill *)
 
@@ -48,7 +48,7 @@ val new_major_mode : string -> (Efuns.buffer -> unit) list -> Efuns.major_mode
 val set_major_mode : Efuns.buffer -> Efuns.major_mode -> unit
 val fondamental_mode : Efuns.major_mode
 
-val modes_alist : (string * Efuns.major_mode) list Local.var
+val modes_alist : (string * Efuns.major_mode) list Store.var
 (* use modes_alist to try to automatically set the major mode *)
 val set_buffer_mode : Efuns.buffer -> unit
 

@@ -41,7 +41,7 @@ module FT = File_type
 (*****************************************************************************)
 
 (* pwd of the shell buffer *)
-let pwd_var = Local.create_string "pwd_var"
+let pwd_var = Store.create_string "pwd_var"
 let pwd buf =
   Var.get_local buf pwd_var
 

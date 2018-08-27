@@ -20,7 +20,7 @@ val window_change_buffer : Efuns.action
 
 (* time *)
 
-val buf_mtime : float Local.var
+val buf_mtime : float Store.var
 val update_time : Efuns.buffer -> unit
 
 (* colors/fonts *)
@@ -55,7 +55,7 @@ val describe_position : Efuns.action
 val mark_at_point : Efuns.action
 
 val umask : int
-val file_perm : Unix.file_perm Local.var
+val file_perm : Unix.file_perm Store.var
 val mkdir : Efuns.action
 
 val eval : Efuns.action

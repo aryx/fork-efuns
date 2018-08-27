@@ -70,7 +70,7 @@ val backward_paragraph : Efuns.buffer -> Text.point -> unit
 val forward_paragraph : Efuns.buffer -> Text.point -> unit
 
 val fill_paragraph : Efuns.action
-val line_comment : string Local.var
+val line_comment : string Store.var
 
 (* screen *)
 

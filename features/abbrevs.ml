@@ -128,7 +128,7 @@ let dabbrev_expand frame =
 (*e: function [[Abbrevs.dabbrev_expand]] *)
 
 (*s: constant [[Abbrevs.abbrev_table]] *)
-let abbrev_table = Local.create "abbrev_table" 
+let abbrev_table = Store.create "abbrev_table" 
     (fun table ->
       let s = ref "" in 
       Hashtbl.iter (fun s1 s2 ->
@@ -136,7 +136,7 @@ let abbrev_table = Local.create "abbrev_table"
       ) table;
       !s
   )
-  Local.no_input
+  Store.no_input
 (*e: constant [[Abbrevs.abbrev_table]] *)
   
 (*s: function [[Abbrevs.expand_sabbrev]] *)

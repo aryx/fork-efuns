@@ -1,5 +1,5 @@
 
-val add_hook : 'a list Local.var -> 'a -> unit
+val add_hook : 'a list Store.var -> 'a -> unit
 val exec_hooks : ('a -> unit) list -> 'a -> unit
 
 val add_start_hook : (unit -> unit) -> unit

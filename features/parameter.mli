@@ -1,7 +1,7 @@
 
 type parameter =    (string * ((string -> Obj.t) * (Obj.t -> string) * 
       Obj.t Options.option_record))
-val parameters_var : parameter list Local.var
+val parameters_var : parameter list Store.var
 val add_parameter :
   string -> (string -> 'a) -> ('a -> string) -> 'a Options.option_record -> unit
 
