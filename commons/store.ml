@@ -23,13 +23,13 @@ type 'a var = string
 module Vars = Map_
 (*e: module Store.Vars *)
 
-(*s: type [[Store.vars]] *)
-type vars = (string, Obj.t ref) Vars.t ref
-(*e: type [[Store.vars]] *)
-(*s: function [[Store.vars]] *)
-let vars () = 
+(*s: type [[Store.t]] *)
+type t = (string, Obj.t ref) Vars.t ref
+(*e: type [[Store.t]] *)
+(*s: function [[Store.new_store]] *)
+let new_store () = 
   ref Vars.empty
-(*e: function [[Store.vars]] *)
+(*e: function [[Store.new_store]] *)
 
 (*s: global [[Store.vars_table]] *)
 let (vars_table :

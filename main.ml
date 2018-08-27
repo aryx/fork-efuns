@@ -157,7 +157,7 @@ let main () =
       loc_map = Keymap.create ();
       loc_dirname = Sys.getcwd ();
 
-      loc_vars = Store.vars ();
+      loc_vars = Store.new_store ();
     
       loc_colors_names = Array.create 256 "";
       loc_colors = Hashtbl.create 37;

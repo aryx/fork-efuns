@@ -1,12 +1,12 @@
 (*s: commons/store.mli *)
 
-(*s: signature type [[Store.vars]] *)
-type vars
-(*e: signature type [[Store.vars]] *)
-(*s: signature function [[Store.vars]] *)
+(*s: signature type [[Store.t]] *)
+type t
+(*e: signature type [[Store.t]] *)
+(*s: signature function [[Store.new_store]] *)
 (* constructor *)
-val vars : unit -> vars
-(*e: signature function [[Store.vars]] *)
+val new_store : unit -> t
+(*e: signature function [[Store.new_store]] *)
 
 (*s: signature type [[Store.var]] *)
 type 'a var
@@ -24,21 +24,21 @@ val create : string -> ('a -> string) -> (string -> 'a) -> 'a var
 (*e: signature function [[Store.create]] *)
 
 (*s: signature function [[Store.get]] *)
-val get : vars -> 'a var -> 'a
+val get : t -> 'a var -> 'a
 (*e: signature function [[Store.get]] *)
 (*s: signature function [[Store.set]] *)
-val set : vars -> 'a var -> 'a -> unit
+val set : t -> 'a var -> 'a -> unit
 (*e: signature function [[Store.set]] *)
 
 (*s: signature functions [[Store]] *)
 val no_input : string -> 'a
 val no_print : 'a -> string
 
-val set_input : vars -> 'a var -> string -> unit
-val get_print : vars -> 'a var -> string
-val list : vars -> string list
+val set_input : t -> 'a var -> string -> unit
+val get_print : t -> 'a var -> string
+val list : t -> string list
 
-val print : vars -> string -> string
-val input : vars -> string -> string -> unit
+val print : t -> string -> string
+val input : t -> string -> string -> unit
 (*e: signature functions [[Store]] *)
 (*e: commons/store.mli *)

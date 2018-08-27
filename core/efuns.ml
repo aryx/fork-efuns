@@ -111,7 +111,7 @@ and buffer =
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_map_partial : bool;
     (*x: [[Efuns.buffer]] other fields *)
-    mutable buf_vars : Store.vars;
+    mutable buf_vars : Store.t;
     (*x: [[Efuns.buffer]] other fields *)
     mutable buf_charreprs : Text.charreprs; (* 256 array *)
     (*x: [[Efuns.buffer]] other fields *)
@@ -136,7 +136,7 @@ and major_mode = {
     maj_map : map;
 
     mutable maj_hooks : (buffer -> unit) list;
-    mutable maj_vars : Store.vars;
+    mutable maj_vars : Store.t;
 
     (* another customization is the syntax table! don't forget
      * to call Ebuffer.create_syntax_table and modify
@@ -152,7 +152,7 @@ and minor_mode = {
     min_map : map;
 
     mutable min_hooks : (buffer -> unit) list;
-    mutable min_vars : Store.vars;
+    mutable min_vars : Store.t;
   }
 (*e: type [[Efuns.minor_mode]] *)
 
@@ -376,7 +376,7 @@ type editor =
     (*s: [[Efuns.editor]] other fields *)
     loc_map : map;
     (*x: [[Efuns.editor]] other fields *)
-    loc_vars : Store.vars;
+    loc_vars : Store.t;
     (*x: [[Efuns.editor]] other fields *)
     loc_colors_names : string array;
     loc_colors : (string,int) Hashtbl.t;

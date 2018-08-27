@@ -77,7 +77,7 @@ let new_minor_mode name hooks  = {
     min_name = name;
     min_map = Keymap.create ();
     min_hooks = hooks;
-    min_vars = Store.vars ()
+    min_vars = Store.new_store ()
   }
 (*e: function [[Ebuffer.new_minor_mode]] *)
 
@@ -86,7 +86,7 @@ let new_major_mode name hooks = {
     maj_name = name;
     maj_map = Keymap.create ();
     maj_hooks = hooks;
-    maj_vars = Store.vars ();
+    maj_vars = Store.new_store ();
   }
 (*e: function [[Ebuffer.new_major_mode]] *)
 
@@ -118,7 +118,7 @@ let create name filename text local_map =
 
       buf_syntax_table = default_syntax_table;
       buf_map_partial = true;
-      buf_vars = Store.vars ();
+      buf_vars = Store.new_store ();
       buf_major_mode = fondamental_mode;
       buf_minor_modes = [];
 
