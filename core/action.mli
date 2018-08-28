@@ -1,8 +1,8 @@
 
 type t = Efuns.action
 
-(* to go from a string to an ocaml function 
- * (ocaml does not have 'eval' so we have to assist and define "actions")
+(* Actions allow to go from a string to an OCaml function
+ * (OCaml does not have 'eval', so we have to assist and define "actions")
  *)
 
 val define_action : Efuns.action_name -> t -> unit

@@ -150,6 +150,8 @@ let colorize_and_set_outlines funcs buf file =
       xs |> List.sort (fun (_, pt_a) (_, pt_b) -> compare pt_a pt_b)
   in
   Var.set_local buf Outline_mode.outline_var outline_points;
+  (* bugfix: needs that to force a redisplay *)
+  buf.buf_modified <- buf.buf_modified + 1;
   ()
 
 
