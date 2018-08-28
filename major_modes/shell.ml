@@ -48,13 +48,9 @@ let pwd buf =
 let prompt buf =
   spf "%s $ " (pwd buf)
 
-(* from pfff/commons/common2.ml *)
-let foldl1 p = function x::xs -> List.fold_left p x xs | _ -> failwith "foldl1"
-let maximum xs = foldl1 max xs
-
 (* for builtin_ls *)
 let columnize width xs =
-  let maxlen = xs |> List.map String.length |> maximum in
+  let maxlen = xs |> List.map String.length |> Common2.maximum in
   (* need to account for extra spaces between columns *)
   let maxlen = maxlen + 2 in
   (* but don't need the extra space for the last col so compensate *)
