@@ -20,7 +20,7 @@ type 'a t = 'a Store.var
 
 (*s: function [[Var.set_global]] *)
 let set_global var value = 
-  Store.set (Globals.location()).loc_vars var value
+  Store.set (Globals.editor()).loc_vars var value
 (*e: function [[Var.set_global]] *)
 (*s: function [[Var.set_local]] *)
 let set_local buf var value = 
@@ -49,12 +49,12 @@ let get_var buf var =
         iter buf.buf_minor_modes
         (*e: [[Var.get_var()]] try with minor mode variables *)
       with Not_found ->
-        Store.get (location()).loc_vars var
+        Store.get (editor()).loc_vars var
 (*e: function [[Var.get_var]] *)
           
 (*s: function [[Var.get_global]] *)
 let get_global var = 
-  Store.get (location()).loc_vars var
+  Store.get (editor()).loc_vars var
 (*e: function [[Var.get_global]] *)
 (*s: function [[Var.get_local]] *)
 let get_local buf var = 

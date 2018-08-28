@@ -938,8 +938,8 @@ let _ =
   );
   (*e: Simple toplevel setup *)
   Hook.add_start_hook (fun () ->
-    let loc = Globals.location () in
-    let gmap = loc.loc_map in
+    let edt = Globals.editor () in
+    let gmap = edt.loc_map in
 
     (*s: [[Simple._]] start hook *)
     (* standard chars *)
@@ -975,7 +975,7 @@ let _ =
     (*e: [[Simple._]] start hook *)
 
 
-    Keymap.add_interactive (loc.loc_map) "fondamental_mode" 
+    Keymap.add_interactive (edt.loc_map) "fondamental_mode" 
       (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
           Ebuffer.fondamental_mode);
 

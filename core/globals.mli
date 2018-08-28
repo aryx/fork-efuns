@@ -1,7 +1,7 @@
 
-val location : unit -> Efuns.editor
+val editor : unit -> Efuns.editor
 (* should be set once, in main *)
-val global_location : Efuns.editor option ref
+val global_editor : Efuns.editor option ref
 
 val with_lock : (unit -> 'a) -> 'a
 val error : ('a -> 'b, out_channel, unit) format -> 'a -> unit

@@ -15,21 +15,21 @@ open Efuns
 
 (* there are other globals: actions, start_hooks, etc *)
 
-(*s: global [[Efuns.global_location]] *)
-let global_location = ref None
-(*e: global [[Efuns.global_location]] *)
-(*s: function [[Efuns.location]] *)
-let location () =
-  match !global_location with
-  | None -> failwith "no global location defined"
+(*s: global [[Efuns.global_editor]] *)
+let global_editor = ref None
+(*e: global [[Efuns.global_editor]] *)
+(*s: function [[Efuns.editor]] *)
+let editor () =
+  match !global_editor with
+  | None -> failwith "no global editor defined"
   | Some x -> x
-(*e: function [[Efuns.location]] *)
+(*e: function [[Efuns.editor]] *)
 
 (*s: function [[Efuns.with_lock]] *)
 let with_lock f =
-  let loc = location () in
-  Mutex.lock loc.loc_mutex;
-  Common.finalize f (fun () -> Mutex.unlock loc.loc_mutex)
+  let edt = editor () in
+  Mutex.lock edt.loc_mutex;
+  Common.finalize f (fun () -> Mutex.unlock edt.loc_mutex)
 (*e: function [[Efuns.with_lock]] *)
 
 (*s: function [[Efuns.error]] *)

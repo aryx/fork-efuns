@@ -32,8 +32,8 @@ let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 (*e: constant [[Main.highlight_color]] *)
 
 (*s: function [[Efuns.init]] *)
-let init_efuns location =
-  Globals.global_location := Some location;
+let init_efuns editor =
+  Globals.global_editor := Some editor;
   let hooks = List.rev !Hook.start_hooks in
   Hook.start_hooks := [];
   hooks |> List.iter (fun f -> f ())
@@ -141,8 +141,8 @@ let main () =
   (*e: [[main()]] adjust options *)
   (*e: [[main()]] set options *)
 
-  (*s: [[main()]] initial location *)
-  let location = {
+  (*s: [[main()]] initial editor *)
+  let editor = {
       loc_buffers = Hashtbl.create 13;
       loc_files = Hashtbl.create 13;
 
@@ -169,9 +169,9 @@ let main () =
 
       loc_mutex = Mutex.create ()
   } in
-  (*e: [[main()]] initial location *)
+  (*e: [[main()]] initial editor *)
   (*s: [[main()]] initialize the world *)
-  init_efuns location (* launch first hooks *);
+  init_efuns editor (* launch first hooks *);
   (*e: [[main()]] initialize the world *)
   (*s: [[main()]] misc initializations *)
   (* color 0 is foreground *)

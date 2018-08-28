@@ -89,7 +89,7 @@ and buffer =
   { 
     mutable buf_text : Text.t;
 
-    (* should be unique; can be used as a primary key in location.loc_buffers*)
+    (* should be unique; can be used as a primary key in editor.edt_buffers *)
     mutable buf_name : string;
     mutable buf_filename : string option;
 

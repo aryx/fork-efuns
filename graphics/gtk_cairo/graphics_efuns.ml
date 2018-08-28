@@ -548,7 +548,7 @@ let configure loc top_window desc metrics da top_gtk_win =
 
 
   (* force a redraw for all the frame after a resize. w.base has changed! *)
-  (Globals.location()).top_windows |> List.iter (fun top_window ->
+  (Globals.editor()).top_windows |> List.iter (fun top_window ->
      top_window.window |> Window.iter(fun frm -> frm.frm_redraw <- true;);
      (match top_window.top_mini_buffers with
       | [] -> ()
@@ -598,7 +598,7 @@ let start_cursor_thread () =
       (*pr2 (spf "%d" !cnt);*)
       Thread.delay 0.5;
       Globals.with_lock (fun () ->
-        (Globals.location()).top_windows |> List.iter (fun top_window ->
+        (Globals.editor()).top_windows |> List.iter (fun top_window ->
           if !cnt mod 2 = 0
           then Top_window.cursor_on top_window
           else Top_window.cursor_off top_window;
@@ -622,9 +622,9 @@ let init2 init_files =
   (* Graphics initialisation *)
   (*-------------------------------------------------------------------*)
   let _locale = GtkMain.Main.init () in
-  let loc = Globals.location () in
+  let edt = Globals.editor () in
 
-  let desc = Pango.Font.from_string loc.loc_font
+  let desc = Pango.Font.from_string edt.loc_font
   (* see https://github.com/hbin/top-programming-fonts to install
    * some nice programming fonts (e.g., Menlo)
    *)
@@ -640,7 +640,7 @@ let init2 init_files =
   (* Pango.Font.set_weight desc `ULTRABOLD; *)
   pr2 (Pango.Font.to_string desc);
 
-  let metrics = compute_metrics loc desc in
+  let metrics = compute_metrics edt desc in
 
   (*-------------------------------------------------------------------*)
   (* Window creation *)
@@ -652,7 +652,7 @@ let init2 init_files =
   (* Creation of core DS of Efuns (buffers, frames, top_window) *)
   (*-------------------------------------------------------------------*)
 
-  (* loc.loc_height <- 45; *)
+  (* edt.loc_height <- 45; *)
   (* will boostrap and use a newly created *help* buffer *)
   let top_window = Top_window.create () in
   (* the *bindings* buffer *)
@@ -737,7 +737,7 @@ let init2 init_files =
 *)
 
     da#event#connect#configure 
-      ~callback:(configure loc top_window desc metrics da win) |> ignore;
+      ~callback:(configure edt top_window desc metrics da win) |> ignore;
     da#event#connect#expose ~callback:(expose) |> ignore;
 
     (*-------------------------------------------------------------------*)

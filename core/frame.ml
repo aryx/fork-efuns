@@ -267,7 +267,7 @@ let active frame =
   let top_window = Window.top frame.frm_window in
   top_window.top_active_frame <- frame;
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
-    (Globals.location()).loc_dirname <- Filename.dirname filename
+    (Globals.editor()).loc_dirname <- Filename.dirname filename
   )
 (*e: function [[Frame.active]] *)
       
@@ -733,7 +733,7 @@ let current_dir frame =
   let buf = frame.frm_buffer in
   match buf.buf_filename with
   | Some filename -> Filename.dirname filename ^ "/"
-  | None -> (Globals.location()).loc_dirname ^ "/"
+  | None -> (Globals.editor()).loc_dirname ^ "/"
 (*e: function [[Frame.current_dir]] *)
 
 (*s: exception [[Frame.FoundFrame]] *)
@@ -743,7 +743,7 @@ exception FoundFrame of frame
 (*s: function [[Frame.find_buffer_frame]] *)
 let find_buffer_frame buf =
   try
-    (Globals.location()).top_windows |> List.iter (fun top_window ->
+    (Globals.editor()).top_windows |> List.iter (fun top_window ->
       top_window.window |> Window.iter (fun frame -> 
         if frame.frm_buffer == buf 
         then raise (FoundFrame frame)
@@ -771,7 +771,7 @@ let load_file window filename =
 (*s: function [[Frame.change_buffer]] *)
 let change_buffer window name = 
   try
-    let buf = Hashtbl.find (Globals.location()).loc_buffers name in
+    let buf = Hashtbl.find (Globals.editor()).loc_buffers name in
     let frame = create window None buf in
     Hook.exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name

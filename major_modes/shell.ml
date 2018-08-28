@@ -244,8 +244,8 @@ let builtin_cd frame s =
   | Unix.S_DIR -> 
       Var.set_local buf pwd_var newdir;
       (* so C-x C-f and other stuff starts from this directory *)
-      let loc = Globals.location () in
-      loc.loc_dirname <- newdir;
+      let edt = Globals.editor () in
+      edt.loc_dirname <- newdir;
       builtin_ls false false frame
   | _ -> failwith (spf "%s is not a directory" newdir)
 
@@ -291,7 +291,7 @@ let run_cmd frame cmd =
 
   let (pid,inc,outc) = System.open_process (pwd buf) cmd in
   pid_external := Some pid;
-  let loc = Globals.location () in
+  let edt = Globals.editor () in
 
   let end_action buf _s = 
     display_prompt buf 
@@ -303,7 +303,7 @@ let run_cmd frame cmd =
     let finished = ref false in
     while not !finished do
       let len = input inc tampon 0 1000 in
-      Mutex.lock loc.loc_mutex;
+      Mutex.lock edt.loc_mutex;
       if len = 0 then begin
         let pid, status = Unix.waitpid [Unix.WNOHANG] pid in
         (match status with 
@@ -321,7 +321,7 @@ let run_cmd frame cmd =
       end
       else Text.insert_at_end text (String.sub tampon 0 len);
 
-      Mutex.unlock loc.loc_mutex;
+      Mutex.unlock edt.loc_mutex;
       scroll_until_not_pass_prompt frame;
       (* redraw screen *)
       Top_window.update_display ();
@@ -384,7 +384,7 @@ let key_return frame =
 
 let install buf =
   (* loc_dirname should be the dirname of the file in active frame *)
-  Var.set_local buf pwd_var  (Globals.location()).loc_dirname;
+  Var.set_local buf pwd_var  (Globals.editor()).loc_dirname;
   let tbl = Ebuffer.create_syntax_table () in
   buf.buf_syntax_table <- tbl;
   tbl.(Char.code '_') <- true;

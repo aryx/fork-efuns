@@ -51,12 +51,12 @@ let system pwd buf_name cmd end_action =
   let ins = Unix.descr_of_in_channel inc in
   let tampon = String.create 1000 in
   let active = ref true in
-  let loc = Globals.location () in
+  let edt = Globals.editor () in
   Concur.Thread.add_reader ins (fun () ->
     let pos,str = Text.delete_res text curseur
                     (Text.point_to_eof text curseur) in
     let len = input inc tampon 0 1000 in
-    Mutex.lock loc.loc_mutex;
+    Mutex.lock edt.loc_mutex;
     if len = 0 then begin
       let pid,status = waitpid [WNOHANG] pid in
       (match status with 
@@ -71,7 +71,7 @@ let system pwd buf_name cmd end_action =
       (* redraw screen *)
       Top_window.update_display ();
 
-      Mutex.unlock loc.loc_mutex;
+      Mutex.unlock edt.loc_mutex;
       Concur.Thread.remove_reader ins; (* Kill self *)
     end
     else
@@ -83,7 +83,7 @@ let system pwd buf_name cmd end_action =
 
     (* redraw screen *)
     Top_window.update_display ();
-    Mutex.unlock loc.loc_mutex
+    Mutex.unlock edt.loc_mutex
   );
 
   let lmap = buf.buf_map in
@@ -131,7 +131,7 @@ let shell_hist = ref []
 (*s: function [[System.shell_command]] *)
 let shell_command frame =
   Select.select_string frame "Run command:" shell_hist "" (fun cmd -> 
-    let pwd = (Globals.location()).loc_dirname in
+    let pwd = (Globals.editor()).loc_dirname in
     start_command pwd "*Command*" (Multi_frames.cut_frame frame) cmd |> ignore)
 (*e: function [[System.shell_command]] *)
   

@@ -137,7 +137,7 @@ let cursor_off top_window =
 
 (*s: function [[Top_window.update_display]] *)
 let update_display () =
-  (Globals.location()).top_windows |> List.iter (fun top_window ->
+  (Globals.editor()).top_windows |> List.iter (fun top_window ->
      top_window.window |> Window.iter (fun frm -> 
        Frame.display top_window frm
      );
@@ -155,7 +155,7 @@ let update_display () = Common.profile_code "Top_window.update_display"
 
 (*s: function [[Top_window.clean_display]] *)
 let clean_display () =
-  (Globals.location()).top_windows |> List.iter (fun top_window ->
+  (Globals.editor()).top_windows |> List.iter (fun top_window ->
      cursor_off top_window;
      (*s: [[clean_display()]] sanity check second cursor and minibuffer *)
      (match top_window.top_mini_buffers, top_window.top_second_cursor with
@@ -323,7 +323,7 @@ let handle_key top_window modifiers keysym =
   
 (*s: function [[Top_window.wrap]] *)
 let wrap top_window f () = 
-  let loc = Globals.location() in
+  let loc = Globals.editor() in
   Mutex.lock loc.loc_mutex;  
   clean_display ();    
   clear_message top_window;
@@ -432,7 +432,7 @@ let help_menu = ref ([| |]: (string * action) array)
   
 (*s: function [[Top_window.create]] *)
 let create () =
-  let loc = Globals.location() in
+  let loc = Globals.editor() in
   let buf = 
     Ebuffer.default "*help*" in
   (* keep one line for the minibuffer, hence the -1 *)
