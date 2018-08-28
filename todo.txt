@@ -4,9 +4,6 @@
 
 ** important (and not too long to implement)
 
-*** recolorize on save
-policy per mode? save-hook?
-
 *** paren_mode: bug does not hide highlight
 show when hover a paren
 quite useful indeed
@@ -34,6 +31,8 @@ so can comment "what was planned" in my colbert report copy of the
 previous week
 
 see tex_mode.mll? tex-comment-region
+
+or go multi-selection as in Sublime or Atom?
 
 *** cua, S-down, S-etc
 and highlight
@@ -154,6 +153,10 @@ actually does not work on my mac :)
 
 *** ocaml
 
+**** less: lpize with ocaml support for globals, typed constants
+also have arrays in ast? pfff -lpize split weird
+when constant is an array
+
 **** EASY Typedef Def -> Entity (Type, Def) !!
 so better color for types in efuns and codemap
 
@@ -189,12 +192,14 @@ so they easier to colorize groups with right scope
 **** outline! and more colors for big sections
 regexp = ****\n* [^\n]+\n****
 
+*** mkfile?
+
 ** stuff not in emacs
 More visual stuff where escape the terminal-compatibility barrier.
 Some of the stuff are actually available as plugins (e.g. autocomplete),
  but they are complicated and so I might do a better job for myself.
 
-*** later: minimap
+*** SEMI minimap
 
 **** mouse: click on it to scroll there
 
@@ -221,6 +226,7 @@ It's in emacs, but it's not clean. It always confused me.
 ** stuff in emacs to port
 
 *** !!indentation!!
+use the new ocamlformat? futur of indentation is automatic indentation?
 
 *** later
 
@@ -230,9 +236,6 @@ at least C-x r t, or M-x comment
 or use the multi-cursor thing of sublime text?
 
 **** visual beep (e.g. when incremental search done)
-
-**** make save_hook to recolor, anyway good
-to do syntactic check to prepare for running make
 
 **** still? want incremental coloring! 
 font-lock is complicated 
@@ -251,7 +254,7 @@ and make default mode?
 and then the key.
 may need a special thing though to do that.
 
-**** C-x =
+**** EASY C-x =
 to see current position
 
 **** macros!!! how can it be called emacs
@@ -307,10 +310,6 @@ avoid further regression whens refactoring code?
 
 **** add check for useless export, so can have even smaller .mli
 
-*** less: lpize with ocaml support for globals, typed constants
-also have arrays in ast? pfff -lpize split weird
-when constant is an array
-
 *** bench
 vs emacs, vs qemacs
 
@@ -325,7 +324,7 @@ attr representation efficient?
 
 * Ports
 
-** try minimal port using OCaml Graphics
+** less: try minimal port using OCaml Graphics
 
 ** finish efuns port to plan9!
 so can start to work under plan9!!! in a nice environment!!!
@@ -396,6 +395,7 @@ syntax highlighting (actually buggy on xhp)
 autocomplete (big deal in their demo)
 flycheck (big deal)
 click goto-def
+
 build integration, colored output
 file explorer
 remote file explorer (fbide remote connect)
