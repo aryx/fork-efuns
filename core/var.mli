@@ -11,3 +11,5 @@ val get_var : Efuns.buffer -> 'a t -> 'a
 
 val set_minor_var : Efuns.minor_mode -> 'a t -> 'a -> unit
 val set_major_var : Efuns.major_mode -> 'a t -> 'a -> unit
+
+val add_global: 'a list t -> 'a list -> unit

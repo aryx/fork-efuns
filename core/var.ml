@@ -69,6 +69,9 @@ let set_minor_var min var value =
 let set_major_var maj var value = 
   Store.set maj.maj_vars var value
 (*e: function [[Var.set_major_var]] *)
-  
+
+let add_global var xs =
+  let ys = get_global var in
+  set_global var (xs @ ys)
 
 (*e: core/var.ml *)
