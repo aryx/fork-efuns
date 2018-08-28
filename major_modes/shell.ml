@@ -395,7 +395,7 @@ let install buf =
   Text.set_position text buf.buf_point (Text.size text);
   ()
 
-let mode =  Ebuffer.new_major_mode "Shell" [install]
+let mode =  Ebuffer.new_major_mode "Shell" (Some install)
 
 let eshell buf_name frame =
   let text = Text.create "" in

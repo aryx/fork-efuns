@@ -147,10 +147,11 @@ let color_buffer buf =
     (Text.make_attr (Attr.get_color "red") 1 0 false);
   ()
 
-let install buf =
-  color_buffer buf
-
-let mode = Ebuffer.new_major_mode "Compilation" [install]
+  
+let mode = Ebuffer.new_major_mode "Compilation" 
+  (Some (fun buf ->
+    color_buffer buf
+   ))
   
 (*s: constant [[Compil.make_hist]] *)
 let make_hist = ref [!!make_command]

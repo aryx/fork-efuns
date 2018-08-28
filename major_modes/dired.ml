@@ -160,7 +160,7 @@ let install buf =
 (*e: function [[Dired.install]] *)
       
 (*s: constant [[Dired.mode]] *)
-let mode = Ebuffer.new_major_mode "Dired" [install]
+let mode = Ebuffer.new_major_mode "Dired" (Some install)
 (*e: constant [[Dired.mode]] *)
 
 (*s: constant [[Dired.map]] *)
@@ -216,8 +216,7 @@ let _ =
     Keymap.add_interactive ((Globals.editor()).edt_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
-    Var.set_global Ebuffer.modes_alist 
-      ((".*/$",mode) :: (Var.get_global Ebuffer.modes_alist));
+    Var.add_global Ebuffer.modes_alist [".*/$",mode];
   )   
 (*e: toplevel [[Dired._1]] *)
 (*e: major_modes/dired.ml *)

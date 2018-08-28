@@ -82,16 +82,16 @@ let new_minor_mode name hooks  = {
 (*e: function [[Ebuffer.new_minor_mode]] *)
 
 (*s: function [[Ebuffer.new_major_mode]] *)
-let new_major_mode name hooks = {
+let new_major_mode name hook_opt = {
     maj_name = name;
     maj_map = Keymap.create ();
-    maj_hooks = hooks;
+    maj_hooks = (match hook_opt with None -> [] | Some hook -> [hook]);
     maj_vars = Store.new_store ();
   }
 (*e: function [[Ebuffer.new_major_mode]] *)
 
 (*s: constant [[Ebuffer.fondamental_mode]] *)
-let fondamental_mode = new_major_mode "Fondamental" [] (* no hooks *)
+let fondamental_mode = new_major_mode "Fondamental" None (* no hooks *)
 (*e: constant [[Ebuffer.fondamental_mode]] *)
   
 (*s: constant [[Ebuffer.tab_size]] *)

@@ -97,7 +97,7 @@ let install _buf =
   ()
 
 let mode_name = "Outline"
-let mode =  Ebuffer.new_major_mode mode_name [install]
+let mode =  Ebuffer.new_major_mode mode_name (Some install)
 
 (* less: we could also have a minor mode? *)
 

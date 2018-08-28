@@ -51,9 +51,7 @@ let buflist_array = Store.create_abstr "buffer_menu_buflist"
 (* Entry points *)
 (*****************************************************************************)
 
-let install buf =
-  ()
-let mode =  Ebuffer.new_major_mode "Buffer List" [install]
+let mode =  Ebuffer.new_major_mode "Buffer List" None
 
 
 (* bounded to C-M-Tab in std_efunsrc.ml  *)

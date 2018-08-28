@@ -379,7 +379,7 @@ let install buf =
   ) !!tex_hooks;
   ()
   
-let mode = Ebuffer.new_major_mode"TeX" [install]
+let mode = Ebuffer.new_major_mode"TeX" (Some install)
 
 let comment_string = "%"
 let _ = Var.set_major_var mode Simple.line_comment "%"

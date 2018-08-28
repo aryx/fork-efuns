@@ -55,32 +55,25 @@ let color_buffer buf =
 (* Installation *)
 (*****************************************************************************)
 
-let install buf =
+let mode = Ebuffer.new_major_mode "C" (Some (fun buf ->
   color_buffer buf; 
+
   let tbl = Ebuffer.create_syntax_table () in
   buf.buf_syntax_table <- tbl;
   tbl.(Char.code '_') <- true;
   ()
+))
 
-let mode =  Ebuffer.new_major_mode "C" [install]
-let cpp_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
+let cpp_mode frame = 
+  Ebuffer.set_major_mode frame.frm_buffer mode
 
 (*****************************************************************************)
 (* Setup *)
 (*****************************************************************************)
 
-let setup () = 
-  Action.define_action "cpp_mode" cpp_mode;
-  ()
-
-let mode_regexp =
-  [".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$"]
-
 let _ =
   Hook.add_start_hook (fun () ->
-    let alist = Var.get_global Ebuffer.modes_alist in
-    Var.set_global Ebuffer.modes_alist 
-      ((List.map (fun s -> s, mode) mode_regexp) @ alist);
-    
-    setup();
+    Var.add_global Ebuffer.modes_alist 
+      [".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$", mode];
+    Action.define_action "cpp_mode" cpp_mode;
   )

@@ -43,7 +43,7 @@ val tab_size : int ref
 
 (* major modes *)
 
-val new_major_mode : string -> (t -> unit) list -> Efuns.major_mode
+val new_major_mode : string -> (t -> unit) option -> Efuns.major_mode
 val set_major_mode : t -> Efuns.major_mode -> unit
 val fondamental_mode : Efuns.major_mode
 

@@ -39,7 +39,6 @@ let funcs = { Pfff_modes.
   highlight = (fun ~tag_hook prefs (ast, toks) -> 
     Highlight_ml.visit_program ~tag_hook prefs (ast, toks)
   );
-
   }
 
 (*****************************************************************************)
@@ -58,49 +57,39 @@ let color_buffer buf =
         let (_,_, e) = Common2.dbe_of_filename file in
         e
   in
-      
   Common2.with_tmp_file ~str:s ~ext (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   )
-
 
 (*****************************************************************************)
 (* Installation *)
 (*****************************************************************************)
 
-let install buf =
+let mode =  Ebuffer.new_major_mode "OCaml" (Some (fun buf ->
   color_buffer buf; 
+
   let tbl = Ebuffer.create_syntax_table () in
   buf.buf_syntax_table <- tbl;
   tbl.(Char.code '_') <- true;
   tbl.(Char.code '\'') <- true;
   tbl.(Char.code '.') <- false;
   ()
+))
 
-let mode =  Ebuffer.new_major_mode "Caml" [install]
-let caml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
+let caml_mode frame = 
+  Ebuffer.set_major_mode frame.frm_buffer mode
 
 (*****************************************************************************)
 (* Setup *)
 (*****************************************************************************)
 
-let setup () = 
-  Action.define_action "caml_mode" caml_mode;
-  Var.set_major_var mode Compil.find_error 
-    Ocaml_mode.ocaml_find_error;
-  Var.set_major_var mode Compil.find_error_location_regexp 
-    (snd !!Ocaml_mode.ocaml_error_regexp);
-  ()
-
-
-let mode_regexp =
-  [".*\\.\\(ml\\|mli\\|mll\\|mly\\)"]
-
 let _ =
   Hook.add_start_hook (fun () ->
-    let alist = Var.get_global Ebuffer.modes_alist in
-    Var.set_global Ebuffer.modes_alist 
-      ((List.map (fun s -> s, mode) mode_regexp) @ alist);
+    Var.add_global Ebuffer.modes_alist [".*\\.\\(ml\\|mli\\|mll\\|mly\\)",mode];
     
-    setup();
+    Action.define_action "caml_mode" caml_mode;
+    Var.set_major_var mode Compil.find_error 
+      Ocaml_mode.ocaml_find_error;
+    Var.set_major_var mode Compil.find_error_location_regexp 
+      (snd !!Ocaml_mode.ocaml_error_regexp);
   )

@@ -61,8 +61,9 @@ let color_buffer buf =
 (* Installation *)
 (*****************************************************************************)
 
-let install buf =
+let mode = Ebuffer.new_major_mode "Noweb" (Some (fun buf ->
   color_buffer buf; 
+
   let tbl = Ebuffer.create_syntax_table () in
   buf.buf_syntax_table <- tbl;
   (* true in code usually, not necesseraly for tex itself, but have
@@ -70,27 +71,17 @@ let install buf =
    *)
   tbl.(Char.code '_') <- true;
   ()
+))
 
-
-let mode =  Ebuffer.new_major_mode "Noweb" [install]
-let noweb_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
+let noweb_mode frame = 
+  Ebuffer.set_major_mode frame.frm_buffer mode
 
 (*****************************************************************************)
 (* Setup *)
 (*****************************************************************************)
 
-let setup () = 
-  Action.define_action "noweb_mode" noweb_mode;
-  ()
-
-let mode_regexp =
-  [".*\\.nw$"]
-
 let _ =
   Hook.add_start_hook (fun () ->
-    let alist = Var.get_global Ebuffer.modes_alist in
-    Var.set_global Ebuffer.modes_alist 
-      ((List.map (fun s -> s, mode) mode_regexp) @ alist);
-    
-    setup();
+    Var.add_global Ebuffer.modes_alist [".*\\.nw$", mode];
+    Action.define_action "noweb_mode" noweb_mode;
   )

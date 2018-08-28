@@ -54,7 +54,7 @@ let install buf =
 (*e: function [[Makefile_mode.install]] *)
   
 (*s: constant [[Makefile_mode.mode]] *)
-let mode = Ebuffer.new_major_mode "Makefile" [makefile_color]
+let mode = Ebuffer.new_major_mode "Makefile" (Some install)
 (*e: constant [[Makefile_mode.mode]] *)
   
 

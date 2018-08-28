@@ -179,7 +179,7 @@ let install window frame =
 let editname = "Efuns:"
 (*e: constant [[Frame.editname]] *)
 (*s: constant [[Frame.dummy_mode]] *)
-let dummy_mode = Ebuffer.new_major_mode "" []
+let dummy_mode = Ebuffer.new_major_mode "" None
 (*e: constant [[Frame.dummy_mode]] *)
   
 (*s: function [[Frame.create_without_top]] *)

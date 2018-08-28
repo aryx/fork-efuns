@@ -529,7 +529,7 @@ let install buf =
   ()
 
 
-let mode = Ebuffer.new_major_mode "Lisp" [install]  
+let mode = Ebuffer.new_major_mode "Lisp" (Some install)
   
 let setup () =
   let map = mode.maj_map in

@@ -251,7 +251,7 @@ let install buf =
   Structure.install_structures buf structures;
   ()
 
-let mode = Ebuffer.new_major_mode "HTML" [install]
+let mode = Ebuffer.new_major_mode "HTML" (Some install)
 let _ = 
   Keymap.add_major_key mode [c_c; ControlMap,Char.code 'l']
   "html-color-buffer" (fun frame -> html_color_buffer frame.frm_buffer);

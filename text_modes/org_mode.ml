@@ -103,32 +103,27 @@ let color_buffer_and_set_outlines buf =
 (* Installation *)
 (*****************************************************************************)
 
-let install buf =
+let mode =  Ebuffer.new_major_mode "Org" (Some (fun buf ->
   color_buffer_and_set_outlines buf;
-(*
-  let tbl = Ebuffer.create_syntax_table () in
-  buf.buf_syntax_table <- tbl;
-  tbl.(Char.code '_') <- true;
-*)
+  (*
+    let tbl = Ebuffer.create_syntax_table () in
+    buf.buf_syntax_table <- tbl;
+    tbl.(Char.code '_') <- true;
+  *)
   ()
+))
 
-let mode =  Ebuffer.new_major_mode "Org" [install]
+let org_mode frame = 
+  Ebuffer.set_major_mode frame.frm_buffer mode
 
 (*****************************************************************************)
 (* Setup *)
 (*****************************************************************************)
 
-let org_mode frame = 
-  Ebuffer.set_major_mode frame.frm_buffer mode
-
 let _ =
   Hook.add_start_hook (fun () ->
-    let alist = Var.get_global Ebuffer.modes_alist in
-    Var.set_global Ebuffer.modes_alist 
-      ((List.map (fun s -> s, mode) [".*\\.\\(txt\\|org\\)"]) @ alist);
-    
+    Var.add_global Ebuffer.modes_alist [".*\\.\\(txt\\|org\\)", mode];
     Action.define_action "org_mode" org_mode;
-
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer_and_set_outlines::(Var.get_global Ebuffer.saved_buffer_hooks));
   )

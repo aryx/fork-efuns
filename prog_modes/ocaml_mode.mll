@@ -1334,7 +1334,7 @@ let install buf =
   )
 
 
-let mode =  Ebuffer.new_major_mode "Ocaml" [install]
+let mode =  Ebuffer.new_major_mode "Ocaml" (Some install)
 let ocaml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 
 (***********************************************************************)

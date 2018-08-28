@@ -817,7 +817,7 @@ let install buf =
   ()
 
   
-let mode = Ebuffer.new_major_mode "C"  [install]
+let mode = Ebuffer.new_major_mode "C"  (Some install)
 let c_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 
 (***********************************************************************)
