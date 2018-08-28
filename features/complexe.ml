@@ -395,7 +395,7 @@ let _ =
         set_global_variable;
       Keymap.add_interactive edt.edt_map "set_parameter" set_parameter;
       Keymap.add_interactive edt.edt_map "get_parameter" get_parameter;
-      
+    Var.set_global Ebuffer.saved_buffer_hooks [update_time];
   )
 (*e: toplevel [[Complex._1]] *)
   

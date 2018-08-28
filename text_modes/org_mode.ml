@@ -29,8 +29,6 @@ open Options
  *  - C-M-up and down, to move around sections
  *)
 
-
-
 (*****************************************************************************)
 (* Colors *)
 (*****************************************************************************)
@@ -101,7 +99,6 @@ let color_buffer_and_set_outlines buf =
     (Text.make_attr (Attr.get_color !!Pl_colors.section_comment_color) 1 0 false);
   ()
 
-
 (*****************************************************************************)
 (* Installation *)
 (*****************************************************************************)
@@ -131,10 +128,7 @@ let _ =
       ((List.map (fun s -> s, mode) [".*\\.\\(txt\\|org\\)"]) @ alist);
     
     Action.define_action "org_mode" org_mode;
-    Action.define_action "org_colorize" (fun frm ->
-      color_buffer_and_set_outlines frm.frm_buffer);
-(* TODO
-    Var.set_major_var mode Ebuffer.save_buffer_hooks
-      ("org_colorize"::(Vars.get_var Ebuffer.save_buffer_hooks));
-*)
+
+    Var.set_major_var mode Ebuffer.saved_buffer_hooks
+      (color_buffer_and_set_outlines::(Var.get_global Ebuffer.saved_buffer_hooks));
   )

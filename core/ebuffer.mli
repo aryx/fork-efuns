@@ -12,6 +12,7 @@ val create_buf_hook : (t -> unit) list Store.var
 val read : string -> Efuns.map -> t
 val save : t -> unit
 val save_buffer_hooks: Efuns.action_name list Options.option_record
+val saved_buffer_hooks : (t -> unit) list Store.var
 
 (* This should not be used in plugins and hoping it will kill a buffer.
  * What you want is kill the frame managing the buffer, and then

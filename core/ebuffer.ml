@@ -173,9 +173,7 @@ let save_buffer_hooks = define_option ["save_buffer_hooks"] ""
 (*e: constant [[Ebuffer.save_buffer_hooks]] *)
   
 (*s: constant [[Ebuffer.saved_buffer_hooks]] *)
-let saved_buffer_hooks = define_option ["saved_buffer_hooks"] "" 
-    (list_option string_option)
-  ["update_time" ]
+let saved_buffer_hooks = Store.create_abstr "saved_buffer_hooks"
 (*e: constant [[Ebuffer.saved_buffer_hooks]] *)
 
 (*s: function [[Ebuffer.save]] *)
@@ -192,7 +190,8 @@ let save buf =
   close_out outc;
   buf.buf_last_saved <- Text.version buf.buf_text;
 
-  Hook.exec_named_buf_hooks !!saved_buffer_hooks buf
+  let hooks = try Var.get_var buf saved_buffer_hooks with Not_found -> [] in
+  Hook.exec_hooks hooks buf
 (*e: function [[Ebuffer.save]] *)
  
 (*s: function [[Ebuffer.read]] *)
