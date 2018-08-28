@@ -42,10 +42,6 @@ otherwise can't delete those $Id:xxx
 
 ** small bugs but useful stuff
 
-*** EASY realpath/fullpath so can edit gtd.org in both editors and safe
-otherwise when modify gtd.org in emacs then efuns
-does not see it
-
 *** eshell: color_region, because color from scratch
 starts to be expensive when have long eshell session
 still true on fast surface book 2?

@@ -707,7 +707,9 @@ let _ =
     Parameter.add_option_parameter Compil.compile_find_makefile;
     Parameter.add_option_parameter Text.add_amount;
     (*e: [[Std_efunsrc._5]] start hooks options *)
-    init_global_map ()
+    init_global_map ();
+    Hook.add_hook Top_window.handle_key_start_hook Complexe.check_file;      
+
   )
 (*e: toplevel [[Std_efunsrc._5]] *)
 (*e: std_efunsrc.ml *)
