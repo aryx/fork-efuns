@@ -84,4 +84,6 @@ let _ =
   Hook.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist [".*\\.nw$", mode];
     Action.define_action "noweb_mode" noweb_mode;
+    Var.set_major_var mode Ebuffer.saved_buffer_hooks
+      (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
   )

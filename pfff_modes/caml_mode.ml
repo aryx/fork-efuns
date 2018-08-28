@@ -92,4 +92,6 @@ let _ =
       Ocaml_mode.ocaml_find_error;
     Var.set_major_var mode Compil.find_error_location_regexp 
       (snd !!Ocaml_mode.ocaml_error_regexp);
+    Var.set_major_var mode Ebuffer.saved_buffer_hooks
+      (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
   )
