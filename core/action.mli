@@ -1,11 +1,11 @@
 
 type t = Efuns.action
 
-(* to go from a string to an ocaml function (ocaml does not have eval
- * so we have to assist and define actions) 
+(* to go from a string to an ocaml function 
+ * (ocaml does not have 'eval' so we have to assist and define "actions")
  *)
 
-val define_action : Efuns.action_name -> Efuns.action -> unit
+val define_action : Efuns.action_name -> t -> unit
 val define_buffer_action : Efuns.action_name -> (Efuns.buffer -> unit) -> unit
 
 val get_action : Efuns.action_name -> Efuns.generic_action

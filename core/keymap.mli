@@ -3,12 +3,12 @@ type t = Efuns.map
 
 (* creation *)
 
-val create: unit -> Efuns.map
+val create: unit -> t
 
 (* getters/setters *)
 
 val add_binding: 
-  Efuns.map ->        Efuns.keys ->                      Efuns.action -> unit
+  t ->        Efuns.keys ->                      Efuns.action -> unit
 
 val add_global_key:
                       Efuns.keys -> Efuns.action_name -> Efuns.action -> unit
@@ -23,14 +23,14 @@ val define_interactive_action:
   Efuns.action_name -> Efuns.action -> unit
 
 val add_interactive: 
-  Efuns.map -> Efuns.action_name -> Efuns.action -> unit
+  t -> Efuns.action_name -> Efuns.action -> unit
 
-val get_binding: Efuns.map -> Efuns.keys -> Efuns.binding
+val get_binding: t -> Efuns.keys -> Efuns.binding
 
 (* helpers *)
 
 val interactive: 
-  Efuns.map -> 
+  t -> 
   (Efuns.keys -> Efuns.action_name -> Efuns.action -> unit)
 
 val dummy_action: Efuns.action

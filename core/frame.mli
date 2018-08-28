@@ -7,18 +7,18 @@ type t = Efuns.frame
  * kill all the previous frames that were in the window.
  *)
 val create : 
-  Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
+  Efuns.window -> string option -> Efuns.buffer -> t
 
 (* without_top means does not make the frame the top active frame *)
 val create_without_top :
-  Efuns.window -> string option -> Efuns.buffer -> Efuns.frame
+  Efuns.window -> string option -> Efuns.buffer -> t
 (* alias for create_without_top *)
 val create_inactive : 
-  Efuns.window -> Efuns.buffer -> Efuns.frame
+  Efuns.window -> Efuns.buffer -> t
 
 (* load/save/kill *)
 
-val load_file : Efuns.window -> Common.filename -> Efuns.frame
+val load_file : Efuns.window -> Common.filename -> t
 
 (* ugly: you may want to use Multi_buffers.set_previous_frame just before.
  * note: you can't maintain a reference to the old frame as in
@@ -31,68 +31,68 @@ val load_file : Efuns.window -> Common.filename -> Efuns.frame
 val change_buffer : Efuns.window -> string -> unit
 val change_buffer_hooks: Efuns.action_name list Options.option_record
 
-val save_buffer : Efuns.frame -> unit
+val save_buffer : t -> unit
 
-val kill : Efuns.frame -> unit
+val kill : t -> unit
 val kill_all : Efuns.window -> unit
 
 exception BufferKilled
-val unkill : Efuns.window -> Efuns.frame -> unit
+val unkill : Efuns.window -> t -> unit
 
 (* find *)
 
-val find_buffer_frame : Efuns.buffer -> Efuns.frame
+val find_buffer_frame : Efuns.buffer -> t
 
 (* display *)
 
-val display : Efuns.top_window -> Efuns.frame -> unit
+val display : Efuns.top_window -> t -> unit
 
 (* prepare the frame for display, setup cutline, frm_table, etc *)
-val install : Efuns.window -> Efuns.frame -> unit
+val install : Efuns.window -> t -> unit
 
 (* status line *)
 
 val status_format : (Efuns.status_info * (int * int)) list ref
 val status_print : Efuns.status -> string -> Efuns.status_info -> unit
-val status_modified : Efuns.frame -> bool -> unit
-val status_col : Efuns.frame -> int -> unit
-val status_major_mode : Efuns.frame  -> unit
-val status_line : Efuns.frame -> int -> unit
-val status_name : Efuns.frame -> string -> unit
+val status_modified : t -> bool -> unit
+val status_col : t -> int -> unit
+val status_major_mode : t  -> unit
+val status_line : t -> int -> unit
+val status_name : t -> string -> unit
 
 (* cursor *)
 
-val set_cursor : Efuns.frame -> unit
+val set_cursor : t -> unit
 
 val point_to_x_when_no_cutline : Efuns.buffer -> Text.point -> int
-val cursor_to_coord : Efuns.frame -> int -> int -> Text.coord
+val cursor_to_coord : t -> int -> int -> Text.coord
 
 (* x y screen coordinates *)
-val move_point : Efuns.frame -> Text.point -> int -> int -> unit
+val move_point : t -> Text.point -> int -> int -> unit
 
 (* getters/setters *)
 
-val current_dir : Efuns.frame -> string
+val current_dir : t -> string
 
 (* dumpers *)
 
 (* iterator *)
 
-val to_frame : (Efuns.buffer -> Text.point -> 'a) -> Efuns.frame -> 'a
+val to_frame : (Efuns.buffer -> Text.point -> 'a) -> t -> 'a
 
 (* navigation *)
 
-val active : Efuns.frame -> unit
+val active : t -> unit
 
 (* misc *)
 
 val editname : string
-exception FoundFrame of Efuns.frame
+exception FoundFrame of t
 
-val bindings_help : Efuns.frame -> unit
+val bindings_help : t -> unit
 
 (*
-val display_line : Efuns.top_window -> Efuns.frame -> string -> int -> unit
-val update_table : 'a -> Efuns.frame -> unit
-val resize : Efuns.frame -> unit 
+val display_line : Efuns.top_window -> t -> string -> int -> unit
+val update_table : 'a -> t -> unit
+val resize : t -> unit 
 *)
