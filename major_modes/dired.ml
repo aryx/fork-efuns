@@ -34,7 +34,7 @@ let file_reg = Str.regexp ".* \\([^ ]+\\)$"
 (*s: function [[Dired.get_file_line]] *)
 let get_file_line frame =
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
-    (Globals.editor()).loc_dirname <- Filename.dirname filename;
+    (Globals.editor()).edt_dirname <- Filename.dirname filename;
   );
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
@@ -213,7 +213,7 @@ let _ =
     ];
   
   Hook.add_start_hook (fun () ->
-    Keymap.add_interactive ((Globals.editor()).loc_map) "dired_mode" 
+    Keymap.add_interactive ((Globals.editor()).edt_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
     Var.set_global Ebuffer.modes_alist 

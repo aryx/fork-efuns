@@ -353,40 +353,40 @@ and window_down =
 type editor =
   { 
     (* key is buffer name (made unique via get_unique_name()) *)
-    mutable loc_buffers : (string, buffer) Hashtbl.t;
+    mutable edt_buffers : (string, buffer) Hashtbl.t;
     (* key is filename (should be unique? todo: use realpath?) *)
-    mutable loc_files : (Common.filename, buffer) Hashtbl.t;
+    mutable edt_files : (Common.filename, buffer) Hashtbl.t;
 
     (* list when have one efuns running multiple top windows *)
     mutable top_windows : top_window list;
 
     (* pwd of efuns when started and then dirname of file of active frame *)
-    mutable loc_dirname : string;
+    mutable edt_dirname : string;
 
     (* general look, configurable via -xxx command line options or .efunsrc 
      * (dimension type is in characters)
      *)
-    mutable loc_width : int;
-    mutable loc_height : int;
+    mutable edt_width : int;
+    mutable edt_height : int;
 
-    mutable loc_fg : string;
-    mutable loc_bg : string;
-    mutable loc_font : string;
+    mutable edt_fg : string;
+    mutable edt_bg : string;
+    mutable edt_font : string;
 
     (*s: [[Efuns.editor]] other fields *)
-    loc_map : map;
+    edt_map : map;
     (*x: [[Efuns.editor]] other fields *)
-    loc_vars : Store.t;
+    edt_vars : Store.t;
     (*x: [[Efuns.editor]] other fields *)
-    loc_colors_names : string array;
-    loc_colors : (string,int) Hashtbl.t;
-    mutable loc_colors_n : int;
+    edt_colors_names : string array;
+    edt_colors : (string,int) Hashtbl.t;
+    mutable edt_colors_n : int;
     (*x: [[Efuns.editor]] other fields *)
-    loc_fonts : (string,int) Hashtbl.t;
-    loc_fonts_names : string array;
-    mutable loc_fonts_n : int;
+    edt_fonts : (string,int) Hashtbl.t;
+    edt_fonts_names : string array;
+    mutable edt_fonts_n : int;
     (*x: [[Efuns.editor]] other fields *)
-    loc_mutex : Mutex.t;
+    edt_mutex : Mutex.t;
     (*e: [[Efuns.editor]] other fields *)
   } 
 (*e: type [[Efuns.editor]] *)

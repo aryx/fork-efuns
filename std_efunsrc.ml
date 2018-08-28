@@ -601,7 +601,7 @@ let init_global_map () =
   (*s: [[Std_efunsrc.init_global_map()]] add interactives from [[interactives_map]] *)
   !!interactives_map |> List.iter (fun (name, action) ->
     try
-      Keymap.add_interactive (Globals.editor()).loc_map name 
+      Keymap.add_interactive (Globals.editor()).edt_map name 
         (execute_action action)
     with e ->
       Log.printf "Error for action %s" action;
@@ -680,7 +680,7 @@ let _ =
   Top_window.buffers_menu := (fun top_window button () ->
       let buffers = ref [] in
       let edt = Globals.editor() in
-      Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) edt.loc_buffers;
+      Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) edt.edt_buffers;
       let _desc = Array.map (fun name -> 
             (name, Top_window.wrap top_window (fun top_window ->
                   let frame = top_window.top_active_frame in

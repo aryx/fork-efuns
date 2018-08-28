@@ -139,7 +139,7 @@ let n_5 = (NormalMap, Char.code '5')
 (*s: function [[Keymap.all_bindings]] *)
 let all_bindings () =
   let s = ref "Default bindings:" in
-  (Globals.editor()).loc_map.interactives |> List.iter(fun (name,(_,binding)) ->
+  (Globals.editor()).edt_map.interactives |> List.iter(fun (name,(_,binding)) ->
     match binding with
     | None -> ()
     | Some key_list ->
@@ -165,7 +165,7 @@ let add_interactive map name f =
 
 (*s: function [[Keymap.add_global_key]] *)
 let add_global_key = fun prefix string action ->
-  interactive (Globals.editor()).loc_map prefix string action
+  interactive (Globals.editor()).edt_map prefix string action
 (*e: function [[Keymap.add_global_key]] *)
 (*s: function [[Keymap.add_local_key]] *)
 let add_local_key buf = 
@@ -183,7 +183,7 @@ let add_major_key major =
 (*s: function [[Keymap.define_interactive_action]] *)
 let define_interactive_action action_name action_fun =
   Action.define_action action_name action_fun;
-  let map = (Globals.editor()).loc_map in
+  let map = (Globals.editor()).edt_map in
   add_interactive map action_name action_fun
 (*e: function [[Keymap.define_interactive_action]] *)
 

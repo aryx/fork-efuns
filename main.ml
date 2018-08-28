@@ -143,31 +143,31 @@ let main () =
 
   (*s: [[main()]] initial editor *)
   let editor = {
-      loc_buffers = Hashtbl.create 13;
-      loc_files = Hashtbl.create 13;
+      edt_buffers = Hashtbl.create 13;
+      edt_files = Hashtbl.create 13;
 
       top_windows = [];
 
-      loc_width = !!width;
-      loc_height = !!height;
-      loc_fg = !!foreground;
-      loc_bg = !!background;
-      loc_font = !!Globals.font;
+      edt_width = !!width;
+      edt_height = !!height;
+      edt_fg = !!foreground;
+      edt_bg = !!background;
+      edt_font = !!Globals.font;
 
-      loc_map = Keymap.create ();
-      loc_dirname = Sys.getcwd ();
+      edt_map = Keymap.create ();
+      edt_dirname = Sys.getcwd ();
 
-      loc_vars = Store.new_store ();
+      edt_vars = Store.new_store ();
     
-      loc_colors_names = Array.create 256 "";
-      loc_colors = Hashtbl.create 37;
-      loc_colors_n = 0;
+      edt_colors_names = Array.create 256 "";
+      edt_colors = Hashtbl.create 37;
+      edt_colors_n = 0;
 
-      loc_fonts_names = Array.create 256 "";
-      loc_fonts = Hashtbl.create 37;
-      loc_fonts_n = 0;
+      edt_fonts_names = Array.create 256 "";
+      edt_fonts = Hashtbl.create 37;
+      edt_fonts_n = 0;
 
-      loc_mutex = Mutex.create ()
+      edt_mutex = Mutex.create ()
   } in
   (*e: [[main()]] initial editor *)
   (*s: [[main()]] initialize the world *)

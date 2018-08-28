@@ -323,8 +323,8 @@ let handle_key top_window modifiers keysym =
   
 (*s: function [[Top_window.wrap]] *)
 let wrap top_window f () = 
-  let loc = Globals.editor() in
-  Mutex.lock loc.loc_mutex;  
+  let edt = Globals.editor() in
+  Mutex.lock edt.edt_mutex;  
   clean_display ();    
   clear_message top_window;
   keypressed := XK.xk_Menu;
@@ -337,7 +337,7 @@ let wrap top_window f () =
   end;
   Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();    
   update_display ();
-  Mutex.unlock loc.loc_mutex
+  Mutex.unlock edt.edt_mutex
 (*e: function [[Top_window.wrap]] *)
 
 (*s: function [[Top_window.wrap_item]] *)
@@ -432,18 +432,15 @@ let help_menu = ref ([| |]: (string * action) array)
   
 (*s: function [[Top_window.create]] *)
 let create () =
-  let loc = Globals.editor() in
-  let buf = 
-    Ebuffer.default "*help*" in
+  let edt = Globals.editor() in
+  let buf = Ebuffer.default "*help*" in
   (* keep one line for the minibuffer, hence the -1 *)
-  let window = 
-    Window.create_at_top  0 0 loc.loc_width (loc.loc_height - 1) in
-  let frame = 
-    Frame.create_without_top window None buf in
+  let window = Window.create_at_top  0 0 edt.edt_width (edt.edt_height - 1) in
+  let frame = Frame.create_without_top window None buf in
   let top_window =
     { 
-      top_width = loc.loc_width;
-      top_height = loc.loc_height;
+      top_width = edt.edt_width;
+      top_height = edt.edt_height;
       window = window;
       top_active_frame = frame;
 
@@ -458,7 +455,7 @@ let create () =
 
   (* adjust what Window.create_at_top could not do *)
   frame.frm_window.win_up <- TopWindow top_window;
-  loc.top_windows <- top_window :: loc.top_windows;
+  edt.top_windows <- top_window :: edt.top_windows;
 
   top_window
 (*e: function [[Top_window.create]] *)

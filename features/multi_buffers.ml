@@ -15,7 +15,7 @@ open Efuns
 
 (*s: function [[Simple.buffer_list]] *)
 let buffer_list frame =
-  (Globals.editor()).loc_buffers |> Common.hash_to_list |> List.map fst
+  (Globals.editor()).edt_buffers |> Common.hash_to_list |> List.map fst
 (*e: function [[Simple.buffer_list]] *)
 
 (*s: constant [[Select.prev_buffers]] *)
@@ -62,7 +62,7 @@ let select_buffer frame request default action =
 (*s: function [[Simple.next_buffer]] *)
 (* useful when want to iterate over all buffers, e.g. in dabbrev_expand *)
 let next_buffer buf =
-  let buf_list = Utils.list_of_hash (Globals.editor()).loc_buffers in
+  let buf_list = Utils.list_of_hash (Globals.editor()).edt_buffers in
   let rec iter list =
     match list with
       [] -> raise Not_found 
@@ -88,7 +88,7 @@ let kill_buffer frame =
     | x::xs when x <> buf.buf_name -> 
         prev_buffers := xs;
         (try 
-          Hashtbl.find (Globals.editor()).loc_buffers x
+          Hashtbl.find (Globals.editor()).edt_buffers x
         with Not_found -> 
           next_buffer buf
         )

@@ -47,26 +47,27 @@ let define_buffer_action action_name action_fun =
 (*e: function [[Efuns.define_buffer_action]] *)
 
 (*s: function [[Efuns.get_action]] *)
-let get_action action =
-  try Hashtbl.find actions action 
+let get_action action_name =
+  try Hashtbl.find actions action_name
   with Not_found ->
-    Globals.error "Could not find action %s. Forgot define_action()?" action;
+    Globals.error "Could not find action %s. Forgot define_action()?" 
+        action_name;
     BufferAction (fun _ -> ())
 (*e: function [[Efuns.get_action]] *)
 
 (*s: function [[Efuns.execute_action]] *)
-let execute_action action = 
-  match (get_action action) with
+let execute_action action_name = 
+  match (get_action action_name) with
   | FrameAction f -> f 
   | BufferAction f -> (fun frame -> f frame.frm_buffer)
 (*e: function [[Efuns.execute_action]] *)
 
 (*s: function [[Efuns.execute_buffer_action]] *)
-let execute_buffer_action action buf =
-  match (get_action action) with
+let execute_buffer_action action_name buf =
+  match (get_action action_name) with
     BufferAction f -> f buf
   | FrameAction _f -> 
-      Globals.error "Can't apply action %s on buffer" action
+      Globals.error "Can't apply action %s on buffer" action_name
 (*e: function [[Efuns.execute_buffer_action]] *)
 
 (*e: core/action.ml *)

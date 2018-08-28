@@ -53,6 +53,7 @@ let create mini up_window xpos ypos width height =
 let rec top window = 
   match window.win_up with
   | TopWindow top_window -> top_window
+  (* recurse *)
   | Window window -> top window
 (*e: function [[Window.top]] *)
 

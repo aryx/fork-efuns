@@ -24,7 +24,7 @@ open Efuns
 
 type world = {
   (* the "model" (but actually accessible also via Globals.location()) *)
-  loc: Efuns.editor;
+  edt: Efuns.editor;
 
   (* dimensions *)
   metrics: layout;
@@ -146,7 +146,7 @@ let clear cr =
 (* Pango and metrics *)
 (*****************************************************************************)
 
-let compute_metrics loc desc =
+let compute_metrics edt desc =
 
   let fontmap = Pango_cairo.FontMap.get_default () in
   let ctx = Pango_cairo.FontMap.create_context fontmap in
@@ -164,8 +164,8 @@ let compute_metrics loc desc =
     font_width = width; 
     font_height = height;
 
-    main_width = float_of_int loc.loc_width * width;
-    main_height = float_of_int loc.loc_height * height;
+    main_width = float_of_int edt.edt_width * width;
+    main_height = float_of_int edt.edt_height * height;
 
     mini_factor = 10.;
     margin_factor = 150.;
@@ -230,7 +230,7 @@ let draw_minimap w =
 
   Cairo.scale cr (1. / w.metrics.mini_factor) (1. / w.metrics.mini_factor);
 
-  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
+  let frame = w.edt.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
@@ -263,7 +263,7 @@ let draw_minimap w =
 
       let fgcolor = 
         let idx = attr land 255 in
-        w.loc.loc_colors_names.(idx)
+        w.edt.edt_colors_names.(idx)
       in
       let fontsize = (attr lsr 16) land 255 in
       set_source_color ~cr ~color:fgcolor ();
@@ -312,7 +312,7 @@ let draw_minimap_overlay w =
   Cairo.translate cr (w.metrics.main_width + w.metrics.margin_width * 2.) 0.0;
   Cairo.scale cr (1. / w.metrics.mini_factor) (1. / w.metrics.mini_factor);
 
-  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
+  let frame = w.edt.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
@@ -326,7 +326,7 @@ let draw_minimap_overlay w =
 
   let x = 0. in
   let y = (float_of_int line) * w.metrics.font_height in
-  let h = (float_of_int w.loc.loc_height) * w.metrics.font_height in
+  let h = (float_of_int w.edt.edt_height) * w.metrics.font_height in
 
   Cairo.set_line_width cr ((Cairo.get_line_width cr) * w.metrics.mini_factor);
   fill_rectangle_xywh ~alpha:0.2 ~cr ~x ~y ~w:w.metrics.main_width ~h
@@ -341,7 +341,7 @@ let draw_minimap_overlay a = Common.profile_code "G.draw_minimap_overlay"
 
 (* opti to avoid recompute/redraw expensive minimap *)
 let active_frame_info w =
-  let frame = w.loc.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
+  let frame = w.edt.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
 
@@ -432,7 +432,7 @@ let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
   fill_rectangle_xywh ~cr ~x ~y ~w ~h ~color (); 
   ()
 
-let draw_string loc cr pg   col line  str  offset len   attr =
+let draw_string edt cr pg   col line  str  offset len   attr =
   if !Globals.debug_graphics
   then pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
               col line str offset len attr);
@@ -443,13 +443,13 @@ let draw_string loc cr pg   col line  str  offset len   attr =
       then 2
       else idx
     in
-    loc.loc_colors_names.(idx)
+    edt.edt_colors_names.(idx)
   in
   clear_eol ~color:bgcolor cr pg col line len;
   move_to cr pg col line;
   let fgcolor = 
     let idx = (attr) land 255 in
-    loc.loc_colors_names.(idx)
+    edt.edt_colors_names.(idx)
   in
   set_source_color ~cr ~color:fgcolor ();
   let (ly, _) = pg in
@@ -465,13 +465,13 @@ let backend w da top_gtk_win =
   Cairo.translate cr (w.metrics.margin_width) 0.0;
   let pg = (w.ly, w.metrics) in
 
-  let loc = w.loc in
+  let edt = w.edt in
   { Xdraw. 
     clear_eol = (fun a b c -> 
       clear_eol cr pg (conv a) (conv b) c
     ); 
     draw_string = (fun a b c d e f -> 
-      draw_string loc cr pg (conv a) (conv b) c d e f
+      draw_string edt cr pg (conv a) (conv b) c d e f
     );
 
     (* refresh drawing area *)
@@ -500,7 +500,7 @@ let paint () =
 
 let get_w = ref (fun () -> failwith "no w yet, configure has been called?")
 
-let configure loc top_window desc metrics da top_gtk_win =
+let configure edt top_window desc metrics da top_gtk_win =
  fun ev ->
   let width = GdkEvent.Configure.width ev in
   let height = GdkEvent.Configure.height ev in
@@ -518,7 +518,7 @@ let configure loc top_window desc metrics da top_gtk_win =
   let colorkind = Cairo.CONTENT_COLOR_ALPHA in
 
   let w = {
-    loc = loc;
+    edt = edt;
     base =    Cairo.surface_create_similar surface colorkind  width height;
     overlay = Cairo.surface_create_similar surface colorkind  width height;
     final = surface;
@@ -624,7 +624,7 @@ let init2 init_files =
   let _locale = GtkMain.Main.init () in
   let edt = Globals.editor () in
 
-  let desc = Pango.Font.from_string edt.loc_font
+  let desc = Pango.Font.from_string edt.edt_font
   (* see https://github.com/hbin/top-programming-fonts to install
    * some nice programming fonts (e.g., Menlo)
    *)

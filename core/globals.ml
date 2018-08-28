@@ -28,8 +28,8 @@ let editor () =
 (*s: function [[Efuns.with_lock]] *)
 let with_lock f =
   let edt = editor () in
-  Mutex.lock edt.loc_mutex;
-  Common.finalize f (fun () -> Mutex.unlock edt.loc_mutex)
+  Mutex.lock edt.edt_mutex;
+  Common.finalize f (fun () -> Mutex.unlock edt.edt_mutex)
 (*e: function [[Efuns.with_lock]] *)
 
 (*s: function [[Efuns.error]] *)

@@ -63,7 +63,7 @@ let get_unique_name filename =
   in
   try
     while true do
-      let _ = Hashtbl.find (Globals.editor()).loc_buffers (compute_name ()) 
+      let _ = Hashtbl.find (Globals.editor()).edt_buffers (compute_name ()) 
       in 
       incr i
     done; 
@@ -134,7 +134,7 @@ let create name filename text local_map =
 
     } in
   (*s: [[Ebuffer.create()]] adjust editor global fields *)
-  Hashtbl.add (Globals.editor()).loc_buffers name buf;
+  Hashtbl.add (Globals.editor()).edt_buffers name buf;
   (*e: [[Ebuffer.create()]] adjust editor global fields *)
   (*s: [[Ebuffer.create()]] adjust charreprs *)
   for i=0 to 25 do
@@ -155,9 +155,9 @@ let create name filename text local_map =
 (*s: function [[Ebuffer.kill]] *)
 let kill buf =
   let edt = Globals.editor() in
-  Hashtbl.remove edt.loc_buffers buf.buf_name;
+  Hashtbl.remove edt.edt_buffers buf.buf_name;
   buf.buf_filename |> Common.do_option (fun filename ->
-    Hashtbl.remove edt.loc_files filename
+    Hashtbl.remove edt.edt_files filename
   );
   List.iter (fun f -> f () ) buf.buf_finalizers;
 (* TODO Gc.compact (); this cause some segfault under plan9 with ocaml light *)
@@ -198,9 +198,9 @@ let save buf =
 (*s: function [[Ebuffer.read]] *)
 let read filename local_map =
   let edt = Globals.editor() in
-  let filename = Utils.normal_name edt.loc_dirname filename in
+  let filename = Utils.normal_name edt.edt_dirname filename in
   try
-    Hashtbl.find edt.loc_files filename
+    Hashtbl.find edt.edt_files filename
   with Not_found ->
     let text =
       try
@@ -213,13 +213,13 @@ let read filename local_map =
         Text.create ""
     in
     let buf = create filename (Some filename) text local_map in
-    Hashtbl.add edt.loc_files filename buf;
+    Hashtbl.add edt.edt_files filename buf;
     buf
 (*e: function [[Ebuffer.read]] *)
 
 (*s: function [[Ebuffer.find_buffer_opt]] *)
 let find_buffer_opt name =
-  try Some (Hashtbl.find (Globals.editor()).loc_buffers name)
+  try Some (Hashtbl.find (Globals.editor()).edt_buffers name)
   with Not_found -> None
 (*e: function [[Ebuffer.find_buffer_opt]] *)
 
@@ -236,7 +236,7 @@ INRIA Rocquencourt
 (*s: function [[Ebuffer.default]] *)
 let default name =
   try
-    Hashtbl.find (Globals.editor()).loc_buffers name
+    Hashtbl.find (Globals.editor()).edt_buffers name
   with Not_found ->
     let str = 
       if name = "*help*" 
@@ -258,21 +258,21 @@ exception BufferAlreadyOpened
 (*s: function [[Ebuffer.change_name]] *)
 let change_name buf filename =
   let edt = Globals.editor() in
-  Hashtbl.remove edt.loc_buffers buf.buf_name;
+  Hashtbl.remove edt.edt_buffers buf.buf_name;
   buf.buf_filename |> Common.do_option (fun filename ->
-    Hashtbl.remove edt.loc_files filename
+    Hashtbl.remove edt.edt_files filename
   );
   let filename = 
     if Filename.is_relative filename 
-    then Filename.concat edt.loc_dirname filename
+    then Filename.concat edt.edt_dirname filename
     else filename
   in
-  if Utils.hashtbl_mem edt.loc_files filename
+  if Utils.hashtbl_mem edt.edt_files filename
   then raise BufferAlreadyOpened;
-  let filename = Utils.normal_name edt.loc_dirname filename in
+  let filename = Utils.normal_name edt.edt_dirname filename in
   let name = get_unique_name filename in
-  Hashtbl.add edt.loc_buffers name buf;
-  Hashtbl.add edt.loc_files filename buf;
+  Hashtbl.add edt.edt_buffers name buf;
+  Hashtbl.add edt.edt_files filename buf;
   buf.buf_filename <- Some filename;
   buf.buf_name <- name
 (*e: function [[Ebuffer.change_name]] *)
@@ -423,7 +423,7 @@ let get_binding buf keylist =
     );
     (*s: [[Ebuffer.get_binding()]] if partial map *)
     if buf.buf_map_partial then
-      (let b = Keymap.get_binding (Globals.editor()).loc_map keylist in
+      (let b = Keymap.get_binding (Globals.editor()).edt_map keylist in
         match b with
         | Prefix map -> binding := b;
         | Function f -> binding := b; raise Exit
@@ -438,7 +438,7 @@ let get_binding buf keylist =
 let message buf m =
   let name = "*Messages*" in
   try
-    let buf = Hashtbl.find (Globals.editor()).loc_buffers name in
+    let buf = Hashtbl.find (Globals.editor()).edt_buffers name in
     Text.insert_at_end buf.buf_text (m^"\n");
   with Not_found ->
     create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore

@@ -117,7 +117,7 @@ let check_file frame =
     
 (*s: function [[Complex.exit_efuns]] *)
 let exit_efuns frame =
-  let buffers = Utils.list_of_hash (Globals.editor()).loc_buffers in
+  let buffers = Utils.list_of_hash (Globals.editor()).edt_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
     raise (Common.UnixExit 0)
@@ -126,7 +126,7 @@ let exit_efuns frame =
 
 (*s: function [[Complex.save_some_buffers]] *)
 let save_some_buffers frame =
-  let buffers = Utils.list_of_hash (Globals.editor()).loc_buffers in
+  let buffers = Utils.list_of_hash (Globals.editor()).edt_buffers in
   save_buffers_and_action frame buffers (fun _ -> ())
 (*e: function [[Complex.save_some_buffers]] *)
 
@@ -314,7 +314,7 @@ let all_variables frame _ =
   | _ ->
       let list = 
         (Store.list buf.buf_vars) @ 
-        (Store.list (Globals.editor()).loc_vars) 
+        (Store.list (Globals.editor()).edt_vars) 
       in
       all_vars := Some (frame, list);
       list
@@ -335,7 +335,7 @@ let set_global_variable frame =
     "" (all_variables frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
-          Store.input (Globals.editor()).loc_vars variable value))
+          Store.input (Globals.editor()).edt_vars variable value))
 (*e: function [[Complex.set_global_variable]] *)
   
 (*s: function [[Complex.get_variable]] *)
@@ -350,7 +350,7 @@ let describe_variable frame =
           try
             Store.print buf.buf_vars variable
           with _ ->
-            Store.print (Globals.editor()).loc_vars variable)))
+            Store.print (Globals.editor()).edt_vars variable)))
 (*e: function [[Complex.get_variable]] *)
 
 open Options
@@ -388,13 +388,13 @@ let get_parameter frame =
 let _ =
   Hook.add_start_hook (fun () ->
     let edt = Globals.editor() in
-      Keymap.add_interactive edt.loc_map "make_directory" mkdir;
-      Keymap.add_interactive edt.loc_map "set_local_variable" 
+      Keymap.add_interactive edt.edt_map "make_directory" mkdir;
+      Keymap.add_interactive edt.edt_map "set_local_variable" 
         set_local_variable;
-      Keymap.add_interactive edt.loc_map "set_global_variable" 
+      Keymap.add_interactive edt.edt_map "set_global_variable" 
         set_global_variable;
-      Keymap.add_interactive edt.loc_map "set_parameter" set_parameter;
-      Keymap.add_interactive edt.loc_map "get_parameter" get_parameter;
+      Keymap.add_interactive edt.edt_map "set_parameter" set_parameter;
+      Keymap.add_interactive edt.edt_map "get_parameter" get_parameter;
       
   )
 (*e: toplevel [[Complex._1]] *)
