@@ -1441,7 +1441,7 @@ let _ =
   Action.define_action "ocaml_minor_mode" 
     (fun frame -> 
       let buf = frame.frm_buffer in
-      if Ebuffer.modep buf minor_mode 
+      if Ebuffer.has_minor_mode buf minor_mode 
       then Ebuffer.del_minor_mode buf minor_mode
       else Ebuffer.set_minor_mode buf minor_mode
     )

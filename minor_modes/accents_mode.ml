@@ -218,7 +218,7 @@ let _ =
 let _ = 
   define_buffer_action "accents_mode" 
     (fun buf -> 
-      if Ebuffer.modep buf mode then begin
+      if Ebuffer.has_minor_mode buf mode then begin
           Ebuffer.del_minor_mode buf mode
         end else
         Ebuffer.set_minor_mode buf mode)

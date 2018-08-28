@@ -56,7 +56,7 @@ val set_buffer_mode : t -> unit
 val new_minor_mode : string ->  (t -> unit) list -> Efuns.minor_mode
 val set_minor_mode : t -> Efuns.minor_mode -> unit
 val del_minor_mode : t -> Efuns.minor_mode -> unit
-val modep : t -> Efuns.minor_mode -> bool
+val has_minor_mode : t -> Efuns.minor_mode -> bool
 
 (* display *)
 val compute_representation : t -> int -> Text.line

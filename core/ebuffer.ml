@@ -346,10 +346,10 @@ let del_minor_mode buf minor =
     ) buf.buf_minor_modes []
 (*e: function [[Ebuffer.del_minor_mode]] *)
   
-(*s: function [[Ebuffer.modep]] *)
-let modep buf minor =
+(*s: function [[Ebuffer.has_minor_mode]] *)
+let has_minor_mode buf minor =
   List.memq minor buf.buf_minor_modes
-(*e: function [[Ebuffer.modep]] *)
+(*e: function [[Ebuffer.has_minor_mode]] *)
 
 (*s: constant [[Ebuffer.suffix_reg]] *)
 let suffix_reg = Str.regexp "\\(.*\\)<[0-9]+>$"

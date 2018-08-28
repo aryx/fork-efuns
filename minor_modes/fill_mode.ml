@@ -48,7 +48,7 @@ let _ =
 let _ = 
   Action.define_buffer_action (minor_mode_name ^ "_mode")
     (fun buf -> 
-      if Ebuffer.modep buf mode 
+      if Ebuffer.has_minor_mode buf mode 
       then Ebuffer.del_minor_mode buf mode
       else Ebuffer.set_minor_mode buf mode
      );

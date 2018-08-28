@@ -89,7 +89,7 @@ let self_insert_command frame =
   let char = Char.chr !Top_window.keypressed in
   let buf = frame.frm_buffer in
   (*s: [[Simple.self_insert_command()]] if overwrite mode *)
-  if Ebuffer.modep buf overwrite_mode 
+  if Ebuffer.has_minor_mode buf overwrite_mode 
   then insert_at_place frame char
   (*e: [[Simple.self_insert_command()]] if overwrite mode *)
   else insert_char frame char
@@ -99,7 +99,7 @@ let self_insert_command frame =
 let char_insert_command char frame =
   let buf = frame.frm_buffer in
   (*s: [[Simple.self_insert_command()]] if overwrite mode *)
-  if Ebuffer.modep buf overwrite_mode 
+  if Ebuffer.has_minor_mode buf overwrite_mode 
   then insert_at_place frame char
   (*e: [[Simple.self_insert_command()]] if overwrite mode *)
   else insert_char frame char
@@ -932,7 +932,7 @@ let _ =
   (*s: Simple toplevel setup *)
   Action.define_buffer_action "overwrite_mode" (fun buf -> 
       let mode = overwrite_mode in
-      if Ebuffer.modep buf mode 
+      if Ebuffer.has_minor_mode buf mode 
       then Ebuffer.del_minor_mode buf mode
       else Ebuffer.set_minor_mode buf mode
   );
