@@ -31,6 +31,7 @@ PFFF_MODES=\
 # for compilation (for -I)
 PFFF_LIBS1=\
  h_program-lang \
+ matcher \
  graph_code \
  lang_ml  lang_ml-visual \
  lang_cpp lang_cpp-analyze \
@@ -41,8 +42,6 @@ PFFF_LIBS0=\
  config\
  commons-graph \
  h_files-format \
- h_program-lang \
- matcher \
 
 # for linking
 PFFF_LIBS2=\
