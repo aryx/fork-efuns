@@ -340,7 +340,7 @@ let interpret frame s =
   | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
 
   (* file editing *)
-  | _ when s =~ "v[ ]+\\(.*\\)" -> 
+  | _ when s =~ "[ve][ ]+\\(.*\\)" -> 
     builtin_v frame (Common.matched1 s);
     Simple.end_of_file frame;
   (* do not scroll_to_end() here! Indeed this will change frm_start
