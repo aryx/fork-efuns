@@ -249,6 +249,22 @@ let describe_position frame =
        (Text.get_position frame.frm_buffer.buf_text frame.frm_point))
 (*e: function [[Complex.get_pos]] *)
 
+let cursor_position frm =
+  let text = frm.frm_buffer.buf_text in
+  let point = frm.frm_point in
+  let char = Text.get_char text point in
+  let coord = Text.point_coord text point in
+  Top_window.message 
+    (Window.top frm.frm_window)
+    (Printf.sprintf "Char: '%c' (%d, #o%o, #x%x) point=%d line=%d column=%d" 
+       char 
+       (Char.code char) (Char.code char) (Char.code char)
+       (Text.get_position text point)
+       (coord.Text.c_line + 1) 
+       coord.Text.c_col
+    )
+  
+
 (*s: function [[Complex.mark_at_point]] *)
 let mark_at_point frame =
   Ebuffer.set_mark frame.frm_buffer frame.frm_point;

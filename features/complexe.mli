@@ -51,6 +51,7 @@ val goto_line : Efuns.action
 val goto_char : Efuns.action
 
 val describe_position : Efuns.action
+val cursor_position : Efuns.action
 
 val mark_at_point : Efuns.action
 

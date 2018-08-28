@@ -248,6 +248,7 @@ let _ =
   define_action "save_options" save_options;
   (*x: misc actions *)
   define_action "describe_position" Complexe.describe_position;
+  define_action "cursor_position" Complexe.cursor_position;
   (*x: misc actions *)
   define_action "unset_attr" Simple.unset_attr;
   (*x: misc actions *)
@@ -536,6 +537,8 @@ let _ =
         (*x: misc keys *)
         [NormalMap, XK.xk_Insert], "overwrite_mode";
         (*e: misc keys *)
+        [c_x; NormalMap, Char.code '='], "cursor_position";
+
         (*e: [[global_map]] initial entries *)
       ]
     end;
