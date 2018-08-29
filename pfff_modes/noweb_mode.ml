@@ -16,6 +16,7 @@ open Efuns
 open Options
 
 module PI = Parse_info
+module HC = Highlight_code
 
 (*****************************************************************************)
 (* Prelude *)
@@ -50,8 +51,9 @@ let color_buffer buf =
   Common2.with_tmp_file ~str:s ~ext:"c" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   );
-  Simple.color buf (Str.regexp "^%.*$") false
-    (Text.make_attr (Attr.get_color !!Pl_colors.syncweb_comment_color) 1 0 false);
+  (* overcome some of the parsing limitations like the lack of structure
+   * in comments.
+   *)
   Simple.color buf (Str.regexp "^%[a-zA-Z]+:") false
     (Text.make_attr (Attr.get_color !!Pl_colors.section_comment_color) 1 0 false);
   ()

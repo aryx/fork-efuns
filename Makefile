@@ -66,7 +66,7 @@ endif
 ifeq ($(USE_GTKCAIRO), 1)
 BACKENDDIR=graphics/gtk_cairo
 GRAPHICSDIRS=external/lablgtk2 external/cairo
-GRAPHICSLIBS=lablgtk.cma cairo.cma   cairo_lablgtk.cma pango_cairo.cma
+GRAPHICSLIBS=external/lablgtk2/lablgtk.cma external/cairo/cairo.cma  external/cairo/cairo_lablgtk.cma external/cairo/pango_cairo.cma
 GTKLOOP=gtkThread.cmo
 # because of -linkall and the use of libcairo, but should not be required
 EXTRA=-cclib -lfontconfig
@@ -174,10 +174,9 @@ INCLUDEDIRS=\
 
 OCAMLDEPS=$(DIRS:%=-I %)
 
+LIBS=$(EXTERNALCMAS) $(PFFFCMAS) $(GRAPHICSLIBS)
 # bigarray is used by cairo
 SYSLIBS=unix.cma str.cma threads.cma bigarray.cma
-
-LIBS=$(SYSLIBS) $(EXTERNALCMAS) $(PFFFCMAS) $(GRAPHICSLIBS)
 
 ##############################################################################
 # Generic variables
@@ -193,13 +192,13 @@ all:: $(PROGS)
 opt: $(PROGS:=.opt)
 
 # need -linkall! otherwise the 'let _ = add_start_hook ...' will not be run.
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) $(LIBS)
 	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ \
-      $(LIBS) $(GTKLOOP) $(OBJS) $(EXTRA)
+      $(SYSLIBS) $(LIBS) $(GTKLOOP) $(OBJS) $(EXTRA)
 
-$(TARGET).opt: $(OPTOBJS)
+$(TARGET).opt: $(OPTOBJS) $(LIBS:.cma=.cmxa)
 	$(OCAMLOPT) $(STATIC) -cclib -L/opt/X11/lib -o $@ \
-      $(LIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $(OPTOBJS)
+     $(SYSLIBS:.cma=.cmxa) $(LIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $(OPTOBJS)
 
 #clean::
 #	@rm -f $(OBJS) $(OBJS:.cmo=.cmi) $(OBJS:.cmo=.cmx) $(OBJS:.cmo=.o) \
@@ -210,10 +209,10 @@ clean::
 
 
 efuns_client: ipc/efuns_client.cmo
-	$(OCAMLC) $(BYTECODE_STATIC) -o $@ $(LIBS) $^
+	$(OCAMLC) $(BYTECODE_STATIC) -o $@ $(SYSLIBS) $(LIBS) $^
 
 efuns_client.opt: ipc/efuns_client.cmx
-	$(OCAMLOPT) $(STATIC) -o $@ $(LIBS:.cma=.cmxa) $^
+	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa) $(LIBS:.cma=.cmxa) $^
 
 
 depend::
@@ -246,7 +245,7 @@ visual:
 	~/pfff/codemap -no_legend -screen_size 2 -filter pfff .
 
 graph:
-	~/pfff/codegraph_build -lang cmt .
+	~/pfff/codegraph_build -symlinks -lang cmt .
 
 check:
 	~/pfff/scheck -with_graph_code graph_code.marshall -filter 3 . 2>&1 | grep -v stdlib | grep -v commons/ | grep Function

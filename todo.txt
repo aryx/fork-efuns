@@ -250,9 +250,6 @@ and make default mode?
 and then the key.
 may need a special thing though to do that.
 
-**** EASY C-x =
-to see current position
-
 **** macros!!! how can it be called emacs
 without macros!
 
