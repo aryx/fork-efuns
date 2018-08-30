@@ -264,12 +264,7 @@ let _ =
 
 (*s: toplevel [[Ocaml_toplevel._2]] *)
 let _ = 
-  define_buffer_action "ocaml_compiler_mode" 
-    (fun buf -> 
-      if Ebuffer.has_minor_mode buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode);
+  define_buffer_action "ocaml_compiler_mode" (Minor_modes.toggle_minor mode);
   define_action "ocaml_compiler_mode.find_implementation" find_implementation;
   define_action "ocaml_compiler_mode.backward_implementation" backward_implementation;
   define_action "ocaml_compiler_mode.print_type" print_type;

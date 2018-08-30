@@ -98,11 +98,6 @@ let _ =
 
 (*s: toplevel [[Paren_mode._2]] *)
 let _ = 
-  Action.define_buffer_action "paren_mode" 
-    (fun buf -> 
-      if Ebuffer.has_minor_mode buf mode 
-      then Ebuffer.del_minor_mode buf mode
-      else Ebuffer.set_minor_mode buf mode
-    )
+  Action.define_action "paren_mode" (Minor_modes.toggle_minor mode)
 (*e: toplevel [[Paren_mode._2]] *)
 (*e: minor_modes/paren_mode.ml *)

@@ -1438,13 +1438,7 @@ let _ =
   Keymap.add_binding minor_mode.min_map 
    [c_c; ControlMap, Char.code 'c'] (Action.execute_action "compile")
    |> ignore;
-  Action.define_action "ocaml_minor_mode" 
-    (fun frame -> 
-      let buf = frame.frm_buffer in
-      if Ebuffer.has_minor_mode buf minor_mode 
-      then Ebuffer.del_minor_mode buf minor_mode
-      else Ebuffer.set_minor_mode buf minor_mode
-    )
-   )
+  Action.define_action "ocaml_minor_mode" (Minor_modes.toggle_minor minor_mode)
+  )
 
 } 

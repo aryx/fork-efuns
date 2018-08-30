@@ -80,6 +80,8 @@ endif
 # Main variables
 #------------------------------------------------------------------------------
 
+#pad: I've indented some of the files I created and put them under the
+# file from which they come from in the original Efuns from LeFessant.
 SRC=\
  commons/utils.ml\
  commons/str2.ml\
@@ -123,6 +125,7 @@ SRC=\
  features/compil.ml\
  features/search.ml\
  \
+ minor_modes/minor_modes.ml\
  minor_modes/minor_mode_sample.ml\
  minor_modes/paren_mode.ml\
  minor_modes/abbrevs_mode.ml\
@@ -137,6 +140,7 @@ SRC=\
  prog_modes/pl_colors.ml\
  prog_modes/makefile_mode.ml\
  prog_modes/ocaml_mode.ml\
+ prog_modes/ocaml_merlin.ml\
  prog_modes/c_mode.ml\
  prog_modes/lisp_mode.ml\
  \

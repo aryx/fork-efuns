@@ -216,12 +216,7 @@ let _ =
 
 (*s: toplevel [[Accents_mode._2]] *)
 let _ = 
-  define_buffer_action "accents_mode" 
-    (fun buf -> 
-      if Ebuffer.has_minor_mode buf mode then begin
-          Ebuffer.del_minor_mode buf mode
-        end else
-        Ebuffer.set_minor_mode buf mode)
+  define_action "accents_mode" (Minor_modes.toggle_minor mode)
 (*e: toplevel [[Accents_mode._2]] *)
 
 (*e: minor_modes/accents_mode.ml *)

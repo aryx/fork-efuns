@@ -46,12 +46,8 @@ let _ =
   
 (*s: toplevel [[Fill_mode._2]] *)
 let _ = 
-  Action.define_buffer_action (minor_mode_name ^ "_mode")
-    (fun buf -> 
-      if Ebuffer.has_minor_mode buf mode 
-      then Ebuffer.del_minor_mode buf mode
-      else Ebuffer.set_minor_mode buf mode
-     );
+  Action.define_action (minor_mode_name ^ "_mode") 
+    (Minor_modes.toggle_minor mode)
 (*e: toplevel [[Fill_mode._2]] *)
     
 (*e: minor_modes/fill_mode.ml *)

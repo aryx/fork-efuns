@@ -42,13 +42,8 @@ let _ =
 
 (*s: toplevel [[Minor_mode_sample._2]] *)
 let _ = 
-  Action.define_action (minor_mode_name ^ "_mode")
-    (fun frame -> 
-      let buf = frame.frm_buffer in
-      if Ebuffer.has_minor_mode buf mode 
-      then Ebuffer.del_minor_mode buf mode
-      else Ebuffer.set_minor_mode buf mode
-    )
+  Action.define_action (minor_mode_name ^ "_mode") 
+    (Minor_modes.toggle_minor mode)
 (*e: toplevel [[Minor_mode_sample._2]] *)
     
 (*e: minor_modes/minor_mode_sample.ml *)
