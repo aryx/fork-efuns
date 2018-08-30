@@ -15,12 +15,23 @@ PROGS=efuns efuns_client
 #Library dependencies
 #------------------------------------------------------------------------------
 
-# mandatory dependencies
-EXTERNALDIRS=external/commons external/h_visualization
-EXTERNALCMAS=external/commons/commons.cma external/h_visualization/lib.cma
+# mandatory dependencies 
+
+# This is for -I or for finding dlls (e.g., deps-netsys)
+EXTERNALDIRS=\
+ external/commons external/h_visualization \
+ external/json-wheel external/deps-netsys 
+# I now use jsonwheel not only for pfff_modes but also for ocaml_merlin
+# hence the mandatory dependencies
+EXTERNALCMAS=\
+ external/commons/commons.cma external/h_visualization/lib.cma\
+ external/deps-netsys/netsys_oothr.cma external/deps-netsys/netsys.cma \
+ external/deps-netstring/netstring.cma \
+ external/json-wheel/jsonwheel.cma
 
 
-# pfff
+# pfff dependencies
+
 ifeq ($(USE_PFFF),1)
 PFFF_MODES=\
  pfff_modes/pfff_modes.ml\
@@ -43,21 +54,10 @@ PFFF_LIBS0=\
  commons-graph \
  h_files-format \
 
-# for linking
-PFFF_LIBS2=\
- external/pfff-deps-netsys/netsys_oothr.cma \
- external/pfff-deps-netsys/netsys.cma \
- external/pfff-deps-netstring/netstring.cma \
- external/pfff-deps-json-wheel/jsonwheel.cma \
+PFFFDIRS=$(PFFF_LIBS1:%=external/pfff-%/)
+PFFFCMAS=\
  external/pfff-deps-ocamlgraph/graph.cma \
  external/pfff-deps-commons_core/commons_core.cma \
-
-# for the linker to find the dlls
-PFFF_LIBS3=\
- external/pfff-deps-netsys
-
-PFFFDIRS=$(PFFF_LIBS1:%=external/pfff-%/) $(PFFF_LIBS3)
-PFFFCMAS=$(PFFF_LIBS2) \
  $(PFFF_LIBS0:%=external/pfff-%/lib.cma) \
  $(PFFF_LIBS1:%=external/pfff-%/lib.cma)
 endif
