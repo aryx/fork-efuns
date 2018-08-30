@@ -30,6 +30,7 @@ let fondamental_mode frame =
   Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
 (*e: function [[Std_efunsrc.fondamental_mode]] *)
 
+(* less: I could put those define_action() in their respective files *)
 (*s: toplevel [[Std_efunsrc._1]] *)
 let _ =
   (*s: actions definitions *)
@@ -543,6 +544,9 @@ let _ =
       ]
     end;
   (*s: [[Std_efunsrc.toplevel]] set [[interactives_map]] *)
+  (* todo: we should consider all actions as interactives; 
+   * useless repetition here.
+   *)
   if !!interactives_map = [] then begin
       interactives_map =:= List.map (fun x -> x, x ) [
         (*s: [[interactives_map]] initial entries *)
@@ -582,6 +586,7 @@ let _ =
         "tab_mode";
         (*"accents_mode";*)
         "ocaml_minor_mode";
+        "merlin_mode";
         (*"ocaml_compiler_mode";*)
         (*x: [[interactives_map]] initial entries *)
         "overwrite_mode";
@@ -712,7 +717,6 @@ let _ =
     (*e: [[Std_efunsrc._5]] start hooks options *)
     init_global_map ();
     Hook.add_hook Top_window.handle_key_start_hook Complexe.check_file;      
-
   )
 (*e: toplevel [[Std_efunsrc._5]] *)
 (*e: std_efunsrc.ml *)

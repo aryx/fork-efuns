@@ -18,6 +18,7 @@
 (* Prelude *)
 (*****************************************************************************)
 (* Support for Merlin under Efuns!
+ * (I actually had troubles setting up Merlin for my Emacs 23 ...)
  *
  * Look at merlin/doc/dev/PROTOCOL.md to see the list of commands.
  * You can also experiment with merlin directly from the command line:
