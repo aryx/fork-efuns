@@ -22,10 +22,13 @@ open Efuns
 (*****************************************************************************)
 (* Entry points *)
 (*****************************************************************************)
-let toggle_minor mode = fun frame -> 
-  let buf = frame.frm_buffer in
+let toggle_minor_buffer mode = fun buf -> 
   if Ebuffer.has_minor_mode buf mode
   then Ebuffer.del_minor_mode buf mode
   else Ebuffer.set_minor_mode buf mode
+
+let toggle_minor mode = fun frame -> 
+  let buf = frame.frm_buffer in
+  toggle_minor_buffer mode buf
 
 

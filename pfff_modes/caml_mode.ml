@@ -1,6 +1,6 @@
 (* Yoann Padioleau
  *
- * Copyright (C) 2015 Yoann Padioleau
+ * Copyright (C) 2015, 2018 Yoann Padioleau
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -23,7 +23,7 @@ module PI = Parse_info
 (*****************************************************************************)
 (*
  * Using the OCaml parser and highlighters in pfff (used for codemap)
- * for efuns.
+ * for Efuns.
  *)
 
 (*****************************************************************************)
@@ -64,6 +64,7 @@ let color_buffer buf =
 (*****************************************************************************)
 (* Installation *)
 (*****************************************************************************)
+let hooks = Store.create_abstr "caml_mode_hook"
 
 let mode =  Ebuffer.new_major_mode "OCaml" (Some (fun buf ->
   color_buffer buf; 
@@ -73,6 +74,9 @@ let mode =  Ebuffer.new_major_mode "OCaml" (Some (fun buf ->
   tbl.(Char.code '_') <- true;
   tbl.(Char.code '\'') <- true;
   tbl.(Char.code '.') <- false;
+
+  let hooks = Var.get_var buf hooks in
+  Hook.exec_hooks hooks buf;
   ()
 ))
 
