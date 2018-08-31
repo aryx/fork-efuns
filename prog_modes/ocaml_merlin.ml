@@ -61,12 +61,17 @@ module J = Json_type
  * less:
  *  - errors
  *  - jump
+ *  - occurences
+ *  - type-enclosing, type-expression
+ *  - outline, shape
  *  - expand-prefix (more error resistant than complete-prefix,
  *    maybe use if complete-prefix returns an empty set)
  *  - enclosing
  *  - extension-list, findlib-list, flags-list
  *  - phrase
  *  - list-modules
+ *  - path-of-source
+ *  - check-configuration
  *)
 
 (*****************************************************************************)
@@ -190,12 +195,13 @@ let mode = Ebuffer.new_minor_mode  "Merlin" [(fun buf ->
 
 let _ = 
   Action.define_action "merlin_mode" (Minor_modes.toggle_minor mode);
-  Action.define_action "merlin_type" type_at_cursor;
+
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 't']
     type_at_cursor;
   (* 'i' for information *)
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'i']
     doc_at_cursor;
+  (* replacement for the traditional Emacs tags-find command *)
   Keymap.add_binding mode.min_map [MetaMap, Char.code '.']
     (def_at_cursor "implementation");
   (* 'd' for def *)
