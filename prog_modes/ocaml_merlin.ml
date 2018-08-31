@@ -30,37 +30,59 @@ module J = Json_type
  *   - on-the-fly error-checking,
  *     which is similar to flymake, but again easier to setup
  *   - type under cursor, 
- *     which is similar to what the .annot provided under Emacs
+ *     which is similar to what the .annot provided under Emacs, but is
+ *     incremental by not requiring to refresh the .annot by typing 'make'
+ *     
+ * 
+ * To use merlin from Efuns simply 'opam install merlin', which
+ * should make available an 'ocamlmerlin' program in your PATH.
  * 
  * Note that Emacs supports Merlin, but I actually had troubles 
  * to setting it up for my Emacs 23 ... Switching to Efuns might be simpler :)
  *
+ * internals: 
  * Look at merlin/doc/dev/PROTOCOL.md to see the list of commands.
  * You can also experiment with merlin directly from the command line:
  * 
  *   $ ocamlmerlin single errors -filename foo.ml < foo.ml
  * 
- * Note the -filename option is optional but very important for multi-file
- * support. Indeed, it is this option that allows merlin to process
- * the .merlin in your project.
+ * Note that the '-filename' option is optional but very important for
+ * multi-files support. Indeed, it is this option that allows merlin to find
+ * and process the .merlin in your project.
  * 
- * Some good source of inspiration for the code in this file:
+ * Some source of inspiration for the code in this file:
  *  - merlin-acme (https://github.com/raphael-proust/merlin-acme) which is a
- *    plugin written in OCaml and 
+ *    plugin written in OCaml
  *  - sublime-text-merlin (https://github.com/cynddl/sublime-text-merlin)
- *    which is written in Python and pretty small compared to
- *    the plugins for Emacs or Vim.
+ *    which is written in Python
+ * The code of those plugins is small compared to the plugins for Emacs or Vim.
+ * 
+ * FAQ:
+ *  - How can I jump to the definition of entities in OPAM packages
+ *    when those packages do not have the .cmt or .cmti files?
+ * 
+ *    See https://github.com/ocaml/merlin/wiki/Letting-merlin-locate-go-to-stuff-in-.opam and put
+ *    $ export OPAMKEEPBUILDDIR=true
+ *    $ export OCAMLPARAM="_,bin-annot=1"
+ *    in your environment before installing OPAM packages.
+ *    Then add a symlink from external/opam_lib/build to ../build
+ *    and add this to your .merlin:
+ *     B external/opam_lib/build/**
+ *     S external/opam_lib/build/**
+ * 
  * 
  * related:
- * - ocamlspotter
  * - otags
+ * - ocamlspotter
  * - pfff (lang_ml/ and lang_cmt/)
+ * - https://github.com/freebroccolo/ocaml-language-server but is written
+ *   in Javascript and uses merlin under the hood
  * 
  * todo:
- *  - case-analysis
- * less:
- *  - errors
  *  - jump
+ *  - case-analysis
+ *  - errors
+ * less:
  *  - occurences
  *  - type-enclosing, type-expression
  *  - outline, shape
@@ -94,7 +116,7 @@ let str_of_current_position frm =
 (*****************************************************************************)
 (* External program communication *)
 (*****************************************************************************)
-let send_command frm command =
+let execute_command frm command =
   let buf = frm.frm_buffer in
   let text = buf.buf_text in
   let final_command = 
@@ -124,8 +146,6 @@ let send_command frm command =
   | _ -> failwith (spf "wrong ocamlmerlin JSON output: %s" str)
   )
 
-    
-  
 
 (*****************************************************************************)
 (* Services *)
@@ -134,7 +154,7 @@ let send_command frm command =
 let type_at_cursor frm =
   let command = spf "type-enclosing -position %s -index 0" 
     (str_of_current_position frm) in
-  let (j, str) = send_command frm command in
+  let (j, str) = execute_command frm command in
   match j with
   | J.Array (J.Object [
     "start", _;
@@ -148,7 +168,7 @@ let type_at_cursor frm =
 let doc_at_cursor frm =
   let command = spf "document -position %s" 
     (str_of_current_position frm) in
-  let (j, str) = send_command frm command in
+  let (j, str) = execute_command frm command in
   match j with
   | J.String str -> 
     Top_window.message (Window.top frm.frm_window) str
@@ -157,7 +177,7 @@ let doc_at_cursor frm =
 let def_at_cursor look_for frm =
   let command = spf "locate -position %s -look-for %s" 
     (str_of_current_position frm) look_for in
-  let (j, str) = send_command frm command in
+  let (j, str) = execute_command frm command in
   match j with
   | J.Object [
     "file", J.String file;
@@ -185,9 +205,7 @@ let complete_prefix frm =
 (* Minor mode *)
 (*****************************************************************************)
 
-let mode = Ebuffer.new_minor_mode  "Merlin" [(fun buf ->
-  ()
-)]
+let mode = Ebuffer.new_minor_mode  "Merlin" []
 
 (*****************************************************************************)
 (* Setup *)
