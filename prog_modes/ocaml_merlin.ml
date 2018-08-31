@@ -23,11 +23,11 @@ module J = Json_type
  *
  * Merlin is an external program providing many services for OCaml programs:
  *   - intellisense completion,
- *     which is smarter than dabbrev
+ *     which is smarter than dabbrev because it is contextual
  *   - jump-to-definition,
  *     which is similar to Tags, but is easier to setup, more incremental,
  *     more precise, and faster
- *   - on-the-fly error-checking,
+ *   - TODO on-the-fly error-checking,
  *     which is similar to flymake, but again easier to setup
  *   - type under cursor, 
  *     which is similar to what the .annot provided under Emacs, but is
@@ -99,6 +99,7 @@ module J = Json_type
 (*****************************************************************************)
 (* Constants and globals *)
 (*****************************************************************************)
+(* I assume this program is in your PATH *)
 let external_program = "ocamlmerlin"
 
 let debug = ref true
@@ -151,26 +152,28 @@ let execute_command frm command =
 (* Services *)
 (*****************************************************************************)
 
-let type_at_cursor frm =
+let show_type_at_cursor frm =
   let command = spf "type-enclosing -position %s -index 0" 
     (str_of_current_position frm) in
   let (j, str) = execute_command frm command in
   match j with
   | J.Array (J.Object [
-    "start", _;
-    "end", _;
+    (* less: could highlight typed expression *)
+    "start", _; "end", _;
     "type", J.String str;
     "tail", _;
-    (* less: could process _rest which provides bigger enclosing expression,
+    (* less: could process _rest which provides bigger enclosing expressions,
      * in which case further C-c C-t should highlight and type those
      * bigger expressions
      *)
     ]::_rest) -> 
+    (* todo: sometimes the str contains newlines *)
+    (* less: could use ocaml_mode to colorize those types *)
     Top_window.message (Window.top frm.frm_window) str
   | _ -> failwith (spf "wrong JSON output for type_at_cursor: %s" str)
 
 (* todo: should look for type if no doc, or goto def if no doc *)
-let doc_at_cursor frm =
+let show_doc_at_cursor frm =
   let command = spf "document -position %s" 
     (str_of_current_position frm) in
   let (j, str) = execute_command frm command in
@@ -179,7 +182,7 @@ let doc_at_cursor frm =
     Top_window.message (Window.top frm.frm_window) str
   | _ -> failwith (spf "wrong JSON output for doc_at_cursor: %s" str)
 
-let def_at_cursor look_for frm =
+let goto_def_at_cursor look_for frm =
   let command = spf "locate -position %s -look-for %s" 
     (str_of_current_position frm) look_for in
   let (j, str) = execute_command frm command in
@@ -202,8 +205,25 @@ let def_at_cursor look_for frm =
   | _ -> failwith (spf "wrong JSON output for def_at_cursor: %s" str)
   
 
-let complete_prefix frm =
-  let prefix = "Li" in
+let completion_hist = ref []
+(* alt: 
+ *  - todo: use dabbrev style completion (see abbrev.ml)
+ *  - use minibuffer *Completion* style (see select.ml)
+ *)
+let complete_prefix_at_cursor frm =
+  let buf = frm.frm_buffer in
+  let text = buf.buf_text in
+  let point = frm.frm_point in
+  let prefix = 
+    Text.with_dup_point text point (fun mark ->
+      let tbl = buf.buf_syntax_table in
+      tbl.(Char.code '.') <- true;
+      Simple.to_begin_of_word text mark tbl;
+      tbl.(Char.code '.') <- false;
+      Text.region text mark point
+    )
+  in
+  
   let command = spf "complete-prefix -prefix '%s' -position %s -types n -doc n" 
     prefix (str_of_current_position frm) in
   let (j, str) = execute_command frm command in
@@ -223,7 +243,17 @@ let complete_prefix frm =
       ] -> name
       | _ -> failwith (spf "wrong JSON output for complete_prefix entry: %s"str)
     ) in
-    pr2_gen entries
+      (* todo: fill with prefix *)
+      (* todo: colorize completion buffer *)
+      Select.select frm "Completion: " completion_hist ""
+        (fun _ -> entries)
+        (fun s -> s)
+        (fun s -> 
+          (* TODO: look if dot in prefix and replace only that part *)
+          pr2_gen s
+        )
+
+
   | _ -> failwith (spf "wrong JSON output for complete_prefix: %s" str)
 
 (*****************************************************************************)
@@ -240,20 +270,19 @@ let _ =
   Action.define_action "merlin_mode" (Minor_modes.toggle_minor mode);
 
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 't']
-    type_at_cursor;
+    show_type_at_cursor;
   (* 'i' for information *)
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'i']
-    doc_at_cursor;
+    show_doc_at_cursor;
   (* replacement for the traditional Emacs tags-find command *)
   Keymap.add_binding mode.min_map [MetaMap, Char.code '.']
-    (def_at_cursor "implementation");
+    (goto_def_at_cursor "implementation");
   (* 'd' for def *)
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'd']
-    (def_at_cursor "implementation");
+    (goto_def_at_cursor "implementation");
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'D']
-    (def_at_cursor "interface");
+    (goto_def_at_cursor "interface");
   Keymap.add_binding mode.min_map [NormalMap, XK.xk_Tab]
-    complete_prefix;
-
+    complete_prefix_at_cursor;
 
   ()
