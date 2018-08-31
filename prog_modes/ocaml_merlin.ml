@@ -249,8 +249,11 @@ let complete_prefix_at_cursor frm =
         (fun _ -> entries)
         (fun s -> s)
         (fun s -> 
-          Simple.backward_word buf point;
-          Simple.delete_forward_word buf point;
+          if not (prefix =~ ".*\\.$")
+          then begin
+            Simple.backward_word buf point;
+            Simple.delete_forward_word buf point;
+          end;
           Simple.insert_string frm s;
         )
 
