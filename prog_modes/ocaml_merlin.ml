@@ -19,12 +19,13 @@ module J = Json_type
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-(* Support for Merlin (https://github.com/ocaml/merlin), an external
- * program providing many services for OCaml programs:
- *     - intellisense completion
- *     - jump-to-definition (similar to Tags, but probably more precise)
- *     - on-the-fly error-checking (a la flymake but more robust probably)
- *     - type under cursor (similar to what the .annot provided under Emacs)
+(* Support for Merlin (https://github.com/ocaml/merlin) in Efuns.
+ *
+ * Merlin is an external program providing many services for OCaml programs:
+ *   - intellisense completion
+ *   - jump-to-definition (similar to Tags, but probably more precise)
+ *   - on-the-fly error-checking (a la flymake but more robust probably)
+ *   - type under cursor (similar to what the .annot provided under Emacs)
  * 
  * Note that Emacs supports Merlin, but I actually had troubles 
  * to setting it up for my Emacs 23 ... Switching to Efuns might be simpler :)
@@ -50,6 +51,8 @@ module J = Json_type
  * - otags
  * - pfff (lang_ml/ and lang_cmt/)
  * 
+ * todo:
+ *  - case-analysis
  *)
 
 (*****************************************************************************)
@@ -93,8 +96,10 @@ let send_command frm command =
   let j = Json_io.json_of_string str in
   (match j with
   | J.Object (
-    ("class", J.String "return")::
+    ("class", J.String "return"):: (* | "failure" | "error" | "exception" *)
     ("value", v)::
+    ("notifications", J.Array [])::
+    ("timing", _)::
       _rest
   ) -> v, str
   | _ -> failwith (spf "wrong ocamlmerlin JSON output: %s" str)
@@ -121,6 +126,18 @@ let type_at_cursor frm =
     Top_window.message (Window.top frm.frm_window) str
   | _ -> failwith (spf "wrong JSON output for type_at_cursor: %s" str)
 
+let doc_at_cursor frm =
+  let command = spf "document -position %s" 
+    (str_of_current_position frm) in
+  let (j, str) = send_command frm command in
+  match j with
+  | J.String str -> 
+    Top_window.message (Window.top frm.frm_window) str
+  | _ -> failwith (spf "wrong JSON output for doc_at_cursor: %s" str)
+
+
+let complete_prefix frm =
+  raise Todo
 
 (*****************************************************************************)
 (* Minor mode *)
@@ -139,4 +156,6 @@ let _ =
   Action.define_action "merlin_type" type_at_cursor;
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 't']
     type_at_cursor;
+  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'd']
+    doc_at_cursor;
   ()
