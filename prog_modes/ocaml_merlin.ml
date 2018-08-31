@@ -22,10 +22,15 @@ module J = Json_type
 (* Support for Merlin (https://github.com/ocaml/merlin) in Efuns.
  *
  * Merlin is an external program providing many services for OCaml programs:
- *   - intellisense completion
- *   - jump-to-definition (similar to Tags, but probably more precise)
- *   - on-the-fly error-checking (a la flymake but more robust probably)
- *   - type under cursor (similar to what the .annot provided under Emacs)
+ *   - intellisense completion,
+ *     which is smarter than dabbrev
+ *   - jump-to-definition,
+ *     which is similar to Tags, but is easier to setup, more incremental,
+ *     more precise, and faster
+ *   - on-the-fly error-checking,
+ *     which is similar to flymake, but again easier to setup
+ *   - type under cursor, 
+ *     which is similar to what the .annot provided under Emacs
  * 
  * Note that Emacs supports Merlin, but I actually had troubles 
  * to setting it up for my Emacs 23 ... Switching to Efuns might be simpler :)
@@ -53,6 +58,15 @@ module J = Json_type
  * 
  * todo:
  *  - case-analysis
+ * less:
+ *  - errors
+ *  - jump
+ *  - expand-prefix (more error resistant than complete-prefix,
+ *    maybe use if complete-prefix returns an empty set)
+ *  - enclosing
+ *  - extension-list, findlib-list, flags-list
+ *  - phrase
+ *  - list-modules
  *)
 
 (*****************************************************************************)
@@ -135,6 +149,29 @@ let doc_at_cursor frm =
     Top_window.message (Window.top frm.frm_window) str
   | _ -> failwith (spf "wrong JSON output for doc_at_cursor: %s" str)
 
+let def_at_cursor look_for frm =
+  let command = spf "locate -position %s -look-for %s" 
+    (str_of_current_position frm) look_for in
+  let (j, str) = send_command frm command in
+  match j with
+  | J.Object [
+    "file", J.String file;
+    "pos", J.Object ["line", J.Int line; "col", J.Int col];
+  ] -> 
+    let str = spf "file: %s (%d:%d)" file line col in
+    (* for C-M-l to work *)
+    Multi_buffers.set_previous_frame frm;
+
+    let frm = Frame.load_file frm.frm_window file in
+    Text.goto_line frm.frm_buffer.buf_text frm.frm_point (line - 1);
+    Text.fmove frm.frm_buffer.buf_text frm.frm_point (col);
+    Top_window.message (Window.top frm.frm_window) str
+
+  | J.String str -> 
+    Top_window.message (Window.top frm.frm_window) str
+  | _ -> failwith (spf "wrong JSON output for def_at_cursor: %s" str)
+  
+
 
 let complete_prefix frm =
   raise Todo
@@ -156,6 +193,14 @@ let _ =
   Action.define_action "merlin_type" type_at_cursor;
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 't']
     type_at_cursor;
-  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'd']
+  (* 'i' for information *)
+  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'i']
     doc_at_cursor;
+  Keymap.add_binding mode.min_map [MetaMap, Char.code '.']
+    (def_at_cursor "implementation");
+  (* 'd' for def *)
+  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'd']
+    (def_at_cursor "implementation");
+  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'D']
+    (def_at_cursor "interface");
   ()
