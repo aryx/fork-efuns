@@ -239,15 +239,11 @@ let load_graph_code frame =
 (* Setup *)
 (*****************************************************************************)
 
-let setup () =
-  Keymap.define_interactive_action "load_database_code" load_database_code;
-  Keymap.define_interactive_action "load_graph_code" load_graph_code;
-  Keymap.add_global_key [MetaMap, Char.code '.'] 
-    "goto_def" goto_def;
-  ()
-
-
 let _ =
   Hook.add_start_hook (fun () ->
-    setup()
+    Keymap.define_interactive_action "load_database_code" load_database_code;
+    Keymap.define_interactive_action "load_graph_code" load_graph_code;
+    Keymap.add_global_key [MetaMap, Char.code '.'] 
+      "goto_def" goto_def;
+    ()
   )
