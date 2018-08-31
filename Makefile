@@ -245,6 +245,13 @@ clean::
 # Developer rules
 ##############################################################################
 
+.PHONY:: .merlin
+
+.merlin:
+	@echo > .merlin
+	@set -e; for i in $(INCLUDEDIRS); do echo "S $$i" >> .merlin || exit 1; done
+	@set -e; for i in $(INCLUDEDIRS); do echo "B $$i" >> .merlin || exit 1; done
+
 visual:
 	~/pfff/codemap -no_legend -screen_size 2 -filter pfff .
 
