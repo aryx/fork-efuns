@@ -65,10 +65,10 @@ module J = Json_type
  *    $ export OPAMKEEPBUILDDIR=true
  *    $ export OCAMLPARAM="_,bin-annot=1"
  *    in your environment before installing OPAM packages.
- *    Then add a symlink from external/opam_lib/build to ../build
- *    and add this to your .merlin:
- *     B external/opam_lib/build/**
- *     S external/opam_lib/build/**
+ *    Then add this to your .merlin:
+ *     B external/FOR_MERLIN/**
+ *     S external/FOR_MERLIN/**
+ *    where FOR_MERLIN points to your OPAM build directory.
  * 
  * 
  * related:
