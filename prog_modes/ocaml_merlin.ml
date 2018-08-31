@@ -256,9 +256,69 @@ let complete_prefix_at_cursor frm =
           end;
           Simple.insert_string frm s;
         )
-
-
   | _ -> failwith (spf "wrong JSON output for complete_prefix: %s" str)
+
+(* similar to Emacs Tags search *)
+let goto_def frm =
+  let _point = frm.frm_point in
+  (* less: use what is under the cursor *)
+  let prefix = "" in
+
+  (* step1: choose the module *)  
+  let command = spf "complete-prefix -prefix '%s' -position %s -types n -doc n"
+    prefix (str_of_current_position frm) in
+  let (j, str) = execute_command frm command in
+  match j with
+  | J.Object [
+    "entries", J.Array entries;
+    "context", _contextTODO
+  ] -> 
+    let entries = entries |> List.map (fun j ->
+      match j with
+      | J.Object [
+        "name", J.String name;
+        (* less: also displays the type and ocamldoc if available *)
+        "kind", J.String _kind;
+        "desc", J.String _desc;
+        "info", J.String _info;
+      ] -> name
+      | _ -> failwith (spf "wrong JSON output for goto_def entry: %s"str)
+    ) in
+      (* less: fill with prefix *)
+      (* less: colorize completion buffer *)
+      Select.select frm "Goto Def: " completion_hist ""
+        (fun _ -> entries)
+        (fun s -> s)
+        (fun prefix -> 
+          let look_for = "implementation" in
+          (* todo: step2: choose the entity inside a module *)
+          (* step3: go to the def *)
+          (* less: reuse more code with goto_def_at_cursor *)
+          let command = spf "locate -prefix %s -position %s -look-for %s" 
+            prefix (str_of_current_position frm) look_for in
+          let (j, str) = execute_command frm command in
+          match j with
+            | J.Object [
+              "file", J.String file;
+              "pos", J.Object ["line", J.Int line; "col", J.Int col];
+            ] -> 
+              let str = spf "file: %s (%d:%d)" file line col in
+              (* for C-M-l to work *)
+              Multi_buffers.set_previous_frame frm;
+
+              let frm = Frame.load_file frm.frm_window file in
+              Text.goto_line frm.frm_buffer.buf_text frm.frm_point (line - 1);
+              Text.fmove frm.frm_buffer.buf_text frm.frm_point (col);
+              Top_window.message (Window.top frm.frm_window) str
+
+            | J.String str -> 
+              Top_window.message (Window.top frm.frm_window) str
+            | _ -> failwith (spf "wrong JSON output for def_at_cursor: %s" str)
+              
+
+        )
+  | _ -> failwith (spf "wrong JSON output for complete_prefix: %s" str)
+
 
 (*****************************************************************************)
 (* Minor mode *)
@@ -280,13 +340,17 @@ let _ =
     show_doc_at_cursor;
   (* replacement for the traditional Emacs tags-find command *)
   Keymap.add_binding mode.min_map [MetaMap, Char.code '.']
-    (goto_def_at_cursor "implementation");
-  (* 'd' for def *)
+    (* alt: (goto_def_at_cursor "implementation"); *)
+    goto_def;
+  (* 'd' for 'definition' below *)
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'd']
     (goto_def_at_cursor "implementation");
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'D']
     (goto_def_at_cursor "interface");
-  Keymap.add_binding mode.min_map [NormalMap, XK.xk_Tab]
-    complete_prefix_at_cursor;
-
+  Keymap.add_binding mode.min_map [NormalMap, XK.xk_Tab] (fun frm ->
+    let point = frm.frm_point in
+    if Text.point_col frm.frm_buffer.buf_text point = 0
+    then Simple.insert_string frm "  "
+    else complete_prefix_at_cursor frm;
+  );
   ()
