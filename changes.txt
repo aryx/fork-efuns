@@ -4,12 +4,17 @@
 
 ** a new Merlin minor mode
 to support type and ocamldoc information under cursor, jump-to-definition,
-jump-to-interface, TODO completion, automatic case-analysis code generation
+jump-to-interface, 
+TODO completion, 
+TODO automatic case-analysis code generation,
+TODO search-def
 
 ** better coloring in noweb_mode
+use fuzzy tree more to correctly handle nested elements, and
+support [[ ]] and [< >] correctly (different lexing rules).
 
 ** support for Windows!
-can now compile efuns for Linux, Windows, and macOS
+can now compile Efuns for Linux, Windows, and macOS
 
 ** better fonts for Linux and Windows
 
@@ -64,7 +69,7 @@ buffer menu C-M-Tab, C-M-l and right order
 
 * 0.19 (Q1 2015)
 
-** fork efuns (after 15 years), and port it to gtk/cairo
+** fork Efuns (after 15 years), and port it to gtk/cairo
 also use pfff/h_visualization/simple_color.ml for emacs style color names
 
 ** a new Dircolors module (based on my dircolors.el plugin for emacs)
