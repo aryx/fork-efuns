@@ -161,10 +161,15 @@ let type_at_cursor frm =
     "end", _;
     "type", J.String str;
     "tail", _;
-  ]::_) -> 
+    (* less: could process _rest which provides bigger enclosing expression,
+     * in which case further C-c C-t should highlight and type those
+     * bigger expressions
+     *)
+    ]::_rest) -> 
     Top_window.message (Window.top frm.frm_window) str
   | _ -> failwith (spf "wrong JSON output for type_at_cursor: %s" str)
 
+(* todo: should look for type if no doc, or goto def if no doc *)
 let doc_at_cursor frm =
   let command = spf "document -position %s" 
     (str_of_current_position frm) in
@@ -197,9 +202,29 @@ let def_at_cursor look_for frm =
   | _ -> failwith (spf "wrong JSON output for def_at_cursor: %s" str)
   
 
-
 let complete_prefix frm =
-  raise Todo
+  let prefix = "Li" in
+  let command = spf "complete-prefix -prefix '%s' -position %s -types n -doc n" 
+    prefix (str_of_current_position frm) in
+  let (j, str) = execute_command frm command in
+  match j with
+  | J.Object [
+    "entries", J.Array entries;
+    "context", _contextTODO
+  ] -> 
+    let entries = entries |> List.map (fun j ->
+      match j with
+      | J.Object [
+        "name", J.String name;
+        (* less: also displays the type and ocamldoc if available *)
+        "kind", J.String _kind;
+        "desc", J.String _desc;
+        "info", J.String _info;
+      ] -> name
+      | _ -> failwith (spf "wrong JSON output for complete_prefix entry: %s"str)
+    ) in
+    pr2_gen entries
+  | _ -> failwith (spf "wrong JSON output for complete_prefix: %s" str)
 
 (*****************************************************************************)
 (* Minor mode *)
@@ -227,4 +252,8 @@ let _ =
     (def_at_cursor "implementation");
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'D']
     (def_at_cursor "interface");
+  Keymap.add_binding mode.min_map [NormalMap, XK.xk_Tab]
+    complete_prefix;
+
+
   ()
