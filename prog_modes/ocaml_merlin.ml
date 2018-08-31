@@ -249,8 +249,9 @@ let complete_prefix_at_cursor frm =
         (fun _ -> entries)
         (fun s -> s)
         (fun s -> 
-          (* TODO: look if dot in prefix and replace only that part *)
-          pr2_gen s
+          Simple.backward_word buf point;
+          Simple.delete_forward_word buf point;
+          Simple.insert_string frm s;
         )
 
 

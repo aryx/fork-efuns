@@ -10,7 +10,6 @@ let _ =
   Hook.add_start_hook (fun () ->
 
     (* special functions *)
-
     Keymap.define_interactive_action "gtd" (fun frm ->
       Frame.load_file frm.frm_window "/home/pad/GTD/GTD-daily.org" |> ignore
     );
