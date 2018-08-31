@@ -1,5 +1,27 @@
 # -*- org -*-
 
+* 0.21 (Q3 2018)
+
+** a new Merlin minor mode
+to support type and ocamldoc information under cursor, jump-to-definition,
+jump-to-interface, TODO completion, automatic case-analysis code generation
+
+** better coloring in noweb_mode
+
+** support for Windows!
+can now compile efuns for Linux, Windows, and macOS
+
+** better fonts for Linux and Windows
+
+** misc
+C-c = to get position information
+
+** internals
+
+*** cleanup external/, rely more on OPAM
+
+* -----------------------------------------------------------
+
 * 0.20 (Q2 2015)
 
 ** a new Org mode
@@ -69,6 +91,8 @@ for identifiers (e.g. differentiate fields from parameters from locals).
 - added many .mli
 - factorize color in pl_colors.ml
 
+
+* -----------------------------------------------------------
 
 * Version 018: (1999?)
 ===========
