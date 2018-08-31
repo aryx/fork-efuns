@@ -587,8 +587,6 @@ let _ =
         (*"accents_mode";*)
         "ocaml_minor_mode";
         "merlin_mode";
-        (* TODO: can erase once binded to a minor mode keymap *)
-        "merlin_type";
         (*"ocaml_compiler_mode";*)
         (*x: [[interactives_map]] initial entries *)
         "overwrite_mode";

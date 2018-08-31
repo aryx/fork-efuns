@@ -14,6 +14,7 @@
  *)
 open Common
 open Efuns
+module J = Json_type
 
 (*****************************************************************************)
 (* Prelude *)
@@ -50,7 +51,13 @@ open Efuns
  * - pfff (lang_ml/ and lang_cmt/)
  * 
  *)
+
+(*****************************************************************************)
+(* Constants and globals *)
+(*****************************************************************************)
 let external_program = "ocamlmerlin"
+
+let debug = ref true
 
 (*****************************************************************************)
 (* Helpers *)
@@ -81,8 +88,19 @@ let send_command frm command =
   close_out pipe_write;
   let str = input_line pipe_read in
   let _status = Unix.close_process (pipe_read, pipe_write) in
-  pr2 str;
-  str
+  if !debug
+  then pr2 str;
+  let j = Json_io.json_of_string str in
+  (match j with
+  | J.Object (
+    ("class", J.String "return")::
+    ("value", v)::
+      _rest
+  ) -> v, str
+  | _ -> failwith (spf "wrong ocamlmerlin JSON output: %s" str)
+  )
+
+    
   
 
 (*****************************************************************************)
@@ -92,8 +110,16 @@ let send_command frm command =
 let type_at_cursor frm =
   let command = spf "type-enclosing -position %s -index 0" 
     (str_of_current_position frm) in
-  let str = send_command frm command in
-  Top_window.message (Window.top frm.frm_window) str
+  let (j, str) = send_command frm command in
+  match j with
+  | J.Array (J.Object [
+    "start", _;
+    "end", _;
+    "type", J.String str;
+    "tail", _;
+  ]::_) -> 
+    Top_window.message (Window.top frm.frm_window) str
+  | _ -> failwith (spf "wrong JSON output for type_at_cursor: %s" str)
 
 
 (*****************************************************************************)
@@ -111,4 +137,6 @@ let mode = Ebuffer.new_minor_mode  "Merlin" [(fun buf ->
 let _ = 
   Action.define_action "merlin_mode" (Minor_modes.toggle_minor mode);
   Action.define_action "merlin_type" type_at_cursor;
+  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 't']
+    type_at_cursor;
   ()
