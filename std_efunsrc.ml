@@ -345,16 +345,8 @@ let _ =
         [ControlMap, XK.xk_Next], "end_of_file";
         [ControlMap, XK.xk_Prior], "begin_of_file";
         (*x: navigating keys *)
-        (* pad: *)
         [MetaMap, Char.code '>'], "end_of_file";
         [MetaMap, Char.code '<'], "begin_of_file";
-        [MetaMap, Char.code 'g'], "goto_line";
-        (* pad: *)
-        [MetaMap, XK.xk_Up], "scroll_up"; 
-        [MetaMap, XK.xk_Down], "scroll_down"; 
-        [MetaMap, XK.xk_Left], "scroll_other_up"; 
-        [MetaMap, XK.xk_Right], "scroll_other_down"; 
-
         (*x: navigating keys *)
         [ControlMap, Char.code 'u'; ControlMap, Char.code ' '], 
           "goto_last_saved_pos"; 
@@ -394,7 +386,6 @@ let _ =
         [ControlMap, Char.code 'w'], "kill_region";
         [ControlMap, Char.code 'y'], "insert_killed";
         [MetaMap, Char.code 'y'], "insert_next_killed";
-        (* pad: pc-select *)
         [MetaMap, Char.code 'w'], "copy_region";
         (*e: moving keys *)
         (* ---------------------- *)
@@ -430,8 +421,6 @@ let _ =
         (*s: undoing keys *)
         [ControlMap, Char.code '_'], "undo";
         (*x: undoing keys *)
-        (* pad: *)
-        [ControlMap, Char.code '/'], "undo";
         (*e: undoing keys *)
 
         (* -------------------------------------------------------- *)
@@ -442,38 +431,16 @@ let _ =
         (*e: external commands keys *)
         [c_x;NormalMap, Char.code '`' ], "next_error";
 
-        (* pad: *)
-        [MetaMap, XK.xk_Return], "compile";
-        [ControlMap, Char.code 'n' ], "next_error";
-
-        (* pad: *)
-        [MetaMap, Char.code '1'], "eshell_num";
-        [MetaMap, Char.code '2'], "eshell_num";
-        [MetaMap, Char.code '3'], "eshell_num";
-        [MetaMap, Char.code '4'], "eshell_num";
-        [MetaMap, Char.code '5'], "eshell_num";
-        [MetaMap, Char.code '9'], "eshell_num";
-        [MetaMap, Char.code '0'], "eshell_num";
-        [MetaMap, Char.code '-'], "eshell_num";
-        [MetaMap, Char.code '='], "eshell_num";
-
         (* -------------------------------------------------------- *)
         (* Buffers/windows/frames *)
         (* -------------------------------------------------------- *)
         (*s: buffer management keys *)
-        (* pad: *)
-        [ControlMetaMap, XK.xk_Tab], "buffer_menu";
         (*x: buffer management keys *)
         [c_x; NormalMap, Char.code 'b'], "change_buffer";
-        (* pad: *)
-        [ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
         (*x: buffer management keys *)
         [c_x; NormalMap, Char.code 'k'], "kill_buffer";
         (*e: buffer management keys *)
         (*s: buffer navigating keys *)
-        (* lefessant? in emacs now? *)
-        [ControlMetaMap, XK.xk_Left], "left_buffer";
-        [ControlMetaMap, XK.xk_Right], "right_buffer";
         (*x: buffer navigating keys *)
         (* pinning *)
         [ControlMetaMap, XK.xk_Down], "down_buffer";
@@ -488,8 +455,6 @@ let _ =
         (*e: frame management keys *)
         (*s: frame navigation keys *)
         [c_x; NormalMap, Char.code 'o'], "next_frame";
-        (* pad: xemacs inspired *)
-        [ControlMap, XK.xk_Tab], "next_frame";
         (*e: frame navigation keys *)
 
         (* -------------------------------------------------------- *)
