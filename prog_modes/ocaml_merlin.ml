@@ -79,7 +79,6 @@ module J = Json_type
  *   in Javascript and uses merlin under the hood
  * 
  * todo:
- *  - jump
  *  - case-analysis
  *  - errors
  * less:
@@ -120,6 +119,7 @@ let str_of_current_position frm =
 let execute_command frm command =
   let buf = frm.frm_buffer in
   let text = buf.buf_text in
+  (* todo? use 'server' instead of 'single' so faster? *)
   let final_command = 
     spf "%s single %s %s" external_program command
       (match frm.frm_buffer.buf_filename with
@@ -148,7 +148,7 @@ let execute_command frm command =
     ("class", J.String "error"):: 
     ("value", J.String err)::
       _rest
-  ) -> failwith (spf "ocamlmering: %s" err)
+  ) -> failwith (spf "ocamlmerlin: %s" err)
 
   | _ -> failwith (spf "wrong ocamlmerlin JSON output: %s" str)
   )
@@ -229,8 +229,8 @@ let complete_prefix_at_cursor frm =
       Text.region text mark point
     )
   in
-  
-  let command = spf "complete-prefix -prefix '%s' -position %s -types n -doc n" 
+  pr2_gen prefix;
+  let command = spf "complete-prefix -prefix '%s' -position %s -types n -doc n"
     prefix (str_of_current_position frm) in
   let (j, str) = execute_command frm command in
   match j with
@@ -255,8 +255,9 @@ let complete_prefix_at_cursor frm =
         (fun _ -> entries)
         (fun s -> s)
         (fun s -> 
-          if not (prefix =~ ".*\\.$")
-          then begin
+          if (prefix =~ ".*[\\.]$" || prefix = "")
+          then ()
+          else begin
             Simple.backward_word buf point;
             Simple.delete_forward_word buf point;
           end;
