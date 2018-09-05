@@ -259,7 +259,7 @@ let last_insert = ref None
 (*e: constant [[Simple.last_insert]] *)
 
 (* alt: 
- * - have a mutable clipboard here in simple.ml
+ * - have a mutable clipboard here in simple.ml (or global.ml)
  *   pro: does not require a frame so can be done in lowlevel API (kill_string)
  * - have the clipboard be part of the backend
  *   pro: clearer that backends in graphics/ need to setup this
