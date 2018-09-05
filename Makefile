@@ -24,7 +24,7 @@ EXTERNALDIRS=\
 # I now use jsonwheel not only for pfff_modes but also for ocaml_merlin
 # hence the mandatory dependencies
 EXTERNALCMAS=\
- external/commons/commons.cma external/h_visualization/lib.cma\
+ external/commons/lib.cma external/h_visualization/lib.cma\
  external/deps-netsys/netsys_oothr.cma external/deps-netsys/netsys.cma \
  external/deps-netstring/netstring.cma \
  external/json-wheel/jsonwheel.cma
@@ -57,7 +57,7 @@ PFFF_LIBS0=\
 PFFFDIRS=$(PFFF_LIBS1:%=external/pfff-%/)
 PFFFCMAS=\
  external/pfff-deps-ocamlgraph/graph.cma \
- external/pfff-deps-commons_core/commons_core.cma \
+ external/pfff-deps-commons_core/lib.cma \
  $(PFFF_LIBS0:%=external/pfff-%/lib.cma) \
  $(PFFF_LIBS1:%=external/pfff-%/lib.cma)
 endif
@@ -176,6 +176,7 @@ INCLUDEDIRS=\
   $(GRAPHICSDIRS) \
   $(DIRS)
 
+# do not put external dirs here! other make depend might modify OPAM files
 OCAMLDEPS=$(DIRS:%=-I %)
 
 LIBS=$(EXTERNALCMAS) $(PFFFCMAS) $(GRAPHICSLIBS)
@@ -263,4 +264,5 @@ graph:
 	~/pfff/codegraph_build -symlinks -lang cmt .
 
 check:
+
 	~/pfff/scheck -with_graph_code graph_code.marshall -filter 3 . 2>&1 | grep -v stdlib | grep -v commons/ | grep Function
