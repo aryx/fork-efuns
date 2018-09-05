@@ -258,6 +258,18 @@ let last_kill = ref None
 let last_insert = ref None
 (*e: constant [[Simple.last_insert]] *)
 
+(* alt: 
+ * - have a mutable clipboard here in simple.ml
+ *   pro: does not require a frame so can be done in lowlevel API (kill_string)
+ * - have the clipboard be part of the backend
+ *   pro: clearer that backends in graphics/ need to setup this
+ *)
+let add_clipboard frame str =
+  let top_window = Window.top frame.frm_window in
+  let graphic = Efuns.backend top_window in
+  graphic.Xdraw.set_clipboard (Some str)
+
+
 (*s: function [[Simple.kill_string]] *)
 let kill_string str =
   Array.blit kill_ring 0 kill_ring 1 (kill_max - 1);
@@ -270,8 +282,7 @@ let kill_string str =
 let kill_text text point len =
   let point,str = Text.delete_res text point len in
   match !last_kill with
-  | Some (oldtext,oldpoint) when
-    oldpoint = point && oldtext == text ->
+  | Some (oldtext,oldpoint) when oldpoint = point && oldtext == text ->
       kill_ring.(0) <- kill_ring.(0)^str
   | _ ->
       last_kill := Some (text,point);
@@ -283,7 +294,12 @@ let kill_end_of_line frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let eol = point_to_end frame in
-  let len = if eol = 0 then 1 else eol in
+  let len = 
+    (* if already at eol then kill the newline *)
+    if eol = 0 
+    then 1 
+    else eol 
+  in
   kill_text text frame.frm_point len
 (*e: function [[Simple.kill_end_of_line]] *)
 
@@ -312,6 +328,7 @@ let insert_killed frame =
   let text = buf.buf_text in
   let point = frame.frm_point in
 
+(*
   let top_window = Window.top frame.frm_window in
   let graphic = Efuns.backend top_window in
   let str =
@@ -321,7 +338,9 @@ let insert_killed frame =
       graphic.Xdraw.set_clipboard None;
       s
   in
-  
+*)
+  let str = kill_ring.(0) in
+
   let pos, len =  Text.insert_res text point str in
   Text.fmove text point len; 
   last_insert := Some(frame,pos,0,len)
@@ -363,14 +382,8 @@ let kill_region frame =
     if mark > point then (point,mark) else (mark,point)
   in
   let _,region = Text.delete_res text start (Text.distance text start term) in
-
-  (* less: would be better to do that in kill_string, but that would
-   * require to pass a frame to it so it can get the backend
-   *)
-  let top_window = Window.top frame.frm_window in
-  let graphic = Efuns.backend top_window in
-  graphic.Xdraw.set_clipboard (Some region);
-
+  (* less: would be better to do that in kill_string *)
+  add_clipboard frame region;
   kill_string region
 (*e: function [[Simple.kill_region]] *)
 
@@ -391,11 +404,10 @@ let copy_region frame =
     if mark > point then (point,mark) else (mark,point)
   in
   let region = Text.sub text start (Text.distance text start term) in
-  let top_window = Window.top frame.frm_window in
-  let graphic = Efuns.backend top_window in
-  graphic.Xdraw.set_clipboard (Some region);
+  add_clipboard frame region;
   kill_string region;
   let top_window = Window.top frame.frm_window in
+  (* need a message because as opposed to a cut this is not directly visible *)
   Top_window.message top_window "Region saved"
 (*e: function [[Simple.copy_region]] *)
   

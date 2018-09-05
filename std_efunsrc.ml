@@ -367,6 +367,7 @@ let _ =
         (* ------------- *)
         (* Inserting *)
         (* ------------- *)
+        (* see also the start_hook in simple.ml setting many self_insert_cmd *)
         (*s: inserting keys *)
         [NormalMap, XK.xk_Return], "insert_return"; 
         (*e: inserting keys *)
