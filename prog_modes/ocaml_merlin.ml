@@ -144,6 +144,12 @@ let execute_command frm command =
     ("timing", _)::
       _rest
   ) -> v, str
+  | J.Object (
+    ("class", J.String "error"):: 
+    ("value", J.String err)::
+      _rest
+  ) -> failwith (spf "ocamlmering: %s" err)
+
   | _ -> failwith (spf "wrong ocamlmerlin JSON output: %s" str)
   )
 
