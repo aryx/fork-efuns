@@ -11,39 +11,39 @@ let _ =
 
     (* keybindings *)
     [
-      [MetaMap, Char.code 'g'], "goto_line";
-      [MetaMap, XK.xk_Up], "scroll_up"; 
-      [MetaMap, XK.xk_Down], "scroll_down"; 
-      [MetaMap, XK.xk_Left], "scroll_other_up"; 
-      [MetaMap, XK.xk_Right], "scroll_other_down"; 
+      [MetaMap, Char.code 'g'], Complexe.goto_line;
+      [MetaMap, XK.xk_Up], Simple.scroll_up; 
+      [MetaMap, XK.xk_Down], Simple.scroll_down; 
+      [MetaMap, XK.xk_Left], Simple.scroll_other_up; 
+      [MetaMap, XK.xk_Right], Simple.scroll_other_down; 
 
-      [ControlMap, Char.code '/'], "undo";
+      [ControlMap, Char.code '/'], Simple.undo;
 
-      [MetaMap, XK.xk_Return], "compile";
-      [ControlMap, Char.code 'n' ], "next_error";
+      [MetaMap, XK.xk_Return], Compil.compile;
+      [ControlMap, Char.code 'n' ], Compil.next_error;
 
-      [MetaMap, Char.code '1'], "eshell_num";
-      [MetaMap, Char.code '2'], "eshell_num";
-      [MetaMap, Char.code '3'], "eshell_num";
-      [MetaMap, Char.code '4'], "eshell_num";
-      [MetaMap, Char.code '5'], "eshell_num";
-      [MetaMap, Char.code '9'], "eshell_num";
-      [MetaMap, Char.code '0'], "eshell_num";
-      [MetaMap, Char.code '-'], "eshell_num";
-      [MetaMap, Char.code '='], "eshell_num";
+      [MetaMap, Char.code '1'], Shell.eshell_num;
+      [MetaMap, Char.code '2'], Shell.eshell_num;
+      [MetaMap, Char.code '3'], Shell.eshell_num;
+      [MetaMap, Char.code '4'], Shell.eshell_num;
+      [MetaMap, Char.code '5'], Shell.eshell_num;
+      [MetaMap, Char.code '9'], Shell.eshell_num;
+      [MetaMap, Char.code '0'], Shell.eshell_num;
+      [MetaMap, Char.code '-'], Shell.eshell_num;
+      [MetaMap, Char.code '='], Shell.eshell_num;
 
-      [ControlMetaMap, XK.xk_Tab], "buffer_menu";
-      [ControlMetaMap, Char.code 'l'], "switch_to_other_buffer";
+      [ControlMetaMap, XK.xk_Tab], Buffer_menu.menu;
+      [ControlMetaMap, Char.code 'l'], Multi_buffers.switch_to_other_buffer;
 
       (* lefessant? in emacs now? *)
-      [ControlMetaMap, XK.xk_Left], "left_buffer";
-      [ControlMetaMap, XK.xk_Right], "right_buffer";
+      [ControlMetaMap, XK.xk_Left], Multi_buffers.left_buffer;
+      [ControlMetaMap, XK.xk_Right], Multi_buffers.right_buffer;
 
       (* pad: xemacs inspired *)
-      [ControlMap, XK.xk_Tab], "next_frame";
+      [ControlMap, XK.xk_Tab], Multi_frames.next_frame;
 
     ] |> List.iter (fun (keys, action) ->
-      Keymap.add_global_key keys 
+      Keymap.add_global_key keys "TODO" action
     );
   
     (* special functions *)
