@@ -420,7 +420,6 @@ let _ =
         (* -------------------------------------------------------- *)
         (*s: undoing keys *)
         [ControlMap, Char.code '_'], "undo";
-        (*x: undoing keys *)
         (*e: undoing keys *)
 
         (* -------------------------------------------------------- *)
@@ -435,13 +434,11 @@ let _ =
         (* Buffers/windows/frames *)
         (* -------------------------------------------------------- *)
         (*s: buffer management keys *)
-        (*x: buffer management keys *)
         [c_x; NormalMap, Char.code 'b'], "change_buffer";
         (*x: buffer management keys *)
         [c_x; NormalMap, Char.code 'k'], "kill_buffer";
         (*e: buffer management keys *)
         (*s: buffer navigating keys *)
-        (*x: buffer navigating keys *)
         (* pinning *)
         [ControlMetaMap, XK.xk_Down], "down_buffer";
         [ControlMetaMap, XK.xk_Up], "up_buffer";
