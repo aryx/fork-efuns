@@ -6,6 +6,10 @@ type graphics_backend = {
   clear_eol: int -> int -> int -> unit;
   draw_string: int -> int -> string -> int -> int -> int -> unit;
 
+  (* clipboard interaction *)
+  get_clipboard: unit -> string option;
+  set_clipboard: string option -> unit;
+
   (* flush the display *)
   update_display: unit -> unit;
 

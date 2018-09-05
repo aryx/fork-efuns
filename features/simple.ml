@@ -311,7 +311,18 @@ let insert_killed frame =
   let buf = frame.frm_buffer in
   let text = buf.buf_text in
   let point = frame.frm_point in
-  let pos, len =  Text.insert_res text point kill_ring.(0) in
+
+  let top_window = Window.top frame.frm_window in
+  let graphic = Efuns.backend top_window in
+  let str =
+    match graphic.Xdraw.get_clipboard () with
+    | None | Some "" -> kill_ring.(0)
+    | Some s -> 
+      graphic.Xdraw.set_clipboard None;
+      s
+  in
+  
+  let pos, len =  Text.insert_res text point str in
   Text.fmove text point len; 
   last_insert := Some(frame,pos,0,len)
 (*e: function [[Simple.insert_killed]] *)
@@ -352,6 +363,14 @@ let kill_region frame =
     if mark > point then (point,mark) else (mark,point)
   in
   let _,region = Text.delete_res text start (Text.distance text start term) in
+
+  (* less: would be better to do that in kill_string, but that would
+   * require to pass a frame to it so it can get the backend
+   *)
+  let top_window = Window.top frame.frm_window in
+  let graphic = Efuns.backend top_window in
+  graphic.Xdraw.set_clipboard (Some region);
+
   kill_string region
 (*e: function [[Simple.kill_region]] *)
 
@@ -372,6 +391,9 @@ let copy_region frame =
     if mark > point then (point,mark) else (mark,point)
   in
   let region = Text.sub text start (Text.distance text start term) in
+  let top_window = Window.top frame.frm_window in
+  let graphic = Efuns.backend top_window in
+  graphic.Xdraw.set_clipboard (Some region);
   kill_string region;
   let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Region saved"

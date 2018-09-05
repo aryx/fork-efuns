@@ -19,7 +19,11 @@ can now compile Efuns for Linux, Windows, and macOS
 ** better fonts for Linux and Windows
 
 ** misc
-C-c = to get position information
+
+*** C-c = to get position information
+
+*** copy to and from clipboard
+so can have efuns interact with other applications (e.g., web browser)
 
 ** internals
 

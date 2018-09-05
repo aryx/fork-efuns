@@ -464,6 +464,7 @@ let backend w da top_gtk_win =
   let cr = Cairo.create w.base in
   Cairo.translate cr (w.metrics.margin_width) 0.0;
   let pg = (w.ly, w.metrics) in
+  let clipboard = GData.clipboard Gdk.Atom.clipboard in
 
   let edt = w.edt in
   { Xdraw. 
@@ -486,6 +487,18 @@ let backend w da top_gtk_win =
     update_window_title = (fun s ->
       top_gtk_win#set_title s
     );
+    get_clipboard = (fun () ->
+      clipboard#text
+    );
+    set_clipboard = (fun str_opt ->
+      let str =
+        match str_opt with
+        | Some s -> s
+        | None -> ""
+      in
+      clipboard#set_text str
+    );
+        
   }
 
 
