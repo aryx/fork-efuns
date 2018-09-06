@@ -15,7 +15,7 @@ PROGS=efuns efuns_client
 #Library dependencies
 #------------------------------------------------------------------------------
 
-# mandatory dependencies 
+# Mandatory dependencies 
 
 # This is for -I or for finding dlls (e.g., deps-netsys)
 EXTERNALDIRS=\
@@ -66,7 +66,8 @@ endif
 ifeq ($(USE_GTKCAIRO), 1)
 BACKENDDIR=graphics/gtk_cairo
 GRAPHICSDIRS=external/lablgtk2 external/cairo
-GRAPHICSLIBS=external/lablgtk2/lablgtk.cma external/cairo/cairo.cma  external/cairo/cairo_lablgtk.cma external/cairo/pango_cairo.cma
+GRAPHICSLIBS=external/lablgtk2/lablgtk.cma external/cairo/cairo.cma\
+  external/cairo/cairo_lablgtk.cma external/cairo/pango_cairo.cma
 GTKLOOP=gtkThread.cmo
 # because of -linkall and the use of libcairo, but should not be required
 EXTRA=-cclib -lfontconfig
@@ -176,8 +177,8 @@ INCLUDEDIRS=\
   $(GRAPHICSDIRS) \
   $(DIRS)
 
-# do not put external dirs here! other make depend might modify OPAM files
-OCAMLDEPS=$(DIRS:%=-I %)
+# do not put external dirs here! otherwise make depend might modify OPAM files
+DEPEND_INCLUDES=$(DIRS:%=-I %)
 
 LIBS=$(EXTERNALCMAS) $(PFFFCMAS) $(GRAPHICSLIBS)
 # bigarray is used by cairo
@@ -221,7 +222,7 @@ efuns_client.opt: ipc/efuns_client.cmx
 
 
 depend::
-	$(OCAMLDEP) $(OCAMLDEPS) *.ml* */*.ml*  $(BACKENDDIR)/*.ml* > .depend
+	$(OCAMLDEP) $(DEPEND_INCLUDES) *.ml* */*.ml*  $(BACKENDDIR)/*.ml* > .depend
 
 MODES= \
  prog_modes/ocaml_mode.ml prog_modes/c_mode.ml prog_modes/lisp_mode.ml \
