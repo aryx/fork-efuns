@@ -960,6 +960,13 @@ let binding_option = tuple2_option (smalllist_option key_option, string_option)
 (*****************************************************************************)
 (* Toplevel *)
 (*****************************************************************************)
+
+let toggle_overwrite_mode frm =
+  let buf = frm.frm_buffer in
+  let mode = overwrite_mode in
+  if Ebuffer.has_minor_mode buf mode 
+  then Ebuffer.del_minor_mode buf mode
+  else Ebuffer.set_minor_mode buf mode
   
 (*s: toplevel [[Simple._1]] *)
 let _ =

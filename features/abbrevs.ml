@@ -163,6 +163,11 @@ let expand_sabbrev frame =
   with _ -> ()
 (*e: function [[Abbrevs.expand_sabbrev]] *)
 
+let char_expand_abbrev frm =
+  expand_sabbrev frm; 
+  Simple.self_insert_command frm
+
+
 (*s: toplevel [[Abbrevs._1]] *)
 let _ =
   Action.define_action "char_expand_abbrev" (fun frame ->

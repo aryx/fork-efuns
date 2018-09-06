@@ -1,9 +1,9 @@
 
 val abbrev_table : (string, string) Hashtbl.t Store.var
 
-val expand_sabbrev : Efuns.frame -> unit
-
-val dabbrev_expand : Efuns.frame -> unit
+val char_expand_abbrev: Efuns.action
+val expand_sabbrev : Efuns.action
+val dabbrev_expand : Efuns.action
 
 (*
 val escaped : string -> string
