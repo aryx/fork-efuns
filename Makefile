@@ -73,6 +73,17 @@ GTKLOOP=gtkThread.cmo
 EXTRA=-cclib -lfontconfig
 endif
 
+ifeq ($(USE_GTKCAIRO2), 1)
+BACKENDDIR=graphics/gtk_cairo2
+GRAPHICSDIRS=external/lablgtk2 \
+ external/cairo2 external/cairo2-gtk external/cairo2-pango
+GRAPHICSLIBS=external/lablgtk2/lablgtk.cma external/cairo2/cairo.cma\
+  external/cairo2-gtk/cairo_gtk.cma external/cairo2-pango/cairo_pango.cma
+GTKLOOP=gtkThread.cmo
+# because of -linkall and the use of libcairo, but should not be required
+EXTRA=-cclib -lfontconfig
+endif
+
 #alt:
 #BACKENDDIR=graphics/ocamlgraphics
 #OTHERSYSLIBS=graphics.cma
