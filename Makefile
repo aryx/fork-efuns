@@ -110,6 +110,7 @@ SRC=\
  core/efuns.ml\
   core/globals.ml\
   core/var.ml\
+  core/parameter.ml\
   core/attr.ml\
   core/action.ml\
   core/hook.ml\
@@ -122,7 +123,6 @@ SRC=\
  features/simple.ml\
   features/mouse.ml\
   features/highlight.ml\
-  features/parameter.ml\
   features/indent.ml\
   features/structure.ml\
  features/minibuffer.ml\
