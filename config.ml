@@ -1,4 +1,4 @@
-(*s: std_efunsrc.ml *)
+(*s: config.ml *)
 (*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
@@ -223,32 +223,32 @@ let standard_map = [
 ]
 (*e: constant [[standard_map]] *)
 
-(*s: constant [[Std_efunsrc.grep_hist]] *)
+(*s: constant [[Config.grep_hist]] *)
 let grep_hist = ref ["grep -n "]
-(*e: constant [[Std_efunsrc.grep_hist]] *)
+(*e: constant [[Config.grep_hist]] *)
 
-(*s: function [[Std_efunsrc.save_options]] *)
+(*s: function [[Config.save_options]] *)
 let save_options frame = 
   Options.save ()
-(*e: function [[Std_efunsrc.save_options]] *)
-(*s: function [[Std_efunsrc.fondamental_mode]] *)
+(*e: function [[Config.save_options]] *)
+(*s: function [[Config.fondamental_mode]] *)
 let fondamental_mode frame =
   Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
-(*e: function [[Std_efunsrc.fondamental_mode]] *)
+(*e: function [[Config.fondamental_mode]] *)
 
 open Options
   
-(*s: constant [[Std_efunsrc.global_map]] *)
+(*s: constant [[Config.global_map]] *)
 let global_map = define_option ["global_map"] "" 
   (list_option Simple.binding_option) []
-(*e: constant [[Std_efunsrc.global_map]] *)
-(*s: constant [[Std_efunsrc.interactives_map]] *)
+(*e: constant [[Config.global_map]] *)
+(*s: constant [[Config.interactives_map]] *)
 let interactives_map = define_option ["interactives_map"] ""
     (list_option string2_option) 
   []
-(*e: constant [[Std_efunsrc.interactives_map]] *)
+(*e: constant [[Config.interactives_map]] *)
 
-(*s: function [[Std_efunsrc.init_global_map]] *)
+(*s: function [[Config.init_global_map]] *)
 let init_global_map () = 
   if !!global_map = [] 
   then 
@@ -264,7 +264,7 @@ let init_global_map () =
         Log.exn "%s\n" e;
   );
 
-  (*s: [[Std_efunsrc.init_global_map()]] add interactives from [[interactives_map]] *)
+  (*s: [[Config.init_global_map()]] add interactives from [[interactives_map]] *)
   !!interactives_map |> List.iter (fun (name, action) ->
     try
       Keymap.add_interactive (Globals.editor()).edt_map name 
@@ -273,25 +273,25 @@ let init_global_map () =
       Log.printf "Error for action %s" action;
       Log.exn "%s\n" e;
   );
-  (*e: [[Std_efunsrc.init_global_map()]] add interactives from [[interactives_map]] *)
+  (*e: [[Config.init_global_map()]] add interactives from [[interactives_map]] *)
     
 
   (* Mouse *)
-  (*s: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
+  (*s: [[Config.init_global_map()]] mouse keys setup *)
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
     "set_active_frame" Mouse.mouse_set_frame;
-  (*x: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
+  (*x: [[Config.init_global_map()]] mouse keys setup *)
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
     "mouse_save_then_kill" Mouse.mouse_save_then_kill;
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
     "insert_at_point" Mouse.mouse_yank_at_click;
-  (*e: [[Std_efunsrc.init_global_map()]] mouse keys setup *)
+  (*e: [[Config.init_global_map()]] mouse keys setup *)
   ()
-(*e: function [[Std_efunsrc.init_global_map]] *)
+(*e: function [[Config.init_global_map]] *)
   
-(*s: toplevel [[Std_efunsrc]] menu settings *)
+(*s: toplevel [[Config]] menu settings *)
 let _ =
-  (*s: [[Std_efunsrc]] file menu setup *)
+  (*s: [[Config]] file menu setup *)
   if !!Top_window.file_menu = [] then begin
     Top_window.file_menu =:= [
       "Open File", "load_buffer";
@@ -305,8 +305,8 @@ let _ =
       "Quit", "exit";
     ]
     end;
-  (*e: [[Std_efunsrc]] file menu setup *)
-  (*s: [[Std_efunsrc]] edit menu setup *)
+  (*e: [[Config]] file menu setup *)
+  (*s: [[Config]] edit menu setup *)
   if !!Top_window.edit_menu = [] then begin
       Top_window.edit_menu =:= [ 
         "Cut",    "kill_region";
@@ -322,8 +322,8 @@ let _ =
         (*e: [[edit_menu]] entries *)
       ];
     end;
-  (*e: [[Std_efunsrc]] edit menu setup *)
-  (*s: [[Std_efunsrc]] help menu setup *)
+  (*e: [[Config]] edit menu setup *)
+  (*s: [[Config]] help menu setup *)
   Top_window.help_menu := [|
     "Key Bindings", (fun frame ->
       Frame.change_buffer frame.frm_window "*bindings*"
@@ -339,8 +339,8 @@ let _ =
       failwith "Std_xxx.menu changes: TODO"
     );
   |];
-  (*e: [[Std_efunsrc]] help menu setup *)
-  (*s: [[Std_efunsrc]] buffers menu setup *)
+  (*e: [[Config]] help menu setup *)
+  (*s: [[Config]] buffers menu setup *)
   Top_window.buffers_menu := (fun top_window button () ->
       let buffers = ref [] in
       let edt = Globals.editor() in
@@ -361,18 +361,18 @@ let _ =
       *)
       failwith "Std_menu: show menus TODO"
       )
-  (*e: [[Std_efunsrc]] buffers menu setup *)
-(*e: toplevel [[Std_efunsrc]] menu settings *)
+  (*e: [[Config]] buffers menu setup *)
+(*e: toplevel [[Config]] menu settings *)
   
-(*s: toplevel [[Std_efunsrc]] starting hook *)
+(*s: toplevel [[Config]] starting hook *)
 let _ =
   Hook.add_start_hook (fun () ->
-    (*s: [[Std_efunsrc._5]] start hooks options *)
+    (*s: [[Config._5]] start hooks options *)
     Parameter.add_option_parameter Compil.compile_find_makefile;
     Parameter.add_option_parameter Text.add_amount;
-    (*e: [[Std_efunsrc._5]] start hooks options *)
+    (*e: [[Config._5]] start hooks options *)
     init_global_map ();
     Hook.add_hook Top_window.handle_key_start_hook Complexe.check_file;      
   )
-(*e: toplevel [[Std_efunsrc]] starting hook *)
-(*e: std_efunsrc.ml *)
+(*e: toplevel [[Config]] starting hook *)
+(*e: config.ml *)
