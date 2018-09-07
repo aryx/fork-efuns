@@ -182,7 +182,7 @@ let append filename =
       
 *)
 let init () = 
-  failwith "Options.init: TODO"
+  failwith "Options.init: TODO, need to port parser which uses stream (camlp4)"
 (*  load () *)
 
 let (!!) o = o.option_value
