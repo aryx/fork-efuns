@@ -71,7 +71,7 @@ let standard_map = [
   (* ------------- *)
   (* Inserting *)
   (* ------------- *)
-  (* see also the start_hook in simple.ml setting many self_insert_cmd *)
+  (* see also the many self_insert_cmd below *)
   (*s: inserting keys *)
   [NormalMap, XK.xk_Return], Edit.insert_return; 
   (*e: inserting keys *)
@@ -218,7 +218,7 @@ let standard_map = [
   [NormalMap, XK.xk_Insert], Edit.toggle_overwrite_mode;
   (*e: misc keys *)
   (*e: [[standard_map]] entries *)
-]
+] 
 (*e: constant [[standard_map]] *)
 
 (*s: constant [[Config.grep_hist]] *)
