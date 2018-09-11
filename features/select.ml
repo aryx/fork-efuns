@@ -112,7 +112,7 @@ let set_history map string history =
       let text = buf.buf_text in
       Text.clear text;
       string := ele;
-      Simple.insert_string mini_frame ele
+      Edit.insert_string mini_frame ele
     end
   );      
   Keymap.add_binding map [NormalMap, XK.xk_Down] (fun mini_frame ->
@@ -125,7 +125,7 @@ let set_history map string history =
       let text = buf.buf_text in
       Text.clear text;
       string := ele;
-      Simple.insert_string mini_frame ele; ()
+      Edit.insert_string mini_frame ele; ()
     end
   )
 (*e: function [[Select.set_history]] *)
@@ -139,7 +139,7 @@ let incremental_mini_buffer
     incremental_action frame (Text.to_string mini_frame.frm_buffer.buf_text)
   in
   let incremental_insert mini_frame =
-    Simple.self_insert_command mini_frame;
+    Edit.self_insert_command mini_frame;
     incremental mini_frame
   in
 
@@ -147,7 +147,7 @@ let incremental_mini_buffer
     Keymap.add_binding ismap [NormalMap, key] incremental_insert
   done;
   Keymap.add_binding ismap [NormalMap, XK.xk_BackSpace] (fun mini_frame -> 
-    Simple.delete_backspace_char mini_frame;
+    Edit.delete_backspace_char mini_frame;
     incremental mini_frame
   );
 
@@ -353,18 +353,18 @@ let select_file frame request history start action =
     ) |> ignore;
   Keymap.add_binding map [NormalMap, XK.xk_Prior] (fun frame ->
     let frame = find_completion_frame frame in
-    Simple.backward_screen frame
+    Scroll.backward_screen frame
   );
   Keymap.add_binding map [NormalMap, XK.xk_Next] (fun frame ->
     let frame = find_completion_frame frame in
-    Simple.forward_screen frame
+    Scroll.forward_screen frame
   );
   Keymap.add_binding map [NormalMap, Char.code '~'] (fun frame ->
     let buf = frame.frm_buffer in
     let text = buf.buf_text in
     let point = frame.frm_point in
-    Simple.kill_bol buf point;
-    Simple.self_insert_command frame;      
+    Copy_paste.kill_bol buf point;
+    Edit.self_insert_command frame;      
     string := Text.to_string text
   );
   Keymap.add_binding map [NormalMap, Char.code '/'] (fun frame ->
@@ -375,8 +375,8 @@ let select_file frame request history start action =
       ( let c = Text.get_char text point in
         Text.fmove text point 1;
         if c = '/' then
-          Simple.kill_bol buf point);
-    Simple.self_insert_command frame;
+          Copy_paste.kill_bol buf point);
+    Edit.self_insert_command frame;
     string := Text.to_string text            
   );
   ()

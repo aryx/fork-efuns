@@ -12,12 +12,12 @@ let _ =
     (* keybindings *)
     [
       [MetaMap, Char.code 'g'], Complexe.goto_line;
-      [MetaMap, XK.xk_Up], Simple.scroll_up; 
-      [MetaMap, XK.xk_Down], Simple.scroll_down; 
-      [MetaMap, XK.xk_Left], Simple.scroll_other_up; 
-      [MetaMap, XK.xk_Right], Simple.scroll_other_down; 
+      [MetaMap, XK.xk_Up], Scroll.scroll_up; 
+      [MetaMap, XK.xk_Down], Scroll.scroll_down; 
+      [MetaMap, XK.xk_Left], Scroll.scroll_other_up; 
+      [MetaMap, XK.xk_Right], Scroll.scroll_other_down; 
 
-      [ControlMap, Char.code '/'], Simple.undo;
+      [ControlMap, Char.code '/'], Edit.undo;
 
       [MetaMap, XK.xk_Return], Compil.compile;
       [ControlMap, Char.code 'n' ], Compil.next_error;

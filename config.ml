@@ -30,36 +30,36 @@ let standard_map = [
   (* Navigating (in the file) *)
   (* -------------------------------------------------------- *)
   (*s: navigating keys *)
-  [NormalMap, XK.xk_Left], (fun frm -> ignore (Simple.move_backward frm 1)); 
-  [NormalMap, XK.xk_Right], (fun frm -> ignore (Simple.move_forward frm 1)); 
-  [ControlMap, Char.code 'b'], (fun frm -> ignore (Simple.move_backward frm 1)); 
-  [ControlMap, Char.code 'f'], (fun frm -> ignore (Simple.move_forward frm 1)); 
+  [NormalMap, XK.xk_Left], (fun frm -> ignore (Move.move_backward frm 1)); 
+  [NormalMap, XK.xk_Right], (fun frm -> ignore (Move.move_forward frm 1)); 
+  [ControlMap, Char.code 'b'], (fun frm -> ignore (Move.move_backward frm 1)); 
+  [ControlMap, Char.code 'f'], (fun frm -> ignore (Move.move_forward frm 1)); 
 
-  [ControlMap, XK.xk_Left ], (Frame.to_frame Simple.backward_word);
-  [ControlMap, XK.xk_Right ], (Frame.to_frame Simple.forward_word);  
-  [MetaMap, XK.xk_Left ], (Frame.to_frame Simple.backward_word);
-  [MetaMap, XK.xk_Right ], (Frame.to_frame Simple.forward_word);
+  [ControlMap, XK.xk_Left ], (Frame.to_frame Move.backward_word);
+  [ControlMap, XK.xk_Right ], (Frame.to_frame Move.forward_word);  
+  [MetaMap, XK.xk_Left ], (Frame.to_frame Move.backward_word);
+  [MetaMap, XK.xk_Right ], (Frame.to_frame Move.forward_word);
 
-  [ControlMap, Char.code 'a'], Simple.beginning_of_line;
-  [ControlMap, Char.code 'e'], Simple.end_of_line;
+  [ControlMap, Char.code 'a'], Move.beginning_of_line;
+  [ControlMap, Char.code 'e'], Move.end_of_line;
 
-  [NormalMap, XK.xk_Up], Simple.backward_line; 
-  [NormalMap, XK.xk_Down], Simple.forward_line; 
+  [NormalMap, XK.xk_Up], Move.backward_line; 
+  [NormalMap, XK.xk_Down], Move.forward_line; 
 
 
-  [ControlMap, XK.xk_Up], (Frame.to_frame Simple.backward_paragraph);
-  [ControlMap, XK.xk_Down], (Frame.to_frame Simple.forward_paragraph);  
+  [ControlMap, XK.xk_Up], (Frame.to_frame Move.backward_paragraph);
+  [ControlMap, XK.xk_Down], (Frame.to_frame Move.forward_paragraph);  
 
-  [NormalMap, XK.xk_Prior], Simple.backward_screen; 
-  [NormalMap, XK.xk_Next], Simple.forward_screen;
+  [NormalMap, XK.xk_Prior], Scroll.backward_screen; 
+  [NormalMap, XK.xk_Next], Scroll.forward_screen;
 
-  [ControlMap, XK.xk_Next], Simple.end_of_file;
-  [ControlMap, XK.xk_Prior], Simple.begin_of_file;
-  [MetaMap, Char.code '>'], Simple.end_of_file;
-  [MetaMap, Char.code '<'], Simple.begin_of_file;
+  [ControlMap, XK.xk_Next], Move.end_of_file;
+  [ControlMap, XK.xk_Prior], Move.begin_of_file;
+  [MetaMap, Char.code '>'], Move.end_of_file;
+  [MetaMap, Char.code '<'], Move.begin_of_file;
   (*x: navigating keys *)
   [ControlMap, Char.code 'u'; ControlMap, Char.code ' '], 
-    Simple.goto_last_saved_pos; 
+    Move.goto_last_saved_pos; 
   (*e: navigating keys *)
 
   (* -------------------------------------------------------- *)
@@ -71,50 +71,50 @@ let standard_map = [
   (* ------------- *)
   (* see also the start_hook in simple.ml setting many self_insert_cmd *)
   (*s: inserting keys *)
-  [NormalMap, XK.xk_Return], Simple.insert_return; 
+  [NormalMap, XK.xk_Return], Edit.insert_return; 
   (*e: inserting keys *)
   (* ------------- *)
   (* Deleting *)
   (* ------------- *)
   (*s: deleting keys *)
-  [NormalMap, XK.xk_BackSpace], Simple.delete_backspace_char; 
-  [ControlMap, Char.code 'd'], Simple.delete_char;
-  [NormalMap, XK.xk_Delete], Simple.delete_char; 
+  [NormalMap, XK.xk_BackSpace], Edit.delete_backspace_char; 
+  [ControlMap, Char.code 'd'], Edit.delete_char;
+  [NormalMap, XK.xk_Delete], Edit.delete_char; 
 
-  [MetaMap, Char.code 'd' ], (Frame.to_frame Simple.delete_forward_word);
-  [MetaMap, XK.xk_BackSpace ], (Frame.to_frame Simple.delete_backward_word);
+  [MetaMap, Char.code 'd' ], (Frame.to_frame Edit.delete_forward_word);
+  [MetaMap, XK.xk_BackSpace ], (Frame.to_frame Edit.delete_backward_word);
 
-  [ControlMap, Char.code 'k'], Simple.kill_end_of_line;
+  [ControlMap, Char.code 'k'], Copy_paste.kill_end_of_line;
   (*x: deleting keys *)
-  [ControlMap, XK.xk_BackSpace], Simple.hungry_electric_delete;
+  [ControlMap, XK.xk_BackSpace], Misc.hungry_electric_delete;
   (*e: deleting keys *)
   (* ------------------------------ *)
   (* Moving (Cut, copy, paste) *)
   (* ------------------------------ *)
   (*s: moving keys *)
   [ControlMap, Char.code ' '], Complexe.mark_at_point;
-  [ControlMap, Char.code 'w'], Simple.kill_region;
-  [ControlMap, Char.code 'y'], Simple.insert_killed;
-  [MetaMap, Char.code 'y'], Simple.insert_next_killed;
-  [MetaMap, Char.code 'w'], Simple.copy_region;
+  [ControlMap, Char.code 'w'], Copy_paste.kill_region;
+  [ControlMap, Char.code 'y'], Copy_paste.insert_killed;
+  [MetaMap, Char.code 'y'], Copy_paste.insert_next_killed;
+  [MetaMap, Char.code 'w'], Copy_paste.copy_region;
   (*e: moving keys *)
   (* ---------------------- *)
   (* Transforming *)
   (* ---------------------- *)
   (*s: transforming keys *)
-  [ControlMap, Char.code 't'], (Frame.to_frame Simple.transpose_chars);
-  [MetaMap, Char.code 't'], (Frame.to_frame Simple.transpose_words);
+  [ControlMap, Char.code 't'], (Frame.to_frame Edit.transpose_chars);
+  [MetaMap, Char.code 't'], (Frame.to_frame Edit.transpose_words);
 
   [MetaMap, Char.code 'l'], (fun frm ->
-    Simple.on_word frm.frm_buffer frm.frm_point String.lowercase
+    Edit.on_word frm.frm_buffer frm.frm_point String.lowercase
   );
   [MetaMap, Char.code 'u'], (fun frm ->
-    Simple.on_word frm.frm_buffer frm.frm_point String.uppercase
+    Edit.on_word frm.frm_buffer frm.frm_point String.uppercase
   );
   [MetaMap, Char.code 'c'], (fun frm ->
-    Simple.on_word frm.frm_buffer frm.frm_point String.capitalize
+    Edit.on_word frm.frm_buffer frm.frm_point String.capitalize
   );
-  [MetaMap, XK.xk_q], Simple.fill_paragraph;
+  [MetaMap, XK.xk_q], Misc.fill_paragraph;
   (*e: transforming keys *)
 
   (* -------------------------------------------------------- *)
@@ -134,7 +134,7 @@ let standard_map = [
   (* Undoing *)
   (* -------------------------------------------------------- *)
   (*s: undoing keys *)
-  [ControlMap, Char.code '_'], Simple.undo;
+  [ControlMap, Char.code '_'], Edit.undo;
   (*e: undoing keys *)
 
   (* -------------------------------------------------------- *)
@@ -197,11 +197,11 @@ let standard_map = [
   (*x: misc keys *)
   [c_x; ControlMap, Char.code 'c'], Complexe.exit_efuns; 
   (*x: misc keys *)
-  [ControlMap, Char.code 'l'], Simple.recenter;
+  [ControlMap, Char.code 'l'], Scroll.recenter;
   (*x: misc keys *)
   [c_h; NormalMap, Char.code 'K'], Frame.bindings_help;
   (*x: misc keys *)
-  [c_x; ControlMap, Char.code 'x'], Simple.point_at_mark;
+  [c_x; ControlMap, Char.code 'x'], Misc.point_at_mark;
   (*x: misc keys *)
   [ c_c; NormalMap, Char.code '-'], Structure.next_hole;
   (*x: misc keys *)
@@ -217,7 +217,7 @@ let standard_map = [
   [c_x; n_5; NormalMap, Char.code '0'], Top_window.delete_window;
   (*e: window management keys *)
   (*x: misc keys *)
-  [NormalMap, XK.xk_Insert], Simple.toggle_overwrite_mode;
+  [NormalMap, XK.xk_Insert], Misc.toggle_overwrite_mode;
   (*e: misc keys *)
   (*e: [[standard_map]] entries *)
 ]
@@ -240,7 +240,7 @@ open Options
   
 (*s: constant [[Config.global_map]] *)
 let global_map = define_option ["global_map"] "" 
-  (list_option Simple.binding_option) []
+  (list_option Misc.binding_option) []
 (*e: constant [[Config.global_map]] *)
 (*s: constant [[Config.interactives_map]] *)
 let interactives_map = define_option ["interactives_map"] ""

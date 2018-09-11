@@ -147,7 +147,7 @@ let prompt_color = "coral"
 
 let colorize buf =
   Dircolors.colorize buf;
-  Simple.color buf 
+  Misc.color buf 
     (Str.regexp ("^/.* \\$")) false
       (Text.make_attr (Attr.get_color prompt_color) 1 0 false);
   ()
@@ -342,7 +342,7 @@ let interpret frame s =
   (* file editing *)
   | _ when s =~ "[ve][ ]+\\(.*\\)" -> 
     builtin_v frame (Common.matched1 s);
-    Simple.end_of_file frame;
+    Move.end_of_file frame;
   (* do not scroll_to_end() here! Indeed this will change frm_start
    * and frm_y_offset, but only frm_start is saved in the
    * buffer, and so a restore to the eshell buffer will have a wrong
@@ -353,7 +353,7 @@ let interpret frame s =
   (* general case *)
   | cmd -> run_cmd frame cmd
   );
-  Simple.end_of_file frame;
+  Move.end_of_file frame;
   scroll_to_end frame;
   ()
  with Exit -> ()
@@ -435,7 +435,7 @@ let _ =
     (* not too bad completion for free *)
     Keymap.add_binding map [(NormalMap, XK.xk_Tab)] Abbrevs.dabbrev_expand;
     Keymap.add_binding map [(MetaMap, Char.code '>')] (fun frame ->
-      Simple.end_of_file frame;
+      Move.end_of_file frame;
       scroll_to_end frame;
     );
     Keymap.add_binding map [Keymap.c_c; (ControlMap, Char.code 'k')] 

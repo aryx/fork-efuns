@@ -224,7 +224,7 @@ let complete_prefix_at_cursor frm =
     Text.with_dup_point text point (fun mark ->
       let tbl = buf.buf_syntax_table in
       tbl.(Char.code '.') <- true;
-      Simple.to_begin_of_word text mark tbl;
+      Move.to_begin_of_word text mark tbl;
       tbl.(Char.code '.') <- false;
       Text.region text mark point
     )
@@ -258,10 +258,10 @@ let complete_prefix_at_cursor frm =
           if (prefix =~ ".*[\\.]$" || prefix = "")
           then ()
           else begin
-            Simple.backward_word buf point;
-            Simple.delete_forward_word buf point;
+            Move.backward_word buf point;
+            Edit.delete_forward_word buf point;
           end;
-          Simple.insert_string frm s;
+          Edit.insert_string frm s;
         )
   | _ -> failwith (spf "wrong JSON output for complete_prefix: %s" str)
 
@@ -357,7 +357,7 @@ let _ =
   Keymap.add_binding mode.min_map [NormalMap, XK.xk_Tab] (fun frm ->
     let point = frm.frm_point in
     if Text.point_col frm.frm_buffer.buf_text point = 0
-    then Simple.insert_string frm "  "
+    then Edit.insert_string frm "  "
     else complete_prefix_at_cursor frm;
   );
   ()

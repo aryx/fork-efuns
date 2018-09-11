@@ -36,13 +36,13 @@ let target_color = define_option ["makefile_mode"; "target_color"] ""
 (*e: constant [[Makefile_mode.target_color]] *)
 (*s: function [[Makefile_mode.makefile_color]] *)
 let makefile_color buf =
-  Simple.color buf mkfile_rules false
+  Misc.color buf mkfile_rules false
     (Text.make_attr (Attr.get_color !!rules_color) 1 0 false);
-  Simple.color buf mkfile_target false 
+  Misc.color buf mkfile_target false 
     (Text.make_attr (Attr.get_color !!target_color) 1 0 false);
-  Simple.color buf mkfile_vars false 
+  Misc.color buf mkfile_vars false 
     (Text.make_attr (Attr.get_color !!Pl_colors.variable_name_color) 1 0 false);
-  Simple.color buf mkfile_comments false 
+  Misc.color buf mkfile_comments false 
     (Text.make_attr (Attr.get_color !!Pl_colors.comment_color) 1 0 false);
   ()
 (*e: function [[Makefile_mode.makefile_color]] *)
@@ -60,7 +60,7 @@ let mode = Ebuffer.new_major_mode "Makefile" (Some install)
 
 (*s: constant [[Makefile_mode.local_map]] *)
 let local_map = define_option ["makefile_mode"; "local_map"] ""
-    (list_option Simple.binding_option) []
+    (list_option Misc.binding_option) []
 (*e: constant [[Makefile_mode.local_map]] *)
 
 (*s: constant [[Makefile_mode.interactives_map]] *)

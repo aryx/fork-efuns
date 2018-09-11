@@ -45,10 +45,10 @@ let error_color = define_option ["error_color"] ""
 let color_buf_hook = Store.create_abstr "color_buf_hook"
 
 let color_number_and_punctuation buf =
-  Simple.color buf 
+  Misc.color buf 
     (Str.regexp ("\\b[0-9]+\\b")) false
       (Text.make_attr (Attr.get_color !!number_color) 1 0 false);
-  Simple.color buf 
+  Misc.color buf 
     (Str.regexp ("[|;(){}\\[\\]]")) false
       (Text.make_attr (Attr.get_color !!punctuation_color) 1 0 false);
   ()

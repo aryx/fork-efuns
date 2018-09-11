@@ -257,7 +257,7 @@ let tex_color_buffer buf =
 let c_c = (ControlMap,Char.code 'c')
 
 let structures = define_option ["tex_mode"; "structures"] ""
-    (list_option Simple.binding_option) []
+    (list_option Misc.binding_option) []
   
 let _ =
   if !!structures = [] then 
@@ -382,7 +382,7 @@ let install buf =
 let mode = Ebuffer.new_major_mode"TeX" (Some install)
 
 let comment_string = "%"
-let _ = Var.set_major_var mode Simple.line_comment "%"
+let _ = Var.set_major_var mode Misc.line_comment "%"
   
 let comment_region frame =
   let buf = frame.frm_buffer in
@@ -429,9 +429,9 @@ let insert_return_in_tex frame =
   Text.bmove text point bol;
   let comment = (Text.get_char text point = '%') && bol <> 0 in
   Text.fmove text point bol;
-  Simple.insert_return frame;
+  Edit.insert_return frame;
   if comment 
-  then Simple.insert_char frame '%'
+  then Edit.insert_char frame '%'
 
   (* load in buffer \input{file} *)
 let load_input frame buf point =
@@ -557,7 +557,7 @@ let setup_actions () =
   Action.define_action "tex_mode.comment_region" comment_region;
   Action.define_action "tex_mode.uncomment_region" uncomment_region;
   Action.define_action "tex_mode.char_expand_abbrev" (fun frame ->
-      Abbrevs.expand_sabbrev frame; Simple.self_insert_command frame);
+      Abbrevs.expand_sabbrev frame; Edit.self_insert_command frame);
   Action.define_action "tex_mode.insert_return" insert_return_in_tex;
   Action.define_action "tex_mode.load_input_file" load_input_file;
   Action.define_action "tex_mode.load_next_input_file" load_next_input_file;
@@ -565,7 +565,7 @@ let setup_actions () =
   Action.define_action "tex_mode.set_main_file" set_main_file;
   Action.define_action "tex_mode.to_main_file" to_main_file;
   Action.define_action "tex_mode.find_matching_paren" (fun frame ->
-      Simple.self_insert_command frame;
+      Edit.self_insert_command frame;
       Paren_mode.highlight_paren frame);
   Action.define_action "tex_mode.end_env" end_env;
   Action.define_action "tex_mode.begin_env" begin_env;
@@ -573,7 +573,7 @@ let setup_actions () =
   ()  
     
 let local_map = define_option ["tex_mode"; "local_map"] ""
-    (list_option Simple.binding_option) []
+    (list_option Misc.binding_option) []
 
 let interactives_map = define_option ["tex_mode"; "interactives_map"] ""
     (list_option string2_option) 

@@ -454,7 +454,7 @@ let insert_and_return frame =
     in
     let session = Text.start_session text in
     Indent.set_indent text point current;
-    Simple.insert_char frame '\n';
+    Edit.insert_char frame '\n';
     Indent.set_indent text point next;
     Text.commit_session text session;
     Text.fmove text point next; 
@@ -462,7 +462,7 @@ let insert_and_return frame =
   with
     e -> 
       Text.remove_point text curseur;
-      Simple.insert_char frame '\n'
+      Edit.insert_char frame '\n'
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let indent_current_line frame =
@@ -553,7 +553,7 @@ let setup () =
   Keymap.add_binding map [NormalMap, XK.xk_Return] insert_and_return;
   ['}';']';')'] |> List.iter (fun char ->
       Keymap.add_binding map [NormalMap, Char.code char] (fun frame ->
-        Simple.self_insert_command frame;
+        Edit.self_insert_command frame;
         Paren_mode.highlight_paren frame
       )
   )

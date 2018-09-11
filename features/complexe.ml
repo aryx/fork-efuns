@@ -142,7 +142,7 @@ let load_buffer frame =
 let insert_file frame =
   Select.select_filename frame "Insert file: " (fun str ->
     let inc = open_in str in
-    Simple.insert_string frame (Utils.read_string inc);
+    Edit.insert_string frame (Utils.read_string inc);
     close_in inc
   )
 (*e: function [[Complex.insert_file]] *)
@@ -226,7 +226,7 @@ let goto_line frame =
   Select.simple_select frame "goto-line:" (fun name ->
     let line = int_of_string name in
     (*s: save current pos from frame for position history navigation *)
-    Simple.save_current_pos frame;
+    Move.save_current_pos frame;
     (*e: save current pos from frame for position history navigation *)
     Text.goto_line frame.frm_buffer.buf_text frame.frm_point (line - 1)
   )
@@ -269,7 +269,7 @@ let cursor_position frm =
 let mark_at_point frame =
   Ebuffer.set_mark frame.frm_buffer frame.frm_point;
   (*s: save current pos from frame for position history navigation *)
-  Simple.save_current_pos frame;
+  Move.save_current_pos frame;
   (*e: save current pos from frame for position history navigation *)
   let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Mark set";

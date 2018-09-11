@@ -12,7 +12,6 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Efuns
-open Simple
 
 module H = Highlight
 
@@ -85,7 +84,7 @@ let mode = Ebuffer.new_minor_mode "paren" []
 
 (*s: function [[Paren_mode.find_matching]] *)
 let find_matching frame = 
-  self_insert_command frame; 
+  Edit.self_insert_command frame; 
   highlight_paren frame
 (*e: function [[Paren_mode.find_matching]] *)
   

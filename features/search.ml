@@ -47,7 +47,7 @@ let replace flag frame query str repl =
   let text = buf.buf_text in
   let point = frame.frm_point in
   (*s: save current pos from frame for position history navigation *)
-  Simple.save_current_pos frame;
+  Move.save_current_pos frame;
   (*e: save current pos from frame for position history navigation *)
   let regexp = to_regexp flag str in
   let session = Text.start_session text in
@@ -229,7 +229,7 @@ let isearch to_regexp sens frame =
   let spoint = Text.dup_point text point in
   let orig = Text.get_position text point in
   (*s: save current pos from frame for position history navigation *)
-  Simple.save_current_pos frame;
+  Move.save_current_pos frame;
   (*e: save current pos from frame for position history navigation *)
 
   let sens = ref sens in
@@ -299,9 +299,9 @@ let isearch to_regexp sens frame =
     (fun mini_frame ->
       (*      set_last mini_frame;       *)
       Text.goto_point text spoint point;
-      let end_current_word = Simple.end_of_word buf point in
+      let end_current_word = Move.end_of_word buf point in
       string := !string ^ end_current_word;
-      Simple.insert_string mini_frame end_current_word;
+      Edit.insert_string mini_frame end_current_word;
       isearch_s ();
       Minibuffer.update_request mini_frame (request ())
     );
@@ -330,19 +330,19 @@ let isearch to_regexp sens frame =
   Keymap.add_binding ismap [NormalMap, XK.xk_Left]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      Simple.move_backward frame 1 |> ignore
+      Move.move_backward frame 1 |> ignore
      );  
   Keymap.add_binding ismap [NormalMap, XK.xk_Right]
     (fun mini_frame  ->
       Minibuffer.kill mini_frame frame;
-      Simple.move_forward frame 1 |> ignore
+      Move.move_forward frame 1 |> ignore
     );  
-  Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and Simple.forward_line);
-  Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and Simple.backward_line);
+  Keymap.add_binding ismap [NormalMap, XK.xk_Down] (kill_and Move.forward_line);
+  Keymap.add_binding ismap [NormalMap, XK.xk_Up] (kill_and Move.backward_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'a'] 
-    (kill_and Simple.beginning_of_line);
+    (kill_and Move.beginning_of_line);
   Keymap.add_binding ismap [ControlMap, Char.code 'e'] 
-    (kill_and Simple.end_of_line)
+    (kill_and Move.end_of_line)
   (*e: [[Search.isearch()]] key bindings *)
 (*e: function [[Search.isearch]] *)
 

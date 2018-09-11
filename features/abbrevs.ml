@@ -67,7 +67,7 @@ let dabbrev_expand frame =
         Text.delete text point for_len;
         s, buf, pos, history
     | _ -> 
-        let str = Simple.beginning_of_word buf point in
+        let str = Move.beginning_of_word buf point in
         str , buf, 
         Text.get_position text point - String.length str, []
   in
@@ -95,7 +95,7 @@ let dabbrev_expand frame =
         let rec first () =
           restart ();
           Text.fmove curr_text mark truelen;
-          let m = Simple.end_of_word curr_buf mark in
+          let m = Move.end_of_word curr_buf mark in
           if List.mem m history then begin
             Text.bmove curr_text mark truelen; 
             first ()
@@ -148,7 +148,7 @@ let expand_sabbrev frame =
     let abbrevs = Var.get_local buf abbrev_table in
     let str =
       Text.with_dup_point text point (fun mark ->
-        Simple.to_begin_of_word text point buf.buf_syntax_table;
+        Move.to_begin_of_word text point buf.buf_syntax_table;
         Text.region text point mark 
       )
     in
@@ -165,6 +165,6 @@ let expand_sabbrev frame =
 
 let char_expand_abbrev frm =
   expand_sabbrev frm; 
-  Simple.self_insert_command frm
+  Edit.self_insert_command frm
  
 (*e: features/abbrevs.ml *)

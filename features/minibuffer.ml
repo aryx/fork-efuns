@@ -106,7 +106,7 @@ let create frame local_map request =
 (*s: function [[Minibuffer.create_return]] *)
 let create_return frame local_map request default action =
   let mini_frame = create frame local_map request in
-  Simple.insert_string mini_frame default;
+  Edit.insert_string mini_frame default;
   Keymap.add_binding local_map [NormalMap, XK.xk_Return] 
     (return action frame);
   mini_frame

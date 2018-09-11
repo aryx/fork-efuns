@@ -13,7 +13,6 @@
 (*e: copyright header2 *)
 open Options
 open Abbrevs
-open Simple
 open Efuns
 
 (*s: constant [[Abbrevs_mode.abbreviations]] *)
@@ -46,12 +45,12 @@ let abbrevs_chars = define_option ["abbrevs_mode"; "abbrevs_chars"] ""
   
 (*s: function [[Abbrevs_mode.find_matching]] *)
 let find_matching  frame = 
-  self_insert_command frame; 
+  Edit.self_insert_command frame; 
   Paren_mode.highlight_paren frame
 (*e: function [[Abbrevs_mode.find_matching]] *)
 (*s: function [[Abbrevs_mode.char_expand_abbrev]] *)
 let char_expand_abbrev frame =
-  expand_sabbrev frame; self_insert_command frame
+  expand_sabbrev frame; Edit.self_insert_command frame
 (*e: function [[Abbrevs_mode.char_expand_abbrev]] *)
   
 (*s: toplevel [[Abbrevs_mode._2]] *)

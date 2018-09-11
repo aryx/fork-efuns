@@ -1138,7 +1138,7 @@ let insert_and_return frame =
     in
     let session = Text.start_session text in
     Indent.set_indent text point current;
-    Simple.insert_char frame '\n';
+    Edit.insert_char frame '\n';
     Indent.set_indent text point next;
     Text.commit_session text session;
     Text.fmove text point next; 
@@ -1146,7 +1146,7 @@ let insert_and_return frame =
   with
     e -> 
       Text.remove_point text curseur;
-      Simple.insert_char frame '\n'
+      Edit.insert_char frame '\n'
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let indent_current_line frame =
@@ -1203,7 +1203,7 @@ let parse_name str = split1 str '.'
 
 let find_long_word buf point =
   buf.buf_syntax_table.(Char.code '.') <- true;
-  let w = Simple.current_word buf point in
+  let w = Move.current_word buf point in
   buf.buf_syntax_table.(Char.code '.') <- false;
   w  
   
@@ -1287,7 +1287,7 @@ let ocaml_find_error text error_point =
 let c_c = (ControlMap,Char.code 'c')
 
 let structures = define_option ["ocaml_mode"; "structures"] ""
-    (list_option Simple.binding_option) []
+    (list_option Misc.binding_option) []
   
 let setup_structures () = 
   if !!structures = [] then
@@ -1342,7 +1342,7 @@ let ocaml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 (***********************************************************************)
          
 let local_map = define_option ["ocaml_mode"; "local_map"] ""
-    (list_option Simple.binding_option) []
+    (list_option Misc.binding_option) []
 
 let interactives_map = define_option ["ocaml_mode"; "interactives_map"] ""
     (list_option string2_option) 
@@ -1384,7 +1384,7 @@ let setup () =
   Action.define_action "ocaml_mode.indent_phrase" indent_phrase;
   Action.define_action "ocaml_mode.indent_line" indent_current_line;
   Action.define_action "ocaml_mode.char_expand_abbrev" (fun frame ->
-      Abbrevs.expand_sabbrev frame; Simple.self_insert_command frame);
+      Abbrevs.expand_sabbrev frame; Edit.self_insert_command frame);
   Action.define_action "ocaml_mode.return_expand_abbrev"
     (fun frame -> Abbrevs.expand_sabbrev frame; insert_and_return frame); 
 

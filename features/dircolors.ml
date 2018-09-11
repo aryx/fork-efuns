@@ -141,7 +141,7 @@ let extensions = [
 (* todo: should add '-' in the [] below
  * to those regexps but ocaml light does not support them yet  *)
 let colorize buf = 
-  Simple.color buf 
+  Misc.color buf 
     (Str.regexp ("[a-zA-Z0-9_]*/")) false (* todo: add also . here *)
     (Text.make_attr (Attr.get_color dir_color) 1 0 false);
 
@@ -149,11 +149,11 @@ let colorize buf =
   extensions |> List.iter (fun (exts, color) ->
     exts |> List.iter (function
       | E ext ->
-          Simple.color buf 
+          Misc.color buf 
             (Str.regexp (spf "\\b[a-zA-Z0-9_]*\\.%s\\b" ext)) false
             (Text.make_attr (Attr.get_color color) 1 0 false);
       | Reg re ->
-          Simple.color buf 
+          Misc.color buf 
             (Str.regexp (spf "\\b[a-zA-Z0-9_]*%s[a-zA-Z0-9_]*\\b" re)) false
             (Text.make_attr (Attr.get_color color) 1 0 false);
     )

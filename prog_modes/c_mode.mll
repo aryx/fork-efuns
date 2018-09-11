@@ -743,7 +743,7 @@ let insert_and_return frame =
     in
     let session = Text.start_session text in
     Indent.set_indent text point current;
-    Simple.insert_char frame '\n';
+    Edit.insert_char frame '\n';
     Indent.set_indent text point next;
     Text.commit_session text session;
     Text.fmove text point next; 
@@ -751,7 +751,7 @@ let insert_and_return frame =
   with
     e -> 
       Text.remove_point text curseur;
-      Simple.insert_char frame '\n'
+      Edit.insert_char frame '\n'
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let indent_current_line frame =
@@ -830,7 +830,7 @@ let mode_regexp = define_option ["c_mode"; "mode_regexp"] ""
   ]
   
 let local_map = define_option ["c_mode"; "local_map"] ""
-    (list_option Simple.binding_option) []
+    (list_option Misc.binding_option) []
 
 let interactives_map = define_option ["c_mode"; "interactives_map"] ""
     (list_option string2_option) 
@@ -857,7 +857,7 @@ let setup_maps () =
   
   ['}';']';')'] |> List.iter (fun char ->
       Keymap.add_binding map [NormalMap, Char.code char] (fun frame ->
-        Simple.self_insert_command frame;
+        Edit.self_insert_command frame;
         Paren_mode.highlight_paren frame
       )
   );

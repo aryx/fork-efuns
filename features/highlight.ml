@@ -81,7 +81,7 @@ let unhightlight _frame =
        Text.set_position text final fin;
 
        let str = Text.region text curseur final in
-       Simple.kill_string str;
+       Copy_paste.kill_string str;
        (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
 
      ));

@@ -12,7 +12,6 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Options
-open Simple
 open Efuns
           
 (*s: constant [[Fill_mode.minor_mode_name]] *)
@@ -40,7 +39,7 @@ let _ =
   let fill_on_char = !!fill_on_char in
   for i = 0 to String.length fill_on_char - 1 do 
       Keymap.add_binding mode.min_map [NormalMap, Char.code fill_on_char.[i]] 
-        electric_insert_space
+        Misc.electric_insert_space
   done
 (*e: toplevel [[Fill_mode._1]] *)
   

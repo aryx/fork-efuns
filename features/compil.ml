@@ -136,14 +136,14 @@ let color_buffer buf =
     try Var.get_var buf find_error_location_regexp
     with Not_found | Failure _ -> snd !!c_error_regexp
   in
-  Simple.color buf re false
+  Misc.color buf re false
     (Text.make_attr (Attr.get_color "green") 1 0 false);
 
   let re =
     try Var.get_var buf find_error_error_regexp
     with Not_found | Failure _ -> Str.regexp "Error"
   in
-  Simple.color buf re false
+  Misc.color buf re false
     (Text.make_attr (Attr.get_color "red") 1 0 false);
   ()
 

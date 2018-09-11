@@ -30,7 +30,7 @@ EXTERNALCMAS=\
  external/json-wheel/jsonwheel.cma
 
 
-# pfff dependencies
+# Pfff dependencies
 
 ifeq ($(USE_PFFF),1)
 PFFF_MODES=\
@@ -92,15 +92,13 @@ endif
 # Main variables
 #------------------------------------------------------------------------------
 
-#pad: I've indented some of the files I created and put them under the
-# file from which they come from in the original Efuns from LeFessant.
 SRC=\
  commons/utils.ml\
  commons/str2.ml\
  commons/log.ml\
+ commons/concur.ml\
  commons/options.ml\
  commons/store.ml\
- commons/concur.ml\
  \
  graphics/xtypes.ml\
  graphics/xdraw.ml\
@@ -108,23 +106,27 @@ SRC=\
  \
  core/text.ml\
  core/efuns.ml\
-  core/globals.ml\
-  core/var.ml\
-  core/parameter.ml\
-  core/attr.ml\
-  core/action.ml\
-  core/hook.ml\
+ core/globals.ml\
+ core/var.ml\
+ core/parameter.ml\
+ core/attr.ml\
+ core/action.ml\
+ core/hook.ml\
  core/keymap.ml\
  core/ebuffer.ml\
  core/window.ml\
  core/frame.ml\
  core/top_window.ml\
  \
- features/simple.ml\
-  features/mouse.ml\
-  features/highlight.ml\
-  features/indent.ml\
-  features/structure.ml\
+ features/move.ml\
+ features/edit.ml\
+ features/scroll.ml\
+ features/copy_paste.ml\
+ features/mouse.ml\
+ features/highlight.ml\
+ features/indent.ml\
+ features/structure.ml\
+ features/misc.ml\
  features/minibuffer.ml\
  features/multi_frames.ml\
  features/select.ml\
