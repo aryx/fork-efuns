@@ -124,9 +124,9 @@ let _ =
 (*e: constant [[Efuns.t]] *)
 
 (* for ipc/server too *)
-(*s: constant [[Efuns.displayname]] *)
+(*s: global [[Efuns.displayname]] *)
 let displayname = ref ""
-(*e: constant [[Efuns.displayname]] *)
+(*e: global [[Efuns.displayname]] *)
 
 (*
   let _ = Printf.printf "%d %d %s %s %s" !width !height !font !fg !bg; 

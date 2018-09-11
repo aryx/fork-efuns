@@ -91,11 +91,6 @@ let main () =
     "-bg"     , Arg.String(fun s -> bg_opt := Some s), "<color>: Background color";
     "-font"   , Arg.String(fun s -> font_opt := Some s), "<font>: Font name";
     (*x: [[main()]] command line options *)
-    "-d",        Arg.String(fun s -> Globals.displayname := s),
-    " <dpy>: Name of display";
-    "--display", Arg.String(fun s -> Globals.displayname := s),
-    " <dpy>: Name of display";
-    (*x: [[main()]] command line options *)
     "-check", Arg.Set Globals.check, ": only for testing";
     (*x: [[main()]] command line options *)
       "-I",Arg.String (fun s -> Globals.load_path =:= 
