@@ -259,7 +259,7 @@ let _ =
   Keymap.add_binding map [NormalMap, Char.code ' '] 
     (fun frame ->
       Abbrevs.expand_sabbrev frame;
-      Misc.electric_insert_space frame);
+      Electric.electric_insert_space frame);
   Keymap.add_binding map [MetaMap, Char.code 'q'] Misc.fill_paragraph;
   List.iter (fun char ->
       Keymap.add_binding map [NormalMap, Char.code char]

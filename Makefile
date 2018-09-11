@@ -137,6 +137,7 @@ SRC=\
  features/dircolors.ml\
  features/compil.ml\
  features/search.ml\
+ features/electric.ml\
  features/misc.ml\
  \
  minor_modes/minor_modes.ml\

@@ -39,7 +39,7 @@ let _ =
   let fill_on_char = !!fill_on_char in
   for i = 0 to String.length fill_on_char - 1 do 
       Keymap.add_binding mode.min_map [NormalMap, Char.code fill_on_char.[i]] 
-        Misc.electric_insert_space
+        Electric.electric_insert_space
   done
 (*e: toplevel [[Fill_mode._1]] *)
   

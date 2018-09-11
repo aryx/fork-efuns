@@ -1,15 +1,6 @@
 (* insertion *)
 
-val electric_insert_space : Efuns.action
-
 val insert_special_char : Efuns.action
-
-(* deletion *)
-
-val previous_char : Efuns.frame -> char
-
-val hungry_char : char -> bool
-val hungry_electric_delete : Efuns.action
 
 (* paragraph *)
 

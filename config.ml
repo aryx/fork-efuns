@@ -88,7 +88,7 @@ let standard_map = [
 
   [ControlMap, Char.code 'k'], Copy_paste.kill_end_of_line;
   (*x: deleting keys *)
-  [ControlMap, XK.xk_BackSpace], Misc.hungry_electric_delete;
+  [ControlMap, XK.xk_BackSpace], Electric.hungry_electric_delete;
   (*e: deleting keys *)
   (* ------------------------------ *)
   (* Moving (Cut, copy, paste) *)
