@@ -443,11 +443,11 @@ let message buf m =
     create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore
 (*e: function [[Ebuffer.message]] *)
       
-(*s: toplevel [[Ebuffer._1]] *)
+(*s: toplevel [[Ebuffer]] starting hook *)
 let _ =
   Hook.add_start_hook (fun () ->
     Var.set_global create_buf_hook [set_buffer_mode];
     Var.set_global modes_alist []
   )
-(*e: toplevel [[Ebuffer._1]] *)
+(*e: toplevel [[Ebuffer]] starting hook *)
 (*e: core/ebuffer.ml *)

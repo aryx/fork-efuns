@@ -19,4 +19,4 @@ val efuns_path : string list
 val font : string Options.option_record
 
 val displayname: string ref
-val xdefaults : string
+

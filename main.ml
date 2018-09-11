@@ -186,7 +186,7 @@ let main () =
   ()
 (*e: function [[Main.main]] *)
 
-(*s: toplevel [[Main._]] *)
+(*s: toplevel [[Main]] call [[main()]] *)
 let _ =
   Common.main_boilerplate (fun () ->
 (*
@@ -196,6 +196,6 @@ let _ =
 *)
     main () 
   )
-(*e: toplevel [[Main._]] *)
+(*e: toplevel [[Main]] call [[main()]] *)
 
 (*e: main.ml *)

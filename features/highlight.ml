@@ -125,11 +125,11 @@ let highlight frame =
   hightlight_region buf pos_debut_to_hl pos_fin_to_hl
 (*e: function [[Simple.highlight]] *)
 
-(*s: toplevel [[Highlight._]] *)
+(*s: toplevel [[Highlight]] starting hook *)
 let _ =
   Hook.add_start_hook (fun () ->
-    (* unhightlight region *)
+    (* unhighlight region *)
     Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
   )
-(*e: toplevel [[Highlight._]] *)
+(*e: toplevel [[Highlight]] starting hook *)
 (*e: features/highlight.ml *)

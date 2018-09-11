@@ -78,50 +78,17 @@ let efuns_path = [
   ]
 (*e: constant [[Efuns.efuns_path]] *)
   
-(*s: toplevel [[Efuns._1]] *)
+(*s: toplevel [[Efuns]] load path *)
 let _ = 
   path := !!load_path @ efuns_path;
   option_hook load_path (fun _ -> path := !!load_path @ efuns_path)
-(*e: toplevel [[Efuns._1]] *)
+(*e: toplevel [[Efuns]] load path *)
 
 (* used in some major mode *)
 (*s: constant [[Efuns.font]] *)
 let font = define_option ["font"] "" string_option "Monospace 20"
 (*e: constant [[Efuns.font]] *)
   
-(*--------------------    Ressources *)
-(*s: constant [[Efuns.xdefaults]] *)
-let xdefaults = try Sys.getenv "XUSERFILESEARCHPATH" with
-    Not_found -> Filename.concat Utils.homedir ".Xdefaults"
-(*e: constant [[Efuns.xdefaults]] *)
-
-(*s: constant [[Efuns.x_res]] *)
-(*let x_res = Xrm.create ()*)
-(*e: constant [[Efuns.x_res]] *)
-(*s: toplevel [[Efuns._2]] *)
-(*
-let _ =
-  begin    
-    try
-      let efuns_res = 
-        let path = try Utils.string_to_path (Sys.getenv "XFILESEARCHPATH") with _ -> 
-              [] in
-        let xenv = try Sys.getenv "XENVIRONMENT" with _ -> "" in
-        let xroot = try Filename.concat  (Sys.getenv "X11ROOT")
-            "lib/X11/app-defaults/" with _ -> "" in
-        Utils.find_in_path (path@[
-            xenv; xroot; "/usr/X11/lib/X11/app-defaults/"]) "Efuns"
-      in
-      Xrm.safe_load x_res efuns_res
-    with _ -> ()
-  end;
-  Xrm.safe_load x_res xdefaults
-*)
-(*e: toplevel [[Efuns._2]] *)
-  
-(*s: constant [[Efuns.t]] *)
-(*let t = x_res*)
-(*e: constant [[Efuns.t]] *)
 
 (* for ipc/server too *)
 (*s: global [[Efuns.displayname]] *)

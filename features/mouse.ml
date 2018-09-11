@@ -127,12 +127,12 @@ let mouse_set_frame frame =
   ()
 (*e: function [[Simple.mouse_set_frame]] *)
 
-(*s: toplevel [[Mouse._]] *)
+(*s: toplevel [[Mouse]] starting hook *)
 let _ =
   Hook.add_start_hook (fun () ->
     Keymap.add_global_key [NormalMap, XK.xk_Pointer_Drag1]
       "mouse_drag_region" mouse_drag_region;
   )
-(*e: toplevel [[Mouse._]] *)
+(*e: toplevel [[Mouse]] starting hook *)
 
 (*e: features/mouse.ml *)
