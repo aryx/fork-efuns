@@ -12,20 +12,12 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Efuns
-open Xtypes
 open Edit
 open Move
 
 (*****************************************************************************)
 (* Misc *)
 (*****************************************************************************)
-
-(*s: function [[Simple.unset_attr]] *)
-let unset_attr frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  Text.unset_attrs text
-(*e: function [[Simple.unset_attr]] *)
 
 (*s: function [[Simple.simplify]] *)
 let simplify text start point =
@@ -98,74 +90,6 @@ let insert_special_char frame =
   then insert_char frame (Char.chr (key - 97))
   else insert_char frame (Char.chr (key - 65))
 (*e: function [[Simple.insert_special_char]] *)
-
-(*****************************************************************************)
-(* Keys *)
-(*****************************************************************************)
-open Options
-
-(*s: function [[Simple.string_to_modifier]] *)
-let string_to_modifier s =  
-  let mask = ref 0 in
-  for i = 0 to String.length s - 1 do
-    mask := !mask lor (match s.[i] with
-      | 'C' -> controlMask
-      | 'A' -> mod1Mask
-      | 'M' -> mod1Mask
-      | '1' -> mod1Mask
-      | _ -> 0
-    )
-  done;
-  !mask
-(*e: function [[Simple.string_to_modifier]] *)
-  
-(*s: constant [[Simple.name_to_keysym]] *)
-let name_to_keysym = 
-  ("Button1", XK.xk_Pointer_Button1) ::
-  ("Button2", XK.xk_Pointer_Button2) ::
-  ("Button3", XK.xk_Pointer_Button3) ::
-  ("Button4", XK.xk_Pointer_Button4) ::
-  ("Button5", XK.xk_Pointer_Button5) ::
-  XK.name_to_keysym
-(*e: constant [[Simple.name_to_keysym]] *)
-  
-(*s: function [[Simple.value_to_key]] *)
-(* form: SC-Button1 *)
-let value_to_key v =
-  match v with 
-    Value s -> 
-      let key, mods = 
-        try
-          let index = String.index s '-' in
-          let mods = String.sub s 0 index in
-          let key = String.sub s (index+1) (String.length s - index - 1) in
-          key, mods
-        with _ -> s, ""
-      in
-      let key = List.assoc key name_to_keysym in
-      let mods = string_to_modifier mods in
-      let map = 
-        if mods land (controlMask lor mod1Mask) = (controlMask lor mod1Mask)
-        then ControlMetaMap else
-        if mods land controlMask <> 0 then ControlMap else
-        if mods land mod1Mask <> 0 then MetaMap else NormalMap
-      in
-      map, key
-      
-  | _ -> raise Not_found
-(*e: function [[Simple.value_to_key]] *)
-  
-(*s: function [[Simple.key_to_value]] *)
-let key_to_value k = Value (Keymap.print_key k)
-(*e: function [[Simple.key_to_value]] *)
-      
-(*s: constant [[Simple.key_option]] *)
-let key_option = define_option_class "Key" value_to_key key_to_value
-(*e: constant [[Simple.key_option]] *)
-
-(*s: constant [[Simple.binding_option]] *)
-let binding_option = tuple2_option (smalllist_option key_option, string_option)
-(*e: constant [[Simple.binding_option]] *)
 
 (*****************************************************************************)
 (* Complexe *)
@@ -360,25 +284,6 @@ let change_font frame =
 (*s: constant [[Complex.display_hist]] *)
 (*let display_hist = ref []*)
 (*e: constant [[Complex.display_hist]] *)
-(*s: function [[Complex.open_display]] *)
-let open_display frame =
-  failwith "Complex.open_display: TODO"
-(*
-  select frame "open_display :" display_hist ""
-    (fun _ -> [])
-  (fun s -> s)
-  (fun name -> 
-      let top_window = Window.top frame.frm_window in
-      let location = top_window.top_location in
-      let dpy_oo = new WX_display.t name in
-      let root_oo = new WX_root.t dpy_oo 0 in
-      let display = WX_xterm.create_display root_oo
-          location.loc_colors_names location.loc_fonts_names
-        in
-      Top_window.create location display |> ignore
-   )
-*)
-(*e: function [[Complex.open_display]] *)
 
 (*s: function [[Complex.goto_line]] *)
 let goto_line frame =
@@ -424,25 +329,7 @@ let cursor_position frm =
     )
   
 
-(*s: constant [[Complex.umask]] *)
-let umask = 
-  let old = Unix.umask 0 in 
-  Unix.umask old |> ignore;
-  old
-(*e: constant [[Complex.umask]] *)
-  
-(*s: constant [[Complex.file_perm]] *)
-let file_perm = Store.create "file_perm" string_of_int int_of_string
-(*e: constant [[Complex.file_perm]] *)
-(*s: function [[Complex.mkdir]] *)
-let mkdir frame =
-  Select.select_filename frame "Make directory: "
-    (fun str -> 
-      let file_perm = try Var.get_var frame.frm_buffer file_perm with _ -> 
-            0x1ff land (lnot umask) in
-      Unix.mkdir str file_perm)
-(*e: function [[Complex.mkdir]] *)
-
+ 
 (*s: constant [[Complex.eval_history]] *)
 let eval_history = ref []
 (*e: constant [[Complex.eval_history]] *)
@@ -552,7 +439,6 @@ let get_parameter frame =
 let _ =
   Hook.add_start_hook (fun () ->
     let edt = Globals.editor() in
-      Keymap.add_interactive edt.edt_map "make_directory" mkdir;
       Keymap.add_interactive edt.edt_map "set_local_variable" 
         set_local_variable;
       Keymap.add_interactive edt.edt_map "set_global_variable" 

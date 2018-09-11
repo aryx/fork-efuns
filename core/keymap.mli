@@ -46,3 +46,7 @@ val c_x: Efuns.key
 val c_c: Efuns.key
 val c_h: Efuns.key
 val n_5: Efuns.key
+
+(* key <-> string (stored in config/option file) *)
+val binding_option :
+  (Efuns.key list * Efuns.action_name) Options.option_class

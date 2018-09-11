@@ -187,4 +187,74 @@ let define_interactive_action action_name action_fun =
   add_interactive map action_name action_fun
 (*e: function [[Keymap.define_interactive_action]] *)
 
+(*****************************************************************************)
+(* Keys <-> string *)
+(*****************************************************************************)
+
+(*s: function [[Simple.string_to_modifier]] *)
+let string_to_modifier s =  
+  let mask = ref 0 in
+  for i = 0 to String.length s - 1 do
+    mask := !mask lor (match s.[i] with
+      | 'C' -> Xtypes.controlMask
+      | 'A' -> Xtypes.mod1Mask
+      | 'M' -> Xtypes.mod1Mask
+      | '1' -> Xtypes.mod1Mask
+      | _ -> 0
+    )
+  done;
+  !mask
+(*e: function [[Simple.string_to_modifier]] *)
+  
+(*s: constant [[Simple.name_to_keysym]] *)
+let name_to_keysym = 
+  ("Button1", XK.xk_Pointer_Button1) ::
+  ("Button2", XK.xk_Pointer_Button2) ::
+  ("Button3", XK.xk_Pointer_Button3) ::
+  ("Button4", XK.xk_Pointer_Button4) ::
+  ("Button5", XK.xk_Pointer_Button5) ::
+  XK.name_to_keysym
+(*e: constant [[Simple.name_to_keysym]] *)
+  
+(*s: function [[Simple.value_to_key]] *)
+(* form: SC-Button1 *)
+let value_to_key v =
+  match v with 
+    Options.Value s -> 
+      let key, mods = 
+        try
+          let index = String.index s '-' in
+          let mods = String.sub s 0 index in
+          let key = String.sub s (index+1) (String.length s - index - 1) in
+          key, mods
+        with _ -> s, ""
+      in
+      let key = List.assoc key name_to_keysym in
+      let mods = string_to_modifier mods in
+      let map = 
+        if mods land (Xtypes.controlMask lor Xtypes.mod1Mask) = 
+                     (Xtypes.controlMask lor Xtypes.mod1Mask)
+        then ControlMetaMap else
+        if mods land Xtypes.controlMask <> 0 then ControlMap else
+        if mods land Xtypes.mod1Mask <> 0 then MetaMap else NormalMap
+      in
+      map, key
+      
+  | _ -> raise Not_found
+(*e: function [[Simple.value_to_key]] *)
+  
+(*s: function [[Simple.key_to_value]] *)
+let key_to_value k = Options.Value (print_key k)
+(*e: function [[Simple.key_to_value]] *)
+      
+(*s: constant [[Simple.key_option]] *)
+let key_option = Options.define_option_class "Key" value_to_key key_to_value
+(*e: constant [[Simple.key_option]] *)
+
+(*s: constant [[Simple.binding_option]] *)
+let binding_option = 
+  Options.tuple2_option (Options.smalllist_option key_option, 
+                         Options.string_option)
+(*e: constant [[Simple.binding_option]] *)
+
 (*e: core/keymap.ml *)

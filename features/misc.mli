@@ -7,15 +7,6 @@ val insert_special_char : Efuns.action
 val fill_paragraph : Efuns.action
 val line_comment : string Store.var
 
-(* attributes *)
-
-val unset_attr : Efuns.action
-
-(* misc *)
-
-val binding_option :
-  ((Efuns.mod_ident * int) list * string) Options.option_class
-
 (*
 val single_char : string
 val simplify : Text.t -> Text.point -> Text.point -> unit
@@ -68,18 +59,12 @@ val get_parameter : Efuns.action
 val reload : Efuns.action
 val check_file : Efuns.action
 
-val open_display : 'a -> 'b
-
 val goto_line : Efuns.action
 val goto_char : Efuns.action
 
 val describe_position : Efuns.action
 val cursor_position : Efuns.action
 
-
-val umask : int
-val file_perm : Unix.file_perm Store.var
-val mkdir : Efuns.action
 
 val eval : Efuns.action
 

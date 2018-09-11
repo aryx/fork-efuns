@@ -240,7 +240,7 @@ open Options
   
 (*s: constant [[Config.global_map]] *)
 let global_map = define_option ["global_map"] "" 
-  (list_option Misc.binding_option) []
+  (list_option Keymap.binding_option) []
 (*e: constant [[Config.global_map]] *)
 (*s: constant [[Config.interactives_map]] *)
 let interactives_map = define_option ["interactives_map"] ""

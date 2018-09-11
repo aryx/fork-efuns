@@ -60,7 +60,7 @@ let mode = Ebuffer.new_major_mode "Makefile" (Some install)
 
 (*s: constant [[Makefile_mode.local_map]] *)
 let local_map = define_option ["makefile_mode"; "local_map"] ""
-    (list_option Misc.binding_option) []
+    (list_option Keymap.binding_option) []
 (*e: constant [[Makefile_mode.local_map]] *)
 
 (*s: constant [[Makefile_mode.interactives_map]] *)
