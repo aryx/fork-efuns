@@ -217,7 +217,7 @@ let standard_map = [
   [c_x; n_5; NormalMap, Char.code '0'], Top_window.delete_window;
   (*e: window management keys *)
   (*x: misc keys *)
-  [NormalMap, XK.xk_Insert], Misc.toggle_overwrite_mode;
+  [NormalMap, XK.xk_Insert], Edit.toggle_overwrite_mode;
   (*e: misc keys *)
   (*e: [[standard_map]] entries *)
 ]

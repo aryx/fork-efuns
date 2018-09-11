@@ -81,19 +81,19 @@ type ext =
   | Reg of string
 
 let extensions = [
-  ([E "txt"; E "man"; Reg "README"; Reg "readme"] , doc_color);
-  ([E "doc"]                                      , doc_doc_color);
-  ([E "tex"; E "texi"]                            , doc_tex_color);
-  ([E "nw"]                                       , literate_prog_color);
+  ([E "txt"; E "man"; Reg "README"; Reg "readme"], doc_color);
+  ([E "doc"], doc_doc_color);
+  ([E "tex"; E "texi"], doc_tex_color);
+  ([E "nw"], literate_prog_color);
   (* ; put before other cases *)
-  ([Reg ".md5sum_"]                                 , objet_color);
-  ([E "org"]                                        , doc_org_color);
-  ([E "htm"; E "html"; E "html\\.gz"; E "htm\\.gz"] , html_color);
+  ([Reg ".md5sum_"], objet_color);
+  ([E "org"], doc_org_color);
+  ([E "htm"; E "html"; E "html\\.gz"; E "htm\\.gz"], html_color);
 
 
-  ([E "rpm"; E "deb"; E "dmg"]                            , package_color);
-  ([E "tar"; E "tgz"; E "tar.gz"; E "tar.bz2"; E "zip"; E "rar"] , tar_color);
-  ([E "bak"; E "BAK"; Reg "\\.save"]       , backup_color);
+  ([E "rpm"; E "deb"; E "dmg"], package_color);
+  ([E "tar"; E "tgz"; E "tar.gz"; E "tar.bz2"; E "zip"; E "rar"], tar_color);
+  ([E "bak"; E "BAK"; Reg "\\.save"], backup_color);
 
   ([E"mp3"; E "s3m"; E "mod"; E "au"; E "wav"], sound_color);
   ([E "jpg"; E "gif"; E "bmp"; E "xbm"; E "tif"; E "xpm"; E "jpeg"; E "png"],
@@ -101,10 +101,10 @@ let extensions = [
   ([E "avi"; E "wmv"; E "mpg"; E "mpeg"; E "mov"; E "ram"; E "mp4"; E "divx"],
    movie_color);
 
-  ([E "ps"; E "pdf"; E "ps\\.gz"; E "eps"] , ps_color);
-  ([E "cmd"; E "exe"; E "com"; E "bat"]                          , dos_color);
+  ([E "ps"; E "pdf"; E "ps\\.gz"; E "eps"], ps_color);
+  ([E "cmd"; E "exe"; E "com"; E "bat"], dos_color);
 
-  ([Reg "akefile"]                         , make_color);
+  ([Reg "akefile"], make_color);
   ([E "ml"; E "mlx";
 	E "hs"; E "lhs";
 	E "scm"; E "sc";
@@ -141,7 +141,7 @@ let extensions = [
 (* todo: should add '-' in the [] below
  * to those regexps but ocaml light does not support them yet  *)
 let colorize buf = 
-  Misc.color buf 
+  Color.color buf 
     (Str.regexp ("[a-zA-Z0-9_]*/")) false (* todo: add also . here *)
     (Text.make_attr (Attr.get_color dir_color) 1 0 false);
 
@@ -149,11 +149,11 @@ let colorize buf =
   extensions |> List.iter (fun (exts, color) ->
     exts |> List.iter (function
       | E ext ->
-          Misc.color buf 
+          Color.color buf 
             (Str.regexp (spf "\\b[a-zA-Z0-9_]*\\.%s\\b" ext)) false
             (Text.make_attr (Attr.get_color color) 1 0 false);
       | Reg re ->
-          Misc.color buf 
+          Color.color buf 
             (Str.regexp (spf "\\b[a-zA-Z0-9_]*%s[a-zA-Z0-9_]*\\b" re)) false
             (Text.make_attr (Attr.get_color color) 1 0 false);
     )

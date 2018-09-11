@@ -22,11 +22,7 @@ val point_at_mark : Efuns.action
 
 val unset_attr : Efuns.action
 
-val color : Efuns.buffer -> Str.regexp -> bool -> Text.attribute -> unit
-
 (* misc *)
-
-val toggle_overwrite_mode: Efuns.action
 
 val binding_option :
   ((Efuns.mod_ident * int) list * string) Options.option_class

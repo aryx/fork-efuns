@@ -36,13 +36,13 @@ let target_color = define_option ["makefile_mode"; "target_color"] ""
 (*e: constant [[Makefile_mode.target_color]] *)
 (*s: function [[Makefile_mode.makefile_color]] *)
 let makefile_color buf =
-  Misc.color buf mkfile_rules false
+  Color.color buf mkfile_rules false
     (Text.make_attr (Attr.get_color !!rules_color) 1 0 false);
-  Misc.color buf mkfile_target false 
+  Color.color buf mkfile_target false 
     (Text.make_attr (Attr.get_color !!target_color) 1 0 false);
-  Misc.color buf mkfile_vars false 
+  Color.color buf mkfile_vars false 
     (Text.make_attr (Attr.get_color !!Pl_colors.variable_name_color) 1 0 false);
-  Misc.color buf mkfile_comments false 
+  Color.color buf mkfile_comments false 
     (Text.make_attr (Attr.get_color !!Pl_colors.comment_color) 1 0 false);
   ()
 (*e: function [[Makefile_mode.makefile_color]] *)

@@ -125,19 +125,20 @@ SRC=\
  features/mouse.ml\
  features/highlight.ml\
  features/indent.ml\
+ features/color.ml\
  features/structure.ml\
- features/misc.ml\
  features/minibuffer.ml\
  features/multi_frames.ml\
  features/select.ml\
  features/interactive.ml\
  features/multi_buffers.ml\
- features/complexe.ml\
  features/abbrevs.ml\
  features/system.ml\
  features/dircolors.ml\
  features/compil.ml\
  features/search.ml\
+ features/misc.ml\
+ features/complexe.ml\
  \
  minor_modes/minor_modes.ml\
  minor_modes/minor_mode_sample.ml\

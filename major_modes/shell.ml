@@ -147,7 +147,7 @@ let prompt_color = "coral"
 
 let colorize buf =
   Dircolors.colorize buf;
-  Misc.color buf 
+  Color.color buf 
     (Str.regexp ("^/.* \\$")) false
       (Text.make_attr (Attr.get_color prompt_color) 1 0 false);
   ()

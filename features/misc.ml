@@ -69,47 +69,6 @@ let hungry_electric_delete frame =
   )
 (*e: function [[Simple.hungry_electric_delete]] *)
 
-
-(*****************************************************************************)
-(* Color helpers *)
-(*****************************************************************************)
-
-(*s: function [[Simple.color]] *)
-let color buf regexp strict attr =
-  let text = buf.buf_text in
-  Text.with_new_point text (fun point ->
-  try
-    while true do
-      let len = Text.search_forward text regexp point in
-      let before =
-        if Text.bmove_res text point 1 = 1 then begin
-          let c = Text.get_char text point in
-          Text.fmove text point (len+1);
-          c
-        end else begin
-          let c = Text.get_char text point in
-          Text.fmove text point (len+1); 
-          c
-        end
-      in
-      let after = Text.get_char text point in
-      if not (strict && (buf.buf_syntax_table.(Char.code before) ||
-                         buf.buf_syntax_table.(Char.code after))) then
-        begin
-          Text.bmove text point len;
-          Text.set_attrs text point len attr;
-          Text.fmove text point len;
-          ()
-        end
-    done
-  (* at some point Text.search_forward will return Not_found *)
-  with Not_found -> 
-    buf.buf_modified <- buf.buf_modified + 1
-  )
-(*e: function [[Simple.color]] *)
-let color a b c d = Common.profile_code "Simple.color" 
-  (fun () -> color a b c d)
-
 (*****************************************************************************)
 (* Points *)
 (*****************************************************************************)
@@ -125,7 +84,6 @@ let point_at_mark frame =
   Text.goto_point text point mark;
   Text.set_position text mark pos
 (*e: function [[Simple.point_at_mark]] *)
-
 
 (*****************************************************************************)
 (* Electric *)
@@ -293,13 +251,6 @@ let binding_option = tuple2_option (smalllist_option key_option, string_option)
 (* Toplevel *)
 (*****************************************************************************)
 
-let toggle_overwrite_mode frm =
-  let buf = frm.frm_buffer in
-  let mode = overwrite_mode in
-  if Ebuffer.has_minor_mode buf mode 
-  then Ebuffer.del_minor_mode buf mode
-  else Ebuffer.set_minor_mode buf mode
-  
 (*s: toplevel [[Simple._1]] *)
 let _ =
   (*s: Simple toplevel setup *)

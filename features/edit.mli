@@ -31,6 +31,8 @@ val transpose_words : Efuns.buffer -> Text.point -> unit
 (* overwrite *)
 val overwrite_mode: Efuns.minor_mode
 
+val toggle_overwrite_mode: Efuns.action
+
 (* undo *)
 
 val undo : Efuns.action

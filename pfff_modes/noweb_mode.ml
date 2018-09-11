@@ -54,7 +54,7 @@ let color_buffer buf =
   (* overcome some of the parsing limitations like the lack of structure
    * in comments.
    *)
-  Misc.color buf (Str.regexp "^%[a-zA-Z]+:") false
+  Color.color buf (Str.regexp "^%[a-zA-Z]+:") false
     (Text.make_attr (Attr.get_color !!Pl_colors.section_comment_color) 1 0 false);
   ()
 
