@@ -16,8 +16,6 @@ val hungry_electric_delete : Efuns.action
 val fill_paragraph : Efuns.action
 val line_comment : string Store.var
 
-val point_at_mark : Efuns.action
-
 (* attributes *)
 
 val unset_attr : Efuns.action
@@ -87,7 +85,6 @@ val goto_char : Efuns.action
 val describe_position : Efuns.action
 val cursor_position : Efuns.action
 
-val mark_at_point : Efuns.action
 
 val umask : int
 val file_perm : Unix.file_perm Store.var

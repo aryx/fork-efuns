@@ -60,6 +60,8 @@ let standard_map = [
   (*x: navigating keys *)
   [ControlMap, Char.code 'u'; ControlMap, Char.code ' '], 
     Move.goto_last_saved_pos; 
+  (*x: navigating keys *)
+  [c_x; ControlMap, Char.code 'x'], Move.point_at_mark;
   (*e: navigating keys *)
 
   (* -------------------------------------------------------- *)
@@ -92,7 +94,7 @@ let standard_map = [
   (* Moving (Cut, copy, paste) *)
   (* ------------------------------ *)
   (*s: moving keys *)
-  [ControlMap, Char.code ' '], Misc.mark_at_point;
+  [ControlMap, Char.code ' '], Copy_paste.mark_at_point;
   [ControlMap, Char.code 'w'], Copy_paste.kill_region;
   [ControlMap, Char.code 'y'], Copy_paste.insert_killed;
   [MetaMap, Char.code 'y'], Copy_paste.insert_next_killed;
@@ -200,8 +202,6 @@ let standard_map = [
   [ControlMap, Char.code 'l'], Scroll.recenter;
   (*x: misc keys *)
   [c_h; NormalMap, Char.code 'K'], Frame.bindings_help;
-  (*x: misc keys *)
-  [c_x; ControlMap, Char.code 'x'], Misc.point_at_mark;
   (*x: misc keys *)
   [ c_c; NormalMap, Char.code '-'], Structure.next_hole;
   (*x: misc keys *)

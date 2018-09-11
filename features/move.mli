@@ -18,7 +18,6 @@ val end_of_word : Efuns.buffer -> Text.point -> string
 
 val current_word : Efuns.buffer -> Text.point -> string
 
-
 (* line *)
 
 val line_size : Efuns.frame -> int
@@ -41,6 +40,10 @@ val forward_paragraph : Efuns.buffer -> Text.point -> unit
 val end_of_file : Efuns.action
 val begin_of_file : Efuns.action
 
+(* mark *)
+val point_at_mark : Efuns.action
+
 (* history navigation *)
 val goto_last_saved_pos: Efuns.action
 val save_current_pos: Efuns.frame -> unit (* not an action *)
+

@@ -186,4 +186,17 @@ let copy_region frame =
   (* need a message because as opposed to a cut this is not directly visible *)
   Top_window.message top_window "Region saved"
 (*e: function [[Simple.copy_region]] *)
+
+
+
+(*s: function [[Complex.mark_at_point]] *)
+let mark_at_point frame =
+  Ebuffer.set_mark frame.frm_buffer frame.frm_point;
+  (*s: save current pos from frame for position history navigation *)
+  Move.save_current_pos frame;
+  (*e: save current pos from frame for position history navigation *)
+  let top_window = Window.top frame.frm_window in
+  Top_window.message top_window "Mark set";
+  ()
+(*e: function [[Complex.mark_at_point]] *)
 (*e: features/copy_paste.ml *)

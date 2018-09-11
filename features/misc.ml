@@ -70,22 +70,6 @@ let hungry_electric_delete frame =
 (*e: function [[Simple.hungry_electric_delete]] *)
 
 (*****************************************************************************)
-(* Points *)
-(*****************************************************************************)
-
-(*s: function [[Simple.point_at_mark]] *)
-let point_at_mark frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-
-  let mark = Ebuffer.get_mark buf point in
-  let pos = Text.get_position text point in
-  Text.goto_point text point mark;
-  Text.set_position text mark pos
-(*e: function [[Simple.point_at_mark]] *)
-
-(*****************************************************************************)
 (* Electric *)
 (*****************************************************************************)
 
@@ -503,17 +487,6 @@ let cursor_position frm =
        coord.Text.c_col
     )
   
-
-(*s: function [[Complex.mark_at_point]] *)
-let mark_at_point frame =
-  Ebuffer.set_mark frame.frm_buffer frame.frm_point;
-  (*s: save current pos from frame for position history navigation *)
-  Move.save_current_pos frame;
-  (*e: save current pos from frame for position history navigation *)
-  let top_window = Window.top frame.frm_window in
-  Top_window.message top_window "Mark set";
-  ()
-(*e: function [[Complex.mark_at_point]] *)
 
 (*s: constant [[Complex.umask]] *)
 let umask = 
