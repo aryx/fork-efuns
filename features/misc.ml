@@ -270,21 +270,6 @@ let window_change_buffer frame =
   )
 (*e: function [[Complex.window_change_buffer]] *)
 
-(*s: function [[Complex.change_font]] *)
-let change_font frame =
-  Minibuffer.create_return frame (Keymap.create ()) "Find font: " "fixed"
-    (fun old_frame name ->
-      let window = frame.frm_window in
-      let _top_window = Window.top window in
-      (*WX_xterm.change_font xterm name*)
-      failwith "Complex.change_font: TODO"
-  ) |> ignore
-(*e: function [[Complex.change_font]] *)
-
-(*s: constant [[Complex.display_hist]] *)
-(*let display_hist = ref []*)
-(*e: constant [[Complex.display_hist]] *)
-
 (*s: function [[Complex.goto_line]] *)
 let goto_line frame =
   Select.simple_select frame "goto-line:" (fun name ->
@@ -330,80 +315,6 @@ let cursor_position frm =
   
 
  
-(*s: constant [[Complex.eval_history]] *)
-let eval_history = ref []
-(*e: constant [[Complex.eval_history]] *)
-(*s: function [[Complex.eval]] *)
-let eval frame =
-  Select.select_string frame "Eval:" eval_history "" (fun str ->
-    let top_window = Window.top frame.frm_window in
-    (* This is not enough: the paths also may have changed. *)
-    Top_window.message top_window 
-      (*(Dyneval.eval 
-        (let len = String.length str in
-        if str.[len - 1] = ';' && str.[len -2 ] = ';' then str else
-        str ^ " ;;"))
-      *)(failwith "Complex.eval: TODO")
-    )
-(*e: function [[Complex.eval]] *)
-
-(*s: constant [[Complex.variable_hist]] *)
-let variable_hist = ref []
-(*e: constant [[Complex.variable_hist]] *)
-(*s: constant [[Complex.value_hist]] *)
-let value_hist = ref []
-(*e: constant [[Complex.value_hist]] *)
-  
-(*s: constant [[Complex.all_vars]] *)
-let all_vars = ref None
-(*e: constant [[Complex.all_vars]] *)
-(*s: function [[Complex.all_variables]] *)
-let all_variables frame _ =
-  let buf = frame.frm_buffer in
-  match !all_vars with
-    Some (f,l) when f == frame -> l
-  | _ ->
-      let list = 
-        (Store.list buf.buf_vars) @ 
-        (Store.list (Globals.editor()).edt_vars) 
-      in
-      all_vars := Some (frame, list);
-      list
-(*e: function [[Complex.all_variables]] *)
-  
-(*s: function [[Complex.set_local_variable]] *)
-let set_local_variable frame = 
-  Select.select frame "set_local_variable : " variable_hist
-    "" (all_variables frame) (fun s -> s) (fun variable ->
-      Select.select_string frame (Printf.sprintf "%s : " variable)
-      value_hist "" (fun value ->
-          Store.input frame.frm_buffer.buf_vars variable value))
-(*e: function [[Complex.set_local_variable]] *)
-  
-(*s: function [[Complex.set_global_variable]] *)
-let set_global_variable frame =
-  Select.select frame "set_global_variable : " variable_hist
-    "" (all_variables frame) (fun s -> s) (fun variable ->
-      Select.select_string frame (Printf.sprintf "%s : " variable)
-      value_hist "" (fun value ->
-          Store.input (Globals.editor()).edt_vars variable value))
-(*e: function [[Complex.set_global_variable]] *)
-  
-(*s: function [[Complex.get_variable]] *)
-let describe_variable frame = 
-  Select.select frame "get_variable : " variable_hist "" 
-    (all_variables frame)
-    (fun s -> s) 
-    (fun variable ->
-      Top_window.mini_message frame 
-        (Printf.sprintf "%s : %s" variable (
-          let buf = frame.frm_buffer in
-          try
-            Store.print buf.buf_vars variable
-          with _ ->
-            Store.print (Globals.editor()).edt_vars variable)))
-(*e: function [[Complex.get_variable]] *)
-
 open Options
   
 (*s: constant [[Complex.parameters_hist]] *)
@@ -416,7 +327,7 @@ let set_parameter frame =
   Select.select frame "set-parameter : " parameters_hist
     "" (Parameter.all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
-      value_hist "" (fun value ->
+      Interactive.value_hist "" (fun value ->
           let (input,print,param) = List.assoc variable parameters
           in
           param =:= input value))
@@ -440,9 +351,9 @@ let _ =
   Hook.add_start_hook (fun () ->
     let edt = Globals.editor() in
       Keymap.add_interactive edt.edt_map "set_local_variable" 
-        set_local_variable;
+        Interactive.set_local_variable;
       Keymap.add_interactive edt.edt_map "set_global_variable" 
-        set_global_variable;
+        Interactive.set_global_variable;
       Keymap.add_interactive edt.edt_map "set_parameter" set_parameter;
       Keymap.add_interactive edt.edt_map "get_parameter" get_parameter;
     Var.set_global Ebuffer.saved_buffer_hooks [update_time];

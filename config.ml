@@ -191,11 +191,9 @@ let standard_map = [
   (* Misc *)
   (* -------------------------------------------------------- *)
   (*s: misc keys *)
-  [c_h; NormalMap, Char.code 'v'], Misc.describe_variable;
+  [c_h; NormalMap, Char.code 'v'], Interactive.describe_variable;
   (*x: misc keys *)
   [c_x; NormalMap, Char.code '='], Misc.cursor_position;
-  (*x: misc keys *)
-  [c_x; NormalMap, Char.code 'F'], Misc.change_font;
   (*x: misc keys *)
   [c_x; ControlMap, Char.code 'c'], Misc.exit_efuns; 
   (*x: misc keys *)
