@@ -21,9 +21,9 @@ let standard_map = [
   (* Loading *)
   (* -------------------------------------------------------- *)
   (*s: loading keys *)
-  [c_x; ControlMap, Char.code 'f'], Complexe.load_buffer;
+  [c_x; ControlMap, Char.code 'f'], Misc.load_buffer;
   (*x: loading keys *)
-  [c_x; NormalMap, Char.code 'i'], Complexe.insert_file;
+  [c_x; NormalMap, Char.code 'i'], Misc.insert_file;
   (*e: loading keys *)
 
   (* -------------------------------------------------------- *)
@@ -92,7 +92,7 @@ let standard_map = [
   (* Moving (Cut, copy, paste) *)
   (* ------------------------------ *)
   (*s: moving keys *)
-  [ControlMap, Char.code ' '], Complexe.mark_at_point;
+  [ControlMap, Char.code ' '], Misc.mark_at_point;
   [ControlMap, Char.code 'w'], Copy_paste.kill_region;
   [ControlMap, Char.code 'y'], Copy_paste.insert_killed;
   [MetaMap, Char.code 'y'], Copy_paste.insert_next_killed;
@@ -179,23 +179,23 @@ let standard_map = [
   (* Saving *)
   (* -------------------------------------------------------- *)
   (*s: saving keys *)
-  [c_x; ControlMap, Char.code 's'], Complexe.save_buffer; 
+  [c_x; ControlMap, Char.code 's'], Misc.save_buffer; 
   (*x: saving keys *)
-  [c_x; NormalMap,  Char.code 's'], Complexe.save_some_buffers;
-  [c_x; ControlMap, Char.code 'w'], Complexe.write_buffer; 
+  [c_x; NormalMap,  Char.code 's'], Misc.save_some_buffers;
+  [c_x; ControlMap, Char.code 'w'], Misc.write_buffer; 
   (*e: saving keys *)
 
   (* -------------------------------------------------------- *)
   (* Misc *)
   (* -------------------------------------------------------- *)
   (*s: misc keys *)
-  [c_h; NormalMap, Char.code 'v'], Complexe.describe_variable;
+  [c_h; NormalMap, Char.code 'v'], Misc.describe_variable;
   (*x: misc keys *)
-  [c_x; NormalMap, Char.code '='], Complexe.cursor_position;
+  [c_x; NormalMap, Char.code '='], Misc.cursor_position;
   (*x: misc keys *)
-  [c_x; NormalMap, Char.code 'F'], Complexe.change_font;
+  [c_x; NormalMap, Char.code 'F'], Misc.change_font;
   (*x: misc keys *)
-  [c_x; ControlMap, Char.code 'c'], Complexe.exit_efuns; 
+  [c_x; ControlMap, Char.code 'c'], Misc.exit_efuns; 
   (*x: misc keys *)
   [ControlMap, Char.code 'l'], Scroll.recenter;
   (*x: misc keys *)
@@ -212,8 +212,8 @@ let standard_map = [
   (*x: misc keys *)
   (*s: window management keys *)
   (* less: delete *)
-  [c_x; n_5; NormalMap, Char.code 'f'], Complexe.window_load_buffer;
-  [c_x; n_5; NormalMap, Char.code 'b'], Complexe.window_change_buffer;
+  [c_x; n_5; NormalMap, Char.code 'f'], Misc.window_load_buffer;
+  [c_x; n_5; NormalMap, Char.code 'b'], Misc.window_change_buffer;
   [c_x; n_5; NormalMap, Char.code '0'], Top_window.delete_window;
   (*e: window management keys *)
   (*x: misc keys *)
@@ -372,7 +372,7 @@ let _ =
     Parameter.add_option_parameter Text.add_amount;
     (*e: [[Config._5]] start hooks options *)
     init_global_map ();
-    Hook.add_hook Top_window.handle_key_start_hook Complexe.check_file;      
+    Hook.add_hook Top_window.handle_key_start_hook Misc.check_file;      
   )
 (*e: toplevel [[Config]] starting hook *)
 (*e: config.ml *)

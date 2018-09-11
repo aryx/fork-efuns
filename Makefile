@@ -138,7 +138,6 @@ SRC=\
  features/compil.ml\
  features/search.ml\
  features/misc.ml\
- features/complexe.ml\
  \
  minor_modes/minor_modes.ml\
  minor_modes/minor_mode_sample.ml\
