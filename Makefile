@@ -124,8 +124,8 @@ SRC=\
  features/copy_paste.ml\
  features/mouse.ml\
  features/highlight.ml\
- features/indent.ml\
  features/color.ml\
+ features/indent.ml\
  features/structure.ml\
  features/minibuffer.ml\
  features/multi_frames.ml\
