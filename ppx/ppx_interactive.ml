@@ -61,15 +61,27 @@ let mapper argv =
         | { pstr_desc = 
               Pstr_value (Nonrecursive,
                 [{pvb_pat = {ppat_desc = Ppat_var {txt = fname; _}; _};
-                  pvb_attributes = [({txt = "interactive"; loc}, PStr [])]; _}
+                  pvb_attributes = [({txt = "interactive"; loc}, PStr args)]; _}
                 ])
           ; _} -> 
+          let action_name =
+            match args with
+            | [] -> fname
+            | [{pstr_desc =
+                Pstr_eval
+                  ({pexp_desc = Pexp_constant (Const_string (name, None));_},
+                   _); _}] -> name
+            | _ -> 
+              raise (Location.Error (
+                Location.error ~loc 
+                  "@@interactive accepts nothing or a string"))
+          in
           let action = 
             Str.eval 
               (Exp.apply 
                  (Exp.ident 
                     {txt = Ldot (Lident "Action", "define_action" ); loc})
-                 ["", Exp.constant (Const_string (fname, None));
+                 ["", Exp.constant (Const_string (action_name, None));
                   "", Exp.ident {txt = Lident fname; loc};
                  ])
           in
