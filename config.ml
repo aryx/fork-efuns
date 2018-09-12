@@ -71,7 +71,7 @@ let standard_map = [
   (* ------------- *)
   (* Inserting *)
   (* ------------- *)
-  (* see also the many self_insert_cmd in core_map *)
+  (* see also the many self_insert_xxx in core_map *)
   (*s: inserting keys *)
   [NormalMap, XK.xk_Return], Edit.insert_return; 
   (*e: inserting keys *)
@@ -221,6 +221,43 @@ let standard_map = [
 ] 
 (*e: constant [[standard_map]] *)
 
+(*s: constant [[core_map]] *)
+let core_map = 
+ (*s: [[core_map]] entries *)
+ (* standard chars *)
+ (Common2.enum 32 127 |> List.map (fun key ->
+   [NormalMap, key], Edit.self_insert_command
+ )) @
+ (*x: [[core_map]] entries *)
+ (let c_q = (ControlMap, Char.code 'q') in
+ (Common2.enum 65 (65+25) |> List.map (fun key ->
+   [c_q;ControlMap, key], Misc.insert_special_char
+ )) @
+ (Common2.enum 97 (97+25) |> List.map (fun key ->
+   [c_q;ControlMap, key], Misc.insert_special_char
+ ))) @
+ (*x: [[core_map]] entries *)
+ ([
+ (*
+         (XK.xk_eacute, 'é');
+         (XK.xk_egrave, 'è');
+         (XK.xk_ccedilla, 'ç');
+         (XK.xk_agrave, 'à');
+         (XK.xk_ugrave, 'ù');
+         (XK.xk_mu, 'µ'); 
+         (XK.xk_sterling, '£');
+         (XK.xk_section, '§');
+         (XK.xk_degree,  '°');
+ *)
+ ] |> List.map (fun (key, char) ->
+     (* special for AZERTY keyboards *)
+         [NormalMap, key], (Edit.char_insert_command char)
+     )
+ ) @
+ (*e: [[core_map]] entries *)
+ []
+(*e: constant [[core_map]] *)
+
 (*s: constant [[Config.grep_hist]] *)
 let grep_hist = ref ["grep -n "]
 (*e: constant [[Config.grep_hist]] *)
@@ -242,7 +279,7 @@ let global_map = define_option ["global_map"] ""
 let init_global_map () = 
   if !!global_map = [] 
   then 
-    standard_map |> List.iter (fun (keys, action) ->
+    (core_map @ standard_map) |> List.iter (fun (keys, action) ->
         Keymap.add_global_key keys "" action
     )
   else 
@@ -342,6 +379,7 @@ let _ =
   (*e: [[Config]] buffers menu setup *)
 (*e: toplevel [[Config]] menu settings *)
   
+
 (*s: toplevel [[Config]] starting hook *)
 let _ =
   Hook.add_start_hook (fun () ->

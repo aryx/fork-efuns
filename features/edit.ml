@@ -65,7 +65,7 @@ let insert_at_place frame char =
 (*s: constant [[Simple.overwrite_mode]] *)
 let overwrite_mode = Ebuffer.new_minor_mode "Over" []
 (*e: constant [[Simple.overwrite_mode]] *)
-  
+
   
 (*s: function [[Simple.self_insert_command]] *)
 let self_insert_command frame =

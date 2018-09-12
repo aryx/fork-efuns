@@ -358,57 +358,7 @@ let _ =
 
 (*s: toplevel [[Simple._1]] *)
 let _ =
-  (*s: Simple toplevel setup *)
-  Action.define_buffer_action "overwrite_mode" (fun buf -> 
-      let mode = overwrite_mode in
-      if Ebuffer.has_minor_mode buf mode 
-      then Ebuffer.del_minor_mode buf mode
-      else Ebuffer.set_minor_mode buf mode
-  );
-  (*e: Simple toplevel setup *)
   Hook.add_start_hook (fun () ->
-    let edt = Globals.editor () in
-    let gmap = edt.edt_map in
-
-    (*s: [[Simple._]] start hook *)
-    (* standard chars *)
-    for key = 32 to 127 do
-      Keymap.add_binding gmap [NormalMap, key] self_insert_command
-    done;
-    (*x: [[Simple._]] start hook *)
-    let c_q = (ControlMap, Char.code 'q') in
-    (* Keymap.add_prefix gmap [c_q]; *)
-    for key = 65 to 65+25 do
-      Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
-    done;
-    for key = 97 to 97+25 do
-      Keymap.add_binding gmap [c_q;ControlMap, key] insert_special_char;
-    done;
-    (*x: [[Simple._]] start hook *)
-        (* special for AZERTY keyboards *)
-        Array.iter (fun (key, char) ->
-            Keymap.add_binding gmap [NormalMap, key] (char_insert_command char)
-        ) [| 
-    (*
-            (XK.xk_eacute, 'é');
-            (XK.xk_egrave, 'è');
-            (XK.xk_ccedilla, 'ç');
-            (XK.xk_agrave, 'à');
-            (XK.xk_ugrave, 'ù');
-            (XK.xk_mu, 'µ'); 
-            (XK.xk_sterling, '£');
-            (XK.xk_section, '§');
-            (XK.xk_degree,  '°');
-    *)
-            |];
-    (*e: [[Simple._]] start hook *)
-
-(* TODO
-    Keymap.add_interactive (edt.edt_map) "fondamental_mode" 
-      (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
-          Ebuffer.fondamental_mode);
-*)
-
     Var.set_global line_comment ""
   )
 (*e: toplevel [[Simple._1]] *)
