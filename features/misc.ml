@@ -197,6 +197,7 @@ let check_file frame =
        with _ -> Var.set_local buf buf_mtime st.st_mtime
     )
   with _ -> ()
+[@@interactive]
 (*e: function [[Complex.check_file]] *)
     
 (*s: function [[Complex.exit_efuns]] *)
