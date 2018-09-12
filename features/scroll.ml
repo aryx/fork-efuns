@@ -48,22 +48,26 @@ let scroll_line frame n =
 let scroll_down frame =
   scroll_line frame 1;
   forward_line frame
+[@@interactive]
 (*e: function [[Simple.scroll_down]] *)
 
 (*s: function [[Simple.scroll_up]] *)
 let scroll_up frame =
   scroll_line frame (-1);
   backward_line frame
+[@@interactive]
 (*e: function [[Simple.scroll_up]] *)
 
 (*s: function [[Simple.scroll_other_up]] *)
 let scroll_other_up frame =
   Window.next scroll_up frame.frm_window
+[@@interactive]
 (*e: function [[Simple.scroll_other_up]] *)
 
 (*s: function [[Simple.scroll_other_down]] *)
 let scroll_other_down frame =
   Window.next scroll_down frame.frm_window
+[@@interactive]
 (*e: function [[Simple.scroll_other_down]] *)
 
 (*s: function [[Simple.recenter]] *)
@@ -74,6 +78,7 @@ let recenter frame =
   frame.frm_redraw <- true;
   Text.goto_point text frame.frm_start frame.frm_point;
   frame.frm_y_offset <- - frame.frm_height/2
+[@@interactive]
 (*e: function [[Simple.recenter]] *)
 
 (*e: features/scroll.ml *)

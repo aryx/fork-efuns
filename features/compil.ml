@@ -117,6 +117,7 @@ let next_error top_frame =
           Frame.active frame
       with Not_found ->
         Top_window.message top_window "No more errors"
+[@@interactive]
 (*e: function [[Compil.next_error]] *)
 
 (*s: constant [[Compil.compile_find_makefile]] *)
@@ -225,6 +226,7 @@ let compile frame =
       Ebuffer.set_major_mode buf mode
 
   )
+[@@interactive]
 (*e: function [[Compil.compile]] *)
 
 (*s: constant [[Compil.grep_command]] *)
@@ -262,5 +264,6 @@ let grep frame =
       let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir)
   )
+[@@interactive]
 (*e: function [[Compil.grep]] *)
 (*e: features/compil.ml *)

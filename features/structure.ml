@@ -28,6 +28,7 @@ let next_hole frame =
         Text.delete text curseur 2;
         Text.goto_point text point curseur);
   )
+[@@interactive]
 (*e: function [[Simple.next_hole]] *)
 
 

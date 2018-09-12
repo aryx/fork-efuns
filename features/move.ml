@@ -139,11 +139,13 @@ let line_size frame =
 (*s: function [[Simple.beginning_of_line]] *)
 let beginning_of_line frame =
   move_backward frame (begin_to_point frame) |> ignore
+[@@interactive]
 (*e: function [[Simple.beginning_of_line]] *)
 
 (*s: function [[Simple.end_of_line]] *)
 let end_of_line frame =
   move_forward frame (point_to_end frame) |> ignore
+[@@interactive]
 (*e: function [[Simple.end_of_line]] *)
 
 (*s: constant [[Simple.temporary_goal_column]] *)
@@ -183,6 +185,7 @@ and forward_line frame =
     move_forward frame 1 |> ignore;
     move_to_goal_column frame goal_col;
   end
+[@@interactive]
 (*e: function [[Simple.forward_line]] *)
 
 (*s: function [[Simple.backward_line]] *)
@@ -195,6 +198,7 @@ and backward_line frame =
     move_backward frame 1 |> ignore;
     move_to_goal_column frame goal_col;
   end
+[@@interactive]
 (*e: function [[Simple.backward_line]] *)
 
 (*****************************************************************************)
@@ -261,6 +265,7 @@ let goto_last_saved_pos frame =
   match head with
   | Some pt -> Text.goto_point text frame.frm_point pt
   | None -> failwith "No position history"
+[@@interactive]
 (*e: function [[Simple.goto_last_saved_pos]] *)
 
 (*****************************************************************************)
@@ -275,6 +280,7 @@ let end_of_file frame =
   save_current_pos frame;
   (*e: save current pos from frame for position history navigation (in simple.ml) *)
   Text.set_position text frame.frm_point (Text.size text)
+[@@interactive]
 (*e: function [[Simple.end_of_file]] *)
 
 (*s: function [[Simple.begin_of_file]] *)
@@ -285,6 +291,7 @@ let begin_of_file frame =
   save_current_pos frame;
   (*e: save current pos from frame for position history navigation (in simple.ml) *)
   Text.set_position text frame.frm_point 0
+[@@interactive]
 (*e: function [[Simple.begin_of_file]] *)
 
 (*****************************************************************************)
@@ -301,5 +308,6 @@ let point_at_mark frame =
   let pos = Text.get_position text point in
   Text.goto_point text point mark;
   Text.set_position text mark pos
+[@@interactive]
 (*e: function [[Simple.point_at_mark]] *)
 (*e: features/move.ml *)

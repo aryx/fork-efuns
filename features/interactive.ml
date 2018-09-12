@@ -63,6 +63,7 @@ let call_interactive frame =
     (fun _ -> List.map fst interactives)
     (fun s -> s) 
     (fun s -> exec_interactive interactives frame s)
+[@@interactive]
 (*e: function [[Interactive.call_interactive]] *)
 
 (* variables *)
@@ -122,6 +123,7 @@ let describe_variable frame =
             Store.print buf.buf_vars variable
           with _ ->
             Store.print (Globals.editor()).edt_vars variable)))
+[@@interactive]
 (*e: function [[Complex.get_variable]] *)
 
 (*e: features/interactive.ml *)

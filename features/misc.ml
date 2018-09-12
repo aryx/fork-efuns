@@ -80,6 +80,7 @@ let fill_paragraph frame =
       iter 0 0;  
       Text.insert text fin "\n";
   )))
+[@@interactive]
 (*e: function [[Simple.fill_paragraph]] *)
   
 (*s: function [[Simple.insert_special_char]] *)
@@ -205,12 +206,14 @@ let exit_efuns frame =
     (* todo: have some exit hooks? *)
     raise (Common.UnixExit 0)
   )
+[@@interactive]
 (*e: function [[Complex.exit_efuns]] *)
 
 (*s: function [[Complex.save_some_buffers]] *)
 let save_some_buffers frame =
   let buffers = Utils.list_of_hash (Globals.editor()).edt_buffers in
   save_buffers_and_action frame buffers (fun _ -> ())
+[@@interactive]
 (*e: function [[Complex.save_some_buffers]] *)
 
 (*s: function [[Complex.load_buffer]] *)
@@ -219,6 +222,7 @@ let load_buffer frame =
   Select.select_filename frame "Find file: " (fun str -> 
     Frame.load_file frame.frm_window str |> ignore
   )
+[@@interactive]
 (*e: function [[Complex.load_buffer]] *)
 
 (*s: function [[Complex.insert_file]] *)
@@ -228,6 +232,7 @@ let insert_file frame =
     Edit.insert_string frame (Utils.read_string inc);
     close_in inc
   )
+[@@interactive]
 (*e: function [[Complex.insert_file]] *)
 
 (*s: function [[Complex.write_buffer]] *)
@@ -237,6 +242,7 @@ let write_buffer frame =
     Ebuffer.change_name buf str;
     Ebuffer.save buf
   )
+[@@interactive]
 (*e: function [[Complex.write_buffer]] *)
 
 (*s: function [[Complex.save_buffer]] *)
@@ -245,6 +251,7 @@ let save_buffer frame =
   match buf.buf_filename with
     Some _ -> Ebuffer.save buf
   | None -> write_buffer frame
+[@@interactive]
 (*e: function [[Complex.save_buffer]] *)
 
 (*s: function [[Complex.window_load_buffer]] *)
@@ -256,6 +263,7 @@ let window_load_buffer frame =
       in
       Frame.load_file top_window.window str |> ignore
     )
+[@@interactive]
 (*e: function [[Complex.window_load_buffer]] *)
 
 (*s: function [[Complex.window_change_buffer]] *)
@@ -268,6 +276,7 @@ let window_change_buffer frame =
       in
       Frame.change_buffer top_window.window name
   )
+[@@interactive]
 (*e: function [[Complex.window_change_buffer]] *)
 
 (*s: function [[Complex.goto_line]] *)
@@ -279,6 +288,7 @@ let goto_line frame =
     (*e: save current pos from frame for position history navigation *)
     Text.goto_line frame.frm_buffer.buf_text frame.frm_point (line - 1)
   )
+[@@interactive]
 (*e: function [[Complex.goto_line]] *)
 
 (*s: function [[Complex.goto_char]] *)
@@ -287,6 +297,7 @@ let goto_char frame =
     let char = int_of_string name in
     Text.set_position frame.frm_buffer.buf_text frame.frm_point char
   )
+[@@interactive]
 (*e: function [[Complex.goto_char]] *)
 
 
@@ -296,6 +307,7 @@ let describe_position frame =
     (Window.top frame.frm_window)
     (Printf.sprintf "Char position %d" 
        (Text.get_position frame.frm_buffer.buf_text frame.frm_point))
+[@@interactive]
 (*e: function [[Complex.get_pos]] *)
 
 let cursor_position frm =

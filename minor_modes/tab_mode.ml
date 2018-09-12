@@ -20,6 +20,7 @@ let mode = Ebuffer.new_minor_mode "tab" []
 (*s: function [[Tab_mode.insert_tab]] *)
 let insert_tab frame = 
   Edit.insert_string frame "\t"
+[@@interactive]
 (*e: function [[Tab_mode.insert_tab]] *)
   
 (*s: toplevel [[Tab_mode._1]] *)
@@ -29,7 +30,6 @@ let _ =
 
 (*s: toplevel [[Tab_mode._2]] *)
 let _ = 
-  Action.define_action "tab_mode" (Minor_modes.toggle_minor mode);
-  Action.define_action "insert_tab" insert_tab
+  Action.define_action "tab_mode" (Minor_modes.toggle_minor mode)
 (*e: toplevel [[Tab_mode._2]] *)
 (*e: minor_modes/tab_mode.ml *)

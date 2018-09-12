@@ -133,6 +133,7 @@ let shell_command frame =
   Select.select_string frame "Run command:" shell_hist "" (fun cmd -> 
     let pwd = (Globals.editor()).edt_dirname in
     start_command pwd "*Command*" (Multi_frames.cut_frame frame) cmd |> ignore)
+[@@interactive]
 (*e: function [[System.shell_command]] *)
   
 (*e: features/system.ml *)

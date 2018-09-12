@@ -174,6 +174,7 @@ let replace_string frame =
   select_replace frame "with string: "    (fun str2 ->
     replace RegexpString frame NoQuery str str2
   ))
+[@@interactive]
 (*e: function [[Search.replace_string]] *)
 
 (*s: function [[Search.query_replace_string]] *)
@@ -183,6 +184,7 @@ let query_replace_string frame =
     replace RegexpString frame (Query ( frame, "Replace string ? (y/n)"))
         str str2
   ))
+[@@interactive]
 (*e: function [[Search.query_replace_string]] *)
 
 (*s: function [[Search.replace_regexp]] *)
@@ -191,6 +193,7 @@ let replace_regexp frame =
   select_replace frame "with string: " (fun str2 ->
     replace Regexp frame NoQuery str str2
   ))
+[@@interactive]
 (*e: function [[Search.replace_regexp]] *)
 
 (*s: function [[Search.query_replace_regexp]] *)
@@ -199,6 +202,7 @@ let query_replace_regexp frame =
   select_replace frame "with string: "    (fun str2 ->
     replace Regexp frame (Query (frame, "Replace regexp ? (y/n)")) str str2
   ))
+[@@interactive]
 (*e: function [[Search.query_replace_regexp]] *)
 
 (*s: constant [[Search.library_regexp]] *)
@@ -349,15 +353,19 @@ let isearch to_regexp sens frame =
 
 (*s: constant [[Search.isearch_forward_regexp]] *)
 let isearch_forward_regexp = isearch Regexp Forward
+[@@interactive]
 (*e: constant [[Search.isearch_forward_regexp]] *)
 (*s: constant [[Search.isearch_forward]] *)
 let isearch_forward = isearch RegexpString Forward
+[@@interactive]
 (*e: constant [[Search.isearch_forward]] *)
 (*s: constant [[Search.isearch_backward]] *)
 let isearch_backward = isearch RegexpString Backward
+[@@interactive]
 (*e: constant [[Search.isearch_backward]] *)
 (*s: constant [[Search.isearch_backward_regexp]] *)
 let isearch_backward_regexp = isearch Regexp Backward 
+[@@interactive]
 (*e: constant [[Search.isearch_backward_regexp]] *)
   
 (*e: features/search.ml *)

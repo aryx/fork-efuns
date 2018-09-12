@@ -42,6 +42,7 @@ let insert_char frame char =
 (*s: function [[Simple.insert_return]] *)
 let insert_return frame =
   insert_char frame '\n'
+[@@interactive]
 (*e: function [[Simple.insert_return]] *)
 
 (*s: function [[Simple.insert_at_place]] *)
@@ -95,6 +96,7 @@ let char_insert_command char frame =
 let delete_char frame =
   let text = frame.frm_buffer.buf_text in
   Text.delete text frame.frm_point 1
+[@@interactive]
 (*e: function [[Simple.delete_char]] *)
 
 (*s: function [[Simple.delete_backspace_char]] *)
@@ -102,6 +104,7 @@ let delete_backspace_char frame =
   let text = frame.frm_buffer.buf_text in
   if Text.bmove_res text frame.frm_point 1 <> 0 
   then Text.delete text frame.frm_point 1
+[@@interactive]
 (*e: function [[Simple.delete_backspace_char]] *)
 
 (*****************************************************************************)
@@ -206,6 +209,7 @@ let undo frame =
   (*e: save current pos from frame for position history navigation (in simple.ml) *)
   Text.set_position text point at_point;
   Text.fmove text point len
+[@@interactive]
 (*e: function [[Simple.undo]] *)
 
 (*e: features/edit.ml *)

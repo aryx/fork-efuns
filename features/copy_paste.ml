@@ -77,6 +77,7 @@ let kill_end_of_line frame =
     else eol 
   in
   kill_text text frame.frm_point len
+[@@interactive]
 (*e: function [[Simple.kill_end_of_line]] *)
 
 (*s: function [[Simple.kill_eol]] *)
@@ -120,6 +121,7 @@ let insert_killed frame =
   let pos, len =  Text.insert_res text point str in
   Text.fmove text point len; 
   last_insert := Some(frame,pos,0,len)
+[@@interactive]
 (*e: function [[Simple.insert_killed]] *)
 
 (*s: function [[Simple.insert_next_killed]] *)
@@ -141,6 +143,7 @@ let insert_next_killed frame =
       Text.fmove text point len;
       last_insert := Some(frame,pos,n,len)
   | _ -> ()
+[@@interactive]
 (*e: function [[Simple.insert_next_killed]] *)
 
 
@@ -161,6 +164,7 @@ let kill_region frame =
   (* less: would be better to do that in kill_string *)
   add_clipboard frame region;
   kill_string region
+[@@interactive]
 (*e: function [[Simple.kill_region]] *)
 
 (*s: function [[Simple.copy_region]] *)
@@ -185,6 +189,7 @@ let copy_region frame =
   let top_window = Window.top frame.frm_window in
   (* need a message because as opposed to a cut this is not directly visible *)
   Top_window.message top_window "Region saved"
+[@@interactive]
 (*e: function [[Simple.copy_region]] *)
 
 
@@ -198,5 +203,6 @@ let mark_at_point frame =
   let top_window = Window.top frame.frm_window in
   Top_window.message top_window "Mark set";
   ()
+[@@interactive]
 (*e: function [[Complex.mark_at_point]] *)
 (*e: features/copy_paste.ml *)

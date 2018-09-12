@@ -49,6 +49,7 @@ let hungry_electric_delete frame =
        Edit.insert_char frame ' '
      with Not_found -> ()
   )
+[@@interactive]
 (*e: function [[Simple.hungry_electric_delete]] *)
 
 (*s: function [[Simple.electric_insert_space]] *)

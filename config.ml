@@ -228,10 +228,12 @@ let grep_hist = ref ["grep -n "]
 (*s: function [[Config.save_options]] *)
 let save_options frame = 
   Options.save ()
+[@@interactive]
 (*e: function [[Config.save_options]] *)
 (*s: function [[Config.fondamental_mode]] *)
 let fondamental_mode frame =
   Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
+[@@interactive]
 (*e: function [[Config.fondamental_mode]] *)
 
 open Options

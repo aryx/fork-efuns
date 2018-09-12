@@ -45,6 +45,7 @@ let remove_frame frame =
 let v_cut_frame frame =
   if frame.frm_mini_buffer = None 
   then Frame.create (cut_frame frame) None frame.frm_buffer |> ignore
+[@@interactive]
 (*e: function [[Multi_frames.v_cut_frame]] *)
 
 (*s: function [[Multi_frames.h_cut_frame]] *)
@@ -64,6 +65,7 @@ let h_cut_frame frame =
       Frame.install w1 frame;
       Frame.create w2 None frame.frm_buffer |> ignore
     end
+[@@interactive]
 (*e: function [[Multi_frames.h_cut_frame]] *)
 
 (*s: function [[Multi_frames.delete_frame]] *)
@@ -76,6 +78,7 @@ let delete_frame frame =
     | Window upwin ->
         Frame.install upwin frame;
         Frame.active frame
+[@@interactive]
 (*e: function [[Multi_frames.delete_frame]] *)
 
 (*s: function [[Multi_frames.one_frame]] *)
@@ -89,6 +92,7 @@ let one_frame frame =
         Frame.install top_window.window frame;
         Frame.active frame
       end
+[@@interactive]
 (*e: function [[Multi_frames.one_frame]] *)
       
       
@@ -96,5 +100,6 @@ let one_frame frame =
 let next_frame frame =
   let window = frame.frm_window in
   Window.next Frame.active window
+[@@interactive]
 (*e: function [[Multi_frames.next_frame]] *)
 (*e: features/multi_frames.ml *)

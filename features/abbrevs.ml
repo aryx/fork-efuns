@@ -124,6 +124,7 @@ let dabbrev_expand frame =
      )
   in
   iter buf pos; ()
+[@@interactive]
 (*e: function [[Abbrevs.dabbrev_expand]] *)
 
 (*s: constant [[Abbrevs.abbrev_table]] *)

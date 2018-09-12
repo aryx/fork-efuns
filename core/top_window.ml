@@ -474,6 +474,7 @@ let delete_window frame =
     loc.top_windows <- Utils.list_remove loc.top_windows
       top_window
 *)
+[@@interactive]
 (*e: function [[Top_window.delete_window]] *)
 
         

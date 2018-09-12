@@ -98,6 +98,7 @@ let kill_buffer frame =
   let _new_frame = Frame.create window None new_buf in
   if buf.buf_shared = 0 
   then Ebuffer.kill buf
+[@@interactive]
 (*e: function [[Simple.kill_buffer]] *)
 
 (*s: constant [[Complex.up_buffer]] *)
@@ -106,6 +107,7 @@ let up_buffer = ref ""
 (*s: function [[Complex.down_buffer]] *)
 let down_buffer frame = 
   up_buffer := frame.frm_buffer.buf_name
+[@@interactive]
 (*e: function [[Complex.down_buffer]] *)
 
 (*s: function [[Complex.up_buffer]] *)
@@ -114,6 +116,7 @@ let up_buffer frame =
   then raise Not_found;
   set_previous_frame frame;
   Frame.change_buffer frame.frm_window !up_buffer
+[@@interactive]
 (*e: function [[Complex.up_buffer]] *)
   
 (*s: function [[Complex.left_buffer]] *)
@@ -151,6 +154,7 @@ let change_buffer frame =
   select_buffer frame " Switch to buffer: " default (fun str ->
     Frame.change_buffer frame.frm_window str
   )
+[@@interactive]
 (*e: function [[Complex.change_buffer]] *)
 
 (*e: features/multi_buffers.ml *)

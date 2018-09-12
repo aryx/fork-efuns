@@ -787,6 +787,7 @@ let save_buffer frame =
 let bindings_help frame =
   let window = frame.frm_window in
   change_buffer window "*bindings*"
+[@@interactive]
 (*e: function [[Frame.bindings_help]] *)
 
 (*s: function [[Simple.to_frame]] *)
