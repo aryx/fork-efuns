@@ -45,8 +45,8 @@ OCAMLCFLAGS?=-g -dtypes -absname -bin-annot -thread $(WARNING_FLAGS)
 # This flag is also used in subdirectories so don't change its name here.
 OPTFLAGS?=-thread
 
-OCAMLC=ocamlc$(OPTBIN) $(OCAMLCFLAGS)  $(INCLUDES)
-OCAMLOPT=ocamlopt$(OPTBIN) $(OPTFLAGS) $(INCLUDES)
+OCAMLC=ocamlc$(OPTBIN) $(PPX) $(OCAMLCFLAGS)  $(INCLUDES)
+OCAMLOPT=ocamlopt$(OPTBIN) $(PPX) $(OPTFLAGS) $(INCLUDES)
 OCAMLLEX=ocamllex #-ml # -ml for debugging lexer, but slightly slower
 OCAMLYACC=ocamlyacc -v
 OCAMLDEP=ocamldep

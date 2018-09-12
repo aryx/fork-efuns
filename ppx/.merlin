@@ -1,0 +1,7 @@
+# -*- sh -*-
+B ../external/OPAM_DIR/lib/ocaml/**
+#todo:  4.02.3 does not have the .mli under OPAM
+#S /home/pad/.opam/4.06.1/lib/ocaml/compiler-libs/
+S /home/pad/work/lang-ocaml/ocaml-4.02.3/**
+B ../external/FOR_MERLIN/**
+S ../external/FOR_MERLIN/**

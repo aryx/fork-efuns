@@ -16,7 +16,7 @@ PROGS=efuns efuns_client
 #------------------------------------------------------------------------------
 
 # Basic dependencies 
-EXTERNALDIRS= external/commons external/h_visualization \
+EXTERNALDIRS= external/commons external/h_visualization
 EXTERNALCMAS= external/commons/lib.cma external/h_visualization/lib.cma
 
 # Jsonwheel dependencies 
@@ -195,6 +195,8 @@ DEPEND_INCLUDES=$(DIRS:%=-I %)
 LIBS=$(EXTERNALCMAS) $(PFFFCMAS) $(GRAPHICSLIBS)
 # bigarray is used by cairo
 SYSLIBS=unix.cma str.cma threads.cma bigarray.cma
+
+PPX=-ppx $(TOP)/ppx/ppx_interactive
 
 ##############################################################################
 # Generic variables
