@@ -4,12 +4,12 @@ val call_interactive : Efuns.action
 (* val meta_hist : string list ref *)
 (* val value_hist : string list ref *)
 
-val exec_interactive :
-  (string * (Efuns.action * Efuns.keys option)) list ->
-  Efuns.frame -> string -> unit
 (*
 val compute_interactives :
   unit -> (string * (Efuns.action * Efuns.keys option)) list
+val exec_interactive :
+  (string * (Efuns.action * Efuns.keys option)) list ->
+  Efuns.frame -> string -> unit
 *)
 
 (* help for user *)

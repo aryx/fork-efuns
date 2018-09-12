@@ -28,7 +28,9 @@ let meta_hist = ref []
 
 (*s: function [[Interactive.buf_interactives]] *)
 let compute_interactives () =
-  failwith "TODO"
+  Action.actions |> Common.hash_to_list |> List.map (fun (s, _) ->
+    s, (Action.execute_action s, None)
+  )
 (*e: function [[Interactive.buf_interactives]] *)
   
 (*s: function [[Interactive.exec_interactive]] *)
