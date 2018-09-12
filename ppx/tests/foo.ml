@@ -1,0 +1,2 @@
+let _ = [%getenv "USER"]
+
