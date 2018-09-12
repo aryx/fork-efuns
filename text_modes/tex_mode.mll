@@ -257,7 +257,7 @@ let tex_color_buffer buf =
 let c_c = (ControlMap,Char.code 'c')
 
 let structures = define_option ["tex_mode"; "structures"] ""
-    (list_option Misc.binding_option) []
+    (list_option Keymap.binding_option) []
   
 let _ =
   if !!structures = [] then 
@@ -573,7 +573,7 @@ let setup_actions () =
   ()  
     
 let local_map = define_option ["tex_mode"; "local_map"] ""
-    (list_option Misc.binding_option) []
+    (list_option Keymap.binding_option) []
 
 let interactives_map = define_option ["tex_mode"; "interactives_map"] ""
     (list_option string2_option) 

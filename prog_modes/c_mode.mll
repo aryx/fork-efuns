@@ -830,7 +830,7 @@ let mode_regexp = define_option ["c_mode"; "mode_regexp"] ""
   ]
   
 let local_map = define_option ["c_mode"; "local_map"] ""
-    (list_option Misc.binding_option) []
+    (list_option Keymap.binding_option) []
 
 let interactives_map = define_option ["c_mode"; "interactives_map"] ""
     (list_option string2_option) 

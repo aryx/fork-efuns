@@ -1287,7 +1287,7 @@ let ocaml_find_error text error_point =
 let c_c = (ControlMap,Char.code 'c')
 
 let structures = define_option ["ocaml_mode"; "structures"] ""
-    (list_option Misc.binding_option) []
+    (list_option Keymap.binding_option) []
   
 let setup_structures () = 
   if !!structures = [] then
@@ -1342,7 +1342,7 @@ let ocaml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 (***********************************************************************)
          
 let local_map = define_option ["ocaml_mode"; "local_map"] ""
-    (list_option Misc.binding_option) []
+    (list_option Keymap.binding_option) []
 
 let interactives_map = define_option ["ocaml_mode"; "interactives_map"] ""
     (list_option string2_option) 
