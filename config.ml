@@ -160,8 +160,8 @@ let standard_map = [
   [ControlMetaMap, XK.xk_Up], Multi_buffers.up_buffer;
   (*e: buffer navigating keys *)
   (*s: frame management keys *)
-  [c_x; NormalMap, Char.code '2'], Multi_frames.v_cut_frame;    
-  [c_x; NormalMap, Char.code '3'], Multi_frames.h_cut_frame;    
+  [c_x; NormalMap, Char.code '2'], Multi_frames.vertical_cut_frame;    
+  [c_x; NormalMap, Char.code '3'], Multi_frames.horizontal_cut_frame;    
   (*x: frame management keys *)
   [c_x; NormalMap, Char.code '1'], Multi_frames.one_frame;
   [c_x; NormalMap, Char.code '0'], Multi_frames.delete_frame;
@@ -195,11 +195,11 @@ let standard_map = [
   (*x: misc keys *)
   [c_x; NormalMap, Char.code '='], Misc.cursor_position;
   (*x: misc keys *)
-  [c_x; ControlMap, Char.code 'c'], Misc.exit_efuns; 
+  [c_x; ControlMap, Char.code 'c'], Misc.exit; 
   (*x: misc keys *)
   [ControlMap, Char.code 'l'], Scroll.recenter;
   (*x: misc keys *)
-  [c_h; NormalMap, Char.code 'K'], Frame.bindings_help;
+  [c_h; NormalMap, Char.code 'K'], Frame.help_bindings;
   (*x: misc keys *)
   [ c_c; NormalMap, Char.code '-'], Structure.next_hole;
   (*x: misc keys *)
@@ -242,11 +242,6 @@ open Options
 let global_map = define_option ["global_map"] "" 
   (list_option Keymap.binding_option) []
 (*e: constant [[Config.global_map]] *)
-(*s: constant [[Config.interactives_map]] *)
-let interactives_map = define_option ["interactives_map"] ""
-    (list_option string2_option) 
-  []
-(*e: constant [[Config.interactives_map]] *)
 
 (*s: function [[Config.init_global_map]] *)
 let init_global_map () = 
@@ -263,18 +258,6 @@ let init_global_map () =
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;
   );
-
-  (*s: [[Config.init_global_map()]] add interactives from [[interactives_map]] *)
-  !!interactives_map |> List.iter (fun (name, action) ->
-    try
-      Keymap.add_interactive (Globals.editor()).edt_map name 
-        (Action.execute_action action)
-    with e ->
-      Log.printf "Error for action %s" action;
-      Log.exn "%s\n" e;
-  );
-  (*e: [[Config.init_global_map()]] add interactives from [[interactives_map]] *)
-    
 
   (* Mouse *)
   (*s: [[Config.init_global_map()]] mouse keys setup *)

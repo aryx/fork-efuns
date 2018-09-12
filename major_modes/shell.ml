@@ -401,6 +401,11 @@ let eshell buf_name frame =
   Frame.change_buffer frame.frm_window buf.buf_name;
   ()
 
+let shell =
+  eshell "*Shell*"
+[@@interactive]
+
+(* use Top_window.keypressed *)
 let eshell_num frame =
   let char = Char.chr !Top_window.keypressed in
   let buf_name = spf "*Shell-%c*" char in
@@ -409,6 +414,7 @@ let eshell_num frame =
   | Some buf -> 
       Multi_buffers.set_previous_frame frame;
       Frame.change_buffer frame.frm_window buf.buf_name
+[@@interactive]
 
 (*****************************************************************************)
 (* Setup *)
@@ -416,10 +422,6 @@ let eshell_num frame =
 
 let _ = 
   Hook.add_start_hook (fun () ->
-    Keymap.define_interactive_action "eshell" (eshell "*Shell*");
-    Keymap.define_interactive_action "shell" (eshell "*Shell*");
-    (* use Top_window.keypressed *)
-    Keymap.define_interactive_action "eshell_num" eshell_num;
     
 (* buggy, does not handle C-e, need something better
     Efuns.set_major_var mode Top_window.handle_key_start_hook [(fun frame ->

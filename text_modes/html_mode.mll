@@ -270,8 +270,10 @@ let _ =
   
 let _ =  
   Hook.add_start_hook (fun () ->
+(* TODO
     Keymap.add_interactive (Globals.editor()).edt_map "html-mode" 
       (fun frame -> install frame.frm_buffer);
+*)
     let alist = Var.get_global Ebuffer.modes_alist in
     Var.set_global Ebuffer.modes_alist 
         ((".*\\.\\(html\\|htm\\)",mode)

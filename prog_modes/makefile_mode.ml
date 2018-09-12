@@ -64,9 +64,11 @@ let local_map = define_option ["makefile_mode"; "local_map"] ""
 (*e: constant [[Makefile_mode.local_map]] *)
 
 (*s: constant [[Makefile_mode.interactives_map]] *)
+(* TODO
 let interactives_map = define_option ["makefile_mode"; "interactives_map"] ""
     (list_option string2_option) 
   []
+*)
 (*e: constant [[Makefile_mode.interactives_map]] *)
 
 (* let insert_tab frame = ignore (insert_string frame "\t") *)
@@ -79,12 +81,14 @@ let _ =
       [c_c; ControlMap, Char.code 'c'], "compile";    
       [ControlMap, Char.code 'l'], "makefile_mode.color_buffer";
      (*  [NormalMap, XK.xk_Tab], "insert_tab"; *)
-    ];
+    ]
+(* TODO
   if !!interactives_map = [] then 
         interactives_map =:= [
           "color_buffer", "makefile_mode.color_buffer";
           (*"compile", "makefile_mode.compile";*)
       ]
+*)
 (*e: toplevel [[Makefile_mode._1]] *)
 
 (*s: function [[Makefile_mode.makefile_mode]] *)
@@ -111,6 +115,7 @@ let setup_maps () =
           Log.exn "%s\n" e;
   
   );
+(* TODO
   !!interactives_map |> List.iter (fun (name, action) ->
       try
         Keymap.add_interactive map name (Action.execute_action action)
@@ -119,6 +124,7 @@ let setup_maps () =
           Log.exn "%s\n" e;
           
   );
+*)
   ()
 (*e: toplevel [[Makefile_mode._3]] *)
 

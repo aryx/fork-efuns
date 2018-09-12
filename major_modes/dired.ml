@@ -13,7 +13,6 @@
 (*e: copyright header *)
 open Efuns
 
-
 (*s: function [[Dired.update]] *)
 let update buf =
   let filename = match buf.buf_filename with
@@ -77,6 +76,7 @@ let open_file frame =
   let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = Frame.create  frame.frm_window None buf in
   Frame.active frame
+[@@interactive "dired_open"]
 (*e: function [[Dired.open_file]] *)
   
 (*s: function [[Dired.remove]] *)
@@ -88,6 +88,7 @@ let remove frame =
           if line.[1] = 'd' then Unix.rmdir filename else
           Unix.unlink filename;
         update frame.frm_buffer) |> ignore
+[@@interactive "dired_remove"]
 (*e: function [[Dired.remove]] *)
 
 (*s: constant [[Dired.view_list]] *)
@@ -133,11 +134,13 @@ let fast_view frame filename =
 let open_view frame =
   let filename = select_file (get_file_line frame) in
   fast_view frame filename
+[@@interactive "dired_view"]
 (*e: function [[Dired.open_view]] *)
   
 (*s: function [[Dired.mkdir]] *)
 let mkdir frame =
   failwith "Dired.mkdir: TODO"
+[@@interactive "dired_mkdir"]
 (*
   Select.select_filename frame "Make directory: "
     (fun str -> 
@@ -164,7 +167,7 @@ let mode = Ebuffer.new_major_mode "Dired" (Some install)
 (*e: constant [[Dired.mode]] *)
 
 (*s: constant [[Dired.map]] *)
-let map = mode.maj_map
+(* TODO let map = mode.maj_map *)
 (*e: constant [[Dired.map]] *)
   
 
@@ -191,17 +194,17 @@ let unzip_and_view frame filename =
     
 (*s: toplevel [[Dired._1]] *)
 let _ = 
-  Keymap.interactive map [NormalMap, XK.xk_Return] "dired_open_file" 
+  Keymap.add_major_key mode [NormalMap, XK.xk_Return] "dired_open_file" 
     open_file;
-  Keymap.interactive map [NormalMap, Char.code 'g'] "dired_update" 
+  Keymap.add_major_key mode [NormalMap, Char.code 'g'] "dired_update" 
     (fun frame -> update frame.frm_buffer);  
-  Keymap.interactive map [NormalMap, Char.code 'v'] "dired_view_file" 
+  Keymap.add_major_key mode [NormalMap, Char.code 'v'] "dired_view_file" 
     open_view;  
-  Keymap.interactive map [NormalMap, Char.code '+'] "dired_make_directory" 
+  Keymap.add_major_key mode [NormalMap, Char.code '+'] "dired_make_directory" 
     mkdir;  
-  Keymap.interactive map [NormalMap, Char.code '-'] "dired_remove_entry" 
+  Keymap.add_major_key mode [NormalMap, Char.code '-'] "dired_remove_entry" 
     remove;  
-  
+
   view_list := [
     ".*\\(\\.jpg\\|\\..gig\\|\\.xpm\\|\\.ppm\\)",viewer "xv";
     ".*\\(\\.ps\\|\\.PS\\)",viewer "gv";
@@ -213,9 +216,11 @@ let _ =
     ];
   
   Hook.add_start_hook (fun () ->
+(* TODO
     Keymap.add_interactive ((Globals.editor()).edt_map) "dired_mode" 
         (fun frame -> 
           Ebuffer.set_major_mode frame.frm_buffer mode);
+*)
     Var.add_global Ebuffer.modes_alist [".*/$",mode];
   )   
 (*e: toplevel [[Dired._1]] *)

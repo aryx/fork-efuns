@@ -476,30 +476,5 @@ let delete_window frame =
 *)
 [@@interactive]
 (*e: function [[Top_window.delete_window]] *)
-
         
-(*s: constant [[Top_window.check_abort]] *)
-(*let check_abort = ref 0*)
-(*e: constant [[Top_window.check_abort]] *)
-(*s: constant [[Top_window.check_abort_delay]] *)
-(*let check_abort_delay = ref 100*)
-(*e: constant [[Top_window.check_abort_delay]] *)
-
-  (* This function should be used in loops that could be interrupted by
-  the user. It returns "true" if the user pressed C-g, and false
-  in other cases. *)
-  
-(*s: function [[Top_window.check_abort]] *)
-let check_abort frame =
-  failwith "Top_window.check_abort: TODO"
-(*
-  incr check_abort; 
-  if !check_abort mod !check_abort_delay = 0 then
-    let top_window = Window.top frame.frm_window in
-    let xterm = top_window.top_term in
-    xterm#check_abort
-  else false
-*)
-(*e: function [[Top_window.check_abort]] *)
-
 (*e: core/top_window.ml *)

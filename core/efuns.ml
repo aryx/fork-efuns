@@ -29,10 +29,6 @@ type map =
     char_map : binding array;
     (* complex key, possible sub maps *)
     mutable complex_bindings : (key * binding) list;
-
-    (*s: [[Efuns.map]] other fields *)
-    mutable interactives : (action_name * (action * prefix option)) list;
-    (*e: [[Efuns.map]] other fields *)
   } 
 (*e: type [[Efuns.map]] *)
 (*s: type [[Efuns.keySym]] *)
@@ -67,10 +63,6 @@ and mod_ident =
 (*s: type [[Efuns.keys]] *)
 and keys = key list
 (*e: type [[Efuns.keys]] *)
-
-(*s: type [[Efuns.prefix]] *)
-and prefix = key list
-(*e: type [[Efuns.prefix]] *)
 
 (*s: type [[Efuns.binding]] *)
 and binding = 

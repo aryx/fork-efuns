@@ -89,7 +89,7 @@ val active : t -> unit
 val editname : string
 exception FoundFrame of t
 
-val bindings_help : t -> unit
+val help_bindings : Efuns.action
 
 (*
 val display_line : Efuns.top_window -> t -> string -> int -> unit

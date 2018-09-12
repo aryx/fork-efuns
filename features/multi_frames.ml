@@ -42,14 +42,14 @@ let remove_frame frame =
 (*e: function [[Multi_frames.remove_frame]] *)
 
 (*s: function [[Multi_frames.v_cut_frame]] *)
-let v_cut_frame frame =
+let vertical_cut_frame frame =
   if frame.frm_mini_buffer = None 
   then Frame.create (cut_frame frame) None frame.frm_buffer |> ignore
 [@@interactive]
 (*e: function [[Multi_frames.v_cut_frame]] *)
 
 (*s: function [[Multi_frames.h_cut_frame]] *)
-let h_cut_frame frame =
+let horizontal_cut_frame frame =
   if frame.frm_mini_buffer = None 
   then
     let window = frame.frm_window in

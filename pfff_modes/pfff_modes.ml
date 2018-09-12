@@ -172,6 +172,7 @@ let load_database_code frame =
     let idx = Big_grep.build_index entities in
     Common.push (dir, (db, dir, entities, idx)) dir_to_db
   )
+[@@interactive]
 
 
 let db_for_frame _frame =
@@ -233,6 +234,7 @@ let load_graph_code frame =
     let g = Graph_code.load file in
     Common.push (dir, g) dir_to_graph
   )
+[@@interactive]
 
 
 (*****************************************************************************)
@@ -241,8 +243,6 @@ let load_graph_code frame =
 
 let _ =
   Hook.add_start_hook (fun () ->
-    Keymap.define_interactive_action "load_database_code" load_database_code;
-    Keymap.define_interactive_action "load_graph_code" load_graph_code;
     Keymap.add_global_key [MetaMap, Char.code '.'] 
       "goto_def" goto_def;
     ()

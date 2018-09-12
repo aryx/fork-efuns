@@ -25,7 +25,6 @@ let dummy_action frame = ()
 let create () =
   { char_map = Array.create 256 Unbound;
     complex_bindings = [];
-    interactives = [];
   } 
 (*e: function [[Keymap.create]] *)
 
@@ -139,53 +138,27 @@ let n_5 = (NormalMap, Char.code '5')
 (*s: function [[Keymap.all_bindings]] *)
 let all_bindings () =
   let s = ref "Default bindings:" in
-  (Globals.editor()).edt_map.interactives |> List.iter(fun (name,(_,binding)) ->
-    match binding with
-    | None -> ()
-    | Some key_list ->
-        s := Printf.sprintf "%s\n%20s : %s" !s 
-              (print_key_list key_list) name
-  );
+  (* TODO *)
   !s
 (*e: function [[Keymap.all_bindings]] *)
   
-(*s: function [[Keymap.interactive]] *)
-let interactive map =
- fun keylist name f ->
-  (*s: [[Keymap.interactive()]] add keylist and name to interactives list *)
-  map.interactives <- (name, (f, Some keylist)) :: map.interactives;
-  (*e: [[Keymap.interactive()]] add keylist and name to interactives list *)
-  add_binding map keylist f
-(*e: function [[Keymap.interactive]] *)
-
-(*s: function [[Keymap.add_interactive]] *)
-let add_interactive map name f =
-    map.interactives <- (name, (f, None)) :: map.interactives
-(*e: function [[Keymap.add_interactive]] *)
 
 (*s: function [[Keymap.add_global_key]] *)
-let add_global_key = fun prefix string action ->
-  interactive (Globals.editor()).edt_map prefix string action
+let add_global_key prefix _string action =
+  add_binding (Globals.editor()).edt_map prefix action
 (*e: function [[Keymap.add_global_key]] *)
 (*s: function [[Keymap.add_local_key]] *)
-let add_local_key buf = 
-  interactive buf.buf_map 
+let add_local_key buf prefix _string action = 
+  add_binding buf.buf_map prefix action
 (*e: function [[Keymap.add_local_key]] *)
 (*s: function [[Keymap.add_minor_key]] *)
-let add_minor_key minor = 
-  interactive minor.min_map 
+let add_minor_key minor prefix _string action = 
+  add_binding minor.min_map prefix action
 (*e: function [[Keymap.add_minor_key]] *)
 (*s: function [[Keymap.add_major_key]] *)
-let add_major_key major = 
-  interactive major.maj_map 
+let add_major_key major prefix _string action = 
+  add_binding major.maj_map prefix action
 (*e: function [[Keymap.add_major_key]] *)
-
-(*s: function [[Keymap.define_interactive_action]] *)
-let define_interactive_action action_name action_fun =
-  Action.define_action action_name action_fun;
-  let map = (Globals.editor()).edt_map in
-  add_interactive map action_name action_fun
-(*e: function [[Keymap.define_interactive_action]] *)
 
 (*****************************************************************************)
 (* Keys <-> string *)

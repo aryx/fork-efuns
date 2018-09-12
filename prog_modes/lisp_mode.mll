@@ -428,6 +428,7 @@ let indent_buffer frame =
   indent_between_points buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point
+[@@interactive "lisp_indent_buffer"]
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let insert_and_return frame =
@@ -533,9 +534,10 @@ let mode = Ebuffer.new_major_mode "Lisp" (Some install)
   
 let setup () =
   let map = mode.maj_map in
-  Keymap.add_interactive map "lisp-indent-buffer" indent_buffer;
+(* TODO
   Keymap.add_interactive map "lisp-color-buffer" 
     (fun frame -> lisp_color_buffer frame.frm_buffer);
+*)
 
   Var.set_major_var mode Compil.find_error lisp_find_error;
 
@@ -560,8 +562,10 @@ let setup () =
 
 let _ =  
   Hook.add_start_hook (fun () ->
+(* TODO
     Keymap.add_interactive (Globals.editor()).edt_map "lisp-mode" 
         (fun frame -> install frame.frm_buffer);
+*)
     let alist = Var.get_global Ebuffer.modes_alist in
     Var.set_global Ebuffer.modes_alist
       ((".*\\.\\(el\\|gwm\\|lisp\\)$", mode):: alist);

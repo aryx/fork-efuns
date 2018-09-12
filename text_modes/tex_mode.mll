@@ -575,10 +575,6 @@ let setup_actions () =
 let local_map = define_option ["tex_mode"; "local_map"] ""
     (list_option Keymap.binding_option) []
 
-let interactives_map = define_option ["tex_mode"; "interactives_map"] ""
-    (list_option string2_option) 
-  []
-
 let setup_maps () =
 
   Var.set_major_var mode Compil.find_error tex_find_error;
@@ -611,11 +607,13 @@ let setup_maps () =
       [NormalMap, Char.code ']'], "tex_mode.find_matching_paren";
       [NormalMap, Char.code ')'], "tex_mode.find_matching_paren";
     ];
+(* TODO
   if !!interactives_map = [] then 
     interactives_map =:= [
 (*      "tex_browser", "tex_mode.browse"; *)
       "color_buffer", "tex_mode.color_buffer";
     ];
+*)
 
   let map = mode.maj_map in
   (*  Keymap.add_prefix map [c_c]; *)
@@ -623,18 +621,10 @@ let setup_maps () =
       try
         let f = Action.execute_action action in
         Keymap.add_binding map keys f;
-        Keymap.add_interactive map action f;
       with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;
   
-  );
-  !!interactives_map |> List.iter (fun (name, action) ->
-      try
-        Keymap.add_interactive map name (Action.execute_action action)
-      with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;          
   );
   ()
   

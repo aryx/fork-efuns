@@ -6,6 +6,11 @@ open Efuns
  * alt: have a .efunsrc, but not everything is customizable through options.
  *)
 
+(* special functions *)
+let gtd frm = 
+  Frame.load_file frm.frm_window "/home/pad/GTD/GTD-daily.org" |> ignore
+[@@interactive]
+
 let _ =
   Hook.add_start_hook (fun () ->
 
@@ -46,11 +51,6 @@ let _ =
       Keymap.add_global_key keys "TODO" action
     );
   
-    (* special functions *)
-    Keymap.define_interactive_action "gtd" (fun frm ->
-      Frame.load_file frm.frm_window "/home/pad/GTD/GTD-daily.org" |> ignore
-    );
-
     (* ~/.login like *)
     Unix.putenv "PFFF_HOME" "/home/pad/pfff";
     Unix.putenv "PATH" (

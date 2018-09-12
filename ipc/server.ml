@@ -96,7 +96,7 @@ let start frame =
         PropModeReplace atom XA.xa_string 1 socket_name;
       *)
   )  
-[@@interactive]
+[@@interactive "start_server"]
 (*e: function [[Server.start]] *)
   
 (*e: ipc/server.ml *)

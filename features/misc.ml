@@ -200,7 +200,7 @@ let check_file frame =
 (*e: function [[Complex.check_file]] *)
     
 (*s: function [[Complex.exit_efuns]] *)
-let exit_efuns frame =
+let exit frame =
   let buffers = Utils.list_of_hash (Globals.editor()).edt_buffers in
   save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
@@ -361,6 +361,7 @@ let get_parameter frame =
 (*s: toplevel [[Complex._1]] *)
 let _ =
   Hook.add_start_hook (fun () ->
+(* TODO
     let edt = Globals.editor() in
       Keymap.add_interactive edt.edt_map "set_local_variable" 
         Interactive.set_local_variable;
@@ -368,6 +369,7 @@ let _ =
         Interactive.set_global_variable;
       Keymap.add_interactive edt.edt_map "set_parameter" set_parameter;
       Keymap.add_interactive edt.edt_map "get_parameter" get_parameter;
+*)
     Var.set_global Ebuffer.saved_buffer_hooks [update_time];
   )
 (*e: toplevel [[Complex._1]] *)
@@ -423,9 +425,11 @@ let _ =
             |];
     (*e: [[Simple._]] start hook *)
 
+(* TODO
     Keymap.add_interactive (edt.edt_map) "fondamental_mode" 
       (fun frame -> Ebuffer.set_major_mode frame.frm_buffer 
           Ebuffer.fondamental_mode);
+*)
 
     Var.set_global line_comment ""
   )

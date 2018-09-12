@@ -56,7 +56,7 @@ let replace flag frame query str repl =
     let last_pos = ref (Text.get_position text point) in
     match flag,query with
       Regexp, NoQuery ->
-        while not (Top_window.check_abort frame) do
+        while not (* (Top_window.check_abort frame) *) false do
           let len = Text.search_forward text regexp point in
           let pos = Text.get_position text point in
           if pos = !last_pos then 
@@ -72,7 +72,7 @@ let replace flag frame query str repl =
         done
     | RegexpString, NoQuery ->
         let delta = String.length repl in
-        while not (Top_window.check_abort frame) do
+        while not (* (Top_window.check_abort frame) *) false do
           let len = Text.search_forward text regexp point in
           let pos = Text.get_position text point in
           if pos = !last_pos then 

@@ -1344,10 +1344,6 @@ let ocaml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
 let local_map = define_option ["ocaml_mode"; "local_map"] ""
     (list_option Keymap.binding_option) []
 
-let interactives_map = define_option ["ocaml_mode"; "interactives_map"] ""
-    (list_option string2_option) 
-  []
-
 let setup_maps () =
   if !!local_map = [] 
   then local_map =:= [
@@ -1362,12 +1358,14 @@ let setup_maps () =
       [NormalMap, Char.code '.'], "ocaml_mode.char_expand_abbrev";
       [NormalMap, Char.code ';'], "ocaml_mode.char_expand_abbrev";
       [NormalMap, XK.xk_Return], "ocaml_mode.return_expand_abbrev";
-    ];
+    ]
+(* TODO: pad: have M-x color_buffer use a per-major-mode variable
   if !!interactives_map = [] 
   then interactives_map =:= [
 (*          "compile", "ocaml_mode.compile";*)
           "color_buffer", "ocaml_mode.color_buffer";
       ]
+*)
 
 
 let setup () = 
@@ -1398,14 +1396,6 @@ let setup () =
       try
         let f = Action.execute_action action in
         Keymap.add_binding map keys f;
-        Keymap.add_interactive map action f;
-      with e ->
-        Log.printf "Error for action %s" action;
-        Log.exn "%s\n" e;
-  );
-  !!interactives_map |> List.iter (fun (name, action) ->
-      try
-        Keymap.add_interactive map name (Action.execute_action action)
       with e ->
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;

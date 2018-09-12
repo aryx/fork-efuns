@@ -25,7 +25,7 @@ val save_buffers_and_action :
   Efuns.frame -> ('a * Efuns.buffer) list -> (Efuns.frame -> unit) -> unit
 val save_some_buffers : Efuns.action
 
-val exit_efuns : Efuns.action
+val exit : Efuns.action
 
 (* time *)
 

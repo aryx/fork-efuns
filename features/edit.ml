@@ -185,13 +185,16 @@ let transpose_chars buf point =
 (* Overwrite *)
 (*****************************************************************************)
 
+(*s: function [[Edit.toggle_overwrite_mode]] *)
 let toggle_overwrite_mode frm =
   let buf = frm.frm_buffer in
   let mode = overwrite_mode in
   if Ebuffer.has_minor_mode buf mode 
   then Ebuffer.del_minor_mode buf mode
   else Ebuffer.set_minor_mode buf mode
-  
+[@@interactive "overwrite_mode"]
+(*e: function [[Edit.toggle_overwrite_mode]] *)
+ 
 
 (*****************************************************************************)
 (* Undo *)

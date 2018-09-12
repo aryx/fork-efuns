@@ -16,7 +16,7 @@ open Efuns
 (* M-x *)
   
 (*s: function [[Interactive.create_bindings]] *)
-let create_bindings () =
+let create_bindings_help_buffer () =
   let s = Keymap.all_bindings () in
   let text = Text.create s in
   Ebuffer.create "*bindings*" None text (Keymap.create ())
@@ -28,12 +28,7 @@ let meta_hist = ref []
 
 (*s: function [[Interactive.buf_interactives]] *)
 let buf_interactives buf =
-  let interactives = 
-    buf.buf_major_mode.maj_map.interactives @
-    (Globals.editor()).edt_map.interactives 
-  in
-  List.fold_left (fun list minor -> minor.min_map.interactives @ list) 
-   interactives buf.buf_minor_modes 
+  failwith "TODO"
 (*e: function [[Interactive.buf_interactives]] *)
   
 (*s: function [[Interactive.exec_interactive]] *)
