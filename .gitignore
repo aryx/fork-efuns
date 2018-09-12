@@ -66,3 +66,4 @@ html_mode.ml
 #/.depend2
 
 # ?????
+/ppx/ppx_interactive
