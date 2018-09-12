@@ -27,7 +27,7 @@ let meta_hist = ref []
 (*e: constant [[Interactive.meta_hist]] *)
 
 (*s: function [[Interactive.buf_interactives]] *)
-let buf_interactives buf =
+let compute_interactives () =
   failwith "TODO"
 (*e: function [[Interactive.buf_interactives]] *)
   
@@ -52,8 +52,7 @@ let exec_interactive interactives frame name =
       
 (*s: function [[Interactive.call_interactive]] *)
 let call_interactive frame =
-  let buf = frame.frm_buffer in
-  let interactives = buf_interactives buf in
+  let interactives = compute_interactives () in
   Select.select frame "M-x " meta_hist "" 
     (fun _ -> List.map fst interactives)
     (fun s -> s) 
