@@ -15,6 +15,12 @@ open Efuns
 open Edit
 open Move
 
+(*s: function [[Misc.fondamental_mode]] *)
+let fondamental_mode frame =
+  Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
+[@@interactive]
+(*e: function [[Misc.fondamental_mode]] *)
+
 (*****************************************************************************)
 (* Misc *)
 (*****************************************************************************)
@@ -311,6 +317,7 @@ let describe_position frame =
 [@@interactive]
 (*e: function [[Complex.get_pos]] *)
 
+(*s: function [[Misc.cursor_position]] *)
 let cursor_position frm =
   let text = frm.frm_buffer.buf_text in
   let point = frm.frm_point in
@@ -325,7 +332,8 @@ let cursor_position frm =
        (coord.Text.c_line + 1) 
        coord.Text.c_col
     )
-  
+[@@interactive]
+(*e: function [[Misc.cursor_position]] *)
 
  
 (*s: toplevel [[Complex._1]] *)

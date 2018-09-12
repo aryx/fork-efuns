@@ -71,7 +71,7 @@ let standard_map = [
   (* ------------- *)
   (* Inserting *)
   (* ------------- *)
-  (* see also the many self_insert_cmd below *)
+  (* see also the many self_insert_cmd in core_map *)
   (*s: inserting keys *)
   [NormalMap, XK.xk_Return], Edit.insert_return; 
   (*e: inserting keys *)
@@ -230,11 +230,6 @@ let save_options frame =
   Options.save ()
 [@@interactive]
 (*e: function [[Config.save_options]] *)
-(*s: function [[Config.fondamental_mode]] *)
-let fondamental_mode frame =
-  Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
-[@@interactive]
-(*e: function [[Config.fondamental_mode]] *)
 
 open Options
   
