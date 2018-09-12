@@ -47,6 +47,12 @@ open Longident
  *   =========
  * (I wish I could use ~/pfff/pfff -dump_ml, but my AST is different).
  * 
+ * doc:
+ *  - original tutorial blog post for ppx_getenv:
+ *  https://whitequark.org/blog/2014/04/16/a-guide-to-extension-points-in-ocaml/
+ *  - update of ppx_getenv using the latest ppxlib
+ *  http://rgrinberg.com/posts/extension-points-3-years-later/
+ *  (in my opinion it's not worth the complexity)
  *)
 
 (*****************************************************************************)
