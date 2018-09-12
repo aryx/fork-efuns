@@ -4,10 +4,11 @@
 # Prelude 
 ##############################################################################
 
-# This file assumes the "includer" will have set a few variables and then do a
+# This file assumes the "includer" has set a few variables and then did an
 # include Makefile.common. Here are those variables:
 #  - SRC
 #  - INCLUDEDIRS
+#  - DEPEND_INCLUDES
 
 ##############################################################################
 # Generic variables
@@ -64,10 +65,6 @@ BYTECODE_STATIC=-custom
 all::
 
 ##############################################################################
-# Developer rules
-##############################################################################
-
-##############################################################################
 # Generic ocaml rules
 ##############################################################################
 
@@ -93,6 +90,6 @@ distclean::
 beforedepend::
 
 depend:: beforedepend
-	$(OCAMLDEP) *.mli *.ml > .depend
+	$(OCAMLDEP) $(DEPEND_INCLUDES) *.mli *.ml > .depend
 
 -include .depend

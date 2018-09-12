@@ -1,4 +1,4 @@
-(* see Efuns.frame, Efuns.status types *)
+(* see Efuns.frame and Efuns.status types *)
 type t = Efuns.frame
 
 (* creation *)
@@ -9,7 +9,7 @@ type t = Efuns.frame
 val create : 
   Efuns.window -> string option -> Efuns.buffer -> t
 
-(* without_top means does not make the frame the top active frame *)
+(* without_top means it does not make the frame the top active frame *)
 val create_without_top :
   Efuns.window -> string option -> Efuns.buffer -> t
 (* alias for create_without_top *)
@@ -76,7 +76,7 @@ val current_dir : t -> string
 
 (* dumpers *)
 
-(* iterator *)
+(* helpers *)
 
 val to_frame : (Efuns.buffer -> Text.point -> 'a) -> t -> 'a
 

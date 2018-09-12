@@ -15,23 +15,20 @@ PROGS=efuns efuns_client
 #Library dependencies
 #------------------------------------------------------------------------------
 
-# Mandatory dependencies 
+# Basic dependencies 
+EXTERNALDIRS= external/commons external/h_visualization \
+EXTERNALCMAS= external/commons/lib.cma external/h_visualization/lib.cma
 
-# This is for -I or for finding dlls (e.g., deps-netsys)
-EXTERNALDIRS=\
- external/commons external/h_visualization \
- external/json-wheel external/deps-netsys 
-# I now use jsonwheel not only for pfff_modes but also for ocaml_merlin
-# hence the mandatory dependencies
-EXTERNALCMAS=\
- external/commons/lib.cma external/h_visualization/lib.cma\
+# Jsonwheel dependencies 
+# (I now use jsonwheel it not only for pfff_modes but also for ocaml_merlin)
+# this is for -I and for finding dlls (e.g., deps-netsys)
+EXTERNALDIRS+=external/json-wheel external/deps-netsys 
+EXTERNALCMAS+=\
  external/deps-netsys/netsys_oothr.cma external/deps-netsys/netsys.cma \
  external/deps-netstring/netstring.cma \
  external/json-wheel/jsonwheel.cma
 
-
 # Pfff dependencies
-
 ifeq ($(USE_PFFF),1)
 PFFF_MODES=\
  pfff_modes/pfff_modes.ml\
@@ -172,6 +169,7 @@ SRC=\
  $(BACKENDDIR)/graphics_efuns.ml \
  main.ml \
 
+#todo:
 # minor_modes/accents_mode.ml\
 # prog_modes/*.mll
 # ipc/efuns_client.ml ipc/server.ml
@@ -215,7 +213,6 @@ opt: $(PROGS:=.opt)
 $(TARGET): $(OBJS) $(LIBS)
 	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ \
       $(SYSLIBS) $(LIBS) $(GTKLOOP) $(OBJS) $(EXTRA)
-
 $(TARGET).opt: $(OPTOBJS) $(LIBS:.cma=.cmxa)
 	$(OCAMLOPT) $(STATIC) -cclib -L/opt/X11/lib -o $@ \
      $(SYSLIBS:.cma=.cmxa) $(LIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $(OPTOBJS)
@@ -230,10 +227,8 @@ clean::
 
 efuns_client: ipc/efuns_client.cmo
 	$(OCAMLC) $(BYTECODE_STATIC) -o $@ $(SYSLIBS) $(LIBS) $^
-
 efuns_client.opt: ipc/efuns_client.cmx
 	$(OCAMLOPT) $(STATIC) -o $@ $(SYSLIBS:.cma=.cmxa) $(LIBS:.cma=.cmxa) $^
-
 
 depend::
 	$(OCAMLDEP) $(DEPEND_INCLUDES) *.ml* */*.ml*  $(BACKENDDIR)/*.ml* > .depend
@@ -271,7 +266,6 @@ clean::
 	@echo 'B external/FOR_MERLIN/**' >> .merlin
 	@echo 'S external/FOR_MERLIN/**' >> .merlin
 
-
 visual:
 	~/pfff/codemap -no_legend -screen_size 2 -filter pfff .
 
@@ -279,5 +273,4 @@ graph:
 	~/pfff/codegraph_build -symlinks -lang cmt .
 
 check:
-
 	~/pfff/scheck -with_graph_code graph_code.marshall -filter 3 . 2>&1 | grep -v stdlib | grep -v commons/ | grep Function

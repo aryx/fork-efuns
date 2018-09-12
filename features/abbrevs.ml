@@ -22,7 +22,6 @@ deux fonctions principales:
 *)
 open Efuns
 
-
 (*s: function [[Abbrevs.escaped]] *)
 let escaped s =
   let n = ref 0 in
