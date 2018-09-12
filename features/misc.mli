@@ -32,13 +32,6 @@ val exit : Efuns.action
 val buf_mtime : float Store.var
 val update_time : Efuns.buffer -> unit
 
-(* parameters *)
-
-val set_parameter : Efuns.action
-val get_parameter : Efuns.action
-
-(* val parameters_hist : string list ref *)
-
 (* misc *)
 
 val reload : Efuns.action

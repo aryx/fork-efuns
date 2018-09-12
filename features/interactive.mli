@@ -26,3 +26,10 @@ val all_variables : Efuns.frame -> 'a -> string list
 (*
 val all_vars : (Efuns.frame * string list) option ref
 *)
+
+(* parameters *)
+
+val set_parameter : Efuns.action
+val get_parameter : Efuns.action
+
+(* val parameters_hist : string list ref *)

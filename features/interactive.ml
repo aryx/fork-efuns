@@ -121,4 +121,35 @@ let describe_variable frame =
 [@@interactive]
 (*e: function [[Complex.get_variable]] *)
 
+(* parameters *)
+open Options
+
+(*s: constant [[Complex.parameters_hist]] *)
+let parameters_hist = ref []
+(*e: constant [[Complex.parameters_hist]] *)
+  
+(*s: function [[Complex.set_parameter]] *)
+let set_parameter frame = 
+  let parameters = Var.get_global Parameter.parameters_var in
+  Select.select frame "set-parameter : " parameters_hist
+    "" (Parameter.all_parameters frame) (fun s -> s) (fun variable ->
+      Select.select_string frame (Printf.sprintf "%s : " variable)
+      value_hist "" (fun value ->
+          let (input,print,param) = List.assoc variable parameters
+          in
+          param =:= input value))
+(*e: function [[Complex.set_parameter]] *)
+  
+(*s: function [[Complex.get_parameter]] *)
+let get_parameter frame =
+  let parameters = Var.get_global Parameter.parameters_var in  
+  Select.select frame "get-parameter : " parameters_hist
+    "" (Parameter.all_parameters frame) (fun s -> s) (fun variable ->
+      Top_window.mini_message frame 
+        (Printf.sprintf "%s : %s" variable (
+          let (input,print,param) = List.assoc variable parameters
+          in
+          print !!param)))
+(*e: function [[Complex.get_parameter]] *)
+
 (*e: features/interactive.ml *)
