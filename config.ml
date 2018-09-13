@@ -388,7 +388,6 @@ let _ =
     Parameter.add_option_parameter Text.add_amount;
     (*e: [[Config._5]] start hooks options *)
     init_global_map ();
-    Var.set_global Ebuffer.saved_buffer_hooks [Misc.update_time];
     Hook.add_hook Top_window.handle_key_start_hook Misc.check_file;      
   )
 (*e: toplevel [[Config]] starting hook *)

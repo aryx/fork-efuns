@@ -342,7 +342,13 @@ let cursor_position frm =
 (*s: toplevel [[Simple._1]] *)
 let _ =
   Hook.add_start_hook (fun () ->
-    Var.set_global line_comment ""
+    Var.set_global line_comment "";
+    (* this needs to be done early, not in config.ml, because some
+     * major modes may want to access it to add stuff in their
+     * own local version (e.g., in caml_mode.ml to recolorize the buffer
+     *)
+    Var.set_global Ebuffer.saved_buffer_hooks [update_time];
+
   )
 (*e: toplevel [[Simple._1]] *)
   
