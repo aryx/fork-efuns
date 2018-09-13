@@ -22,10 +22,10 @@ let init_frames = ref []
 (*e: constant [[Efuns.init_frames]] *)
 
 (*s: constants Main options *)
-let width = define_option ["width"] "" int_option 80
-let height = define_option ["height"] "" int_option 44 (* 44, 27 *)
-let foreground= define_option ["foreground"] "" string_option "wheat"
-let background= define_option ["background"] "" string_option "DarkSlateGray"
+let width      = define_option ["width"] "" int_option 80
+let height     = define_option ["height"] "" int_option 44 (* 44, 27 *)
+let foreground = define_option ["foreground"] "" string_option "wheat"
+let background = define_option ["background"] "" string_option "DarkSlateGray"
 (*e: constants Main options *)
 (*s: constant [[Main.highlight_color]] *)
 let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
@@ -45,11 +45,11 @@ exception SigInt
 (*e: exception [[Main.SigInt]] *)
 
 (*s: constants [[Main.xxx_opt]] *)
-let width_opt = ref None
+let width_opt   = ref None
 let height_opt  = ref None
-let fg_opt = ref None
-let bg_opt = ref None
-let font_opt = ref None
+let fg_opt      = ref None
+let bg_opt      = ref None
+let font_opt    = ref None
 (*e: constants [[Main.xxx_opt]] *)
   
 (*s: constant [[Efuns.usage_str]] *)

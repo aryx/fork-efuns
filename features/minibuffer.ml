@@ -65,7 +65,7 @@ let kill mini_frame old_frame =
 (*e: function [[Minibuffer.kill]] *)
 
 (*s: function [[Minibuffer.return]] *)
-let return action old_frame mini_frame =
+let return action old_frame = fun mini_frame ->
   let repstr = Text.to_string mini_frame.frm_buffer.buf_text in
   kill mini_frame old_frame;
   action old_frame repstr
