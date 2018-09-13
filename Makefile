@@ -216,6 +216,7 @@ opt: $(PROGS:=.opt)
 $(TARGET): $(OBJS) $(LIBS)
 	$(OCAMLC) -linkall -cclib -L/opt/X11/lib  $(BYTECODE_STATIC) -o $@ \
       $(SYSLIBS) $(LIBS) $(GTKLOOP) $(OBJS) $(EXTRA)
+
 $(TARGET).opt: $(OPTOBJS) $(LIBS:.cma=.cmxa)
 	$(OCAMLOPT) $(STATIC) -cclib -L/opt/X11/lib -o $@ \
      $(SYSLIBS:.cma=.cmxa) $(LIBS:.cma=.cmxa) $(GTKLOOP:.cmo=.cmx) $(OPTOBJS)

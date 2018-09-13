@@ -235,7 +235,7 @@ let grep_command = define_option ["compil"; "grep_command"] "" string_option
 (*e: constant [[Compil.grep_command]] *)
   
 (*s: constant [[Compil.grep_hist]] *)
-let grep_hist = ref [""]
+let grep_hist = ref ["grep -n "]
 (*e: constant [[Compil.grep_hist]] *)
 (*s: function [[Compil.grep]] *)
 let grep frame =

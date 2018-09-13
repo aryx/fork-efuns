@@ -37,6 +37,7 @@ let standard_map = [
 
   [ControlMap, XK.xk_Left ], (Frame.to_frame Move.backward_word);
   [ControlMap, XK.xk_Right ], (Frame.to_frame Move.forward_word);  
+  (* ?? standard ?*)
   [MetaMap, XK.xk_Left ], (Frame.to_frame Move.backward_word);
   [MetaMap, XK.xk_Right ], (Frame.to_frame Move.forward_word);
 
@@ -88,6 +89,7 @@ let standard_map = [
 
   [ControlMap, Char.code 'k'], Copy_paste.kill_end_of_line;
   (*x: deleting keys *)
+  (* ?? *)
   [ControlMap, XK.xk_BackSpace], Electric.hungry_electric_delete;
   (*e: deleting keys *)
   (* ------------------------------ *)
@@ -125,6 +127,7 @@ let standard_map = [
   (*s: searching keys *)
   [ControlMap, Char.code 's'], Search.isearch_forward;
   [ControlMap, Char.code 'r'], Search.isearch_backward;
+  (* standard? *)
   [MetaMap, Char.code 's'], Search.isearch_forward_regexp;
   [MetaMap, Char.code 'r'], Search.isearch_backward_regexp;
   (*e: searching keys *)
@@ -155,7 +158,7 @@ let standard_map = [
   [c_x; NormalMap, Char.code 'k'], Multi_buffers.kill_buffer;
   (*e: buffer management keys *)
   (*s: buffer navigating keys *)
-  (* pinning *)
+  (* pinning, lefessant?? *)
   [ControlMetaMap, XK.xk_Down], Multi_buffers.down_buffer;
   [ControlMetaMap, XK.xk_Up], Multi_buffers.up_buffer;
   (*e: buffer navigating keys *)
@@ -233,6 +236,7 @@ let core_map =
  (Common2.enum 65 (65+25) |> List.map (fun key ->
    [c_q;ControlMap, key], Misc.insert_special_char
  )) @
+ (* needed? *)
  (Common2.enum 97 (97+25) |> List.map (fun key ->
    [c_q;ControlMap, key], Misc.insert_special_char
  ))) @
@@ -257,10 +261,6 @@ let core_map =
  (*e: [[core_map]] entries *)
  []
 (*e: constant [[core_map]] *)
-
-(*s: constant [[Config.grep_hist]] *)
-let grep_hist = ref ["grep -n "]
-(*e: constant [[Config.grep_hist]] *)
 
 (*s: function [[Config.save_options]] *)
 let save_options frame = 
