@@ -1,10 +1,5 @@
 
 val insert_special_char : Efuns.action
-val fill_paragraph : Efuns.action
-(*
-val single_char : string
-val simplify : Text.t -> Text.point -> Text.point -> unit
-*)
 
 val line_comment : string Store.var
 

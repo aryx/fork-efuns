@@ -12,95 +12,27 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Efuns
-open Edit
-open Move
-
-(*s: function [[Misc.fondamental_mode]] *)
-let fondamental_mode frame =
-  Ebuffer.set_major_mode frame.frm_buffer Ebuffer.fondamental_mode
-[@@interactive]
-(*e: function [[Misc.fondamental_mode]] *)
 
 (*****************************************************************************)
 (* Misc *)
 (*****************************************************************************)
 
-(*s: function [[Simple.simplify]] *)
-let simplify text start point =
-  Text.with_dup_point text start (fun start ->
-    let rec iter last_c =
-      if start < point then
-        let c = Text.get_char text start in
-        if c = ' ' || c = '\n' || c = '\t' then
-          ( Text.delete text start 1;
-            iter ' ')
-        else
-        if last_c = ' ' then
-          ( Text.insert text start " ";
-            Text.fmove text start 2;
-            iter 'a')
-        else
-          ( Text.fmove text start 1;
-            iter 'a')
-    in
-    iter 'a'
-  )
-(*e: function [[Simple.simplify]] *)
-
 (*s: constant [[Simple.line_comment]] *)
 let line_comment = Store.create_abstr "Fill_mode.line_comment"
 (*e: constant [[Simple.line_comment]] *)
 
-(*s: function [[Simple.fill_paragraph]] *)
-(* We will have to modify this to handle line_comment soon !! *)
-let fill_paragraph frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
-  text |> Text.with_session (fun () ->
-    Text.with_dup_point text point (fun start ->
-    backward_paragraph buf start;
-    Text.with_dup_point text start (fun fin ->
-      forward_paragraph buf fin;
-
-      simplify text start fin;
-      Text.insert text start "\n";
-      let rec iter count last_space =
-        if Text.compare text start fin < 0 then
-        if Text.fmove_res text start 1 = 1 then 
-          let c = Text.get_char text start in  
-            if c = ' ' then (* good, a new space *)
-              iter (count+1) 0
-          else
-          if count > 75 && count <> last_space then 
-              begin
-              Text.bmove text start (last_space+1);
-              Text.delete text start 1;
-              Text.insert text start "\n";
-              Text.fmove text start 1;
-              iter 0 0
-              end
-            else
-              iter (count+1) (last_space+1)
-      in
-      iter 0 0;  
-      Text.insert text fin "\n";
-  )))
-[@@interactive]
-(*e: function [[Simple.fill_paragraph]] *)
-  
 (*s: function [[Simple.insert_special_char]] *)
 let insert_special_char frame =
   let key = !Top_window.keypressed in
   let char = Char.chr key in
   if char >= 'a' && char <= 'z' 
-  then insert_char frame (Char.chr (key - 97))
-  else insert_char frame (Char.chr (key - 65))
+  then Edit.insert_char frame (Char.chr (key - 97))
+  else Edit.insert_char frame (Char.chr (key - 65))
 (*e: function [[Simple.insert_special_char]] *)
 
 (*****************************************************************************)
 (* Complexe *)
 (*****************************************************************************)
-
-open Unix
 
 (*s: constant [[Complex.buf_mtime]] *)
 let buf_mtime = Store.create "buf_mtime" string_of_float float_of_string
@@ -111,8 +43,8 @@ let update_time buf =
   try
     buf.buf_filename |> Common.do_option (fun file ->
       let st = Unix.lstat file in
-      if st.st_kind = S_REG 
-      then Var.set_local buf buf_mtime st.st_mtime;
+      if st.Unix.st_kind = Unix.S_REG 
+      then Var.set_local buf buf_mtime st.Unix.st_mtime;
     )
   with _ -> ()
 (*e: function [[Complex.update_time]] *)
@@ -144,11 +76,11 @@ let check_file frame =
     let buf = frame.frm_buffer in
     buf.buf_filename |> Common.do_option (fun file ->
       let st = Unix.lstat file in
-      if st.st_kind = S_REG then
+      if st.Unix.st_kind = Unix.S_REG then
         try
           let time = Var.get_local buf buf_mtime in
-          Var.set_local buf buf_mtime st.st_mtime;
-          if time <> st.st_mtime then
+          Var.set_local buf buf_mtime st.Unix.st_mtime;
+          if time <> st.Unix.st_mtime then
             (Select.select_yes_or_no frame 
                (Printf.sprintf "%s changed on disk; reload (y/n) ?" 
                     buf.buf_name) 
@@ -157,7 +89,7 @@ let check_file frame =
                    then reload frame 
                    else Frame.status_modified frame true
                  )) |> ignore
-       with _ -> Var.set_local buf buf_mtime st.st_mtime
+       with _ -> Var.set_local buf buf_mtime st.Unix.st_mtime
     )
   with _ -> ()
 [@@interactive]
@@ -249,6 +181,7 @@ let cursor_position frm =
 [@@interactive]
 (*e: function [[Misc.cursor_position]] *)
 
+
 (*****************************************************************************)
 (* Toplevel *)
 (*****************************************************************************)
@@ -259,7 +192,7 @@ let _ =
     Var.set_global line_comment "";
     (* this needs to be done early, not in config.ml, because some
      * major modes may want to access it to add stuff in their
-     * own local version (e.g., in caml_mode.ml to recolorize the buffer
+     * own local versions (e.g., in caml_mode.ml to recolorize the buffer
      *)
     Var.set_global Ebuffer.saved_buffer_hooks [update_time];
 

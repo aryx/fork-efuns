@@ -117,8 +117,8 @@ SRC=\
  \
  features/move.ml\
  features/edit.ml\
- features/scroll.ml\
  features/copy_paste.ml\
+ features/scroll.ml\
  features/mouse.ml\
  features/highlight.ml\
  features/color.ml\
@@ -135,6 +135,7 @@ SRC=\
  features/compil.ml\
  features/search.ml\
  features/electric.ml\
+ features/transform.ml\
  features/misc.ml\
  \
  minor_modes/minor_modes.ml\

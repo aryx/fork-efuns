@@ -165,7 +165,7 @@ let copy_region frame =
   let (buf, text, point) = Frame.buf_text_point frame in
   let mark =
     match buf.buf_mark with
-      None -> failwith "No mark set"
+    | None -> failwith "No mark set"
     | Some mark -> 
         buf.buf_mark <- None;
         mark
@@ -176,9 +176,8 @@ let copy_region frame =
   let region = Text.sub text start (Text.distance text start term) in
   add_clipboard frame region;
   kill_string region;
-  let top_window = Window.top frame.frm_window in
   (* need a message because as opposed to a cut this is not directly visible *)
-  Top_window.message top_window "Region saved"
+  Top_window.message (Window.top frame.frm_window) "Region saved"
 [@@interactive]
 (*e: function [[Simple.copy_region]] *)
 

@@ -41,7 +41,7 @@ let buf_create text local_map =
     buf_charreprs = charreprs;
     buf_syntax_table = Ebuffer.default_syntax_table;
     buf_vars = Store.new_store ();
-    buf_major_mode = Ebuffer.fondamental_mode;
+    buf_major_mode = Ebuffer.fondamental__mode;
     buf_minor_modes = [];
 
     buf_sync = false;

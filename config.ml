@@ -118,7 +118,7 @@ let standard_map = [
   [MetaMap, Char.code 'c'], (fun frm ->
     Edit.on_word frm.frm_buffer frm.frm_point String.capitalize
   );
-  [MetaMap, XK.xk_q], Misc.fill_paragraph;
+  [MetaMap, XK.xk_q], Transform.fill_paragraph;
   (*e: transforming keys *)
 
   (* -------------------------------------------------------- *)

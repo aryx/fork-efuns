@@ -45,7 +45,9 @@ val tab_size : int ref
 
 val new_major_mode : string -> (t -> unit) option -> Efuns.major_mode
 val set_major_mode : t -> Efuns.major_mode -> unit
-val fondamental_mode : Efuns.major_mode
+
+val fondamental__mode : Efuns.major_mode
+val fondamental_mode : Efuns.action
 
 val modes_alist : (string * Efuns.major_mode) list Store.var
 (* use modes_alist to try to automatically set the major mode *)

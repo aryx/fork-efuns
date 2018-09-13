@@ -91,8 +91,10 @@ let new_major_mode name hook_opt = {
 (*e: function [[Ebuffer.new_major_mode]] *)
 
 (*s: constant [[Ebuffer.fondamental_mode]] *)
-let fondamental_mode = new_major_mode "Fondamental" None (* no hooks *)
+let fondamental__mode = new_major_mode "Fondamental" None (* no hooks *)
 (*e: constant [[Ebuffer.fondamental_mode]] *)
+
+
   
 (*s: constant [[Ebuffer.tab_size]] *)
 let tab_size = ref 9
@@ -119,7 +121,7 @@ let create name filename text local_map =
       buf_syntax_table = default_syntax_table;
       buf_map_partial = true;
       buf_vars = Store.new_store ();
-      buf_major_mode = fondamental_mode;
+      buf_major_mode = fondamental__mode;
       buf_minor_modes = [];
 
       buf_sync = false;
@@ -442,6 +444,14 @@ let message buf m =
   with Not_found ->
     create name None (Text.create (m^"\n")) (Keymap.create ()) |> ignore
 (*e: function [[Ebuffer.message]] *)
+
+
+(*s: function [[Ebuffer.fondamental_mode]] *)
+let fondamental_mode frame =
+  set_major_mode frame.frm_buffer fondamental__mode
+[@@interactive]
+(*e: function [[Ebuffer.fondamental_mode]] *)
+
       
 (*s: toplevel [[Ebuffer]] starting hook *)
 let _ =
