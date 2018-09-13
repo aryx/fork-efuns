@@ -144,6 +144,7 @@ SRC=\
  minor_modes/fill_mode.ml\
  minor_modes/tab_mode.ml\
  \
+ major_modes/major_modes.ml\
  major_modes/dired.ml\
  major_modes/buffer_menu.ml\
  major_modes/shell.ml\
