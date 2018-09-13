@@ -22,6 +22,7 @@ ou prendre la derniere position, ou la premiere.
 *)
 let mouse_drag_region frame =
   failwith "Simple.mouse_drag_region: TODO"
+[@@interactive]
 (*
   let top_window = Window.top frame.frm_window in
   let point = frame.frm_point in
@@ -72,6 +73,7 @@ let mouse_drag_region frame =
 (*s: function [[Simple.mouse_yank_at_click]] *)
 let  mouse_yank_at_click frame =
 failwith "Simple.mouse_yank_at_click: TODO"
+[@@interactive "insert_at_point"]
 (*
   let top_window = Window.top frame.frm_window in
   let frame = mouse_set_active top_window in
@@ -88,6 +90,7 @@ failwith "Simple.mouse_yank_at_click: TODO"
 (*s: function [[Simple.mouse_save_then_kill]] *)
 let mouse_save_then_kill frame =
   failwith "Simple.mouse_save_then_kill: TODO"
+[@@interactive]
 (*
   let top_window = Window.top frame.frm_window in
   let frame = Top_window.find_selected_frame top_window in
@@ -125,13 +128,13 @@ let mouse_set_frame frame =
   let mark = Ebuffer.get_mark buf point in
   Text.goto_point text mark point;
   ()
+[@@interactive "set_active_frame"]
 (*e: function [[Simple.mouse_set_frame]] *)
 
 (*s: toplevel [[Mouse]] starting hook *)
 let _ =
   Hook.add_start_hook (fun () ->
-    Keymap.add_global_key [NormalMap, XK.xk_Pointer_Drag1]
-      "mouse_drag_region" mouse_drag_region;
+    Keymap.add_global_key [NormalMap, XK.xk_Pointer_Drag1] mouse_drag_region;
   )
 (*e: toplevel [[Mouse]] starting hook *)
 

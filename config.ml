@@ -280,12 +280,12 @@ let init_global_map () =
   if !!global_map = [] 
   then 
     (core_map @ standard_map) |> List.iter (fun (keys, action) ->
-        Keymap.add_global_key keys "" action
+        Keymap.add_global_key keys action
     )
   else 
   !!global_map |> List.iter (fun (keys, action) ->
       try
-        Keymap.add_global_key keys action (Action.execute_action action)
+        Keymap.add_global_key keys (Action.execute_action action)
       with e ->
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;
@@ -293,13 +293,12 @@ let init_global_map () =
 
   (* Mouse *)
   (*s: [[Config.init_global_map()]] mouse keys setup *)
-  Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1]
-    "set_active_frame" Mouse.mouse_set_frame;
+  Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button1] Mouse.mouse_set_frame;
   (*x: [[Config.init_global_map()]] mouse keys setup *)
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button3]
-    "mouse_save_then_kill" Mouse.mouse_save_then_kill;
+    Mouse.mouse_save_then_kill;
   Keymap.add_global_key [NormalMap, XK.xk_Pointer_Button2]
-    "insert_at_point" Mouse.mouse_yank_at_click;
+    Mouse.mouse_yank_at_click;
   (*e: [[Config.init_global_map()]] mouse keys setup *)
   ()
 (*e: function [[Config.init_global_map]] *)

@@ -212,6 +212,7 @@ let goto_def frame =
         failwith (spf "Could not find entity %s (with re = %s)" 
                     e.Db.e_name re_str)
     )
+[@@interactive]
 
 (* todo: 
  * - fuzzy file finder
@@ -243,7 +244,6 @@ let load_graph_code frame =
 
 let _ =
   Hook.add_start_hook (fun () ->
-    Keymap.add_global_key [MetaMap, Char.code '.'] 
-      "goto_def" goto_def;
+    Keymap.add_global_key [MetaMap, Char.code '.'] goto_def;
     ()
   )

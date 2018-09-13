@@ -88,12 +88,11 @@ let copy_line_and_attr text cursor text2 =
   );
   Text.insert_at_end text2 "...\n"
 
-
 (*****************************************************************************)
 (* Install *)
 (*****************************************************************************)
 let install _buf =
-  (* less: set to read-only *)
+  (* todo: set to read-only! *)
   ()
 
 let mode_name = "Outline"
@@ -176,6 +175,7 @@ let outline_num frame =
     let buf_outl = create_outline_buffer lvl line_orig bufname_outl buf_orig in
     Frame.change_buffer frame.frm_window buf_outl.buf_name
   end
+[@@interactive]
 
 
 (*****************************************************************************)
@@ -184,18 +184,10 @@ let outline_num frame =
 
 let _ = 
   Hook.add_start_hook (fun () ->
-    Action.define_action "outline_num" outline_num;
-
     (* will use keypressed global to differentiate *)
-    Keymap.add_global_key [ControlMetaMap, Char.code '1'] 
-      "outline_num" outline_num;
-    Keymap.add_global_key [ControlMetaMap, Char.code '2'] 
-      "outline_num" outline_num;
-    Keymap.add_global_key [ControlMetaMap, Char.code '3'] 
-      "outline_num" outline_num;
-    Keymap.add_global_key [ControlMetaMap, Char.code '4'] 
-      "outline_num" outline_num;
-    Keymap.add_global_key [ControlMetaMap, Char.code '5'] 
-      "outline_num" outline_num;
-
+    Keymap.add_global_key [ControlMetaMap, Char.code '1'] outline_num;
+    Keymap.add_global_key [ControlMetaMap, Char.code '2'] outline_num;
+    Keymap.add_global_key [ControlMetaMap, Char.code '3'] outline_num;
+    Keymap.add_global_key [ControlMetaMap, Char.code '4'] outline_num;
+    Keymap.add_global_key [ControlMetaMap, Char.code '5'] outline_num;
   )

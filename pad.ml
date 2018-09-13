@@ -48,7 +48,7 @@ let _ =
       [ControlMap, XK.xk_Tab], Multi_frames.next_frame;
 
     ] |> List.iter (fun (keys, action) ->
-      Keymap.add_global_key keys "TODO" action
+      Keymap.add_global_key keys action
     );
   
     (* ~/.login like *)

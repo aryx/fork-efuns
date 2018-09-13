@@ -517,13 +517,14 @@ let lisp_find_error text error_point =
 (*********************  installation ********************)
 (***********************************************************************)
 
-let c_c = (ControlMap,Char.code 'c')
 let install buf =
   lisp_color_buffer buf; 
+
   buf.buf_syntax_table.(Char.code '_') <- true;
   buf.buf_syntax_table.(Char.code '-') <- true;
   buf.buf_syntax_table.(Char.code '+') <- true;
   buf.buf_syntax_table.(Char.code '*') <- true;
+
   let abbrevs = Hashtbl.create 11 in
   Var.set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs abbreviations;
@@ -531,44 +532,33 @@ let install buf =
 
 
 let mode = Ebuffer.new_major_mode "Lisp" (Some install)
+
+let lisp_mode =
+  Major_modes.enable_major_mode mode
+[@@interactive]
   
-let setup () =
-  let map = mode.maj_map in
-(* TODO
-  Keymap.add_interactive map "lisp-color-buffer" 
-    (fun frame -> lisp_color_buffer frame.frm_buffer);
-*)
+open Keymap
 
-  Var.set_major_var mode Compil.find_error lisp_find_error;
+let _ = 
+  Hook.add_start_hook (fun () ->
 
-  Keymap.add_major_key mode [c_c; ControlMap, Char.code 'c'] 
-    "lisp-compile" Compil.compile;
-(*  add_major_key mode [c_c; ControlMap,Char.code 'e']
-    "lisp-eval-buffer" eval_buffer;
-*)
-  Keymap.add_major_key mode [c_c; ControlMap,Char.code 'l']
-    "lisp-color-buffer" (fun frame -> lisp_color_buffer frame.frm_buffer);
-  Keymap.add_major_key mode [MetaMap,Char.code 'q']
-    "lisp-indent-phrase" indent_phrase;
-  Keymap.add_major_key mode [NormalMap,XK.xk_Tab]
-    "lisp-indent-line" indent_current_line;
-  Keymap.add_binding map [NormalMap, XK.xk_Return] insert_and_return;
-  ['}';']';')'] |> List.iter (fun char ->
-      Keymap.add_binding map [NormalMap, Char.code char] (fun frame ->
+    Var.set_major_var mode Compil.find_error lisp_find_error;
+
+    Keymap.add_major_key mode [c_c; ControlMap, Char.code 'c'] Compil.compile;
+    (*  add_major_key mode [c_c; ControlMap,Char.code 'e']
+        "lisp-eval-buffer" eval_buffer;
+    *)
+    Keymap.add_major_key mode [c_c; ControlMap,Char.code 'l']
+      (fun frame -> lisp_color_buffer frame.frm_buffer);
+    Keymap.add_major_key mode [MetaMap,Char.code 'q'] indent_phrase;
+    Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
+    Keymap.add_major_key mode [NormalMap, XK.xk_Return] insert_and_return;
+    ['}';']';')'] |> List.iter (fun char ->
+      Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
         Edit.self_insert_command frame;
         Paren_mode.highlight_paren frame
       )
-  )
-
-let _ =  
-  Hook.add_start_hook (fun () ->
-(* TODO
-    Keymap.add_interactive (Globals.editor()).edt_map "lisp-mode" 
-        (fun frame -> install frame.frm_buffer);
-*)
-    let alist = Var.get_global Ebuffer.modes_alist in
-    Var.set_global Ebuffer.modes_alist
-      ((".*\\.\\(el\\|gwm\\|lisp\\)$", mode):: alist);
-    setup ();
+    );
+    Var.add_global Ebuffer.modes_alist [(".*\\.\\(el\\|gwm\\|lisp\\)$", mode)];
   )
 } 

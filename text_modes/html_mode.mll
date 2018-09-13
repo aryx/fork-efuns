@@ -237,46 +237,44 @@ Tel travail: 01 69 33 52 93<br>
 (*********************  installation ********************)
 (***********************************************************************)
 
-let c_c = (ControlMap,Char.code 'c')
+
 let install buf =
   html_color_buffer buf; 
+
   buf.buf_syntax_table.(Char.code '_') <- true;
   buf.buf_syntax_table.(Char.code '-') <- true;
   buf.buf_syntax_table.(Char.code '+') <- true;
   buf.buf_syntax_table.(Char.code '*') <- true;
-(*  Accents_mode.install buf; *)
+
+  (* Accents_mode.install buf; *)
   let abbrevs = Hashtbl.create 11 in
   Var.set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs abbreviations;
+
   Structure.install_structures buf structures;
   ()
 
 let mode = Ebuffer.new_major_mode "HTML" (Some install)
-let _ = 
-  Keymap.add_major_key mode [c_c; ControlMap,Char.code 'l']
-  "html-color-buffer" (fun frame -> html_color_buffer frame.frm_buffer);
-  let map = mode.maj_map in
-  Keymap.add_binding map [NormalMap, Char.code ' '] 
-    (fun frame ->
-      Abbrevs.expand_sabbrev frame;
-      Electric.electric_insert_space frame);
-  Keymap.add_binding map [MetaMap, Char.code 'q'] Misc.fill_paragraph;
-  List.iter (fun char ->
-      Keymap.add_binding map [NormalMap, Char.code char]
-        (fun frame ->
-          Edit.self_insert_command frame;
-          Paren_mode.highlight_paren frame)
-  ) ['>']
-  
+
+let html_mode =
+  Major_modes.enable_major_mode mode
+[@@interactive]
+
 let _ =  
   Hook.add_start_hook (fun () ->
-(* TODO
-    Keymap.add_interactive (Globals.editor()).edt_map "html-mode" 
-      (fun frame -> install frame.frm_buffer);
-*)
-    let alist = Var.get_global Ebuffer.modes_alist in
-    Var.set_global Ebuffer.modes_alist 
-        ((".*\\.\\(html\\|htm\\)",mode)
-        :: alist)
-      )
+
+    Keymap.add_major_key mode [c_c; ControlMap,Char.code 'l']
+      (fun frame -> html_color_buffer frame.frm_buffer);
+    Keymap.add_major_key mode [NormalMap, Char.code ' '] (fun frame ->
+      Abbrevs.expand_sabbrev frame;
+      Electric.electric_insert_space frame);
+    ['>'] |> List.iter (fun char ->
+      Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
+          Edit.self_insert_command frame;
+          Paren_mode.highlight_paren frame)
+    );
+
+    Var.add_global Ebuffer.modes_alist [(".*\\.\\(html\\|htm\\)",mode)];
+  )
+
 } 

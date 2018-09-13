@@ -144,19 +144,19 @@ let all_bindings () =
   
 
 (*s: function [[Keymap.add_global_key]] *)
-let add_global_key prefix _string action =
+let add_global_key prefix action =
   add_binding (Globals.editor()).edt_map prefix action
 (*e: function [[Keymap.add_global_key]] *)
 (*s: function [[Keymap.add_local_key]] *)
-let add_local_key buf prefix _string action = 
+let add_local_key buf prefix action = 
   add_binding buf.buf_map prefix action
 (*e: function [[Keymap.add_local_key]] *)
 (*s: function [[Keymap.add_minor_key]] *)
-let add_minor_key minor prefix _string action = 
+let add_minor_key minor prefix action = 
   add_binding minor.min_map prefix action
 (*e: function [[Keymap.add_minor_key]] *)
 (*s: function [[Keymap.add_major_key]] *)
-let add_major_key major prefix _string action = 
+let add_major_key major prefix action = 
   add_binding major.maj_map prefix action
 (*e: function [[Keymap.add_major_key]] *)
 

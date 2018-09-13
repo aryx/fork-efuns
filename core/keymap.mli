@@ -10,14 +10,10 @@ val create: unit -> t
 val add_binding: 
   t ->        Efuns.keys ->                      Efuns.action -> unit
 
-val add_global_key:
-                      Efuns.keys -> Efuns.action_name -> Efuns.action -> unit
-val add_local_key:
- Efuns.buffer ->      Efuns.keys -> Efuns.action_name -> Efuns.action -> unit
-val add_major_key: 
-  Efuns.major_mode -> Efuns.keys -> Efuns.action_name -> Efuns.action -> unit
-val add_minor_key: 
-  Efuns.minor_mode -> Efuns.keys -> Efuns.action_name -> Efuns.action -> unit
+val add_global_key:                    Efuns.keys -> Efuns.action -> unit
+val add_local_key: Efuns.buffer     -> Efuns.keys -> Efuns.action -> unit
+val add_major_key: Efuns.major_mode -> Efuns.keys -> Efuns.action -> unit
+val add_minor_key: Efuns.minor_mode -> Efuns.keys -> Efuns.action -> unit
 
 val get_binding: t -> Efuns.keys -> Efuns.binding
 

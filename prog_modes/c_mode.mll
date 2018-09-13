@@ -792,16 +792,7 @@ let abbreviations =
 (*********************  installation ********************)
 (***********************************************************************)
 
-let c_c = (ControlMap,Char.code 'c')
 let install buf =
-(*
-  add_interactive (Buffer buf) "c-indent-buffer" indent_buffer;
-  interactive (Buffer buf) [MetaMap,Char.code 'q']
-    "c-indent-phrase" indent_phrase;
-  interactive (Buffer buf) [NormalMap,XK.xk_Tab]
-    "c-indent-line" indent_current_line;
-  Keymap.add_binding map [NormalMap, XK.xk_Return] insert_and_return;
-  *)
   c_color_buffer buf; 
   buf.buf_syntax_table.(Char.code '_') <- true;
 
@@ -818,7 +809,10 @@ let install buf =
 
   
 let mode = Ebuffer.new_major_mode "C"  (Some install)
-let c_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
+
+let c_mode = 
+  Major_modes.enable_major_mode mode
+[@@interactive]
 
 (***********************************************************************)
 (* Setup *)
@@ -832,26 +826,18 @@ let mode_regexp = define_option ["c_mode"; "mode_regexp"] ""
 let local_map = define_option ["c_mode"; "local_map"] ""
     (list_option Keymap.binding_option) []
 
-let setup_actions () = 
-  Action.define_action "c_mode" c_mode;
-  Action.define_action "c_mode.color_buffer"
-    (fun frame -> c_color_buffer frame.frm_buffer);
-  Action.define_action "c_mode.indent_buffer" indent_buffer;
-  Action.define_action "c_mode.indent_line" indent_current_line;
-  Action.define_action "c_mode.indent_phrase" indent_phrase
-    
-  
-let setup_maps () =
-  let map = mode.maj_map in
-  Keymap.add_major_key (mode) [c_c; ControlMap, Char.code 'b'] 
-    "c-indent-buffer" indent_buffer;
-  Keymap.add_major_key (mode) [MetaMap,Char.code 'q']
-    "c-indent-phrase" indent_phrase;
-  Keymap.add_major_key (mode) [NormalMap,XK.xk_Tab]
-    "c-indent-line" indent_current_line;
+open Keymap
+
+let _ =  
+  Hook.add_start_hook (fun () ->
+    Var.add_global Ebuffer.modes_alist 
+        (List.map (fun s -> s,mode) !!mode_regexp);
+  Keymap.add_major_key mode [c_c; ControlMap, Char.code 'b'] indent_buffer;
+  Keymap.add_major_key mode [MetaMap,Char.code 'q'] indent_phrase;
+  Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
   
   ['}';']';')'] |> List.iter (fun char ->
-      Keymap.add_binding map [NormalMap, Char.code char] (fun frame ->
+      Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
         Edit.self_insert_command frame;
         Paren_mode.highlight_paren frame
       )
@@ -866,35 +852,14 @@ let setup_maps () =
       [c_c; ControlMap, Char.code 'b'], "c_mode.indent_buffer";
   
       ];
-(* TODO
-  if !!interactives_map = [] then 
-    interactives_map =:= [
-      "color_buffer", "c_mode.color_buffer";
-    ];
-*)
-
   (*  Keymap.add_prefix map [c_c]; *)
   !!local_map |> List.iter (fun (keys, action) ->
       try
-        let f = Action.execute_action action in
-        Keymap.add_binding map keys f;
+        Keymap.add_major_key mode keys (Action.execute_action action)
       with e ->
         Log.printf "Error for action %s" action;
         Log.exn "%s\n" e;  
   );
   ()
-
-let _ =  
-  Hook.add_start_hook (fun () ->
-(* TODO
-    Keymap.add_interactive (Globals.editor()).edt_map "c-mode" 
-        (fun frame -> install frame.frm_buffer);
-*)
-    let alist = Var.get_global Ebuffer.modes_alist in
-    Var.set_global Ebuffer.modes_alist 
-        ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
-    setup_actions ();
-    setup_maps ();
   )
-
 }
