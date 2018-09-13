@@ -23,6 +23,9 @@ can now compile Efuns for Linux, Windows, and macOS
 *** SEMI copy to and from clipboard
 so can have efuns interact with other applications (e.g., web browser)
 
+*** M-x align_char
+
+
 ** internals
 
 *** cleanup external/, rely more on OPAM

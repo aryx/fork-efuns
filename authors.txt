@@ -1,15 +1,15 @@
-Fabrice Le Fessant (most of the code)
+Fabrice Le Fessant: most of the code
 
-With contributions from:
- - Yoann Padioleau 
-    * dircolors (see C-x C-f TAB)
-    * buffer_menu (C-M-Tab and C-M-l)
-    * eshell (poor's man version, M-1, M-2, ...)
-    * outline (poor's man version, C-M-1, C-M-2, ...)
-    * org mode (poor's man version)
-    * pfff-based modes for OCaml/C/noweb/Tex (with many colors and outlines)
-    * minimap instead of scrollbar (a la Sublime Text), with bigger font
-      for important (outline) stuff (a la Code Thumbnails)
-    * merlin minor mode for OCaml (C-c C-t, C-c C-d, ...)
-    * Emacs's default behavior port: goal column, C-s C-w, M-w, Top|Bot|%, ...
-    * pad's stuff: M-down/up/right/left scrolling, M-x gtd
+Yoann Padioleau: a few contributions
+  * dircolors (see C-x C-f TAB)
+  * buffer_menu (C-M-Tab and C-M-l)
+  * eshell (poor's man version, M-1, M-2, ...)
+  * outline (poor's man version, C-M-1, C-M-2, ...)
+  * org mode (poor's man version)
+  * pfff-based modes for OCaml/C/noweb/Tex (with many colors and outlines)
+  * minimap instead of scrollbar (a la Sublime Text), with bigger font
+    for important (outline) stuff (a la Code Thumbnails)
+  * merlin minor mode for OCaml (C-c C-t, C-c C-d, ...)
+  * Emacs's default behavior port: goal column, C-s C-w, M-w, Top|Bot|%, ...
+  * Emacs's plugins: M-x align_char, rectangles (C-x r t)
+  * pad's stuff: M-down/up/right/left scrolling, M-x gtd
