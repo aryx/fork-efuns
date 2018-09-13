@@ -34,6 +34,25 @@ let lines str =
   in
   aux xs
 
+let transform_marked_region frame f =
+  let (buf, text, point) = Frame.buf_text_point frame in
+  let mark =
+    match buf.buf_mark with
+      | None -> failwith "No mark set"
+      | Some mark -> 
+        buf.buf_mark <- None;
+        mark
+  in
+  let (a,b) = if mark > point then (point,mark) else (mark,point) in
+  let delta = Text.distance text a b in
+  let region = Text.sub text a delta in
+  let region' = f region in
+  
+  text |> Text.with_session (fun () ->
+    Text.delete text a delta;
+    Text.insert text a region';
+  )
+
 (*****************************************************************************)
 (* Filling *)
 (*****************************************************************************)
@@ -122,23 +141,7 @@ let align_char frame =
       then failwith "align_char expects a single character"
       else String.get s 0
     in
-    let (buf, text, point) = Frame.buf_text_point frame in
-    let mark =
-      match buf.buf_mark with
-        | None -> failwith "No mark set"
-        | Some mark -> 
-          buf.buf_mark <- None;
-          mark
-    in
-    let (a,b) = if mark > point then (point,mark) else (mark,point) in
-    let delta = Text.distance text a b in
-    let region = Text.sub text a delta in
-    let region' = align_char_string c region in
-
-    text |> Text.with_session (fun () ->
-      Text.delete text a delta;
-      Text.insert text a region';
-    )
+    transform_marked_region frame (align_char_string c);
   )
 [@@interactive]
 

@@ -136,6 +136,7 @@ SRC=\
  features/search.ml\
  features/electric.ml\
  features/transform.ml\
+ features/rectangle.ml\
  features/misc.ml\
  \
  minor_modes/minor_modes.ml\

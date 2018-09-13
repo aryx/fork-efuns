@@ -11,3 +11,5 @@ val align_char : Efuns.action
 
 (* this maintains the \n and generate entries for empty lines *)
 val lines: string -> string list
+
+val transform_marked_region: Efuns.frame -> (string -> string) -> unit
