@@ -54,7 +54,7 @@ let color_buffer buf =
   (* overcome some of the parsing limitations like the lack of structure
    * in comments.
    *)
-  Color.color buf (Str.regexp "^%[a-zA-Z]+:") false
+  Color.color buf (Str.regexp "^%[a-zA-Z-]+:") false
     (Text.make_attr (Attr.get_color !!Pl_colors.section_comment_color) 1 0 false);
   ()
 
@@ -77,6 +77,7 @@ let mode = Ebuffer.new_major_mode "Noweb" (Some (fun buf ->
 
 let noweb_mode frame = 
   Ebuffer.set_major_mode frame.frm_buffer mode
+[@@interactive]
 
 (*****************************************************************************)
 (* Setup *)
@@ -85,7 +86,6 @@ let noweb_mode frame =
 let _ =
   Hook.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist [".*\\.nw$", mode];
-    Action.define_action "noweb_mode" noweb_mode;
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
   )

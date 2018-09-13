@@ -28,8 +28,7 @@ val select_file :
   Efuns.frame ->
   string -> string list ref -> string -> (string -> unit) -> unit
 
-(* diff with select_file*) 
-val select_filename : 
+val select_file_from_pwd : 
   Efuns.frame -> string -> (string -> unit) -> unit
 
 

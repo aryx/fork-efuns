@@ -162,7 +162,7 @@ let colorize_and_set_outlines funcs buf file =
 let dir_to_db = ref []
 
 let load_database_code frame =
-  Select.select_filename frame "Load database code file: " (fun file ->
+  Select.select_file_from_pwd frame "Load database code file: " (fun file ->
     let dir = Filename.dirname file in
     let db = Database_code.load_database file in
     let entities = 
@@ -230,7 +230,7 @@ let goto_def frame =
 let dir_to_graph = ref []
 
 let load_graph_code frame =
-  Select.select_filename frame "Load graph file: " (fun file ->
+  Select.select_file_from_pwd frame "Load graph file: " (fun file ->
     let dir = Filename.dirname file in
     let g = Graph_code.load file in
     Common.push (dir, g) dir_to_graph

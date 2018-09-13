@@ -132,6 +132,7 @@ let left_buffer frame =
         buffer
     | _ -> raise Not_found
     )
+[@@interactive]
 (*e: function [[Complex.left_buffer]] *)
 
 (*s: function [[Complex.right_buffer]] *)
@@ -148,6 +149,7 @@ let right_buffer frame =
         )
     | _ -> raise Not_found
     )
+[@@interactive]
 (*e: function [[Complex.right_buffer]] *)
 
 (*s: function [[Complex.change_buffer]] *)
@@ -213,7 +215,7 @@ let save_some_buffers frame =
 (*s: function [[Complex.load_buffer]] *)
 let load_buffer frame = 
   set_previous_frame frame;
-  Select.select_filename frame "Find file: " (fun str -> 
+  Select.select_file_from_pwd frame "Find file: " (fun str -> 
     Frame.load_file frame.frm_window str |> ignore
   )
 [@@interactive]
@@ -221,7 +223,7 @@ let load_buffer frame =
 
 (*s: function [[Complex.insert_file]] *)
 let insert_file frame =
-  Select.select_filename frame "Insert file: " (fun str ->
+  Select.select_file_from_pwd frame "Insert file: " (fun str ->
     let inc = open_in str in
     Edit.insert_string frame (Utils.read_string inc);
     close_in inc
@@ -232,7 +234,7 @@ let insert_file frame =
 (*s: function [[Complex.write_buffer]] *)
 let write_buffer frame = 
   let buf = frame.frm_buffer in
-  Select.select_filename frame "Save file as: " (fun str -> 
+  Select.select_file_from_pwd frame "Save file as: " (fun str -> 
     Ebuffer.change_name buf str;
     Ebuffer.save buf
   )

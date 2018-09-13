@@ -24,4 +24,3 @@ open Efuns
 (*****************************************************************************)
 let enable_major_mode mode = fun frame ->
   Ebuffer.set_major_mode frame.frm_buffer mode
-

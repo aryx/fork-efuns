@@ -180,7 +180,7 @@ let exit frame =
 
 (*s: function [[Complex.window_load_buffer]] *)
 let window_load_buffer frame = 
-  Select.select_filename frame "Find file: " 
+  Select.select_file_from_pwd frame "Find file: " 
     (fun str -> 
       let top_window = Top_window.create ()
           (*(Window.display top_window)*)

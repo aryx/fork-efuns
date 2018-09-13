@@ -30,5 +30,3 @@ let toggle_minor_buffer mode = fun buf ->
 let toggle_minor mode = fun frame -> 
   let buf = frame.frm_buffer in
   toggle_minor_buffer mode buf
-
-

@@ -6,9 +6,9 @@ val insert_at_place : Efuns.frame -> char -> unit
 val insert_string : Efuns.frame -> string -> unit
 
 val insert_return : Efuns.action
-val self_insert_command : Efuns.action
 
-(* ? *)
+(* handle overwrite_mode *)
+val self_insert_command : Efuns.action
 val char_insert_command : char -> Efuns.action
 
 (* deletion *)
@@ -29,8 +29,8 @@ val on_word : Efuns.buffer -> Text.point -> (string -> string) -> unit
 val transpose_words : Efuns.buffer -> Text.point -> unit
 
 (* overwrite *)
-val overwrite_mode: Efuns.minor_mode
 
+val overwrite_mode: Efuns.minor_mode
 val toggle_overwrite_mode: Efuns.action
 
 (* undo *)

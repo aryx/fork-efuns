@@ -383,7 +383,7 @@ let select_file frame request history start action =
 (*e: function [[Select.select_file]] *)
 
 (*s: function [[Select.select_filename]] *)
-let select_filename frame request action =
+let select_file_from_pwd frame request action =
   let curdir = Frame.current_dir frame in
   select_file frame request file_hist (Utils.filename_to_string curdir) action
 (*e: function [[Select.select_filename]] *)
