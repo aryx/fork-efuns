@@ -261,7 +261,7 @@ let register_exn f =
 let printexn exn =
   let rec iter exns =
     match exns with
-      [] -> Printexc.to_string exn
+    | [] -> Printexc.to_string exn
     | f :: tail ->
         try f exn 
         with  _ -> iter tail
@@ -280,10 +280,6 @@ let vcatchexn s f =
     Printf.printf "Uncaught exception in %s: %s" s (printexn e);
     print_newline ();
     None
-
-  
-let set_signal sig_num sig_beh =
-  let _ = Sys.signal sig_num sig_beh in ()
 
   
 (*
@@ -488,8 +484,6 @@ let to_regexp_string s =
   iter 0 0;
   ss
 
-let ignore _ = ()
-  
 let hashtbl_mem h key =
   try let _ = Hashtbl.find h key in true with _ -> false
 

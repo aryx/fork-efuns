@@ -71,17 +71,17 @@ let main () =
     | _ -> raise e
   );
 
-  Utils.set_signal Sys.sigint (Sys.Signal_handle (fun _ ->  
+  Sys.signal Sys.sigint (Sys.Signal_handle (fun _ ->  
     (* Should auto-save all buffers, and then exit ... *)
     exit 1
-  )); 
-  Utils.set_signal Sys.sigterm (Sys.Signal_handle (fun _ ->  
+  )) |> ignore; 
+  Sys.signal Sys.sigterm (Sys.Signal_handle (fun _ ->  
     (* Should auto-save all buffers, and then exit ... *)
     raise SigInt
-  ));
-  Utils.set_signal Sys.sighup (Sys.Signal_handle (fun _ -> 
+  )) |> ignore;
+  Sys.signal Sys.sighup (Sys.Signal_handle (fun _ -> 
     raise SigInt
-  ));
+  )) |> ignore;
   (*e: [[main()]] set signal handlers *)
   Arg.parse ([
     (*s: [[main()]] command line options *)
