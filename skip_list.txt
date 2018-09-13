@@ -1,0 +1,59 @@
+# -*- sh -*-
+
+dir: external/OPAM_DIR
+dir: external/FOR_MERLIN
+
+dir: external/compiler-libs
+dir: external/STDLIB/camltk
+dir: external/STDLIB/compiler-libs
+
+# not sure what those files are, but they lead to ambiguities
+file: external/STDLIB/callback.p.cmt
+file: external/STDLIB/scanf.p.cmt
+file: external/STDLIB/stringLabels.p.cmt
+file: external/STDLIB/arg.p.cmt
+file: external/STDLIB/oo.p.cmt
+file: external/STDLIB/obj.p.cmt
+file: external/STDLIB/char.p.cmt
+file: external/STDLIB/stdLabels.p.cmt
+file: external/STDLIB/stream.p.cmt
+file: external/STDLIB/format.p.cmt
+file: external/STDLIB/filename.p.cmt
+file: external/STDLIB/camlinternalMod.p.cmt
+file: external/STDLIB/camlinternalFormatBasics.p.cmt
+file: external/STDLIB/bytesLabels.p.cmt
+file: external/STDLIB/camlinternalFormat.p.cmt
+file: external/STDLIB/int64.p.cmt
+file: external/STDLIB/random.p.cmt
+file: external/STDLIB/listLabels.p.cmt
+file: external/STDLIB/complex.p.cmt
+file: external/STDLIB/string.p.cmt
+file: external/STDLIB/parsing.p.cmt
+file: external/STDLIB/marshal.p.cmt
+file: external/STDLIB/array.p.cmt
+file: external/STDLIB/moreLabels.p.cmt
+file: external/STDLIB/camlinternalOO.p.cmt
+file: external/STDLIB/digest.p.cmt
+file: external/STDLIB/map.p.cmt
+file: external/STDLIB/weak.p.cmt
+file: external/STDLIB/hashtbl.p.cmt
+file: external/STDLIB/genlex.p.cmt
+file: external/STDLIB/pervasives.p.cmt
+file: external/STDLIB/stack.p.cmt
+file: external/STDLIB/camlinternalLazy.p.cmt
+file: external/STDLIB/printexc.p.cmt
+file: external/STDLIB/set.p.cmt
+file: external/STDLIB/list.p.cmt
+file: external/STDLIB/arrayLabels.p.cmt
+file: external/STDLIB/printf.p.cmt
+file: external/STDLIB/lazy.p.cmt
+file: external/STDLIB/int32.p.cmt
+file: external/STDLIB/gc.p.cmt
+file: external/STDLIB/nativeint.p.cmt
+file: external/STDLIB/std_exit.p.cmt
+file: external/STDLIB/bytes.p.cmt
+file: external/STDLIB/sort.p.cmt
+file: external/STDLIB/lexing.p.cmt
+file: external/STDLIB/buffer.p.cmt
+file: external/STDLIB/sys.p.cmt
+file: external/STDLIB/queue.p.cmt
