@@ -11,13 +11,10 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header2 *)
-open Efuns
 
 (*s: function [[Simple.previous_char]] *)
 let previous_char frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   if Text.bmove_res text point 1 = 0 then raise Not_found;
   let c = Text.get_char text point in
   Text.fmove text point 1;
@@ -31,8 +28,7 @@ let hungry_char c =
 
 (*s: function [[Simple.hungry_electric_delete]] *)
 let hungry_electric_delete frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = Frame.buf_text_point frame in
   text |> Text.with_session (fun () ->
    let c1 = previous_char frame in
    Edit.delete_backspace_char frame;
@@ -55,9 +51,7 @@ let hungry_electric_delete frame =
 (*s: function [[Simple.electric_insert_space]] *)
 let electric_insert_space frame =
   Edit.self_insert_command frame;
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let line_len = Text.point_to_bol text point in
   if line_len > 75 then
     Text.with_dup_point text point (fun mark ->

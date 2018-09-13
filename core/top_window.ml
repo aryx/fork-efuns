@@ -392,8 +392,7 @@ let buffers_menu = ref
 (*
 let scroll_to_frame ady top_window =
   let frame = top_window.top_active_frame in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = Frame.buf_text_point frame in
   let pos_start = Text.get_position text frame.frm_start in
   let _size = Text.size text in
   Common.pr2 "ady#get_pos size";

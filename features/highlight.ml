@@ -72,8 +72,7 @@ let unhightlight _frame =
   | Some (frame,debut,fin) -> 
      (*   if !keypressed <> XK.xk_Pointer_Drag1 then *)
      highlighted := None;
-     let buf = frame.frm_buffer in
-     let text = buf.buf_text in
+     let (buf, text, _) = Frame.buf_text_point frame in
 
      Text.with_new_point text (fun curseur ->
      Text.with_new_point text (fun final ->
@@ -95,9 +94,7 @@ let highlight frame =
     | None -> frame
     | Some (frame, _d, _f) -> frame
   in    
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let mark = Ebuffer.get_mark buf point in
   let pt_debut, pt_fin =
     if point < mark 

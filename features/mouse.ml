@@ -31,8 +31,7 @@ let mouse_drag_region frame =
       move_point frame point !mouse_x !mouse_y
     with
       Not_found ->
-        let buf = frame.frm_buffer in
-        let text = buf.buf_text in
+        let (buf, text, _) = Frame.buf_text_point frame in
         let y = !mouse_y - frame.frm_ypos in
         if y < 0 then
           ( scroll_line frame (y-1);
@@ -54,8 +53,7 @@ let mouse_drag_region frame =
         match !highlighted with
           None -> raise Not_found
         | Some (frame,debut,fin) -> 
-            let buf = frame.frm_buffer in
-            let text = buf.buf_text in
+            let (buf, text, _) = Frame.buf_text_point frame in
             let curseur = new_point text in
             let final = new_point text in
             set_position text curseur debut;
@@ -77,9 +75,7 @@ failwith "Simple.mouse_yank_at_click: TODO"
 (*
   let top_window = Window.top frame.frm_window in
   let frame = mouse_set_active top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let xterm = Window.xterm top_window in
   let str = WX_xterm.get_cutbuffer xterm in
   Text.insert text point str;
@@ -94,9 +90,7 @@ let mouse_save_then_kill frame =
 (*
   let top_window = Window.top frame.frm_window in
   let frame = Top_window.find_selected_frame top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let mark = Ebuffer.get_mark buf point in
   Text.with_new_point text (fun new_point ->
     Frame.move_point frame new_point !mouse_x !mouse_y;
@@ -122,9 +116,7 @@ let mouse_save_then_kill frame =
 let mouse_set_frame frame =
   let top_window = Window.top frame.frm_window in
   let frame = Top_window.mouse_set_active top_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let mark = Ebuffer.get_mark buf point in
   Text.goto_point text mark point;
   ()

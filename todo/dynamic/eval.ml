@@ -80,8 +80,7 @@ let load_library frame =
 let eval_buffer frame =
   let top_window = Window.top frame.frm_window in
   let location = top_window.top_location in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = Frame.buf_text_point frame in
   let filename = Filename.temp_file "buffer" ".ml" in
   let outc = open_out filename in
   Text.save buf.buf_text outc;

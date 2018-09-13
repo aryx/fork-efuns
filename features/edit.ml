@@ -47,9 +47,7 @@ let insert_return frame =
 
 (*s: function [[Simple.insert_at_place]] *)
 let insert_at_place frame char =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let c = Text.get_char text point in
   if c = '\n' 
   then insert_char frame char
@@ -202,9 +200,7 @@ let toggle_overwrite_mode frm =
 
 (*s: function [[Simple.undo]] *)
 let undo frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in  
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let action, at_point, len = Text.undo text in
   frame.frm_last_text_updated <- Text.version text - 1;
   (*s: save current pos from frame for position history navigation (in simple.ml) *)

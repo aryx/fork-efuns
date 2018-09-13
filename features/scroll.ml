@@ -72,11 +72,11 @@ let scroll_other_down frame =
 
 (*s: function [[Simple.recenter]] *)
 let recenter frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, point) = Frame.buf_text_point frame in
+
   frame.frm_force_start <- true;
   frame.frm_redraw <- true;
-  Text.goto_point text frame.frm_start frame.frm_point;
+  Text.goto_point text frame.frm_start point;
   frame.frm_y_offset <- - frame.frm_height/2
 [@@interactive]
 (*e: function [[Simple.recenter]] *)

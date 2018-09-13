@@ -43,9 +43,7 @@ type query = NoQuery | Query of frame * string
 (*s: function [[Search.replace]] *)
 let replace flag frame query str repl =
   let top_window = Window.top frame.frm_window in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   (*s: save current pos from frame for position history navigation *)
   Move.save_current_pos frame;
   (*e: save current pos from frame for position history navigation *)
@@ -225,11 +223,9 @@ let last_search = ref ""
 (*e: constant [[Search.last_search]] *)
 (*s: function [[Search.isearch]] *)
 let isearch to_regexp sens frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let ismap = Keymap.create () in
+  let (buf, text, point) = Frame.buf_text_point frame in
 
-  let point = frame.frm_point in
+  let ismap = Keymap.create () in
   let spoint = Text.dup_point text point in
   let orig = Text.get_position text point in
   (*s: save current pos from frame for position history navigation *)
@@ -272,9 +268,7 @@ let isearch to_regexp sens frame =
   in
   let set_last mini_frame =
     if !string = "" then begin
-      let buf = mini_frame.frm_buffer in
-      let text = buf.buf_text in
-      let point = mini_frame.frm_point in
+      let (buf, text, point) = Frame.buf_text_point mini_frame in
       Text.insert text point !last_search;
       Text.fmove text point (String.length !last_search);
       string := !last_search

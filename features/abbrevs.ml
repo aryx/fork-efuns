@@ -53,10 +53,8 @@ let dabbrev_buf = ref None
 (*e: constant [[Abbrevs.dabbrev_buf]] *)
 (*s: function [[Abbrevs.dabbrev_expand]] *)
 let dabbrev_expand frame = 
-  let buf = frame.frm_buffer in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let syntax = buf.buf_syntax_table in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
   let loop = ref false in
   let s, buf, pos, history =
     match !dabbrev_buf with
@@ -142,9 +140,7 @@ let abbrev_table = Store.create "abbrev_table"
 (*s: function [[Abbrevs.expand_sabbrev]] *)
 let expand_sabbrev frame =
   try
-    let point = frame.frm_point in
-    let buf = frame.frm_buffer in
-    let text = buf.buf_text in
+    let (buf, text, point) = Frame.buf_text_point frame in
     let abbrevs = Var.get_local buf abbrev_table in
     let str =
       Text.with_dup_point text point (fun mark ->

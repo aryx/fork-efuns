@@ -78,6 +78,7 @@ val current_dir : t -> string
 
 (* helpers *)
 
+val buf_text_point: Efuns.frame -> (Efuns.buffer * Text.t * Text.point)
 val to_frame : (Efuns.buffer -> Text.point -> 'a) -> t -> 'a
 
 (* navigation *)

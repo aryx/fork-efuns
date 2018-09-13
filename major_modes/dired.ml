@@ -35,9 +35,7 @@ let get_file_line frame =
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
     (Globals.editor()).edt_dirname <- Filename.dirname filename;
   );
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   Text.with_dup_point text point (fun start_point ->
     let before = Text.point_to_bol text point in
     let after = Text.point_to_eol text point in

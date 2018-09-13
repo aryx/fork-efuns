@@ -239,9 +239,7 @@ let history_pos_max = 10
 
 (*s: function [[Simple.save_current_pos]] *)
 let save_current_pos frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   if Array.length buf.buf_history_pos < history_pos_max
   then buf.buf_history_pos <- Array.create history_pos_max None;
   let arr = buf.buf_history_pos in
@@ -254,8 +252,7 @@ let save_current_pos frame =
 
 (*s: function [[Simple.goto_last_saved_pos]] *)
 let goto_last_saved_pos frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, point) = Frame.buf_text_point frame in
   if Array.length buf.buf_history_pos < history_pos_max
   then buf.buf_history_pos <- Array.create history_pos_max None;
   let arr = buf.buf_history_pos in
@@ -263,7 +260,7 @@ let goto_last_saved_pos frame =
   Array.blit arr 1 arr 0 (history_pos_max - 1);
   arr.(history_pos_max - 1) <- None;
   match head with
-  | Some pt -> Text.goto_point text frame.frm_point pt
+  | Some pt -> Text.goto_point text point pt
   | None -> failwith "No position history"
 [@@interactive]
 (*e: function [[Simple.goto_last_saved_pos]] *)
@@ -274,23 +271,21 @@ let goto_last_saved_pos frame =
 
 (*s: function [[Simple.end_of_file]] *)
 let end_of_file frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, point) = Frame.buf_text_point frame in
   (*s: save current pos from frame for position history navigation (in simple.ml) *)
   save_current_pos frame;
   (*e: save current pos from frame for position history navigation (in simple.ml) *)
-  Text.set_position text frame.frm_point (Text.size text)
+  Text.set_position text point (Text.size text)
 [@@interactive]
 (*e: function [[Simple.end_of_file]] *)
 
 (*s: function [[Simple.begin_of_file]] *)
 let begin_of_file frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, point) = Frame.buf_text_point frame in
   (*s: save current pos from frame for position history navigation (in simple.ml) *)
   save_current_pos frame;
   (*e: save current pos from frame for position history navigation (in simple.ml) *)
-  Text.set_position text frame.frm_point 0
+  Text.set_position text point 0
 [@@interactive]
 (*e: function [[Simple.begin_of_file]] *)
 
@@ -300,10 +295,7 @@ let begin_of_file frame =
 
 (*s: function [[Simple.point_at_mark]] *)
 let point_at_mark frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-
+  let (buf, text, point) = Frame.buf_text_point frame in
   let mark = Ebuffer.get_mark buf point in
   let pos = Text.get_position text point in
   Text.goto_point text point mark;

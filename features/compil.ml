@@ -72,7 +72,7 @@ let next_error top_frame =
       if frame.frm_killed 
       then Frame.unkill (Multi_frames.cut_frame top_frame) frame;
 
-      let buf = frame.frm_buffer in
+      let (buf, text, point) = Frame.buf_text_point frame in
       let find_error = 
         try Var.get_var buf find_error
         with Not_found | Failure _ -> 
@@ -83,8 +83,6 @@ let next_error top_frame =
           in
           find_error_gen re
       in
-      let text = buf.buf_text in
-      let point = frame.frm_point in
       try
         let error = find_error text error_point in
         Text.set_position text frame.frm_start error.err_msg;

@@ -49,9 +49,7 @@ let read_command fd frame =
         (*wrap*) top_window |> (fun top_window ->
             let frame = Frame.load_file window name in
             if pos <> 0 then begin
-              let buf = frame.frm_buffer in
-              let text = buf.buf_text in
-              let point = frame.frm_point in
+              let (buf, text, point) = Frame.buf_text_point frame in
               try
                 if str = "" 
                 then raise Not_found 

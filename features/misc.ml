@@ -54,9 +54,7 @@ let line_comment = Store.create_abstr "Fill_mode.line_comment"
 (*s: function [[Simple.fill_paragraph]] *)
 (* We will have to modify this to handle line_comment soon !! *)
 let fill_paragraph frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   text |> Text.with_session (fun () ->
     Text.with_dup_point text point (fun start ->
     backward_paragraph buf start;
@@ -122,8 +120,7 @@ let update_time buf =
 
 (*s: function [[Complex.reload]] *)
 let reload frame = 
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = Frame.buf_text_point frame in
   match buf.buf_filename with
     None -> ()
   | Some file ->

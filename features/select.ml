@@ -360,17 +360,13 @@ let select_file frame request history start action =
     Scroll.forward_screen frame
   );
   Keymap.add_binding map [NormalMap, Char.code '~'] (fun frame ->
-    let buf = frame.frm_buffer in
-    let text = buf.buf_text in
-    let point = frame.frm_point in
+    let (buf, text, point) = Frame.buf_text_point frame in
     Copy_paste.kill_bol buf point;
     Edit.self_insert_command frame;      
     string := Text.to_string text
   );
   Keymap.add_binding map [NormalMap, Char.code '/'] (fun frame ->
-    let buf = frame.frm_buffer in
-    let text = buf.buf_text in
-    let point = frame.frm_point in
+    let (buf, text, point) = Frame.buf_text_point frame in
     if Text.bmove_res text point 1 = 1 then
       ( let c = Text.get_char text point in
         Text.fmove text point 1;

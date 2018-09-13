@@ -166,9 +166,7 @@ let back_list = ref []
           
 (*s: function [[Ocaml_toplevel.find_implementation]] *)
 let find_implementation frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let word = find_long_word buf point in
   let ids = all_idents buf in
   let pos = get_position text point in

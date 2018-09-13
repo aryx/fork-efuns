@@ -16,9 +16,7 @@ open Efuns
 (*s: function [[Simple.next_hole]] *)
 (* a hole is two consecutive '^' chars *)
 let next_hole frame = 
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
+  let (buf, text, point) = Frame.buf_text_point frame in
   Text.with_dup_point text point (fun curseur ->
     while 
       not ((Text.get_char text curseur = '^') && (Text.fmove_res text curseur 1 = 1) &&
@@ -34,9 +32,7 @@ let next_hole frame =
 
 (*s: function [[Simple.insert_structure]] *)
 let insert_structure s frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let text = buf.buf_text in
+  let (buf, text, point) = Frame.buf_text_point frame in
   Text.insert text point s;
   next_hole frame
 (*e: function [[Simple.insert_structure]] *)

@@ -22,6 +22,18 @@ type t = Efuns.frame
 (*e: type [[Frame.t]] *)
 
 (*****************************************************************************)
+(* Helpers *)
+(*****************************************************************************)
+
+(*s: function [[Frame.buf_text_point]] *)
+let buf_text_point frame =
+  let buf = frame.frm_buffer in
+  let text = buf.buf_text in
+  let point = frame.frm_point in
+  (buf, text, point)
+(*e: function [[Frame.buf_text_point]] *)
+
+(*****************************************************************************)
 (* Status line *)
 (*****************************************************************************)
 
@@ -108,15 +120,14 @@ let status_name frame name =
 
 (*s: function [[Frame.kill]] *)
 let kill frame = 
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, point) = buf_text_point frame in
   (*s: [[Frame.kill()]] setting [[frm_killed]] field *)
   frame.frm_killed <- true;
   (*e: [[Frame.kill()]] setting [[frm_killed]] field *)
   buf.buf_shared <- buf.buf_shared - 1;
   Text.remove_point text buf.buf_point;
   Text.remove_point text buf.buf_start;
-  buf.buf_point <- frame.frm_point;
+  buf.buf_point <- point;
   buf.buf_start <- frame.frm_start
 (*e: function [[Frame.kill]] *)
 
@@ -361,8 +372,7 @@ let display_line graphic frame repr_string y =
 
 (*s: function [[Frame.point_to_xy_opt]] *)
 let point_to_xy_opt frame point =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = buf_text_point frame in
 
   let x_nocut = point_to_x_when_no_cutline buf point in
   let line = Ebuffer.compute_representation buf (point_line text point) in
@@ -393,10 +403,8 @@ let point_to_xy_opt frame point =
 
 (*s: function [[Frame.set_cursor]] *)
 let set_cursor frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, point) = buf_text_point frame in
 
-  let point = frame.frm_point in
   match point_to_xy_opt frame point with
   | None ->
       (* insert cursor is not on frame *)
@@ -430,8 +438,7 @@ let set_cursor frame =
 
 (*s: function [[Frame.update_table]] *)
 let update_table frame =
-  let buf =  frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = buf_text_point frame in
 
   let start = frame.frm_start in
   let height = frame.frm_height - frame.frm_has_status_line in
@@ -526,10 +533,7 @@ let update_table a = Common.profile_code "Frame.update_table"
 
 (*s: function [[Frame.display]] *)
 let display top_window frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-
-  let point = frame.frm_point in
+  let (buf, text, point) = buf_text_point frame in
 
   let width = frame.frm_width - frame.frm_has_scrollbar in
   let height = frame.frm_height - frame.frm_has_status_line in
@@ -706,10 +710,9 @@ exception BufferKilled
 (*e: exception [[Frame.BufferKilled]] *)
 (*s: function [[Frame.unkill]] *)
 let unkill window frame =
-  let buf = frame.frm_buffer in
+  let (buf, text, _) = buf_text_point frame in
   if buf.buf_shared < 0 
   then raise BufferKilled;
-  let text = buf.buf_text in
   install window frame;
   frame.frm_start <- Text.dup_point text buf.buf_start;
   frame.frm_end <- Text.dup_point text buf.buf_start;
@@ -721,8 +724,7 @@ let unkill window frame =
 
 (*s: function [[Frame.move_point]] *)
 let move_point frame point x y =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = buf_text_point frame in
   let coord = cursor_to_coord frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
   Text.goto_line text point coord.Text.c_line;
   Text.fmove text point coord.Text.c_col
@@ -794,5 +796,4 @@ let help_bindings frame =
 let to_frame f frame =
   f frame.frm_buffer frame.frm_point
 (*e: function [[Simple.to_frame]] *)
-  
 (*e: core/frame.ml *)
