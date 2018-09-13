@@ -91,8 +91,9 @@ let copy_line_and_attr text cursor text2 =
 (*****************************************************************************)
 (* Install *)
 (*****************************************************************************)
-let install _buf =
-  (* todo: set to read-only! *)
+let install buf =
+  let text = buf.buf_text in
+  Text.toggle_readonly text;
   ()
 
 let mode_name = "Outline"
