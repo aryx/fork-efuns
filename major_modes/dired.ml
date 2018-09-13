@@ -166,10 +166,12 @@ let install buf =
 let mode = Ebuffer.new_major_mode "Dired" (Some install)
 (*e: constant [[Dired.mode]] *)
 
-(*s: constant [[Dired.map]] *)
-(* TODO let map = mode.maj_map *)
-(*e: constant [[Dired.map]] *)
-  
+(*s: function [[Dired.dired_mode]] *)
+let dired_mode =
+  Major_modes.enable_major_mode mode
+[@@interactive]
+(*e: function [[Dired.dired_mode]] *)
+
 
 (*s: function [[Dired.viewer]] *)
 let viewer commande frame filename =
@@ -216,11 +218,6 @@ let _ =
     ];
   
   Hook.add_start_hook (fun () ->
-(* TODO
-    Keymap.add_interactive ((Globals.editor()).edt_map) "dired_mode" 
-        (fun frame -> 
-          Ebuffer.set_major_mode frame.frm_buffer mode);
-*)
     Var.add_global Ebuffer.modes_alist [".*/$",mode];
   )   
 (*e: toplevel [[Dired._1]] *)

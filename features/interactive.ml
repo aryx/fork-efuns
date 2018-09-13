@@ -95,6 +95,7 @@ let set_local_variable frame =
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
           Store.input frame.frm_buffer.buf_vars variable value))
+[@@interactive]
 (*e: function [[Complex.set_local_variable]] *)
   
 (*s: function [[Complex.set_global_variable]] *)
@@ -104,6 +105,7 @@ let set_global_variable frame =
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
           Store.input (Globals.editor()).edt_vars variable value))
+[@@interactive]
 (*e: function [[Complex.set_global_variable]] *)
   
 (*s: function [[Complex.get_variable]] *)
@@ -139,6 +141,7 @@ let set_parameter frame =
           let (input,print,param) = List.assoc variable parameters
           in
           param =:= input value))
+[@@interactive]
 (*e: function [[Complex.set_parameter]] *)
   
 (*s: function [[Complex.get_parameter]] *)
@@ -151,6 +154,7 @@ let get_parameter frame =
           let (input,print,param) = List.assoc variable parameters
           in
           print !!param)))
+[@@interactive]
 (*e: function [[Complex.get_parameter]] *)
 
 (*e: features/interactive.ml *)

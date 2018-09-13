@@ -63,14 +63,6 @@ let local_map = define_option ["makefile_mode"; "local_map"] ""
     (list_option Keymap.binding_option) []
 (*e: constant [[Makefile_mode.local_map]] *)
 
-(*s: constant [[Makefile_mode.interactives_map]] *)
-(* TODO
-let interactives_map = define_option ["makefile_mode"; "interactives_map"] ""
-    (list_option string2_option) 
-  []
-*)
-(*e: constant [[Makefile_mode.interactives_map]] *)
-
 (* let insert_tab frame = ignore (insert_string frame "\t") *)
  
 (*s: toplevel [[Makefile_mode._1]] *)
@@ -92,15 +84,15 @@ let _ =
 (*e: toplevel [[Makefile_mode._1]] *)
 
 (*s: function [[Makefile_mode.makefile_mode]] *)
-let makefile_mode frame = 
-  Ebuffer.set_major_mode frame.frm_buffer mode
+let makefile_mode = 
+  Major_modes.enable_major_mode mode
+[@@interactive]
 (*e: function [[Makefile_mode.makefile_mode]] *)
         
 (*s: toplevel [[Makefile_mode._2]] *)
 let _ = 
   Action.define_action "makefile_mode.color_buffer" 
     (fun frame -> makefile_color frame.frm_buffer);
-  Action.define_action "makefile_mode" makefile_mode;
   ()
 (*e: toplevel [[Makefile_mode._2]] *)
 
@@ -115,16 +107,6 @@ let setup_maps () =
           Log.exn "%s\n" e;
   
   );
-(* TODO
-  !!interactives_map |> List.iter (fun (name, action) ->
-      try
-        Keymap.add_interactive map name (Action.execute_action action)
-      with e ->
-          Log.printf "Error for action %s" action;
-          Log.exn "%s\n" e;
-          
-  );
-*)
   ()
 (*e: toplevel [[Makefile_mode._3]] *)
 
@@ -134,8 +116,7 @@ let _ =
   (* Keymap.add_prefix mode.maj_map [c_c];   *)
   Hook.add_start_hook (fun () ->
     setup_maps();
-    let alist = Var.get_global Ebuffer.modes_alist in
-    Var.set_global Ebuffer.modes_alist ((".*/[Mm]akefile.*",mode):: alist);
+    Var.add_global Ebuffer.modes_alist [".*/[Mm]akefile.*", mode];
     
     Parameter.add_option_parameter target_color;
     Parameter.add_option_parameter rules_color;

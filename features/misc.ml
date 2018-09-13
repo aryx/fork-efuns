@@ -335,23 +335,6 @@ let cursor_position frm =
 [@@interactive]
 (*e: function [[Misc.cursor_position]] *)
 
- 
-(*s: toplevel [[Complex._1]] *)
-let _ =
-  Hook.add_start_hook (fun () ->
-(* TODO
-    let edt = Globals.editor() in
-      Keymap.add_interactive edt.edt_map "set_local_variable" 
-        Interactive.set_local_variable;
-      Keymap.add_interactive edt.edt_map "set_global_variable" 
-        Interactive.set_global_variable;
-      Keymap.add_interactive edt.edt_map "set_parameter" set_parameter;
-      Keymap.add_interactive edt.edt_map "get_parameter" get_parameter;
-*)
-    Var.set_global Ebuffer.saved_buffer_hooks [update_time];
-  )
-(*e: toplevel [[Complex._1]] *)
-
 (*****************************************************************************)
 (* Toplevel *)
 (*****************************************************************************)
