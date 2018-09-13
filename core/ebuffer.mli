@@ -50,6 +50,7 @@ val fondamental_mode : Efuns.major_mode
 val modes_alist : (string * Efuns.major_mode) list Store.var
 (* use modes_alist to try to automatically set the major mode *)
 val set_buffer_mode : t -> unit
+(* see also major_modes.mli *)
 
 (* minor modes *)
 
@@ -57,6 +58,7 @@ val new_minor_mode : string ->  (t -> unit) list -> Efuns.minor_mode
 val set_minor_mode : t -> Efuns.minor_mode -> unit
 val del_minor_mode : t -> Efuns.minor_mode -> unit
 val has_minor_mode : t -> Efuns.minor_mode -> bool
+(* see also minor_modes.mli *)
 
 (* display *)
 val compute_representation : t -> int -> Text.line

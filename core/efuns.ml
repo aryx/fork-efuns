@@ -76,7 +76,7 @@ and binding =
 (*************************************************************************)
 
 (*s: type [[Efuns.buffer]] *)
-(* a buffer containing a file in Text.t *)
+(* a buffer containing a file content in buffer.buf_text *)
 and buffer =
   { 
     mutable buf_text : Text.t;
@@ -90,7 +90,7 @@ and buffer =
     mutable buf_start : Text.point;
     (*e: [[Efuns.buffer]] position fields *)
     (*s: [[Efuns.buffer]] history fields *)
-    mutable buf_modified : int; (* version? *)
+    mutable buf_modified : int; (* version *)
     (*x: [[Efuns.buffer]] history fields *)
     mutable buf_last_saved : Text.version;
     (*x: [[Efuns.buffer]] history fields *)
@@ -282,7 +282,7 @@ and frm_line =
 (*************************************************************************)
 
 (*s: type [[Efuns.top_window]] *)
-(* an xterm: a window containing some frames *)
+(* a window containing some frames *)
 and top_window = 
   { 
     mutable top_width : int;

@@ -14,8 +14,8 @@
 open Options
 
 (*s: type [[Simple.parameter]] *)
-type parameter = (string * ((string -> Obj.t) * (Obj.t -> string) * 
-      Obj.t option_record))
+type t = 
+ string * ((string -> Obj.t) * (Obj.t -> string) * Obj.t option_record)
 (*e: type [[Simple.parameter]] *)
   
 (*s: constant [[Simple.parameters_var]] *)

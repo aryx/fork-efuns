@@ -1,13 +1,17 @@
 
-type parameter =    (string * ((string -> Obj.t) * (Obj.t -> string) * 
-      Obj.t Options.option_record))
-val parameters_var : parameter list Store.var
+type t = 
+ string * ((string->Obj.t) * (Obj.t->string) * Obj.t Options.option_record)
+
+val parameters_var : t list Store.var
 val add_parameter :
-  string -> (string -> 'a) -> ('a -> string) -> 'a Options.option_record -> unit
+  string -> (string -> 'a) -> ('a -> string) -> 'a Options.option_record -> 
+  unit
 
 val add_option_parameter : 'a Options.option_record -> unit
-val all_params : (parameter list * string list) option ref
+
+val all_params : (t list * string list) option ref
 val all_parameters : Efuns.frame -> 'a -> string list
+
 (*
 external id : 'a -> 'a = "%identity"
 val add_string_parameter : Efuns.location -> string -> string ref -> unit

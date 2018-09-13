@@ -17,6 +17,7 @@ let _ =
     (* keybindings *)
     [
       [MetaMap, Char.code 'g'], Misc.goto_line;
+
       [MetaMap, XK.xk_Up], Scroll.scroll_up; 
       [MetaMap, XK.xk_Down], Scroll.scroll_down; 
       [MetaMap, XK.xk_Left], Scroll.scroll_other_up; 
@@ -44,7 +45,7 @@ let _ =
       [ControlMetaMap, XK.xk_Left], Multi_buffers.left_buffer;
       [ControlMetaMap, XK.xk_Right], Multi_buffers.right_buffer;
 
-      (* pad: xemacs inspired *)
+      (* pad: xemacs inspired, but often intercepted by window manager *)
       [ControlMap, XK.xk_Tab], Multi_frames.next_frame;
 
     ] |> List.iter (fun (keys, action) ->
