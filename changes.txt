@@ -4,13 +4,11 @@
 
 ** a new Merlin minor mode
 to support type and ocamldoc information under cursor, jump-to-definition,
-jump-to-interface, 
-TODO completion, 
+jump-to-interface, completion, search-def
 TODO automatic case-analysis code generation,
-TODO search-def
 
 ** better coloring in noweb_mode
-use fuzzy tree more to correctly handle nested elements, and
+use fuzzy tree to correctly handle nested elements, and
 support [[ ]] and [< >] correctly (different lexing rules).
 
 ** support for Windows!
@@ -22,12 +20,15 @@ can now compile Efuns for Linux, Windows, and macOS
 
 *** C-c = to get position information
 
-*** copy to and from clipboard
+*** SEMI copy to and from clipboard
 so can have efuns interact with other applications (e.g., web browser)
 
 ** internals
 
 *** cleanup external/, rely more on OPAM
+
+*** simplified interface for interactive functions and bindings
+use [@@interactive] attribute
 
 * -----------------------------------------------------------
 

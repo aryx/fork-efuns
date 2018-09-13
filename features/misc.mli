@@ -8,22 +8,8 @@ val simplify : Text.t -> Text.point -> Text.point -> unit
 
 val line_comment : string Store.var
 
-(* buffers *)
-
-val load_buffer : Efuns.action
-val insert_file : Efuns.action
-
-val write_buffer : Efuns.action
-val save_buffer : Efuns.action
-
 val window_load_buffer : Efuns.action
 val window_change_buffer : Efuns.action
-
-(* load/save/kill *)
-
-val save_buffers_and_action :
-  Efuns.frame -> ('a * Efuns.buffer) list -> (Efuns.frame -> unit) -> unit
-val save_some_buffers : Efuns.action
 
 val exit : Efuns.action
 

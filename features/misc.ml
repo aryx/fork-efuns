@@ -104,47 +104,6 @@ let insert_special_char frame =
 
 open Unix
 
-(*s: function [[Complex.save_buffers_and_action]] *)
-let rec save_buffers_and_action frame buffers action =
-  match buffers with
-    [] -> let () = action frame in ()
-  | (_,buf) :: buffers ->
-      let text = buf.buf_text in
-      if buf.buf_last_saved = Text.version text  ||
-        buf.buf_name.[0] = '*'
-      then
-        save_buffers_and_action frame buffers action
-      else
-      let map = Keymap.create () in
-      let request = Printf.sprintf "Save buffer %s ? (y,n,!,a)" buf.buf_name
-      in
-      let yes mini_frame =
-        Minibuffer.kill mini_frame frame;
-        Ebuffer.save buf;
-        save_buffers_and_action frame buffers action
-      in
-      let no mini_frame =
-        Minibuffer.kill mini_frame frame;
-        save_buffers_and_action frame buffers action; ()
-      in
-      let action_immediately mini_frame = 
-        Minibuffer.kill mini_frame frame;
-        let () = action mini_frame in ()
-      in
-      let abort mini_frame =
-        Minibuffer.kill mini_frame frame
-      in
-      Keymap.add_binding map [NormalMap, Char.code 'y'] yes;
-      Keymap.add_binding map [NormalMap, Char.code 'Y'] yes;
-      Keymap.add_binding map [NormalMap, Char.code 'n'] no;
-      Keymap.add_binding map [NormalMap, Char.code 'N'] no;
-      Keymap.add_binding map [NormalMap, Char.code '!'] action_immediately;
-      Keymap.add_binding map [NormalMap, Char.code 'a'] abort;
-      Keymap.add_binding map [NormalMap, Char.code 'A'] abort;
-      Keymap.add_binding map [ControlMap, Char.code 'g'] abort;
-      Minibuffer.create frame map request |> ignore
-(*e: function [[Complex.save_buffers_and_action]] *)
-
 (*s: constant [[Complex.buf_mtime]] *)
 let buf_mtime = Store.create "buf_mtime" string_of_float float_of_string
 (*e: constant [[Complex.buf_mtime]] *)
@@ -160,6 +119,7 @@ let update_time buf =
   with _ -> ()
 (*e: function [[Complex.update_time]] *)
       
+
 (*s: function [[Complex.reload]] *)
 let reload frame = 
   let buf = frame.frm_buffer in
@@ -206,60 +166,17 @@ let check_file frame =
 [@@interactive]
 (*e: function [[Complex.check_file]] *)
     
+
 (*s: function [[Complex.exit_efuns]] *)
 let exit frame =
   let buffers = Utils.list_of_hash (Globals.editor()).edt_buffers in
-  save_buffers_and_action frame buffers (fun _ -> 
+  Multi_buffers.save_buffers_and_action frame buffers (fun _ -> 
     (* todo: have some exit hooks? *)
     raise (Common.UnixExit 0)
   )
 [@@interactive]
 (*e: function [[Complex.exit_efuns]] *)
 
-(*s: function [[Complex.save_some_buffers]] *)
-let save_some_buffers frame =
-  let buffers = Utils.list_of_hash (Globals.editor()).edt_buffers in
-  save_buffers_and_action frame buffers (fun _ -> ())
-[@@interactive]
-(*e: function [[Complex.save_some_buffers]] *)
-
-(*s: function [[Complex.load_buffer]] *)
-let load_buffer frame = 
-  Multi_buffers.set_previous_frame frame;
-  Select.select_filename frame "Find file: " (fun str -> 
-    Frame.load_file frame.frm_window str |> ignore
-  )
-[@@interactive]
-(*e: function [[Complex.load_buffer]] *)
-
-(*s: function [[Complex.insert_file]] *)
-let insert_file frame =
-  Select.select_filename frame "Insert file: " (fun str ->
-    let inc = open_in str in
-    Edit.insert_string frame (Utils.read_string inc);
-    close_in inc
-  )
-[@@interactive]
-(*e: function [[Complex.insert_file]] *)
-
-(*s: function [[Complex.write_buffer]] *)
-let write_buffer frame = 
-  let buf = frame.frm_buffer in
-  Select.select_filename frame "Save file as: " (fun str -> 
-    Ebuffer.change_name buf str;
-    Ebuffer.save buf
-  )
-[@@interactive]
-(*e: function [[Complex.write_buffer]] *)
-
-(*s: function [[Complex.save_buffer]] *)
-let save_buffer frame =
-  let buf = frame.frm_buffer in
-  match buf.buf_filename with
-    Some _ -> Ebuffer.save buf
-  | None -> write_buffer frame
-[@@interactive]
-(*e: function [[Complex.save_buffer]] *)
 
 (*s: function [[Complex.window_load_buffer]] *)
 let window_load_buffer frame = 

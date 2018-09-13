@@ -21,9 +21,9 @@ let standard_map = [
   (* Loading *)
   (* -------------------------------------------------------- *)
   (*s: loading keys *)
-  [c_x; ControlMap, Char.code 'f'], Misc.load_buffer;
+  [c_x; ControlMap, Char.code 'f'], Multi_buffers.load_buffer;
   (*x: loading keys *)
-  [c_x; NormalMap, Char.code 'i'], Misc.insert_file;
+  [c_x; NormalMap, Char.code 'i'], Multi_buffers.insert_file;
   (*e: loading keys *)
 
   (* -------------------------------------------------------- *)
@@ -184,10 +184,10 @@ let standard_map = [
   (* Saving *)
   (* -------------------------------------------------------- *)
   (*s: saving keys *)
-  [c_x; ControlMap, Char.code 's'], Misc.save_buffer; 
+  [c_x; ControlMap, Char.code 's'], Multi_buffers.save_buffer; 
   (*x: saving keys *)
-  [c_x; NormalMap,  Char.code 's'], Misc.save_some_buffers;
-  [c_x; ControlMap, Char.code 'w'], Misc.write_buffer; 
+  [c_x; NormalMap,  Char.code 's'], Multi_buffers.save_some_buffers;
+  [c_x; ControlMap, Char.code 'w'], Multi_buffers.write_buffer; 
   (*e: saving keys *)
 
   (* -------------------------------------------------------- *)

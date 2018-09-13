@@ -25,3 +25,17 @@ val next_buffer : Efuns.buffer -> Efuns.buffer
 (*val prev_buffers : string list ref*)
 val set_previous_frame : Efuns.frame -> unit
 val get_previous_frame : unit -> string
+
+(* buffers *)
+
+val load_buffer : Efuns.action
+val insert_file : Efuns.action
+
+val write_buffer : Efuns.action
+val save_buffer : Efuns.action
+
+(* load/save/kill *)
+
+val save_buffers_and_action :
+  Efuns.frame -> ('a * Efuns.buffer) list -> (Efuns.frame -> unit) -> unit
+val save_some_buffers : Efuns.action
