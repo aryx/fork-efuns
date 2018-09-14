@@ -12,7 +12,6 @@
 (***********************************************************************)
 (*e: copyright header *)
 open Options
-open Efuns
 
 (*s: constant [[Efuns.init_files]] *)
 let initial_files = ref []
@@ -20,7 +19,7 @@ let initial_files = ref []
 
 (*s: constants Main options *)
 let width      = define_option ["width"] "" int_option 80
-let height     = define_option ["height"] "" int_option 44 (* 44, 27 *)
+let height     = define_option ["height"] "" int_option 44
 let foreground = define_option ["foreground"] "" string_option "wheat"
 let background = define_option ["background"] "" string_option "DarkSlateGray"
 (*e: constants Main options *)
@@ -132,7 +131,7 @@ let main () =
   (*e: [[main()]] set options *)
 
   (*s: [[main()]] initial editor *)
-  let editor = {
+  let editor = { Efuns.
       edt_buffers = Hashtbl.create 13;
       edt_files = Hashtbl.create 13;
 
