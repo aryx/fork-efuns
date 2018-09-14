@@ -14,7 +14,7 @@
 open Efuns
 
 (*s: function [[Simple.buffer_list]] *)
-let buffer_list frame =
+let buffer_list () =
   (Globals.editor()).edt_buffers |> Common.hash_to_list |> List.map fst
 (*e: function [[Simple.buffer_list]] *)
 
@@ -47,15 +47,14 @@ let switch_to_other_buffer frame =
 (*e: function [[Multi_buffers.switch_to_other_buffer]] *)
 
 
-
 (*s: constant [[Select.buf_hist]] *)
 let buf_hist = ref []
 (*e: constant [[Select.buf_hist]] *)
 (*s: function [[Select.select_buffer]] *)
 let select_buffer frame request default action =
   Select.select frame (request^"(default :"^ default ^ ") ") buf_hist ""
-    (fun _ -> buffer_list frame) 
-    (fun s ->s) 
+    (fun _ -> buffer_list ()) 
+    (fun s -> s) 
     (fun str ->
       let str = if str = "" then default else str in
       action str)
@@ -245,7 +244,7 @@ let write_buffer frame =
 let save_buffer frame =
   let buf = frame.frm_buffer in
   match buf.buf_filename with
-    Some _ -> Ebuffer.save buf
+  | Some _ -> Ebuffer.save buf
   | None -> write_buffer frame
 [@@interactive]
 (*e: function [[Complex.save_buffer]] *)

@@ -1,6 +1,4 @@
 
-val buffer_list : Efuns.frame -> string list
-
 (* interactive with default *)
 val change_buffer : Efuns.action
 (* go to default *)
@@ -39,3 +37,6 @@ val save_buffer : Efuns.action
 val save_buffers_and_action :
   Efuns.frame -> ('a * Efuns.buffer) list -> (Efuns.frame -> unit) -> unit
 val save_some_buffers : Efuns.action
+
+(* used by buffer_menu.ml *)
+val buffer_list : unit -> string list

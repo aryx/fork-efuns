@@ -68,7 +68,7 @@ let menu frame =
   Text.insert_at_end text " -- ------             ----  ----         ----\n";
 
   let current = frame.frm_buffer.buf_name in
-  let all = Multi_buffers.buffer_list frame in
+  let all = Multi_buffers.buffer_list () in
   let hall = all |> Common.hashset_of_list in
   list := !list |> List.filter (fun str -> Hashtbl.mem hall str);
   let history = !list in
