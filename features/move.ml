@@ -19,12 +19,14 @@ open Efuns
 
 (*s: function [[Simple.move_backward]] *)
 let move_backward frame delta =
-  Text.bmove frame.frm_buffer.buf_text frame.frm_point delta
+  let (_buf, text, point) = Frame.buf_text_point frame in
+  Text.bmove text point delta
 (*e: function [[Simple.move_backward]] *)
 
 (*s: function [[Simple.move_forward]] *)
 let move_forward frame delta =
-  Text.fmove frame.frm_buffer.buf_text frame.frm_point delta
+  let (_buf, text, point) = Frame.buf_text_point frame in
+  Text.fmove text point delta
 (*e: function [[Simple.move_forward]] *)
 
 (*
@@ -37,12 +39,14 @@ let move_forward frame =
 
 (*s: function [[Simple.begin_to_point]] *)
 let begin_to_point frame =
-  Text.point_to_bol frame.frm_buffer.buf_text frame.frm_point
+  let (_, text, point) = Frame.buf_text_point frame in
+  Text.point_to_bol text point
 (*e: function [[Simple.begin_to_point]] *)
 
 (*s: function [[Simple.point_to_end]] *)
 let point_to_end frame =
-  Text.point_to_eol frame.frm_buffer.buf_text frame.frm_point
+  let (_, text, point) = Frame.buf_text_point frame in
+  Text.point_to_eol text point
 (*e: function [[Simple.point_to_end]] *)
 
 (*****************************************************************************)

@@ -51,6 +51,7 @@ let transform_marked_region frame f =
   text |> Text.with_session (fun () ->
     Text.delete text a delta;
     Text.insert text a region';
+    Text.remove_point text mark;
   )
 
 (*****************************************************************************)

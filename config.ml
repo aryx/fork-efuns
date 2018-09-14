@@ -193,6 +193,10 @@ let standard_map = [
   (* -------------------------------------------------------- *)
   (* Rectangles *)
   (* -------------------------------------------------------- *)
+  [c_x; NormalMap, Char.code 'r'; NormalMap, Char.code 't'],
+    Rectangle.rectangle_insert;
+  [c_x; NormalMap, Char.code 'r'; NormalMap, Char.code 'k'],
+    Rectangle.rectangle_kill;
 
   (* -------------------------------------------------------- *)
   (* Misc *)

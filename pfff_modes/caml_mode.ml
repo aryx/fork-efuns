@@ -24,6 +24,10 @@ module PI = Parse_info
 (*
  * Using the OCaml parser and highlighters in pfff (used for codemap)
  * for Efuns.
+ *
+ * todo:
+ *  - Tab handling when in comment and indent and add '*' leading if needed
+ *  - finish merlin support (see ocaml_merlin.ml)
  *)
 
 (*****************************************************************************)

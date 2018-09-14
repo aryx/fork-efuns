@@ -7,7 +7,9 @@ to support type and ocamldoc information under cursor, jump-to-definition,
 jump-to-interface, completion, search-def
 TODO automatic case-analysis code generation,
 
-** better coloring in noweb_mode
+** noweb 
+
+*** better coloring
 use fuzzy tree to correctly handle nested elements, and
 support [[ ]] and [< >] correctly (different lexing rules).
 
@@ -25,6 +27,7 @@ so can have efuns interact with other applications (e.g., web browser)
 
 *** M-x align_char
 
+*** basic rectangle operations (C-x r t, C-x r k)
 
 ** internals
 
@@ -32,6 +35,8 @@ so can have efuns interact with other applications (e.g., web browser)
 
 *** simplified interface for interactive functions and bindings
 use [@@interactive] attribute
+
+*** factorized code with Frame.buf_text_point helper
 
 * -----------------------------------------------------------
 
@@ -56,7 +61,7 @@ better ls in eshell, multi cols, correctly sorted, hiding object files
 with variable font size for important entities 
 (a la Code thumbnails of visual studio) for pfff-based major modes
 
-** adjustments to emacs behavior
+** adjustments to Emacs behavior
 M-w (copy_region)
 M-c (capitalize_words)
 C-s C-w (incomplete though)
@@ -80,7 +85,8 @@ buffer menu C-M-Tab, C-M-l and right order
 ** fork Efuns (after 15 years), and port it to gtk/cairo
 also use pfff/h_visualization/simple_color.ml for emacs style color names
 
-** a new Dircolors module (based on my dircolors.el plugin for emacs)
+** a new Dircolors module
+(based on my dircolors.el plugin for emacs)
 
 ** a new Buffer_menu mode
 
@@ -90,13 +96,13 @@ also use pfff/h_visualization/simple_color.ml for emacs style color names
 for Caml, C/C++, and TeX/Noweb, with correct and more highlightings
 for identifiers (e.g. differentiate fields from parameters from locals).
 
-** adjustments to emacs behavior
-- maintain a "goal column" when goes up and down in a file, similar to emacs
+** adjustments to Emacs behavior
+- maintain a "goal column" when goes up and down in a file, similar to Emacs
 
 ** refactoring
 
 - files and directories reorganization, pad's style
-- lpization
+- LPization (literate programming restructuring, with help from syncweb)
 - removed many opens
 - use global for location
 - reorg main.ml to use less toplevels and pack in a main() function

@@ -11,5 +11,5 @@ Yoann Padioleau: a few contributions
     for important (outline) stuff (a la Code Thumbnails)
   * merlin minor mode for OCaml (C-c C-t, C-c C-d, ...)
   * Emacs's default behavior port: goal column, C-s C-w, M-w, Top|Bot|%, ...
-  * Emacs's plugins: M-x align_char, rectangles (C-x r t)
+  * Emacs's misc port: M-x align_char, rectangles (C-x r t, C-x r k)
   * pad's stuff: M-down/up/right/left scrolling, M-x gtd

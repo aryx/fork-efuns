@@ -1287,6 +1287,7 @@ let point_to_eol text point =
 (*e: function [[Text.point_to_eol]] *)
 
 (*s: function [[Text.point_to_bol]] *)
+(* less: kinda bol_to_point really *)
 let point_to_bol text point =
   low_distance text 
     text.text_newlines.(point.line).position
