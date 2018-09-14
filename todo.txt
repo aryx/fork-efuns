@@ -26,13 +26,8 @@ C-c C-x C-s
 
 ** important but can take a long time
 
-*** rectangle: C-x r k
-so can comment "what was planned" in my colbert report copy of the
-previous week
-
-see tex_mode.mll? tex-comment-region
-
-or go multi-selection as in Sublime or Atom?
+*** multi-selection as in Sublime or Atom?
+does what rectangle and macro do
 
 *** cua, S-down, S-etc
 and highlight
@@ -158,6 +153,7 @@ so better color for types in efuns and codemap
 
 **** !!!! fix indent issues in tuareg mode, put 4 indent sick of it
 do it in efuns!! finally!
+use ocp-indent?
 
 *** eshell
 
@@ -179,9 +175,6 @@ but need understand frm_y_offset
 **** arrow for history
 
 *** noweb
-
-**** could make AST at least where parenthesized correctly,
-so they easier to colorize groups with right scope
 
 *** makefile
 
@@ -208,8 +201,6 @@ Some of the stuff are actually available as plugins (e.g. autocomplete),
 *** later: try ahupp mural for ocaml? 
 still need? efuns.opt not fast enough to "serve" tags?
 
-*** later: try merlin?
-
 *** visual align-guides like in atom
 just do via overlay? after frm_table has been updated
 just go through all frm_table and look if space?
@@ -223,13 +214,9 @@ It's in emacs, but it's not clean. It always confused me.
 
 *** !!indentation!!
 use the new ocamlformat? futur of indentation is automatic indentation?
+ocp-indent?
 
 *** later
-
-**** rectangles!!! how can it be called emacs
-at least C-x r t, or M-x comment
-
-or use the multi-cursor thing of sublime text?
 
 **** visual beep (e.g. when incremental search done)
 
@@ -269,7 +256,7 @@ https://github.com/gleitz/howdoi
 
 *** misc
 
-**** use realpath? so C-n does a better job?
+**** still? use realpath? so C-n does a better job?
 
 ** Internals
 
@@ -277,19 +264,6 @@ https://github.com/gleitz/howdoi
 
 **** rewrite display to not have terminal backward compatibility
 constraint. Simpler? Can do multi-fonts more easily?
-
-**** sure? remove dupes between actions and keys, have keys
-define also the action, and have another thing that defines
-an action and add it to interactives
-
-not sure also to have configurable interactives ...
-ok for the keys, but for interactives??
-can allow to change name of interactives things depending on major
-mode. It can be good. for instance M-x colorize in a ocaml buffer
-is in fact caml_colorize
-
-**** sure? merge actions and keys?
-dki ? define key and interactive?
 
 **** less: remove windows C-n 5 ? init_frame
 
@@ -368,14 +342,14 @@ an unix
 
 ** from https://github.com/Microsoft/vscode-go
 
-Colorization
-Completion Lists (using gocode)
+DONE Colorization
+DONE Completion Lists (using gocode)
 Signature Help (using godoc)
 Snippets
 Quick Info (using godef)
-Goto Definition (using godef)
+DONE Goto Definition (using godef)
 Find References (using go-find-references)
-File outline (using go-outline)
+DONE File outline (using go-outline)
 Workspace symbol search (using go-symbols)
 Rename (using gorename)
 Build-on-save (using go build and go test)
@@ -384,12 +358,12 @@ Add Imports (using gopkgs)
 [partially implemented] Debugging (using delve)
 
 ** f8 nuclide demos
-syntax highlighting (actually buggy on xhp)
-autocomplete (big deal in their demo)
+DONE syntax highlighting (actually buggy on xhp)
+DONE autocomplete (big deal in their demo)
 flycheck (big deal)
-click goto-def
+SEMI click goto-def
 
-build integration, colored output
+DONE build integration, colored output
 file explorer
 remote file explorer (fbide remote connect)
 
@@ -445,5 +419,3 @@ a reference to a global constant in the file
 Finally fix tuareg!
 
 also TAB and insert comment prefix star when inside a comment.
-
-
