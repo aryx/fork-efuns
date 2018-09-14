@@ -3,9 +3,6 @@ val insert_special_char : Efuns.action
 
 val line_comment : string Store.var
 
-val window_load_buffer : Efuns.action
-val window_change_buffer : Efuns.action
-
 val exit : Efuns.action
 
 (* time *)

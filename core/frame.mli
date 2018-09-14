@@ -34,7 +34,6 @@ val change_buffer_hooks: Efuns.action_name list Options.option_record
 val save_buffer : t -> unit
 
 val kill : t -> unit
-val kill_all : Efuns.window -> unit
 
 exception BufferKilled
 val unkill : Efuns.window -> t -> unit

@@ -219,13 +219,6 @@ let standard_map = [
   [NormalMap, Char.code ' '], Abbrevs.char_expand_abbrev;
   [MetaMap, Char.code '/'], Abbrevs.dabbrev_expand;
   (*x: misc keys *)
-  (*s: window management keys *)
-  (* less: delete *)
-  [c_x; n_5; NormalMap, Char.code 'f'], Misc.window_load_buffer;
-  [c_x; n_5; NormalMap, Char.code 'b'], Misc.window_change_buffer;
-  [c_x; n_5; NormalMap, Char.code '0'], Top_window.delete_window;
-  (*e: window management keys *)
-  (*x: misc keys *)
   [NormalMap, XK.xk_Insert], Edit.toggle_overwrite_mode;
   (*e: misc keys *)
   (*e: [[standard_map]] entries *)

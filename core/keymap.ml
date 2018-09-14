@@ -131,9 +131,6 @@ let c_x = (ControlMap, Char.code 'x')
 (*s: constant [[Keymap.c_c]] *)
 let c_c = (ControlMap, Char.code 'c')
 (*e: constant [[Keymap.c_c]] *)
-(*s: constant [[Keymap.n_5]] *)
-let n_5 = (NormalMap, Char.code '5')
-(*e: constant [[Keymap.n_5]] *)
 
 (*s: function [[Keymap.all_bindings]] *)
 let all_bindings () =

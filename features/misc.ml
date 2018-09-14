@@ -107,31 +107,6 @@ let exit frame =
 (*e: function [[Complex.exit_efuns]] *)
 
 
-(*s: function [[Complex.window_load_buffer]] *)
-let window_load_buffer frame = 
-  Select.select_file_from_pwd frame "Find file: " 
-    (fun str -> 
-      let top_window = Top_window.create ()
-          (*(Window.display top_window)*)
-      in
-      Frame.load_file top_window.window str |> ignore
-    )
-[@@interactive]
-(*e: function [[Complex.window_load_buffer]] *)
-
-(*s: function [[Complex.window_change_buffer]] *)
-let window_change_buffer frame =
-  Multi_buffers.select_buffer frame "Switch to buffer in new frame: " 
-    (Multi_buffers.get_previous_frame ())
-    (fun name ->
-      let top_window = Top_window.create ()
-           (*"TODO_Display"*) 
-      in
-      Frame.change_buffer top_window.window name
-  )
-[@@interactive]
-(*e: function [[Complex.window_change_buffer]] *)
-
 (*s: function [[Complex.goto_line]] *)
 let goto_line frame =
   Select.simple_select frame "goto-line:" (fun name ->

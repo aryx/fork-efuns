@@ -17,9 +17,6 @@ open Efuns
 (*s: constant [[Efuns.init_files]] *)
 let initial_files = ref []
 (*e: constant [[Efuns.init_files]] *)
-(*s: constant [[Efuns.init_frames]] *)
-let init_frames = ref []
-(*e: constant [[Efuns.init_frames]] *)
 
 (*s: constants Main options *)
 let width      = define_option ["width"] "" int_option 80
@@ -95,8 +92,6 @@ let main () =
     (*x: [[main()]] command line options *)
       "-I",Arg.String (fun s -> Globals.load_path =:= 
           (Utils.string_to_path s) @ !!Globals.load_path), "<path>: Load Path";
-    (*x: [[main()]] command line options *)
-      "-frame", Arg.String (fun s -> init_frames := s:: !init_frames), "<file>: open a frame with <file>";
     (*x: [[main()]] command line options *)
     "-debug", Arg.Set Globals.debug, 
     " for debugging";

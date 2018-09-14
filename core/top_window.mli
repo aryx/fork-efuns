@@ -48,7 +48,6 @@ val cursor_off: t -> unit
 
 (* misc *)
 val wrap : t -> (t -> unit) -> unit -> unit
-val delete_window : 'a -> 'b
 
 (*
 val dummy_action : 'a -> unit

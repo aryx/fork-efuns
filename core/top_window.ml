@@ -459,21 +459,4 @@ let create () =
   top_window
 (*e: function [[Top_window.create]] *)
 
-(*s: function [[Top_window.delete_window]] *)
-let delete_window frame =
-  failwith "Top_window:delete_window: TODO"
-(*
-  let top_window = Window.top frame.frm_window in
-  let loc = Efuns.loc() in
-  if List.length loc.top_windows > 1 then
-    let xterm = Window.xterm top_window in
-    top_window.top_appli#destroy;
-    WX_xterm.destroy_window xterm;
-    Frame.kill_all top_window.window;
-    loc.top_windows <- Utils.list_remove loc.top_windows
-      top_window
-*)
-[@@interactive]
-(*e: function [[Top_window.delete_window]] *)
-        
 (*e: core/top_window.ml *)

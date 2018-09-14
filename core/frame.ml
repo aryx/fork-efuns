@@ -131,11 +131,6 @@ let kill frame =
   buf.buf_start <- frame.frm_start
 (*e: function [[Frame.kill]] *)
 
-(*s: function [[Frame.kill_all]] *)
-let kill_all window =
-  Window.iter kill window
-(*e: function [[Frame.kill_all]] *)
-
 (*****************************************************************************)
 (* Display *)
 (*****************************************************************************)
