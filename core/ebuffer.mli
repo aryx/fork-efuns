@@ -5,14 +5,14 @@ type t = Efuns.buffer
 (* creation *)
 
 val create : string -> string option -> Text.t -> Efuns.map -> t
-val create_buf_hook : (t -> unit) list Store.var
+val create_buf_hook : (t -> unit) list Var.t
 
 (* load/save/kill *)
 
 val read : string -> Efuns.map -> t
 val save : t -> unit
 val save_buffer_hooks: Efuns.action_name list Options.option_record
-val saved_buffer_hooks : (t -> unit) list Store.var
+val saved_buffer_hooks : (t -> unit) list Var.t
 
 (* This should not be used in plugins and hoping it will kill a buffer.
  * What you want is kill the frame managing the buffer, and then
@@ -49,7 +49,7 @@ val set_major_mode : t -> Efuns.major_mode -> unit
 val fondamental__mode : Efuns.major_mode
 val fondamental_mode : Efuns.action
 
-val modes_alist : (string * Efuns.major_mode) list Store.var
+val modes_alist : (string * Efuns.major_mode) list Var.t
 (* use modes_alist to try to automatically set the major mode *)
 val set_buffer_mode : t -> unit
 (* see also major_modes.mli *)

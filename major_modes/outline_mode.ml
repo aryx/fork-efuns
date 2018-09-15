@@ -60,11 +60,11 @@ type outline_origin_points =
     string (* original buf_name *) * Text.point array (* line number -> point *)
 
 (* variable in the origin buffer *)
-let (outline_var: outline_points Store.var) = 
+let (outline_var: outline_points Var.t) = 
   Store.create_abstr "outline_var"
 
 (* variable in the outline buffer *)
-let (outline_origin: outline_origin_points Store.var) = 
+let (outline_origin: outline_origin_points Var.t) = 
   Store.create_abstr "outline_origin"
 
 (*****************************************************************************)

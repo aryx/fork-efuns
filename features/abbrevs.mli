@@ -1,5 +1,5 @@
 
-val abbrev_table : (string, string) Hashtbl.t Store.var
+val abbrev_table : (string, string) Hashtbl.t Var.t
 
 val char_expand_abbrev: Efuns.action
 val expand_sabbrev : Efuns.action

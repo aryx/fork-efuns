@@ -16,10 +16,10 @@ type find_error_fun = Text.t -> Text.point -> error
 val find_error_gen : Str.regexp -> find_error_fun
 
 (* to setup as major mode variables in the different pl modes *)
-val find_error_location_regexp : Str.regexp Store.var
-val find_error_error_regexp: Str.regexp Store.var
+val find_error_location_regexp : Str.regexp Var.t
+val find_error_error_regexp: Str.regexp Var.t
 (* to setup if find_error_gen is not good enough for you *)
-val find_error : find_error_fun Store.var
+val find_error : find_error_fun Var.t
 
 val compile_find_makefile : bool Options.option_record
 

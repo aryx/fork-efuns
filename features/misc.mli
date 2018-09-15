@@ -1,13 +1,13 @@
 
 val insert_special_char : Efuns.action
 
-val line_comment : string Store.var
+val line_comment : string Var.t
 
 val exit : Efuns.action
 
 (* time *)
 
-val buf_mtime : float Store.var
+val buf_mtime : float Var.t
 val update_time : Efuns.buffer -> unit
 
 (* misc *)

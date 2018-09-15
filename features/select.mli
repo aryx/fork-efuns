@@ -36,7 +36,7 @@ val set_history : Efuns.map -> string ref -> string list ref -> unit
 
 
 
-val completions_buf_hook: (Efuns.buffer -> unit) list Store.var
+val completions_buf_hook: (Efuns.buffer -> unit) list Var.t
 val display_completions : Efuns.frame -> string list -> unit
 val remove_completions : Efuns.frame -> unit
 val complete_filename :
