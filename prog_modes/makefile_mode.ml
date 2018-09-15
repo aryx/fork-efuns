@@ -66,11 +66,9 @@ let local_map = define_option ["makefile_mode"; "local_map"] ""
 (* let insert_tab frame = ignore (insert_string frame "\t") *)
  
 (*s: toplevel [[Makefile_mode._1]] *)
-open Keymap (* c_c *)
 let _ =
   if !!local_map = [] then
     local_map =:= [
-      [c_c; ControlMap, Char.code 'c'], "compile";    
       [ControlMap, Char.code 'l'], "makefile_mode.color_buffer";
      (*  [NormalMap, XK.xk_Tab], "insert_tab"; *)
     ]
@@ -78,7 +76,6 @@ let _ =
   if !!interactives_map = [] then 
         interactives_map =:= [
           "color_buffer", "makefile_mode.color_buffer";
-          (*"compile", "makefile_mode.compile";*)
       ]
 *)
 (*e: toplevel [[Makefile_mode._1]] *)

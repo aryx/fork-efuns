@@ -52,8 +52,6 @@ let color_number_and_punctuation buf =
     (Str.regexp ("[|;(){}\\[\\]]")) false
       (Text.make_attr (Attr.get_color !!punctuation_color) 1 0 false);
   ()
-
-
   
 
 let _ =  
@@ -66,7 +64,6 @@ let _ =
 
     Parameter.add_option_parameter module_color;
   )
-
 
 (*
 let keyword_font = define_option ["keyword_font"] ""

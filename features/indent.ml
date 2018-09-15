@@ -22,6 +22,7 @@ let get_indent_func buf =
 let indent_phrase frame =
   let (buf, _, point) = Frame.buf_text_point frame in
   (get_indent_func buf) buf point point
+[@@interactive]
 
 let indent_region frame =
   let (buf, _, point) = Frame.buf_text_point frame in
@@ -30,6 +31,7 @@ let indent_region frame =
     if point < mark then (point,mark) else (mark,point) 
   in
    (get_indent_func buf) buf start_point end_point
+[@@interactive]
 
 
 let indent_buffer frame =
@@ -39,6 +41,7 @@ let indent_buffer frame =
   Text.set_position text end_point (Text.size text);
   (get_indent_func buf) buf start_point end_point;
   ))
+[@@interactive]
 
 (*s: function [[Simple.set_indent]] *)
 (* modify the indentation of (point) line. Does not modify point *)

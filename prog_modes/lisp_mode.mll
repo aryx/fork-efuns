@@ -19,12 +19,9 @@ type token =
   IDENT
 | COMMENT
 | STRING
-| LBRACE
-| RBRACE
-| LPAREN
-| RPAREN
-| LBRACKET
-| RBRACKET
+| LBRACE | RBRACE
+| LPAREN | RPAREN
+| LBRACKET | RBRACKET
 | NUM
 | DOT
 | QUOTE
@@ -213,6 +210,7 @@ let lisp_color_region buf start_point end_point =
   let text = buf.buf_text in
   let curseur = Text.new_point text in
   let lexbuf = lexing text start_point end_point in
+
   let rec iter prev_tok lexbuf =
     let (pos,len), token = token lexbuf in
     (match token with
@@ -403,32 +401,6 @@ let indent_between_points buf start_point end_point =
       Text.commit_session text session;
       Text.remove_point text curseur
 
-(* Interactive: indent all lines of the current block *)
-let indent_phrase frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  indent_between_points buf point point
-
-let indent_region frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let mark = Ebuffer.get_mark buf point in
-  let (start_point,end_point) =
-    if point < mark then (point,mark) else (mark,point) 
-  in
-  indent_between_points buf start_point end_point
-  
-
-let indent_buffer frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let start_point = Text.new_point text in
-  let end_point = Text.new_point text in
-  Text.set_position text end_point (Text.size text);
-  indent_between_points buf start_point end_point;
-  Text.remove_point text start_point;
-  Text.remove_point text end_point
-[@@interactive "lisp_indent_buffer"]
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let insert_and_return frame =
@@ -543,14 +515,14 @@ let _ =
   Hook.add_start_hook (fun () ->
 
     Var.set_major_var mode Compil.find_error lisp_find_error;
+    Var.set_major_var mode Indent.indent_func indent_between_points;
 
-    Keymap.add_major_key mode [c_c; ControlMap, Char.code 'c'] Compil.compile;
     (*  add_major_key mode [c_c; ControlMap,Char.code 'e']
         "lisp-eval-buffer" eval_buffer;
     *)
     Keymap.add_major_key mode [c_c; ControlMap,Char.code 'l']
       (fun frame -> lisp_color_buffer frame.frm_buffer);
-    Keymap.add_major_key mode [MetaMap,Char.code 'q'] indent_phrase;
+
     Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
     Keymap.add_major_key mode [NormalMap, XK.xk_Return] insert_and_return;
     ['}';']';')'] |> List.iter (fun char ->

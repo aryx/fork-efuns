@@ -806,11 +806,10 @@ open Keymap
 let _ =  
   Hook.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist 
-        (List.map (fun s -> s,mode) !!mode_regexp);
+      (List.map (fun s -> s,mode) !!mode_regexp);
 
     Var.set_major_var mode Indent.indent_func indent_between_points;
-    Keymap.add_major_key mode [c_c; ControlMap, Char.code 'b'] Indent.indent_buffer;
-    Keymap.add_major_key mode [MetaMap,Char.code 'q'] Indent.indent_phrase;
+
     Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
   
     ['}';']';')'] |> List.iter (fun char ->
@@ -823,7 +822,6 @@ let _ =
   if !!local_map = [] then
     local_map =:= [
       [c_c;ControlMap, Char.code 'l'], "c_mode.color_buffer" ;
-      [c_c;ControlMap, Char.code 'c'], "compile" ;
       ];
   (*  Keymap.add_prefix map [c_c]; *)
   !!local_map |> List.iter (fun (keys, action) ->

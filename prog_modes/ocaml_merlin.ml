@@ -34,7 +34,7 @@ module J = Json_type
  *     incremental by not requiring to refresh the .annot by typing 'make'
  *     
  * 
- * To use merlin from Efuns simply 'opam install merlin', which
+ * To use merlin from Efuns simply type 'opam install merlin', which
  * should make available an 'ocamlmerlin' program in your PATH.
  * 
  * Note that Emacs supports Merlin, but I actually had troubles 
@@ -79,8 +79,8 @@ module J = Json_type
  *   in Javascript and uses merlin under the hood
  * 
  * todo:
- *  - case-analysis
  *  - errors
+ *  - case-analysis
  * less:
  *  - occurences
  *  - type-enclosing, type-expression
@@ -107,8 +107,7 @@ let debug = ref true
 (* Helpers *)
 (*****************************************************************************)
 let str_of_current_position frm =
-  let point = frm.frm_point in
-  let text = frm.frm_buffer.buf_text in
+  let (_, text, point) = Frame.buf_text_point frm in
   spf "'%d:%d'" 
     (Text.point_line text point + 1)
     (Text.point_col text point)
@@ -117,12 +116,11 @@ let str_of_current_position frm =
 (* External program communication *)
 (*****************************************************************************)
 let execute_command frm command =
-  let buf = frm.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = Frame.buf_text_point frm in
   (* todo? use 'server' instead of 'single' so faster? *)
   let final_command = 
     spf "%s single %s %s" external_program command
-      (match frm.frm_buffer.buf_filename with
+      (match buf.buf_filename with
       | None -> ""
       | Some file -> spf "-filename '%s'" file
       )
@@ -217,9 +215,7 @@ let completion_hist = ref []
  *  - use minibuffer *Completion* style (see select.ml)
  *)
 let complete_prefix_at_cursor frm =
-  let buf = frm.frm_buffer in
-  let text = buf.buf_text in
-  let point = frm.frm_point in
+  let (buf, text, point) = Frame.buf_text_point frm in
   let prefix = 
     Text.with_dup_point text point (fun mark ->
       let tbl = buf.buf_syntax_table in
@@ -333,12 +329,15 @@ let goto_def frm =
 
 let mode = Ebuffer.new_minor_mode  "Merlin" []
 
+let merlin_mode = 
+  Minor_modes.toggle_minor mode
+[@@interactive]
+
 (*****************************************************************************)
 (* Setup *)
 (*****************************************************************************)
 
 let _ = 
-  Action.define_action "merlin_mode" (Minor_modes.toggle_minor mode);
 
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 't']
     show_type_at_cursor;

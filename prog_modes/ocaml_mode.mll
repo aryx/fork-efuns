@@ -241,8 +241,6 @@ let keyword_table =
     "parser", PARSER;
     "private", PRIVATE;
     "virtual", VIRTUAL;
-
-
   ];
   h
   
@@ -1087,32 +1085,6 @@ let indent_between_points buf start_point end_point =
       Text.commit_session text session;
       Text.remove_point text curseur
 
-(* Interactive: indent all lines of the current block *)
-let indent_phrase frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  indent_between_points buf point point
-
-let indent_region frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let mark = Ebuffer.get_mark buf point in
-  let (start_point,end_point) =
-    if point < mark then (point,mark) else (mark,point) 
-  in
-  indent_between_points buf start_point end_point
-
-
-let indent_buffer frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let start_point = Text.new_point text in
-  let end_point = Text.new_point text in
-  Text.set_position text end_point (Text.size text);
-  indent_between_points buf start_point end_point;
-  Text.remove_point text start_point;
-  Text.remove_point text end_point
-
 (* Interactive: indent the current line, insert newline and indent next line *)
 let insert_and_return frame =
   let buf = frame.frm_buffer in
@@ -1284,7 +1256,7 @@ let ocaml_find_error text error_point =
 (***********************************************************************)
 (*********************  structures ********************)
 (***********************************************************************)
-let c_c = (ControlMap,Char.code 'c')
+open Keymap
 
 let structures = define_option ["ocaml_mode"; "structures"] ""
     (list_option Keymap.binding_option) []
@@ -1335,7 +1307,10 @@ let install buf =
 
 
 let mode =  Ebuffer.new_major_mode "Ocaml" (Some install)
-let ocaml_mode frame = Ebuffer.set_major_mode frame.frm_buffer mode
+let ocaml_mode = 
+  Major_modes.enable_major_mode mode
+[@@interactive]
+
 
 (***********************************************************************)
 (********************* setup ********************)
@@ -1347,13 +1322,10 @@ let local_map = define_option ["ocaml_mode"; "local_map"] ""
 let setup_maps () =
   if !!local_map = [] 
   then local_map =:= [
-      [c_c; ControlMap, Char.code 'c'], "compile";    
       [ControlMap, Char.code 'l'], "ocaml_mode.color_buffer";
-      [c_c; ControlMap, Char.code 'b'], "ocaml_mode.indent_buffer";
       [c_c; ControlMap, Char.code 'C'], "ocaml_mode.color_buffer";
 (*      [c_c; ControlMap,Char.code 'e'], "ocaml_mode.eval_buffer"; *)
       [c_c; ControlMap,Char.code 'l'], "ocaml_mode.color_buffer";
-      [MetaMap,Char.code 'q'], "ocaml_mode.indent_phrase";
       [NormalMap,XK.xk_Tab], "ocaml_mode.indent_line";
       [NormalMap, Char.code '.'], "ocaml_mode.char_expand_abbrev";
       [NormalMap, Char.code ';'], "ocaml_mode.char_expand_abbrev";
@@ -1362,73 +1334,59 @@ let setup_maps () =
 (* TODO: pad: have M-x color_buffer use a per-major-mode variable
   if !!interactives_map = [] 
   then interactives_map =:= [
-(*          "compile", "ocaml_mode.compile";*)
           "color_buffer", "ocaml_mode.color_buffer";
       ]
 *)
 
 
-let setup () = 
-
-  setup_ocaml_path ();
-  setup_abbrevs ();
-  setup_structures ();
-
-  Action.define_action "ocaml_mode" ocaml_mode;
-  Action.define_action "ocaml_mode.color_buffer" 
-    (fun frame -> ocaml_color_buffer frame.frm_buffer);
-  Action.define_action "ocaml_mode.indent_buffer" indent_buffer;
-(*  define_action "ocaml_mode.eval_buffer" eval_buffer; *)
-  Action.define_action "ocaml_mode.indent_phrase" indent_phrase;
-  Action.define_action "ocaml_mode.indent_line" indent_current_line;
-  Action.define_action "ocaml_mode.char_expand_abbrev" (fun frame ->
-      Abbrevs.expand_sabbrev frame; Edit.self_insert_command frame);
-  Action.define_action "ocaml_mode.return_expand_abbrev"
-    (fun frame -> Abbrevs.expand_sabbrev frame; insert_and_return frame); 
-
-  setup_maps ();
-
-  Var.set_major_var mode Compil.find_error ocaml_find_error;
-
-
-  let map = mode.maj_map in
-  !!local_map |> List.iter (fun (keys, action) ->
-      try
-        let f = Action.execute_action action in
-        Keymap.add_binding map keys f;
-      with e ->
-        Log.printf "Error for action %s" action;
-        Log.exn "%s\n" e;
-  );
-  ()
-
-
 let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
     (list_option string_option) 
     [".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)"]
-  
-let _ =  
-  Hook.add_start_hook (fun () ->
-    let alist = Var.get_global Ebuffer.modes_alist in
-    Var.set_global Ebuffer.modes_alist 
-      ((List.map (fun s -> s,mode) !!mode_regexp) @ alist);
-    
-    Parameter.add_option_parameter ocaml_path;
-    Parameter.add_option_parameter indentation;
 
-    setup ()
-  )  
 
 (*** Ocaml minor mode (for Makefiles (!)) ***)
 
 let minor_mode = Ebuffer.new_minor_mode "ocaml" []
+let ocaml_minor_mode = 
+  Minor_modes.toggle_minor minor_mode
+[@@interactive]
 
+  
 let _ =  
   Hook.add_start_hook (fun () ->
-  Keymap.add_binding minor_mode.min_map 
-   [c_c; ControlMap, Char.code 'c'] (Action.execute_action "compile")
-   |> ignore;
-  Action.define_action "ocaml_minor_mode" (Minor_modes.toggle_minor minor_mode)
-  )
+    Var.add_global Ebuffer.modes_alist (List.map (fun s ->s,mode)!!mode_regexp);
+    Parameter.add_option_parameter ocaml_path;
+    Parameter.add_option_parameter indentation;
+
+    setup_ocaml_path ();
+    setup_abbrevs ();
+    setup_structures ();
+    
+    Action.define_action "ocaml_mode.color_buffer" 
+      (fun frame -> ocaml_color_buffer frame.frm_buffer);
+(*    define_action "ocaml_mode.eval_buffer" eval_buffer; *)
+    Action.define_action "ocaml_mode.indent_line" indent_current_line;
+    Action.define_action "ocaml_mode.char_expand_abbrev" (fun frame ->
+        Abbrevs.expand_sabbrev frame; Edit.self_insert_command frame);
+    Action.define_action "ocaml_mode.return_expand_abbrev"
+      (fun frame -> Abbrevs.expand_sabbrev frame; insert_and_return frame); 
+    
+    setup_maps ();
+    
+    Var.set_major_var mode Compil.find_error ocaml_find_error;
+    Var.set_major_var mode Indent.indent_func indent_between_points;
+    
+    let map = mode.maj_map in
+    !!local_map |> List.iter (fun (keys, action) ->
+
+        try
+          let f = Action.execute_action action in
+          Keymap.add_binding map keys f;
+        with e ->
+          Log.printf "Error for action %s" action;
+          Log.exn "%s\n" e;
+    );
+    ()
+  )  
 
 } 

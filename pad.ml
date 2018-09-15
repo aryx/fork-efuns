@@ -26,6 +26,11 @@ let _ =
       [ControlMap, Char.code '/'], Edit.undo;
 
       [MetaMap, XK.xk_Return], Compil.compile;
+      (* lefessant did that *)
+      [Keymap.c_c; ControlMap, Char.code 'c'], Compil.compile;
+      [Keymap.c_c; ControlMap, Char.code 'b'], Indent.indent_buffer;
+      [MetaMap,Char.code 'q'], Indent.indent_phrase;
+
       [ControlMap, Char.code 'n' ], Compil.next_error;
 
       [MetaMap, Char.code '1'], Shell.eshell_num;
