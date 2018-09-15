@@ -692,31 +692,6 @@ let indent_between_points buf start_point end_point =
       Text.commit_session text session;
       Text.remove_point text curseur
 
-(* Interactive: indent all lines of the current block *)
-let indent_phrase frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  indent_between_points buf point point
-
-let indent_region frame =
-  let buf = frame.frm_buffer in
-  let point = frame.frm_point in
-  let mark = Ebuffer.get_mark buf point in
-  let (start_point,end_point) =
-    if point < mark then (point,mark) else (mark,point) 
-  in
-  indent_between_points buf start_point end_point
-
-
-let indent_buffer frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let start_point = Text.new_point text in
-  let end_point = Text.new_point text in
-  Text.set_position text end_point (Text.size text);
-  indent_between_points buf start_point end_point;
-  Text.remove_point text start_point;
-  Text.remove_point text end_point
 
 (* Interactive: indent the current line, insert newline and indent next line *)
 let insert_and_return frame =
@@ -832,11 +807,13 @@ let _ =
   Hook.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist 
         (List.map (fun s -> s,mode) !!mode_regexp);
-  Keymap.add_major_key mode [c_c; ControlMap, Char.code 'b'] indent_buffer;
-  Keymap.add_major_key mode [MetaMap,Char.code 'q'] indent_phrase;
-  Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
+
+    Var.set_major_var mode Indent.indent_func indent_between_points;
+    Keymap.add_major_key mode [c_c; ControlMap, Char.code 'b'] Indent.indent_buffer;
+    Keymap.add_major_key mode [MetaMap,Char.code 'q'] Indent.indent_phrase;
+    Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
   
-  ['}';']';')'] |> List.iter (fun char ->
+    ['}';']';')'] |> List.iter (fun char ->
       Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
         Edit.self_insert_command frame;
         Paren_mode.highlight_paren frame
@@ -847,10 +824,6 @@ let _ =
     local_map =:= [
       [c_c;ControlMap, Char.code 'l'], "c_mode.color_buffer" ;
       [c_c;ControlMap, Char.code 'c'], "compile" ;
-      [MetaMap,Char.code 'q'], "c_mode.indent_phrase";
-      [NormalMap,XK.xk_Tab], "c_mode.indent_line";
-      [c_c; ControlMap, Char.code 'b'], "c_mode.indent_buffer";
-  
       ];
   (*  Keymap.add_prefix map [c_c]; *)
   !!local_map |> List.iter (fun (keys, action) ->
