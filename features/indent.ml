@@ -34,6 +34,7 @@ let indent_region frame =
 [@@interactive]
 
 
+(* alt: C-x h and then M-x color_region *)
 let indent_buffer frame =
   let (buf, text, _) = Frame.buf_text_point frame in
   Text.with_new_point text (fun start_point ->

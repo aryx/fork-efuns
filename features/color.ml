@@ -41,4 +41,50 @@ let color buf regexp strict attr =
 let color a b c d = Common.profile_code "Simple.color" 
   (fun () -> color a b c d)
 
+(*****************************************************************************)
+(* Per-mode colorization  *)
+(*****************************************************************************)
+
+(* should be set by each major mode to point to the right function *)
+let color_func = Store.create_abstr "Color.color_func"
+
+(* alt: 
+ *  - recolorize after save automatically
+ *  - per-major-mode interactive M-x color_buffer (but I removed support
+ *    for this)
+ *)
+let get_color_func buf =
+  Var.get_var buf color_func
+
+
+let color_region frame =
+  let (buf, _, point) = Frame.buf_text_point frame in
+  let mark = Ebuffer.get_mark buf point in
+  let (start_point,end_point) =
+    if point < mark then (point,mark) else (mark,point) 
+  in
+   (get_color_func buf) buf start_point end_point
+[@@interactive]
+
+let color_buffer_buf buf =
+  let text = buf.buf_text in
+  (* less: Text.unset_attrs text;   was done in ocaml_mode.mll *)
+
+  Text.with_new_point text (fun start_point ->
+  Text.with_new_point text (fun end_point ->
+  Text.set_position text end_point (Text.size text);
+  (* less: 
+   *  let hooks = 
+   *    try Var.get_global Pl_colors.color_buf_hook with Not_found ->[] in
+   *  Hook.exec_hooks hooks buf;
+   *)
+  (get_color_func buf) buf start_point end_point;
+  ))
+
+(* alt: C-x h and then M-x color_region *)
+let color_buffer frame =
+  color_buffer_buf frame.frm_buffer
+[@@interactive]
+
+
 (*e: features/color.ml *)

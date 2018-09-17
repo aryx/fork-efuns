@@ -196,7 +196,7 @@ let lexing text start_point end_point =
 (*********************** colors ***********************)
 (***********************************************************************)
 
-let lisp_color_region buf start_point end_point =
+let color_region buf start_point end_point =
 
   let _keyword_attr = 
     Text.make_attr (Attr.get_color !!Pl_colors.keyword_color) 1 0 false in
@@ -233,18 +233,6 @@ let lisp_color_region buf start_point end_point =
   with _ ->
     buf.buf_modified <- buf.buf_modified + 1;
     Text.remove_point text curseur
-
-let lisp_color_buffer buf =
-  let text = buf.buf_text in
-  let start_point = Text.new_point text in
-  let end_point = Text.new_point text in
-  Text.set_position text end_point (Text.size text);
-  lisp_color_region buf start_point end_point;
-  Text.remove_point text start_point;
-  Text.remove_point text end_point
-
-let lisp_color frame =
-  lisp_color_buffer frame.frm_buffer
 
 (***********************************************************************)
 (************************  abbreviations ********************)
@@ -410,7 +398,7 @@ let insert_and_return frame =
 (* colors *)
   let start_point = Text.dup_point text point in
   Text.bmove text start_point (Text.point_to_bol text start_point);
-  lisp_color_region buf start_point point;
+  color_region buf start_point point;
   Text.remove_point text start_point;
 (* indentations *)
   let curseur = Text.dup_point text point in
@@ -447,7 +435,7 @@ let indent_current_line frame =
   let start_point = Text.dup_point text point in
   Text.bmove text start_point (Text.point_to_bol text start_point);
   Text.fmove text end_point (Text.point_to_eol text end_point);
-  lisp_color_region buf start_point end_point;
+  color_region buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point;
 (* indentations *)
@@ -464,15 +452,15 @@ let indent_current_line frame =
   in
   Indent.set_indent text point current
 
-let lisp_regexp_string =
+let regexp_string =
   "File \"\\(.*\\)\", line \\([0-9]+\\), characters \\([0-9]+\\)-\\([0-9]+\\):"
-let lisp_error_regexp = Str.regexp lisp_regexp_string
+let error_regexp = Str.regexp regexp_string
 
 
 open Compil
-let lisp_find_error text error_point =
+let find_error text error_point =
   let groups = 
-    Text.search_forward_groups text lisp_error_regexp 
+    Text.search_forward_groups text error_regexp 
       error_point 4 in
   let error =
     { 
@@ -490,7 +478,7 @@ let lisp_find_error text error_point =
 (***********************************************************************)
 
 let install buf =
-  lisp_color_buffer buf; 
+  Color.color_buffer_buf buf; 
 
   buf.buf_syntax_table.(Char.code '_') <- true;
   buf.buf_syntax_table.(Char.code '-') <- true;
@@ -509,19 +497,16 @@ let lisp_mode =
   Major_modes.enable_major_mode mode
 [@@interactive]
   
-open Keymap
-
 let _ = 
   Hook.add_start_hook (fun () ->
 
-    Var.set_major_var mode Compil.find_error lisp_find_error;
+    Var.set_major_var mode Compil.find_error find_error;
     Var.set_major_var mode Indent.indent_func indent_between_points;
+    Var.set_major_var mode Color.color_func color_region;
 
     (*  add_major_key mode [c_c; ControlMap,Char.code 'e']
         "lisp-eval-buffer" eval_buffer;
     *)
-    Keymap.add_major_key mode [c_c; ControlMap,Char.code 'l']
-      (fun frame -> lisp_color_buffer frame.frm_buffer);
 
     Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
     Keymap.add_major_key mode [NormalMap, XK.xk_Return] insert_and_return;

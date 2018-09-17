@@ -493,7 +493,7 @@ let setup_ocaml_path () =
 (* Colors *)
 (***********************************************************************)
 
-let ocaml_color_region buf start_point end_point =
+let color_region buf start_point end_point =
   let keyword_attr = 
     Text.make_attr (Attr.get_color !!Pl_colors.keyword_color) 1 
                                (Attr.get_font !!(*keyword_*)Globals.font) false in
@@ -543,20 +543,6 @@ let ocaml_color_region buf start_point end_point =
     buf.buf_modified <- buf.buf_modified + 1;
     Text.remove_point text curseur
 
-
-
-let ocaml_color_buffer buf =
-  let text = buf.buf_text in
-  Text.unset_attrs text;
-  let start_point = Text.new_point text in
-  let end_point = Text.new_point text in
-  Text.set_position text end_point (Text.size text);
-  let hooks = try Var.get_global Pl_colors.color_buf_hook with Not_found ->[] in
-  Hook.exec_hooks hooks buf;
-  ocaml_color_region buf start_point end_point;
-  Text.remove_point text start_point;
-  Text.remove_point text end_point
-    
 
 (***********************************************************************)
 (************************  abbreviations ********************)
@@ -1093,7 +1079,7 @@ let insert_and_return frame =
 (* colors *)
   let start_point = Text.dup_point text point in
   Text.bmove text start_point (Text.point_to_bol text start_point);
-  ocaml_color_region buf start_point point;
+  color_region buf start_point point;
   Text.remove_point text start_point;
 (* indentations *)
   let curseur = Text.dup_point text point in
@@ -1130,7 +1116,7 @@ let indent_current_line frame =
   let start_point = Text.dup_point text point in
   Text.bmove text start_point (Text.point_to_bol text start_point);
   Text.fmove text end_point (Text.point_to_eol text end_point);
-  ocaml_color_region buf start_point end_point;
+  color_region buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point;
 (* indentations *)
@@ -1230,15 +1216,15 @@ the word under the cursor. During parsing, an envirronment is built and
 then used to find the word. 
 *)
 
-let ocaml_error_regexp = define_option ["ocaml_mode"; "error_regexp"] ""
+let error_regexp = define_option ["ocaml_mode"; "error_regexp"] ""
     regexp_option (string_to_regex
     "File \"\\(.*\\)\", line \\([0-9]+\\), characters \\([0-9]+\\)[-]\\([0-9]*\\):")
 
 open Compil
   
-let ocaml_find_error text error_point =
+let find_error text error_point =
   let groups = 
-    Text.search_forward_groups text (snd !!ocaml_error_regexp) 
+    Text.search_forward_groups text (snd !!error_regexp) 
       error_point 4 in
   let error =
     { 
@@ -1288,7 +1274,7 @@ let ocaml_hooks = define_option ["ocaml_mode"; "hooks"] ""
   [  "paren_mode" ]
   
 let install buf =
-  ocaml_color_buffer buf; 
+  Color.color_buffer_buf buf; 
 
   let syntax = !!syntax in
   for i = 0 to String.length syntax - 1 do
@@ -1307,6 +1293,7 @@ let install buf =
 
 
 let mode =  Ebuffer.new_major_mode "Ocaml" (Some install)
+
 let ocaml_mode = 
   Major_modes.enable_major_mode mode
 [@@interactive]
@@ -1322,22 +1309,12 @@ let local_map = define_option ["ocaml_mode"; "local_map"] ""
 let setup_maps () =
   if !!local_map = [] 
   then local_map =:= [
-      [ControlMap, Char.code 'l'], "ocaml_mode.color_buffer";
-      [c_c; ControlMap, Char.code 'C'], "ocaml_mode.color_buffer";
 (*      [c_c; ControlMap,Char.code 'e'], "ocaml_mode.eval_buffer"; *)
-      [c_c; ControlMap,Char.code 'l'], "ocaml_mode.color_buffer";
       [NormalMap,XK.xk_Tab], "ocaml_mode.indent_line";
       [NormalMap, Char.code '.'], "ocaml_mode.char_expand_abbrev";
       [NormalMap, Char.code ';'], "ocaml_mode.char_expand_abbrev";
       [NormalMap, XK.xk_Return], "ocaml_mode.return_expand_abbrev";
     ]
-(* TODO: pad: have M-x color_buffer use a per-major-mode variable
-  if !!interactives_map = [] 
-  then interactives_map =:= [
-          "color_buffer", "ocaml_mode.color_buffer";
-      ]
-*)
-
 
 let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
     (list_option string_option) 
@@ -1347,6 +1324,7 @@ let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
 (*** Ocaml minor mode (for Makefiles (!)) ***)
 
 let minor_mode = Ebuffer.new_minor_mode "ocaml" []
+
 let ocaml_minor_mode = 
   Minor_modes.toggle_minor minor_mode
 [@@interactive]
@@ -1362,8 +1340,6 @@ let _ =
     setup_abbrevs ();
     setup_structures ();
     
-    Action.define_action "ocaml_mode.color_buffer" 
-      (fun frame -> ocaml_color_buffer frame.frm_buffer);
 (*    define_action "ocaml_mode.eval_buffer" eval_buffer; *)
     Action.define_action "ocaml_mode.indent_line" indent_current_line;
     Action.define_action "ocaml_mode.char_expand_abbrev" (fun frame ->
@@ -1373,15 +1349,13 @@ let _ =
     
     setup_maps ();
     
-    Var.set_major_var mode Compil.find_error ocaml_find_error;
+    Var.set_major_var mode Compil.find_error find_error;
     Var.set_major_var mode Indent.indent_func indent_between_points;
+    Var.set_major_var mode Color.color_func color_region;
     
-    let map = mode.maj_map in
     !!local_map |> List.iter (fun (keys, action) ->
-
         try
-          let f = Action.execute_action action in
-          Keymap.add_binding map keys f;
+          Keymap.add_major_key mode keys (Action.execute_action action);
         with e ->
           Log.printf "Error for action %s" action;
           Log.exn "%s\n" e;

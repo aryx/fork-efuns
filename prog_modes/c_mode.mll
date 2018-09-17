@@ -59,10 +59,8 @@ type token =
 | EXTERN
   
 (* parenthesis *)
-| LBRACE
-| RBRACE
-| LPAREN
-| RPAREN
+| LBRACE | RBRACE
+| LPAREN | RPAREN
 | SEMI
 | COMMA
   
@@ -366,15 +364,15 @@ let lexing text start_point end_point =
 (* Find errors *)
 (***********************************************************************)
 
-let c_regexp_string =
+let regexp_string =
   "^\\([^:\n]+\\):\\([0-9]+\\):.*$"
-let c_error_regexp = Str.regexp c_regexp_string
+let error_regexp = Str.regexp regexp_string
 
 open Compil
 
-let c_find_error text error_point =
+let find_error text error_point =
   let groups = 
-    Text.search_forward_groups text c_error_regexp 
+    Text.search_forward_groups text error_regexp 
       error_point 2 in
   let error =
     { 
@@ -391,7 +389,7 @@ let c_find_error text error_point =
 (******************* couleurs *********************)
 (***********************************************************************)
 
-let c_color_region buf start_point end_point =
+let color_region buf start_point end_point =
   let keyword_attr = 
     Text.make_attr (Attr.get_color !!Pl_colors.keyword_color) 1 0 false in
   let string_attr = 
@@ -464,15 +462,6 @@ let c_color_region buf start_point end_point =
     _ ->
       buf.buf_modified <- buf.buf_modified + 1;
       Text.remove_point text curseur
-
-let c_color_buffer buf =
-  let text = buf.buf_text in
-  let start_point = Text.new_point text in
-  let end_point = Text.new_point text in
-  Text.set_position text end_point (Text.size text);
-  c_color_region buf start_point end_point;
-  Text.remove_point text start_point;
-  Text.remove_point text end_point
 
 (***********************************************************************)
 (*********************** indentation ************************)
@@ -701,7 +690,7 @@ let insert_and_return frame =
 (* colors *)
   let start_point = Text.dup_point text point in
   Text.bmove text start_point (Text.point_to_bol text start_point);
-  c_color_region buf start_point point;
+  color_region buf start_point point;
   Text.remove_point text start_point;
 (* indentations *)
   let curseur = Text.dup_point text point in
@@ -738,7 +727,7 @@ let indent_current_line frame =
   let start_point = Text.dup_point text point in
   Text.bmove text start_point (Text.point_to_bol text start_point);
   Text.fmove text end_point (Text.point_to_eol text end_point);
-  c_color_region buf start_point end_point;
+  color_region buf start_point end_point;
   Text.remove_point text start_point;
   Text.remove_point text end_point;
 (* indentations *)
@@ -768,7 +757,7 @@ let abbreviations =
 (***********************************************************************)
 
 let install buf =
-  c_color_buffer buf; 
+  Color.color_buffer_buf buf; 
   buf.buf_syntax_table.(Char.code '_') <- true;
 
   let abbrevs =
@@ -794,21 +783,16 @@ let c_mode =
 (***********************************************************************)
   
 let mode_regexp = define_option ["c_mode"; "mode_regexp"] ""
-    (list_option string_option) [ 
-    ".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$"
-  ]
-  
+   (list_option string_option) [".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$"]
 let local_map = define_option ["c_mode"; "local_map"] ""
     (list_option Keymap.binding_option) []
 
-open Keymap
-
 let _ =  
   Hook.add_start_hook (fun () ->
-    Var.add_global Ebuffer.modes_alist 
-      (List.map (fun s -> s,mode) !!mode_regexp);
+    Var.add_global Ebuffer.modes_alist (List.map(fun s->s,mode) !!mode_regexp);
 
     Var.set_major_var mode Indent.indent_func indent_between_points;
+    Var.set_major_var mode Color.color_func color_region;
 
     Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
   
@@ -819,11 +803,6 @@ let _ =
       )
   );
 
-  if !!local_map = [] then
-    local_map =:= [
-      [c_c;ControlMap, Char.code 'l'], "c_mode.color_buffer" ;
-      ];
-  (*  Keymap.add_prefix map [c_c]; *)
   !!local_map |> List.iter (fun (keys, action) ->
       try
         Keymap.add_major_key mode keys (Action.execute_action action)

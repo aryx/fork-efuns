@@ -86,6 +86,7 @@ let mode =  Ebuffer.new_major_mode "OCaml" (Some (fun buf ->
 
 let caml_mode frame = 
   Ebuffer.set_major_mode frame.frm_buffer mode
+[@@interactive]
 
 (*****************************************************************************)
 (* Setup *)
@@ -95,11 +96,10 @@ let _ =
   Hook.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist [".*\\.\\(ml\\|mli\\|mll\\|mly\\)",mode];
     
-    Action.define_action "caml_mode" caml_mode;
-    Var.set_major_var mode Compil.find_error 
-      Ocaml_mode.ocaml_find_error;
+    (* reuse some functions from ocaml_mode.ml from LeFessant *)
+    Var.set_major_var mode Compil.find_error Ocaml_mode.find_error;
     Var.set_major_var mode Compil.find_error_location_regexp 
-      (snd !!Ocaml_mode.ocaml_error_regexp);
+      (snd !!Ocaml_mode.error_regexp);
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
   )

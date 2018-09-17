@@ -29,6 +29,7 @@ let _ =
       (* lefessant did that *)
       [Keymap.c_c; ControlMap, Char.code 'c'], Compil.compile;
       [Keymap.c_c; ControlMap, Char.code 'b'], Indent.indent_buffer;
+      [Keymap.c_c; ControlMap, Char.code 'l'], Color.color_buffer;
       [MetaMap,Char.code 'q'], Indent.indent_phrase;
 
       [ControlMap, Char.code 'n' ], Compil.next_error;
