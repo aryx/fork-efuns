@@ -29,3 +29,6 @@ $(TARGET): $(OBJS)
 	$(OCAMLC) -o $(TARGET) $(SYSLIBS) $(LIBS) $(OBJS)
 $(TARGET).opt: $(OPTOBJS) $(LIBS:.cma=.cmxa)
 	$(OCAMLOPT) -o $(TARGET).opt $(SYSLIBS:.cma=.cmxa) $(LIBS:.cma=.cmxa) $(OPTOBJS)
+
+clean::
+	rm -f $(TARGET) $(TARGET.opt)

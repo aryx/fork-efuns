@@ -64,12 +64,16 @@ let mapper argv =
     structure = fun mapper xs ->
       xs |> List.map (fun item ->
         match item with
+        (* let <fname> = ... [@@interactive <args_opt> *)
         | { pstr_desc = 
               Pstr_value (Nonrecursive,
                 [{pvb_pat = {ppat_desc = Ppat_var {txt = fname; _}; _};
                   pvb_attributes = [({txt = "interactive"; loc}, PStr args)]; _}
                 ])
           ; _} -> 
+          (* you can change the action name by specifying an explicit name
+           * with [@@interactive "<explicit_name>"]
+           *)
           let action_name =
             match args with
             | [] -> fname
@@ -82,6 +86,7 @@ let mapper argv =
                 Location.error ~loc 
                   "@@interactive accepts nothing or a string"))
           in
+          (* let _ = Action.define_action <action_name> <fname> *)
           let action = 
             Str.eval 
               (Exp.apply 

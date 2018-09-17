@@ -211,8 +211,8 @@ PPX=-ppx $(TOP)/ppx/ppx_interactive
 ##############################################################################
 .PHONY:: all all.opt opt top clean distclean
 
-all:: $(PROGS)
-opt: $(PROGS:=.opt)
+all:: ppx/ppx_interactive $(PROGS)
+opt: ppx/ppx_interactive $(PROGS:=.opt)
 
 # need -linkall! otherwise the 'let _ = add_start_hook ...' will not be run.
 $(TARGET): $(OBJS) $(LIBS)
@@ -230,6 +230,8 @@ clean::
 	rm -f */*.cm[ioxa] */*.[oa] */*.cmxa */*.annot */*.cmt*
 	rm -f $(PROGS) *.opt
 
+ppx/ppx_interactive:
+	cd ppx; make
 
 efuns_client: ipc/efuns_client.cmo
 	$(OCAMLC) $(BYTECODE_STATIC) -o $@ $(SYSLIBS) $(LIBS) $^
