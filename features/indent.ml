@@ -129,15 +129,6 @@ let print_exc e s =
 (* Helpers of helper *)
 (*****************************************************************************)
 
-(* less: maybe can get rid of this *)
-let compute_indentations get_indentations lexing = 
- fun buf start_point end_point ->
-  let text = buf.buf_text in
-  Text.with_dup_point text start_point (fun curseur ->
-    let lexbuf = lexing text curseur end_point in
-    get_indentations lexbuf
-  )
-
 let rec pop_indentations indents =
   match indents with
   | [] -> raise Not_found
@@ -183,15 +174,14 @@ let set_indent text point offset =
 (* Indent between points (for indent_func) helpers using get_indentations *)
 (*****************************************************************************)
 
-let indent_between_points get_indentations lexing start_regexp = 
+let indent_between_points get_indentations start_regexp = 
  fun buf start_point end_point ->
   let text = buf.buf_text in
   text |> Text.with_session (fun session ->
   Text.with_dup_point text start_point (fun curseur ->
    try
     find_phrase_start start_regexp buf curseur;
-    let indentations = 
-      compute_indentations get_indentations lexing buf curseur end_point in
+    let indentations = get_indentations buf curseur end_point in
     (* remove the Eof indentation *)
     let _,_,indentations = pop_indentations indentations in
     (* indent other lines *)
@@ -208,7 +198,7 @@ let indent_between_points get_indentations lexing start_regexp =
 (*****************************************************************************)
 (* Indent current line (Tab) helper *)
 (*****************************************************************************)
-let indent_current_line get_indentations lexing start_regexp color_region = 
+let indent_current_line get_indentations start_regexp color_region = 
  fun frame ->
   let (buf, text, point) = Frame.buf_text_point frame in
 
@@ -223,8 +213,7 @@ let indent_current_line get_indentations lexing start_regexp color_region =
   (* indentation *)
   Text.with_dup_point text point (fun curseur ->
     find_phrase_start start_regexp buf curseur;
-    let indentations = 
-      compute_indentations get_indentations lexing buf curseur point in
+    let indentations = get_indentations buf curseur point in
     let (_next,pos,tail) = pop_indentations indentations in
     let current =
       try

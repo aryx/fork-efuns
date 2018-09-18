@@ -203,18 +203,24 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
       parse lexbuf token stack [] indent 
         (Indent.fix (indent+offset) eols indents)
 
-let get_indentations lexbuf =
-  parse lexbuf EOFCOMMENT [] [] 0 []
+(* could factorize this function more between the different major modes,
+ * but not worth it; it complexifies things.
+ *)
+let get_indentations buf start_point end_point =
+  let text = buf.buf_text in
+  Text.with_dup_point text start_point (fun curseur ->
+    let lexbuf = Common_lexer.lexing text curseur end_point in
+    parse lexbuf EOFCOMMENT [] [] 0 []
+  )
+
 
 (* Now, use the indentation from the parser *)
 
 let indent_between_points = 
-  Indent.indent_between_points get_indentations Common_lexer.lexing
-    start_regexp
+  Indent.indent_between_points get_indentations start_regexp
 
 let indent_current_line =
-  Indent.indent_current_line get_indentations Common_lexer.lexing
-    start_regexp color_region
+  Indent.indent_current_line get_indentations start_regexp color_region
 
 (***********************************************************************)
 (************************  abbreviations ********************)
