@@ -102,65 +102,7 @@ let color_region buf start_point end_point =
   
 let start_regexp = Str.regexp "^{";;
 
-type indentations = (int * (Text.position list)) list
-
-let print_indentations list =
-  print_string "Indentations :"; print_newline ();
-  List.iter (fun (indent, list) ->
-      List.iter (fun pos -> 
-          Printf.printf "Line at %d with %d" pos indent
-      ) list
-  ) list;
-  print_newline ()
-
-let print_stack stack =
-  print_string "Indentation stack:"; print_newline ();
-  let rec iter stack =
-    match stack with
-      [] -> ()
-    | (token, indent) :: stack ->
-        Printf.printf "Token %s indent %d" 
-          (List.assoc token tokens) indent;
-        print_newline ();
-        iter stack
-  in
-  iter stack
-
-let rec pop_to_top stack =
-  match stack with
-    [] -> ([],0)
-  | _ :: stack -> pop_to_top stack
-
-let rec pop_to kwd stack =
-  match stack with
-    [] -> ([],0)
-  | (kwd',indent) :: stack when kwd' = kwd -> stack, indent
-  | _ :: stack -> pop_to kwd stack
-
-let rec pop_to_kwds kwds stack =
-  match stack with
-    [] -> ([],RBRACE, 0)
-  | (kwd,indent) :: stack when List.memq kwd kwds -> 
-      stack, kwd, indent
-  | _ :: stack -> pop_to_kwds kwds stack
-      
-let fix indent eols indents =
-  match eols with
-    [] -> indents
-  | _ -> 
-      match indents with
-        (pindent,peols) :: tail when pindent = indent ->
-          (indent, eols @ peols) :: tail
-      | _ ->  (indent,eols) :: indents
-
-let rec pop_indentation indents =
-  match indents with
-    [] -> raise Not_found
-  | (indent, eols) :: indents ->
-      match eols with
-        [] -> pop_indentation indents
-      | eol :: eols ->
-          (indent, eol, (indent,eols) :: indents)
+let pop_to_kwds = Indent.pop_to_kwds RBRACE
 
 let token_offset prev_tok = 0
 (*
@@ -192,9 +134,9 @@ let rec parse lexbuf prev_tok stack eols indent indents =
   let _, token = token lexbuf in
   match token with
     EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
-  | EOF pos -> fix indent  (pos :: eols) indents
-  | EOFSTRING -> (0,[0]) :: (fix indent eols indents)
-  | EOFCOMMENT -> (2,[0]) :: (fix indent eols indents)
+  | EOF pos -> Indent.fix indent  (pos :: eols) indents
+  | EOFSTRING -> (0,[0]) :: (Indent.fix indent eols indents)
+  | EOFCOMMENT -> (2,[0]) :: (Indent.fix indent eols indents)
   | COMMENT -> parse lexbuf prev_tok stack [] indent indents
 
       (* Terminated structures *)
@@ -210,11 +152,11 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       in
       let offset = token_offset prev_tok in
       parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
-      (fix (indent+offset) eols indents)
+      (Indent.fix (indent+offset) eols indents)
   | LPAREN          (* LPAREN ... RPAREN *) ->
       let offset = token_offset prev_tok in
       parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
-      (fix (indent+offset) eols indents)
+      (Indent.fix (indent+offset) eols indents)
       
   | ELSE            (* ELSE { ... } *)
   | FOR             (* FOR (...) { ... }  *)
@@ -222,10 +164,10 @@ let rec parse lexbuf prev_tok stack eols indent indents =
   | IF              (* IF (...) { ... } *)
     ->
       parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
-      (fix indent eols indents)
+      (Indent.fix indent eols indents)
       
   | RBRACE -> (* This might terminate a IF/WHILE/FOR/ELSE structure *)
-      let (stack,indent) = pop_to LBRACE stack in
+      let (stack,indent) = Indent.pop_to LBRACE stack in
       let (stack, indent) =
         match stack with
           (IF, indent) :: stack -> stack, indent
@@ -234,13 +176,13 @@ let rec parse lexbuf prev_tok stack eols indent indents =
         | (WHILE, indent) :: stack -> stack, indent
         | _ -> (stack, indent)
       in
-      parse lexbuf token stack [] indent (fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
       
 (* Deterministic Terminators *) 
   | RPAREN ->
   (* find corresponding block delimiter *)
-      let (stack,indent) = pop_to LPAREN stack in
-      parse lexbuf token stack [] indent (fix indent eols indents)
+      let (stack,indent) = Indent.pop_to LPAREN stack in
+      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
       
   | SEMI ->
       let (stack, indent) =
@@ -252,13 +194,13 @@ let rec parse lexbuf prev_tok stack eols indent indents =
         | _ -> (stack, indent)
       in 
       parse lexbuf token stack [] indent
-        (fix indent eols indents)      
+        (Indent.fix indent eols indents)      
       
   | _ ->
       
       let offset = token_offset prev_tok in
       parse lexbuf token stack [] indent 
-        (fix (indent+offset) eols indents)
+        (Indent.fix (indent+offset) eols indents)
 
 let get_indentations pos lexbuf =
   parse lexbuf EOFCOMMENT [] [] 0 []
@@ -300,10 +242,10 @@ let indent_between_points buf start_point end_point =
     find_phrase_start buf curseur;
     let indentations = compute_indentations buf curseur end_point in
 (* remove the Eof indentation *)
-    let _,_,indentations = pop_indentation indentations in
+    let _,_,indentations = Indent.pop_indentations indentations in
 (* indent other lines *)
     let rec iter indents =
-      let (current,pos,indents) = pop_indentation indents in
+      let (current,pos,indents) = Indent.pop_indentations indents in
       Text.set_position text curseur (pos+1);
       Indent.set_indent text curseur current;
       iter indents
@@ -331,10 +273,10 @@ let insert_and_return frame =
     find_phrase_start buf curseur;
     let indentations = compute_indentations buf curseur point in
     Text.remove_point text curseur;
-    let (next,pos,tail) = pop_indentation indentations in
+    let (next,pos,tail) = Indent.pop_indentations indentations in
     let current =
       try
-        let (current, _, _ ) = pop_indentation tail in current
+        let (current, _, _ ) = Indent.pop_indentations tail in current
       with
         Not_found  -> 0
     in
@@ -368,10 +310,10 @@ let indent_current_line frame =
   find_phrase_start buf curseur;
   let indentations = compute_indentations buf curseur point in
   Text.remove_point text curseur;
-  let (next,pos,tail) = pop_indentation indentations in
+  let (next,pos,tail) = Indent.pop_indentations indentations in
   let current =
     try
-      let (current, _, _ ) = pop_indentation tail in current
+      let (current, _, _ ) = Indent.pop_indentations tail in current
     with
       Not_found  -> 0
   in

@@ -69,4 +69,70 @@ let set_indent text point offset =
   )
 (*e: function [[Simple.set_indent]] *)
 
+type indentations = (int * (Text.position list)) list
+
+let rec pop_to_top stack =
+  match stack with
+    [] -> ([],0)
+  | _ :: stack -> pop_to_top stack
+
+let rec pop_to kwd stack =
+  match stack with
+    [] -> ([],0)
+  | (kwd',indent) :: stack when kwd' = kwd -> stack, indent
+  | _ :: stack -> pop_to kwd stack
+
+let rec pop_to_kwds kwd_end_recursion = fun kwds stack ->
+  match stack with
+    [] -> ([], kwd_end_recursion, 0)
+  | (kwd,indent) :: stack when List.memq kwd kwds -> 
+      stack, kwd, indent
+  | _ :: stack -> pop_to_kwds kwd_end_recursion kwds stack
+
+let fix indent eols indents =
+  match eols with
+    [] -> indents
+  | _ -> 
+      match indents with
+        (pindent,peols) :: tail when pindent = indent ->
+          (indent, eols @ peols) :: tail
+      | _ ->  (indent,eols) :: indents
+
+let rec pop_indentations indents =
+  match indents with
+    [] -> raise Not_found
+  | (indent, eols) :: indents ->
+      match eols with
+        [] -> pop_indentations indents
+      | eol :: eols ->
+          (indent, eol, (indent,eols) :: indents)
+
+
+(* debugging *)
+let print_indentations list =
+  print_string "Indentations :"; 
+  print_newline ();
+  List.iter (fun (indent, list) ->
+      List.iter (fun pos -> 
+          Printf.printf "Line at %d with %d" pos indent
+      ) list
+  ) list;
+  print_newline ()
+
+type 'tok indentation_stack = ('tok * int) list
+
+let print_stack tokens stack =
+  print_string "Indentation stack:"; 
+  print_newline ();
+  let rec iter stack =
+    match stack with
+      [] -> ()
+    | (token, indent) :: stack ->
+        Printf.printf "Token %s indent %d" 
+          (List.assoc token tokens) indent;
+        print_newline ();
+        iter stack
+  in
+  iter stack
+
 (*e: features/indent.ml *)
