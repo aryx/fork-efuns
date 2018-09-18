@@ -1,5 +1,5 @@
 
-(* to be set by each major programming mode *)
+(* to be set by each major programming mode for the index_xxx below to work *)
 val indent_func: (Efuns.buffer -> Text.point -> Text.point -> unit) Var.t
 
 val indent_region: Efuns.action
@@ -7,7 +7,7 @@ val indent_phrase: Efuns.action
 val indent_buffer: Efuns.action
 
 
-(* helpers to be used by get_indention functions *)
+(* helpers to build an indent_func *)
 
 (* ??? *)
 type indentations = (int * (Text.position list (* eols *))) list
@@ -17,7 +17,8 @@ type 'tok indentation_stack = ('tok * int) list
 val pop_to_top: 'tok indentation_stack -> 'tok indentation_stack * int
 val pop_to: 'tok -> 'tok indentation_stack -> 'tok indentation_stack * int
 val pop_to_kwds: 'tok -> 
-  ('tok list -> 'tok indentation_stack -> 'tok indentation_stack * 'tok * int)
+  ('tok list -> 'tok indentation_stack -> 
+  'tok indentation_stack * ('tok * int))
 
 (* ??? *) 
 val fix: int -> Text.position list -> indentations -> indentations
@@ -30,7 +31,6 @@ val indent_between_points:
   Efuns.buffer -> Text.point -> Text.point -> unit (* indent_func *)
 
 
-
 (* helper to generate indent_current_line to bind to TAB *)
 val indent_current_line:
   (Text.position -> 'tok -> indentations) (* get_indentation *) ->
@@ -38,7 +38,6 @@ val indent_current_line:
   Str.regexp (* phrase_start *) ->
   (Efuns.buffer -> Text.point -> Text.point -> unit) (* color_region *) ->
   Efuns.action
-
 
 
 (* internals
