@@ -44,8 +44,10 @@ let color_region buf start_point end_point =
   let text = buf.buf_text in
   let curseur = Text.new_point text in
   let lexbuf = lexing text start_point end_point in
+
   let rec iter lexbuf =
-    let (pos,len), token = token lexbuf in
+    let (pos,len), token = Ocaml_lexer.token lexbuf in
+    Text.set_position text curseur pos;
     (match token with
         EOF _ -> raise Exit
       | LET | IN | MATCH | TRY | WITH | FUN 
@@ -54,19 +56,15 @@ let color_region buf start_point end_point =
       | OPEN | MODULE | STRUCT | MUTABLE
       | AND | OR | TYPE | VAL | CLASS | SIG | INHERIT | OBJECT
       | EXCEPTION | RULE | METHOD | EXTERNAL -> 
-          Text.set_position text curseur pos;
           Text.set_attrs text curseur len keyword_attr
       | EOFCOMMENT 
       | COMMENT ->
-          Text.set_position text curseur pos;
           Text.set_attrs text curseur len comment_attr
       | EOFSTRING
       | CHAR 
       | STRING ->
-          Text.set_position text curseur pos;
           Text.set_attrs text curseur len string_attr
       | UIDENT ->
-          Text.set_position text curseur pos;
           Text.set_attrs text curseur len gray_attr            
       | _ -> ()
     );
@@ -195,7 +193,7 @@ let setup_abbrevs () =
   
 let start_regexp = define_option ["ocaml_mode"; "start_regexp"]
     "" regexp_option (
-    string_to_regex "^\\(let\\|module\\|type\\|exception\\|open\\)");;
+    string_to_regex "^\\(let\\|module\\|type\\|exception\\|open\\)")
 
 let indentation = define_option ["ocaml_mode"; "indentation"] ""
   int_option 2
@@ -236,7 +234,7 @@ let token_offset prev_tok =
   | _ -> 0
 
 let rec parse lexbuf prev_tok stack eols indent indents =
-  let _, token = token lexbuf in
+  let _, token = Ocaml_lexer.token lexbuf in
   match token with
     EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
   | EOF pos -> Indent.fix indent  (pos :: eols) indents
@@ -502,118 +500,11 @@ let rec parse lexbuf prev_tok stack eols indent indents =
 let get_indentations pos lexbuf =
   parse lexbuf SEMISEMI [] [] 0 []
 
-let print_exc e s =
-  Printf.printf "Caught exception %s in %s" (Printexc.to_string e) s;
-  print_newline ()
-
 (* Now, use the indentation from the parser *)
 
-let compute_indentations buf start_point end_point =
-  let text = buf.buf_text in
-  let curseur = Text.dup_point text start_point in
-(* init indentation *)
-  let _pos = Text.get_position text end_point in
-  let lexbuf = lexing text curseur end_point in
-  try
-    let indentations = 
-      get_indentations (Text.get_position text start_point) lexbuf in
-    Text.remove_point text curseur;
-    indentations
-  with
-    e ->
-      Text.remove_point text curseur;
-      raise e
-
-let find_phrase_start buf curseur =
-  let text = buf.buf_text in
-  try
-    let _ = Text.search_backward text (snd !!start_regexp) curseur in ()
-  with
-    Not_found -> Text.set_position text curseur 0
-
-let indent_between_points buf start_point end_point =
-  let text = buf.buf_text in
-  let session = Text.start_session text in
-  let curseur = Text.dup_point text start_point in
-  try
-    find_phrase_start buf curseur;
-    let indentations = compute_indentations buf curseur end_point in
-(* remove the Eof indentation *)
-    let _,_,indentations = Indent.pop_indentations indentations in
-(* indent other lines *)
-    let rec iter indents =
-      let (current,pos,indents) = Indent.pop_indentations indents in
-      Text.set_position text curseur (pos+1);
-      Indent.set_indent text curseur current;
-      iter indents
-    in
-    iter indentations
-  with
-    e -> 
-      Text.commit_session text session;
-      Text.remove_point text curseur
-
-(* Interactive: indent the current line, insert newline and indent next line *)
-let insert_and_return frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-(* colors *)
-  let start_point = Text.dup_point text point in
-  Text.bmove text start_point (Text.point_to_bol text start_point);
-  color_region buf start_point point;
-  Text.remove_point text start_point;
-(* indentations *)
-  let curseur = Text.dup_point text point in
-  try
-    find_phrase_start buf curseur;
-    let indentations = compute_indentations buf curseur point in
-    Text.remove_point text curseur;
-    let (next,pos,tail) = Indent.pop_indentations indentations in
-    let current =
-      try
-        let (current, _, _ ) = Indent.pop_indentations tail in current
-      with
-        Not_found  -> 0
-    in
-    let session = Text.start_session text in
-    Indent.set_indent text point current;
-    Edit.insert_char frame '\n';
-    Indent.set_indent text point next;
-    Text.commit_session text session;
-    Text.fmove text point next; 
-    ()
-  with
-    e -> 
-      Text.remove_point text curseur;
-      Edit.insert_char frame '\n'
-
-(* Interactive: indent the current line, insert newline and indent next line *)
-let indent_current_line frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-  let point = frame.frm_point in
-(* colors *)
-  let end_point = Text.dup_point text point in
-  let start_point = Text.dup_point text point in
-  Text.bmove text start_point (Text.point_to_bol text start_point);
-  Text.fmove text end_point (Text.point_to_eol text end_point);
-  color_region buf start_point end_point;
-  Text.remove_point text start_point;
-  Text.remove_point text end_point;
-(* indentations *)
-  let curseur = Text.dup_point text point in
-  find_phrase_start buf curseur;
-  let indentations = compute_indentations buf curseur point in
-  Text.remove_point text curseur;
-  let (next,pos,tail) = Indent.pop_indentations indentations in
-  let current =
-    try
-      let (current, _, _ ) = Indent.pop_indentations tail in current
-    with
-      Not_found  -> 0
-  in
-  Indent.set_indent text point current
+let indent_between_points = 
+  Indent.indent_between_points get_indentations Ocaml_lexer.lexing
+    (snd !!start_regexp)
 
 (***********************************************************************)
 (*********************  aide a la programmation *********)
@@ -697,6 +588,7 @@ let find_env buf point =
 the word under the cursor. During parsing, an envirronment is built and
 then used to find the word. 
 *)
+(* pad: obsolete by ocaml_merlin.ml? *)
 
 (***********************************************************************)
 (*********************  find_error  ********************)
@@ -706,6 +598,7 @@ let error_regexp = define_option ["ocaml_mode"; "error_regexp"] ""
     regexp_option (string_to_regex
     "File \"\\(.*\\)\", line \\([0-9]+\\), characters \\([0-9]+\\)[-]\\([0-9]*\\):")
 
+(* less: could factorize with lisp_mode.ml *)
 let find_error text error_point =
   let groups = 
     Text.search_forward_groups text (snd !!error_regexp) 
@@ -797,7 +690,9 @@ let setup_maps () =
       [NormalMap,XK.xk_Tab], "ocaml_mode.indent_line";
       [NormalMap, Char.code '.'], "ocaml_mode.char_expand_abbrev";
       [NormalMap, Char.code ';'], "ocaml_mode.char_expand_abbrev";
+(* pad: electric return?
       [NormalMap, XK.xk_Return], "ocaml_mode.return_expand_abbrev";
+*)
     ]
 
 let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
@@ -825,17 +720,20 @@ let _ =
     setup_structures ();
     
 (*    define_action "ocaml_mode.eval_buffer" eval_buffer; *)
-    Action.define_action "ocaml_mode.indent_line" indent_current_line;
     Action.define_action "ocaml_mode.char_expand_abbrev" (fun frame ->
         Abbrevs.expand_sabbrev frame; Edit.self_insert_command frame);
+(* pad: ?
     Action.define_action "ocaml_mode.return_expand_abbrev"
       (fun frame -> Abbrevs.expand_sabbrev frame; insert_and_return frame); 
+*)
     
     setup_maps ();
     
     Var.set_major_var mode Compil.find_error find_error;
     Var.set_major_var mode Indent.indent_func indent_between_points;
     Var.set_major_var mode Color.color_func color_region;
+
+    (*pad: Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;*)
     
     !!local_map |> List.iter (fun (keys, action) ->
         try
