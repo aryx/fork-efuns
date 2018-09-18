@@ -131,10 +131,10 @@ let token_offset prev_tok = 0
   | _ -> 0
 *)
   
-let rec parse lexbuf prev_tok stack eols indent indents =
+let rec parse lexbuf prev_tok  stack eols  indent indents =
   let _, token = C_lexer.token lexbuf in
   match token with
-    EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
+  | EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
   | EOF pos -> Indent.fix indent  (pos :: eols) indents
   | EOFSTRING -> (0,[0]) :: (Indent.fix indent eols indents)
   | EOFCOMMENT -> (2,[0]) :: (Indent.fix indent eols indents)

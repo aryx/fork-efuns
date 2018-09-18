@@ -17,7 +17,6 @@ open Lisp_lexer
 (***********************************************************************)
 
 let color_region buf start_point end_point =
-
   let _keyword_attr = 
     Text.make_attr (Attr.get_color !!Pl_colors.keyword_color) 1 0 false in
   let string_attr = 
@@ -43,7 +42,8 @@ let color_region buf start_point end_point =
           Text.set_attrs text curseur len string_attr
       | IDENT _ when prev_tok = QUOTE ->
           Text.set_attrs text curseur len gray_attr            
-      | _ -> ());
+      | _ -> ()
+    );
     iter token lexbuf
   in
   try
@@ -67,10 +67,10 @@ let start_regexp = Str.regexp "^\\(let\\|module\\|type\\|exception\\|open\\)"
 
 let pop_to_kwds = Indent.pop_to_kwds COMMENT
       
-let rec parse lexbuf prev_tok stack eols indent indents =
+let rec parse lexbuf prev_tok  stack eols  indent indents =
   let _, token = Lisp_lexer.token lexbuf in
   match token with
-    EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
+  | EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
   | EOF pos -> Indent.fix indent  (pos :: eols) indents
   | EOFSTRING -> (0,[0]) :: (Indent.fix indent eols indents)
   | COMMENT -> parse lexbuf prev_tok stack [] indent
@@ -83,7 +83,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       parse lexbuf token ((token,indent)::stack) [] (indent+2) 
         (Indent.fix indent eols indents)
   
-(* Deterministic Terminators *) 
+  (* Deterministic Terminators *) 
   | RPAREN ->
       (* find corresponding block delimiter *)
       let (stack,indent) = Indent.pop_to LPAREN stack in
@@ -101,8 +101,8 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       parse lexbuf token stack [] indent 
         (Indent.fix indent eols indents)
 
-let get_indentations pos lexbuf =
-  parse lexbuf COMMENT [] [] 0 []
+let get_indentations _pos lexbuf =
+  parse lexbuf COMMENT  [] []   0 []
 
 (* Now, use the indentation from the parser *)
 

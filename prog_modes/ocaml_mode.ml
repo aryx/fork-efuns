@@ -294,16 +294,16 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       (Indent.fix indent eols indents)
   
   | EQUAL ->
-      let (_stack',_kwd,_indent') = pop_to_kwds [BAR] stack in
+      let (_stack',(_kwd,_indent')) = pop_to_kwds [BAR] stack in
       parse lexbuf token stack [] indent (Indent.fix indent eols indents)
   
   | AND ->
-      let (stack,kwd,indent) = pop_to_kwds 
+      let (stack,(kwd,indent)) = pop_to_kwds 
           [LET;TYPE;RULE;CLASS] stack in
       parse lexbuf token ((kwd,indent)::stack)
       [] (indent+ !!indentation) (Indent.fix indent eols indents) 
   | OR ->
-      let (_stack',_kwd,_indent') = pop_to_kwds  [] stack in
+      let (_stack',(_kwd,_indent')) = pop_to_kwds  [] stack in
       parse lexbuf token stack [] indent (Indent.fix indent eols indents)
   
   | IN -> 
@@ -315,7 +315,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
  
   | DO ->
 (* starts a DO ... DONE structure *)
-      let (stack',kwd,indent') = pop_to_kwds [WHILE;FOR] stack in
+      let (stack',(kwd,indent')) = pop_to_kwds [WHILE;FOR] stack in
       parse lexbuf DO ((DO,indent') :: stack') [] (indent'+ !!indentation) 
         (Indent.fix indent' eols indents)
 (* These keywords start multi-keywords block structures. *)
@@ -410,10 +410,10 @@ let rec parse lexbuf prev_tok stack eols indent indents =
           DONE, [FOR;WHILE;DO;TO;DOWNTO]
         ] 
       in
-      let (stack,kwd, indent) = pop_to_kwds kwds stack in
+      let (stack,(kwd,indent)) = pop_to_kwds kwds stack in
       parse lexbuf token stack [] indent (Indent.fix indent eols indents)
   | WITH ->
-      let (stack,kwd,indent) = pop_to_kwds [MATCH;TRY;LBRACE] stack in
+      let (stack,(kwd,indent)) = pop_to_kwds [MATCH;TRY;LBRACE] stack in
       if kwd = LBRACE then
         parse lexbuf token ((LBRACE,indent)::stack) [] (indent+ !!indentation)
         (Indent.fix indent eols indents)        
@@ -421,7 +421,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
         parse lexbuf token ((WITH,indent)::stack) [] (indent+ !!indentation)
         (Indent.fix indent eols indents)
   | BAR ->
-      let (stack,kwd,indent) = 
+      let (stack,(kwd,indent)) = 
         pop_to_kwds [WITH;FUNCTION;BAR;TYPE;PARSE;LPAREN;LBRACE] stack in
       let kwd = 
         match kwd with
@@ -431,7 +431,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       parse lexbuf token ((kwd,indent)::stack) [] (indent+ !!indentation)
       (Indent.fix indent eols indents)
   | MINUSGREATER ->
-      let (stack,kwd,indent) =
+      let (stack,(kwd,indent)) =
         pop_to_kwds [WITH;FUN;BAR;FUNCTION;TYPE;LPAREN;EXTERNAL;VAL;COLON] stack in
       begin
         match kwd with
@@ -456,8 +456,8 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       let _old_stack = stack in
 (* le ; termine un THEN ... ou ELSE ... s'il n'y a pas 
    construction infinie (LET, IN, MATCH, BAR) avant *)
-      let (stack1,_,indent1) = pop_to_kwds [THEN;ELSE] stack in
-      let (stack2,_,_) = pop_to_kwds
+      let (stack1,(_,indent1)) = pop_to_kwds [THEN;ELSE] stack in
+      let (stack2,(_,_)) = pop_to_kwds
           [
           LET; IN; COLONCOLON; INFIXOP0; INFIXOP0; INFIXOP1; INFIXOP2;
           INFIXOP3; INFIXOP4; SUBTRACTIVE; STAR; EQUAL; LESS; GREATER;
