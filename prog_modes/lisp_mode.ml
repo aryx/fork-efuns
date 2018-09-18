@@ -34,7 +34,7 @@ let color_region buf start_point end_point =
     let (pos,len), token = Lisp_lexer.token lexbuf in
     Text.set_position text curseur pos;
     (match token with
-        EOF _ -> raise Exit
+      | EOF _ -> raise Exit
       | COMMENT ->
           Text.set_attrs text curseur len comment_attr
       | EOFSTRING
@@ -103,13 +103,14 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
 
 (* could factorize this function more between the different major modes,
  * but not worth it; it complexifies things.
+ * This modifies start_point, because Common_lexer.lexing,
+ * which use Text.lexing, does; but it's ok.
  *)
 let get_indentations buf start_point end_point =
   let text = buf.buf_text in
-  Text.with_dup_point text start_point (fun curseur ->
-    let lexbuf = Common_lexer.lexing text curseur end_point in
-    parse  lexbuf COMMENT  [] []   0 []
-  )
+  let lexbuf = Common_lexer.lexing text start_point end_point in
+  parse  lexbuf COMMENT  [] []   0 []
+
 
 (* Now, use the indentation from the parser *)
 

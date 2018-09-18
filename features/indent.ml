@@ -46,7 +46,6 @@ let indent_region frame =
    (get_indent_func buf) buf start_point end_point
 [@@interactive]
 
-
 (* alt: C-x h and then M-x color_region *)
 let indent_buffer frame =
   let (buf, text, _) = Frame.buf_text_point frame in
@@ -66,7 +65,7 @@ type indentations = (int * (Text.position list)) list
 
 type 'tok indentation_stack = ('tok * int) list
 
-
+(* to be used by programming-language-specific get_indentations() *)
 let pop_to_top stack =
   ([],0)
 
@@ -175,6 +174,7 @@ let set_indent text point offset =
 (*****************************************************************************)
 
 let indent_between_points get_indentations start_regexp = 
+ (* returns an "indent_func" compatible function *)
  fun buf start_point end_point ->
   let text = buf.buf_text in
   text |> Text.with_session (fun session ->
@@ -187,6 +187,7 @@ let indent_between_points get_indentations start_regexp =
     (* indent other lines *)
     let rec iter indents =
       let (current,pos,indents) = pop_indentations indents in
+      (* go just after the eol *)                
       Text.set_position text curseur (pos+1);
       set_indent text curseur current;
       iter indents

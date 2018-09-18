@@ -208,10 +208,8 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
  *)
 let get_indentations buf start_point end_point =
   let text = buf.buf_text in
-  Text.with_dup_point text start_point (fun curseur ->
-    let lexbuf = Common_lexer.lexing text curseur end_point in
-    parse lexbuf EOFCOMMENT [] [] 0 []
-  )
+  let lexbuf = Common_lexer.lexing text start_point end_point in
+  parse lexbuf EOFCOMMENT [] [] 0 []
 
 
 (* Now, use the indentation from the parser *)
