@@ -39,7 +39,6 @@ let c_error_regexp = define_option ["compil"; "error_regexp"] "" regexp_option
 (*e: constant [[Compil.c_error_regexp]] *)
 
 (*s: function [[Compil.c_find_error]] *)
-(* todo: vs C_mode.c_find_error? *)
 let find_error_gen re text error_point =
   let groups = 
     Text.search_forward_groups text re
@@ -61,6 +60,7 @@ let find_error = Store.create_abstr "find_error"
 (*e: constant [[Compil.find_error]] *)
 
 let find_error_location_regexp = Store.create_abstr "find_error_loc_regexp"
+
 let find_error_error_regexp = Store.create_abstr "find_error_err_regexp"
   
 (*s: function [[Compil.next_error]] *)

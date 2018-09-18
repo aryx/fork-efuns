@@ -751,18 +751,20 @@ the word under the cursor. During parsing, an envirronment is built and
 then used to find the word. 
 *)
 
+(***********************************************************************)
+(*********************  find_error  ********************)
+(***********************************************************************)
+
 let error_regexp = define_option ["ocaml_mode"; "error_regexp"] ""
     regexp_option (string_to_regex
     "File \"\\(.*\\)\", line \\([0-9]+\\), characters \\([0-9]+\\)[-]\\([0-9]*\\):")
 
-open Compil
-  
 let find_error text error_point =
   let groups = 
     Text.search_forward_groups text (snd !!error_regexp) 
       error_point 4 in
   let error =
-    { 
+    { Compil.
       err_msg = Text.get_position text error_point;
       err_filename = groups.(0);
       err_line = (int_of_string groups.(1)) - 1;
@@ -896,5 +898,4 @@ let _ =
           Log.exn "%s\n" e;
     );
     ()
-  )  
-
+  ) 

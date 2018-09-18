@@ -1,6 +1,10 @@
 
 val compile : Efuns.action
+(* val make_hist : string list ref *)
+
 val grep : Efuns.action
+(* val grep_hist : string list ref *)
+(* val grep_command : string Options.option_record *)
 
 val next_error : Efuns.action
 
@@ -15,21 +19,25 @@ type find_error_fun = Text.t -> Text.point -> error
 
 val find_error_gen : Str.regexp -> find_error_fun
 
-(* to setup as major mode variables in the different pl modes *)
+(* To setup as major mode variable in the different PL modes.
+ * Default to c_error_regexp otherwise.
+ *)
 val find_error_location_regexp : Str.regexp Var.t
-val find_error_error_regexp: Str.regexp Var.t
-(* to setup if find_error_gen is not good enough for you *)
+
+val c_error_regexp : (string * Str.regexp) Options.option_record
+
+(* to setup if 'find_error_gen find_error_location_regexp' is not enough *)
 val find_error : find_error_fun Var.t
+
+(* to colorize the compilation buffer *)
+val find_error_error_regexp: Str.regexp Var.t
+
 
 val compile_find_makefile : bool Options.option_record
 
-(*
+(* internals:
 val compilation_frame : (Efuns.frame * Text.point * string) option ref
-val c_error_regexp : (string * Str.regexp) Options.option_record
 val default_error : (Text.t -> Text.point -> error) ref
 val make_command : string Options.option_record
-val make_hist : string list ref
 val set_compilation_buffer : Efuns.frame -> Efuns.buffer -> string -> unit
-val grep_command : string Options.option_record
-val grep_hist : string list ref
 *)

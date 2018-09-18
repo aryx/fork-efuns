@@ -1,6 +1,3 @@
-
-external/stdlib/*
-
 # ocaml object files
 
 *.o
@@ -39,23 +36,18 @@ external/stdlib/*
 
 
 # lex and yacc
-ocaml_mode.ml
+prog_modes/c_lexer.ml
+prog_modes/lisp_lexer.ml
+prog_modes/ocaml_lexer.ml
+
 tex_mode.ml
-c_mode.ml
-lisp_mode.ml
 html_mode.ml
 
 
-# doc
-/Efuns.pdf
-/Efuns.tex
-
 # binaries
 /efuns
-/efuns_server
-/efuns_filebrowser
-/efuns_texbrowser
 /efuns_client
+/ppx/ppx_interactive
 
 #MISC
 #efuns.opt.gz
@@ -66,7 +58,4 @@ html_mode.ml
 #/.depend2
 
 # ?????
-/ppx/ppx_interactive
-/prog_modes/c_lexer.ml
-/prog_modes/lisp_lexer.ml
-/prog_modes/ocaml_lexer.ml
+

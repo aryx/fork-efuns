@@ -16,24 +16,7 @@ open C_lexer
 (* Find errors *)
 (***********************************************************************)
 
-let error_regexp = Str.regexp "^\\([^:\n]+\\):\\([0-9]+\\):.*$"
-
-open Compil
-
-let find_error text error_point =
-  let groups = 
-    Text.search_forward_groups text error_regexp 
-      error_point 2 in
-  let error =
-    { 
-      err_msg = Text.get_position text error_point;
-      err_filename = groups.(0);
-      err_line = (int_of_string groups.(1)) - 1;
-      err_begin = 0;
-      err_end = 0;
-    } in
-  Text.fmove text error_point 1;
-  error
+(* Default stuff in compile.ml works *)
 
 (***********************************************************************)
 (******************* couleurs *********************)

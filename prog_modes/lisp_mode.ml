@@ -12,7 +12,6 @@ open Efuns
 open Options
 open Lisp_lexer
 
-
 (***********************************************************************)
 (*********************** colors ***********************)
 (***********************************************************************)
@@ -273,18 +272,20 @@ let indent_current_line frame =
   in
   Indent.set_indent text point current
 
-let regexp_string =
+(***********************************************************************)
+(**********************  find_error  *******************)
+(***********************************************************************)
+
+let error_regexp = Str.regexp 
   "File \"\\(.*\\)\", line \\([0-9]+\\), characters \\([0-9]+\\)-\\([0-9]+\\):"
-let error_regexp = Str.regexp regexp_string
 
-
-open Compil
+(* more precise than Compil.find_error_gen, get column range *)
 let find_error text error_point =
   let groups = 
     Text.search_forward_groups text error_regexp 
       error_point 4 in
   let error =
-    { 
+    { Compil.
       err_msg = Text.get_position text error_point;
       err_filename = groups.(0);
       err_line = (int_of_string groups.(1)) - 1;
@@ -339,5 +340,3 @@ let _ =
     );
     Var.add_global Ebuffer.modes_alist [(".*\\.\\(el\\|gwm\\|lisp\\)$", mode)];
   )
-
-

@@ -1,9 +1,10 @@
 open Efuns
 
 (* 
- * This file contains hopefully all the pad-specific keybindings/cmds/options.
+ * This file contains hopefully all the pad-specific keys/cmds/options.
  * Hopefully it will be shorter than my .emacs ...
  * alt: have a .efunsrc, but not everything is customizable through options.
+ *  moreover I prefer OCaml typed code to untyped text configuration file!
  *)
 
 (* special functions *)
