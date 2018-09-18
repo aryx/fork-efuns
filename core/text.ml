@@ -198,7 +198,9 @@ let find_line_of_pos a b =
 (*s: function [[Text.point_line]] *)
 let point_line text point = 
   (* defensive: *)
-  assert(point.line = find_line_of_pos text point.pos);
+  if (point.line <> find_line_of_pos text point.pos)
+  then Common.pr2 (Common.spf "TODO: point.line = %d != find_line ... = %d"
+                     point.line (find_line_of_pos text point.pos));
   point.line
 (*e: function [[Text.point_line]] *)
 
