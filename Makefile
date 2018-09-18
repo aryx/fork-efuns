@@ -154,6 +154,9 @@ SRC=\
  \
  prog_modes/pl_colors.ml\
  prog_modes/makefile_mode.ml\
+ prog_modes/ocaml_lexer.ml\
+ prog_modes/c_lexer.ml\
+ prog_modes/lisp_lexer.ml\
  prog_modes/ocaml_mode.ml\
  prog_modes/ocaml_merlin.ml\
  prog_modes/c_mode.ml\
@@ -241,24 +244,25 @@ efuns_client.opt: ipc/efuns_client.cmx
 depend::
 	$(OCAMLDEP) $(DEPEND_INCLUDES) *.ml* */*.ml*  $(BACKENDDIR)/*.ml* > .depend
 
-MODES= \
- prog_modes/ocaml_mode.ml prog_modes/c_mode.ml prog_modes/lisp_mode.ml \
+LEXERS= \
+ prog_modes/ocaml_lexer.ml prog_modes/c_lexer.ml prog_modes/lisp_lexer.ml \
  text_modes/tex_mode.ml text_modes/html_mode.ml
 
-beforedepend:: $(MODES)
-prog_modes/ocaml_mode.ml: prog_modes/ocaml_mode.mll
+beforedepend:: $(LEXERS)
+prog_modes/ocaml_lexer.ml: prog_modes/ocaml_lexer.mll
 	ocamllex $^
-prog_modes/c_mode.ml: prog_modes/c_mode.mll
+prog_modes/c_lexer.ml: prog_modes/c_lexer.mll
 	ocamllex $^
-prog_modes/lisp_mode.ml: prog_modes/lisp_mode.mll
+prog_modes/lisp_lexer.ml: prog_modes/lisp_lexer.mll
 	ocamllex $^
+
 text_modes/tex_mode.ml: text_modes/tex_mode.mll
 	ocamllex $^
 text_modes/html_mode.ml: text_modes/html_mode.mll
 	ocamllex $^
 
 clean:: 
-	rm -f $(MODES)
+	rm -f $(LEXERS)
 
 ##############################################################################
 # Developer rules

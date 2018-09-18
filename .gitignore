@@ -67,3 +67,6 @@ html_mode.ml
 
 # ?????
 /ppx/ppx_interactive
+/prog_modes/c_lexer.ml
+/prog_modes/lisp_lexer.ml
+/prog_modes/ocaml_lexer.ml
