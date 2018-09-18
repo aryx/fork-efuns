@@ -129,13 +129,14 @@ let tokens = [
     COMMA, "COMMA";
     SEMI, "SEMI";    
   ]
-  
+
   
   
 let token_to_string token =
   List.assoc token tokens
 
 let lexer_start = ref 0
+
 let position lexbuf =
   let b = lexeme_start lexbuf in
   let e = lexeme_end lexbuf in
