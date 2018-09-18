@@ -20,8 +20,8 @@ module PI = Parse_info
 (* Prelude *)
 (*****************************************************************************)
 (*
- * Using the C/cpp/C++ parser and highlighters in pfff (used for codemap)
- * for efuns.
+ * Using the C/cpp/C++ parser and highlighters in Pfff (used for codemap)
+ * for Efuns.
  *)
 
 (*****************************************************************************)
@@ -55,17 +55,16 @@ let color_buffer buf =
 (* Installation *)
 (*****************************************************************************)
 
-let mode = Ebuffer.new_major_mode "C" (Some (fun buf ->
+let mode = Ebuffer.new_major_mode "Cpp(Pfff)" (Some (fun buf ->
   color_buffer buf; 
 
-  let tbl = Ebuffer.create_syntax_table () in
-  buf.buf_syntax_table <- tbl;
-  tbl.(Char.code '_') <- true;
+  buf.buf_syntax_table.(Char.code '_') <- true;
   ()
 ))
 
-let cpp_mode frame = 
-  Ebuffer.set_major_mode frame.frm_buffer mode
+let cpp_mode = 
+  Major_modes.enable_major_mode mode
+[@@interactive]
 
 (*****************************************************************************)
 (* Setup *)
@@ -73,9 +72,23 @@ let cpp_mode frame =
 
 let _ =
   Hook.add_start_hook (fun () ->
+    (* this should override the one in c_mode.ml because this module is
+     * linked after and Var.add_global prepends.
+     *)
     Var.add_global Ebuffer.modes_alist 
       [".*\\.\\(c\\|cpp\\|cc\\|h\\|H\\|C\\|y\\|l\\)$", mode];
-    Action.define_action "cpp_mode" cpp_mode;
+
+    (* reuse indentation functions in c_mode.ml *)
+    Var.set_major_var mode Indent.indent_func C_mode.indent_between_points;
+    Keymap.add_major_key mode [NormalMap,XK.xk_Tab] C_mode.indent_current_line;
+
+    (* recolor at save time *)
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
+
+    ['}';']';')'] |> List.iter (fun char ->
+      Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
+        Edit.self_insert_command frame;
+        Paren_mode.highlight_paren frame;
+      ));
   )

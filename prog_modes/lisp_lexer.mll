@@ -17,12 +17,11 @@ open Lexing
 open Common_lexer
   
 type token =
-| IDENT
-
-| COMMENT
-
+| IDENT of string
 | STRING
 | NUM
+
+| COMMENT
 
 | LBRACE | RBRACE
 | LPAREN | RPAREN
@@ -32,9 +31,9 @@ type token =
 | QUOTE
 | COMMA
 
-| EOF of (Text.position)
 | EOL of (Text.position)
 | EOFSTRING 
+| EOF of (Text.position)
 
 | ERROR
   
@@ -44,32 +43,38 @@ let start_pos = ref 0
 
 let blank = [' ' '\009']
 let return = ['\010' '\012' '\013']
+
 let firstidentchar = 
-  ['A'-'Z' 'a'-'z' '-' '_' '\192'-'\214' '\216'-'\246'
-    '\248'-'\255']
+  ['A'-'Z' 'a'-'z' '-' '_'         '\192'-'\214' '\216'-'\246' '\248'-'\255']
 let identchar = 
-  ['A'-'Z' 'a'-'z' '-' '_' '\192'-'\214' '\216'-'\246'
-    '\248'-'\255' '0'-'9']
+  ['A'-'Z' 'a'-'z' '-' '_' '0'-'9' '\192'-'\214' '\216'-'\246' '\248'-'\255' ]
+
 let symbolchar =
   ['!' '$' '%' '&' '*' '+' '-' '.' '/' ':' '<' '=' '>' '?' '@' '^' '|' '~']
+
 let decimal_literal = ['0'-'9']+
 let hex_literal = '0' ['x' 'X'] ['0'-'9' 'A'-'F' 'a'-'f']+
 let oct_literal = '0' ['o' 'O'] ['0'-'7']+
 let bin_literal = '0' ['b' 'B'] ['0'-'1']+
+
 let float_literal =
   ['0'-'9']+ ('.' ['0'-'9']*)? (['e' 'E'] ['+' '-']? ['0'-'9']+)?
 
 rule token = parse
-    blank +
+  | blank+
       { token lexbuf }
-  | return { let (p,_) as pos = position lexbuf in pos, EOL p }
+  | return 
+      { let (p,_) as pos = position lexbuf in pos, EOL p }
+
   | firstidentchar identchar *
       { position lexbuf,
-      let _s = Lexing.lexeme lexbuf in
-      IDENT }
-  | float_literal
+        let s = Lexing.lexeme lexbuf in
+        IDENT s }
+
   | decimal_literal | hex_literal | oct_literal | bin_literal
+  | float_literal
       { position lexbuf, NUM }
+
   | "\""
       { reset_string_buffer();
         let string_start = Lexing.lexeme_start lexbuf in
@@ -82,21 +87,24 @@ rule token = parse
         with
           Error (pos,len,error) -> (pos,len), EOFSTRING          
       }
-  | (* comments *)
-    ";"+ [^ '\n']* '\n' { position lexbuf, COMMENT }
-    (* symbols *)
+  (* comments *)
+  | ";"+ [^ '\n']* '\n' { position lexbuf, COMMENT }
+
+  (* symbols *)
   | "'"  { position lexbuf, QUOTE  }
-  | "("  { position lexbuf, LPAREN  }
-  | ")"  { position lexbuf, RPAREN  }
   | ","  { position lexbuf, COMMA  }
   | "."  { position lexbuf, DOT  }
+  | "("  { position lexbuf, LPAREN  }
+  | ")"  { position lexbuf, RPAREN  }
   | "["  { position lexbuf, LBRACKET  }
   | "]"  { position lexbuf, RBRACKET  }
   | "{"  { position lexbuf, LBRACE  }
   | "}"  { position lexbuf, RBRACE  }
-  | symbolchar *
-            { position lexbuf, IDENT }
-  | eof { let (pos,len) = position lexbuf in (pos,len), EOF pos }
+  | symbolchar*
+     { position lexbuf, let s = Lexing.lexeme lexbuf in IDENT s }
+
+  | eof 
+     { let (pos,len) = position lexbuf in (pos,len), EOF pos }
   | _
       { position lexbuf, ERROR }
 

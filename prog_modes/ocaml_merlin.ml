@@ -353,7 +353,7 @@ let _ =
     (goto_def_at_cursor "implementation");
   Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'D']
     (goto_def_at_cursor "interface");
-  Keymap.add_binding mode.min_map [NormalMap, XK.xk_Tab] (fun frm ->
+  Keymap.add_binding mode.min_map [ControlMap, XK.xk_Tab] (fun frm ->
     let point = frm.frm_point in
     if Text.point_col frm.frm_buffer.buf_text point = 0
     then Edit.insert_string frm "  "

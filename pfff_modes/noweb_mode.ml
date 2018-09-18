@@ -63,7 +63,7 @@ let color_buffer buf =
 (* Installation *)
 (*****************************************************************************)
 
-let mode = Ebuffer.new_major_mode "Noweb" (Some (fun buf ->
+let mode = Ebuffer.new_major_mode "Noweb(Pfff)" (Some (fun buf ->
   color_buffer buf; 
 
   let tbl = Ebuffer.create_syntax_table () in

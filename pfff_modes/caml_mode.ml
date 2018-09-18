@@ -22,12 +22,12 @@ module PI = Parse_info
 (* Prelude *)
 (*****************************************************************************)
 (*
- * Using the OCaml parser and highlighters in pfff (used for codemap)
+ * Using the OCaml parser and highlighters in Pfff (used for codemap)
  * for Efuns.
  *
  * todo:
  *  - Tab handling when in comment and indent and add '*' leading if needed
- *  - finish merlin support (see ocaml_merlin.ml)
+ *  - finish Merlin support (see ocaml_merlin.ml)
  *)
 
 (*****************************************************************************)
@@ -68,24 +68,23 @@ let color_buffer buf =
 (*****************************************************************************)
 (* Installation *)
 (*****************************************************************************)
+(* can add merlin minor mode in it (see pad.ml) *)
 let hooks = Store.create_abstr "caml_mode_hook"
 
-let mode =  Ebuffer.new_major_mode "OCaml" (Some (fun buf ->
+let mode =  Ebuffer.new_major_mode "OCaml(Pfff)" (Some (fun buf ->
   color_buffer buf; 
 
-  let tbl = Ebuffer.create_syntax_table () in
-  buf.buf_syntax_table <- tbl;
-  tbl.(Char.code '_') <- true;
-  tbl.(Char.code '\'') <- true;
-  tbl.(Char.code '.') <- false;
+  buf.buf_syntax_table.(Char.code '_') <- true;
+  buf.buf_syntax_table.(Char.code '\'') <- true;
+  buf.buf_syntax_table.(Char.code '.') <- false;
 
   let hooks = Var.get_var buf hooks in
   Hook.exec_hooks hooks buf;
   ()
 ))
 
-let caml_mode frame = 
-  Ebuffer.set_major_mode frame.frm_buffer mode
+let caml_mode = 
+  Major_modes.enable_major_mode mode
 [@@interactive]
 
 (*****************************************************************************)
@@ -94,12 +93,26 @@ let caml_mode frame =
 
 let _ =
   Hook.add_start_hook (fun () ->
-    Var.add_global Ebuffer.modes_alist [".*\\.\\(ml\\|mli\\|mll\\|mly\\)",mode];
+    Var.add_global Ebuffer.modes_alist 
+      (* the .mll and .mly are better handled by ocaml_mode for now *)
+      [".*\\.\\(ml\\|mli\\)",mode];
     
     (* reuse some functions from ocaml_mode.ml from LeFessant *)
     Var.set_major_var mode Compil.find_error Ocaml_mode.find_error;
     Var.set_major_var mode Compil.find_error_location_regexp 
       (snd !!Ocaml_mode.error_regexp);
+    Var.set_major_var mode Indent.indent_func Ocaml_mode.indent_between_points;
+    Keymap.add_major_key mode [NormalMap,XK.xk_Tab] 
+     Ocaml_mode.indent_current_line;
+
+    (* recolor at save time *)
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
+
+    ['}';']';')'] |> List.iter (fun char ->
+      Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
+        Edit.self_insert_command frame;
+        Paren_mode.highlight_paren frame;
+      ));
+
   )

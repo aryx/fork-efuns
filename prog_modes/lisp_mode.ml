@@ -41,7 +41,7 @@ let color_region buf start_point end_point =
       | EOFSTRING
       | STRING ->
           Text.set_attrs text curseur len string_attr
-      | IDENT when prev_tok = QUOTE ->
+      | IDENT _ when prev_tok = QUOTE ->
           Text.set_attrs text curseur len gray_attr            
       | _ -> ());
     iter token lexbuf
@@ -81,7 +81,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
   | LBRACKET        (* LBRACKET ... RBRACKET  *)
     ->
       parse lexbuf token ((token,indent)::stack) [] (indent+2) 
-      (Indent.fix indent eols indents)
+        (Indent.fix indent eols indents)
   
 (* Deterministic Terminators *) 
   | RPAREN ->
@@ -96,6 +96,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       (* find corresponding block delimiter *)
       let (stack,indent) = Indent.pop_to LBRACKET stack in
       parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+
   | _ ->
       parse lexbuf token stack [] indent 
         (Indent.fix indent eols indents)

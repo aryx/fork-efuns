@@ -8,7 +8,6 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
-
 open Efuns
 open Options
 open Ocaml_lexer
@@ -506,11 +505,15 @@ let indent_between_points =
   Indent.indent_between_points get_indentations Common_lexer.lexing
     (snd !!start_regexp)
 
+let indent_current_line =
+  Indent.indent_current_line get_indentations Common_lexer.lexing
+    (snd !!start_regexp) color_region
+
 (***********************************************************************)
 (*********************  aide a la programmation *********)
 (***********************************************************************)
 
-  (* split a string (remove chr) *)
+(* split a string (remove chr) *)
 let split1 str chr =
   let list = ref [] in
   let start = ref 0 in
@@ -525,11 +528,11 @@ let split1 str chr =
   List.rev !list
 
 
-let parse_name str = split1 str '.'
+let parse_name str = 
+  split1 str '.'
 
 (* open a minibuffer for a long name (module+name), then look
  in the corresponding .cmi file to find the type of the value *)
-
 
 
 let find_long_word buf point =
@@ -538,11 +541,11 @@ let find_long_word buf point =
   buf.buf_syntax_table.(Char.code '.') <- false;
   w  
   
-  (*
-  A rudimentary parser, to find all OPEN directives. This will be
-  useful when trying to discover where a name is defined.
-  In particular, we will open each .cmi file to find the name.
-  *)
+(*
+A rudimentary parser, to find all OPEN directives. This will be
+useful when trying to discover where a name is defined.
+In particular, we will open each .cmi file to find the name.
+*)
 
 let module_name buf_name = 
   Filename.chop_extension (String.capitalize buf_name)
@@ -687,7 +690,6 @@ let setup_maps () =
   if !!local_map = [] 
   then local_map =:= [
 (*      [c_c; ControlMap,Char.code 'e'], "ocaml_mode.eval_buffer"; *)
-      [NormalMap,XK.xk_Tab], "ocaml_mode.indent_line";
       [NormalMap, Char.code '.'], "ocaml_mode.char_expand_abbrev";
       [NormalMap, Char.code ';'], "ocaml_mode.char_expand_abbrev";
 (* pad: electric return?
@@ -733,7 +735,7 @@ let _ =
     Var.set_major_var mode Indent.indent_func indent_between_points;
     Var.set_major_var mode Color.color_func color_region;
 
-    (*pad: Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;*)
+    Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
     
     !!local_map |> List.iter (fun (keys, action) ->
         try

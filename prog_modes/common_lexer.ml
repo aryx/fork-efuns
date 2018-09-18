@@ -21,6 +21,10 @@
 (* Globals *)
 (***********************************************************************)
 
+(* we usually lex just a region of the file, so this stores the start
+ * of this region so position() below can return the correct global
+ * position of a token
+ *)
 let lexer_start = ref 0
 
 (***********************************************************************)
