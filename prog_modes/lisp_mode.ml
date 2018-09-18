@@ -29,7 +29,7 @@ let color_region buf start_point end_point =
 
   let text = buf.buf_text in
   let curseur = Text.new_point text in
-  let lexbuf = lexing text start_point end_point in
+  let lexbuf = Common_lexer.lexing text start_point end_point in
 
   let rec iter prev_tok lexbuf =
     let (pos,len), token = Lisp_lexer.token lexbuf in
@@ -106,11 +106,11 @@ let get_indentations pos lexbuf =
 (* Now, use the indentation from the parser *)
 
 let indent_between_points = 
-  Indent.indent_between_points get_indentations Lisp_lexer.lexing
+  Indent.indent_between_points get_indentations Common_lexer.lexing
     start_regexp
 
 let indent_current_line =
-  Indent.indent_current_line get_indentations Lisp_lexer.lexing
+  Indent.indent_current_line get_indentations Common_lexer.lexing
     start_regexp color_region
 
 (***********************************************************************)

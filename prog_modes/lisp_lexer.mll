@@ -14,94 +14,31 @@
 (* Lexing *)
 (***********************************************************************)
 open Lexing 
+open Common_lexer
   
 type token =
-  IDENT
+| IDENT
+
 | COMMENT
+
 | STRING
+| NUM
+
 | LBRACE | RBRACE
 | LPAREN | RPAREN
 | LBRACKET | RBRACKET
-| NUM
+
 | DOT
 | QUOTE
 | COMMA
+
 | EOF of (Text.position)
 | EOL of (Text.position)
 | EOFSTRING 
+
 | ERROR
   
-let tokens = []
-  
-let token_to_string token =
-  List.assoc token tokens
-
-let lexer_start = ref 0
-let position lexbuf =
-  let b = lexeme_start lexbuf in
-  let e = lexeme_end lexbuf in
-  b + !lexer_start, e - b
-
-type lexer_error =
-    Illegal_character
-  | Unterminated_string
-
-(* To buffer string literals *)
-
-let initial_string_buffer = String.create 256
-let string_buff = ref initial_string_buffer
-let string_index = ref 0
-
-let reset_string_buffer () =
-  string_buff := initial_string_buffer;
-  string_index := 0
-
-let store_string_char c =
-  if !string_index >= String.length (!string_buff) then begin
-    let new_buff = String.create (String.length (!string_buff) * 2) in
-      String.blit (!string_buff) 0 new_buff 0 (String.length (!string_buff));
-      string_buff := new_buff
-  end;
-  String.unsafe_set (!string_buff) (!string_index) c;
-  incr string_index
-
-let get_stored_string () =
-  let s = String.sub (!string_buff) 0 (!string_index) in
-  string_buff := initial_string_buffer;
-  s
-
-(* To translate escape sequences *)
-
-let char_for_backslash =
-  match Sys.os_type with
-  | "Unix" | "Cygwin" ->
-      begin function
-      | 'n' -> '\010'
-      | 'r' -> '\013'
-      | 'b' -> '\008'
-      | 't' -> '\009'
-      | c   -> c
-      end
-  | x -> failwith "Lexer: unknown system type"
-
-let char_for_decimal_code lexbuf i =
-  let c = 100 * (Char.code(Lexing.lexeme_char lexbuf i) - 48) +
-           10 * (Char.code(Lexing.lexeme_char lexbuf (i+1)) - 48) +
-                (Char.code(Lexing.lexeme_char lexbuf (i+2)) - 48) in  
-  Char.chr(c land 0xFF)
-
-(* To store the position of the beginning of a string or comment *)
-
 let start_pos = ref 0
-
-(* Error report *)
-
-exception Error of int * int * lexer_error
-let report_error = function
-    Illegal_character ->
-      print_string "Illegal character"
-  | Unterminated_string ->
-      print_string "String literal not terminated"
 
 }
 
@@ -181,13 +118,3 @@ and string = parse
   | _
       { store_string_char(Lexing.lexeme_char lexbuf 0);
         string lexbuf }
-
-{
-(* val token : lexbuf -> token *)
-
-
-let lexing text start_point end_point =
-  lexer_start := Text.get_position text start_point;
-  Text.lexing text start_point end_point
-
-} 

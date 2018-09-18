@@ -15,14 +15,17 @@
 (***********************************************************************)
 
 open Lexing
+open Common_lexer
   
 type token =
 | IDENT
+
 | INT
 | FLOAT
 | STRING
-| ELLIPSIS
 | CHAR
+
+| ELLIPSIS
 | SHARP
 | STAR
 | AMPERSAND
@@ -44,11 +47,13 @@ type token =
 | CONTINUE
 | RETURN
 | GOTO
+
 | TYPEOF
 | ALIGNOF
 | ATTRIBUTE
 | EXTENSION
 | LABEL
+
 (* operators *)
 | ASSIGN
 | PREFIXOP
@@ -60,13 +65,13 @@ type token =
 (* parenthesis *)
 | LBRACE | RBRACE
 | LPAREN | RPAREN
+
 | SEMI
 | COMMA
   
 (* Comments *)
 | COMMENT
 | EOFCOMMENT
-
   
 (* Macros *)
 | M_IFDEF
@@ -81,9 +86,10 @@ type token =
 | EOLMACRO
 | EOF of (Text.position)
 | EOFSTRING
+
 | ERROR
   
-  
+(*  for debugging indent, see Indent.print_stack
 let tokens = [
     IDENT,"IDENT";
     INT,"INT";
@@ -129,112 +135,42 @@ let tokens = [
     COMMA, "COMMA";
     SEMI, "SEMI";    
   ]
-
-  
   
 let token_to_string token =
   List.assoc token tokens
-
-let lexer_start = ref 0
-
-let position lexbuf =
-  let b = lexeme_start lexbuf in
-  let e = lexeme_end lexbuf in
-  b + !lexer_start, e - b
-
-type lexer_error =
-  Illegal_character
-| Unterminated_comment
-| Unterminated_string
+*)
 
 (* The table of keywords *)
   
-let keyword_table =
-  let h = Hashtbl.create 149 in
-  Utils.hash_add_assoc h [
-    "sizeof",  SIZEOF;
-    
-    "enum", ENUM;
-    "struct", STRUCT;
-    "union",UNION;
-    
-    "if",IF;
-    "else",ELSE;
-    "while",WHILE;
-    "do",DO;
-    "for",FOR;
-    "switch",SWITCH;
-    "case",CASE;
-    "default",DEFAULT;
-    "break",BREAK;
-    "continue",CONTINUE;
-    "return",RETURN;
-    "goto",GOTO;
-    "typeof",TYPEOF;
-    "label",LABEL;
-    "static", STATIC;
-    "extern", EXTERN;
-  ];
-  h
+let keyword_table = [
+  "sizeof",  SIZEOF;
   
-(* To buffer string literals *)
+  "enum", ENUM;
+  "struct", STRUCT;
+  "union",UNION;
   
-let initial_string_buffer = String.create 256
-let string_buff = ref initial_string_buffer
-let string_index = ref 0
+  "if",IF;
+  "else",ELSE;
+  "while",WHILE;
+  "do",DO;
+  "for",FOR;
+  "switch",SWITCH;
+  "case",CASE;
+  "default",DEFAULT;
+  "break",BREAK;
+  "continue",CONTINUE;
+  "return",RETURN;
+  "goto",GOTO;
+  "typeof",TYPEOF;
+  "label",LABEL;
+  "static", STATIC;
+  "extern", EXTERN;
+ ] |> Common.hash_of_list
 
-let reset_string_buffer () =
-  string_buff := initial_string_buffer;
-  string_index := 0
-
-let store_string_char c =
-  if !string_index >= String.length (!string_buff) then begin
-      let new_buff = String.create (String.length (!string_buff) * 2) in
-      String.blit (!string_buff) 0 new_buff 0 (String.length (!string_buff));
-      string_buff := new_buff
-    end;
-  String.unsafe_set (!string_buff) (!string_index) c;
-  incr string_index
-
-let get_stored_string () =
-  let s = String.sub (!string_buff) 0 (!string_index) in
-  string_buff := initial_string_buffer;
-  s
-
-(* To translate escape sequences *)
   
-let char_for_backslash =
-  match Sys.os_type with
-    | "Unix" | "Cygwin" ->
-      begin function
-        | 'n' -> '\010'
-        | 'r' -> '\013'
-        | 'b' -> '\008'
-        | 't' -> '\009'
-        | c   -> c
-      end
-  | x -> failwith "Lexer: unknown system type"
-
-let char_for_decimal_code lexbuf i =
-  let c = 100 * (Char.code(Lexing.lexeme_char lexbuf i) - 48) +
-      10 * (Char.code(Lexing.lexeme_char lexbuf (i+1)) - 48) +
-      (Char.code(Lexing.lexeme_char lexbuf (i+2)) - 48) in  
-  Char.chr(c land 0xFF)
-
 (* To store the position of the beginning of a string or comment *)
   
 let start_pos = ref 0
-
-(* Error report *)
-  
-exception Error of int * int * lexer_error
-let report_error = function
-    Illegal_character ->
-      print_string "Illegal character"
-  | Unterminated_comment ->
-      print_string "Comment not terminated"
-  | Unterminated_string ->
-      print_string "String literal not terminated"
 
 }
 
@@ -350,11 +286,3 @@ and string = parse
   | _
       { store_string_char(Lexing.lexeme_char lexbuf 0);
       string lexbuf }
-
-{
-
-let lexing text start_point end_point =
-  lexer_start := Text.get_position text start_point;
-  Text.lexing text start_point end_point
-
-}

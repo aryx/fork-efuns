@@ -43,7 +43,7 @@ let color_region buf start_point end_point =
                             (Attr.get_font !!(*upper_*)Globals.font) false in
   let text = buf.buf_text in
   let curseur = Text.new_point text in
-  let lexbuf = lexing text start_point end_point in
+  let lexbuf = Common_lexer.lexing text start_point end_point in
 
   let rec iter lexbuf =
     let (pos,len), token = Ocaml_lexer.token lexbuf in
@@ -503,7 +503,7 @@ let get_indentations pos lexbuf =
 (* Now, use the indentation from the parser *)
 
 let indent_between_points = 
-  Indent.indent_between_points get_indentations Ocaml_lexer.lexing
+  Indent.indent_between_points get_indentations Common_lexer.lexing
     (snd !!start_regexp)
 
 (***********************************************************************)
@@ -577,7 +577,7 @@ let find_env buf point =
   in
   let end_point = Text.dup_point text point in
   let curseur = Text.new_point text in
-  let lexbuf = lexing text curseur end_point in
+  let lexbuf = Common_lexer.lexing text curseur end_point in
   let env = parse lexbuf [] [] in
   Text.remove_point text curseur;
   Text.remove_point text tmp_point;
