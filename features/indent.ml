@@ -135,7 +135,7 @@ let compute_indentations get_indentations lexing =
   let text = buf.buf_text in
   Text.with_dup_point text start_point (fun curseur ->
     let lexbuf = lexing text curseur end_point in
-    get_indentations (Text.get_position text start_point) lexbuf
+    get_indentations lexbuf
   )
 
 let rec pop_indentations indents =

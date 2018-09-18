@@ -25,16 +25,16 @@ val fix: int -> Text.position list -> indentations -> indentations
 
 (* helpers to generate the indent_func above *)
 val indent_between_points: 
-  (Text.position -> 'tok -> indentations) (* get_indentation *) ->
-  (Text.t -> Text.point -> Text.point -> 'tok) (* lexing *) ->
+  (Lexing.lexbuf -> indentations) (* get_indentation *) ->
+  (Text.t -> Text.point -> Text.point -> Lexing.lexbuf) (* lexing *) ->
   Str.regexp (* phrase_start *) -> 
   Efuns.buffer -> Text.point -> Text.point -> unit (* indent_func *)
 
 
 (* helper to generate indent_current_line to bind to TAB *)
 val indent_current_line:
-  (Text.position -> 'tok -> indentations) (* get_indentation *) ->
-  (Text.t -> Text.point -> Text.point -> 'tok) (* lexing *) ->
+  (Lexing.lexbuf -> indentations) (* get_indentation *) ->
+  (Text.t -> Text.point -> Text.point -> Lexing.lexbuf) (* lexing *) ->
   Str.regexp (* phrase_start *) ->
   (Efuns.buffer -> Text.point -> Text.point -> unit) (* color_region *) ->
   Efuns.action

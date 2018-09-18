@@ -101,7 +101,7 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
       parse lexbuf token stack [] indent 
         (Indent.fix indent eols indents)
 
-let get_indentations _pos lexbuf =
+let get_indentations  lexbuf =
   parse lexbuf COMMENT  [] []   0 []
 
 (* Now, use the indentation from the parser *)
