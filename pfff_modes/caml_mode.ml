@@ -95,7 +95,7 @@ let _ =
   Hook.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist 
       (* the .mll and .mly are better handled by ocaml_mode for now *)
-      [".*\\.\\(ml\\|mli\\)",mode];
+      [".*\\.\\(ml\\|mli\\)$",mode];
     
     (* reuse some functions from ocaml_mode.ml from LeFessant *)
     Var.set_major_var mode Compil.find_error Ocaml_mode.find_error;

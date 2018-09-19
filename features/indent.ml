@@ -12,6 +12,7 @@
 (***********************************************************************)
 (*e: copyright header efuns *)
 open Efuns
+open Common
 
 (*****************************************************************************)
 (* Prelude *)
@@ -60,10 +61,32 @@ let indent_buffer frame =
 (* get_indentations (defined by each major mode) helpers *)
 (*****************************************************************************)
 
-(* indent level and list of eols *)
-type indentations = (int * (Text.position list)) list
+(* Indent level and list of eols (in reverse order).
+ *
+ * For example on the file content:
+void foo() {
+  if(true) {
+    bar();
+    return 1+2;
+  }
+  fooba();
+}
+ * you will get this indentations (when reversed, see print_indentations()):
+indent: 2, eols at [12]
+indent: 4, eols at [25, 36]
+indent: 2, eols at [52, 56]
+indent: 0, eols at [67, 69, 70]
+ *
+ * remember that position at 0-indexed based (see text.mli).
+ * So each time you have an indentation level and the set of futur
+ * lines that must be at this level (the futur lines are represented
+ * by the eol ('\n') preceding the line).
+ *)
+type indentations = (int * (Text.position list (* eols *))) list
 
 type 'tok indentation_stack = ('tok * int) list
+
+let debug_indent = ref true
 
 (* to be used by programming-language-specific get_indentations() *)
 let pop_to_top stack =
@@ -81,6 +104,7 @@ let rec pop_to_kwds kwd_end_recursion = fun kwds stack ->
   | (kwd,indent) :: stack when List.memq kwd kwds -> stack, (kwd, indent)
   | _ :: stack -> pop_to_kwds kwd_end_recursion kwds stack
 
+(* agglomerate eols when have already an (indent, _) in indents *)
 let fix indent eols indents =
   match eols with
   | [] -> indents
@@ -94,15 +118,14 @@ let fix indent eols indents =
 (* Debugging *)
 (*****************************************************************************)
 
-let _print_indentations list =
-  print_string "Indentations :"; 
-  print_newline ();
-  List.iter (fun (indent, list) ->
-      List.iter (fun pos -> 
-          Printf.printf "Line at %d with %d" pos indent
-      ) list
-  ) list;
-  print_newline ()
+(* alt: use Common.dump, it should do a pretty good work *)
+let print_indentations list =
+  pr "Indentations :"; 
+  list |> List.rev |> List.iter (fun (indent, list) ->
+    pr (spf "indent: %d, eols at [%s]" indent
+          (list |> List.rev |> List.map string_of_int |> String.concat ", "))
+  )
+
 
 let _print_stack tokens stack =
   print_string "Indentation stack:"; 
@@ -182,6 +205,8 @@ let indent_between_points get_indentations start_regexp =
    try
     find_phrase_start start_regexp buf curseur;
     let indentations = get_indentations buf curseur end_point in
+    if !debug_indent
+    then print_indentations indentations;                
     (* remove the Eof indentation *)
     let _,_,indentations = pop_indentations indentations in
     (* indent other lines *)
@@ -215,6 +240,8 @@ let indent_current_line get_indentations start_regexp color_region =
   Text.with_dup_point text point (fun curseur ->
     find_phrase_start start_regexp buf curseur;
     let indentations = get_indentations buf curseur point in
+    if !debug_indent
+    then print_indentations indentations;                
     let (_next,pos,tail) = pop_indentations indentations in
     let current =
       try

@@ -92,10 +92,9 @@ let color_region buf start_point end_point =
   in
   try
     iter lexbuf
-  with
-    _ ->
-      buf.buf_modified <- buf.buf_modified + 1;
-      Text.remove_point text curseur
+  with Exit ->
+    buf.buf_modified <- buf.buf_modified + 1;
+    Text.remove_point text curseur
 
 (***********************************************************************)
 (*********************** indentation ************************)
@@ -105,7 +104,7 @@ let start_regexp = Str.regexp "^{";;
 
 let pop_to_kwds = Indent.pop_to_kwds RBRACE
 
-let token_offset prev_tok = 0
+let token_offset _prev_tok = 0
 (*
   match prev_tok with
   
@@ -138,9 +137,20 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
   | EOF pos -> Indent.fix indent  (pos :: eols) indents
   | EOFSTRING -> (0,[0]) :: (Indent.fix indent eols indents)
   | EOFCOMMENT -> (2,[0]) :: (Indent.fix indent eols indents)
+  (* ???? why discard eols when reach a comment? *)
   | COMMENT -> parse lexbuf prev_tok stack [] indent indents
 
       (* Terminated structures *)
+
+      
+  | IF              (* IF (...) { ... } *)
+  | ELSE            (* ELSE { ... } *)
+  | FOR             (* FOR (...) { ... }  *)
+  | WHILE           (* WHILE (...) { ... }  *)
+    ->
+      parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
+        (Indent.fix indent eols indents)
+
   | LBRACE          (* LBRACE ... RBRACE *)
     ->
       let indent = 
@@ -153,19 +163,11 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
       in
       let offset = token_offset prev_tok in
       parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
-      (Indent.fix (indent+offset) eols indents)
+        (Indent.fix (indent+offset) eols indents)
   | LPAREN          (* LPAREN ... RPAREN *) ->
       let offset = token_offset prev_tok in
       parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
-      (Indent.fix (indent+offset) eols indents)
-      
-  | ELSE            (* ELSE { ... } *)
-  | FOR             (* FOR (...) { ... }  *)
-  | WHILE           (* WHILE (...) { ... }  *)
-  | IF              (* IF (...) { ... } *)
-    ->
-      parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
-      (Indent.fix indent eols indents)
+        (Indent.fix (indent+offset) eols indents)
       
   | RBRACE -> (* This might terminate a IF/WHILE/FOR/ELSE structure *)
       let (stack,indent) = Indent.pop_to LBRACE stack in
@@ -181,7 +183,7 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
       
 (* Deterministic Terminators *) 
   | RPAREN ->
-  (* find corresponding block delimiter *)
+      (* find corresponding block delimiter *)
       let (stack,indent) = Indent.pop_to LPAREN stack in
       parse lexbuf token stack [] indent (Indent.fix indent eols indents)
       
@@ -197,8 +199,7 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
       parse lexbuf token stack [] indent
         (Indent.fix indent eols indents)      
       
-  | _ ->
-      
+  | _ ->      
       let offset = token_offset prev_tok in
       parse lexbuf token stack [] indent 
         (Indent.fix (indent+offset) eols indents)

@@ -23,6 +23,7 @@ let color_region buf start_point end_point =
     Text.make_attr (Attr.get_color !!Pl_colors.string_color) 1 0 false in
   let comment_attr = 
     Text.make_attr (Attr.get_color !!Pl_colors.comment_color) 1 0 false in
+  (* atoms *)
   let gray_attr = 
     Text.make_attr (Attr.get_color !!Pl_colors.module_color) 1 0 false in
 
@@ -40,15 +41,16 @@ let color_region buf start_point end_point =
       | EOFSTRING
       | STRING ->
           Text.set_attrs text curseur len string_attr
+      (* todo: could color ident after LPAREN if known keyword *)
       | IDENT _ when prev_tok = QUOTE ->
-          Text.set_attrs text curseur len gray_attr            
+          Text.set_attrs text curseur len gray_attr         
       | _ -> ()
     );
     iter token lexbuf
   in
   try
     iter COMMENT lexbuf
-  with _ ->
+  with Exit ->
     buf.buf_modified <- buf.buf_modified + 1;
     Text.remove_point text curseur
 
@@ -189,5 +191,5 @@ let _ =
         Paren_mode.highlight_paren frame
       )
     );
-    Var.add_global Ebuffer.modes_alist [(".*\\.\\(el\\|gwm\\|lisp\\)$", mode)];
+    Var.add_global Ebuffer.modes_alist [(".*\\.\\(el\\|lisp\\|gwm\\)$", mode)];
   )

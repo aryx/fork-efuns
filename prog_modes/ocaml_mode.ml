@@ -71,7 +71,7 @@ let color_region buf start_point end_point =
   in
   try
     iter lexbuf
-  with _ ->
+  with Exit ->
     buf.buf_modified <- buf.buf_modified + 1;
     Text.remove_point text curseur
 
@@ -702,7 +702,7 @@ let setup_maps () =
 
 let mode_regexp = define_option ["ocaml_mode"; "mode_regexp"] ""
     (list_option string_option) 
-    [".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)"]
+    [".*\\.\\(ml\\|mli\\|mll\\|mly\\|mlp\\|mlg\\)$"]
 
 
 (*** Ocaml minor mode (for Makefiles (!)) ***)
