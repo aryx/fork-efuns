@@ -109,18 +109,15 @@ let menu frame =
 
 
 let key_return frame =
-  let buf = frame.frm_buffer in
+  let (buf, text, point) = Frame.buf_text_point frame in
   let arr = Var.get_local buf buflist_array in
-  let point = frame.frm_point in
-  let line = Text.point_line buf.buf_text point in
+  let line = Text.point_line text point in
   try 
     (* -2 because of header *)
     let buf_name = arr.(line - 2) in
-    let window = frame.frm_window in
-    Frame.change_buffer window buf_name
+    Frame.change_buffer frame.frm_window buf_name
   with exn ->
-    Top_window.message 
-      (Window.top frame.frm_window)
+    Message.message frame
       (spf "not valid entry in buffer list, exn = %s" (Common.exn_to_s exn))
 
 

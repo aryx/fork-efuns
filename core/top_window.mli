@@ -35,7 +35,7 @@ val buffers_menu : (t -> unit -> unit -> unit) ref
 
 (* message *)
 
-val message : t -> string -> unit
+val message2 : t -> string -> unit
 val clear_message : t -> unit
 
 val mini_message : Efuns.frame -> string -> unit

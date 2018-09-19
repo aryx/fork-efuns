@@ -14,12 +14,16 @@
 open Efuns
 
 (*****************************************************************************)
-(* Misc *)
+(* Vars *)
 (*****************************************************************************)
 
 (*s: constant [[Simple.line_comment]] *)
 let line_comment = Store.create_abstr "Fill_mode.line_comment"
 (*e: constant [[Simple.line_comment]] *)
+
+(*****************************************************************************)
+(* Misc *)
+(*****************************************************************************)
 
 (*s: function [[Simple.insert_special_char]] *)
 let insert_special_char frame =
@@ -30,12 +34,8 @@ let insert_special_char frame =
   else Edit.insert_char frame (Char.chr (key - 65))
 (*e: function [[Simple.insert_special_char]] *)
 
-(*****************************************************************************)
-(* Complexe *)
-(*****************************************************************************)
-
 (*s: constant [[Complex.buf_mtime]] *)
-let buf_mtime = Store.create "buf_mtime" string_of_float float_of_string
+let buf_mtime = Store.create_float "buf_mtime"
 (*e: constant [[Complex.buf_mtime]] *)
 
 (*s: function [[Complex.update_time]] *)
@@ -131,21 +131,18 @@ let goto_char frame =
 
 (*s: function [[Complex.get_pos]] *)
 let describe_position frame =
-  Top_window.message 
-    (Window.top frame.frm_window)
-    (Printf.sprintf "Char position %d" 
-       (Text.get_position frame.frm_buffer.buf_text frame.frm_point))
+  let (_, text, point) = Frame.buf_text_point frame in
+  Message.message frame
+    (Printf.sprintf "Char position %d" (Text.get_position text point))
 [@@interactive]
 (*e: function [[Complex.get_pos]] *)
 
 (*s: function [[Misc.cursor_position]] *)
 let cursor_position frm =
-  let text = frm.frm_buffer.buf_text in
-  let point = frm.frm_point in
+  let (_, text, point) = Frame.buf_text_point frm in
   let char = Text.get_char text point in
   let coord = Text.point_coord text point in
-  Top_window.message 
-    (Window.top frm.frm_window)
+  Message.message frm
     (Printf.sprintf "Char: '%c' (%d, #o%o, #x%x) point=%d line=%d column=%d" 
        char 
        (Char.code char) (Char.code char) (Char.code char)

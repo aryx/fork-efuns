@@ -177,7 +177,7 @@ let copy_region frame =
   add_clipboard frame region;
   kill_string region;
   (* need a message because as opposed to a cut this is not directly visible *)
-  Top_window.message (Window.top frame.frm_window) "Region saved"
+  Message.message frame "Region saved"
 [@@interactive]
 (*e: function [[Simple.copy_region]] *)
 
@@ -189,8 +189,7 @@ let mark_at_point frame =
   (*s: save current pos from frame for position history navigation *)
   Move.save_current_pos frame;
   (*e: save current pos from frame for position history navigation *)
-  let top_window = Window.top frame.frm_window in
-  Top_window.message top_window "Mark set";
+  Message.message frame "Mark set";
   ()
 [@@interactive]
 (*e: function [[Complex.mark_at_point]] *)

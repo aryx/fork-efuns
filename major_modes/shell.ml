@@ -203,8 +203,7 @@ let previous_history frame =
   let hist = Var.get_local buf history in
   let current = Var.get_local buf history_index in
   if !current = List.length !hist 
-  then Top_window.message (Window.top frame.frm_window) 
-        "No previous line in history"
+  then Message.message frame "No previous line in history"
   else begin
       let s = Utils.list_nth !current !hist in
       incr current;
@@ -219,8 +218,7 @@ let next_history frame =
   let current = Var.get_local buf history_index in
 
   if !current <= 0 
-  then Top_window.message (Window.top frame.frm_window) 
-    "No other line in history"
+  then Message.message frame "No other line in history"
   else begin
       decr current;
       let s = Utils.list_nth !current !hist in

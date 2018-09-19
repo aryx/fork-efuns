@@ -173,7 +173,7 @@ let show_type_at_cursor frm =
     ]::_rest) -> 
     (* todo: sometimes the str contains newlines *)
     (* less: could use ocaml_mode to colorize those types *)
-    Top_window.message (Window.top frm.frm_window) str
+      Message.message frm str
   | _ -> failwith (spf "wrong JSON output for type_at_cursor: %s" str)
 
 (* todo: should look for type if no doc, or goto def if no doc *)
@@ -183,7 +183,7 @@ let show_doc_at_cursor frm =
   let (j, str) = execute_command frm command in
   match j with
   | J.String str -> 
-    Top_window.message (Window.top frm.frm_window) str
+    Message.message frm str
   | _ -> failwith (spf "wrong JSON output for doc_at_cursor: %s" str)
 
 let goto_def_at_cursor look_for frm =
@@ -200,12 +200,13 @@ let goto_def_at_cursor look_for frm =
     Multi_buffers.set_previous_frame frm;
 
     let frm = Frame.load_file frm.frm_window file in
-    Text.goto_line frm.frm_buffer.buf_text frm.frm_point (line - 1);
-    Text.fmove frm.frm_buffer.buf_text frm.frm_point (col);
-    Top_window.message (Window.top frm.frm_window) str
+    let (_buf, text, point) = Frame.buf_text_point frm in
+    Text.goto_line text point (line - 1);
+    Text.fmove text point (col);
+    Message.message frm str
 
   | J.String str -> 
-    Top_window.message (Window.top frm.frm_window) str
+    Message.message frm str
   | _ -> failwith (spf "wrong JSON output for def_at_cursor: %s" str)
   
 
@@ -310,14 +311,15 @@ let goto_def frm =
               Multi_buffers.set_previous_frame frm;
 
               let frm = Frame.load_file frm.frm_window file in
-              Text.goto_line frm.frm_buffer.buf_text frm.frm_point (line - 1);
-              Text.fmove frm.frm_buffer.buf_text frm.frm_point (col);
-              Top_window.message (Window.top frm.frm_window) str
+              let (_buf, text, point) = Frame.buf_text_point frm in
+
+              Text.goto_line text point (line - 1);
+              Text.fmove text point (col);
+              Message.message frm str
 
             | J.String str -> 
-              Top_window.message (Window.top frm.frm_window) str
+              Message.message frm str
             | _ -> failwith (spf "wrong JSON output for def_at_cursor: %s" str)
-              
 
         )
   | _ -> failwith (spf "wrong JSON output for complete_prefix: %s" str)
@@ -337,27 +339,22 @@ let merlin_mode =
 (* Setup *)
 (*****************************************************************************)
 
-let _ = 
-
-  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 't']
-    show_type_at_cursor;
+let _ =
+ [
+  [Keymap.c_c; ControlMap, Char.code 't'], show_type_at_cursor;
   (* 'i' for information *)
-  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'i']
-    show_doc_at_cursor;
+  [Keymap.c_c; ControlMap, Char.code 'i'], show_doc_at_cursor;
   (* replacement for the traditional Emacs tags-find command *)
-  Keymap.add_binding mode.min_map [MetaMap, Char.code '.']
-    (* alt: (goto_def_at_cursor "implementation"); *)
-    goto_def;
+  (* alt: (goto_def_at_cursor "implementation"); *)
+  [MetaMap, Char.code '.'], goto_def;
   (* 'd' for 'definition' below *)
-  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'd']
-    (goto_def_at_cursor "implementation");
-  Keymap.add_binding mode.min_map [Keymap.c_c;ControlMap, Char.code 'D']
-    (goto_def_at_cursor "interface");
+  [Keymap.c_c; ControlMap, Char.code 'd'],(goto_def_at_cursor"implementation");
+  [Keymap.c_c; ControlMap, Char.code 'D'], (goto_def_at_cursor"interface");
   (* todo: real indent_or_complete, move in each major mode *)
-  Keymap.add_binding mode.min_map [ControlMap, XK.xk_Tab] (fun frm ->
-    let point = frm.frm_point in
-    if Text.point_col frm.frm_buffer.buf_text point = 0
+  [ControlMap, XK.xk_Tab], (fun frm ->
+    let (_, text, point) = Frame.buf_text_point frm in
+    if Text.point_col text point = 0
     then Edit.insert_string frm "  "
     else complete_prefix_at_cursor frm;
-  );
-  ()
+    );
+ ] |> List.map (fun (key,action) -> Keymap.add_binding mode.min_map key action)

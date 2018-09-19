@@ -115,6 +115,7 @@ SRC=\
  core/frame.ml\
  core/top_window.ml\
  \
+ features/message.ml\
  features/move.ml\
  features/edit.ml\
  features/copy_paste.ml\

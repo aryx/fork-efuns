@@ -42,7 +42,6 @@ type query = NoQuery | Query of frame * string
 
 (*s: function [[Search.replace]] *)
 let replace flag frame query str repl =
-  let top_window = Window.top frame.frm_window in
   let (buf, text, point) = Frame.buf_text_point frame in
   (*s: save current pos from frame for position history navigation *)
   Move.save_current_pos frame;
@@ -141,8 +140,7 @@ let replace flag frame query str repl =
   with 
   | Not_found ->
       Text.commit_session text session;
-      Top_window.message top_window
-        ("Replace "^(string_of_int !n)^" occurences")
+      Message.message frame ("Replace "^(string_of_int !n)^" occurences")
   | _ ->
       Text.commit_session text session
 (*e: function [[Search.replace]] *)

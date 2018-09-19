@@ -39,17 +39,14 @@ let exec_interactive interactives frame name =
     let f, key = List.assoc name interactives in
     (*s: [[Interactive.exec_interactive()]] display if has a keybinding *)
     key |> Common.do_option (fun key_list ->
-      let top_window = Window.top frame.frm_window in
-      Top_window.message top_window
-        ("you can run "^name^" by typing "^
-          (Keymap.print_key_list key_list))
+      Message.message frame
+        ("you can run "^name^" by typing "^(Keymap.print_key_list key_list))
     );
     (*e: [[Interactive.exec_interactive()]] display if has a keybinding *)
     (* run it ! *)
     f frame
   with Not_found -> 
-    let top_window = Window.top frame.frm_window in
-    Top_window.message top_window ("No interactive command "^name)
+    Message.message frame ("No interactive command "^name)
 (*e: function [[Interactive.exec_interactive]] *)
       
 (*s: function [[Interactive.call_interactive]] *)

@@ -65,9 +65,8 @@ let find_error_error_regexp = Store.create_abstr "find_error_err_regexp"
   
 (*s: function [[Compil.next_error]] *)
 let next_error top_frame =
-  let top_window = Window.top top_frame.frm_window in
   match !compilation_frame with
-  | None -> Top_window.message top_window "No compilation started"
+  | None -> Message.message top_frame "No compilation started"
   | Some (frame, error_point, cdir) ->      
       if frame.frm_killed 
       then Frame.unkill (Multi_frames.cut_frame top_frame) frame;
@@ -114,7 +113,7 @@ let next_error top_frame =
           Text.fmove text point error.err_begin;
           Frame.active frame
       with Not_found ->
-        Top_window.message top_window "No more errors"
+        Message.message top_frame "No more errors"
 [@@interactive]
 (*e: function [[Compil.next_error]] *)
 

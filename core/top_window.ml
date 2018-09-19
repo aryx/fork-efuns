@@ -20,6 +20,12 @@ type t = Efuns.top_window
 (*e: type [[Top_window.t]] *)
 
 (*s: function [[Top_window.message]] *)
+(* note: I could get rid of the top_window parameter and compute top_window
+ * by getting List.hd (Globals.editors()).top_windows, but maybe
+ * one day I will add back the possibility to have multiple top_windows,
+ * in which case we will need to know to which top_window to display
+ * a message.
+ *)
 let message top_window msg =
   let graphic = Efuns.backend top_window in
   let len = String.length msg in
@@ -36,6 +42,7 @@ let message top_window msg =
       (* let _ = Unix.select [] [] [] 0.2 in *)
       mini_buffer.frm_redraw <- true
 (*e: function [[Top_window.message]] *)
+let message2 = message
 
 (*s: function [[Top_window.clear_message]] *)
 let clear_message top_window =

@@ -68,9 +68,8 @@ let completions_buf_hook = Store.create_abstr "completions_buf_hook"
 
 (*s: function [[Select.display_completions]] *)
 let display_completions frame list =
-  let top_window = Window.top frame.frm_window in
   if list = [] 
-  then Top_window.message top_window "No Completions"
+  then Message.message frame "No Completions"
   else
     let rec iter list s =
       match list with
