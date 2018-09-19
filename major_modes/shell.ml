@@ -20,33 +20,42 @@ module FT = File_type
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-(* An eshell-inspired shell/terminal for efuns.
+(* An Eshell-inspired shell/terminal for Efuns.
  *
  * todo:
  *  - fix scroll_to_end to handle when have overflow lines
  *  - typing a key should go to the prompt (but do via
  *    handle_key_before is tricky, do only for regular keys without
  *    modifiers)
- *  - M-backspace should not delete the prompt ... and C-a should
- *    not pass the prompt.
+ *  - M-backspace should not delete the prompt ... 
+ *  - C-a should not pass the prompt.
  *  - later: have syntax for more complex stuff inspired by scsh? more
  *    regular. I always get confused about order of redirection, 
  *    the lack of nestedness, etc.
  *  - look at Shell.nw?
  *)
 
+(*****************************************************************************)
+(* Variables, globals, and constants *)
+(*****************************************************************************)
+
+(* pwd of the shell buffer *)
+let pwd_var = Store.create_string "Shell.pwd"
+let pwd buf =
+  Var.get_local buf pwd_var
+
+(* for C-a *)
+let prompt_last_pos = Store.create_abstr "Shell.prompt_last_pos"
+(* for Up *)
+let history = Store.create_abstr "Shell.history"
+
+let prompt_regexp = Str.regexp ("^/.* \\$ ")
+let prompt_color = "coral"
+
 
 (*****************************************************************************)
 (* Helpers *)
 (*****************************************************************************)
-
-(* pwd of the shell buffer *)
-let pwd_var = Store.create_string "pwd_var"
-let pwd buf =
-  Var.get_local buf pwd_var
-
-let prompt buf =
-  spf "%s $ " (pwd buf)
 
 (* for builtin_ls *)
 let columnize width xs =
@@ -86,6 +95,7 @@ let columnize width xs =
   done;
   Buffer.contents buf
 
+(* to filter them in ls *)
 let is_obj_file file =
   try
     let typ = FT.file_type_of_file file in
@@ -94,7 +104,7 @@ let is_obj_file file =
     | _ -> false
   with _ -> false
 
-(* ugly patching for plan9 *)
+(* plan9: ugly patching for plan. Still needed? *)
 let vfat_patch x =
   if x =~ "^[A-Z0-9_]*\\.[A-Z0-9_]+$" ||
      x =~ "^[A-Z0-9_]+$"
@@ -105,7 +115,7 @@ let vfat_patch x =
 (* Scrolling *)
 (*****************************************************************************)
 
-(* for eshell we don't want to have the cursor centered in the frame,
+(* for Eshell we don't want to have the cursor centered in the frame,
  * we want the cursor at the end so we can see as much as possible
  * output from previous command.
  * later: do like in rc/eshell and scroll until can
@@ -143,28 +153,36 @@ let scroll_until_not_pass_prompt frame =
 (* Colors *)
 (*****************************************************************************)
 
-let prompt_color = "coral"
-
 let colorize buf =
+  (* actually pretty good! *)
   Dircolors.colorize buf;
-  Color.color buf 
-    (Str.regexp ("^/.* \\$")) false
+  (* do that after Dircolors otherwise part of prompt get blue *)
+  Color.color buf prompt_regexp false
       (Text.make_attr (Attr.get_color prompt_color) 1 0 false);
   ()
 
 (*****************************************************************************)
-(* Builtins *)
+(* Prompt *)
 (*****************************************************************************)
+
+let prompt buf =
+  spf "%s $ " (pwd buf)
 
 (* assumes other commands don't output their final newline *)
 let display_prompt buf =
-  Text.insert_at_end buf.buf_text "\n";
-  Text.insert_at_end buf.buf_text (prompt buf);
+  let text = buf.buf_text in
+  Text.insert_at_end text "\n";
+  Text.insert_at_end text (prompt buf);
+  let last_pos = Var.get_local buf prompt_last_pos in
+  Text.set_position text last_pos (Text.size text);
   (* less: it recolorize everything, so might be expensive if we don't
-   * limit the nblines of the buffer. A colorize_region would
-   * be better
+   * limit the nblines of the buffer. A colorize_region would be better.
    *)
   colorize buf
+
+(*****************************************************************************)
+(* Builtins *)
+(*****************************************************************************)
 
 let builtin_ls (*?(show_dotfiles=false) ?(show_objfiles=false)*)
  show_dotfiles show_objfiles frame =
@@ -246,8 +264,7 @@ let builtin_cd frame s =
   | _ -> failwith (spf "%s is not a directory" newdir)
 
 let builtin_v frame s =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = Frame.buf_text_point frame in
 
   let dir = pwd buf in
   let file = 
@@ -269,8 +286,7 @@ let builtin_v frame s =
 let pid_external = ref None
 
 let kill_external frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = Frame.buf_text_point frame in
   match !pid_external with
   | None ->  
       failwith "No external process to kill"
@@ -282,8 +298,7 @@ let kill_external frame =
   
 
 let run_cmd frame cmd =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, _) = Frame.buf_text_point frame in
 
   let (pid,inc,outc) = System.open_process (pwd buf) cmd in
   pid_external := Some pid;
@@ -359,35 +374,47 @@ let interpret frame s =
  with Exit -> ()
 
 (*****************************************************************************)
-(* Keys *)
+(* Keys and actions *)
 (*****************************************************************************)
 
 (* initiate the interpreter *)
 let key_return frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
+  let (buf, text, point) = Frame.buf_text_point frame in
+
   Text.insert_at_end text "\n";
-  Text.with_dup_point text frame.frm_point (fun point ->
-    let delta = Text.search_backward text (Str.regexp " \\$ ") point in
-    Text.fmove text point delta;
-    let s = Text.region text frame.frm_point point in
+  Text.with_dup_point text point (fun cursor ->
+    let delta = Text.search_backward text prompt_regexp cursor in
+    Text.fmove text cursor delta;
+    let s = Text.region text point cursor in
     interpret frame s
   )
+
+let bol_go_after_prompt frame =
+  let (buf, text, point) = Frame.buf_text_point frame in
+  let last_pos = Var.get_local buf prompt_last_pos in
+  if point >= last_pos
+  then Text.goto_point text point last_pos
+  else Move.beginning_of_line frame
+[@@interactive]
 
 (*****************************************************************************)
 (* Install *)
 (*****************************************************************************)
 
 let install buf =
+  let text = buf.buf_text in
   (* loc_dirname should be the dirname of the file in active frame *)
   Var.set_local buf pwd_var  (Globals.editor()).edt_dirname;
+  Var.set_local buf prompt_last_pos (Text.new_point text);
+  Var.set_local buf history (ref []);
+
   let tbl = Ebuffer.create_syntax_table () in
   buf.buf_syntax_table <- tbl;
   tbl.(Char.code '_') <- true;
   tbl.(Char.code '-') <- true;
   tbl.(Char.code '.') <- true;
+
   display_prompt buf;
-  let text = buf.buf_text in
   Text.set_position text buf.buf_point (Text.size text);
   ()
 
@@ -432,14 +459,26 @@ let _ =
     )];
 *)
 
-    let map = mode.maj_map in
-    Keymap.add_binding map [(NormalMap, XK.xk_Return)] key_return;
-    (* not too bad completion for free *)
-    Keymap.add_binding map [(NormalMap, XK.xk_Tab)] Abbrevs.dabbrev_expand;
-    Keymap.add_binding map [(MetaMap, Char.code '>')] (fun frame ->
+    (* pretty good completion for free *)
+    Keymap.add_major_key mode [(NormalMap, XK.xk_Tab)] Abbrevs.dabbrev_expand;
+    Keymap.add_major_key mode [Keymap.c_c; (ControlMap, Char.code 'k')] 
+      kill_external;
+
+    (* patching traditional keys *)
+    Keymap.add_major_key mode [(NormalMap, XK.xk_Return)] key_return;
+    Keymap.add_major_key mode [(MetaMap, Char.code '>')] (fun frame ->
       Move.end_of_file frame;
       scroll_to_end frame;
     );
-    Keymap.add_binding map [Keymap.c_c; (ControlMap, Char.code 'k')] 
-      kill_external;
+    Keymap.add_major_key mode [ControlMap, Char.code 'a'] bol_go_after_prompt;
+(*
+    [MetaMap, XK.xk_BackSpace ], (Frame.to_frame Edit.delete_backward_word);
+*)
+
+    (* less: more patching?
+     [NormalMap, XK.xk_Left], (fun frm -> ignore (Move.move_backward frm 1)); 
+     [ControlMap, XK.xk_Left ], (Frame.to_frame Move.backward_word);
+     [ControlMap, Char.code 'r'], Search.isearch_backward;
+     *)
+
   )
