@@ -397,14 +397,10 @@ let if_else_after_last_prompt fthen felse frame =
   then fthen frame
   else felse frame
 
-let bol frame =
-  frame |> if_else_after_last_prompt 
-    (fun frame -> 
-       let (buf, text, point) = Frame.buf_text_point frame in
-       let last_pos = Var.get_local buf prompt_last_pos in
-       Text.goto_point text point last_pos
-    )
-    Move.beginning_of_line
+let goto_prompt frame =
+  let (buf, text, point) = Frame.buf_text_point frame in
+  let last_pos = Var.get_local buf prompt_last_pos in
+  Text.goto_point text point last_pos
 [@@interactive]
 
 (*****************************************************************************)
@@ -459,7 +455,32 @@ let eshell_num frame =
 
 let _ = 
   Hook.add_start_hook (fun () ->
-    
+       (* major mode keys *)
+   [
+    (* pretty good completion for free *)
+    [(NormalMap, XK.xk_Tab)], Abbrevs.dabbrev_expand;
+   
+    [Keymap.c_c; (ControlMap, Char.code 'k')], kill_external;
+
+    (* patching traditional keys *)
+    [(NormalMap, XK.xk_Return)], key_return;
+    [(MetaMap, Char.code '>')], (fun frame ->
+        Move.end_of_file frame;
+        scroll_to_end frame;
+      );
+    [ControlMap, Char.code 'a'], if_else_after_last_prompt 
+      goto_prompt Move.beginning_of_line;
+    [MetaMap, XK.xk_BackSpace ], if_else_after_last_prompt 
+        (Frame.to_frame Edit.delete_backward_word)
+        (fun _ -> ());
+
+    (* less: more patching?
+     [NormalMap, XK.xk_Left], (fun frm -> ignore (Move.move_backward frm 1)); 
+     [ControlMap, XK.xk_Left ], (Frame.to_frame Move.backward_word);
+     [ControlMap, Char.code 'r'], Search.isearch_backward;
+     *)
+   ] |> List.iter (fun (key, action) -> Keymap.add_major_key mode key action);
+
 (* buggy, does not handle C-e, need something better
     Efuns.set_major_var mode Top_window.handle_key_start_hook [(fun frame ->
       let keysym = !Top_window.keypressed in
@@ -468,30 +489,5 @@ let _ =
       ()
     )];
 *)
-   [
-    (* pretty good completion for free *)
-    [(NormalMap, XK.xk_Tab)], Abbrevs.dabbrev_expand;
-    [Keymap.c_c; (ControlMap, Char.code 'k')], kill_external;
-
-    (* patching traditional keys *)
-    [(NormalMap, XK.xk_Return)], key_return;
-    [(MetaMap, Char.code '>')], (fun frame ->
-          Move.end_of_file frame;
-          scroll_to_end frame;
-      );
-    [ControlMap, Char.code 'a'], bol;
-    [MetaMap, XK.xk_BackSpace ], if_else_after_last_prompt 
-        (Frame.to_frame Edit.delete_backward_word)
-        (fun _ -> ());
-(*
-    [MetaMap, XK.xk_BackSpace ], (Frame.to_frame Edit.delete_backward_word);
-*)
-
-    (* less: more patching?
-     [NormalMap, XK.xk_Left], (fun frm -> ignore (Move.move_backward frm 1)); 
-     [ControlMap, XK.xk_Left ], (Frame.to_frame Move.backward_word);
-     [ControlMap, Char.code 'r'], Search.isearch_backward;
-     *)
-   ] |> List.iter (fun (key, action) -> Keymap.add_major_key mode key action);
 
   )
