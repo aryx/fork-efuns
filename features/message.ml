@@ -22,6 +22,16 @@ open Efuns
  *  - put also the messages in *Messages* as in Emacs
  *)
 
+let bufname = "*Messages*"
+
+(*****************************************************************************)
+(* Helpers *)
+(*****************************************************************************)
+let add_to_messages s =
+  let buf = Ebuffer.default bufname in
+  let text = buf.buf_text in
+  Text.insert_at_end text (s ^ "\n")
+
 (*****************************************************************************)
 (* Entry point *)
 (*****************************************************************************)
@@ -36,4 +46,5 @@ let message frame s =
   let top_window = 
     Window.top frame.frm_window 
   in
-  Top_window.message2 top_window s  
+  Top_window.message2 top_window s;
+  add_to_messages s

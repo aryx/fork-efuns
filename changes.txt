@@ -15,7 +15,7 @@ support [[ ]] and [< >] correctly (different lexing rules).
 
 ** shell
 
-*** history
+*** shell history (Up and Down)
 
 *** working C-a, M-backspace that don't go beyond the prompt
 
@@ -44,6 +44,9 @@ so can have efuns interact with other applications (e.g., web browser)
 use [@@interactive] attribute
 
 *** factorized code with Frame.buf_text_point helper
+
+*** Cleaner Message.message API and add messages to *Messages* buffer
+
 
 * -----------------------------------------------------------
 
