@@ -112,7 +112,7 @@ let set_history map string history =
       let text = buf.buf_text in
       Text.clear text;
       string := ele;
-      Edit.insert_string mini_frame ele
+      Edit.insert_string mini_frame ele;
     end
   );      
   Keymap.add_binding map [NormalMap, XK.xk_Down] (fun mini_frame ->
@@ -125,7 +125,7 @@ let set_history map string history =
       let text = buf.buf_text in
       Text.clear text;
       string := ele;
-      Edit.insert_string mini_frame ele; ()
+      Edit.insert_string mini_frame ele;
     end
   )
 (*e: function [[Select.set_history]] *)

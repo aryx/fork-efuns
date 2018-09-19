@@ -27,8 +27,6 @@ module FT = File_type
  *  - typing a key should go to the prompt (but do via
  *    handle_key_before is tricky, do only for regular keys without
  *    modifiers)
- *  - M-backspace should not delete the prompt ... 
- *  - C-a should not pass the prompt.
  *  - later: have syntax for more complex stuff inspired by scsh? more
  *    regular. I always get confused about order of redirection, 
  *    the lack of nestedness, etc.
@@ -44,14 +42,14 @@ let pwd_var = Store.create_string "Shell.pwd"
 let pwd buf =
   Var.get_local buf pwd_var
 
-(* for C-a *)
+(* for C-a, M-backspace, etc. *)
 let prompt_last_pos = Store.create_abstr "Shell.prompt_last_pos"
-(* for Up *)
+(* for Up/Down *)
 let history = Store.create_abstr "Shell.history"
+let history_index = Store.create_abstr "Shell.history_index"
 
 let prompt_regexp = Str.regexp ("^/.* \\$ ")
 let prompt_color = "coral"
-
 
 (*****************************************************************************)
 (* Helpers *)
@@ -179,6 +177,52 @@ let display_prompt buf =
    * limit the nblines of the buffer. A colorize_region would be better.
    *)
   colorize buf
+
+(*****************************************************************************)
+(* History *)
+(*****************************************************************************)
+let add_history frame cmd =
+  let (buf, _, _) = Frame.buf_text_point frame in
+  let hist = Var.get_local buf history in
+  let index = Var.get_local buf history_index in
+  hist := cmd::!hist;
+  index := 0;
+  ()
+
+(* todo: find prompt, delete, insert *)
+let insert_history_element frame s =
+  Edit.insert_string frame s
+
+(* Mostly a copy-paste of Select.set_history *)
+let previous_history frame =
+  let (buf, _, _) = Frame.buf_text_point frame in
+  let hist = Var.get_local buf history in
+  let current = Var.get_local buf history_index in
+  if !current = List.length !hist 
+  then Top_window.message (Window.top frame.frm_window) 
+        "No previous line in history"
+  else begin
+      let s = Utils.list_nth !current !hist in
+      incr current;
+      insert_history_element frame s
+    end
+
+[@@interactive]  
+
+let next_history frame =
+  let (buf, _, _) = Frame.buf_text_point frame in
+  let hist = Var.get_local buf history in
+  let current = Var.get_local buf history_index in
+
+  if !current <= 0 
+  then Top_window.message (Window.top frame.frm_window) 
+    "No other line in history"
+  else begin
+      decr current;
+      let s = Utils.list_nth !current !hist in
+      insert_history_element frame s;
+    end
+[@@interactive]  
 
 (*****************************************************************************)
 (* Builtins *)
@@ -383,9 +427,11 @@ let key_return frame =
 
   Text.insert_at_end text "\n";
   Text.with_dup_point text point (fun cursor ->
+    (* less: could use prompt_last_pos point now *)
     let delta = Text.search_backward text prompt_regexp cursor in
     Text.fmove text cursor delta;
     let s = Text.region text point cursor in
+    add_history frame s;      
     interpret frame s
   )
 
@@ -393,7 +439,7 @@ let key_return frame =
 let if_else_after_last_prompt fthen felse frame =
   let (buf, text, point) = Frame.buf_text_point frame in
   let last_pos = Var.get_local buf prompt_last_pos in
-  if point > last_pos
+  if point >= last_pos
   then fthen frame
   else felse frame
 
@@ -402,6 +448,7 @@ let goto_prompt frame =
   let last_pos = Var.get_local buf prompt_last_pos in
   Text.goto_point text point last_pos
 [@@interactive]
+
 
 (*****************************************************************************)
 (* Install *)
@@ -412,7 +459,9 @@ let install buf =
   (* loc_dirname should be the dirname of the file in active frame *)
   Var.set_local buf pwd_var  (Globals.editor()).edt_dirname;
   Var.set_local buf prompt_last_pos (Text.new_point text);
+  (* less: could populate with saved history on disk *)
   Var.set_local buf history (ref []);
+  Var.set_local buf history_index (ref 0);
 
   let tbl = Ebuffer.create_syntax_table () in
   buf.buf_syntax_table <- tbl;
@@ -473,12 +522,17 @@ let _ =
     [MetaMap, XK.xk_BackSpace ], if_else_after_last_prompt 
         (Frame.to_frame Edit.delete_backward_word)
         (fun _ -> ());
-
     (* less: more patching?
      [NormalMap, XK.xk_Left], (fun frm -> ignore (Move.move_backward frm 1)); 
      [ControlMap, XK.xk_Left ], (Frame.to_frame Move.backward_word);
      [ControlMap, Char.code 'r'], Search.isearch_backward;
      *)
+
+    [NormalMap, XK.xk_Up], if_else_after_last_prompt 
+        previous_history Move.backward_line; 
+    [NormalMap, XK.xk_Down], if_else_after_last_prompt 
+        next_history Move.forward_line; 
+
    ] |> List.iter (fun (key, action) -> Keymap.add_major_key mode key action);
 
 (* buggy, does not handle C-e, need something better
