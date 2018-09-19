@@ -1,4 +1,4 @@
-(*s: features/parameter.ml *)
+(*s: core/parameter.ml *)
 (*s: copyright header efuns *)
 (***********************************************************************)
 (*                                                                     *)
@@ -61,4 +61,4 @@ let all_parameters frame _ =
       list
 (*e: function [[Simple.all_parameters]] *)
 
-(*e: features/parameter.ml *)
+(*e: core/parameter.ml *)
