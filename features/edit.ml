@@ -20,8 +20,7 @@ open Move
 
 (*s: function [[Simple.insert_string]] *)
 let insert_string frame str =
-  let text = frame.frm_buffer.buf_text in
-  let point = frame.frm_point in
+  let (_, text, point) = Frame.buf_text_point frame in
   Text.insert text point str;
   Text.fmove text point (String.length str)
 (*e: function [[Simple.insert_string]] *)
@@ -32,8 +31,7 @@ let single_char = String.make 1 ' '
 (*s: function [[Simple.insert_char]] *)
 (* could factorize and just call insert_string? *)
 let insert_char frame char =
-  let text = frame.frm_buffer.buf_text in
-  let point = frame.frm_point in
+  let (_, text, point) = Frame.buf_text_point frame in
   single_char.[0] <- char;
   Text.insert text point single_char;
   Text.fmove text point 1
@@ -92,16 +90,16 @@ let char_insert_command char frame =
 
 (*s: function [[Simple.delete_char]] *)
 let delete_char frame =
-  let text = frame.frm_buffer.buf_text in
-  Text.delete text frame.frm_point 1
+  let (_, text, point) = Frame.buf_text_point frame in
+  Text.delete text point 1
 [@@interactive]
 (*e: function [[Simple.delete_char]] *)
 
 (*s: function [[Simple.delete_backspace_char]] *)
 let delete_backspace_char frame =
-  let text = frame.frm_buffer.buf_text in
-  if Text.bmove_res text frame.frm_point 1 <> 0 
-  then Text.delete text frame.frm_point 1
+  let (_, text, point) = Frame.buf_text_point frame in
+  if Text.bmove_res text point 1 <> 0 
+  then Text.delete text point 1
 [@@interactive]
 (*e: function [[Simple.delete_backspace_char]] *)
 

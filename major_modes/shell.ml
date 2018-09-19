@@ -191,6 +191,10 @@ let add_history frame cmd =
 
 (* todo: find prompt, delete, insert *)
 let insert_history_element frame s =
+  let (buf, text, point) = Frame.buf_text_point frame in
+  let last_pos = Var.get_local buf prompt_last_pos in
+  Text.goto_point text point last_pos;
+  Copy_paste.kill_end_of_line frame;
   Edit.insert_string frame s
 
 (* Mostly a copy-paste of Select.set_history *)
@@ -436,10 +440,10 @@ let key_return frame =
   )
 
 (* helper *)
-let if_else_after_last_prompt fthen felse frame =
+let if_else_point_vs_prompt cmp fthen felse frame =
   let (buf, text, point) = Frame.buf_text_point frame in
   let last_pos = Var.get_local buf prompt_last_pos in
-  if point >= last_pos
+  if cmp point last_pos
   then fthen frame
   else felse frame
 
@@ -517,9 +521,9 @@ let _ =
         Move.end_of_file frame;
         scroll_to_end frame;
       );
-    [ControlMap, Char.code 'a'], if_else_after_last_prompt 
+    [ControlMap, Char.code 'a'], if_else_point_vs_prompt (>=)
       goto_prompt Move.beginning_of_line;
-    [MetaMap, XK.xk_BackSpace ], if_else_after_last_prompt 
+    [MetaMap, XK.xk_BackSpace ], if_else_point_vs_prompt (>)
         (Frame.to_frame Edit.delete_backward_word)
         (fun _ -> ());
     (* less: more patching?
@@ -528,9 +532,9 @@ let _ =
      [ControlMap, Char.code 'r'], Search.isearch_backward;
      *)
 
-    [NormalMap, XK.xk_Up], if_else_after_last_prompt 
+    [NormalMap, XK.xk_Up], if_else_point_vs_prompt (>=)
         previous_history Move.backward_line; 
-    [NormalMap, XK.xk_Down], if_else_after_last_prompt 
+    [NormalMap, XK.xk_Down], if_else_point_vs_prompt (>=)
         next_history Move.forward_line; 
 
    ] |> List.iter (fun (key, action) -> Keymap.add_major_key mode key action);

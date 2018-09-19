@@ -13,6 +13,12 @@ TODO automatic case-analysis code generation,
 use fuzzy tree to correctly handle nested elements, and
 support [[ ]] and [< >] correctly (different lexing rules).
 
+** shell
+
+*** history
+
+*** working C-a, M-backspace that don't go beyond the prompt
+
 ** support for Windows!
 can now compile Efuns for Linux, Windows, and macOS
 
@@ -28,6 +34,7 @@ so can have efuns interact with other applications (e.g., web browser)
 *** M-x align_char
 
 *** basic rectangle operations (C-x r t, C-x r k)
+
 
 ** internals
 
