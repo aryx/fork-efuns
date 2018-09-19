@@ -67,8 +67,6 @@ a buffer
 at right place?
 still?
 
-*** eshell: command history 
-
 *** eshell: should start from dir of current frame
 so can get multiple eshell window from same dir
 still?
@@ -171,8 +169,6 @@ goto the end of the buffer
 but need understand frm_y_offset
 
 **** eshell: auto go to end when type anything
-
-**** arrow for history
 
 *** noweb
 
