@@ -389,12 +389,22 @@ let key_return frame =
     interpret frame s
   )
 
-let bol_go_after_prompt frame =
+(* helper *)
+let if_else_after_last_prompt fthen felse frame =
   let (buf, text, point) = Frame.buf_text_point frame in
   let last_pos = Var.get_local buf prompt_last_pos in
-  if point >= last_pos
-  then Text.goto_point text point last_pos
-  else Move.beginning_of_line frame
+  if point > last_pos
+  then fthen frame
+  else felse frame
+
+let bol frame =
+  frame |> if_else_after_last_prompt 
+    (fun frame -> 
+       let (buf, text, point) = Frame.buf_text_point frame in
+       let last_pos = Var.get_local buf prompt_last_pos in
+       Text.goto_point text point last_pos
+    )
+    Move.beginning_of_line
 [@@interactive]
 
 (*****************************************************************************)
@@ -458,19 +468,21 @@ let _ =
       ()
     )];
 *)
-
+   [
     (* pretty good completion for free *)
-    Keymap.add_major_key mode [(NormalMap, XK.xk_Tab)] Abbrevs.dabbrev_expand;
-    Keymap.add_major_key mode [Keymap.c_c; (ControlMap, Char.code 'k')] 
-      kill_external;
+    [(NormalMap, XK.xk_Tab)], Abbrevs.dabbrev_expand;
+    [Keymap.c_c; (ControlMap, Char.code 'k')], kill_external;
 
     (* patching traditional keys *)
-    Keymap.add_major_key mode [(NormalMap, XK.xk_Return)] key_return;
-    Keymap.add_major_key mode [(MetaMap, Char.code '>')] (fun frame ->
-      Move.end_of_file frame;
-      scroll_to_end frame;
-    );
-    Keymap.add_major_key mode [ControlMap, Char.code 'a'] bol_go_after_prompt;
+    [(NormalMap, XK.xk_Return)], key_return;
+    [(MetaMap, Char.code '>')], (fun frame ->
+          Move.end_of_file frame;
+          scroll_to_end frame;
+      );
+    [ControlMap, Char.code 'a'], bol;
+    [MetaMap, XK.xk_BackSpace ], if_else_after_last_prompt 
+        (Frame.to_frame Edit.delete_backward_word)
+        (fun _ -> ());
 (*
     [MetaMap, XK.xk_BackSpace ], (Frame.to_frame Edit.delete_backward_word);
 *)
@@ -480,5 +492,6 @@ let _ =
      [ControlMap, XK.xk_Left ], (Frame.to_frame Move.backward_word);
      [ControlMap, Char.code 'r'], Search.isearch_backward;
      *)
+   ] |> List.iter (fun (key, action) -> Keymap.add_major_key mode key action);
 
   )
