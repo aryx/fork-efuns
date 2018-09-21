@@ -95,7 +95,7 @@ let color_buffer_and_set_outlines buf =
   (* for other non-outline elements *)
   Color.color buf (Str.regexp "^#.*$") false
     (Text.make_attr (Attr.get_color !!Pl_colors.syncweb_comment_color) 1 0 false);
-  Color.color buf (Str.regexp "^#[a-zA-Z]+:") false
+  Color.color buf (Str.regexp "^#[a-zA-Z-_]+:") false
     (Text.make_attr (Attr.get_color !!Pl_colors.section_comment_color) 1 0 false);
   ()
 
