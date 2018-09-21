@@ -38,12 +38,11 @@ let color_region buf start_point end_point =
       | EOF _ -> raise Exit
       | COMMENT ->
           Text.set_attrs text curseur len comment_attr
-      | EOFSTRING
-      | STRING ->
+      | STRING | EOFSTRING ->
           Text.set_attrs text curseur len string_attr
-      (* todo: could color ident after LPAREN if known keyword *)
       | IDENT _ when prev_tok = QUOTE ->
           Text.set_attrs text curseur len gray_attr         
+      (* todo: could color ident after LPAREN if known keyword *)
       | _ -> ()
     );
     iter token lexbuf
@@ -64,8 +63,7 @@ let abbreviations = []
 (**********************  indentations *******************)
 (***********************************************************************)
 
-(* ??? copy-paste bug? *)
-let start_regexp = Str.regexp "^\\(let\\|module\\|type\\|exception\\|open\\)"
+let start_regexp = Str.regexp "^("
 
 let pop_to_kwds = Indent.pop_to_kwds COMMENT
       
@@ -75,8 +73,9 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
   | EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
   | EOF pos -> Indent.fix indent  (pos :: eols) indents
   | EOFSTRING -> (0,[0]) :: (Indent.fix indent eols indents)
-  | COMMENT -> parse lexbuf prev_tok stack [] indent
-      (Indent.fix 0 eols indents) 
+  (* if you want all comments at column 0 *)
+  | COMMENT -> parse lexbuf prev_tok stack [] 
+                 indent (Indent.fix 0 eols indents) 
 
   | LBRACE          (* LBRACE ... RBRACE *)
   | LPAREN          (* LPAREN ... RPAREN *)
