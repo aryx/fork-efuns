@@ -45,6 +45,22 @@ let add_clipboard frame str =
   let graphic = Efuns.backend top_window in
   graphic.Xdraw.set_clipboard (Some str)
 
+let paste_clipboard frame =
+  let (buf, text, point) = Frame.buf_text_point frame in
+  let top_window = Window.top frame.frm_window in
+  let graphic = Efuns.backend top_window in
+  let str =
+    match graphic.Xdraw.get_clipboard () with
+    | None | Some "" -> Message.message frame "Nothing in the clipboard"; ""
+    | Some s -> 
+      graphic.Xdraw.set_clipboard None;
+      s
+  in
+  let pos, len =  Text.insert_res text point str in
+  Text.fmove text point len; 
+  last_insert := Some(frame,pos,0,len)
+[@@interactive]
+
 
 (*s: function [[Simple.kill_string]] *)
 let kill_string str =
