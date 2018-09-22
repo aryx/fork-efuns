@@ -236,10 +236,10 @@ let rec parse lexbuf prev_tok stack eols indent indents =
   let _, token = Ocaml_lexer.token lexbuf in
   match token with
     EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
-  | EOF pos -> Indent.fix indent  (pos :: eols) indents
-  | EOFSTRING -> (0,[0]) :: (Indent.fix indent eols indents)
-  | EOFCOMMENT -> ( !!indentation,[0]) :: (Indent.fix 0 eols indents)
-  | COMMENT -> parse lexbuf prev_tok stack [] indent (Indent.fix 0 eols indents)
+  | EOF pos -> Indent.add indent  (pos :: eols) indents
+  | EOFSTRING -> (0,[0]) :: (Indent.add indent eols indents)
+  | EOFCOMMENT -> ( !!indentation,[0]) :: (Indent.add 0 eols indents)
+  | COMMENT -> parse lexbuf prev_tok stack [] indent (Indent.add 0 eols indents)
   | LET ->
       (* 
   indentation des LETs: Il faut savoir s'il s'agit d'un LET avec ou sans IN.
@@ -256,19 +256,19 @@ let rec parse lexbuf prev_tok stack eols indent indents =
           SEMI | QUESTION | QUOTE | BAR ->
             (* On reste dans le bloc precedent, donc avec la meme indentation *)
             parse lexbuf token ((token,indent) :: stack) [] (indent+ !!indentation) 
-            (Indent.fix indent eols indents)
+            (Indent.add indent eols indents)
         
         | ELSE ->
             (* On reste dans le bloc precedent, mais avec une indentation plus
         petite car on est sorti du IF THEN ELSE *)
             parse lexbuf token ((token,indent- !!indentation) :: stack) [] indent 
-              (Indent.fix (indent- !!indentation) eols indents)
+              (Indent.add (indent- !!indentation) eols indents)
         
         | _ ->
             (* On est dans un nouveau LET toplevel *)
             let (stack, indent) = pop_to_top stack in
             parse lexbuf token ((token,indent) :: stack) [] (indent+ !!indentation) 
-            (Indent.fix indent eols indents)
+            (Indent.add indent eols indents)
       
       end
   
@@ -277,47 +277,47 @@ let rec parse lexbuf prev_tok stack eols indent indents =
       (* On est dans une pharse toplevel *)
       let (stack, indent) = pop_to_top stack in
       parse lexbuf token ((token,indent) :: stack) [] (indent+ !!indentation) 
-      (Indent.fix indent eols indents)
+      (Indent.add indent eols indents)
   
   | SEMISEMI ->
       let (stack,indent) = pop_to_top stack in
-      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.add indent eols indents)
   
   | MODULE ->
       if prev_tok = LET then
         (* LET MODULE *) 
-        parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+        parse lexbuf token stack [] indent (Indent.add indent eols indents)
       else
         (* On est dans une pharse toplevel *)
       let (stack, indent) = pop_to_top stack in
       parse lexbuf token ((token,indent) :: stack) [] (indent+ !!indentation) 
-      (Indent.fix indent eols indents)
+      (Indent.add indent eols indents)
   
   | EQUAL ->
       let (_stack',(_kwd,_indent')) = pop_to_kwds [BAR] stack in
-      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.add indent eols indents)
   
   | AND ->
       let (stack,(kwd,indent)) = pop_to_kwds 
           [LET;TYPE;RULE;CLASS] stack in
       parse lexbuf token ((kwd,indent)::stack)
-      [] (indent+ !!indentation) (Indent.fix indent eols indents) 
+      [] (indent+ !!indentation) (Indent.add indent eols indents) 
   | OR ->
       let (_stack',(_kwd,_indent')) = pop_to_kwds  [] stack in
-      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.add indent eols indents)
   
   | IN -> 
       (* partially terminate a LET structure *)
       let (stack,indent) = Indent.pop_to LET stack in
       parse lexbuf token ((IN,indent)::stack)
-      [] indent (Indent.fix indent eols indents)
+      [] indent (Indent.add indent eols indents)
   
  
   | DO ->
 (* starts a DO ... DONE structure *)
       let (stack',(kwd,indent')) = pop_to_kwds [WHILE;FOR] stack in
       parse lexbuf DO ((DO,indent') :: stack') [] (indent'+ !!indentation) 
-        (Indent.fix indent' eols indents)
+        (Indent.add indent' eols indents)
 (* These keywords start multi-keywords block structures. *)
 
 (* This symbol has different meanings in lexer files *)
@@ -330,11 +330,11 @@ let rec parse lexbuf prev_tok stack eols indent indents =
             -> true
           | _ -> false) then
         parse lexbuf SEMISEMI [] [] 0 
-          (Indent.fix 0 eols indents)
+          (Indent.add 0 eols indents)
       else
       let offset = token_offset prev_tok in
       parse lexbuf token ((token,indent) :: stack) [] (indent+ !!indentation) 
-      (Indent.fix (indent+offset) eols indents)
+      (Indent.add (indent+offset) eols indents)
 
 (* Terminated structures *)
   | LPAREN          (* LPAREN ... RPAREN *)
@@ -346,12 +346,12 @@ let rec parse lexbuf prev_tok stack eols indent indents =
     ->
       let offset = token_offset prev_tok in
       parse lexbuf token ((token,indent) :: stack) [] (indent+ !!indentation) 
-      (Indent.fix (indent+offset) eols indents)
+      (Indent.add (indent+offset) eols indents)
       | COLON
     ->
       let offset = token_offset prev_tok in
       parse lexbuf token ((token,indent) :: stack) [] indent
-        (Indent.fix (indent+offset) eols indents)
+        (Indent.add (indent+offset) eols indents)
   
   | STRUCT          (* STRUCT ... END *)
   | SIG             (* SIG ... END *)
@@ -373,11 +373,11 @@ let rec parse lexbuf prev_tok stack eols indent indents =
             (* On reste dans le bloc precedent, mais avec une indentation plus
             petite car on est sorti du IF THEN ELSE *)
             parse lexbuf token ((token,indent- !!indentation) :: stack) [] indent 
-              (Indent.fix (indent- !!indentation) eols indents)
+              (Indent.add (indent- !!indentation) eols indents)
         
         | _ ->
             parse lexbuf token ((token,indent) :: stack) [] (indent+ !!indentation) 
-            (Indent.fix indent eols indents)
+            (Indent.add indent eols indents)
       end
       
 (* Deterministic Terminators *) 
@@ -399,7 +399,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
         ]
       in
       let (stack,indent) = Indent.pop_to kwd stack in
-      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.add indent eols indents)
       (* Non-deterministic terminators *)
   | END 
   | DONE
@@ -411,15 +411,15 @@ let rec parse lexbuf prev_tok stack eols indent indents =
         ] 
       in
       let (stack,(kwd,indent)) = pop_to_kwds kwds stack in
-      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.add indent eols indents)
   | WITH ->
       let (stack,(kwd,indent)) = pop_to_kwds [MATCH;TRY;LBRACE] stack in
       if kwd = LBRACE then
         parse lexbuf token ((LBRACE,indent)::stack) [] (indent+ !!indentation)
-        (Indent.fix indent eols indents)        
+        (Indent.add indent eols indents)        
       else
         parse lexbuf token ((WITH,indent)::stack) [] (indent+ !!indentation)
-        (Indent.fix indent eols indents)
+        (Indent.add indent eols indents)
   | BAR ->
       let (stack,(kwd,indent)) = 
         pop_to_kwds [WITH;FUNCTION;BAR;TYPE;PARSE;LPAREN;LBRACE] stack in
@@ -429,7 +429,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
         | _ -> BAR
       in
       parse lexbuf token ((kwd,indent)::stack) [] (indent+ !!indentation)
-      (Indent.fix indent eols indents)
+      (Indent.add indent eols indents)
   | MINUSGREATER ->
       let (stack,(kwd,indent)) =
         pop_to_kwds [WITH;FUN;BAR;FUNCTION;TYPE;LPAREN;EXTERNAL;VAL;COLON] stack in
@@ -438,20 +438,20 @@ let rec parse lexbuf prev_tok stack eols indent indents =
           TYPE | LPAREN | EXTERNAL | VAL | COLON ->
             let offset = token_offset prev_tok in
             parse lexbuf token ((kwd,indent)::stack) [] indent 
-              (Indent.fix (indent+offset) eols indents)
+              (Indent.add (indent+offset) eols indents)
         | _ ->
             parse lexbuf token ((BAR,indent)::stack) [] 
               (if kwd = FUN then indent+ !!indentation else indent+ 2 * !!indentation)
-            (Indent.fix (indent+ !!indentation) eols indents) 
+            (Indent.add (indent+ !!indentation) eols indents) 
       end
   | THEN ->
       let (stack,indent) = Indent.pop_to IF stack in
       parse lexbuf token ((THEN,indent)::stack) [] (indent+ !!indentation)
-      (Indent.fix indent eols indents) 
+      (Indent.add indent eols indents) 
   | ELSE ->
       let (stack,indent) = Indent.pop_to THEN stack in
       parse lexbuf token ((ELSE,indent)::stack) [] (indent+ !!indentation)
-      (Indent.fix indent eols indents) 
+      (Indent.add indent eols indents) 
   | SEMI ->
       let _old_stack = stack in
 (* le ; termine un THEN ... ou ELSE ... s'il n'y a pas 
@@ -476,7 +476,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
           stack, indent
       in
       parse lexbuf token new_stack [] new_indent
-        (Indent.fix indent eols indents)
+        (Indent.add indent eols indents)
   
   | PARSE           (* RULE ... PARSE ... *)
     ->
@@ -484,17 +484,17 @@ let rec parse lexbuf prev_tok stack eols indent indents =
         match stack with
           (RULE,_) :: _ ->
             parse lexbuf token ((token,indent) :: stack) [] indent 
-              (Indent.fix indent eols indents)
+              (Indent.add indent eols indents)
         | _ ->
             let offset = token_offset prev_tok in
             parse lexbuf token stack [] indent 
-              (Indent.fix (indent+offset) eols indents)
+              (Indent.add (indent+offset) eols indents)
       end
   | _ ->
       
       let offset = token_offset prev_tok in
       parse lexbuf token stack [] indent 
-        (Indent.fix (indent+offset) eols indents)
+        (Indent.add (indent+offset) eols indents)
 
 (* could factorize this function more between the different major modes,
  * but not worth it; it complexifies things.
