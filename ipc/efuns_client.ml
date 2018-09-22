@@ -3,6 +3,7 @@
 (*s: constant [[Efuns_client.pos]] *)
 let pos = ref 0
 (*e: constant [[Efuns_client.pos]] *)
+let line = ref 0
 (*s: constant [[Efuns_client.string]] *)
 let string = ref ""
 (*e: constant [[Efuns_client.string]] *)
@@ -13,6 +14,7 @@ let filename = ref None
 (*s: toplevel [[Efuns_client._1]] *)
 let _ = Arg.parse [
     "-pos", Arg.Int (fun i -> pos := i)," <int>: set position";
+    "-line", Arg.Int (fun i -> line := i)," <int>: set line";
     "-str", Arg.String (fun s -> string := s)," <string>: search string";
   ] (fun name -> filename := Some name)
   "efuns_server: connect to efuns"
@@ -67,7 +69,7 @@ let _ =  if not (Sys.file_exists socket_name) then raise Not_found
 (*s: toplevel [[Efuns_client._3]] *)
 let (inc,outc) = Unix.open_connection (Unix.ADDR_UNIX socket_name)
 let _ =  
-  output_value outc (Server.LoadFile (filename,pos,string)); 
+  output_value outc (Server.LoadFile (filename,pos,!line, string)); 
   flush outc
 (*e: toplevel [[Efuns_client._3]] *)
   

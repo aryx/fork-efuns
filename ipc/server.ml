@@ -32,69 +32,74 @@ let started = ref false
 (*e: constant [[Server.started]] *)
   
 (*s: type [[Server.proto]] *)
-type proto =
-  LoadFile of string * int * string
+type command =
+  | LoadFile of Common.filename * int (* pos *) * int (* line *) * string
 (*e: type [[Server.proto]] *)
 
  
 (*s: function [[Server.read_command]] *)
-let read_command fd frame =
+let read_command fd frame_opt =
   let inc = in_channel_of_descr fd in
   try
     let cmd = input_value inc in
     match cmd with
-    | LoadFile (name,pos,str) ->
-        let window = frame.frm_window in
-        let top_window = Window.top window in
-        (*wrap*) top_window |> (fun top_window ->
-            let frame = Frame.load_file window name in
-            if pos <> 0 then begin
-              let (buf, text, point) = Frame.buf_text_point frame in
-              try
-                if str = "" 
-                then raise Not_found 
-                else                  
-                  let regexp = Str.regexp_string str in
-                  Text.search_forward text regexp point |> ignore
-              with Not_found -> 
-                Text.set_position text point pos
-            end;
-            Top_window.update_display () 
-        ) (*()*)
+    | LoadFile (name, pos, line, str) ->
+        let window = 
+          match frame_opt with
+          | Some frame -> frame.frm_window
+          | None -> 
+            let edt = Globals.editor () in
+            match edt.top_windows with
+            | [] -> failwith "no top windows"
+            | x::_ -> x.top_active_frame.frm_window
+        in
+        let frame = Frame.load_file window name in
+        let (buf, text, point) = Frame.buf_text_point frame in
+        if pos <> 0 
+        then Text.set_position text point pos;
+        if line <> 0 
+        then Text.goto_line text point line;
+        if str <> ""
+        (* bugfix: need the begin/end here, otherwise update below in then *)
+        then begin                 
+          let regexp = Str.regexp_string str in
+          Text.search_forward text regexp point |> ignore;
+        end;
+        Top_window.update_display () 
   with
     _ -> Concur.Thread.remove_reader fd 
 (*e: function [[Server.read_command]] *)
   
 (*s: function [[Server.module_accept]] *)
-let module_accept s frame = 
+let module_accept s frame_opt = 
   let fd,_ = accept s in
   Unix.set_close_on_exec fd;
-  Concur.Thread.add_reader fd (fun _ -> read_command fd frame)
+  Concur.Thread.add_reader fd (fun _ -> read_command fd frame_opt)
 (*e: function [[Server.module_accept]] *)
   
 (*s: function [[Server.start]] *)
-let start frame =
+let start frame_opt =
   if not !started then
-  (*let top_window = Window.top frame.frm_window in*)
   Utils.catchexn "Efuns server:" (fun _ ->
       let s = Unix.socket PF_UNIX SOCK_STREAM 0 in
-      if Sys.file_exists socket_name then Unix.unlink socket_name;
+
+      if Sys.file_exists socket_name 
+      then Unix.unlink socket_name;
+
       Unix.bind s (ADDR_UNIX socket_name);
       Unix.listen s 254;
       Unix.set_nonblock s;
       Unix.set_close_on_exec s;
-      (*let display = top_window.top_root#display  in *)
+
       Concur.Thread.add_reader s (fun _ -> 
         started := true;
-        module_accept s frame
+        module_accept s frame_opt
       );
-      (*
-      let atom = X.internAtom display efuns_property false in
-      X.changeProperty display top_window.top_root#window 
-        PropModeReplace atom XA.xa_string 1 socket_name;
-      *)
   )  
-[@@interactive "start_server"]
 (*e: function [[Server.start]] *)
+
+let server_start frame =
+  start (Some frame)
+[@@interactive]
   
 (*e: ipc/server.ml *)
