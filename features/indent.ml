@@ -64,25 +64,44 @@ let indent_buffer frame =
 (* Indent level and list of eols (in reverse order).
  *
  * For example on the file content:
-void foo() {
-  if(true) {
-    bar();
-    return 1+2;
-  }
-  fooba();
-}
- * you will get this indentations (when reversed, see print_indentations()):
-indent: 2, eols at [12]
-indent: 4, eols at [25, 36]
-indent: 2, eols at [52, 56]
-indent: 0, eols at [67, 69, 70]
+(setq foo
+  (+ 1 2
+    (+ 3 4)
+    5 6
+  )
+)
+ * you will get this 'indentations' (when reversed, see print_indentations()):
+indent: 2, eols at [9]
+indent: 4, eols at [18, 30]
+indent: 2, eols at [38]
+indent: 0, eols at [42, 44, 45]
  *
- * remember that position at 0-indexed based (see text.mli).
- * So each time you have an indentation level and the set of futur
+ * Each time you have an indentation level and the set of futur
  * lines that must be at this level (the futur lines are represented
  * by the eol ('\n') preceding the line).
+ * Remember that positions are 0-indexed based (see text.mli).
  *)
 type indentations = (int * (Text.position list (* eols *))) list
+
+(* Indenters usually use an auxillary function to compute the indentations
+ * data structure for a region, for example:
+ *    let rec parse lexbuf prev_tok  stack eols  indent indents =
+ *      ...
+ * This function uses an indentation stack to remember at what indentation
+ * level was an "opening" token (e.g., a '(') so that when you
+ * encounter a "closing" token you can know which indentation level to restore.
+ *
+ * Note that 'parse' above maintains a list of eols and current indent.
+ * If it encounters a "closing" token then it must adjust those eols
+ * to the saved indent, not the current indent. Those eols represent
+ * the last eols without indentation information yet. For example for Lisp,
+ * when you have a series of newlines, you know their indentation only
+ * when you encounter a non-empty line (spaces are discarded by the lexer).
+ * If the first token on this line is a closing token, then the indentation
+ * will be less than current; if it's another token, then those eols
+ * will be "flushed" with the current indentation (see lisp_mode.ml for
+ * a simple example of indenter).
+ *)
 
 type 'tok indentation_stack = ('tok * int) list
 
@@ -105,7 +124,7 @@ let rec pop_to_kwds kwd_end_recursion = fun kwds stack ->
   | _ :: stack -> pop_to_kwds kwd_end_recursion kwds stack
 
 (* agglomerate eols when have already an (indent, _) in indents *)
-let fix indent eols indents =
+let add indent eols indents =
   match eols with
   | [] -> indents
   | _ -> 
@@ -167,29 +186,33 @@ let find_phrase_start start_regexp = fun buf curseur ->
     Not_found -> Text.set_position text curseur 0
 
 (*s: function [[Simple.set_indent]] *)
-(* modify the indentation of (point) line. Does not modify point *)
-let set_indent text point offset = 
-  Text.with_dup_point text point (fun curseur ->
+(* Modify the indentation of line of pointm
+ * untabify the line, and move the point to the indented level.
+ *)
+let set_indent text curseur offset = 
     Text.bmove text curseur (Text.point_to_bol text curseur);
 
     let rec iter offset =
       let c = Text.get_char text curseur in
       if offset > 0 then
-        if c = ' ' then
-          (Text.fmove text curseur 1; iter (offset - 1))
-        else
-        if c = '\t' then
-          (Text.delete text curseur 1;
-           iter offset)
-        else
-          (Text.insert text curseur (String.make offset ' '))
+        (match c with
+        | ' ' ->
+          Text.fmove text curseur 1; 
+          iter (offset - 1)
+        | '\t' ->
+          Text.delete text curseur 1;
+          iter offset
+        | _ ->
+          Text.insert text curseur (String.make offset ' ');
+          Text.fmove text curseur offset
+        )
       else
-      if c = ' ' || c='\t' then
-        (Text.delete text curseur 1;
-          iter 0)
+      if c = ' ' || c='\t' then begin
+        Text.delete text curseur 1;
+        iter 0;
+      end            
     in
     iter offset
-  )
 (*e: function [[Simple.set_indent]] *)
 
 (*****************************************************************************)
@@ -237,9 +260,14 @@ let indent_current_line get_indentations start_regexp color_region =
   ));
 
   (* indentation *)
-  Text.with_dup_point text point (fun curseur ->
-    find_phrase_start start_regexp buf curseur;
-    let indentations = get_indentations buf curseur point in
+  Text.with_dup_point text point (fun start_point ->
+  Text.with_dup_point text point (fun end_point ->
+    find_phrase_start start_regexp buf start_point;
+    (* if you are on a line with a "closing" token but before this token
+     * you want the correct indentation but for that you need to consider
+     * the region past this closing token, hence the move here *)
+    Text.fmove text end_point (Text.point_to_eol text point);
+    let indentations = get_indentations buf start_point end_point in
     if !debug_indent
     then print_indentations indentations;                
     let (_next,pos,tail) = pop_indentations indentations in
@@ -250,7 +278,7 @@ let indent_current_line get_indentations start_regexp color_region =
       with Not_found  -> 0
     in
     set_indent text point current
-  )
+  ))
 
 (*****************************************************************************)
 (* Electric return to indent? *)

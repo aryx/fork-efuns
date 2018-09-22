@@ -20,8 +20,7 @@ val pop_to_kwds: 'tok ->
   ('tok list -> 'tok indentation_stack -> 
   'tok indentation_stack * ('tok * int))
 
-(* ??? *) 
-val fix: int -> Text.position list -> indentations -> indentations
+val add: int -> Text.position list -> indentations -> indentations
 
 (* helpers to generate the indent_func above *)
 val indent_between_points: 
