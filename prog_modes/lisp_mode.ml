@@ -71,36 +71,37 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
   let _, token = Lisp_lexer.token lexbuf in
   match token with
   | EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
-  | EOF pos -> Indent.fix indent  (pos :: eols) indents
-  | EOFSTRING -> (0,[0]) :: (Indent.fix indent eols indents)
-  (* if you want all comments at column 0 *)
-  | COMMENT -> parse lexbuf prev_tok stack [] 
-                 indent (Indent.fix 0 eols indents) 
+  | EOF pos -> Indent.add indent  (pos :: eols) indents
+  | EOFSTRING -> (0,[0]) :: (Indent.add indent eols indents)
+  | COMMENT -> 
+     (* if you want all comments at column 0 *)
+     (* parse lexbuf prev_tok stack [] indent (Indent.add 0 eols indents) *)
+     parse lexbuf prev_tok stack [] indent (Indent.add indent eols indents)
 
   | LBRACE          (* LBRACE ... RBRACE *)
   | LPAREN          (* LPAREN ... RPAREN *)
   | LBRACKET        (* LBRACKET ... RBRACKET  *)
     ->
       parse lexbuf token ((token,indent)::stack) [] (indent+2) 
-        (Indent.fix indent eols indents)
+        (Indent.add indent eols indents)
   
   (* Deterministic Terminators *) 
   | RPAREN ->
       (* find corresponding block delimiter *)
       let (stack,indent) = Indent.pop_to LPAREN stack in
-      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.add indent eols indents)
   | RBRACE ->
       (* find corresponding block delimiter *)
       let (stack,indent) = Indent.pop_to LBRACE stack in
-      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.add indent eols indents)
   | RBRACKET ->
       (* find corresponding block delimiter *)
       let (stack,indent) = Indent.pop_to LBRACKET stack in
-      parse lexbuf token stack [] indent (Indent.fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.add indent eols indents)
 
+  (* anything else "flushes" the current eols *)
   | _ ->
-      parse lexbuf token stack [] indent 
-        (Indent.fix indent eols indents)
+      parse lexbuf token stack [] indent (Indent.add indent eols indents)
 
 (* could factorize this function more between the different major modes,
  * but not worth it; it complexifies things.
