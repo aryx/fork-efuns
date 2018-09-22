@@ -72,7 +72,5 @@ let _ =
     (* Hooks *)
     Hook.add_hook Caml_mode.hooks 
       (Minor_modes.toggle_minor_buffer (Ocaml_merlin.mode));
-(*
     Server.start None;
-*)
   )
