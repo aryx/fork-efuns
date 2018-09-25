@@ -11,6 +11,7 @@
 open Efuns
 open Options
 open C_lexer
+module I = Common_indenter
 
 (***********************************************************************)
 (* Find errors *)
@@ -105,19 +106,19 @@ let color_region buf start_point end_point =
  *)
 let start_regexp = Str.regexp "^[^ \t]"
 
-let pop_to_kwds = Indent.pop_to_kwds RBRACE
+let pop_to_kwds = I.pop_to_kwds RBRACE
   
 let rec parse lexbuf prev_tok  stack eols  indent indents =
   let _, token = C_lexer.token lexbuf in
   match token with
   | EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
-  | EOF pos -> Indent.add indent  (pos :: eols) indents
+  | EOF pos -> I.add indent  (pos :: eols) indents
 
-  | EOFSTRING -> (0,[0]) :: (Indent.add indent eols indents)
-  | EOFCOMMENT -> (2,[0]) :: (Indent.add indent eols indents)
+  | EOFSTRING -> (0,[0]) :: (I.add indent eols indents)
+  | EOFCOMMENT -> (2,[0]) :: (I.add indent eols indents)
 
   | COMMENT -> parse lexbuf prev_tok stack [] indent 
-        (Indent.add indent eols indents)
+        (I.add indent eols indents)
 
       (* Terminated structures *)
 
@@ -128,7 +129,7 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
   | WHILE           (* WHILE (...) { ... }  *)
     ->
       parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
-        (Indent.add indent eols indents)
+        (I.add indent eols indents)
 
   | LBRACE          (* LBRACE ... RBRACE *)
     ->
@@ -143,13 +144,13 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
         | _ -> indent
       in
       parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
-        (Indent.add indent eols indents)
+        (I.add indent eols indents)
   | LPAREN          (* LPAREN ... RPAREN *) ->
       parse lexbuf token ((token,indent) :: stack) [] (indent+2) 
-        (Indent.add indent eols indents)
+        (I.add indent eols indents)
       
   | RBRACE -> (* This might terminate a IF/WHILE/FOR/ELSE structure *)
-      let (stack,indent) = Indent.pop_to LBRACE stack in
+      let (stack,indent) = I.pop_to LBRACE stack in
       let (stack, indent) =
         match stack with
           (IF, indent) :: stack -> stack, indent
@@ -158,13 +159,13 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
         | (WHILE, indent) :: stack -> stack, indent
         | _ -> (stack, indent)
       in
-      parse lexbuf token stack [] indent (Indent.add indent eols indents)
+      parse lexbuf token stack [] indent (I.add indent eols indents)
       
 (* Deterministic Terminators *) 
   | RPAREN ->
       (* find corresponding block delimiter *)
-      let (stack,indent) = Indent.pop_to LPAREN stack in
-      parse lexbuf token stack [] indent (Indent.add indent eols indents)
+      let (stack,indent) = I.pop_to LPAREN stack in
+      parse lexbuf token stack [] indent (I.add indent eols indents)
       
   | SEMI ->
       let (stack, indent) =
@@ -176,11 +177,11 @@ let rec parse lexbuf prev_tok  stack eols  indent indents =
         | _ -> (stack, indent)
       in 
       parse lexbuf token stack [] indent
-        (Indent.add indent eols indents)      
+        (I.add indent eols indents)      
       
   | _ ->      
       parse lexbuf token stack [] indent 
-        (Indent.add indent eols indents)
+        (I.add indent eols indents)
 
 (* could factorize this function more between the different major modes,
  * but not worth it; it complexifies things.
@@ -194,10 +195,10 @@ let get_indentations buf start_point end_point =
 (* Now, use the indentation from the parser *)
 
 let indent_between_points = 
-  Indent.indent_between_points get_indentations start_regexp
+  I.indent_between_points get_indentations start_regexp
 
 let indent_current_line =
-  Indent.indent_current_line get_indentations start_regexp color_region
+  I.indent_current_line get_indentations start_regexp color_region
 
 (***********************************************************************)
 (************************  abbreviations ********************)

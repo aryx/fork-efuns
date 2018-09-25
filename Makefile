@@ -155,6 +155,7 @@ SRC=\
  \
  prog_modes/pl_colors.ml\
  prog_modes/common_lexer.ml\
+ prog_modes/common_indenter.ml\
  prog_modes/makefile_mode.ml\
  prog_modes/ocaml_lexer.ml\
  prog_modes/c_lexer.ml\
