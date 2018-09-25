@@ -74,9 +74,9 @@ module J = Json_type
  * related:
  * - otags
  * - ocamlspotter
- * - pfff (lang_ml/ and lang_cmt/)
- * - https://github.com/freebroccolo/ocaml-language-server but is written
- *   in Javascript and uses merlin under the hood
+ * - pfff stags and codegraph (lang_ml/ and lang_cmt/) 
+ * - https://github.com/freebroccolo/ocaml-language-server but it is written
+ *   in Javascript and uses Merlin under the hood
  * 
  * todo:
  *  - errors
