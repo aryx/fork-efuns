@@ -45,11 +45,11 @@ let _ =
       [MetaMap, Char.code '-'], Shell.eshell_num;
       [MetaMap, Char.code '='], Shell.eshell_num;
 
-      [ControlMetaMap, Char.code '1'] Outline_mode.outline_num;
-      [ControlMetaMap, Char.code '2'] Outline_mode.outline_num;
-      [ControlMetaMap, Char.code '3'] Outline_mode.outline_num;
-      [ControlMetaMap, Char.code '4'] Outline_mode.outline_num;
-      [ControlMetaMap, Char.code '5'] Outline_mode.outline_num;
+      [ControlMetaMap, Char.code '1'], Outline_mode.outline_num;
+      [ControlMetaMap, Char.code '2'], Outline_mode.outline_num;
+      [ControlMetaMap, Char.code '3'], Outline_mode.outline_num;
+      [ControlMetaMap, Char.code '4'], Outline_mode.outline_num;
+      [ControlMetaMap, Char.code '5'], Outline_mode.outline_num;
 
       [ControlMetaMap, XK.xk_Tab], Buffer_menu.menu;
       [ControlMetaMap, Char.code 'l'], Multi_buffers.switch_to_other_buffer;
