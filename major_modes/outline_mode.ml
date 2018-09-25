@@ -32,7 +32,7 @@ open Efuns
  * pfff/h_files_format/outline.ml.
  *
  * todo:
- *  - This should be a minor mode that makes some parts of the text as
+ *  - This should be a minor mode that marks some parts of the text as
  *    invisible. We can use one bit of make_attr for that. Then
  *    compute_representation or update_table needs to be modified to
  *    take into account this attribute.
@@ -186,9 +186,8 @@ let outline_num frame =
 let _ = 
   Hook.add_start_hook (fun () ->
     (* will use keypressed global to differentiate *)
-    Keymap.add_global_key [ControlMetaMap, Char.code '1'] outline_num;
-    Keymap.add_global_key [ControlMetaMap, Char.code '2'] outline_num;
-    Keymap.add_global_key [ControlMetaMap, Char.code '3'] outline_num;
-    Keymap.add_global_key [ControlMetaMap, Char.code '4'] outline_num;
-    Keymap.add_global_key [ControlMetaMap, Char.code '5'] outline_num;
+    (* ex:
+     * Keymap.add_global_key [ControlMetaMap, Char.code '1'] outline_num;
+     *)
+    ()
   )

@@ -235,11 +235,14 @@ let token_offset prev_tok =
 let rec parse lexbuf prev_tok stack eols indent indents =
   let _, token = Ocaml_lexer.token lexbuf in
   match token with
-    EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
+  | EOL pos -> parse lexbuf prev_tok stack (pos::eols) indent indents
   | EOF pos -> Indent.add indent  (pos :: eols) indents
+
   | EOFSTRING -> (0,[0]) :: (Indent.add indent eols indents)
   | EOFCOMMENT -> ( !!indentation,[0]) :: (Indent.add 0 eols indents)
-  | COMMENT -> parse lexbuf prev_tok stack [] indent (Indent.add 0 eols indents)
+
+  | COMMENT -> parse lexbuf prev_tok stack [] indent 
+        (Indent.add indent eols indents)
   | LET ->
       (* 
   indentation des LETs: Il faut savoir s'il s'agit d'un LET avec ou sans IN.

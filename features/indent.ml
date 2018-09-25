@@ -277,7 +277,9 @@ let indent_current_line get_indentations start_regexp color_region =
         current
       with Not_found  -> 0
     in
-    set_indent text point current
+    text |> Text.with_session (fun _session ->
+      set_indent text point current
+    );
   ))
 
 (*****************************************************************************)
