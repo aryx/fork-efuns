@@ -21,9 +21,11 @@ module PI = Parse_info
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-(*
- * Using the OCaml parser and highlighters in Pfff (used for codemap)
- * for Efuns.
+(* Pfff-based OCaml major mode.
+ * 
+ * This module provides a major mode to edit OCaml files by using
+ * the OCaml parser and highlighter in Pfff (which is also used for codemap).
+ * It relies on ocp-indent and merlin for the rest.
  *
  * todo:
  *  - Tab handling when in comment and indent and add '*' leading if needed
@@ -66,9 +68,21 @@ let color_buffer buf =
   )
 
 (*****************************************************************************)
+(* Indentation *)
+(*****************************************************************************)
+(* See ocaml_ocp_indent.ml *)
+
+(*****************************************************************************)
+(* Completion/navigation/... *)
+(*****************************************************************************)
+(* see ocaml_merlin.ml *)
+
+(*****************************************************************************)
 (* Installation *)
 (*****************************************************************************)
-(* can add merlin minor mode in it (see pad.ml) *)
+(* can add merlin and ocp-indent minor mode in it (see pad.ml)
+ * alt: could just enable those minor modes from here instead of pad.ml
+ *) 
 let hooks = Store.create_abstr "caml_mode_hook"
 
 let mode =  Ebuffer.new_major_mode "OCaml(Pfff)" (Some (fun buf ->
@@ -101,6 +115,7 @@ let _ =
     Var.set_major_var mode Compil.find_error Ocaml_mode.find_error;
     Var.set_major_var mode Compil.find_error_location_regexp 
       (snd !!Ocaml_mode.error_regexp);
+
     Var.set_major_var mode Indent.indent_func Ocaml_mode.indent_between_points;
     Keymap.add_major_key mode [NormalMap,XK.xk_Tab] 
      Ocaml_mode.indent_current_line;
