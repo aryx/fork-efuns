@@ -1,5 +1,128 @@
 # -*- org -*-
 
+* LAST
+
+** LAST1 
+
+*** imitating: https://blog.atom.io/2017/09/12/announcing-atom-ide.html
+
+*** indentation
+
+**** call ocp-indent? to indent_region?
+
+**** reindent c_mode.ml!
+
+**** try ocamlformat?
+
+*** better org/outline mode
+
+**** fix bug where cant get outline in outline!
+
+**** identify outline and level
+^[*+]
+
+**** API to delete/insert outline
+
+**** move around outline
+
+**** C-c C-x C-s to save archive
+
+*** bugs
+
+**** outline of org-mode does not work
+
+**** paren color stay up once matched
+move should unhighlight no? or forgot redraw force?
+
+**** error: exn in hook: Invalid_argument("index out of bounds")
+
+**** when C-s and accidentally get touchpad to move to other place
+then get second cursor and weird behavior
+
+**** cairo2 segfault
+
+*** *Messages* buffer
+useful when use C-c C-t and want copy paste back
+
+*** M-% prefill with last default replace?
+
+*** C-s C-w that continue with next word under cursor
+
+*** highlighting paren mode
+quite important in the end
+
+*** highlighting C-s
+quite important in the end
+
+
+*** generic M-x comment?
+
+*** all_bindings(), interactive redesign part 4
+
+*** clipboard and Xterm.get_cutbuffer, set_cutbuffer
+merge! and make it work!
+
+*** -------------------------------------------------------
+
+*** pb cairo2 
+
+**** if open a file from efuns (C-x C-f) then I get an 
+Cairo error (SURFACE_FINISHED)
+
+**** got a segfault
+how generate core and get bt?
+
+*** M-x calendar
+just call the cal program?
+
+*** -debug_keyboard?
+where print every keystroke code?
+can bind C-M-x under windows, thx to autokeys
+
+*** SEMI BUG when switch to other windows then key state gets
+fucked up
+need to type Alt one time to reset the thing
+
+*** more integration of merlin with efuns
+
+**** use ocamlmerlin server to accelerate?
+slowdown after use of FOR_MERLIN? too many .cmt?
+
+**** prefill with prefix completion
+
+**** goto-def for functions, constants, etc.
+not just modules
+
+**** fuzzy search for entities! L.m -> List.map
+
+**** indentation? by computing enclosing information?
+Tab would be a command using a lot merlin
+or use ocp-indent? see ocp-indent.el? can ask to indent just where
+is the cursor?
+
+**** show doc and/or type and/or def and/or interface when over ident after
+1 sec!
+ocaml_merlin thread?
+same for error? show error after a few seconds of inactivity?
+
+**** hover mouse show type or info or def content in hover window
+need additional backend field
+
+**** less: show type in other frame?
+so can also colorize it!
+
+*** efuns completion for noweb and TeX?
+for \cite can look at .bbl
+for \ref can look at label in files
+etc.
+
+*** FUN efuns completion for C!
+use LSP protocol client format?
+
+*** FUN efuns and pfff, fuzzy search, being more efficient than under emacs!
+also minimap useful when reading gtd.org, code, latex
+omnibar search!
+
 * Features
 
 ** important (and not too long to implement)
