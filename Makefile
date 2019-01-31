@@ -20,7 +20,7 @@ EXTERNALDIRS= external/commons external/h_visualization
 EXTERNALCMAS= external/commons/lib.cma external/h_visualization/lib.cma
 
 # Jsonwheel dependencies 
-# (I now use jsonwheel it not only for pfff_modes but also for ocaml_merlin)
+# (I now use jsonwheel not only for pfff_modes but also for ocaml_merlin)
 # this is for -I and for finding dlls (e.g., deps-netsys)
 EXTERNALDIRS+=external/json-wheel external/deps-netsys 
 EXTERNALCMAS+=\
@@ -57,17 +57,6 @@ PFFFCMAS=\
  external/pfff-deps-commons_core/lib.cma \
  $(PFFF_LIBS0:%=external/pfff-%/lib.cma) \
  $(PFFF_LIBS1:%=external/pfff-%/lib.cma)
-endif
-
-# gtk/cairo is actually the only working backend available right now
-ifeq ($(USE_GTKCAIRO), 1)
-BACKENDDIR=graphics/gtk_cairo
-GRAPHICSDIRS=external/lablgtk2 external/cairo
-GRAPHICSLIBS=external/lablgtk2/lablgtk.cma external/cairo/cairo.cma\
-  external/cairo/cairo_lablgtk.cma external/cairo/pango_cairo.cma
-GTKLOOP=gtkThread.cmo
-# because of -linkall and the use of libcairo, but should not be required
-EXTRA=-cclib -lfontconfig
 endif
 
 ifeq ($(USE_GTKCAIRO2), 1)
