@@ -1,11 +1,20 @@
 # -*- org -*-
 
+* 0.22 (Q1 2019)
+
+** TODO first public release on OPAM
+
+** TODO better merlin support
+automatic case-analysis code generation,
+
+
+* -----------------------------------------------------------
+
 * 0.21 (Q3 2018)
 
 ** a new Merlin minor mode
 to support type and ocamldoc information under cursor, jump-to-definition,
 jump-to-interface, completion, search-def
-TODO automatic case-analysis code generation,
 
 ** noweb 
 
@@ -17,7 +26,7 @@ support [[ ]] and [< >] correctly (different lexing rules).
 
 *** shell history (Up and Down)
 
-*** working C-a, M-backspace that don't go beyond the prompt
+*** working C-a, M-backspace that do not go beyond the prompt
 
 ** support for Windows!
 can now compile Efuns for Linux, Windows, and macOS
@@ -41,12 +50,25 @@ so can have efuns interact with other applications (e.g., web browser)
 *** cleanup external/, rely more on OPAM
 
 *** simplified interface for interactive functions and bindings
-use [@@interactive] attribute
+use [@@interactive] attribute (thx to my ppx_interactive extension)
 
 *** factorized code with Frame.buf_text_point helper
 
 *** Cleaner Message.message API and add messages to *Messages* buffer
 
+*** port to cairo2
+cairo seems obsolete; I can not even install it with OPAM
+with recent versions of OCaml.
+Also cairo2's maintainer is very responsive (he quickly added
+the support for Pango fonts that I needed).
+
+* -----------------------------------------------------------
+
+* --- (2017) 
+
+* -----------------------------------------------------------
+
+* --- (2016) 
 
 * -----------------------------------------------------------
 
