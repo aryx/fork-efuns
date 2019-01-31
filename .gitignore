@@ -26,10 +26,10 @@
 # pfff and tools
 /TAGS
 /.pfff/*
+/graph_code.marshall
+/graph_code.marshall.opti
 #/PFFF_DB.json
 #/PFFF_DB.marshall
-#/graph_code.marshall
-#/graph_code.marshall.opti
 #/layer_bottomup.json
 #/layer_graphcode_stats.json
 #/layer_topdown.json
@@ -50,12 +50,8 @@ html_mode.ml
 /ppx/ppx_interactive
 
 #MISC
-#efuns.opt.gz
 #*.cfg
 #*.ps
 #*.idx
-#/gitlog
-#/.depend2
-
-# ?????
-
+/.depend2
+/gitlog
