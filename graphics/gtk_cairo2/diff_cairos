@@ -1,0 +1,188 @@
+--- gtk_cairo/graphics_efuns.ml	2018-09-12 14:32:45.630979029 -0700
++++ gtk_cairo2/graphics_efuns.ml	2019-01-31 01:04:55.679663281 -0800
+@@ -30,11 +30,11 @@ type world = {
+   metrics: layout;
+ 
+   (* first cairo layer, for heavy computation e.g. the minimap *)
+-  mutable base: [ `Any ] Cairo.surface;
++  mutable base: Cairo.Surface.t;
+   (* second cairo layer, for scrolling window on minimap *)
+-  mutable overlay: [ `Any ] Cairo.surface;
++  mutable overlay: Cairo.Surface.t;
+   (* the final drawing area *)
+-  mutable final: [ `Any ] Cairo.surface;
++  mutable final: Cairo.Surface.t;
+ 
+   (* pango is better than the (simpler but buggy) toy text api in cairo *)
+   ly: Pango.layout;
+@@ -137,9 +137,9 @@ let draw_rectangle_xywh ?alpha ~cr ~x ~y
+ (* see http://cairographics.org/FAQ/#clear_a_surface *)
+ let clear cr =
+   Cairo.set_source_rgba cr 0. 0. 0.   0.;
+-  Cairo.set_operator cr Cairo.OPERATOR_SOURCE;
++  Cairo.set_operator cr Cairo.SOURCE;
+   Cairo.paint cr;
+-  Cairo.set_operator cr Cairo.OPERATOR_OVER;
++  Cairo.set_operator cr Cairo.OVER;
+   ()
+ 
+ (*****************************************************************************)
+@@ -148,8 +148,8 @@ let clear cr =
+ 
+ let compute_metrics edt desc =
+ 
+-  let fontmap = Pango_cairo.FontMap.get_default () in
+-  let ctx = Pango_cairo.FontMap.create_context fontmap in
++  let fontmap = Cairo_pango.Font_map.get_default () in
++  let ctx = Cairo_pango.Font_map.create_context fontmap in
+   Pango.Context.set_font_description ctx desc;
+ 
+   let metrics = Pango.Context.get_metrics ctx desc None in
+@@ -195,9 +195,9 @@ let compute_metrics edt desc =
+   metrics
+ 
+ let pango_layout cr desc =
+-  let layout = Pango_cairo.create_layout cr in
++  let layout = Cairo_pango.create_layout cr in
+   Pango.Layout.set_font_description layout desc;
+-  Pango_cairo.update_layout cr layout;
++  Cairo_pango.update_layout cr layout;
+   layout
+ let pango_layout a b =
+   Common.profile_code "G.pango_layout" (fun () -> pango_layout a b)
+@@ -205,8 +205,8 @@ let pango_layout a b =
+ 
+ let pango_show_text ly cr str =
+   Pango.Layout.set_text ly  (prepare_string str);
+-  Pango_cairo.update_layout cr ly;
+-  Pango_cairo.show_layout cr ly
++  Cairo_pango.update_layout cr ly;
++  Cairo_pango.show_layout cr ly
+ 
+ let pango_show_text a b c =
+   Common.profile_code "G.pango_show_text" (fun () -> pango_show_text a b c)
+@@ -454,8 +454,8 @@ let draw_string edt cr pg   col line  st
+   set_source_color ~cr ~color:fgcolor ();
+   let (ly, _) = pg in
+   Pango.Layout.set_text ly  (prepare_string (String.sub str offset len));
+-  Pango_cairo.update_layout cr ly;
+-  Pango_cairo.show_layout cr ly;
++  Cairo_pango.update_layout cr ly;
++  Cairo_pango.show_layout cr ly;
+   ()
+ 
+ let backend w da top_gtk_win = 
+@@ -525,15 +525,15 @@ let configure edt top_window desc metric
+   (*-------------------------------------------------------------------*)
+   (* Cairo/pango graphics backend setup *)
+   (*-------------------------------------------------------------------*)
+-  let cr = Cairo_lablgtk.create (*px#pixmap*) da#misc#window in
++  let cr = Cairo_gtk.create (*px#pixmap*) da#misc#window in
+   let surface = Cairo.get_target cr in
+ 
+-  let colorkind = Cairo.CONTENT_COLOR_ALPHA in
++  let colorkind = Cairo.COLOR_ALPHA in
+ 
+   let w = {
+     edt = edt;
+-    base =    Cairo.surface_create_similar surface colorkind  width height;
+-    overlay = Cairo.surface_create_similar surface colorkind  width height;
++    base =    Cairo.Surface.create_similar surface colorkind  width height;
++    overlay = Cairo.Surface.create_similar surface colorkind  width height;
+     final = surface;
+     ly = pango_layout cr desc;
+     metrics;
+@@ -583,10 +583,10 @@ let configure edt top_window desc metric
+ let assemble_layers w =
+   let surface_src = w.base in
+   let cr_final = Cairo.create w.final in
+-  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
++  Cairo.set_operator cr_final Cairo.OVER;
+   Cairo.set_source_surface cr_final surface_src 0. 0.;
+   Cairo.paint cr_final;
+-  Cairo.set_operator cr_final Cairo.OPERATOR_OVER;
++  Cairo.set_operator cr_final Cairo.OVER;
+   Cairo.set_source_surface cr_final w.overlay 0. 0.;
+   Cairo.paint cr_final;
+   ()
+@@ -876,7 +876,7 @@ let test_draw_cairo cr =
+   (* [0,0][1,1] world scaled to a width x height screen *)
+   Cairo.scale cr (float_of_int width) (float_of_int height);
+ 
+-  Cairo.set_source_rgba cr ~red:0.5 ~green:0.5 ~blue:0.5 ~alpha:0.5;
++  Cairo.set_source_rgba cr 0.5 0.5 0.5  0.5;
+   Cairo.set_line_width cr 0.001;
+ 
+   Cairo.move_to cr 0.5 0.5;
+@@ -888,7 +888,7 @@ let test_draw_cairo cr =
+     Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_BOLD;
+ *)
+   Cairo.select_font_face cr "fixed"
+-    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
++    ~weight:Cairo.Normal;
+   Cairo.set_font_size cr 0.05;
+ 
+   let _extent = Cairo.text_extents cr "peh" in
+@@ -905,7 +905,7 @@ let test_draw_cairo cr =
+   Cairo.move_to cr 0.1 0.3;
+   Cairo.show_text cr "THIS IS SOME TEXT";
+ 
+-  Cairo.set_source_rgb cr ~red:0.1 ~green:0.1 ~blue:0.1;
++  Cairo.set_source_rgb cr 0.1 0.1 0.1;
+   Cairo.move_to cr 0.1 0.1;
+   Cairo.line_to cr 0.1 0.2;
+   Cairo.stroke cr;
+@@ -914,8 +914,7 @@ let test_draw_cairo cr =
+ 
+   for _i = 0 to 3 do
+     let end_ = !start +. 0.5 in
+-    Cairo.arc cr ~xc:0.5 ~yc:0.5 ~radius:0.3 ~angle1:!start
+-      ~angle2:end_;
++    Cairo.arc cr 0.5 0.5 ~r:0.3 ~a1:!start ~a2:end_;
+     Cairo.stroke cr;
+     start := end_;
+   done;
+@@ -923,9 +922,9 @@ let test_draw_cairo cr =
+ 
+ let test_draw_pango cr =
+ 
+-  let layout = Pango_cairo.create_layout cr in
+-  let ctx = Pango_cairo.FontMap.create_context 
+-    (Pango_cairo.FontMap.get_default ()) in
++  let layout = Cairo_pango.create_layout cr in
++  let ctx = Cairo_pango.Font_map.create_context 
++    (Cairo_pango.Font_map.get_default ()) in
+ 
+ 
+   Pango.Layout.set_text layout "WWWWW let x = 1 in main () for x = 1 to 3!";
+@@ -942,10 +941,10 @@ let test_draw_pango cr =
+   in
+   Pango.Context.set_font_description ctx desc;
+   Pango.Layout.set_font_description layout desc;
+-  Pango_cairo.update_layout cr layout;
++  Cairo_pango.update_layout cr layout;
+ 
+   Cairo.move_to cr 0. 0.;
+-  Pango_cairo.show_layout cr layout;
++  Cairo_pango.show_layout cr layout;
+   pr2 (spf "font = %s" (Pango.Font.to_string desc));
+ 
+ 
+@@ -964,7 +963,7 @@ let test_draw_pango cr =
+   Cairo.move_to cr 0. h;
+   (* The 'i' should align with the 'W' above if the font is monospace *)
+   Pango.Layout.set_text layout "iiiii let x = 1 in main () for x = 1 to 3!";
+-  Pango_cairo.show_layout cr layout;
++  Cairo_pango.show_layout cr layout;
+ 
+   ()
+ 
+@@ -977,7 +976,7 @@ let test_cairo () =
+   let px = GDraw.pixmap ~width ~height ~window:w () in
+   px#set_foreground `WHITE;
+   px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
+-  let cr = Cairo_lablgtk.create px#pixmap in
++  let cr = Cairo_gtk.create px#pixmap in
+   test_draw_pango cr;
+   (GMisc.pixmap px ~packing:w#add ()) |> ignore;
+   w#show ();
