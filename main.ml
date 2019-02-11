@@ -66,6 +66,7 @@ let main () =
         Printf.sprintf "Unix error %s: %s %s" f (Unix.error_message error) arg
     | _ -> raise e
   );
+  Printexc.record_backtrace true;
 
   Sys.signal Sys.sigint (Sys.Signal_handle (fun _ ->  
     (* Should auto-save all buffers, and then exit ... *)

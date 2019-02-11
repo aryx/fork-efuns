@@ -66,16 +66,19 @@ let _ =
     );
   
     (* ~/.login like *)
+    (*
     Unix.putenv "PFFF_HOME" "/home/pad/pfff";
     Unix.putenv "PATH" (
        "/home/pad/.opam/4.02.3/bin:" ^
         (try (Unix.getenv "PATH") with Not_found -> "/bin") ^ 
        ":/home/pad/bin"
      );
+    *)
 
     (* projects *)
 
     (* Hooks *)
+  (* todo: PFFF dependency! should hide when USE_PFFF=0 *)
     Hook.add_hook Caml_mode.hooks 
       (Minor_modes.toggle_minor_buffer (Ocaml_merlin.mode));
     Server.start None;
