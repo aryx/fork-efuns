@@ -1,59 +1,39 @@
 # -*- sh -*-
 
+# -------------------------------------------------------------------------
+# cmt, for codegraph to skip
+# -------------------------------------------------------------------------
+
 dir: external/OPAM_DIR
-dir: external/FOR_MERLIN
 
+#dir: external/FOR_MERLIN
+# I uppercased below the first letter of directories I don't want to skip 
+# (e.g., we want json-wheel, lablgtk, and ocaml hence JLO uppercase below)
+dir: external/FOR_MERLIN/[abcdefghiJkLmnOpqrstuvwxyz]
+
+# We skip cairo2 above because the external/ contains the .cmt (good citizen)
+dir: external/FOR_MERLIN/ocaml[abcdefghijklmnopqrstuvwxyz]
+# We want stdlib and otherlibs (unix/str)
+dir: external/FOR_MERLIN/ocaml-base-compiler.4.07.1/[abcdefghijklmnOpqrStuvwxyz]
+# complex cmt without a cmt_source_file field (weird)
+dir: external/FOR_MERLIN/ocaml-base-compiler.4.07.1/otherlibs/dynlink
+# dupes for condition/mutex/...
+dir: external/FOR_MERLIN/ocaml-base-compiler.4.07.1/otherlibs/threads
+# dupes
+dir: external/FOR_MERLIN/ocaml-base-compiler.4.07.1/ocamldoc
+dir: external/FOR_MERLIN/ocaml-base-compiler.4.07.1/ocamltest
+# advanced constructs
+dir: external/FOR_MERLIN/ocaml-migrate-parsetree
+
+# already handled above
+dir: external/STDLIB
+
+# use advanced constructs I do not handle yet in graph_code_cmt.ml
 dir: external/compiler-libs
-dir: external/STDLIB/camltk
-dir: external/STDLIB/compiler-libs
+dir: external/ocaml-migrate-parsetree
 
-# not sure what those files are, but they lead to ambiguities
-file: external/STDLIB/callback.p.cmt
-file: external/STDLIB/scanf.p.cmt
-file: external/STDLIB/stringLabels.p.cmt
-file: external/STDLIB/arg.p.cmt
-file: external/STDLIB/oo.p.cmt
-file: external/STDLIB/obj.p.cmt
-file: external/STDLIB/char.p.cmt
-file: external/STDLIB/stdLabels.p.cmt
-file: external/STDLIB/stream.p.cmt
-file: external/STDLIB/format.p.cmt
-file: external/STDLIB/filename.p.cmt
-file: external/STDLIB/camlinternalMod.p.cmt
-file: external/STDLIB/camlinternalFormatBasics.p.cmt
-file: external/STDLIB/bytesLabels.p.cmt
-file: external/STDLIB/camlinternalFormat.p.cmt
-file: external/STDLIB/int64.p.cmt
-file: external/STDLIB/random.p.cmt
-file: external/STDLIB/listLabels.p.cmt
-file: external/STDLIB/complex.p.cmt
-file: external/STDLIB/string.p.cmt
-file: external/STDLIB/parsing.p.cmt
-file: external/STDLIB/marshal.p.cmt
-file: external/STDLIB/array.p.cmt
-file: external/STDLIB/moreLabels.p.cmt
-file: external/STDLIB/camlinternalOO.p.cmt
-file: external/STDLIB/digest.p.cmt
-file: external/STDLIB/map.p.cmt
-file: external/STDLIB/weak.p.cmt
-file: external/STDLIB/hashtbl.p.cmt
-file: external/STDLIB/genlex.p.cmt
-file: external/STDLIB/pervasives.p.cmt
-file: external/STDLIB/stack.p.cmt
-file: external/STDLIB/camlinternalLazy.p.cmt
-file: external/STDLIB/printexc.p.cmt
-file: external/STDLIB/set.p.cmt
-file: external/STDLIB/list.p.cmt
-file: external/STDLIB/arrayLabels.p.cmt
-file: external/STDLIB/printf.p.cmt
-file: external/STDLIB/lazy.p.cmt
-file: external/STDLIB/int32.p.cmt
-file: external/STDLIB/gc.p.cmt
-file: external/STDLIB/nativeint.p.cmt
-file: external/STDLIB/std_exit.p.cmt
-file: external/STDLIB/bytes.p.cmt
-file: external/STDLIB/sort.p.cmt
-file: external/STDLIB/lexing.p.cmt
-file: external/STDLIB/buffer.p.cmt
-file: external/STDLIB/sys.p.cmt
-file: external/STDLIB/queue.p.cmt
+#todo: to reduce the number of lookup failures
+# depends on ocaml-migrate-parsetree
+file: ppx/ppx_interactive.cmt
+# todo, module shadowing not handled
+# file: commons/concur.cmt

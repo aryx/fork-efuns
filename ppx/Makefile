@@ -7,9 +7,13 @@ TARGET=ppx_interactive
 
 SRC=ppx_interactive.ml
 
-INCLUDEDIRS=$(TOP)/external/compiler-libs
+INCLUDEDIRS=\
+  $(TOP)/external/compiler-libs\
+  $(TOP)/external/ocaml-migrate-parsetree
 
-LIBS=$(TOP)/external/compiler-libs/ocamlcommon.cma
+LIBS=\
+  $(TOP)/external/compiler-libs/ocamlcommon.cma \
+  $(TOP)/external/ocaml-migrate-parsetree/migrate_parsetree.cma \
 
 SYSLIBS=
 

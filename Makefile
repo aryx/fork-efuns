@@ -225,8 +225,11 @@ clean::
 	rm -f */*.cm[ioxa] */*.[oa] */*.cmxa */*.annot */*.cmt*
 	rm -f $(PROGS) *.opt
 
+#TODO: should recompile if opam switch
 ppx/ppx_interactive:
 	cd ppx; make
+clean::
+	rm -f ppx/ppx_interactive
 
 efuns_client: ipc/efuns_client.cmo
 	$(OCAMLC) $(BYTECODE_STATIC) -o $@ $(SYSLIBS) $(LIBS) $^
