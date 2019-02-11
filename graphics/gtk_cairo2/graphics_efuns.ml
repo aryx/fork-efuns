@@ -817,6 +817,21 @@ let init2 init_files =
     );
     true
   ) |> ignore;
+  win#event#connect#focus_out ~callback:(fun _focus ->
+    if !Globals.debug_graphics
+    then pr2 "Focus Out";
+    true;
+  ) |> ignore;
+  win#event#connect#focus_in ~callback:(fun _focus ->
+    if !Globals.debug_graphics
+    then pr2 "Focus In";
+    (* bugfix: reset modifiers when focus back in, otherwise
+     * when you Alt-Tab to another window modifiers is set to mod1mask,
+     * and when you go back it is like Alt was still on
+     *)
+    modifiers := 0;
+    true;
+  ) |> ignore;
 
   da#event#connect#button_press (fun ev ->
     let (x, y) = GdkEvent.Button.x ev, GdkEvent.Button.y ev in
@@ -850,9 +865,10 @@ let init2 init_files =
     (match exn with
     | Common.UnixExit _ -> quit ()
     | _ ->
-        pr2 "fucking callback";
         let s = Printexc.get_backtrace () in
+        pr2 "GtkSignal.user_handler: exception!";
         pr2 s;
+        pr2 "end backtrace";
         (*
           let pb = "pb: " ^ Common.exn_to_s exn in
           G.dialog_text ~text:pb ~title:"pb";
