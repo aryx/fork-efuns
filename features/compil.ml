@@ -166,7 +166,8 @@ let compile frame =
       (*s: [[Compil.compile()]] find possibly cdir with a makefile *)
       let cdir = 
         if !!compile_find_makefile then
-          if String.sub cmd 0 4 = "make" || String.sub cmd 1 4 = "make" then
+          if cmd =~ "^make"
+          then
           (* try to find a Makefile in the directory *)
             let rec iter dir =
               if Sys.file_exists (Filename.concat dir "Makefile") ||
