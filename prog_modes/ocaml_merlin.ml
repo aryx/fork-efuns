@@ -38,7 +38,7 @@ module J = Json_type
  * should make available an 'ocamlmerlin' program in your PATH.
  * 
  * Note that Emacs supports Merlin, but I actually had troubles 
- * to setting it up for my Emacs 23 ... Switching to Efuns might be simpler :)
+ * to set it up for my Emacs 23 ... Switching to Efuns might be simpler :)
  *
  * internals: 
  * Look at merlin/doc/dev/PROTOCOL.md to see the list of commands.
@@ -77,6 +77,7 @@ module J = Json_type
  * - pfff stags and codegraph (lang_ml/ and lang_cmt/) 
  * - https://github.com/freebroccolo/ocaml-language-server but it is written
  *   in Javascript and uses Merlin under the hood
+ * - mural from Adam Hupp, to accelerate tags under emacs
  * 
  * todo:
  *  - errors
