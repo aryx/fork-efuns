@@ -12,6 +12,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
  * license.txt for more details.
  *)
+open Migrate_parsetree
+open Ast_402
+
 open Ast_mapper
 open Ast_helper
 open Asttypes
@@ -53,13 +56,15 @@ open Longident
  *  - update of ppx_getenv using the latest ppxlib
  *  http://rgrinberg.com/posts/extension-points-3-years-later/
  *  (in my opinion it's not worth the complexity)
+ *  - update to use ocaml-migrate-parsetree so portable ppx rewriter
+ *   http://ocamllabs.io/projects/2017/02/15/ocaml-migrate-parsetree.html
  *)
 
 (*****************************************************************************)
 (* Mapper *)
 (*****************************************************************************)
 
-let mapper argv =
+let (mapper: Migrate_parsetree.Ast_402.Ast_mapper.mapper) =
   { default_mapper with
     structure = fun mapper xs ->
       xs |> List.map (fun item ->
@@ -101,4 +106,11 @@ let mapper argv =
       ) |> List.concat
   }
 
-let () = register "interactive" mapper
+(*****************************************************************************)
+(* Entry point *)
+(*****************************************************************************)
+module To_current = Convert(OCaml_402)(OCaml_current)
+
+let () = 
+  Compiler_libs.Ast_mapper.register "interactive" 
+    (fun _ -> To_current.copy_mapper mapper)
