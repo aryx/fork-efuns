@@ -42,7 +42,6 @@ let message top_window msg =
       (* let _ = Unix.select [] [] [] 0.2 in *)
       mini_buffer.frm_redraw <- true
 (*e: function [[Top_window.message]] *)
-let message2 = message
 
 (*s: function [[Top_window.clear_message]] *)
 let clear_message top_window =
@@ -301,12 +300,31 @@ let handle_key top_window modifiers keysym =
           (Printf.sprintf "Unbound key %s"
             (Keymap.print_key_list (frame.frm_prefix @ [key])));
         frame.frm_prefix <- [];
-    | Failure str -> message top_window str
+    (* bugfix: it is nice for Failure to have a simpler error message
+     *  than for the general 'e' case below; it allows efuns plugins to
+     *  give nice error messages to the user. However, in the end you want
+     *  also a backtrace because non-efuns code sometimes also
+     *  uses failwith (e.g., Common2.foldl1).
+     * less: maybe have a Efuns.Error instead of using failwith?
+     *)
+     | Failure str ->
+        let bt = Printexc.get_backtrace () in
+        message top_window str;
+        let buf = Ebuffer.default "*backtrace*" in
+        let text = buf.buf_text in
+        Text.insert_at_end text str;
+        Text.insert_at_end text "\n";
+        Text.insert_at_end text bt;
+        Text.insert_at_end text "\n"
+
     | (Common.UnixExit _) as x -> raise x
     (*x: [[Top_window.handle_key()]] handle exception of [[try_map]] *)
     | e -> 
-        let str = spf "Uncaught exception %s" (Utils.printexn e) in
+        (* bugfix: call get_backtrace() first! otherwise the code above
+         * may throw exn, which can be catched, which modifies the backtrace
+         *)
         let bt = Printexc.get_backtrace () in
+        let str = spf "Uncaught exception %s" (Utils.printexn e) in
         if !Globals.debug
         then pr2 str;
         message top_window  str;

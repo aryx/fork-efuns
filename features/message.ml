@@ -46,5 +46,5 @@ let message frame s =
   let top_window = 
     Window.top frame.frm_window 
   in
-  Top_window.message2 top_window s;
+  Top_window.message top_window s;
   add_to_messages s
