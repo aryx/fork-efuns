@@ -15,8 +15,6 @@
 open Common
 open Efuns
 
-module FT = File_type
-
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
@@ -96,14 +94,16 @@ let columnize width xs =
 (* to filter them in ls *)
 let is_obj_file file =
   try
-    let typ = FT.file_type_of_file file in
+    let typ = File_type.file_type_of_file file in
     match typ with
-    | FT.Obj _ -> true
+    | File_type.Obj _ -> true
     | _ -> false
   with _ -> false
 
-(* plan9: ugly patching for plan. Still needed? *)
-let vfat_patch x =
+(* plan9: ugly patching for plan. Still needed? 
+ * todo: it leads then to some Unix.stat errors (e.g., for ~/GTD.org)
+ *)
+let _vfat_patch x =
   if x =~ "^[A-Z0-9_]*\\.[A-Z0-9_]+$" ||
      x =~ "^[A-Z0-9_]+$"
   then String.lowercase x
@@ -173,7 +173,7 @@ let display_prompt buf =
   Text.insert_at_end text (prompt buf);
   let last_pos = Var.get_local buf prompt_last_pos in
   Text.set_position text last_pos (Text.size text);
-  (* less: it recolorize everything, so might be expensive if we don't
+  (* less: it recolorizes everything, so it is expensive if we don't
    * limit the nblines of the buffer. A colorize_region would be better.
    *)
   colorize buf
@@ -209,7 +209,6 @@ let previous_history frame =
       incr current;
       insert_history_element frame s
     end
-
 [@@interactive]  
 
 let next_history frame =
@@ -236,7 +235,7 @@ let builtin_ls (*?(show_dotfiles=false) ?(show_objfiles=false)*)
   let dir = pwd buf in
   let files = 
     Utils.file_list dir 
-    |> List.map vfat_patch
+    (* |> List.map vfat_patch *)
     |> List.sort (fun a b ->
     compare a b (* (String.lowercase a) (String.lowercase b)*)
   )
@@ -266,8 +265,10 @@ let builtin_ls (*?(show_dotfiles=false) ?(show_objfiles=false)*)
       file
   )
   in
-  let s = columnize frame.frm_width files in
-  Text.insert_at_end buf.buf_text s;
+  if files <> [] then begin
+    let s = columnize frame.frm_width files in
+    Text.insert_at_end buf.buf_text s;
+  end;
   display_prompt buf
 
 let builtin_l frame =
@@ -306,7 +307,9 @@ let builtin_cd frame s =
       (* so C-x C-f and other stuff starts from this directory *)
       let edt = Globals.editor () in
       edt.edt_dirname <- newdir;
+      (* pad: pad's style, automatic ls after a cd *)
       builtin_ls false false frame
+      (* alt: display_prompt buf *)
   | _ -> failwith (spf "%s is not a directory" newdir)
 
 let builtin_v frame s =
@@ -396,9 +399,10 @@ let interpret frame s =
   | "l" -> builtin_l frame
 
   (* dir navig *)
-  | "s" -> builtin_cd frame ".."
   | "cd" -> builtin_cd frame Utils.homedir
   | _ when s =~ "cd[ ]+\\(.*\\)" -> builtin_cd frame (Common.matched1 s)
+  (* pad: pad's style, nice shortcut *)
+  | "s" -> builtin_cd frame ".."
 
   (* file editing *)
   | _ when s =~ "v[ ]+\\(.*\\)" -> 

@@ -67,14 +67,14 @@ let read_command fd frame_opt =
         end;
         Top_window.update_display () 
   with
-    _ -> Concur.Thread.remove_reader fd 
+    _ -> Concur.remove_reader fd 
 (*e: function [[Server.read_command]] *)
   
 (*s: function [[Server.module_accept]] *)
 let module_accept s frame_opt = 
   let fd,_ = accept s in
   Unix.set_close_on_exec fd;
-  Concur.Thread.add_reader fd (fun _ -> read_command fd frame_opt)
+  Concur.add_reader fd (fun _ -> read_command fd frame_opt)
 (*e: function [[Server.module_accept]] *)
   
 (*s: function [[Server.start]] *)
@@ -91,7 +91,7 @@ let start frame_opt =
       Unix.set_nonblock s;
       Unix.set_close_on_exec s;
 
-      Concur.Thread.add_reader s (fun _ -> 
+      Concur.add_reader s (fun _ -> 
         started := true;
         module_accept s frame_opt
       );
