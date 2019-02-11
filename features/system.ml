@@ -52,7 +52,7 @@ let system pwd buf_name cmd end_action =
   let tampon = String.create 1000 in
   let active = ref true in
   let edt = Globals.editor () in
-  Concur.Thread.add_reader ins (fun () ->
+  Concur.add_reader ins (fun () ->
     let pos,str = Text.delete_res text curseur
                     (Text.point_to_eof text curseur) in
     let len = input inc tampon 0 1000 in
@@ -72,7 +72,7 @@ let system pwd buf_name cmd end_action =
       Top_window.update_display ();
 
       Mutex.unlock edt.edt_mutex;
-      Concur.Thread.remove_reader ins; (* Kill self *)
+      Concur.remove_reader ins; (* Kill self *)
     end
     else
       Text.insert_at_end text (String.sub tampon 0 len);
@@ -107,7 +107,7 @@ let system pwd buf_name cmd end_action =
        waitpid [] pid |> ignore;
      with _ -> ()
     );
-    Concur.Thread.remove_reader ins
+    Concur.remove_reader ins
   ) :: buf.buf_finalizers;
   (*e: [[System.system()]] set finalizer, to intercept killed frame *)
   buf
