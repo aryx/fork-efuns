@@ -1,10 +1,20 @@
 # -*- org -*-
 
-* LAST
+* Last
 
-** LAST1 
+** Current
 
-*** imitating: https://blog.atom.io/2017/09/12/announcing-atom-ide.html
+*** bugs
+
+**** error: exn in hook: Invalid_argument("index out of bounds")
+
+**** outline of org-mode does not work
+
+**** paren color stay up once matched
+move should unhighlight no? or forgot redraw force?
+
+**** still? when C-s and accidentally get touchpad to move to other place
+then get second cursor and weird behavior
 
 *** indentation
 
@@ -12,7 +22,7 @@
 
 **** reindent c_mode.ml!
 
-**** try ocamlformat?
+**** also TAB and insert comment prefix star when inside a comment.
 
 *** better org/outline mode
 
@@ -27,61 +37,11 @@
 
 **** C-c C-x C-s to save archive
 
-*** bugs
-
-**** outline of org-mode does not work
-
-**** paren color stay up once matched
-move should unhighlight no? or forgot redraw force?
-
-**** error: exn in hook: Invalid_argument("index out of bounds")
-
-**** when C-s and accidentally get touchpad to move to other place
-then get second cursor and weird behavior
-
-**** cairo2 segfault
-
-*** *Messages* buffer
-useful when use C-c C-t and want copy paste back
-
-*** M-% prefill with last default replace?
-
-*** C-s C-w that continue with next word under cursor
-
 *** highlighting paren mode
 quite important in the end
 
 *** highlighting C-s
 quite important in the end
-
-
-*** generic M-x comment?
-
-*** all_bindings(), interactive redesign part 4
-
-*** clipboard and Xterm.get_cutbuffer, set_cutbuffer
-merge! and make it work!
-
-*** -------------------------------------------------------
-
-*** pb cairo2 
-
-**** if open a file from efuns (C-x C-f) then I get an 
-Cairo error (SURFACE_FINISHED)
-
-**** got a segfault
-how generate core and get bt?
-
-*** M-x calendar
-just call the cal program?
-
-*** -debug_keyboard?
-where print every keystroke code?
-can bind C-M-x under windows, thx to autokeys
-
-*** SEMI BUG when switch to other windows then key state gets
-fucked up
-need to type Alt one time to reset the thing
 
 *** more integration of merlin with efuns
 
@@ -90,7 +50,7 @@ slowdown after use of FOR_MERLIN? too many .cmt?
 
 **** prefill with prefix completion
 
-**** goto-def for functions, constants, etc.
+**** M-x goto-def for functions, constants, etc.
 not just modules
 
 **** fuzzy search for entities! L.m -> List.map
@@ -110,6 +70,26 @@ need additional backend field
 
 **** less: show type in other frame?
 so can also colorize it!
+
+*** -------------------------
+
+*** M-% prefill with last default replace?
+
+*** C-s C-w that continue with next word under cursor
+
+*** generic M-x comment?
+
+*** all_bindings(), interactive redesign part 4
+
+*** clipboard and Xterm.get_cutbuffer, set_cutbuffer
+merge! and make it work!
+
+*** M-x calendar
+just call the cal program?
+
+*** -debug_keyboard?
+where print every keystroke code?
+can bind C-M-x under windows, thx to autokeys
 
 *** efuns completion for noweb and TeX?
 for \cite can look at .bbl
@@ -315,11 +295,6 @@ Some of the stuff are actually available as plugins (e.g. autocomplete),
 
 **** show searched highlights! on minimap! a la firefox!
 
-*** later: codemap integration?
-
-*** later: try ahupp mural for ocaml? 
-still need? efuns.opt not fast enough to "serve" tags?
-
 *** visual align-guides like in atom
 just do via overlay? after frm_table has been updated
 just go through all frm_table and look if space?
@@ -330,10 +305,6 @@ look at uemacs/utf8.c code?
 It's in emacs, but it's not clean. It always confused me.
 
 ** stuff in emacs to port
-
-*** !!indentation!!
-use the new ocamlformat? futur of indentation is automatic indentation?
-ocp-indent?
 
 *** later
 
@@ -410,7 +381,7 @@ attr representation efficient?
 
 * Ports
 
-** less: try minimal port using OCaml Graphics
+** less: try minimal port using OCaml Graphics?
 
 ** finish efuns port to plan9!
 so can start to work under plan9!!! in a nice environment!!!
@@ -459,15 +430,17 @@ an unix
 
 * Copy VsCode or Atom
 
+** imitating: https://blog.atom.io/2017/09/12/announcing-atom-ide.html
+
 ** from https://github.com/Microsoft/vscode-go
 
 DONE Colorization
 DONE Completion Lists (using gocode)
-Signature Help (using godoc)
+SEMI Signature Help (using godoc)
 Snippets
-Quick Info (using godef)
+SEMI Quick Info (using godef)
 DONE Goto Definition (using godef)
-Find References (using go-find-references)
+SEMI Find References (using go-find-references)
 DONE File outline (using go-outline)
 Workspace symbol search (using go-symbols)
 Rename (using gorename)
@@ -476,15 +449,16 @@ Format (using goreturns or goimports or gofmt)
 Add Imports (using gopkgs)
 [partially implemented] Debugging (using delve)
 
-** f8 nuclide demos
-DONE syntax highlighting (actually buggy on xhp)
-DONE autocomplete (big deal in their demo)
-flycheck (big deal)
-SEMI click goto-def
+** have langserver.ml?
+LSP? language server protocol?
 
-DONE build integration, colored output
-file explorer
-remote file explorer (fbide remote connect)
+(* LSP
+
+https://microsoft.github.io/language-server-protocol/implementors/servers/
+https://langserver.org/
+
+https://github.com/freebroccolo/ocaml-language-server
+ *)
 
 * Pfff integration
 
@@ -524,17 +498,11 @@ some completions
 
 ** graph_code integration
 
-*** links to pfff dirs in efuns/external/ so can run graphcode
-and later have good jump to def and nice completion!!
-
 *** colorize parameter, local, and globals for ml! check_variable_ml.ml!
 will help for instance in cpp_mode.ml to better see the use of
 mode that looks like a local or param but that is actually
 a reference to a global constant in the file
 
 ** codemap integration?
+have codemap->efuns integration, what could be efuns->codemap?
  
-** indentation? or use an automatic formatter? seems to be the futur
-Finally fix tuareg!
-
-also TAB and insert comment prefix star when inside a comment.
