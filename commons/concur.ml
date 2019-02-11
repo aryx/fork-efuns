@@ -17,12 +17,7 @@
 
 (* external ioctl: Unix.file_descr -> int -> string -> 'a -> unit = "ml2c_ioctl" *)
 
-module Mutex = Mutex
-module Condition = Condition
-
 let readers = ref []
-module Thread = 
-  struct
     
     let actions = ref 0
     let mu_actions = Mutex.create ()
@@ -72,11 +67,10 @@ module Thread =
       if pid > 0 then
         ignore (Thread.create (fun _ -> let _ = Thread.wait_pid pid in ()) ());
       pid
-  end
+
   
   
 
-open Thread
 let iterator lst_it =
   Mutex.lock mu_actions;
   while !actions = !lst_it do
@@ -86,5 +80,4 @@ let iterator lst_it =
   Mutex.unlock mu_actions
 
 let poll () = false
-  
-module ThreadUnix = ThreadUnix
+
