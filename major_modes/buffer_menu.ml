@@ -12,7 +12,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
  * license.txt for more details.
  *)
-open Common
 open Options
 
 open Efuns
@@ -89,7 +88,7 @@ let menu frame =
   list |> List.iter (fun name ->
     let buf = Ebuffer.default name in
     Text.insert_at_end text 
-      (spf " %s  %-17s%6d  %-13s%s\n"
+      (Common.spf " %s  %-17s%6d  %-13s%s\n"
          (if (buf.buf_last_saved = Text.version buf.buf_text) then " " else "*")
          buf.buf_name
          (Text.size buf.buf_text)
@@ -118,7 +117,8 @@ let key_return frame =
     Frame.change_buffer frame.frm_window buf_name
   with exn ->
     Message.message frame
-      (spf "not valid entry in buffer list, exn = %s" (Common.exn_to_s exn))
+      (Common.spf "not valid entry in buffer list, exn = %s" 
+          (Common.exn_to_s exn))
 
 
 (*****************************************************************************)

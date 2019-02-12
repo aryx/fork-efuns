@@ -106,7 +106,7 @@ let highlight frame =
   let pos_debut_to_hl, pos_fin_to_hl =
     match !highlighted with
     | None -> pos1, pos2
-    | Some (frame, d, f) ->
+    | Some (_frame, d, f) ->
         if pos1 > d
         then unhightlight_region buf d pos1; 
         if pos2 < f

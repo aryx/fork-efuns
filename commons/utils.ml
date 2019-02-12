@@ -41,11 +41,11 @@ let rec list_nth n list =
 
 let rec mem_assq x = function
   | [] -> false
-  | (a, b) :: l -> a == x || mem_assq x l
+  | (a, _b) :: l -> a == x || mem_assq x l
 
 let rec removeq x = function
   | [] -> []
-  | (a, b as pair) :: l -> if a == x then l else pair :: removeq x l
+  | (a, _b as pair) :: l -> if a == x then l else pair :: removeq x l
 
 let rec list_removeq list ele =
   match list with
@@ -356,19 +356,19 @@ let load_directory filename =
           let stats = lstat fullname in
           let perm = stats.st_perm in
           let rights = Bytes.create 10 in
-          rights.[9] <- (if perm land 1 = 0 then '-' else
+          Bytes.set rights 9 (if perm land 1 = 0 then '-' else
             if perm land 2048 = 0 then 'x' else 's');
-          rights.[8] <- (if perm land 2 = 0 then '-' else 'w');
-          rights.[7] <- (if perm land 4 = 0 then '-' else 'r');
-          rights.[6] <- (if perm land 8 = 0 then '-'  else
+          Bytes.set rights 8 (if perm land 2 = 0 then '-' else 'w');
+          Bytes.set rights 7 (if perm land 4 = 0 then '-' else 'r');
+          Bytes.set rights 6 (if perm land 8 = 0 then '-'  else
             if perm land 1024 = 0 then 'x' else 's');
-          rights.[5] <- (if perm land 16 = 0 then '-' else 'w');
-          rights.[4] <- (if perm land 32 = 0 then '-' else 'r');
-          rights.[3] <- (if perm land 64 = 0 then '-'  else
+          Bytes.set rights 5 (if perm land 16 = 0 then '-' else 'w');
+          Bytes.set rights 4 (if perm land 32 = 0 then '-' else 'r');
+          Bytes.set rights 3 (if perm land 64 = 0 then '-'  else
             if perm land 512 = 0 then 'x' else 's');
-          rights.[2] <- (if perm land 128 = 0 then '-' else 'w');
-          rights.[1] <- (if perm land 256 = 0 then '-' else 'r');
-          rights.[0] <- (match stats.st_kind with
+          Bytes.set rights 2 (if perm land 128 = 0 then '-' else 'w');
+          Bytes.set rights 1 (if perm land 256 = 0 then '-' else 'r');
+          Bytes.set rights 0 (match stats.st_kind with
               S_DIR -> 'd'
             | S_CHR -> 'c'
             | S_BLK -> 'b'
@@ -420,7 +420,7 @@ let load_directory filename =
             (if is_link fullname then 
               Printf.sprintf " -> %s" 
                 (try Unix.readlink fullname with _ -> "???") else "")
-      ) s (Sort.list (<) list) 
+      ) s (List.sort compare list) 
 
       
 (* This function format filenames so that directory names end with / *)
@@ -474,12 +474,12 @@ let to_regexp_string s =
     if i < len then
       let c = s.[i] in
       match c with
-        '*' -> ss.[j] <- '.'; ss.[j+1] <- '*'; iter (i+1) (j+2)
-      | '?' -> ss.[j] <- '.'; iter (i+1) (j+1)
+        '*' -> Bytes.set ss j '.'; Bytes.set ss (j+1) '*'; iter (i+1) (j+2)
+      | '?' -> Bytes.set ss j '.'; iter (i+1) (j+1)
       | '.'
       | '['
-      | ']' -> ss.[j] <- '\\'; ss.[j+1] <- c; iter (i+1) (j+2)
-      | _ -> ss.[j] <- c; iter (i+1) (j+1)
+      | ']' -> Bytes.set ss j '\\'; Bytes.set ss (j+1) c; iter (i+1) (j+2)
+      | _ -> Bytes.set ss j c; iter (i+1) (j+1)
   in
   iter 0 0;
   Bytes.to_string ss

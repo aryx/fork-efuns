@@ -200,7 +200,7 @@ let value_to_int v =
 let int_to_value i = Value (string_of_int i)
 
 (* The Pervasives version is too restrictive *)
-let bool_of_string s = match String.lowercase s with
+let bool_of_string s = match String.lowercase_ascii s with
   | "true" -> true
   | "false" -> false
   | "yes" -> true
@@ -403,7 +403,7 @@ let help oc =
       (match o.option_name with
           [] -> Printf.fprintf oc "???"
         | [name] -> Printf.fprintf oc "%s" name
-        | name :: tail ->
+        | name :: _tail ->
             Printf.fprintf oc "%s" name;
             iter_order (fun name -> 
                 Printf.fprintf oc ":%s" name

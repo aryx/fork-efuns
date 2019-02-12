@@ -17,22 +17,23 @@ let open_process pwd cmd =
   let outchan = out_channel_of_descr out_write in
   match fork() with
   | 0 ->
-      if out_read <> stdin then begin
-        dup2 out_read stdin; 
+      if out_read <> Unix.stdin then begin
+        dup2 out_read Unix.stdin; 
         close out_read 
       end;
       if in_write <> Unix.stdout ||  in_write <> Unix.stderr then begin
         if in_write <> Unix.stdout 
-        then dup2 in_write stdout;
+        then dup2 in_write Unix.stdout;
         if in_write <> Unix.stderr 
-        then dup2 in_write stderr; 
+        then dup2 in_write Unix.stderr; 
         close in_write 
       end;
       List.iter close [in_read;out_write];
       (* I prefer to do it here than in the caller *)
       Sys.chdir pwd;
-      execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |];
-      exit 127 (* for ocaml light *)
+      execv "/bin/sh" [| "/bin/sh"; "-c"; cmd |]
+      (* never here! *)
+      (* exit 127 (* for ocaml light *) *)
   | pid -> 
       Unix.close out_read;
       Unix.close in_write;
@@ -53,12 +54,12 @@ let system pwd buf_name cmd end_action =
   let active = ref true in
   let edt = Globals.editor () in
   Concur.add_reader ins (fun () ->
-    let pos,str = Text.delete_res text curseur
+    let _pos,str = Text.delete_res text curseur
                     (Text.point_to_eof text curseur) in
     let len = input inc tampon 0 1000 in
     Mutex.lock edt.edt_mutex;
     if len = 0 then begin
-      let pid,status = waitpid [WNOHANG] pid in
+      let _pid,status = waitpid [WNOHANG] pid in
       (match status with 
       | WEXITED s -> Text.insert_at_end text (spf "Exited with status %d\n" s); 
           close_in inc;

@@ -714,7 +714,7 @@ let init2 init_files =
            ))
       ) |> ignore;
 
-      factory#add_submenu "_Buffers" |> (fun menu -> 
+      factory#add_submenu "_Buffers" |> (fun _menu -> 
         (* TODO *)
         ()
       );

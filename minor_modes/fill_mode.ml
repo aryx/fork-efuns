@@ -19,7 +19,7 @@ let minor_mode_name = "fill"
 (*e: constant [[Fill_mode.minor_mode_name]] *)
   
 (*s: function [[Fill_mode.install]] *)
-let install buf = ()
+let install _buf = ()
 (*e: function [[Fill_mode.install]] *)
 
 (*s: constant [[Fill_mode.fill_line_len]] *)

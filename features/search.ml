@@ -42,7 +42,7 @@ type query = NoQuery | Query of frame * string
 
 (*s: function [[Search.replace]] *)
 let replace flag frame query str repl =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
   (*s: save current pos from frame for position history navigation *)
   Move.save_current_pos frame;
   (*e: save current pos from frame for position history navigation *)
@@ -248,7 +248,7 @@ let isearch to_regexp sens frame =
   let string = ref "" in
   let isearch_s () =
     last_search := !string;
-    let regexp, delta =
+    let regexp, _deltaTOREMOVE =
       match !to_regexp, !case_fold with
       | Regexp, true  -> Str.regexp_case_fold !string, 0
       | Regexp, false -> Str.regexp !string, 0
@@ -266,7 +266,7 @@ let isearch to_regexp sens frame =
   in
   let set_last mini_frame =
     if !string = "" then begin
-      let (buf, text, point) = Frame.buf_text_point mini_frame in
+      let (_, text, point) = Frame.buf_text_point mini_frame in
       Text.insert text point !last_search;
       Text.fmove text point (String.length !last_search);
       string := !last_search
@@ -304,11 +304,11 @@ let isearch to_regexp sens frame =
 
   let _mini_frame =
     Select.incremental_mini_buffer frame ismap (request ()) !string
-      (fun frame str -> 
+      (fun _frame str -> 
         string := str;
         isearch_s ()
     )
-    (fun frame str -> 
+    (fun _frame str -> 
         last_search := str;
         Text.remove_point text spoint
     )

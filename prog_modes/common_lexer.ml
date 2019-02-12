@@ -82,7 +82,7 @@ let char_for_backslash =
       | 't' -> '\009'
       | c   -> c
       end
-  | x -> failwith "Lexer: unknown system type"
+  | _ -> failwith "Lexer: unknown system type"
 
 let char_for_decimal_code lexbuf i =
   let c = 100 * (Char.code(Lexing.lexeme_char lexbuf i) - 48) +

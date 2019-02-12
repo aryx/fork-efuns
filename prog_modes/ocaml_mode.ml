@@ -319,7 +319,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
  
   | DO ->
 (* starts a DO ... DONE structure *)
-      let (stack',(kwd,indent')) = pop_to_kwds [WHILE;FOR] stack in
+      let (stack',(_kwd,indent')) = pop_to_kwds [WHILE;FOR] stack in
       parse lexbuf DO ((DO,indent') :: stack') [] (indent'+ !!indentation) 
         (I.add indent' eols indents)
 (* These keywords start multi-keywords block structures. *)
@@ -414,7 +414,7 @@ let rec parse lexbuf prev_tok stack eols indent indents =
           DONE, [FOR;WHILE;DO;TO;DOWNTO]
         ] 
       in
-      let (stack,(kwd,indent)) = pop_to_kwds kwds stack in
+      let (stack,(_kwd,indent)) = pop_to_kwds kwds stack in
       parse lexbuf token stack [] indent (I.add indent eols indents)
   | WITH ->
       let (stack,(kwd,indent)) = pop_to_kwds [MATCH;TRY;LBRACE] stack in
@@ -555,7 +555,7 @@ In particular, we will open each .cmi file to find the name.
 *)
 
 let module_name buf_name = 
-  Filename.chop_extension (String.capitalize buf_name)
+  Filename.chop_extension (String.capitalize_ascii buf_name)
 
 let find_env buf point =
   let text = buf.buf_text in

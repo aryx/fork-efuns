@@ -20,7 +20,7 @@ correcte. On peut utiliser la position de la souris pour trouver la
 nouvelle position du curseur dans la frame. Si on en sort, on peut
 ou prendre la derniere position, ou la premiere.
 *)
-let mouse_drag_region frame =
+let mouse_drag_region _frame =
   failwith "Simple.mouse_drag_region: TODO"
 [@@interactive]
 (*
@@ -69,7 +69,7 @@ let mouse_drag_region frame =
 (*e: function [[Simple.mouse_drag_region]] *)
 
 (*s: function [[Simple.mouse_yank_at_click]] *)
-let  mouse_yank_at_click frame =
+let  mouse_yank_at_click _frame =
 failwith "Simple.mouse_yank_at_click: TODO"
 [@@interactive "insert_at_point"]
 (*
@@ -84,7 +84,7 @@ failwith "Simple.mouse_yank_at_click: TODO"
 (*e: function [[Simple.mouse_yank_at_click]] *)
 
 (*s: function [[Simple.mouse_save_then_kill]] *)
-let mouse_save_then_kill frame =
+let mouse_save_then_kill _frame =
   failwith "Simple.mouse_save_then_kill: TODO"
 [@@interactive]
 (*

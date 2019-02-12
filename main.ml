@@ -149,11 +149,11 @@ let main () =
 
       edt_vars = Store.new_store ();
     
-      edt_colors_names = Array.create 256 "";
+      edt_colors_names = Array.make 256 "";
       edt_colors = Hashtbl.create 37;
       edt_colors_n = 0;
 
-      edt_fonts_names = Array.create 256 "";
+      edt_fonts_names = Array.make 256 "";
       edt_fonts = Hashtbl.create 37;
       edt_fonts_n = 0;
 

@@ -25,7 +25,7 @@ let kill_size = ref 0
 let kill_max = 10
 (*e: constant [[Simple.kill_max]] *)
 (*s: constant [[Simple.kill_ring]] *)
-let kill_ring = Array.create kill_max ""
+let kill_ring = Array.make kill_max ""
 (*e: constant [[Simple.kill_ring]] *)
 (*s: constant [[Simple.last_kill]] *)
 let last_kill = ref None
@@ -46,7 +46,7 @@ let add_clipboard frame str =
   graphic.Xdraw.set_clipboard (Some str)
 
 let paste_clipboard frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
   let top_window = Window.top frame.frm_window in
   let graphic = Efuns.backend top_window in
   let str =
@@ -83,7 +83,7 @@ let kill_text text point len =
 
 (*s: function [[Simple.kill_end_of_line]] *)
 let kill_end_of_line frame =
-  let (buf, text, _) = Frame.buf_text_point frame in
+  let (_, text, _) = Frame.buf_text_point frame in
   let eol = point_to_end frame in
   let len = 
     (* if already at eol then kill the newline *)
@@ -116,7 +116,7 @@ let kill_bol buf point =
 
 (*s: function [[Simple.insert_killed]] *)
 let insert_killed frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
 (*
   let top_window = Window.top frame.frm_window in
   let graphic = Efuns.backend top_window in
@@ -138,7 +138,7 @@ let insert_killed frame =
 
 (*s: function [[Simple.insert_next_killed]] *)
 let insert_next_killed frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
   match !last_insert with
   |  Some (oldframe,oldpoint,n,len) when 
         oldframe == frame && oldpoint + len = Text.get_position text point ->

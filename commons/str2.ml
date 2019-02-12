@@ -12,7 +12,7 @@
 (* This is a small addons for the Str module *)
 
 (*external replacement_text: string -> string -> string = "str_replacement_text"*)
-let replace_matched repl matched =
+let replace_matched _repl _matched =
   failwith "Str2.replace_matched:TODO"
 (*  replacement_text repl matched*)
   

@@ -152,7 +152,7 @@ let html_color_region buf start_point end_point =
   let text = buf.buf_text in
   let curseur = Text.new_point text in
   let lexbuf = lexing text start_point end_point in
-  let rec iter prev_tok lexbuf =
+  let rec iter _prev_tok lexbuf =
     let (pos,len), token = token lexbuf in
     (match token with
         EOF  -> raise Exit

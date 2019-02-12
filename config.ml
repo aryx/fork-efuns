@@ -110,13 +110,13 @@ let standard_map = [
   [MetaMap, Char.code 't'], (Frame.to_frame Edit.transpose_words);
 
   [MetaMap, Char.code 'l'], (fun frm ->
-    Edit.on_word frm.frm_buffer frm.frm_point String.lowercase
+    Edit.on_word frm.frm_buffer frm.frm_point String.lowercase_ascii
   );
   [MetaMap, Char.code 'u'], (fun frm ->
-    Edit.on_word frm.frm_buffer frm.frm_point String.uppercase
+    Edit.on_word frm.frm_buffer frm.frm_point String.uppercase_ascii
   );
   [MetaMap, Char.code 'c'], (fun frm ->
-    Edit.on_word frm.frm_buffer frm.frm_point String.capitalize
+    Edit.on_word frm.frm_buffer frm.frm_point String.capitalize_ascii
   );
   [MetaMap, XK.xk_q], Transform.fill_paragraph;
   (*e: transforming keys *)
@@ -268,7 +268,7 @@ let core_map =
 (*e: constant [[core_map]] *)
 
 (*s: function [[Config.save_options]] *)
-let save_options frame = 
+let save_options _frame = 
   Options.save ()
 [@@interactive]
 (*e: function [[Config.save_options]] *)
@@ -350,7 +350,7 @@ let _ =
     "About Efuns", (fun frame ->
       Frame.change_buffer frame.frm_window "*help*"
     );
-    "Changes", (fun frame ->
+    "Changes", (fun _frame ->
       (*
         let _ = Frame.load_file frame.frm_window (
             Version.efuns_lib ^"/Changes") in ()
@@ -360,7 +360,7 @@ let _ =
   |];
   (*e: [[Config]] help menu setup *)
   (*s: [[Config]] buffers menu setup *)
-  Top_window.buffers_menu := (fun top_window button () ->
+  Top_window.buffers_menu := (fun top_window _button () ->
       let buffers = ref [] in
       let edt = Globals.editor() in
       Hashtbl.iter (fun name _buf -> buffers := name :: !buffers) edt.edt_buffers;

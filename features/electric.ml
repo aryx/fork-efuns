@@ -14,7 +14,7 @@
 
 (*s: function [[Simple.previous_char]] *)
 let previous_char frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
   if Text.bmove_res text point 1 = 0 then raise Not_found;
   let c = Text.get_char text point in
   Text.fmove text point 1;
@@ -28,7 +28,7 @@ let hungry_char c =
 
 (*s: function [[Simple.hungry_electric_delete]] *)
 let hungry_electric_delete frame =
-  let (buf, text, _) = Frame.buf_text_point frame in
+  let (_, text, _) = Frame.buf_text_point frame in
   text |> Text.with_session (fun () ->
    let c1 = previous_char frame in
    Edit.delete_backspace_char frame;

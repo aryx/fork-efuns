@@ -53,7 +53,7 @@ let no_print x =
   "<abstr>:" ^ (Common.dump x)
 (*e: function [[Store.no_print]] *)
 (*s: function [[Store.no_input]] *)
-let no_input (s : string) = failwith "This variable can not be set"
+let no_input (_s : string) = failwith "This variable can not be set"
 (*e: function [[Store.no_input]] *)
 (*s: function [[Store.create_abstr]] *)
 let create_abstr name = 
@@ -93,20 +93,20 @@ let set vars var value =
 (*s: function [[Store.get_print]] *)
 let get_print vars var =
   let value = get vars var in
-  let (p,i) = Hashtbl.find vars_table var in
+  let (p, _i) = Hashtbl.find vars_table var in
   p value  
 (*e: function [[Store.get_print]] *)
   
 (*s: function [[Store.set_input]] *)
 let set_input vars var value =
-  let (p,i) = Hashtbl.find vars_table var in
+  let (_p, i) = Hashtbl.find vars_table var in
   set vars var (i value)
 (*e: function [[Store.set_input]] *)
   
 (*s: function [[Store.list]] *)
 let list vars =
   let list = ref [] in
-  Vars.iter (fun var value ->
+  Vars.iter (fun var _value ->
       list := var :: !list;
   ) !vars;
   !list

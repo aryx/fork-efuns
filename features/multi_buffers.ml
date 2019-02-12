@@ -35,7 +35,7 @@ let set_previous_frame frame =
 let get_previous_frame () = 
   match !prev_buffers with
   | [] -> ""
-  | x::xs -> x
+  | x::_xs -> x
 (*e: function [[Select.get_previous_frame]] *)
 
 (*s: function [[Multi_buffers.switch_to_other_buffer]] *)
@@ -68,7 +68,7 @@ let next_buffer buf =
   let rec iter list =
     match list with
       [] -> raise Not_found 
-    | (name,b) :: tail ->
+    | (_name,b) :: tail ->
         if b == buf 
         then 
           match tail with

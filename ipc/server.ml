@@ -54,7 +54,7 @@ let read_command fd frame_opt =
             | x::_ -> x.top_active_frame.frm_window
         in
         let frame = Frame.load_file window name in
-        let (buf, text, point) = Frame.buf_text_point frame in
+        let (_, text, point) = Frame.buf_text_point frame in
         if pos <> 0 
         then Text.set_position text point pos;
         if line <> 0 

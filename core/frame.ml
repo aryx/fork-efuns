@@ -54,8 +54,8 @@ let status_print status str stat_type =
   try
     let (pos,maxlen) = List.assoc stat_type status.status_format in
     let len = min (String.length str) maxlen in
-    String.blit str 0 status.status_string pos len;
-    String.fill status.status_string (pos + len) (maxlen - len) ' '
+    Bytes.blit_string str 0 status.status_string pos len;
+    Bytes.fill status.status_string (pos + len) (maxlen - len) ' '
   with Not_found -> ()
 (*e: function [[Frame.status_print]] *)
 
@@ -161,7 +161,7 @@ let install window frame =
   then frame.frm_cutline <- window.win_width - 1;
   (*e: [[Frame.install()]] adjust [[frm_cutline]] *)
   (*s: [[Frame.install()]] set [[frm_table]] *)
-  frame.frm_table <- (Array.init window.win_height (fun i -> 
+  frame.frm_table <- (Array.init window.win_height (fun _i -> 
      {
        frm_text_line = Text.dummy_line;
        frmline_boxes = [];
@@ -403,7 +403,7 @@ let set_cursor frame =
   match point_to_xy_opt frame point with
   | None ->
       (* insert cursor is not on frame *)
-      frame.frm_cursor.[0] <- '\000'
+      Bytes.set frame.frm_cursor 0 '\000'
   | Some (x, y) ->
       frame.frm_cursor_x <- x;
       frame.frm_cursor_y <- y;
@@ -414,7 +414,7 @@ let set_cursor frame =
       let rec iter boxes =
         match boxes with
         | [] -> 
-            frame.frm_cursor.[0] <- ' '
+            Bytes.set frame.frm_cursor 0 ' '
         | box :: tail ->
             if box.box_col <= col && box.box_col + box.box_len > col
             then begin
@@ -722,7 +722,7 @@ let unkill window frame =
 
 (*s: function [[Frame.move_point]] *)
 let move_point frame point x y =
-  let (buf, text, _) = buf_text_point frame in
+  let (_, text, _) = buf_text_point frame in
   let coord = cursor_to_coord frame (x - frame.frm_xpos) (y - frame.frm_ypos) in
   Text.goto_line text point coord.Text.c_line;
   Text.fmove text point coord.Text.c_col

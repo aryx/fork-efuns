@@ -59,7 +59,7 @@ let select_yes_or_no frame request action =
 (*e: function [[Select.select_yes_or_no]] *)
 
 (*s: function [[Select.find_completion_frame]] *)
-let find_completion_frame frame =
+let find_completion_frame _frame =
   let buf = Ebuffer.default "*Completions*" in
   Frame.find_buffer_frame buf
 (*e: function [[Select.find_completion_frame]] *)
@@ -187,8 +187,8 @@ let select frame request history start completion_fun prefix_fun action =
   set_history map string history;
 
   incremental_mini_buffer frame map request start
-    (fun frame str -> string := str;)
-    (fun old_frame str -> 
+    (fun _frame str -> string := str;)
+    (fun _old_frame str -> 
        (match !history with
         | hd :: _ when hd = str -> ()
         | _ ->
@@ -272,7 +272,7 @@ let complete_filename frame good_file filename =
   in
 
   match file_list with
-  | a::b::_ -> 
+  | _a::_b::_ -> 
       begin
         match 
           List.fold_left (fun list ele ->
@@ -343,8 +343,8 @@ let select_file frame request history start action =
   );
   set_history map string history;
   incremental_mini_buffer frame map request start
-    (fun frame str -> string := str)
-    (fun old_frame str -> 
+    (fun _frame str -> string := str)
+    (fun _old_frame str -> 
       history := str :: !history;
       remove_completions frame;
       let str = Utils.string_to_filename str in

@@ -383,13 +383,13 @@ let extend_gap text amount =
   let gpos = text.gpoint.pos in
   let gap_end = gpos + gsize in
 
-  let new_text = String.create (old_size + add_size) in
+  let new_text = Bytes.create (old_size + add_size) in
   Bytes.blit  text.text_string 0   new_text 0    gpos; 
   Bytes.blit  text.text_string gap_end   new_text (gap_end + add_size) 
     (old_size - gap_end);
   text.text_string <- new_text;
 
-  let new_attrs = Array.create (old_size + add_size) direct_attr in
+  let new_attrs = Array.make (old_size + add_size) direct_attr in
   Array.blit   text.text_attrs 0   new_attrs 0   gpos; 
   Array.blit   text.text_attrs gap_end    new_attrs (gap_end + add_size) 
     (old_size - gap_end);
@@ -450,7 +450,7 @@ let low_insert text pos str =
       begin
         (*s: [[Text.low_insert()]] grow newlines *)
         let old_size = text.text_nlines in
-        let new_cache = Array.create (old_size + (max 20 nbr_newlines)) 
+        let new_cache = Array.make (old_size + (max 20 nbr_newlines)) 
           { (mk_line_with_pos (-1)) with line_modified = false }
         in
         Array.blit 
@@ -661,7 +661,7 @@ let insert_at_end text str =
 (*s: function [[Text.compute_newlines]] *)
 let compute_newlines string =
   let (nbr_newlines,_) = Utils.count_char string '\n' in
-  let newlines = Array.create (nbr_newlines + 2) (mk_line_with_pos 0) in
+  let newlines = Array.make (nbr_newlines + 2) (mk_line_with_pos 0) in
   let curs = ref 0 in
   (* newlines.(0) is already set with 0 position for its bol *)
   for i = 1 to nbr_newlines do
@@ -676,7 +676,7 @@ let compute_newlines string =
 (*s: function [[Text.create]] *)
 let create str =
   let newlines = compute_newlines str in
-  let attrs = (Array.create (String.length str) direct_attr) in
+  let attrs = (Array.make (String.length str) direct_attr) in
 
     {
       text_string = (Bytes.of_string str);
@@ -802,7 +802,7 @@ let distance text p1 p2 =
 (*e: function [[Text.distance]] *)
 
 (*s: function [[Text.compare]] *)
-let compare text p1 p2 = 
+let compare _text p1 p2 = 
   compare p1.pos p2.pos
 (*e: function [[Text.compare]] *)
 
@@ -990,7 +990,7 @@ let clean_text text =
     let gsize = text.gsize in
     let string = text.text_string in
     move_gpoint_to text size;
-    String.fill string (size - gsize) gsize '\000';
+    Bytes.fill string (size - gsize) gsize '\000';
     text.text_clean <- true
   end
 (*e: function [[Text.clean_text]] *)
@@ -1369,7 +1369,7 @@ let update text str =
     point.pos <- get_position text point
   );
   text.text_string <- Bytes.of_string str;
-  text.text_attrs <- (Array.create len direct_attr);
+  text.text_attrs <- (Array.make len direct_attr);
   text.text_size <- len;
   text.gpoint <- { pos = 0; line = 0 };
   text.gsize <- 0;

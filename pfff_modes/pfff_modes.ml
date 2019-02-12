@@ -185,7 +185,7 @@ let db_for_frame _frame =
 let def_hist = ref []
 
 let goto_def frame =
-  let (db, root, entities, _idx) = db_for_frame frame in
+  let (_db, root, entities, _idx) = db_for_frame frame in
 
   let xs = entities |> List.map (fun e -> 
     if e.Db.e_fullname = "" 

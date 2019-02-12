@@ -245,7 +245,7 @@ let history_pos_max = 10
 let save_current_pos frame =
   let (buf, text, point) = Frame.buf_text_point frame in
   if Array.length buf.buf_history_pos < history_pos_max
-  then buf.buf_history_pos <- Array.create history_pos_max None;
+  then buf.buf_history_pos <- Array.make history_pos_max None;
   let arr = buf.buf_history_pos in
   arr.(history_pos_max -1) |> Common.do_option (fun pt ->
      Text.remove_point text pt
@@ -258,7 +258,7 @@ let save_current_pos frame =
 let goto_last_saved_pos frame =
   let (buf, text, point) = Frame.buf_text_point frame in
   if Array.length buf.buf_history_pos < history_pos_max
-  then buf.buf_history_pos <- Array.create history_pos_max None;
+  then buf.buf_history_pos <- Array.make history_pos_max None;
   let arr = buf.buf_history_pos in
   let head = arr.(0) in
   Array.blit arr 1 arr 0 (history_pos_max - 1);
@@ -275,7 +275,7 @@ let goto_last_saved_pos frame =
 
 (*s: function [[Simple.end_of_file]] *)
 let end_of_file frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
   (*s: save current pos from frame for position history navigation (in simple.ml) *)
   save_current_pos frame;
   (*e: save current pos from frame for position history navigation (in simple.ml) *)
@@ -285,7 +285,7 @@ let end_of_file frame =
 
 (*s: function [[Simple.begin_of_file]] *)
 let begin_of_file frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
   (*s: save current pos from frame for position history navigation (in simple.ml) *)
   save_current_pos frame;
   (*e: save current pos from frame for position history navigation (in simple.ml) *)

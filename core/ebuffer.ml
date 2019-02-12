@@ -29,7 +29,7 @@ let modes_alist = Store.create_abstr "modes_alist"
 
 (*s: function [[Ebuffer.create_syntax_table]] *)
 let create_syntax_table ()  =
-  let table = Array.create 256 false 
+  let table = Array.make 256 false 
   in  
   for i = Char.code 'a' to Char.code 'z' do
     table.(i) <- true;
@@ -404,16 +404,16 @@ let get_binding buf keylist =
     buf.buf_minor_modes |> List.iter (fun minor ->
       let b = Keymap.get_binding minor.min_map keylist in
       match b with
-        Prefix map -> binding := b
-      | Function f -> binding := b; raise Exit
+        Prefix _map -> binding := b
+      | Function _f -> binding := b; raise Exit
       | Unbound -> ()
     ); 
     (*e: [[Ebuffer.get_binding()]] minor mode key search *)
     (*s: [[Ebuffer.get_binding()]] major mode key search *)
     (let b = Keymap.get_binding buf.buf_major_mode.maj_map keylist in
       match b with
-        Prefix map -> binding := b
-      | Function f -> binding := b; raise Exit
+        Prefix _map -> binding := b
+      | Function _f -> binding := b; raise Exit
       | Unbound -> ());
     (*e: [[Ebuffer.get_binding()]] major mode key search *)
     (let b = Keymap.get_binding buf.buf_map keylist in
@@ -426,8 +426,8 @@ let get_binding buf keylist =
     if buf.buf_map_partial then
       (let b = Keymap.get_binding (Globals.editor()).edt_map keylist in
         match b with
-        | Prefix map -> binding := b;
-        | Function f -> binding := b; raise Exit
+        | Prefix _map -> binding := b;
+        | Function _f -> binding := b; raise Exit
         | Unbound -> ()
       );
     (*e: [[Ebuffer.get_binding()]] if partial map *)
@@ -436,7 +436,8 @@ let get_binding buf keylist =
 (*e: function [[Ebuffer.get_binding]] *)
 
 (*s: function [[Ebuffer.message]] *)
-let message buf m =
+(* todo: vs Message.message? *)
+let message _buf m =
   let name = "*Messages*" in
   try
     let buf = Hashtbl.find (Globals.editor()).edt_buffers name in

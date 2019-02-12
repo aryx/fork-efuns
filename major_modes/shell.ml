@@ -106,7 +106,7 @@ let is_obj_file file =
 let _vfat_patch x =
   if x =~ "^[A-Z0-9_]*\\.[A-Z0-9_]+$" ||
      x =~ "^[A-Z0-9_]+$"
-  then String.lowercase x
+  then String.lowercase_ascii x
   else x
 
 (*****************************************************************************)
@@ -124,7 +124,7 @@ let _vfat_patch x =
  * the cursor goes in a very weird place
  *)
 let scroll_to_end frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
   let height = frame.frm_height - frame.frm_has_status_line in
   let start = frame.frm_start in
 
@@ -350,7 +350,7 @@ let builtin_v frame s =
 let pid_external = ref None
 
 let kill_external frame =
-  let (buf, text, _) = Frame.buf_text_point frame in
+  let (_, text, _) = Frame.buf_text_point frame in
   match !pid_external with
   | None ->  
       failwith "No external process to kill"
@@ -380,7 +380,7 @@ let run_cmd frame cmd =
       let len = input inc tampon 0 1000 in
       Mutex.lock edt.edt_mutex;
       if len = 0 then begin
-        let pid, status = Unix.waitpid [Unix.WNOHANG] pid in
+        let _pid, status = Unix.waitpid [Unix.WNOHANG] pid in
         (match status with 
         | Unix.WEXITED s -> 
             Text.insert_at_end text (spf "Exited with status %d" s); 
@@ -444,7 +444,7 @@ let interpret frame s =
 
 (* initiate the interpreter *)
 let key_return frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
 
   Text.insert_at_end text "\n";
   Text.with_dup_point text point (fun cursor ->
@@ -458,7 +458,7 @@ let key_return frame =
 
 (* helper *)
 let if_else_point_vs_prompt cmp fthen felse frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (buf, _, point) = Frame.buf_text_point frame in
   let last_pos = Var.get_local buf prompt_last_pos in
   if cmp point last_pos
   then fthen frame

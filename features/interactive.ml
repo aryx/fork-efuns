@@ -135,7 +135,7 @@ let set_parameter frame =
     "" (Parameter.all_parameters frame) (fun s -> s) (fun variable ->
       Select.select_string frame (Printf.sprintf "%s : " variable)
       value_hist "" (fun value ->
-          let (input,print,param) = List.assoc variable parameters
+          let (input,_print,param) = List.assoc variable parameters
           in
           param =:= input value))
 [@@interactive]
@@ -148,7 +148,7 @@ let get_parameter frame =
     "" (Parameter.all_parameters frame) (fun s -> s) (fun variable ->
       Top_window.mini_message frame 
         (Printf.sprintf "%s : %s" variable (
-          let (input,print,param) = List.assoc variable parameters
+          let (_input,print,param) = List.assoc variable parameters
           in
           print !!param)))
 [@@interactive]

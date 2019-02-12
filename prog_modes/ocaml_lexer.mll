@@ -281,7 +281,7 @@ rule token = parse
           string_start - lexbuf.Lexing.lex_abs_pos;
         (!start_pos + !lexer_start, lexeme_end lexbuf - !start_pos), STRING
       with
-        Error (pos,len,error) -> (pos,len), EOFSTRING          
+        Error (pos,len,_error) -> (pos,len), EOFSTRING          
     }
   | "'" [^ '\\' '\''] "'"
       { position lexbuf, CHAR }
@@ -296,7 +296,7 @@ rule token = parse
         comment lexbuf;
         (!start_pos + !lexer_start, lexeme_end lexbuf - !start_pos), COMMENT
       with
-        Error (pos,len,error) -> (pos,len), EOFCOMMENT
+        Error (pos,len,_error) -> (pos,len), EOFCOMMENT
     }
   | "#" [' ' '\t']* ['0'-'9']+ [' ' '\t']* "\"" [^ '\n' '\r'] *
     ('\n' | '\r' | "\r\n")

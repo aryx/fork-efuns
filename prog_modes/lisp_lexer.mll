@@ -85,7 +85,7 @@ rule token = parse
              string_start - lexbuf.Lexing.lex_abs_pos;
           (!start_pos + !lexer_start, lexeme_end lexbuf - !start_pos), STRING
         with
-          Error (pos,len,error) -> (pos,len), EOFSTRING          
+          Error (pos,len,_error) -> (pos,len), EOFSTRING          
       }
   (* comments *)
   | ";"+ [^ '\n']* '\n' { position lexbuf, COMMENT }

@@ -49,7 +49,7 @@ let add_option_parameter option =
 let all_params = ref None
 (*e: constant [[Simple.all_params]] *)
 (*s: function [[Simple.all_parameters]] *)
-let all_parameters frame _ =
+let all_parameters _frame _ =
   let parameters = 
     try Var.get_global parameters_var with _ -> []
   in

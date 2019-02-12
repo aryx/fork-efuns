@@ -18,12 +18,12 @@ type t = Efuns.map
 (*e: type [[Keymap.t]] *)
 
 (*s: function [[Keymap.dummy_action]] *)
-let dummy_action frame = () 
+let dummy_action _frame = () 
 (*e: function [[Keymap.dummy_action]] *)
 
 (*s: function [[Keymap.create]] *)
 let create () =
-  { char_map = Array.create 256 Unbound;
+  { char_map = Array.make 256 Unbound;
     complex_bindings = [];
   } 
 (*e: function [[Keymap.create]] *)
@@ -117,7 +117,7 @@ let rec add_binding map key_list binding =
           let newmap = create () in
           set_binding map key (Prefix newmap);
           add_binding newmap tail binding;
-      | e -> 
+      | _e -> 
           failwith "ERROR add_complex_binding: Unable to add prefix"
 (*e: function [[Keymap.add_binding]] *)
           

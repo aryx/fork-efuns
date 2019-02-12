@@ -72,7 +72,7 @@ let scroll_other_down frame =
 
 (*s: function [[Simple.recenter]] *)
 let recenter frame =
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
 
   frame.frm_force_start <- true;
   frame.frm_redraw <- true;

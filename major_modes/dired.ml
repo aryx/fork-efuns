@@ -35,7 +35,7 @@ let get_file_line frame =
   frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
     (Globals.editor()).edt_dirname <- Filename.dirname filename;
   );
-  let (buf, text, point) = Frame.buf_text_point frame in
+  let (_, text, point) = Frame.buf_text_point frame in
   Text.with_dup_point text point (fun start_point ->
     let before = Text.point_to_bol text point in
     let after = Text.point_to_eol text point in
@@ -136,7 +136,7 @@ let open_view frame =
 (*e: function [[Dired.open_view]] *)
   
 (*s: function [[Dired.mkdir]] *)
-let mkdir frame =
+let mkdir _frame =
   failwith "Dired.mkdir: TODO"
 [@@interactive "dired_mkdir"]
 (*
@@ -172,12 +172,12 @@ let dired_mode =
 
 
 (*s: function [[Dired.viewer]] *)
-let viewer commande frame filename =
+let viewer commande _frame filename =
   Sys.command (Printf.sprintf "(%s %s) &" commande filename) |> ignore
 (*e: function [[Dired.viewer]] *)
 
 (*s: function [[Dired.commande]] *)
-let commande commande frame filename =
+let commande commande _frame filename =
   Sys.command (Printf.sprintf commande filename) |> ignore;
   failwith  (Printf.sprintf commande filename)
 (*e: function [[Dired.commande]] *)

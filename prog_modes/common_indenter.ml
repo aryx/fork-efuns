@@ -70,7 +70,7 @@ type 'tok indentation_stack = ('tok * int) list
 let debug_indent = ref true
 
 (* to be used by programming-language-specific get_indentations() *)
-let pop_to_top stack =
+let pop_to_top _stack =
   ([],0)
 
 let rec pop_to kwd stack =
@@ -156,7 +156,7 @@ let indent_between_points get_indentations start_regexp =
  (* returns an "indent_func" compatible function *)
  fun buf start_point end_point ->
   let text = buf.buf_text in
-  text |> Text.with_session (fun session ->
+  text |> Text.with_session (fun _session ->
   Text.with_dup_point text start_point (fun curseur ->
    try
     find_phrase_start start_regexp buf curseur;
@@ -203,7 +203,7 @@ let indent_current_line get_indentations start_regexp color_region =
     let indentations = get_indentations buf start_point end_point in
     if !debug_indent
     then print_indentations indentations;                
-    let (_next,pos,tail) = pop_indentations indentations in
+    let (_next,_pos,tail) = pop_indentations indentations in
     let current =
       try
         let (current, _, _ ) = pop_indentations tail in 

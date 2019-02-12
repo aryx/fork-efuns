@@ -81,7 +81,7 @@ let try_map frame key =
       (*s: [[Top_window.try_map()]] set last action *)
       frame.frm_last_action <- f
       (*e: [[Top_window.try_map()]] set last action *)
-  | Prefix map ->
+  | Prefix _map ->
       frame.frm_prefix <- keylist;
       let top_window = Window.top frame.frm_window in
       message top_window (Keymap.print_key_list frame.frm_prefix);
@@ -409,7 +409,7 @@ let handler top_window event =
 
 (*s: constant [[Top_window.buffers_menu]] *)
 let buffers_menu = ref 
-  (fun (top_window : top_window) (button : (*WX_button.t*) unit) ()
+  (fun (_top_window : top_window) (_button : (*WX_button.t*) unit) ()
   -> ())
 (*e: constant [[Top_window.buffers_menu]] *)
 

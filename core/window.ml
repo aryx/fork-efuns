@@ -73,8 +73,8 @@ let iter f window =
 let rec first f window =
   match window.win_down with
     WFrame frame -> f frame
-  | HComb (w1,w2) -> first f w1
-  | VComb (w1,w2) -> first f w1
+  | HComb (w1,_w2) -> first f w1
+  | VComb (w1,_w2) -> first f w1
   | NoFrame -> ()
 (*e: function [[Window.first]] *)
 
@@ -82,8 +82,8 @@ let rec first f window =
 let rec last f window =
   match window.win_down with
     WFrame frame -> f frame
-  | HComb (w1,w2) -> last f w2
-  | VComb (w1,w2) -> last f w2
+  | HComb (_w1,w2) -> last f w2
+  | VComb (_w1,w2) -> last f w2
   | NoFrame -> ()
 (*e: function [[Window.last]] *)
 
@@ -93,11 +93,11 @@ let rec next f window =
   | TopWindow top_window -> first f top_window.window
   | Window win ->
       match win.win_down with
-        HComb (w1,w2) ->
+        HComb (_w1,w2) ->
           if w2 == window 
           then next f win
           else first f w2
-      | VComb (w1,w2) ->
+      | VComb (_w1,w2) ->
           if w2 == window 
           then next f win
           else first f w2
@@ -113,11 +113,11 @@ let rec prev f window =
         last f top_window.window
   | Window win ->
       match win.win_down with
-        HComb (w1,w2) ->
+        HComb (w1,_w2) ->
           if w1 == window 
           then prev f win
           else last f w1
-      | VComb (w1,w2) ->
+      | VComb (w1,_w2) ->
           if w1 == window 
           then prev f win
           else last f w1
