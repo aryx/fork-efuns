@@ -92,22 +92,22 @@ let try_map frame key =
 let set_cursor_on top_window frame = 
   Frame.set_cursor frame;
 
-  if frame.frm_cursor.[0] <> '\000' then
+  if (Bytes.get frame.frm_cursor 0) <> '\000' then
     let graphic = Efuns.backend top_window in
     graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x-frame.frm_x_offset)
       (frame.frm_ypos + frame.frm_cursor_y) 
-      frame.frm_cursor 0 1 Text.inverse_attr
+      (Bytes.to_string frame.frm_cursor) 0 1 Text.inverse_attr
 (*e: function [[Top_window.set_cursor_on]] *)
 
 (*s: function [[Top_window.set_cursor_off]] *)
 let set_cursor_off top_window frame =
-  if frame.frm_cursor.[0] <> '\000' then
+  if (Bytes.get frame.frm_cursor 0) <> '\000' then
     let graphic = Efuns.backend top_window in
     graphic.Xdraw.draw_string
       (frame.frm_xpos + frame.frm_cursor_x) 
       (frame.frm_ypos + frame.frm_cursor_y) 
-      frame.frm_cursor 0 1 frame.frm_cursor_attr
+      (Bytes.to_string frame.frm_cursor) 0 1 frame.frm_cursor_attr
 (*e: function [[Top_window.set_cursor_off]] *)
 
 (*s: function [[Top_window.cursor_on]] *)

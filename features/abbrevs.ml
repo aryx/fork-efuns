@@ -27,25 +27,25 @@ let escaped s =
   let n = ref 0 in
   let len = String.length s in
   for i = 0 to len - 1 do
-    let c = String.unsafe_get s i in
+    let c = String.get s i in
     match c with
       '\\' | '[' | ']' | '^' -> incr n
     | _ -> ()
   done;
   if !n = 0 then s else
-  let ss = String.create (len + !n) in
+  let ss = Bytes.create (len + !n) in
   let p = ref 0 in
   for i = 0 to len - 1 do
-    let c = String.unsafe_get s i in
+    let c = String.get s i in
     (match c with
         '\\' | '[' | ']' | '^' -> 
-          String.unsafe_set ss !p '\\';
+          Bytes.set ss !p '\\';
           incr p
       | _ -> ());
-    String.unsafe_set ss !p c;
+    Bytes.set ss !p c;
     incr p    
   done;
-  ss
+  Bytes.to_string ss
 (*e: function [[Abbrevs.escaped]] *)
   
 (*s: constant [[Abbrevs.dabbrev_buf]] *)

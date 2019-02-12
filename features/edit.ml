@@ -26,14 +26,14 @@ let insert_string frame str =
 (*e: function [[Simple.insert_string]] *)
   
 (*s: constant [[Simple.single_char]] *)
-let single_char = String.make 1 ' '
+let single_char = Bytes.make 1 ' '
 (*e: constant [[Simple.single_char]] *)
 (*s: function [[Simple.insert_char]] *)
 (* could factorize and just call insert_string? *)
 let insert_char frame char =
   let (_, text, point) = Frame.buf_text_point frame in
-  single_char.[0] <- char;
-  Text.insert text point single_char;
+  Bytes.set single_char 0 char;
+  Text.insert text point (Bytes.to_string single_char);
   Text.fmove text point 1
 (*e: function [[Simple.insert_char]] *)
 
@@ -51,8 +51,8 @@ let insert_at_place frame char =
   then insert_char frame char
   else begin
     Text.delete text point 1;
-    single_char.[0] <- char;    
-    Text.insert text point single_char;
+    Bytes.set single_char 0 char;    
+    Text.insert text point (Bytes.to_string single_char);
     Text.fmove text point 1
   end
 (*e: function [[Simple.insert_at_place]] *)

@@ -169,7 +169,7 @@ type line =
     mutable position : position2;
 
     mutable boxes : box list;
-    mutable repr_string : string;
+    mutable repr_string : bytes;
     mutable repr_len : int;
     mutable line_modified : bool;
   }

@@ -205,7 +205,7 @@ and frame  =
     (* frame coordinates, so y is between 0 and frm_height - 1 *)
     mutable frm_cursor_y : int;
 
-    mutable frm_cursor : string;
+    mutable frm_cursor : bytes;
     mutable frm_cursor_attr : Text.attribute;
     (*x: [[Efuns.frame]] other fields *)
     (* offset(+/-) of screen-lines after frm_start *)
@@ -249,7 +249,7 @@ and status =
     mutable status_format : (status_info * (int * int)) list;
     (*x: [[Efuns.status]] other fields *)
     (* the string! --- ... --- *)
-    mutable status_string : string;
+    mutable status_string : bytes;
     (*x: [[Efuns.status]] other fields *)
     mutable stat_mode : major_mode;
     (*x: [[Efuns.status]] other fields *)

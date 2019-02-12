@@ -156,7 +156,7 @@ let common_suffix list start =
 
 let read_string inc =
   let len = in_channel_length inc in
-  let str = String.create len in
+  let str = Bytes.create len in
   let curs = ref 0 in
   let left = ref len in
   try
@@ -166,10 +166,9 @@ let read_string inc =
       left := !left - read;
       curs := !curs + read;
     done;
-    str
-  with
-    End_of_file ->
-      String.sub str 0 !curs
+    Bytes.to_string str
+  with End_of_file ->
+    Bytes.sub_string str 0 !curs
 
 let list_of_hash t =
   let l = ref [] in
@@ -356,7 +355,7 @@ let load_directory filename =
           let fullname = Filename.concat filename entry in
           let stats = lstat fullname in
           let perm = stats.st_perm in
-          let rights = String.create 10 in
+          let rights = Bytes.create 10 in
           rights.[9] <- (if perm land 1 = 0 then '-' else
             if perm land 2048 = 0 then 'x' else 's');
           rights.[8] <- (if perm land 2 = 0 then '-' else 'w');
@@ -415,6 +414,7 @@ let load_directory filename =
           let owner = Printf.sprintf "uid:%d" owner in
           let group = Printf.sprintf "gid:%d" group in
           let size = stats.st_size in
+          let rights = Bytes.to_string rights in
           Printf.sprintf "%s %s   %8s %8s   %8d   %s   %s%s\n"
             s rights owner group size date entry 
             (if is_link fullname then 
@@ -468,7 +468,7 @@ let to_regexp_string s =
       '.' | '*' | '[' | ']' -> incr plus
     | _ -> ()
   done;
-  let ss = String.create (len + !plus) in
+  let ss = Bytes.create (len + !plus) in
   (*: let plus = ref 0 in *)
   let rec iter i j =
     if i < len then
@@ -482,7 +482,7 @@ let to_regexp_string s =
       | _ -> ss.[j] <- c; iter (i+1) (j+1)
   in
   iter 0 0;
-  ss
+  Bytes.to_string ss
 
 let hashtbl_mem h key =
   try let _ = Hashtbl.find h key in true with _ -> false

@@ -92,25 +92,24 @@ let set_source_color ?(alpha=1.) ~cr ~color () =
 
 (*let re_space = Str.regexp "^[ ]+$"*)
 
-(* !does side effect on the (mutable) string! *)
-(* the code below is necessary when using the (limited/buggy) toy cairo text
- * api. It seems also necessary when using pango as I get some
- * Pango warning about UTF-8 characters and ugly display.
+(* The code below is necessary when using the (limited/buggy) toy cairo text
+ * API. It seems also necessary when using Pango as I get some
+ * Pango warnings about UTF-8 characters and some ugly display.
  *)
 let prepare_string s = 
+  let buf = Bytes.of_string s in
 (*  if s ==~ re_space then  s ^ s (* double it *) else  *)
-  begin
-    for i = 0 to String.length s -.. 1 do
-      let c = String.get s i in
-      if int_of_char c >= 128
-      then String.set s i 'Z'
-      else 
-        if c = '\t'
-        then String.set s i ' '
-      else ()
-    done;
-    s
-  end
+  for i = 0 to String.length s -.. 1 do
+    let c = String.get s i in
+    let final_c =
+      match c with
+      | _ when int_of_char c >= 128 -> 'Z'
+      | '\t'-> ' '
+      | _ -> c
+    in
+    Bytes.set buf i final_c
+  done;
+  Bytes.to_string buf
 (* TODO use charreprs instead? *)
 
 
@@ -259,7 +258,8 @@ let draw_minimap w =
       Cairo.move_to cr x y;
       let attr = box.Text.box_attr in
 
-      let str = String.sub repr_str box.Text.box_pos_repr box.Text.box_size in
+      let str = Bytes.sub_string repr_str 
+                box.Text.box_pos_repr box.Text.box_size in
 
       let fgcolor = 
         let idx = attr land 255 in

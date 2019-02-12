@@ -64,7 +64,7 @@ type line = {
     (*s: [[Text.line]] representation fields *)
     mutable boxes : box list; (* sorted in reverse; head is last box on the line *)
     (*x: [[Text.line]] representation fields *)
-    mutable repr_string : string;
+    mutable repr_string : bytes;
     mutable repr_len : int;
     (*e: [[Text.line]] representation fields *)
     (*s: [[Text.line]] other fields *)
@@ -91,8 +91,8 @@ and box =
 
 (*s: type [[Text.t]] *)
 type t = {
-    mutable text_string : string;
-    mutable text_size : int; (* String.length text.text_string *)
+    mutable text_string : bytes;
+    mutable text_size : int; (* Bytes.length text.text_string *)
 
     mutable text_newlines : line array;
     mutable text_nlines : int; (* Array.length text.text_newlines *)
@@ -221,7 +221,7 @@ let mk_line_with_pos pos =
    position = pos; 
 
    boxes = []; 
-   repr_string = ""; 
+   repr_string = Bytes.of_string ""; 
    repr_len = 0; 
    line_modified = true; 
   }
@@ -335,9 +335,10 @@ let move_gpoint_to text pos =
       (*s: [[Text.move_gpoint_to()]] when pos is before gpos *)
       let delta = gpos - pos in
       let (delta_line,_) = 
-        Utils.count_char_sub text.text_string pos delta '\n' in
-      String.blit  text.text_string pos   text.text_string (pos + gsize)   delta;
-      Array.blit   text.text_attrs  pos   text.text_attrs  (pos + gsize)   delta;
+        Utils.count_char_sub (Bytes.to_string text.text_string) pos delta '\n'
+      in
+      Bytes.blit text.text_string pos   text.text_string (pos + gsize)   delta;
+      Array.blit text.text_attrs  pos   text.text_attrs  (pos + gsize)   delta;
       for i = gline - delta_line + 1 to gline do
         text.text_newlines.(i).position <- text.text_newlines.(i).position + gsize 
       done;
@@ -351,9 +352,9 @@ let move_gpoint_to text pos =
       (*s: [[Text.move_gpoint_to()]] when pos is after gpos *)
       let delta = pos - gap_end in
       let (delta_line,_) = 
-        Utils.count_char_sub text.text_string gap_end delta '\n' in
-      String.blit  text.text_string gap_end   text.text_string gpos   delta;
-      Array.blit   text.text_attrs  gap_end   text.text_attrs  gpos   delta;
+        Utils.count_char_sub (Bytes.to_string text.text_string) gap_end delta '\n' in
+      Bytes.blit text.text_string gap_end   text.text_string gpos   delta;
+      Array.blit text.text_attrs  gap_end   text.text_attrs  gpos   delta;
       for i = gline + 1 to gline + delta_line do
         text.text_newlines.(i).position <- text.text_newlines.(i).position - gsize
       done;
@@ -383,8 +384,8 @@ let extend_gap text amount =
   let gap_end = gpos + gsize in
 
   let new_text = String.create (old_size + add_size) in
-  String.blit  text.text_string 0   new_text 0    gpos; 
-  String.blit  text.text_string gap_end   new_text (gap_end + add_size) 
+  Bytes.blit  text.text_string 0   new_text 0    gpos; 
+  Bytes.blit  text.text_string gap_end   new_text (gap_end + add_size) 
     (old_size - gap_end);
   text.text_string <- new_text;
 
@@ -468,7 +469,8 @@ let low_insert text pos str =
 
     (* similar to compute_newlines() but just for lines after gpos *)
     let rec iter n pos =
-      let new_pos = String.index_from text.text_string pos '\n' in
+      let new_pos = 
+       Bytes.index_from text.text_string pos '\n' in
       text.text_newlines.(gline+n) <- mk_line_with_pos (new_pos + 1);
       if n < nbr_newlines 
       then iter (n+1) (new_pos + 1)
@@ -509,7 +511,7 @@ let low_delete text pos len =
   let gap_end = gpos + text.gsize in
   let len = min (text.text_size - gap_end) len in
 
-  let str = String.sub text.text_string gap_end len in
+  let str = Bytes.sub_string text.text_string gap_end len in
 
   let (nbr_newlines, _nbr_chars) = Utils.count_char str '\n' in
   if nbr_newlines > 0 then begin
@@ -677,7 +679,7 @@ let create str =
   let attrs = (Array.create (String.length str) direct_attr) in
 
     {
-      text_string = str;
+      text_string = (Bytes.of_string str);
       text_size = String.length str;
 
       text_newlines = newlines;
@@ -818,7 +820,7 @@ let get_char text point =
     else pos
   in
   if pos < text.text_size 
-  then text.text_string.[pos]
+  then Bytes.get text.text_string pos
   else '\000'
 (*e: function [[Text.get_char]] *)
 
@@ -1003,7 +1005,7 @@ let blit str text point len =
   if pos+len >= gpos && pos < gap_end 
   then clean_text text;
   (try
-     String.blit text.text_string pos str 0 len
+     Bytes.blit text.text_string pos str 0 len
    with e -> raise e
    );
   len
@@ -1011,9 +1013,9 @@ let blit str text point len =
     
 (*s: function [[Text.sub]] *)
 let sub text point len =
-  let str = String.create len in
+  let str = Bytes.create len in
   blit str text point len |> ignore;
-  str
+  Bytes.to_string str
 (*e: function [[Text.sub]] *)
 
 (*s: function [[Text.region]] *)
@@ -1038,7 +1040,7 @@ let search_forward text regexp point =
   then clean_text text;
 
   let gap_end = text.gpoint.pos + gsize in  
-  let string = text.text_string in
+  let string = Bytes.to_string text.text_string in
   let pos = Str.search_forward regexp string point.pos in
   let pos = if pos >= gap_end then pos - gsize else pos in
   set_position text point pos;
@@ -1060,7 +1062,7 @@ let search_forward_matched text regexp point =
   if point.pos < gap_end 
   then clean_text text;
 
-  let string = text.text_string in
+  let string = Bytes.to_string text.text_string in
   let pos = Str.search_forward regexp string point.pos in
   let pos = 
     if pos >= text.gpoint.pos + gsize 
@@ -1082,7 +1084,7 @@ let search_forward_groups text regexp point groups =
   then clean_text text;
 
   let gap_end = text.gpoint.pos + gsize in  
-  let string = text.text_string in
+  let string = Bytes.to_string text.text_string in
   let pos = Str.search_forward regexp string point.pos in
   let pos = if pos >= gap_end then pos - gsize else pos in
   let array = Array.init groups (fun i -> Str.matched_group (i+1) string) in
@@ -1094,7 +1096,7 @@ let search_forward_groups text regexp point groups =
 let search_backward text regexp point =
   if point.pos > text.gpoint.pos 
   then clean_text text;
-  let string = text.text_string in
+  let string = Bytes.to_string text.text_string in
   let start_pos =     
     if point.pos > 0 
     then point.pos - 1 
@@ -1109,7 +1111,7 @@ let search_backward text regexp point =
 let search_backward_groups text regexp point groups =  
   if point.pos > text.gpoint.pos 
   then clean_text text;
-  let string = text.text_string in
+  let string = Bytes.to_string text.text_string in
   let start_pos =     
     if point.pos > 0 
     then point.pos - 1 
@@ -1126,7 +1128,7 @@ let search_backward_groups text regexp point groups =
 (*****************************************************************************)
 
 (*s: constant [[Text.repr_string]] *)
-let repr_string = ref ""
+let repr_string = ref (Bytes.of_string "")
 (*e: constant [[Text.repr_string]] *)
 
 (*s: constant [[Text.repr_size]] *)
@@ -1139,7 +1141,7 @@ let (dummy_line : line) =
     position = max_int;
     boxes = [];
     repr_len = 0;
-    repr_string = "";
+    repr_string = Bytes.of_string "";
     line_modified = true;
   } 
 (*e: constant [[Text.dummy_line]] *)
@@ -1177,7 +1179,7 @@ let compute_representation text charreprs n =
     if line.line_modified then begin
 
       repr_string := line.repr_string;
-      repr_len    := String.length line.repr_string;
+      repr_len    := Bytes.length line.repr_string;
       let boxes = ref [] in
 
       let text_cursor = ref line.position in
@@ -1202,7 +1204,7 @@ let compute_representation text charreprs n =
       (*e: [[Text.compute_representation()]] adjust [[text_cursor]] if in gap *)
       while !text_cursor < end_pos do
         (*s: [[Text.compute_representation()]] loop [[text_cursor]] to [[end_pos]] *)
-        let charcode = Char.code text.text_string.[!text_cursor] in
+        let charcode = Char.code (Bytes.get text.text_string !text_cursor) in
         let charattr = text.text_attrs.(!text_cursor) in
         let charrepr =
           (*s: [[Text.compute_representation()]] compute charrepr, special char *)
@@ -1217,7 +1219,8 @@ let compute_representation text charreprs n =
 
         while !text_cursor < end_pos && 
           begin
-            let char_code = Char.code text.text_string.[!text_cursor] in
+            let char_code = Char.code (Bytes.get text.text_string !text_cursor)
+            in
             let char_attr = text.text_attrs.(!text_cursor) in
             char_repr := 
                (*s: [[Text.compute_representation()]] compute [[char_repr]], special char *)
@@ -1236,8 +1239,8 @@ let compute_representation text charreprs n =
               let new_len = !repr_len + 
                   (low_distance text end_pos !text_cursor) + charsize * 2 
               in
-              let new_repr = String.create new_len in
-              String.blit !repr_string 0 new_repr 0 !repr_cursor;
+              let new_repr = Bytes.create new_len in
+              Bytes.blit !repr_string 0 new_repr 0 !repr_cursor;
               repr_string := new_repr;
               repr_len := new_len;
           end;
@@ -1342,12 +1345,12 @@ let to_string text =
   if len = 0 
   then "" 
   else begin
-    let str = String.create len in
+    let str = Bytes.create len in
     let gpos = text.gpoint.pos in
     let gap_end = gpos + text.gsize in
-    String.blit text.text_string 0 str 0 gpos;
-    String.blit text.text_string gap_end str gpos (len- gpos);
-    str
+    Bytes.blit text.text_string 0 str 0 gpos;
+    Bytes.blit text.text_string gap_end str gpos (len- gpos);
+    Bytes.to_string str
   end
 (*e: function [[Text.to_string]] *)
 
@@ -1365,7 +1368,7 @@ let update text str =
   text.text_points |> List.iter (fun point -> 
     point.pos <- get_position text point
   );
-  text.text_string <- str;
+  text.text_string <- Bytes.of_string str;
   text.text_attrs <- (Array.create len direct_attr);
   text.text_size <- len;
   text.gpoint <- { pos = 0; line = 0 };

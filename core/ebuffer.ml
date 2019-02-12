@@ -140,9 +140,9 @@ let create name filename text local_map =
   (*e: [[Ebuffer.create()]] adjust editor global fields *)
   (*s: [[Ebuffer.create()]] adjust charreprs *)
   for i=0 to 25 do
-    let s = String.make 2 '^' in
-    s.[1] <- Char.chr (97+i);    
-    buf.buf_charreprs.(i) <- s
+    let s = Bytes.make 2 '^' in
+    Bytes.set s 1 (Char.chr (97+i));    
+    buf.buf_charreprs.(i) <- (Bytes.to_string s);
   done;
   (*x: [[Ebuffer.create()]] adjust charreprs *)
   buf.buf_charreprs.(9) <- String.make !tab_size ' ';

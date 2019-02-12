@@ -212,7 +212,7 @@ let create_without_top window mini buf =
 
       status_format = !status_format;
 
-      status_string = String.make 256 '-';
+      status_string = Bytes.make 256 '-';
     } in
   String.blit editname 0 status.status_string 5 (String.length editname);
   (*e: [[Frame.create_without_top()]] let status *)
@@ -233,7 +233,7 @@ let create_without_top window mini buf =
       (* this will be set later in set_cursor called from update_display *)
       frm_cursor_x = 0;
       frm_cursor_y = 0;
-      frm_cursor = String.make 1 ' ';
+      frm_cursor = Bytes.make 1 ' ';
       frm_cursor_attr = Text.direct_attr;
 
       frm_last_text_updated = 0;
@@ -422,7 +422,8 @@ let set_cursor frame =
                 box.box_pos_repr + box.box_charsize * 
                 (col - box.box_col)
               in
-              frame.frm_cursor.[0] <- line.repr_string.[pos_repr];
+              Bytes.set frame.frm_cursor 0 
+                  (Bytes.get line.repr_string pos_repr);
               frame.frm_cursor_attr <- box.box_attr;
             end else
               iter tail
@@ -634,7 +635,9 @@ let display top_window frame =
           frm_line.prev_frmline_boxes <- frm_line.frmline_boxes;
           frm_line.repr_prev_offset <- frm_line.first_box_extra_offset;
 
-          display_line graphic frame frm_line.frm_text_line.repr_string y;
+          display_line graphic frame 
+              (Bytes.to_string frm_line.frm_text_line.repr_string)
+              y;
         end;
       (*e: [[Frame.display()]] redraw, draw line y if line changed *)
     done;

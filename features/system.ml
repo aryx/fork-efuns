@@ -49,7 +49,7 @@ let system pwd buf_name cmd end_action =
   buf.buf_sync <- true;
 
   let ins = Unix.descr_of_in_channel inc in
-  let tampon = String.create 1000 in
+  let tampon = Bytes.create 1000 in
   let active = ref true in
   let edt = Globals.editor () in
   Concur.add_reader ins (fun () ->
@@ -75,7 +75,7 @@ let system pwd buf_name cmd end_action =
       Concur.remove_reader ins; (* Kill self *)
     end
     else
-      Text.insert_at_end text (String.sub tampon 0 len);
+      Text.insert_at_end text (Bytes.sub_string tampon 0 len);
 
     Text.set_position text curseur (Text.size text);
     Text.insert text curseur str;
@@ -96,7 +96,7 @@ let system pwd buf_name cmd end_action =
           (Text.point_to_eof text curseur) in
       Text.set_position text curseur (Text.size text);
       (* synchronize viewpoint *)
-      output outc str 0 (String.length str);
+      output_substring outc str 0 (String.length str);
       flush outc
     end
   );

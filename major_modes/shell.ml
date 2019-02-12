@@ -373,7 +373,7 @@ let run_cmd frame cmd =
   in
   
   Thread.create (fun () ->
-    let tampon = String.create 1000 in
+    let tampon = Bytes.create 1000 in
 
     let finished = ref false in
     while not !finished do
@@ -394,7 +394,7 @@ let run_cmd frame cmd =
         );
         finished := true;
       end
-      else Text.insert_at_end text (String.sub tampon 0 len);
+      else Text.insert_at_end text (Bytes.sub_string tampon 0 len);
 
       Mutex.unlock edt.edt_mutex;
       scroll_until_not_pass_prompt frame;
