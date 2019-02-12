@@ -40,7 +40,7 @@ OPTOBJS?= $(SRC:.ml=.cmx)
 WARNING_FLAGS?=-w +A-3-4-6-29-41-44-45-48-27-21-31 -warn-error +a 
 
 #dont use -custom, it makes the bytecode unportable.
-OCAMLCFLAGS?=-g -dtypes -absname -bin-annot -thread $(WARNING_FLAGS)
+OCAMLCFLAGS?=-g -absname -bin-annot -thread $(WARNING_FLAGS)
 
 # This flag is also used in subdirectories so don't change its name here.
 OPTFLAGS?=-thread
