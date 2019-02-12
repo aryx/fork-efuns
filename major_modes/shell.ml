@@ -120,12 +120,12 @@ let _vfat_patch x =
  *)
 
 (* assumes have done a Simple.end_of_file frame before *)
+(* todo: this code is buggy; if the prompt line is too big, then
+ * the cursor goes in a very weird place
+ *)
 let scroll_to_end frame =
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-
+  let (buf, text, point) = Frame.buf_text_point frame in
   let height = frame.frm_height - frame.frm_has_status_line in
-  let point = frame.frm_point in
   let start = frame.frm_start in
 
   frame.frm_redraw <- true;
@@ -163,14 +163,29 @@ let colorize buf =
 (* Prompt *)
 (*****************************************************************************)
 
-let prompt buf =
-  spf "%s $ " (pwd buf)
+let prompt frame =
+  let (buf, _, _) = Frame.buf_text_point frame in
+  let s = pwd buf in
+
+  (* if the pwd is too long then we get bugs so let's shorten it *)
+  let len = String.length s in
+  (* 10 is enough space for the ' $' and a few characters for a user command *)
+  let max_width_pwd = frame.frm_window.win_width - 10 in
+  if max_width_pwd <= 5
+  then failwith "shell window width is too low to display a prompt";
+  let s =
+    if len <= max_width_pwd
+    then s 
+    (* bugfix: need the leading slash for prompt_regexp to work *)
+    else spf "/.../%s" (String.sub s (len - max_width_pwd) max_width_pwd)
+  in
+  spf "%s $ " s
 
 (* assumes other commands don't output their final newline *)
-let display_prompt buf =
-  let text = buf.buf_text in
+let display_prompt frame =
+  let (buf, text, _) = Frame.buf_text_point frame in
   Text.insert_at_end text "\n";
-  Text.insert_at_end text (prompt buf);
+  Text.insert_at_end text (prompt frame);
   let last_pos = Var.get_local buf prompt_last_pos in
   Text.set_position text last_pos (Text.size text);
   (* less: it recolorizes everything, so it is expensive if we don't
@@ -269,7 +284,7 @@ let builtin_ls (*?(show_dotfiles=false) ?(show_objfiles=false)*)
     let s = columnize frame.frm_width files in
     Text.insert_at_end buf.buf_text s;
   end;
-  display_prompt buf
+  display_prompt frame
 
 let builtin_l frame =
   let buf = frame.frm_buffer in
@@ -288,7 +303,7 @@ let builtin_l frame =
     with exn -> 
       pr2 (spf "builtin_ls: exn = %s" (Common.exn_to_s exn))
   );
-  display_prompt buf
+  display_prompt frame
 
 
 (* later: handle cd - *)
@@ -322,7 +337,7 @@ let builtin_v frame s =
     else s
   in
   Text.insert_at_end text (spf "Visiting %s" s);
-  display_prompt buf;
+  display_prompt frame;
 
   Multi_buffers.set_previous_frame frame;
   Frame.load_file frame.frm_window file |> ignore
@@ -342,7 +357,7 @@ let kill_external frame =
   | Some pid ->
       Unix.kill pid 9;
       Text.insert_at_end text (spf "Killed %d, signal 9" pid);
-      display_prompt buf
+      display_prompt frame
       
   
 
@@ -353,8 +368,8 @@ let run_cmd frame cmd =
   pid_external := Some pid;
   let edt = Globals.editor () in
 
-  let end_action buf _s = 
-    display_prompt buf 
+  let end_action frame _s = 
+    display_prompt frame 
   in
   
   Thread.create (fun () ->
@@ -372,10 +387,10 @@ let run_cmd frame cmd =
             close_in inc;
             close_out outc;
             pid_external := None;
-            (try end_action buf s with _ -> ())
+            (try end_action frame s with _ -> ())
         | _ -> 
           Text.insert_at_end text "Broken pipe";
-          display_prompt buf
+          display_prompt frame
         );
         finished := true;
       end
@@ -474,9 +489,6 @@ let install buf =
   tbl.(Char.code '_') <- true;
   tbl.(Char.code '-') <- true;
   tbl.(Char.code '.') <- true;
-
-  display_prompt buf;
-  Text.set_position text buf.buf_point (Text.size text);
   ()
 
 let mode =  Ebuffer.new_major_mode "Shell" (Some install)
@@ -487,6 +499,10 @@ let eshell buf_name frame =
   Ebuffer.set_major_mode buf mode;
   Multi_buffers.set_previous_frame frame;
   Frame.change_buffer frame.frm_window buf.buf_name;
+  let top_window = Window.top frame.frm_window in
+  let frame = top_window.top_active_frame in
+  display_prompt frame;
+  goto_prompt frame;
   ()
 
 let shell =
