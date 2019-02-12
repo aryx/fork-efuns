@@ -35,5 +35,3 @@ dir: external/ocaml-migrate-parsetree
 #todo: to reduce the number of lookup failures
 # depends on ocaml-migrate-parsetree
 file: ppx/ppx_interactive.cmt
-# todo, module shadowing not handled
-# file: commons/concur.cmt
