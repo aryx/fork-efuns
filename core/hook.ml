@@ -25,7 +25,10 @@ let add_start_hook hook =
 let exec_hooks hooks arg =
   hooks |> List.iter (fun f ->
     try f arg 
-    with exn -> Globals.error "exn in hook: %s" (Common.exn_to_s exn)
+    with exn -> 
+       let bt = Printexc.get_backtrace () in
+       Common.pr2 bt;
+       Globals.error "exn in hook: %s" (Common.exn_to_s exn)
   )
 (*e: function [[Efuns.exec_hooks]] *)
 

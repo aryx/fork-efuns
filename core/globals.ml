@@ -33,9 +33,9 @@ let with_lock f =
 (*e: function [[Efuns.with_lock]] *)
 
 (*s: function [[Efuns.error]] *)
-let error f x =
+let error fmt x =
   Printf.printf "error: ";
-  Printf.printf f x;
+  Printf.printf fmt x;
   Printf.printf "\n"
 (*e: function [[Efuns.error]] *)
 
@@ -95,8 +95,4 @@ let font = define_option ["font"] "" string_option "Monospace 20"
 let displayname = ref ""
 (*e: global [[Efuns.displayname]] *)
 
-(*
-  let _ = Printf.printf "%d %d %s %s %s" !width !height !font !fg !bg; 
-  print_newline () 
-*)
 (*e: core/globals.ml *)
