@@ -123,8 +123,9 @@ let compile_find_makefile = define_option ["compil";"find_makefile"] ""
 (*e: constant [[Compil.compile_find_makefile]] *)
   
 (*s: constant [[Compil.make_command]] *)
+(* old: was "make -k" to keep going after first error, but I prefer without*)
 let make_command = define_option ["compil";"make_command"] ""
-    string_option "make -k"
+    string_option "make"
 (*e: constant [[Compil.make_command]] *)
 
 let color_buffer buf =
