@@ -127,6 +127,7 @@ SRC=\
  features/electric.ml\
  features/transform.ml\
  features/rectangle.ml\
+ features/macros.ml\
  features/misc.ml\
  \
  minor_modes/minor_modes.ml\
@@ -272,6 +273,9 @@ clean::
 	@set -e; for i in $(INCLUDEDIRS); do echo "B $$i" >> .merlin || exit 1; done
 	@echo 'B external/FOR_MERLIN/**' >> .merlin
 	@echo 'S external/FOR_MERLIN/**' >> .merlin
+
+test:
+	./efuns -height 45 -font "UbuntuMono Bold 22" $*
 
 visual:
 	~/pfff/codemap -no_legend -screen_size 3 -efuns_client ./efuns_client -emacs_client /dev/null -filter pfff .

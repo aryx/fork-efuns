@@ -342,6 +342,31 @@ let handle_key top_window modifiers keysym =
   update_display () (* will set cursor back on and many other things *)
 (*e: function [[Top_window.handle_key]] *)
 
+let in_start_macro = ref false
+let in_call_macro = ref false
+
+(* in reverse order *)
+let recorded_keys = ref []
+
+let handle_key_and_macro top_window modifiers keysym =
+  if !in_start_macro
+  then Common.push (modifiers, keysym) recorded_keys;
+
+  let before = !in_start_macro in
+  handle_key top_window modifiers keysym;
+  let after = !in_start_macro in
+
+  if not before && after
+  then recorded_keys := [];
+
+  if !in_call_macro
+  then begin
+   Common.finalize (fun () ->
+   !recorded_keys |> List.rev |> List.iter (fun (modifiers, keysym) ->
+     handle_key top_window modifiers keysym
+   )) (fun () -> in_call_macro := false)
+  end
+
   (* We can receive events from different sources. In particular, some of
   them can be received during the painting (scrollbar ...)
   *)
@@ -378,7 +403,7 @@ let handler top_window event =
     match event with
     (*s: [[Top_window.handler()]] match event cases *)
     | Xtypes.XTKeyPress (modifiers, _s, keysym) ->
-        handle_key top_window modifiers keysym
+        handle_key_and_macro top_window modifiers keysym
     (*x: [[Top_window.handler()]] match event cases *)
     | Xtypes.XTButtonPress (modifiers,button,x,y) -> 
         mouse_x := x;

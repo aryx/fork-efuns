@@ -13,7 +13,7 @@
 (*e: copyright header2 *)
 open Efuns
 
-open Keymap (* c_xxx *)
+open Keymap (* for the c_xxx *)
 (*s: constant [[standard_map]] *)
 let standard_map = [
   (*s: [[standard_map]] entries *)
@@ -201,6 +201,13 @@ let standard_map = [
   (* -------------------------------------------------------- *)
   (* Compile/grep *)
   (* -------------------------------------------------------- *)
+
+  (* -------------------------------------------------------- *)
+  (* Macros *)
+  (* -------------------------------------------------------- *)
+  [c_x; NormalMap, Char.code '('], Macros.start_macro;
+  [c_x; NormalMap, Char.code ')'], Macros.end_macro;
+  [c_x; NormalMap, Char.code 'e'], Macros.call_macro;
 
   (* -------------------------------------------------------- *)
   (* Misc *)

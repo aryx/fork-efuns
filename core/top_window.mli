@@ -20,7 +20,14 @@ val handler : t -> Xtypes.event -> unit
 val handle_key_start_hook : (Efuns.frame -> unit) list Var.t
 val handle_key_end_hook : (unit -> unit) list Var.t
 
+(* used by self_insert_command *)
 val keypressed : Efuns.keySym ref
+
+(* for macros.ml *)
+val in_start_macro: bool ref
+val in_call_macro: bool ref
+(* internal *)
+val recorded_keys: (int * Efuns.keySym) list ref
 
 (* mouse event *)
 
@@ -35,7 +42,9 @@ val buffers_menu : (t -> unit -> unit -> unit) ref
 
 (* message *)
 
-(* Use Message.message instead; it handles *Messages* and takes a frame *)
+(* This is the low-level API for messages. You should probably use
+ * Message.message instead; it handles *Messages* and takes a frame 
+ *)
 val message: t -> string -> unit
 val clear_message : t -> unit
 
@@ -49,24 +58,3 @@ val cursor_off: t -> unit
 
 (* misc *)
 val wrap : t -> (t -> unit) -> unit -> unit
-
-(*
-val dummy_action : 'a -> unit
-val try_map : Efuns.frame -> Efuns.key -> unit
-val set_cursor_on : t -> Efuns.frame -> unit
-val set_cursor_off : t -> Efuns.frame -> unit
-val cursor_on : t -> unit
-val cursor_off : t -> unit
-val clean_display : unit -> unit
-val resize_window : Efuns.window -> int -> int -> int -> int -> unit
-val find_frame : Efuns.window -> int -> int -> Efuns.frame
-val mouse_x : int ref
-val mouse_y : int ref
-val find_selected_frame : t -> Efuns.frame
-val meta : int ref
-val handle_key : t -> int -> Efuns.keySym -> unit
-val wrap_item :
-  t -> 'a * (Efuns.frame -> unit) -> 'a * (unit -> unit)
-val scroll_to_frame : 'a -> t -> unit
-val menus : (string * (string * string) list) list Options.option_record
-*)

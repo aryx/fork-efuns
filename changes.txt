@@ -7,6 +7,9 @@
 ** TODO better merlin support
 automatic case-analysis code generation,
 
+** macros!
+(finally deserve to be called an Emacs clone)
+
 ** bugfixes
 
 *** correct exception backtrace in *backtrace*
@@ -17,7 +20,7 @@ otherwise it's like Alt is still on
 
 ** internals
 
-*** full switch to cairo2, opam 2.0, ocaml 4.07.1
+*** full switch to cairo2, opam 2.0, and ocaml 4.07.1
 
 * -----------------------------------------------------------
 
