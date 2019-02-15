@@ -274,7 +274,7 @@ clean::
 	@echo 'S external/FOR_MERLIN/**' >> .merlin
 
 visual:
-	~/pfff/codemap -no_legend -screen_size 3 -efuns_client ./efuns_client -filter pfff .
+	~/pfff/codemap -no_legend -screen_size 3 -efuns_client ./efuns_client -emacs_client /dev/null -filter pfff .
 
 graph:
 	~/pfff/codegraph_build -symlinks -lang cmt -derived_data -verbose .
