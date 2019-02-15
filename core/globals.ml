@@ -13,7 +13,12 @@
 (*e: copyright header efuns *)
 open Efuns
 
-(* there are other globals: actions, start_hooks, etc *)
+(* Note that there are also globals in other modules: 
+ *  - Action.actions, 
+ *  - Hook.start_hooks
+ *  - Top_window.in_start_macro, 
+ *  - ... 
+ *)
 
 (*s: global [[Efuns.global_editor]] *)
 let global_editor = ref None

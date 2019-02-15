@@ -177,9 +177,6 @@ and frame  =
     mutable frm_window : window;
     (*e: [[Efuns.frame]] window fields *)
     (*s: [[Efuns.frame]] decoration fields *)
-    (* 0 for no scrollbar, 2 for scrollbar *)
-    mutable frm_has_scrollbar : int;
-    (*x: [[Efuns.frame]] decoration fields *)
     (* 0 for minibuffer, 1 for normal frame *)
     mutable frm_has_status_line : int;
     (* Some for minibuffer, None for normal frame *)

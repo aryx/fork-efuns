@@ -247,7 +247,6 @@ let create_without_top window mini buf =
       frm_y_offset = 0;
       frm_table = [||];
 
-      frm_has_scrollbar = 0;
       frm_has_status_line = 1;
       frm_status = status;
       frm_mini_buffer = mini;
@@ -531,7 +530,7 @@ let update_table a = Common.profile_code "Frame.update_table"
 let display top_window frame =
   let (buf, text, point) = buf_text_point frame in
 
-  let width = frame.frm_width - frame.frm_has_scrollbar in
+  let width = frame.frm_width in
   let height = frame.frm_height - frame.frm_has_status_line in
 
   let graphic = Efuns.backend top_window in
@@ -606,19 +605,7 @@ let display top_window frame =
        end
     end;
 
-    (*s: [[Frame.display()]] redraw, scrollbar adjustments *)
-    if frame == top_window.top_active_frame then begin
-      frame.frm_force_start <- true; (* AVOID CYCLING IN SCROLLBAR *)
-      let _pos_start = get_position text frame.frm_start in
-      let _pos_end   = get_position text frame.frm_end in
-
-      Common.pr2_once "Frame.display: TODO scrollbar";
-      (*top_window.top_scrollbar#set_params pos_start (pos_end - pos_start) 
-         (size text);
-       *)
-    end;
     frame.frm_force_start <- false;
-    (*e: [[Frame.display()]] redraw, scrollbar adjustments *)
 
     frame.frm_last_text_updated <- version text;
     frame.frm_last_buf_updated <- buf.buf_modified;
