@@ -14,137 +14,20 @@
  *)
 open Common
 open Options
-module Color = Simple_color
 
+open World
 open Efuns
+
+(* floats are the norm in cairo *)
+open Common2.ArithFloatInfix
+
+module Color = Simple_color
+module CH = Cairo_helpers
 
 let debug = ref false
 
 (*****************************************************************************)
-(* Types *)
-(*****************************************************************************)
-
-type world = {
-  (* the "model" (but actually accessible also via Globals.location()) *)
-  edt: Efuns.editor;
-
-  (* dimensions *)
-  metrics: layout;
-
-  (* first cairo layer, for heavy computation e.g. the minimap *)
-  mutable base: Cairo.Surface.t;
-  (* second cairo layer, for scrolling window on minimap *)
-  mutable overlay: Cairo.Surface.t;
-  (* the final drawing area *)
-  mutable final: Cairo.Surface.t;
-
-  (* pango is better than the (simpler but buggy) toy text api in cairo *)
-  ly: Pango.layout;
-
-  (* we redraw (expensive) the minimap only if this triple changes:
-   *  (buf_name, version of text, page)
-   *)
-  mutable last_top_frame_info:(string * Text.version * int);
-}
-
-(* stuff are set as mutable because they are derived from the other fields *)
-and layout = {
-  font_width: float;
-  font_height: float;
-
-  main_width: float; (* should be loc.loc_width * font_width *)
-  main_height: float; (* should be loc.loc_height * font_height *)
-
-  mini_factor: float;
-  mutable mini_width: float;
-  mutable linemax: int; (* number of lines the minimap can display in a "page"*)
-
-  margin_factor: float;
-  mutable margin_width: float;
-
-  (* main + mini _ margin *)
-  mutable full_width: int;
-  mutable full_height: int;
-}
-
-(*****************************************************************************)
-(* Cairo helpers *)
-(*****************************************************************************)
-
-module ArithFloatInfix = struct
-    let (+..) = (+)
-    let (-..) = (-)
-    let (/..) = (/)
-    let ( *.. ) = ( * )
-
-    let (+) = (+.)
-    let (-) = (-.)
-    let (/) = (/.)
-    let ( * ) = ( *. )
-end
-(* floats are the norm in cairo *)
-open ArithFloatInfix
-
-(* was in pfff/.../cairo_helpers.ml *)
-let set_source_color ?(alpha=1.) ~cr ~color () = 
-  (let (r,g,b) = color |> Color.rgbf_of_string in
-  Cairo.set_source_rgba cr r g b alpha;
-  )
-
-
-(*let re_space = Str.regexp "^[ ]+$"*)
-
-(* The code below is necessary when using the (limited/buggy) toy cairo text
- * API. It seems also necessary when using Pango as I get some
- * Pango warnings about UTF-8 characters and some ugly display.
- *)
-let prepare_string s = 
-  let buf = Bytes.of_string s in
-(*  if s ==~ re_space then  s ^ s (* double it *) else  *)
-  for i = 0 to String.length s -.. 1 do
-    let c = String.get s i in
-    let final_c =
-      match c with
-      | _ when int_of_char c >= 128 -> 'Z'
-      | '\t'-> ' '
-      | _ -> c
-    in
-    Bytes.set buf i final_c
-  done;
-  Bytes.to_string buf
-(* TODO use charreprs instead? *)
-
-
-let fill_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () = 
-  set_source_color ?alpha ~cr ~color ();
-  
-  Cairo.move_to cr x y;
-  Cairo.line_to cr (x+w) y;
-  Cairo.line_to cr (x+w) (y+h);
-  Cairo.line_to cr x (y+h);
-  Cairo.fill cr;
-  ()
-
-let draw_rectangle_xywh ?alpha ~cr ~x ~y ~w ~h ~color () = 
-  set_source_color ?alpha ~cr ~color ();
-  
-  Cairo.move_to cr x y;
-  Cairo.line_to cr (x+w) y;
-  Cairo.line_to cr (x+w) (y+h);
-  Cairo.line_to cr x (y+h);
-  Cairo.stroke cr;
-  ()
-
-(* see http://cairographics.org/FAQ/#clear_a_surface *)
-let clear cr =
-  Cairo.set_source_rgba cr 0. 0. 0.   0.;
-  Cairo.set_operator cr Cairo.SOURCE;
-  Cairo.paint cr;
-  Cairo.set_operator cr Cairo.OVER;
-  ()
-
-(*****************************************************************************)
-(* Pango and metrics *)
+(* Metrics *)
 (*****************************************************************************)
 
 let compute_metrics edt desc =
@@ -195,191 +78,6 @@ let compute_metrics edt desc =
   
   metrics
 
-let pango_layout cr desc =
-  let layout = Cairo_pango.create_layout cr in
-  Pango.Layout.set_font_description layout desc;
-  Cairo_pango.update_layout cr layout;
-  layout
-let pango_layout a b =
-  Common.profile_code "G.pango_layout" (fun () -> pango_layout a b)
-
-
-let pango_show_text ly cr str =
-  Pango.Layout.set_text ly  (prepare_string str);
-  Cairo_pango.update_layout cr ly;
-  Cairo_pango.show_layout cr ly
-
-let pango_show_text a b c =
-  Common.profile_code "G.pango_show_text" (fun () -> pango_show_text a b c)
-
-(*****************************************************************************)
-(* Minimap *)
-(*****************************************************************************)
-
-(* minimap, a la Code Thumbnails, Sublime text, or many regular app
- * like powerpoint, Preview, etc where have thumbnails preview.
- * Focus+context!
- *)
-let draw_minimap w =
-
-  let cr = Cairo.create w.base in
-  Cairo.translate cr (w.metrics.main_width + w.metrics.margin_width *. 2.) 0.0;
-
-  fill_rectangle_xywh ~cr ~x:0. ~y:0. 
-    ~w:w.metrics.mini_width ~h:w.metrics.main_height
-    ~color:"grey22" ();
-
-  Cairo.scale cr (1. / w.metrics.mini_factor) (1. / w.metrics.mini_factor);
-
-  let frame = w.edt.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-
-  let line = Text.point_line text frame.frm_start in
-  (* ex: linemax = 400, line = 10 => startpage = 0; line = 410 => page = 1 *)
-  let startpage = line /.. w.metrics.linemax in
-  let startline = startpage *.. w.metrics.linemax in
-  let endline = 
-    min (startline +.. w.metrics.linemax) (Text.nbr_lines text -.. 1) in
-
-
-  for i = startline to endline do
-    let line = Text.compute_representation text buf.buf_charreprs i in
-    let repr_str = line.Text.repr_string in
-    line.Text.boxes |> List.rev |> List.iter (fun box ->
-      (* opti: no need to spend time on long lines, their tail is not
-       * displayed. Useful in eshell buffers with long compilation lines.
-       *)
-      if box.Text.box_col >= 100
-      then () 
-      else  begin
-      let h = w.metrics.font_height in
-      let x = float_of_int box.Text.box_pos_repr * w.metrics.font_width in
-      let line_in_page = i mod w.metrics.linemax in
-      let y = (float_of_int line_in_page * h) + h * 0.1 in
-      Cairo.move_to cr x y;
-      let attr = box.Text.box_attr in
-
-      let str = Bytes.sub_string repr_str 
-                box.Text.box_pos_repr box.Text.box_size in
-
-      let fgcolor = 
-        let idx = attr land 255 in
-        w.edt.edt_colors_names.(idx)
-      in
-      let fontsize = (attr lsr 16) land 255 in
-      set_source_color ~cr ~color:fgcolor ();
-
-      let ly = 
-        if fontsize = 0 
-        then w.ly
-        else begin
-          (* def of func is fontsize 3 *)
-          let size = 30 +.. 20 *.. fontsize in
-          (* Does not have to be "fixed ..." here, we want to optimize for
-           * readability. Actually we can move to the bol
-           * so preceding long tokens like \subsubsection do not push
-           * us too much to the right.
-           *)
-          Cairo.move_to cr 0. y;
-          let desc = Pango.Font.from_string (spf "Serif %d" size) in
-          pango_layout cr desc
-        end
-      in
-      pango_show_text ly cr str
-
-(*
-  this generate some out_of_memory error when run directly efuns
-  on lexer_nw.mll. weird, but Cairo text api is known to be buggy.
-*)
-(*
-      Cairo.select_font_face cr "serif"
-        Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_NORMAL;
-      Cairo.set_font_size cr (38. + 25. * (float_of_int fontsize));
-      Cairo.show_text cr (prepare_string str);
-*)
-      end
-    )
-  done;
-  ()
-
-let draw_minimap a = Common.profile_code "G.draw_minimap" 
-  (fun () -> draw_minimap a)
-
-let draw_minimap_overlay w =
-
-  let cr = Cairo.create w.overlay in
-  clear cr;
-
-  Cairo.translate cr (w.metrics.main_width + w.metrics.margin_width * 2.) 0.0;
-  Cairo.scale cr (1. / w.metrics.mini_factor) (1. / w.metrics.mini_factor);
-
-  let frame = w.edt.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-
-  let line = Text.point_line text frame.frm_start in
-
-  (* ex: linemax = 400, line = 10 => startpage = 0; line = 410 => page = 1 *)
-  let startpage = line /.. w.metrics.linemax in
-  let startline = startpage *.. w.metrics.linemax in
-
-  let line = line -.. startline in
-
-  let x = 0. in
-  let y = (float_of_int line) * w.metrics.font_height in
-  let h = (float_of_int w.edt.edt_height) * w.metrics.font_height in
-
-  Cairo.set_line_width cr ((Cairo.get_line_width cr) * w.metrics.mini_factor);
-  fill_rectangle_xywh ~alpha:0.2 ~cr ~x ~y ~w:w.metrics.main_width ~h
-    ~color:"white" ();
-  ()
-
-let draw_minimap_overlay a = Common.profile_code "G.draw_minimap_overlay" 
-  (fun () -> draw_minimap_overlay a)
-
-
-
-
-(* opti to avoid recompute/redraw expensive minimap *)
-let active_frame_info w =
-  let frame = w.edt.top_windows |> List.hd |> (fun tw -> tw.top_active_frame) in
-  let buf = frame.frm_buffer in
-  let text = buf.buf_text in
-
-  let line = Text.point_line text frame.frm_start in
-  (* ex: linemax = 400, line = 10 => startpage = 0; line = 410 => page = 1 *)
-  let startpage = line /.. w.metrics.linemax in
-
-  buf.buf_name, Text.version text, startpage
-
-let idle_minimap = ref None
-
-let draw_minimap_when_idle w win =
-  !idle_minimap |> Common.do_option (fun x ->
-    GMain.Timeout.remove x;
-  );
-  idle_minimap := 
-    Some (GMain.Timeout.add ~ms:50 ~callback:(fun () ->
-
-      (* opti: avoid redrawing if nothing was modified and we just moved
-       * the cursor 
-       *)
-      let active_frame = active_frame_info w in
-      if active_frame <> w.last_top_frame_info
-      then begin 
-        (* todo: do in a thread when idle *)
-        draw_minimap w;
-        w.last_top_frame_info <- active_frame;
-      end;
-      draw_minimap_overlay w;
-
-      (* this will trigger the expose event *)
-      GtkBase.Widget.queue_draw win#as_widget;
-      (* avoid double Idle.remove *)
-      idle_minimap := None;
-      false
-    ))
 
 (*****************************************************************************)
 (* Draw Efuns API *)
@@ -431,7 +129,7 @@ let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
   in
   (* to debug use draw and pink color ! so get bounding clear box *)
 (*  draw_rectangle_xywh ~cr ~x ~y ~w:(w * (float_of_int len)) ~h ~color:"pink" ();*)
-  fill_rectangle_xywh ~cr ~x ~y ~w ~h ~color (); 
+  CH.fill_rectangle_xywh ~cr ~x ~y ~w ~h ~color (); 
   ()
 
 let draw_string edt cr pg   col line  str  offset len   attr =
@@ -453,9 +151,9 @@ let draw_string edt cr pg   col line  str  offset len   attr =
     let idx = (attr) land 255 in
     edt.edt_colors_names.(idx)
   in
-  set_source_color ~cr ~color:fgcolor ();
+  CH.set_source_color ~cr ~color:fgcolor ();
   let (ly, _) = pg in
-  Pango.Layout.set_text ly  (prepare_string (String.sub str offset len));
+  Pango.Layout.set_text ly  (CH.prepare_string (String.sub str offset len));
   Cairo_pango.update_layout cr ly;
   Cairo_pango.show_layout cr ly;
   ()
@@ -482,7 +180,7 @@ let backend w da top_gtk_win =
       if !Globals.debug_graphics
       then pr2 ("backend.update_display()");
 
-      draw_minimap_when_idle w da;
+      Minimap.draw_minimap_when_idle w da;
       (* this will trigger the expose event *)
       GtkBase.Widget.queue_draw da#as_widget;
     );
@@ -537,7 +235,7 @@ let configure edt top_window desc metrics da top_gtk_win =
     base =    Cairo.Surface.create_similar surface colorkind  width height;
     overlay = Cairo.Surface.create_similar surface colorkind  width height;
     final = surface;
-    ly = pango_layout cr desc;
+    ly = CH.pango_layout cr desc;
     metrics;
     last_top_frame_info = ("", -1, -1);
   }
@@ -547,16 +245,16 @@ let configure edt top_window desc metrics da top_gtk_win =
 
   let cr = Cairo.create w.base in
 
-  fill_rectangle_xywh ~cr ~x:0. ~y:0. 
+  CH.fill_rectangle_xywh ~cr ~x:0. ~y:0. 
     ~w:(w.metrics.margin_width) 
     ~h:(float_of_int height)
     ~color:"Black" ();
   Cairo.translate cr (w.metrics.margin_width) 0.0;
-  fill_rectangle_xywh ~cr ~x:0. ~y:0. 
+  CH.fill_rectangle_xywh ~cr ~x:0. ~y:0. 
     ~w:(float_of_int width) ~h:(float_of_int height)
     ~color:"DarkSlateGray" ();
   Cairo.translate cr (w.metrics.main_width) 0.0;
-  fill_rectangle_xywh ~cr ~x:0. ~y:0. 
+  CH.fill_rectangle_xywh ~cr ~x:0. ~y:0. 
     ~w:(w.metrics.margin_width) 
     ~h:(float_of_int height)
     ~color:"Black" ();
@@ -882,128 +580,10 @@ let init2 init_files =
   win#show ();
   GMain.main()
 
-
-(*****************************************************************************)
-(* Test cairo/gtk *)
-(*****************************************************************************)
-
-let width = 500
-let height = 500
-
-let test_draw_cairo cr =
-  (* [0,0][1,1] world scaled to a width x height screen *)
-  Cairo.scale cr (float_of_int width) (float_of_int height);
-
-  Cairo.set_source_rgba cr 0.5 0.5 0.5  0.5;
-  Cairo.set_line_width cr 0.001;
-
-  Cairo.move_to cr 0.5 0.5;
-  Cairo.line_to cr 0.6 0.6;
-  Cairo.stroke cr;
-
-(*
-  Cairo.select_font_face cr "monospace"
-    Cairo.FONT_SLANT_NORMAL Cairo.FONT_WEIGHT_BOLD;
-*)
-  Cairo.select_font_face cr "fixed"
-    ~weight:Cairo.Normal;
-  Cairo.set_font_size cr 0.05;
-
-  let _extent = Cairo.text_extents cr "peh" in
-  (* WEIRD: if Cairo.text_extents cr "d" create an Out_of_memory exn *)
-  (* related? https://github.com/diagrams/diagrams-cairo/issues/43
-  *)
-
-
-  Cairo.move_to cr 0.1 0.1;
-  Cairo.show_text cr "THIS IS SOME TEXT";
-  Cairo.move_to cr 0.1 0.2;
-  Cairo.show_text cr "THIS IS SOME TEXT";
-  Cairo.set_font_size cr 0.05;
-  Cairo.move_to cr 0.1 0.3;
-  Cairo.show_text cr "THIS IS SOME TEXT";
-
-  Cairo.set_source_rgb cr 0.1 0.1 0.1;
-  Cairo.move_to cr 0.1 0.1;
-  Cairo.line_to cr 0.1 0.2;
-  Cairo.stroke cr;
-
-  let start = ref 0.0 in
-
-  for _i = 0 to 3 do
-    let end_ = !start +. 0.5 in
-    Cairo.arc cr 0.5 0.5 ~r:0.3 ~a1:!start ~a2:end_;
-    Cairo.stroke cr;
-    start := end_;
-  done;
-  ()
-
-let test_draw_pango cr =
-
-  let layout = Cairo_pango.create_layout cr in
-  let ctx = Cairo_pango.Font_map.create_context 
-    (Cairo_pango.Font_map.get_default ()) in
-
-
-  Pango.Layout.set_text layout "WWWWW let x = 1 in main () for x = 1 to 3!";
-  let desc = Pango.Font.from_string 
-(*
-    "Monospace 18"
-    "Fixed Bold 32"
-    "b&h-Luxi Bold 23"
-    "Arial Bold 30" 
-    "Menlo 18"
-*)
-    "Monospace 18"
-
-  in
-  Pango.Context.set_font_description ctx desc;
-  Pango.Layout.set_font_description layout desc;
-  Cairo_pango.update_layout cr layout;
-
-  Cairo.move_to cr 0. 0.;
-  Cairo_pango.show_layout cr layout;
-  pr2 (spf "font = %s" (Pango.Font.to_string desc));
-
-
-  let metrics = 
-    Pango.Context.get_metrics ctx 
-      (Pango.Context.get_font_description ctx) None in
-  let w = 
-    float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
-  let descent = 
-    float_of_int (Pango.Font.get_descent metrics) / 1024. in
-  let ascent = 
-    float_of_int (Pango.Font.get_ascent metrics) / 1024. in
-  let h = ascent + descent in
-  pr2_gen (w, h, ascent, descent);
-
-  Cairo.move_to cr 0. h;
-  (* The 'i' should align with the 'W' above if the font is monospace *)
-  Pango.Layout.set_text layout "iiiii let x = 1 in main () for x = 1 to 3!";
-  Cairo_pango.show_layout cr layout;
-
-  ()
-
-
-
-let test_cairo () =
-  let _locale = GtkMain.Main.init () in
-  let w = GWindow.window ~title:"test" () in
-  (w#connect#destroy GMain.quit) |> ignore;
-  let px = GDraw.pixmap ~width ~height ~window:w () in
-  px#set_foreground `WHITE;
-  px#rectangle ~x:0 ~y:0 ~width ~height ~filled:true ();
-  let cr = Cairo_gtk.create px#pixmap in
-  test_draw_pango cr;
-  (GMisc.pixmap px ~packing:w#add ()) |> ignore;
-  w#show ();
-  GMain.main()
-
 (*****************************************************************************)
 (*****************************************************************************)
 
 let init a =
   if !Globals.check
-  then test_cairo ()
+  then Test_libs.test_cairo ()
   else init2 a

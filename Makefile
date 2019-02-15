@@ -61,7 +61,12 @@ endif
 
 ifeq ($(USE_GTKCAIRO2), 1)
 BACKENDDIR=graphics/gtk_cairo2
-BACKENDFILES=$(BACKENDDIR)/minimap.ml $(BACKENDDIR)/graphics_efuns.ml
+BACKENDFILES=\
+ $(BACKENDDIR)/cairo_helpers.ml \
+ $(BACKENDDIR)/world.ml \
+ $(BACKENDDIR)/minimap.ml\
+ $(BACKENDDIR)/test_libs.ml\
+ $(BACKENDDIR)/graphics_efuns.ml
 GRAPHICSDIRS=external/lablgtk2 \
  external/cairo2 external/cairo2-gtk external/cairo2-pango
 GRAPHICSLIBS=external/lablgtk2/lablgtk.cma external/cairo2/cairo.cma\
