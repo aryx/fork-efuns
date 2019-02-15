@@ -8,10 +8,10 @@
 
 **** error: exn in hook: Invalid_argument("index out of bounds")
 
-**** outline of org-mode does not work
-
 **** paren color stay up once matched
 move should unhighlight no? or forgot redraw force?
+
+**** outline of org-mode does not work
 
 **** still? when C-s and accidentally get touchpad to move to other place
 then get second cursor and weird behavior
@@ -134,9 +134,6 @@ does what rectangle and macro do
 
 *** cua, S-down, S-etc
 and highlight
-
-*** macros
-otherwise can't delete those $Id:xxx 
 
 ** small bugs but useful stuff
 
@@ -326,9 +323,6 @@ and make default mode?
 **** C-h k
 and then the key.
 may need a special thing though to do that.
-
-**** macros!!! how can it be called emacs
-without macros!
 
 **** less: widen/narrow
 useful though when I work on Tex document, to keep focus
