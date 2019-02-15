@@ -3,6 +3,7 @@ val insert_special_char : Efuns.action
 
 val line_comment : string Var.t
 
+val exit_hooks: (unit -> unit) list Var.t
 val exit : Efuns.action
 
 (* time *)

@@ -94,13 +94,16 @@ let check_file frame =
   with _ -> ()
 [@@interactive]
 (*e: function [[Complex.check_file]] *)
-    
+
+let exit_hooks = Store.create_abstr "exit_hook"    
 
 (*s: function [[Complex.exit_efuns]] *)
 let exit frame =
   let buffers = Utils.list_of_hash (Globals.editor()).edt_buffers in
+  let hooks = Var.get_global exit_hooks in
+  Common.pr2_gen hooks;
+  Hook.exec_hooks hooks ();
   Multi_buffers.save_buffers_and_action frame buffers (fun _ -> 
-    (* todo: have some exit hooks? *)
     raise (Common.UnixExit 0)
   )
 [@@interactive]
@@ -167,7 +170,7 @@ let _ =
      * own local versions (e.g., in caml_mode.ml to recolorize the buffer
      *)
     Var.set_global Ebuffer.saved_buffer_hooks [update_time];
-
+    Var.set_global exit_hooks [];
   )
 (*e: toplevel [[Simple._1]] *)
   
