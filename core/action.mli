@@ -2,8 +2,8 @@
 type t = Efuns.action
 
 (* Actions allow to go from a string to an OCaml function
- * (OCaml does not have 'eval', so we have to assist and define "actions").
- * Now I use the [@@interactive] attribute to automate the define_action.
+ * (OCaml does not have 'eval', so we need to define "actions").
+ * Now I use the [@@interactive] attribute to automate calls to define_action.
  * See ppx/ppx_interactive.ml for more information.
  *)
 

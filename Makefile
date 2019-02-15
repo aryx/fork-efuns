@@ -20,8 +20,8 @@ EXTERNALDIRS= external/commons external/h_visualization
 EXTERNALCMAS= external/commons/lib.cma external/h_visualization/lib.cma
 
 # Jsonwheel dependencies 
-# (I now use jsonwheel not only for pfff_modes but also for ocaml_merlin)
-# this is for -I and for finding dlls (e.g., deps-netsys)
+# (I now use jsonwheel not only for pfff_modes but also for ocaml_merlin).
+# This is for -I and for finding dlls (e.g., deps-netsys).
 EXTERNALDIRS+=external/json-wheel external/deps-netsys 
 EXTERNALCMAS+=\
  external/deps-netsys/netsys_oothr.cma external/deps-netsys/netsys.cma \
@@ -100,6 +100,7 @@ SRC=\
  core/text.ml\
  core/efuns.ml\
  core/globals.ml\
+ core/error.ml\
  core/var.ml\
  core/parameter.ml\
  core/attr.ml\
@@ -175,12 +176,9 @@ SRC=\
  $(BACKENDFILES) \
  main.ml \
 
-#todo:
+#less:
 # minor_modes/accents_mode.ml\
-# prog_modes/*.mll
-# ipc/efuns_client.ml ipc/server.ml
 # dynamic/eval.ml
-# misc/efuns_xxx.ml
 
 DIRS=\
   commons\
@@ -233,7 +231,7 @@ clean::
 	rm -f */*.cm[ioxa] */*.[oa] */*.cmxa */*.annot */*.cmt*
 	rm -f $(PROGS) *.opt
 
-#TODO: should recompile if opam switch
+#less: should recompile if opam switch
 ppx/ppx_interactive:
 	cd ppx; make
 clean::

@@ -209,8 +209,8 @@ let read filename local_map =
         let text = Text.read inc in         
         close_in inc; 
         text
-      with _ -> 
-        Globals.error "error reading file %s" filename;
+      with exn -> 
+        Error.error_exn (spf "error reading file %s" filename) exn;
         Text.create ""
     in
     let buf = create filename (Some filename) text local_map in
@@ -323,7 +323,7 @@ let set_major_mode buf mode =
   buf.buf_major_mode <- mode;
   mode.maj_hooks |> List.iter (fun f -> 
     try f buf 
-    with exn -> Globals.error "set_major_mode: exn = %s" (Common.exn_to_s exn)
+    with exn -> Error.error_exn "set_major_mode" exn
   )
 (*e: function [[Ebuffer.set_major_mode]] *)
 
@@ -333,7 +333,7 @@ let set_minor_mode buf mode =
   buf.buf_modified <- buf.buf_modified + 1;
   mode.min_hooks |> List.iter (fun f -> 
     try f buf 
-    with exn -> Globals.error "set_minor_mode: exn = %s" (Common.exn_to_s exn)
+    with exn -> Error.error_exn "set_minor_mode" exn
   ) 
 (*e: function [[Ebuffer.set_minor_mode]] *)
 
@@ -367,7 +367,7 @@ let set_buffer_mode buf =
            then Str.matched_group 1 buf.buf_name 
            else buf.buf_name 
          with exn -> 
-           Globals.error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
+           Error.error_exn "set_buffer_mode" exn;
            buf.buf_name
          )
     | Some file_name -> file_name 
@@ -390,8 +390,8 @@ let set_buffer_mode buf =
         with 
         | Exit -> raise Exit
         | exn -> 
-            Globals.error "set_buffer_mode: exn = %s" (Common.exn_to_s exn);
-            raise Exit
+          Error.error_exn "set_buffer_mode" exn;
+          raise Exit
     ) 
   with Exit -> ()
 (*e: function [[Ebuffer.set_buffer_mode]] *)

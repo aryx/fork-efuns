@@ -119,7 +119,7 @@ let main () =
      with _ -> Filename.concat Utils.homedir ".efunsrc"
     );
   (try Options.init () 
-   with exn -> Globals.error "init error, exn = %s" (Common.exn_to_s exn)
+   with exn -> Error.error_exn "init error" exn
   );
   (*e: [[main()]] set options filename *)
   (*s: [[main()]] adjust options *)

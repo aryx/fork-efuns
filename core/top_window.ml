@@ -168,8 +168,9 @@ let clean_display () =
       | _, None -> ()
       | _::_, Some _ -> ()
       | [], Some frame ->
-          Globals.error "weird, second cursor for %s but no minibuffer"
-            (frame.frm_buffer.buf_name);
+          Error.error 
+           (spf "clean_display: weird, second cursor for %s but no minibuffer"
+            (frame.frm_buffer.buf_name));
           top_window.top_second_cursor <- None
      )
      (*e: [[clean_display()]] sanity check second cursor and minibuffer *)

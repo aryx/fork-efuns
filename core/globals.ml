@@ -37,13 +37,6 @@ let with_lock f =
   Common.finalize f (fun () -> Mutex.unlock edt.edt_mutex)
 (*e: function [[Efuns.with_lock]] *)
 
-(*s: function [[Efuns.error]] *)
-let error fmt x =
-  Printf.printf "error: ";
-  Printf.printf fmt x;
-  Printf.printf "\n"
-(*e: function [[Efuns.error]] *)
-
 (*************************************************************************)
 (*      Initialization      *)
 (*************************************************************************)

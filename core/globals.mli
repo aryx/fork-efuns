@@ -22,4 +22,3 @@ val font : string Options.option_record
 val displayname: string ref
 
 val with_lock : (unit -> 'a) -> 'a
-val error : ('a -> 'b, out_channel, unit) format -> 'a -> unit

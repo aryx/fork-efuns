@@ -26,9 +26,8 @@ let exec_hooks hooks arg =
   hooks |> List.iter (fun f ->
     try f arg 
     with exn -> 
-       let bt = Printexc.get_backtrace () in
-       Common.pr2 bt;
-       Globals.error "exn in hook: %s" (Common.exn_to_s exn)
+     (* less: could be nice to give names to hooks *)
+     Error.error_exn  "exn in hook" exn
   )
 (*e: function [[Efuns.exec_hooks]] *)
 
@@ -49,8 +48,7 @@ let exec_named_hooks hooks frame =
 let exec_named_buf_hooks hooks frame =
   hooks |> List.rev |> List.iter (fun action_name ->
     try Action.execute_buffer_action action_name frame 
-    with exn -> 
-      Globals.error "exec_named_buf_hooks: exn = %s" (Common.exn_to_s exn)
+    with exn -> Error.error_exn "exec_named_buf_hooks" exn
   )
 (*e: function [[Ebuffer.exec_named_buf_hooks]] *)
 

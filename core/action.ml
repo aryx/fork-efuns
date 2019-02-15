@@ -11,6 +11,7 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header efuns *)
+open Common
 open Efuns
 
 (*s: type [[Action.t]] *)
@@ -27,7 +28,7 @@ let define_action action_name action_fun =
   (*s: sanity check action defined twice *)
   (try 
       Hashtbl.find actions action_name |> ignore;
-      Globals.error "action \"%s\" defined twice" action_name;
+      Error.error (spf "action \"%s\" defined twice" action_name);
    with _ -> ()
   );
   (*e: sanity check action defined twice *)
@@ -39,7 +40,7 @@ let define_buffer_action action_name action_fun =
   (*s: sanity check action defined twice *)
   (try 
       Hashtbl.find actions action_name |> ignore;
-      Globals.error "action \"%s\" defined twice" action_name;
+      Error.error (spf "action \"%s\" defined twice" action_name);
    with _ -> ()
   );
   (*e: sanity check action defined twice *)
@@ -50,8 +51,8 @@ let define_buffer_action action_name action_fun =
 let get_action action_name =
   try Hashtbl.find actions action_name
   with Not_found ->
-    Globals.error "Could not find action %s. Forgot define_action()?" 
-        action_name;
+    Error.error_exn (spf "Could not find action %s. Forgot define_action()?" 
+        action_name) Not_found;
     BufferAction (fun _ -> ())
 (*e: function [[Efuns.get_action]] *)
 
@@ -67,7 +68,7 @@ let execute_buffer_action action_name buf =
   match (get_action action_name) with
     BufferAction f -> f buf
   | FrameAction _f -> 
-      Globals.error "Can't apply action %s on buffer" action_name
+      Error.error (spf "Can't apply action %s on buffer" action_name)
 (*e: function [[Efuns.execute_buffer_action]] *)
 
 (*e: core/action.ml *)
