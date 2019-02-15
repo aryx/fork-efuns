@@ -277,7 +277,7 @@ visual:
 	~/pfff/codemap -no_legend -screen_size 3 -efuns_client ./efuns_client -filter pfff .
 
 graph:
-	~/pfff/codegraph_build -symlinks -lang cmt .
+	~/pfff/codegraph_build -symlinks -lang cmt -derived_data -verbose .
 
 check:
 	~/pfff/scheck -with_graph_code graph_code.marshall -filter 3 . 2>&1 | grep -v stdlib | grep -v commons/ | grep Function
