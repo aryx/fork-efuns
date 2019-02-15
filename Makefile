@@ -61,6 +61,7 @@ endif
 
 ifeq ($(USE_GTKCAIRO2), 1)
 BACKENDDIR=graphics/gtk_cairo2
+BACKENDFILES=$(BACKENDDIR)/minimap.ml $(BACKENDDIR)/graphics_efuns.ml
 GRAPHICSDIRS=external/lablgtk2 \
  external/cairo2 external/cairo2-gtk external/cairo2-pango
 GRAPHICSLIBS=external/lablgtk2/lablgtk.cma external/cairo2/cairo.cma\
@@ -72,6 +73,7 @@ endif
 
 #alt:
 #BACKENDDIR=graphics/ocamlgraphics
+#BACKENDFILES=$(BACKENDDIR)/graphics_efuns.ml
 #OTHERSYSLIBS=graphics.cma
 
 #------------------------------------------------------------------------------
@@ -165,7 +167,7 @@ SRC=\
  \
  config.ml\
  pad.ml\
- $(BACKENDDIR)/graphics_efuns.ml \
+ $(BACKENDFILES) \
  main.ml \
 
 #todo:
