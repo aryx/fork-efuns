@@ -11,8 +11,9 @@
 (*                                                                     *)
 (***********************************************************************)
 (*e: copyright header *)
+open Common
+open Unix
 open Efuns
-open Unix  
   
 (*s: constant [[Server.efuns_property]] *)
 (*let efuns_property = "_EFUNS_SERVER"  *)
@@ -84,17 +85,21 @@ let start frame_opt =
       let s = Unix.socket PF_UNIX SOCK_STREAM 0 in
 
       if Sys.file_exists socket_name 
-      then Unix.unlink socket_name;
-
-      Unix.bind s (ADDR_UNIX socket_name);
-      Unix.listen s 254;
-      Unix.set_nonblock s;
-      Unix.set_close_on_exec s;
-
-      Concur.add_reader s (fun _ -> 
-        started := true;
-        module_accept s frame_opt
-      );
+      then begin 
+        pr2 (spf "socket file %s already exists; cancelling the server"
+              socket_name);
+        (* alt: unlink here, so if you run multiple efuns, the last one wins*)
+      end else begin
+        Unix.bind s (ADDR_UNIX socket_name);
+        Unix.listen s 254;
+        Unix.set_nonblock s;
+        Unix.set_close_on_exec s;
+        Concur.add_reader s (fun _ -> 
+          started := true;
+          module_accept s frame_opt
+        );
+       Hook.add_hook Misc.exit_hooks (fun () -> Unix.unlink socket_name);
+      end
   )  
 (*e: function [[Server.start]] *)
 
