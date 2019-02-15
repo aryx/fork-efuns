@@ -91,4 +91,5 @@ let _ =
     (* recolor at save time *)
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
+    Var.set_global hooks [];
   )
