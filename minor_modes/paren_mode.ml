@@ -33,6 +33,10 @@ let is_paren_begin c = (c == '{') || (c == '[') || (c == '(')
 (*e: function [[Simple.is_paren_begin]] *)
 
 (*s: function [[Simple.highlight_paren]] *)
+(* TODO: this is buggy! it leads to some out_of_bound exn in
+ * the unhiglight hook run after every key; highlighted_chars
+ * is wrong.
+ *)
 let highlight_paren frame =
   let (buf, text, point) = Frame.buf_text_point frame in
 
@@ -88,9 +92,13 @@ let find_matching frame =
   
 (*s: toplevel [[Paren_mode._1]] *)
 let _ = 
-  [ ')'; '}'; ']' ] |> List.iter (fun key -> 
+  (* alt: we could use a major mode var that specifies what is a
+   * parenthesis.
+   *)
+  (* TODO disabled for now because lead to buggy display and exns *)
+  [(* ')'; '}'; ']' *)] |> List.iter (fun key -> 
     Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
-  ) 
+  )
 (*e: toplevel [[Paren_mode._1]] *)
 
 (*s: toplevel [[Paren_mode._2]] *)
