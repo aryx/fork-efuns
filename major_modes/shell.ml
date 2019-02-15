@@ -153,7 +153,7 @@ let scroll_until_not_pass_prompt frame =
 
 let colorize buf =
   (* actually pretty good! *)
-  Dircolors.colorize buf;
+  Dircolors.colorize_buffer buf;
   (* do that after Dircolors otherwise part of prompt get blue *)
   Color.color buf prompt_regexp false
       (Text.make_attr (Attr.get_color prompt_color) 1 0 false);

@@ -140,7 +140,7 @@ let extensions = [
 
 (* todo: should add '-' in the [] below
  * to those regexps but ocaml light does not support them yet  *)
-let colorize buf = 
+let colorize_buffer buf = 
   Color.color buf 
     (Str.regexp ("[a-zA-Z0-9_-]*/")) false (* todo: add also . here *)
     (Text.make_attr (Attr.get_color dir_color) 1 0 false);
@@ -159,11 +159,14 @@ let colorize buf =
     )
   )
 
-let colorize a = Common.profile_code "Dircolors.colorize" 
-  (fun () -> colorize a)
+let colorize_buffer a = Common.profile_code "Dircolors.colorize_buffer" 
+  (fun () -> colorize_buffer a)
 
+let dircolorize frame =
+  colorize_buffer frame.Efuns.frm_buffer
+[@@interactive]
 
 let _ = 
   Hook.add_start_hook (fun () ->
-    Hook.add_hook Select.completions_buf_hook colorize;
+    Hook.add_hook Select.completions_buf_hook colorize_buffer;
   )

@@ -22,7 +22,7 @@ let update buf =
   let text = buf.buf_text in
   Text.update text s;
   (* pad extension *)
-  Dircolors.colorize buf;
+  Dircolors.colorize_buffer buf;
   buf.buf_last_saved <- Text.version text
 (*e: function [[Dired.update]] *)
 

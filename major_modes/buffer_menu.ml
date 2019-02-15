@@ -98,7 +98,7 @@ let menu frame =
          | Some s -> String.sub s 0 (min (String.length s -1) 36)
          ));
   );
-  Dircolors.colorize buf;
+  Dircolors.colorize_buffer buf;
   (*  Text.toggle_readonly text; *)
   Text.goto_line text buf.buf_point 2;
   Multi_buffers.set_previous_frame frame;

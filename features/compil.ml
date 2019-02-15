@@ -129,7 +129,7 @@ let make_command = define_option ["compil";"make_command"] ""
 (*e: constant [[Compil.make_command]] *)
 
 let color_buffer buf =
-  Dircolors.colorize buf;
+  Dircolors.colorize_buffer buf;
 
   let re =
     try Var.get_var buf find_error_location_regexp

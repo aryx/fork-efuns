@@ -125,7 +125,7 @@ C-c C-x C-s
 
 *** highlight marked-region
 
-*** C-x h, to mark the whole buffer
+*** C-x h, to mark the whole buffer, and highlight it
 
 ** important but can take a long time
 
@@ -159,9 +159,6 @@ so can factorize copyright chunks
 
 
 *** eshell: still? eshell unstable M-1, switch cursor between 2 places
-
-*** dircolors: have an interactive function at least, to dircolorize
-a buffer
 
 *** eshell: set loc_dirname?? why C-x C-f from eshell does not start
 at right place?
