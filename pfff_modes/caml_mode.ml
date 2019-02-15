@@ -78,11 +78,8 @@ let color_buffer buf =
 (* see ocaml_merlin.ml *)
 
 (*****************************************************************************)
-(* Installation *)
+(* The mode *)
 (*****************************************************************************)
-(* can add merlin and ocp-indent minor mode in it (see pad.ml)
- * alt: could just enable those minor modes from here instead of pad.ml
- *) 
 let hooks = Store.create_abstr "caml_mode_hook"
 
 let mode =  Ebuffer.new_major_mode "OCaml(Pfff)" (Some (fun buf ->
@@ -92,9 +89,14 @@ let mode =  Ebuffer.new_major_mode "OCaml(Pfff)" (Some (fun buf ->
   buf.buf_syntax_table.(Char.code '\'') <- true;
   buf.buf_syntax_table.(Char.code '.') <- false;
 
+  (* alt: activate them in hooks in pad.ml if you dont want them
+   * by default for every users or want exotic parenthesis (e.g., |])
+   *)
+  Minor_modes.toggle_minor_buffer Ocaml_merlin.mode buf;
+  Minor_modes.toggle_minor_buffer Paren_mode.mode buf;
+
   let hooks = Var.get_var buf hooks in
   Hook.exec_hooks hooks buf;
-  ()
 ))
 
 let caml_mode = 
@@ -123,11 +125,4 @@ let _ =
     (* recolor at save time *)
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
-
-    ['}';']';')'] |> List.iter (fun char ->
-      Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
-        Edit.self_insert_command frame;
-        Paren_mode.highlight_paren frame;
-      ));
-
   )

@@ -152,8 +152,10 @@ let find_error text error_point =
 (***********************************************************************)
 (*********************  installation ********************)
 (***********************************************************************)
+(* will activate paren minor mode *)
+let hooks = Store.create_abstr "lisp_mode_hook"
 
-let install buf =
+let mode = Ebuffer.new_major_mode "Lisp" (Some (fun buf ->
   Color.color_buffer_buf buf; 
 
   buf.buf_syntax_table.(Char.code '_') <- true;
@@ -165,10 +167,10 @@ let install buf =
   (* less: could be a major_var instead? *)
   Var.set_local buf Abbrevs.abbrev_table abbrevs;
   Utils.hash_add_assoc abbrevs abbreviations;
-  ()
 
-
-let mode = Ebuffer.new_major_mode "Lisp" (Some install)
+  let hooks = Var.get_var buf hooks in
+  Hook.exec_hooks hooks buf;
+))
 
 let lisp_mode =
   Major_modes.enable_major_mode mode
@@ -189,11 +191,5 @@ let _ =
 (* pad: TODO
     Keymap.add_major_key mode [NormalMap, XK.xk_Return] insert_and_return;
 *)
-    ['}';']';')'] |> List.iter (fun char ->
-      Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
-        Edit.self_insert_command frame;
-        Paren_mode.highlight_paren frame
-      )
-    );
     Var.add_global Ebuffer.modes_alist [(".*\\.\\(el\\|lisp\\|gwm\\)$", mode)];
   )

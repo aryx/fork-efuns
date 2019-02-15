@@ -19,9 +19,10 @@ module PI = Parse_info
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-(*
- * Using the C/cpp/C++ parser and highlighters in Pfff (used for codemap)
- * for Efuns.
+(* Pfff-based C/C++ major mode.
+ *
+ * This mode uses the C/cpp/C++ parser and highlighters in Pfff 
+ * (used for codemap) for Efuns.
  *)
 
 (*****************************************************************************)
@@ -52,14 +53,19 @@ let color_buffer buf =
   )
 
 (*****************************************************************************)
-(* Installation *)
+(* The mode *)
 (*****************************************************************************)
+let hooks = Store.create_abstr "cpp_mode_hook"
 
 let mode = Ebuffer.new_major_mode "Cpp(Pfff)" (Some (fun buf ->
   color_buffer buf; 
 
   buf.buf_syntax_table.(Char.code '_') <- true;
-  ()
+
+  Minor_modes.toggle_minor_buffer Paren_mode.mode buf;
+
+  let hooks = Var.get_var buf hooks in
+  Hook.exec_hooks hooks buf;
 ))
 
 let cpp_mode = 
@@ -85,10 +91,4 @@ let _ =
     (* recolor at save time *)
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
-
-    ['}';']';')'] |> List.iter (fun char ->
-      Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
-        Edit.self_insert_command frame;
-        Paren_mode.highlight_paren frame;
-      ));
   )

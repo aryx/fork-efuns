@@ -210,6 +210,8 @@ let abbreviations =
 (***********************************************************************)
 (*********************  installation ********************)
 (***********************************************************************)
+(* will activate paren minor mode *)
+let hooks = Store.create_abstr "c_mode_hook"
 
 let install buf =
   (* uses color_region internally through Color.color_func *)
@@ -227,6 +229,9 @@ let install buf =
       abbrevs
   in
   Utils.hash_add_assoc abbrevs abbreviations;
+
+  let hooks = Var.get_var buf hooks in
+  Hook.exec_hooks hooks buf;
   ()
 
   
@@ -254,11 +259,7 @@ let _ =
 
     Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
   
-    ['}';']';')'] |> List.iter (fun char ->
-      Keymap.add_major_key mode [NormalMap, Char.code char] (fun frame ->
-        Edit.self_insert_command frame;
-        Paren_mode.highlight_paren frame
-      )
+    Hook.add_hook hooks (Minor_modes.toggle_minor_buffer (Paren_mode.mode));
   );
 
   !!local_map |> List.iter (fun (keys, action) ->
@@ -269,4 +270,4 @@ let _ =
         Log.exn "%s\n" e;  
   );
   ()
-  )
+  

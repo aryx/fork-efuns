@@ -60,8 +60,9 @@ let color_buffer buf =
 
 
 (*****************************************************************************)
-(* Installation *)
+(* The mode *)
 (*****************************************************************************)
+let hooks = Store.create_abstr "noweb_mode_hook"
 
 let mode = Ebuffer.new_major_mode "Noweb(Pfff)" (Some (fun buf ->
   color_buffer buf; 
@@ -72,11 +73,15 @@ let mode = Ebuffer.new_major_mode "Noweb(Pfff)" (Some (fun buf ->
    * to pick one
    *)
   tbl.(Char.code '_') <- true;
-  ()
+
+  Minor_modes.toggle_minor_buffer Paren_mode.mode buf;
+
+  let hooks = Var.get_var buf hooks in
+  Hook.exec_hooks hooks buf;
 ))
 
-let noweb_mode frame = 
-  Ebuffer.set_major_mode frame.frm_buffer mode
+let noweb_mode = 
+  Major_modes.enable_major_mode mode
 [@@interactive]
 
 (*****************************************************************************)
@@ -86,6 +91,8 @@ let noweb_mode frame =
 let _ =
   Hook.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist [".*\\.nw$", mode];
+
+    (* recolor at save time *)
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
   )

@@ -1,7 +1,6 @@
 open Efuns
 
-(* 
- * This file contains hopefully all the pad-specific keys/cmds/options.
+(* This file contains all the pad-specific keys/cmds/options.
  * Hopefully it will be shorter than my .emacs ...
  * alt: have a .efunsrc, but not everything is customizable through options.
  *  moreover I prefer OCaml typed code to untyped text configuration file!
@@ -27,7 +26,7 @@ let _ =
       [ControlMap, Char.code '/'], Edit.undo;
 
       [MetaMap, XK.xk_Return], Compil.compile;
-      (* lefessant did that *)
+      (* Lefessant did that *)
       [Keymap.c_c; ControlMap, Char.code 'c'], Compil.compile;
       [Keymap.c_c; ControlMap, Char.code 'b'], Indent.indent_buffer;
       [Keymap.c_c; ControlMap, Char.code 'l'], Color.color_buffer;
@@ -54,7 +53,7 @@ let _ =
       [ControlMetaMap, XK.xk_Tab], Buffer_menu.menu;
       [ControlMetaMap, Char.code 'l'], Multi_buffers.switch_to_other_buffer;
 
-      (* lefessant? in emacs now? *)
+      (* Lefessant? in emacs now? *)
       [ControlMetaMap, XK.xk_Left], Multi_buffers.left_buffer;
       [ControlMetaMap, XK.xk_Right], Multi_buffers.right_buffer;
 
@@ -78,8 +77,6 @@ let _ =
     (* projects *)
 
     (* Hooks *)
-  (* todo: PFFF dependency! should hide when USE_PFFF=0 *)
-    Hook.add_hook Caml_mode.hooks 
-      (Minor_modes.toggle_minor_buffer (Ocaml_merlin.mode));
+
     Server.start None;
   )
