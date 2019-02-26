@@ -127,6 +127,10 @@ C-c C-x C-s
 
 *** C-x h, to mark the whole buffer, and highlight it
 
+*** ido-mode
+when opening files, when M-x with big minibuffer
+and arrows. Copy emacs and my .emacs
+
 ** important but can take a long time
 
 *** multi-selection as in Sublime or Atom?
