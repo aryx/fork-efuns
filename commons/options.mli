@@ -87,7 +87,8 @@ val tuple2_option :
   'a type_ * 'b type_ -> ('a * 'b) type_
 val tuple3_option : 'a type_ * 'b type_ * 'c type_ ->
   ('a * 'b * 'c) type_
-  
+
+(* conversions *)  
 val value_to_string : value -> string
 val value_to_int : value -> int
 val value_to_bool : value -> bool
@@ -105,9 +106,7 @@ val list_to_value : ('a -> value) -> 'a list -> value
 val smalllist_to_value : ('a -> value) -> 'a list -> value
 val path_to_value : string list -> value
 
-val bool_of_string : string -> bool
-
-
+(* misc *)
 val help : out_channel -> unit
 
 val option_hook : 'a t -> (unit -> unit) -> unit

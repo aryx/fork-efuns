@@ -12,19 +12,8 @@
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-
-(*
- * old comment:
- * Simple options:
- * This will enable very simple configuration, by a mouse-based configurator.
- * Options will be defined by a special function, which will also check
- * if a value has been provided  by the user in its .gwmlrc file.
- * The .gwmlrc will be created by a dedicated tool, which could be used
- * to generate both .gwmlrc and .efunsrc files.
- *
- * Note: this is redundant, since such options could also be better set
- * in the .Xdefaults file (using Xrm to load them). Maybe we should merge
- * both approaches in a latter release.
+(* Configuration file loader and saver with typed options.
+ * 
  *)
 
 (*****************************************************************************)
@@ -36,9 +25,10 @@ type value =
 | Value of  string
 | List of value list
 | SmallList of value list
-  
+
 and module_ =
   (string * value) list
+
 
 (* old: was called option_class before *)
 type 'a type_ = {
@@ -57,9 +47,9 @@ and 'a t = {
     mutable option_hooks : (unit -> unit) list;
   }
 
+
 let filename = ref (Filename.concat Utils.homedir
       ("." ^ (Filename.basename Sys.argv.(0)) ^ "rc"))
-let gwmlrc = ref []
 
 let options = ref []
 
@@ -88,14 +78,14 @@ let define_type
 (* define_option *)
 (*****************************************************************************)
   
-let rec find_value list m =
+let rec _find_value list m =
   match list with
     [] -> raise Not_found
   | name :: tail ->
       let m = List.assoc name m in
       match m, tail with
         _, [] -> m
-      | Module m, _ :: _ -> find_value tail m
+      | Module m, _ :: _ -> _find_value tail m
       | _ -> raise Not_found
   
 let define_option 
@@ -111,18 +101,11 @@ let define_option
       option_value = default_value;
       option_hooks = [];
     } in
-  
+
+  (* less: could check if already defined option with 
+   * find_value option_name !options
+   *)    
   options := (Obj.magic o : Obj.t t) :: !options;
-  
-  (* is this option already loaded ??? *)
-  o.option_value <- (try
-      o.option_class.from_value 
-        (find_value option_name !gwmlrc)
-    with e -> 
-        Log.printf "Options.define_option, for option %s: " 
-          (match option_name with [] -> "???" | name :: _ -> name);
-        Log.exn "%s\n" e;
-        default_value);
   o
 
 (*****************************************************************************)
@@ -203,12 +186,6 @@ let load () =
   with Not_found ->
       Printf.printf "No %s found" !filename; print_newline ()
 
-let append filename =
-  try
-    gwmlrc := (really_load filename) @ !gwmlrc
-  with Not_found ->
-      Printf.printf "No %s found" filename; print_newline ()
-      
 *)
 
 let init () = 
@@ -228,7 +205,8 @@ let (=:=) o v =
       
 let shortname o = String.concat ":" o.option_name
 let get_type o = o.option_class
-let get_help o = let help = o.option_help in
+let get_help o = 
+  let help = o.option_help in
   if help = "" then "No Help Available" else help
 
 (*****************************************************************************)
@@ -446,26 +424,15 @@ and save_value indent oc v =
 let save () =
   let oc = open_out !filename in
   save_module "" oc (List.map (fun o -> 
-        o.option_name, o.option_help,
-        try o.option_class.to_value o.option_value with e -> 
+        o.option_name, 
+        o.option_help,
+        try o.option_class.to_value o.option_value 
+        with e -> 
             Printf.printf "Error while saving option \"%s\": %s" 
               (try List.hd o.option_name with _ -> "???") (Utils.printexn e);
             print_newline ();
             Value "") 
     (List.rev !options));
-    (* Save unknown options from gwmlrc *)
-  List.iter (fun (name, value) ->
-      try
-        List.iter (fun o -> 
-            match o.option_name with 
-              n :: _ -> if n = name then raise Exit
-            | _ -> ())
-        !options;
-        Printf.fprintf oc "%s = " (safe_string name);
-        save_value "  " oc value;
-        Printf.fprintf oc "\n";
-      with _ -> ()
-  ) !gwmlrc;
   close_out oc
 
 let save_with_help () =
@@ -482,6 +449,7 @@ let option_hook option f =
   
 let type_hook option_class f =
   option_class.class_hooks <- f :: option_class.class_hooks
+
 
 let rec iter_order f list =
   match list with [] -> () | v :: tail -> f v; iter_order f tail
