@@ -189,7 +189,6 @@ and forward_line frame =
     move_forward frame 1 |> ignore;
     move_to_goal_column frame goal_col;
   end
-[@@interactive]
 (*e: function [[Simple.forward_line]] *)
 
 (*s: function [[Simple.backward_line]] *)
@@ -202,8 +201,13 @@ and backward_line frame =
     move_backward frame 1 |> ignore;
     move_to_goal_column frame goal_col;
   end
-[@@interactive]
 (*e: function [[Simple.backward_line]] *)
+
+let forward_line = forward_line
+[@@interactive]
+
+let backward_line = backward_line
+[@@interactive]
 
 (*****************************************************************************)
 (* Paragraphs *)
