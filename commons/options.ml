@@ -8,12 +8,19 @@
 (*  Automatique.  Distributed only by permission.                      *)
 (*                                                                     *)
 (***********************************************************************)
+module S = Stream
 
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
 (* Configuration file loader and saver with typed options.
  * 
+ * alt:
+ *  - a JSON file, but this still requires the mechanism of define_type
+ *    to have typed options (without the need to pattern Match Json_type.t
+ *    to unbox the real type)
+ *  - a sexp file
+ *  - YAML, TOML, ...
  *)
 
 (*****************************************************************************)
@@ -30,7 +37,7 @@ and module_ =
   (string * value) list
 
 
-(* old: was called option_class before *)
+(* old: was called option_class before (hence some field names) *)
 type 'a type_ = {
     class_name : string;
     from_value : value -> 'a;
@@ -51,6 +58,9 @@ and 'a t = {
 let filename = ref (Filename.concat Utils.homedir
       ("." ^ (Filename.basename Sys.argv.(0)) ^ "rc"))
 
+(* old: there was also a gwmlrc global similar to options so that
+ * one could store options in a .efunsrc and .gwmlrc file.
+ *)
 let options = ref []
 
 let to_value cl = cl.to_value
@@ -64,32 +74,29 @@ let define_type
   (class_name : string)
   (from_value : value -> 'a)
   (to_value : 'a -> value) =
-  let c = {
+  {
       class_name = class_name;
       from_value = from_value;
       to_value = to_value;
       class_hooks = [];
-    } in
-(*  classes := (Obj.magic c : Obj.t option_class) :: !classes; *)
-  c  
-
+  }
 
 (*****************************************************************************)
 (* define_option *)
 (*****************************************************************************)
   
-let rec _find_value list m =
+let rec find_value list m =
   match list with
     [] -> raise Not_found
   | name :: tail ->
       let m = List.assoc name m in
       match m, tail with
         _, [] -> m
-      | Module m, _ :: _ -> _find_value tail m
+      | Module m, _ :: _ -> find_value tail m
       | _ -> raise Not_found
   
 let define_option 
-    (option_name : string list)
+  (option_name : string list)
   (option_help : string)
   (option_class : 'a type_)
   (default_value : 'a)
@@ -111,39 +118,64 @@ let define_option
 (*****************************************************************************)
 (* Parser *)
 (*****************************************************************************)
+  
+let lexer = 
+  Genlex.make_lexer [ "=" ; "{" ; "}"; "["; "]"; ";" ; "("; ")"; ","; "."]
 
-(*:
 open Genlex
-  
-let lexer = make_lexer [ "=" ; "{" ; "}"; "["; "]"; ";" ; "("; ")"; ","; "."]
-  
-let rec parse_gwmlrc = parser
-    [< id = parse_id; 'Kwd "="; v = parse_option ; 
-      eof = parse_gwmlrc >] -> (id, v) :: eof
-| [< >] -> []
 
-and parse_option = parser
-| [< 'Kwd "{"; v = parse_gwmlrc; 'Kwd "}" >] -> Module v
-| [< 'Ident s >] -> Value s
-| [< 'String s >] -> Value s
-| [< 'Int i >] -> Value (string_of_int i)
-| [< 'Float f >] -> Value (string_of_float f)
-| [< 'Char c >] -> Value (let s = String.create 1 in s.[0] <- c; s)    
-| [< 'Kwd "["; v = parse_list >] -> List v
-| [< 'Kwd "("; v = parse_list >] -> List v
-    
-and parse_id = parser
-    [< 'Ident s >] -> s
-|   [< 'String s >] -> s
+let rec parse stream = 
+  match S.peek stream with
+  | None -> []
+  | Some t ->
+    (match t with
+    (* first(id) *)
+    | Ident _ | String _ -> 
+      let id = parse_id stream in
+      (match S.next stream with
+      | (Kwd "=") -> ()
+      | _ -> raise S.Failure
+      );
+      let v = parse_option stream in
+      (id, v)::parse stream
+    | _ -> []
+    )
 
-and parse_list = parser
-    [< 'Kwd ";"; v = parse_list >] -> v
-|   [< 'Kwd ","; v = parse_list >] -> v
-|   [< 'Kwd "."; v = parse_list >] -> v
-|   [< v = parse_option; t = parse_list >] -> v :: t
-|   [< 'Kwd "]" >] -> []
-|   [< 'Kwd ")" >] -> []
-*)
+and parse_id stream = 
+  match S.next stream with
+  | Ident s | String s -> s
+  | _ -> raise S.Failure
+
+and parse_option stream =
+  match S.next stream with
+  | Ident s -> Value s
+  | String s -> Value s
+  | Int i -> Value (string_of_int i)
+  | Float f -> Value (string_of_float f)
+  | Char c -> Value (String.make 1 c)
+  | Kwd "{" ->
+    let xs = parse stream in
+    (match S.next stream with
+    | Kwd "}" -> Module xs
+    | _ -> raise S.Failure
+    )
+  | Kwd "[" | Kwd "(" -> 
+    let xs = parse_list stream in
+    List xs
+  | _ -> raise S.Failure
+
+and parse_list stream =
+  match S.peek stream with
+  | Some (Kwd "]" | Kwd ")") -> 
+    S.junk stream; 
+    []
+  | Some (Kwd ";" | Kwd "," | Kwd ".") ->
+    S.junk stream;
+    parse_list stream
+  | _ -> 
+    let v = parse_option stream in
+    let xs = parse_list stream in
+    v::xs
 
 (*****************************************************************************)
 (* Loading *)
@@ -155,42 +187,41 @@ let exec_hooks o =
 let exec_chooks o =
   List.iter (fun f -> try f o with _ -> ()) o.option_class.class_hooks  
 
-(*:  
+
+(* less: could also warn for config data without an option in the program *)
 let really_load filename = 
   let ic = open_in filename in
   let s = Stream.of_channel ic in
   try
     let stream = lexer s in
-    let list = try parse_gwmlrc stream with
-        e -> 
-          Printf.printf "At pos %d/%d" (Stream.count s) (Stream.count stream);
-          print_newline ();
-          raise e in
-    List.iter (fun o ->
+    let list_values = 
+      try parse stream 
+      with e -> 
+        Printf.printf "At character pos %d (token %d)\n" 
+           (Stream.count s) (Stream.count stream);
+        raise e 
+     in
+    !options |> List.iter (fun o ->
         try
           o.option_value <- o.option_class.from_value
-            (find_value o.option_name list);
+            (find_value o.option_name list_values);
           exec_chooks o;
           exec_hooks o;
-        with _ -> () (* no error if option is not defined here *)
-    ) !options;
-    list
-  with   e -> 
-      Printf.printf "Error %s in %s" (Printexc.to_string e) filename;
-      print_newline ();
-      []
+        with Not_found -> () (* no error if option is not defined here *)
+    )
+  with e -> 
+    Printf.printf "Error %s in %s\n" (Printexc.to_string e) filename;
+    flush stdout
+
       
 let load () =
   try
-    gwmlrc := really_load !filename
-  with Not_found ->
-      Printf.printf "No %s found" !filename; print_newline ()
-
-*)
+    really_load !filename
+  with _ ->
+    Printf.printf "No %s found\n" !filename
 
 let init () = 
-  failwith "Options.init: TODO, need to port parser which uses stream (camlp4)"
-(*  load () *)
+  load ()
 
 (*****************************************************************************)
 (* API *)

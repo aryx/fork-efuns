@@ -280,7 +280,7 @@ clean::
 	@echo 'S external/FOR_MERLIN/**' >> .merlin
 
 test:
-	./efuns -height 45 -font "UbuntuMono Bold 22" $*
+	./efuns $*
 promote:
 	cp ~/bin/efuns.byte ~/bin/efuns.save
 	cp ./efuns ~/bin/efuns.byte
