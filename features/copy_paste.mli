@@ -1,5 +1,6 @@
 (* marking *)
 val mark_at_point : Efuns.action
+val mark_whole_buffer: Efuns.action
 
 (* cut/copy/paste *)
 

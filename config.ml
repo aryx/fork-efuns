@@ -101,6 +101,7 @@ let standard_map = [
   [ControlMap, Char.code 'y'], Copy_paste.insert_killed;
   [MetaMap, Char.code 'y'], Copy_paste.insert_next_killed;
   [MetaMap, Char.code 'w'], Copy_paste.copy_region;
+  [c_x; NormalMap, Char.code 'h'], Copy_paste.mark_whole_buffer;
   (*e: moving keys *)
   (* ---------------------- *)
   (* Transforming *)

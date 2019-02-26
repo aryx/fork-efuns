@@ -350,8 +350,9 @@ let init2 init_files =
     "Menlo 18" <- current
 *)
   in
+  if !debug
   (* Pango.Font.set_weight desc `ULTRABOLD; *)
-  pr2 (Pango.Font.to_string desc);
+  then pr2 (Pango.Font.to_string desc);
 
   let metrics = compute_metrics edt desc in
 
@@ -543,7 +544,8 @@ let init2 init_files =
         let button = GdkEvent.Button.button ev in
         let x = (x / metrics.font_width) |> int_of_float in
         let y = (y / metrics.font_height) |> int_of_float in
-        pr2 (spf "click on x = %d, y = %d " x y);
+        if !Globals.debug_graphics
+        then pr2 (spf "click on x = %d, y = %d " x y);
         let evt = Xtypes.XTButtonPress(!modifiers, button, x, y) in
         Top_window.handler top_window evt
     | _ -> ()

@@ -209,4 +209,10 @@ let mark_at_point frame =
   ()
 [@@interactive]
 (*e: function [[Complex.mark_at_point]] *)
+
+let mark_whole_buffer frame =
+  Move.end_of_file frame;
+  mark_at_point frame;
+  Move.begin_of_file frame;  
+[@@interactive]
 (*e: features/copy_paste.ml *)

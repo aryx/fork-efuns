@@ -6,12 +6,8 @@
 
 *** bugs
 
-**** error: exn in hook: Invalid_argument("index out of bounds")
-
 **** paren color stay up once matched
 move should unhighlight no? or forgot redraw force?
-
-**** outline of org-mode does not work
 
 **** still? when C-s and accidentally get touchpad to move to other place
 then get second cursor and weird behavior
@@ -25,8 +21,6 @@ then get second cursor and weird behavior
 **** also TAB and insert comment prefix star when inside a comment.
 
 *** better org/outline mode
-
-**** fix bug where cant get outline in outline!
 
 **** identify outline and level
 ^[*+]
@@ -124,8 +118,6 @@ C-c C-x C-s
 *** highlight C-s
 
 *** highlight marked-region
-
-*** C-x h, to mark the whole buffer, and highlight it
 
 *** ido-mode
 when opening files, when M-x with big minibuffer
