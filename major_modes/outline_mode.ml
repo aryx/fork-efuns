@@ -89,15 +89,12 @@ let copy_line_and_attr text cursor text2 =
   Text.insert_at_end text2 "...\n"
 
 (*****************************************************************************)
-(* Install *)
+(* The mode *)
 (*****************************************************************************)
-let install buf =
-  let text = buf.buf_text in
-  Text.toggle_readonly text;
-  ()
 
 let mode_name = "Outline"
-let mode =  Ebuffer.new_major_mode mode_name (Some install)
+
+let mode =  Ebuffer.new_major_mode mode_name None
 
 (* less: we could also have a minor mode? *)
 
@@ -137,6 +134,8 @@ let create_outline_buffer lvl line_orig buf_name buf_orig =
 
   Var.set_local buf outline_origin 
     (buf_orig.buf_name, Array.of_list (List.rev !origin_points));
+
+  Text.toggle_readonly buf.buf_text;
 
   buf
 
