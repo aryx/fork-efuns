@@ -19,9 +19,10 @@ open Efuns
 (*****************************************************************************)
 (*
  * todo:
- *  - maintain point (deleting whole thing simplify things but complicate 
- *    other)
  *  - C-x r y
+ * less:
+ *  - maintain point (deleting whole thing simplify things but complicates
+ *    other)
  *)
 
 (*****************************************************************************)
@@ -30,6 +31,7 @@ open Efuns
 type rectangle_line = {
   before: string;
   rect_part: string;
+  (* this usually contains the \n *)
   after: string;
 }
 
@@ -41,10 +43,24 @@ let string_of_rectangle_line rline =
 
 let apply_to_region f region (cola, colb) =
   let xs = Transform.lines region in
+  (* sometimes rectangle operations are applied on big regions
+   * containing empty lines where String.sub would fail; we do
+   * not want though to abort the whole operation hence the
+   * try below
+   *)
   let rlines = xs |> List.map (fun s ->
-    { before = String.sub s 0 cola;
-      rect_part = String.sub s cola (colb - cola);
-      after = String.sub s colb (String.length s - colb);
+    { before    = 
+       (* less: maybe should insert as many space as cola here, because
+        * when you insert a rectangle on an empty line at a certain column,
+        * you want extra space to match before that column
+        *)
+       (try String.sub s 0 cola with Invalid_argument _ -> "");
+      rect_part = 
+       (try String.sub s cola (colb - cola) with Invalid_argument _ -> "");
+      after = 
+       (try String.sub s colb (String.length s - colb) 
+       (* we need to maintain the \n *)
+       with Invalid_argument _ -> "\n");
     }
   ) in
  rlines |> List.map f |> List.map string_of_rectangle_line |> String.concat ""
