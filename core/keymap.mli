@@ -33,5 +33,4 @@ val c_c: Efuns.key
 val c_h: Efuns.key
 
 (* key <-> string (stored in config/option file) *)
-val binding_option :
-  (Efuns.key list * Efuns.action_name) Options.option_class
+val binding_option : (Efuns.key list * Efuns.action_name) Options.type_

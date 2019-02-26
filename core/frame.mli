@@ -29,7 +29,7 @@ val load_file : Efuns.window -> Common.filename -> t
  * back the frame you'll have to grab the (new) top active frame.
  *)
 val change_buffer : Efuns.window -> string -> unit
-val change_buffer_hooks: Efuns.action_name list Options.option_record
+val change_buffer_hooks: Efuns.action_name list Options.t
 
 val save_buffer : t -> unit
 

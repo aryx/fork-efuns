@@ -24,7 +24,7 @@ val find_error_gen : Str.regexp -> find_error_fun
  *)
 val find_error_location_regexp : Str.regexp Var.t
 
-val c_error_regexp : (string * Str.regexp) Options.option_record
+val c_error_regexp : (string * Str.regexp) Options.t
 
 (* to setup if 'find_error_gen find_error_location_regexp' is not enough *)
 val find_error : find_error_fun Var.t
@@ -33,7 +33,7 @@ val find_error : find_error_fun Var.t
 val find_error_error_regexp: Str.regexp Var.t
 
 
-val compile_find_makefile : bool Options.option_record
+val compile_find_makefile : bool Options.t
 
 (* internals:
 val compilation_frame : (Efuns.frame * Text.point * string) option ref

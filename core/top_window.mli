@@ -35,8 +35,8 @@ val mouse_set_active : t -> Efuns.frame
 
 (* menus *)
 
-val file_menu : (string * string) list Options.option_record
-val edit_menu : (string * string) list Options.option_record
+val file_menu : (string * string) list Options.t
+val edit_menu : (string * string) list Options.t
 val help_menu : (string * Efuns.action) array ref
 val buffers_menu : (t -> unit -> unit -> unit) ref
 

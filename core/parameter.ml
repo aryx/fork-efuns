@@ -15,7 +15,7 @@ open Options
 
 (*s: type [[Simple.parameter]] *)
 type t = 
- string * ((string -> Obj.t) * (Obj.t -> string) * Obj.t option_record)
+ string * ((string -> Obj.t) * (Obj.t -> string) * Obj.t Options.t)
 (*e: type [[Simple.parameter]] *)
   
 (*s: constant [[Simple.parameters_var]] *)
@@ -24,10 +24,10 @@ let parameters_var = Store.create_abstr "parameters"
   
 (*s: function [[Simple.add_parameter]] *)
 let add_parameter (name : string) (input : string -> 'a) 
-  (print : 'a -> string) (param : 'a option_record) =
+  (print : 'a -> string) (param : 'a Options.t) =
   let (input : string -> Obj.t) = Obj.magic input in
   let (print : Obj.t -> string) = Obj.magic print in
-  let (param : Obj.t option_record) = Obj.magic param in
+  let (param : Obj.t Options.t) = Obj.magic param in
   Var.set_global parameters_var (
     (name, (input, print, param)) :: 
     (try Var.get_global parameters_var with _ -> []))
@@ -36,9 +36,9 @@ let add_parameter (name : string) (input : string -> 'a)
 (*s: function [[Simple.add_option_parameter]] *)
 let add_option_parameter option =
   add_parameter (shortname option)
-   (fun s -> from_value (get_class option) (Value s))
+   (fun s -> from_value (get_type option) (Value s))
    (fun v -> 
-      match to_value (get_class option) v with
+      match to_value (get_type option) v with
         Value s -> s
       | _ -> failwith "Unable to print option"
     ) 

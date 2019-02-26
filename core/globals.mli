@@ -13,10 +13,10 @@ val debug_init : bool ref
 
 (* for dynamic loading of OCaml code? *)
 val path : string list ref
-val load_path : string list Options.option_record
+val load_path : string list Options.t
 val efuns_path : string list
 
-val font : string Options.option_record
+val font : string Options.t
 
 (* for X11 only? *)
 val displayname: string ref

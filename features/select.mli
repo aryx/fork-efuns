@@ -18,7 +18,7 @@ val simple_select :
   Efuns.frame -> string -> (string -> unit) -> unit
 
 
-val dont_complete : string list Options.option_record
+val dont_complete : string list Options.t
 val dont_complete_regexps : (string list * Str.regexp) ref
 val dont_complete_regexp : unit -> Str.regexp
 val avoid_completion : string -> bool

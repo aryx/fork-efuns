@@ -401,7 +401,7 @@ let string_to_regex s = s, Str.regexp s
 
 open Options    
 (*s: constant [[Efuns.regexp_option]] *)
-let regexp_option = define_option_class "Regexp" 
+let regexp_option = Options.define_type "Regexp" 
     (fun v -> match v with
         Value s ->  string_to_regex s | _ -> raise Not_found)
   (fun (s,_r) -> Value s)

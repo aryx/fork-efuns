@@ -158,7 +158,7 @@ val readonly : t -> bool
 val toggle_readonly : t -> unit
 
 val lexing : t -> point -> point -> Lexing.lexbuf
-val add_amount : int Options.option_record
+val add_amount : int Options.t
 val compare : t -> point -> point -> int
 (*val find_xy : t -> int -> int -> int -> coord *)
 

@@ -1,13 +1,13 @@
 
 type t = 
- string * ((string->Obj.t) * (Obj.t->string) * Obj.t Options.option_record)
+ string * ((string->Obj.t) * (Obj.t->string) * Obj.t Options.t)
 
 val parameters_var : t list Var.t
 val add_parameter :
-  string -> (string -> 'a) -> ('a -> string) -> 'a Options.option_record -> 
+  string -> (string -> 'a) -> ('a -> string) -> 'a Options.t -> 
   unit
 
-val add_option_parameter : 'a Options.option_record -> unit
+val add_option_parameter : 'a Options.t -> unit
 
 val all_params : (t list * string list) option ref
 val all_parameters : Efuns.frame -> 'a -> string list

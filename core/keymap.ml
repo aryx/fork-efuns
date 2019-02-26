@@ -218,7 +218,7 @@ let key_to_value k = Options.Value (print_key k)
 (*e: function [[Simple.key_to_value]] *)
       
 (*s: constant [[Simple.key_option]] *)
-let key_option = Options.define_option_class "Key" value_to_key key_to_value
+let key_option = Options.define_type "Key" value_to_key key_to_value
 (*e: constant [[Simple.key_option]] *)
 
 (*s: constant [[Simple.binding_option]] *)
