@@ -9,18 +9,50 @@
 (*                                                                     *)
 (***********************************************************************)
 
-type 'a option_class
-type 'a option_record
+(* example of use:
+ * foo.ml:
+ *  open Options
+ *  let width      = define_option ["width"] "" int_option 80
+ *  let foreground = define_option ["foreground"] "" string_option "wheat"
+ *  ...
+ *  let foo () = 
+ *    let w = !!width in
+ *    ...
+ * main.ml:
+ *  let main () =
+ *    Options.filename := "/home/pad/.config";
+ *    Options.init ();
+ *    ...
+ *)
+
+type 'a type_
+type 'a t
+
+val define_option :
+  string list (*path*) -> string (*help*) -> 'a type_ -> 'a (*default*) ->
+  'a t
+
+val ( !! ) : 'a t -> 'a
+val ( =:= ) : 'a t -> 'a -> unit
+val shortname : 'a t -> string
+val get_type : 'a t -> 'a type_
+val get_help : 'a t -> string  
+
+val bool_option     : bool type_
+val int_option      : int type_
+val float_option    : float type_
+val string_option   : string type_
+
+val color_option    : string type_
+val font_option     : string type_
+val path_option     : string list type_
+val string2_option  : (string * string) type_
+val filename_option : string type_
 
 val filename : string ref
-val define_option :
-  string list ->  string -> 'a option_class -> 'a -> 'a option_record
+(* !uses filename! *)
+val init : unit -> unit
 
-val ( !! ) : 'a option_record -> 'a
-val ( =:= ) : 'a option_record -> 'a -> unit
-val option_hook : 'a option_record -> (unit -> unit) -> unit
-val class_hook : 'a option_class -> ('a option_record -> unit) -> unit
-  
 val save : unit -> unit
 val save_with_help : unit -> unit
 (*:
@@ -28,64 +60,55 @@ val load : unit -> unit
 val append : string -> unit
 *)
 
-val shortname : 'a option_record -> string
-val get_class : 'a option_record -> 'a option_class
-val get_help : 'a option_record -> string  
-val init : unit -> unit
+   
+  (*** To create your own options types ... *)
   
-  (*** To create your own options classes ... *)
-  
-type option_value =
-  Module of option_module
+type value =
+  Module of module_
 | Value of  string
-| List of option_value list
-| SmallList of option_value list
+| List of value list
+| SmallList of value list
   
-and option_module =
-  (string * option_value) list
+and module_ =
+  (string * value) list
 
-val define_option_class :
-  string -> (option_value -> 'a) -> ('a -> option_value) -> 'a option_class
+val define_type :
+  string -> (value -> 'a) -> ('a -> value) -> 'a type_
 
-val to_value : 'a option_class -> 'a -> option_value
-val from_value : 'a option_class -> option_value -> 'a
+val to_value : 'a type_ -> 'a -> value
+val from_value : 'a type_ -> value -> 'a
   
-val string_option   : string option_class
-val color_option    : string option_class
-val font_option     : string option_class
-val int_option      : int option_class
-val bool_option     : bool option_class
-val float_option    : float option_class
-val path_option     : string list option_class
-val string2_option  : (string * string) option_class
-val filename_option : string option_class
-  
+ 
   (* parameterized options *)
-val list_option : 'a option_class -> 'a list option_class
-val smalllist_option : 'a option_class -> 'a list option_class
-val sum_option : (string * 'a) list -> 'a option_class
+val list_option : 'a type_ -> 'a list type_
+val smalllist_option : 'a type_ -> 'a list type_
+val sum_option : (string * 'a) list -> 'a type_
 val tuple2_option :  
-  'a option_class * 'b option_class -> ('a * 'b) option_class
-val tuple3_option : 'a option_class * 'b option_class * 'c option_class ->
-  ('a * 'b * 'c) option_class
+  'a type_ * 'b type_ -> ('a * 'b) type_
+val tuple3_option : 'a type_ * 'b type_ * 'c type_ ->
+  ('a * 'b * 'c) type_
   
-val value_to_string : option_value -> string
-val value_to_int : option_value -> int
-val value_to_bool : option_value -> bool
-val value_to_float : option_value -> float
-val value_to_string2 : option_value -> string * string
-val value_to_list : (option_value -> 'a) -> option_value -> 'a list
-val value_to_path : option_value -> string list
+val value_to_string : value -> string
+val value_to_int : value -> int
+val value_to_bool : value -> bool
+val value_to_float : value -> float
+val value_to_string2 : value -> string * string
+val value_to_list : (value -> 'a) -> value -> 'a list
+val value_to_path : value -> string list
 
-val string_to_value : string -> option_value
-val int_to_value : int -> option_value
-val bool_to_value : bool -> option_value
-val float_to_value : float -> option_value
-val string2_to_value : string * string -> option_value
-val list_to_value : ('a -> option_value) -> 'a list -> option_value
-val smalllist_to_value : ('a -> option_value) -> 'a list -> option_value
-val path_to_value : string list -> option_value
+val string_to_value : string -> value
+val int_to_value : int -> value
+val bool_to_value : bool -> value
+val float_to_value : float -> value
+val string2_to_value : string * string -> value
+val list_to_value : ('a -> value) -> 'a list -> value
+val smalllist_to_value : ('a -> value) -> 'a list -> value
+val path_to_value : string list -> value
 
 val bool_of_string : string -> bool
 
+
 val help : out_channel -> unit
+
+val option_hook : 'a t -> (unit -> unit) -> unit
+val type_hook : 'a type_ -> ('a t -> unit) -> unit
