@@ -18,6 +18,8 @@ open Efuns
 type t = Efuns.action
 (*e: type [[Action.t]] *)
 
+type name = Efuns.action_name
+
 (*s: global [[Efuns.actions]] *)
 let (actions : (action_name, generic_action) Hashtbl.t) = 
   Hashtbl.create 63

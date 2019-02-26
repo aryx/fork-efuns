@@ -281,6 +281,9 @@ clean::
 
 test:
 	./efuns -height 45 -font "UbuntuMono Bold 22" $*
+promote:
+	cp ~/bin/efuns.byte ~/bin/efuns.save
+	cp ./efuns ~/bin/efuns.byte
 
 visual:
 	~/pfff/codemap -no_legend -screen_size 3 -efuns_client ./efuns_client -emacs_client /dev/null -filter pfff .
