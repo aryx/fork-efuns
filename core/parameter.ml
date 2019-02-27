@@ -13,6 +13,13 @@
 (*e: copyright header efuns *)
 open Options
 
+(* A parameter is an option that can be interactively get or set.
+ * See Interactive.get_parameter and set_parameter.
+ *
+ * alt: use Options.options global and make all options parameters?
+ * no need then for parameters_var below and the redundant Parameter.t
+ *)
+
 (*s: type [[Simple.parameter]] *)
 type t = 
  string * ((string -> Obj.t) * (Obj.t -> string) * Obj.t Options.t)
@@ -44,7 +51,8 @@ let add_option_parameter option =
     ) 
     option
 (*e: function [[Simple.add_option_parameter]] *)
-  
+
+(* todo: remove useless cache? *)  
 (*s: constant [[Simple.all_params]] *)
 let all_params = ref None
 (*e: constant [[Simple.all_params]] *)
