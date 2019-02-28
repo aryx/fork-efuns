@@ -39,16 +39,13 @@ type command =
 
  
 (*s: function [[Server.read_command]] *)
-let read_command fd frame_opt =
+let read_command fd =
   let inc = in_channel_of_descr fd in
   try
     let cmd = input_value inc in
     match cmd with
     | LoadFile (name, pos, line, str) ->
         let window = 
-          match frame_opt with
-          | Some frame -> frame.frm_window
-          | None -> 
             let edt = Globals.editor () in
             match edt.top_windows with
             | [] -> failwith "no top windows"
@@ -72,14 +69,15 @@ let read_command fd frame_opt =
 (*e: function [[Server.read_command]] *)
   
 (*s: function [[Server.module_accept]] *)
-let module_accept s frame_opt = 
+let module_accept s = 
   let fd,_ = accept s in
   Unix.set_close_on_exec fd;
-  Concur.add_reader fd (fun _ -> read_command fd frame_opt)
+  Concur.add_reader fd (fun _ -> read_command fd)
 (*e: function [[Server.module_accept]] *)
   
 (*s: function [[Server.start]] *)
-let start frame_opt =
+(* old: this used to take an optional frame but was useless I think *)
+let start () =
   if not !started then
   Utils.catchexn "Efuns server:" (fun _ ->
       let s = Unix.socket PF_UNIX SOCK_STREAM 0 in
@@ -96,15 +94,15 @@ let start frame_opt =
         Unix.set_close_on_exec s;
         Concur.add_reader s (fun _ -> 
           started := true;
-          module_accept s frame_opt
+          module_accept s
         );
        Hook.add_hook Misc.exit_hooks (fun () -> Unix.unlink socket_name);
       end
   )  
 (*e: function [[Server.start]] *)
 
-let server_start frame =
-  start (Some frame)
+let server_start _frame =
+  start ()
 [@@interactive]
   
 (*e: ipc/server.ml *)

@@ -78,5 +78,5 @@ let _ =
 
     (* Hooks *)
 
-    Server.start None;
+    Server.start ();
   )
