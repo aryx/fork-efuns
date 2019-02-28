@@ -101,7 +101,6 @@ let exit_hooks = Store.create_abstr "exit_hook"
 let exit frame =
   let buffers = Utils.list_of_hash (Globals.editor()).edt_buffers in
   let hooks = Var.get_global exit_hooks in
-  Common.pr2_gen hooks;
   Hook.exec_hooks hooks ();
   Multi_buffers.save_buffers_and_action frame buffers (fun _ -> 
     raise (Common.UnixExit 0)
