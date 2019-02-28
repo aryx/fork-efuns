@@ -13,13 +13,6 @@
 (*e: copyright header efuns *)
 open Efuns
 
-(*s: constant [[Simple.highlighted]] *)
-(* hightlighting of regions *)  
-let highlighted = ref None
-(*e: constant [[Simple.highlighted]] *)
-(*s: constant [[Simple.highlight_bit]] *)
-(*e: constant [[Simple.highlight_bit]] *)
-
 (*s: function [[Simple.unhightlight_region]] *)
 let unhightlight_region buf debut fin =
   let text = buf.buf_text in
@@ -52,6 +45,10 @@ let hightlight_region buf debut fin =
   ))
 (*e: function [[Simple.hightlight_region]] *)
 
+(*s: constant [[Simple.highlighted]] *)
+(* hightlighting of regions *)  
+let highlighted = ref None
+(*e: constant [[Simple.highlighted]] *)
 (*s: constant [[Simple.highlighted_chars]] *)
 let highlighted_chars = ref []
 (*e: constant [[Simple.highlighted_chars]] *)

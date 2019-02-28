@@ -5,7 +5,7 @@ val is_paren_begin : char -> bool
 val htmlp : bool ref
 
 (* To activate paren matching visualization in a major mode, simply call
- *     Minor_modes.toggle_minor_buffer Paren_mode.mode buf
+ *     Minor_modes.toggle_minor_on_buf Paren_mode.mode buf
  * in the installation function of a mode.
  *
  * Alternatively, if you don't want all the closing characters to activate

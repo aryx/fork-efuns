@@ -15,6 +15,10 @@ open Efuns
 
 module H = Highlight
 
+(*****************************************************************************)
+(* Helpers *)
+(*****************************************************************************)
+
 (*s: constant [[Simple.htmlp]] *)
 let htmlp = ref false
 (*e: constant [[Simple.htmlp]] *)
@@ -79,30 +83,36 @@ let highlight_paren frame =
   )
 (*e: function [[Simple.highlight_paren]] *)
 
-
-(*s: constant [[Paren_mode.mode]] *)
-let mode = Ebuffer.new_minor_mode "paren" []
-(*e: constant [[Paren_mode.mode]] *)
-
 (*s: function [[Paren_mode.find_matching]] *)
 let find_matching frame = 
   Edit.self_insert_command frame; 
   highlight_paren frame
 (*e: function [[Paren_mode.find_matching]] *)
+
+(*****************************************************************************)
+(* The mode *)
+(*****************************************************************************)
+
+(*s: constant [[Paren_mode.mode]] *)
+let mode = Ebuffer.new_minor_mode "paren" []
+(*e: constant [[Paren_mode.mode]] *)
+
+(*s: function [[Paren_mode.paren_mode]] *)
+let paren_mode = 
+  Minor_modes.toggle_minor mode
+[@@interactive]
+(*e: function [[Paren_mode.paren_mode]] *)
+
+(*****************************************************************************)
+(* Setup *)
+(*****************************************************************************)
   
 (*s: toplevel [[Paren_mode._1]] *)
 let _ = 
-  (* alt: we could use a major mode var that specifies what is a
-   * parenthesis.
-   *)
-  (* TODO disabled for now because lead to buggy display and exns *)
-  [(* ')'; '}'; ']' *)] |> List.iter (fun key -> 
-    Keymap.add_binding mode.min_map [NormalMap, Char.code key] find_matching
+  (* alt: we could use a major mode var that specifies what is a parenthesis *)
+  [')'; '}'; ']'] |> List.iter (fun key -> 
+    Keymap.add_minor_key mode [NormalMap, Char.code key] find_matching
   )
 (*e: toplevel [[Paren_mode._1]] *)
 
-(*s: toplevel [[Paren_mode._2]] *)
-let _ = 
-  Action.define_action "paren_mode" (Minor_modes.toggle_minor mode)
-(*e: toplevel [[Paren_mode._2]] *)
 (*e: minor_modes/paren_mode.ml *)
