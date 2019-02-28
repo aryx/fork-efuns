@@ -259,7 +259,7 @@ let _ =
 
     Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
   
-    Hook.add_hook hooks (Minor_modes.toggle_minor_buffer (Paren_mode.mode));
+    Hook.add_hook hooks (Minor_modes.toggle_minor_on_buf (Paren_mode.mode));
   );
 
   !!local_map |> List.iter (fun (keys, action) ->

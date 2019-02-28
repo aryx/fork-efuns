@@ -92,8 +92,8 @@ let mode =  Ebuffer.new_major_mode "OCaml(Pfff)" (Some (fun buf ->
   (* alt: activate them in hooks in pad.ml if you dont want them
    * by default for every users or want exotic parenthesis (e.g., |])
    *)
-  Minor_modes.toggle_minor_buffer Ocaml_merlin.mode buf;
-  Minor_modes.toggle_minor_buffer Paren_mode.mode buf;
+  Minor_modes.toggle_minor_on_buf Ocaml_merlin.mode buf;
+  Minor_modes.toggle_minor_on_buf Paren_mode.mode buf;
 
   let hooks = Var.get_var buf hooks in
   Hook.exec_hooks hooks buf;

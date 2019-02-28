@@ -62,7 +62,7 @@ let mode = Ebuffer.new_major_mode "Cpp(Pfff)" (Some (fun buf ->
 
   buf.buf_syntax_table.(Char.code '_') <- true;
 
-  Minor_modes.toggle_minor_buffer Paren_mode.mode buf;
+  Minor_modes.toggle_minor_on_buf Paren_mode.mode buf;
 
   let hooks = Var.get_var buf hooks in
   Hook.exec_hooks hooks buf;
