@@ -6,9 +6,6 @@
 
 *** bugs
 
-**** paren color stay up once matched
-move should unhighlight no? or forgot redraw force?
-
 **** still? when C-s and accidentally get touchpad to move to other place
 then get second cursor and weird behavior
 
@@ -30,9 +27,6 @@ then get second cursor and weird behavior
 **** move around outline
 
 **** C-c C-x C-s to save archive
-
-*** highlighting paren mode
-quite important in the end
 
 *** highlighting C-s
 quite important in the end
@@ -101,11 +95,7 @@ omnibar search!
 
 ** important (and not too long to implement)
 
-*** paren_mode: bug does not hide highlight
-show when hover a paren
-quite useful indeed
-
-*** paren_mode: make it the default for all pfff modes
+*** paren_mode: show also when hover a paren
 
 *** org: moving sections up and down
 need helper function that find and mark sections

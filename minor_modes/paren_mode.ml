@@ -26,6 +26,8 @@ module H = Highlight
  *
  * todo:
  *  - highlight also when hover a parenthesis, not just when you type it.
+ *  - should not consider parenthesis inside strings or as characters or
+ *    in comments (need to have each major mode define those things then)
  * less:
  *  - let each major mode specifies what is a parenthesis?
  *    ('<'? '[|'?, ...)

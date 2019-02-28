@@ -54,7 +54,7 @@ let highlighted_chars = ref []
 (*e: constant [[Simple.highlighted_chars]] *)
 
 (*s: function [[Simple.unhightlight]] *)
-let unhightlight _frame =
+let unhighlight _frame =
   (*s: [[Simple.unhightlight()]] handle highlighted chars *)
   !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
     let text = buf.buf_text in
@@ -123,7 +123,7 @@ let highlight frame =
 let _ =
   Hook.add_start_hook (fun () ->
     (* unhighlight region *)
-    Hook.add_hook Top_window.handle_key_start_hook unhightlight;      
+    Hook.add_hook Top_window.handle_key_start_hook unhighlight;      
   )
 (*e: toplevel [[Highlight]] starting hook *)
 (*e: features/highlight.ml *)
