@@ -49,7 +49,8 @@ let color a b c d = Common.profile_code "Simple.color"
 let color_func = Store.create_abstr "Color.color_func"
 
 (* alt: 
- *  - recolorize after save automatically
+ *  - recolorize after save automatically (which I do for 
+ *    most pfff modes via Ebuffer.saved_buffer_hooks)
  *  - per-major-mode interactive M-x color_buffer (but I removed support
  *    for this)
  *)

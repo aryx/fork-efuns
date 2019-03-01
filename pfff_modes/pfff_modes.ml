@@ -24,12 +24,12 @@ module Db = Database_code
 (* Prelude *)
 (*****************************************************************************)
 (* 
- * Common code to the different pfff-based efuns programming language modes,
+ * Common code of the different pfff-based efuns programming language modes
  * for coloring, outline, tags, ...
  * 
  * todo: 
  *  - indentation, 
- *  - codegraph based navig, 
+ *  - codegraph-based navigation, 
  *  - ?
  *)
 

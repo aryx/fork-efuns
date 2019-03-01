@@ -16,7 +16,7 @@ open Options
 (* A parameter is an option that can be interactively get or set.
  * See Interactive.get_parameter and set_parameter.
  *
- * alt: use Options.options global and make all options parameters?
+ * alt: use the Options.options global and make all options parameters?
  * no need then for parameters_var below and the redundant Parameter.t
  *)
 

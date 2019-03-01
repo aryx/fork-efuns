@@ -24,13 +24,10 @@
  * but certain actions like self_insert_command use globals which
  * complicate things.
  *
- * less: could modify the modeline to show that we are recording
- * a macro; I often get lost.
+ * todo: 
+ *  - could modify the modeline to show that we are recording
+ *    a macro; I often get lost.
  *)
-
-(*****************************************************************************)
-(* Globals *)
-(*****************************************************************************)
 
 (*****************************************************************************)
 (* Entry points *)
