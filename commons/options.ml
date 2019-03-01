@@ -54,7 +54,7 @@ and 'a t = {
     mutable option_hooks : (unit -> unit) list;
   }
 
-
+(* alt: could be a parameter of init and save *)
 let filename = ref (Filename.concat Utils.homedir
       ("." ^ (Filename.basename Sys.argv.(0)) ^ "rc"))
 
@@ -219,9 +219,6 @@ let load () =
     really_load !filename
   with _ ->
     Printf.printf "No %s found\n" !filename
-
-let init () = 
-  load ()
 
 (*****************************************************************************)
 (* API *)

@@ -21,13 +21,14 @@
  * main.ml:
  *  let main () =
  *    Options.filename := "/home/pad/.config";
- *    Options.init ();
+ *    Options.load ();
  *    ...
  *)
 
 type 'a type_
 type 'a t
 
+(* typed options! *)
 val define_option :
   string list (*path*) -> string (*help*) -> 'a type_ -> 'a (*default*) ->
   'a t
@@ -51,15 +52,11 @@ val filename_option : string type_
 
 val filename : string ref
 (* !uses filename! *)
-val init : unit -> unit
-
-val save : unit -> unit
-val save_with_help : unit -> unit
-(*:
 val load : unit -> unit
-val append : string -> unit
-*)
+val save : unit -> unit
 
+(* save all the options and their (optional) help string in the config file*)
+val save_with_help : unit -> unit
    
   (*** To create your own options types ... *)
   
