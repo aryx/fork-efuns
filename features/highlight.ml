@@ -13,8 +13,8 @@
 (*e: copyright header efuns *)
 open Efuns
 
-(*s: function [[Simple.unhightlight_region]] *)
-let unhightlight_region buf debut fin =
+(*s: function [[Simple.unhighlight_region]] *)
+let unhighlight_region buf debut fin =
   let text = buf.buf_text in
   Text.with_new_point text (fun curseur ->
   Text.with_new_point text (fun final ->
@@ -27,10 +27,10 @@ let unhightlight_region buf debut fin =
     done;
     buf.buf_modified <- buf.buf_modified + 1
   ))
-(*e: function [[Simple.unhightlight_region]] *)
+(*e: function [[Simple.unhighlight_region]] *)
 
-(*s: function [[Simple.hightlight_region]] *)
-let hightlight_region buf debut fin =
+(*s: function [[Simple.highlight_region]] *)
+let highlight_region buf debut fin =
   let text = buf.buf_text in
   Text.with_new_point text (fun curseur ->
   Text.with_new_point text (fun final ->
@@ -43,86 +43,42 @@ let hightlight_region buf debut fin =
     done;
     buf.buf_modified <- buf.buf_modified + 1
   ))
-(*e: function [[Simple.hightlight_region]] *)
+(*e: function [[Simple.highlight_region]] *)
 
 (*s: constant [[Simple.highlighted]] *)
-(* hightlighting of regions *)  
+(* hightlighting of a region *)  
 let highlighted = ref None
 (*e: constant [[Simple.highlighted]] *)
 (*s: constant [[Simple.highlighted_chars]] *)
 let highlighted_chars = ref []
 (*e: constant [[Simple.highlighted_chars]] *)
+let unhighlight_hook = Store.create_abstr "unhighlight_hook"
 
-(*s: function [[Simple.unhightlight]] *)
+(*s: function [[Simple.unhighlight]] *)
 let unhighlight _frame =
-  (*s: [[Simple.unhightlight()]] handle highlighted chars *)
-  !highlighted_chars |> List.iter (fun (buf,curseur,attr) ->
+  (*s: [[Simple.unhighlight()]] handle highlighted chars *)
+  !highlighted_chars |> List.iter (fun (buf,curseur,old_attr) ->
     let text = buf.buf_text in
-    Text.set_attr text curseur attr;
+    (* less: could reset highlight bit instead of having to store old_attr *)
+    Text.set_attr text curseur old_attr;
     buf.buf_modified <- buf.buf_modified + 1;
     Text.remove_point text curseur
   );
   highlighted_chars := [];
-  (*e: [[Simple.unhightlight()]] handle highlighted chars *)
+  (*e: [[Simple.unhighlight()]] handle highlighted chars *)
   match !highlighted with
   | None -> ()
   | Some (frame,debut,fin) -> 
      (*   if !keypressed <> XK.xk_Pointer_Drag1 then *)
      highlighted := None;
      let (buf, text, _) = Frame.buf_text_point frame in
-
-     Text.with_new_point text (fun curseur ->
-     Text.with_new_point text (fun final ->
-       Text.set_position text curseur debut;
-       Text.set_position text final fin;
-
-       let str = Text.region text curseur final in
-       Copy_paste.kill_string str;
-       (* ??? WX_xterm.set_cutbuffer xterm str; for interop? *)
-
-     ));
-     unhightlight_region buf debut fin
-(*e: function [[Simple.unhightlight]] *)
+     Hook.exec_hooks (Var.get_global unhighlight_hook) (text, debut, fin);
+     unhighlight_region buf debut fin
+(*e: function [[Simple.unhighlight]] *)
   
-(*s: function [[Simple.highlight]] *)
-let highlight frame =
-  let frame =
-    match !highlighted with
-    | None -> frame
-    | Some (frame, _d, _f) -> frame
-  in    
-  let (buf, text, point) = Frame.buf_text_point frame in
-  let mark = Ebuffer.get_mark buf point in
-  let pt_debut, pt_fin =
-    if point < mark 
-    then point, mark
-    else mark, point
-  in
-  let pos1 = Text.get_position text pt_debut in
-  let pos2 = Text.get_position text pt_fin in
-  let pos_debut_to_hl, pos_fin_to_hl =
-    match !highlighted with
-    | None -> pos1, pos2
-    | Some (_frame, d, f) ->
-        if pos1 > d
-        then unhightlight_region buf d pos1; 
-        if pos2 < f
-        then unhightlight_region buf pos2 f;
-        if pos1 < d 
-        then pos1, d
-        else
-          if pos2 > f 
-          then f, pos2
-          else pos1, pos1
-  in
-  highlighted := Some (frame, pos1, pos2);
-  hightlight_region buf pos_debut_to_hl pos_fin_to_hl
-(*e: function [[Simple.highlight]] *)
-
 (*s: toplevel [[Highlight]] starting hook *)
 let _ =
   Hook.add_start_hook (fun () ->
-    (* unhighlight region *)
     Hook.add_hook Top_window.handle_key_start_hook unhighlight;      
   )
 (*e: toplevel [[Highlight]] starting hook *)

@@ -12,6 +12,53 @@
 (***********************************************************************)
 (*e: copyright header efuns *)
 open Efuns
+module H = Highlight
+
+(*s: function [[Simple.highlight]] *)
+let highlight frame =
+  let frame =
+    match !H.highlighted with
+    | None -> frame
+    | Some (frame, _d, _f) -> frame
+  in    
+  let (buf, text, point) = Frame.buf_text_point frame in
+  let mark = Ebuffer.get_mark buf point in
+  let pt_debut, pt_fin =
+    if point < mark 
+    then point, mark
+    else mark, point
+  in
+  let pos1 = Text.get_position text pt_debut in
+  let pos2 = Text.get_position text pt_fin in
+  let pos_debut_to_hl, pos_fin_to_hl =
+    match !H.highlighted with
+    | None -> pos1, pos2
+    | Some (_frame, d, f) ->
+        if pos1 > d
+        then H.unhighlight_region buf d pos1; 
+        if pos2 < f
+        then H.unhighlight_region buf pos2 f;
+        if pos1 < d 
+        then pos1, d
+        else
+          if pos2 > f 
+          then f, pos2
+          else pos1, pos1
+  in
+  H.highlighted := Some (frame, pos1, pos2);
+  H.highlight_region buf pos_debut_to_hl pos_fin_to_hl
+(*e: function [[Simple.highlight]] *)
+
+let unhighlight_hook (text, debut, fin) =
+  Text.with_new_point text (fun curseur ->
+  Text.with_new_point text (fun final ->
+    Text.set_position text curseur debut;
+    Text.set_position text final fin;
+    let str = Text.region text curseur final in
+    Copy_paste.kill_string str;
+    (* TODO WX_xterm.set_cutbuffer xterm str; for interop?  *)
+  ))
+
 
 (*s: function [[Simple.mouse_drag_region]] *)
 (* C'est tout simple. On arrive dans cette fonction quand on est en train
@@ -127,6 +174,7 @@ let mouse_set_frame frame =
 let _ =
   Hook.add_start_hook (fun () ->
     Keymap.add_global_key [NormalMap, XK.xk_Pointer_Drag1] mouse_drag_region;
+    Hook.add_hook Highlight.unhighlight_hook unhighlight_hook;
   )
 (*e: toplevel [[Mouse]] starting hook *)
 

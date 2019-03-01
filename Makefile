@@ -117,8 +117,8 @@ SRC=\
  features/edit.ml\
  features/copy_paste.ml\
  features/scroll.ml\
- features/mouse.ml\
  features/highlight.ml\
+ features/mouse.ml\
  features/color.ml\
  features/indent.ml\
  features/structure.ml\
