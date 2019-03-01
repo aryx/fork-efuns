@@ -118,7 +118,7 @@ let main () =
     (try Utils.find_in_path (Utils.homedir :: !!Globals.load_path) ".efunsrc" 
      with _ -> Filename.concat Utils.homedir ".efunsrc"
     );
-  (try Options.init () 
+  (try Options.load () 
    with exn -> Error.error_exn "init error" exn
   );
   (*e: [[main()]] set options filename *)
