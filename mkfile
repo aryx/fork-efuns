@@ -1,3 +1,9 @@
+#TODO: to port to plan9 you need to handle ppx [@@interactive]!
+# maybe simpler to begin with consider them as attribute
+# and generate a big file from Linux that store all the code
+# by those interactive and use this file under plan9
+
+
 #############################################################################
 # Configuration section
 #############################################################################
