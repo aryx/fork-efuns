@@ -1,11 +1,16 @@
 # -*- org -*-
 
-* 0.22 (Q1 2019)
+* 0.23 (Q2 2019)
+
+** a new Javascript mode
+based on the Javascript parser and highlighter in Pfff.
 
 ** TODO first public release on OPAM
 
 ** TODO better merlin support
 automatic case-analysis code generation,
+
+* 0.22 (Q1 2019)
 
 ** macros!
 (finally deserve to be called an Emacs clone)
