@@ -35,6 +35,7 @@ PFFF_MODES=\
  pfff_modes/caml_mode.ml\
  pfff_modes/cpp_mode.ml\
  pfff_modes/noweb_mode.ml\
+ pfff_modes/javascript_mode.ml\
 
 # for compilation (for -I)
 PFFF_LIBS1=\
@@ -44,6 +45,7 @@ PFFF_LIBS1=\
  lang_ml  lang_ml-visual \
  lang_cpp lang_cpp-analyze \
  lang_nw  lang_nw-analyze \
+ lang_js  lang_js-analyze \
 
 # some of those dirs are here just because of -linkall
 PFFF_LIBS0=\
@@ -228,7 +230,8 @@ $(TARGET).opt: $(OPTOBJS) $(LIBS:.cma=.cmxa)
 #	@rm -f $(OBJS) $(OBJS:.cmo=.cmi) $(OBJS:.cmo=.cmx) $(OBJS:.cmo=.o) \
 #       $(OBJS:.cmo=.annot) $(OBJS:.cmo=.cmt) $(OBJS:.cmo=.cmti)
 clean::
-	rm -f */*.cm[ioxa] */*.[oa] */*.cmxa */*.annot */*.cmt*
+	rm -f */*.cm[ioxa] */*.[oa] */*.cmxa */*.annot */*.cmt* 
+	rm -f $(BACKENDDIR)/*.cm[ioxat]
 	rm -f $(PROGS) *.opt
 
 #less: should recompile if opam switch
