@@ -55,3 +55,8 @@ html_mode.ml
 #*.idx
 /.depend2
 /gitlog
+/PFFF_DB.json
+/PFFF_DB.marshall
+/layer_bottomup.json
+/layer_graphcode_stats.json
+/layer_topdown.json
