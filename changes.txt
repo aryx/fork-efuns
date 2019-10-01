@@ -1,14 +1,21 @@
 # -*- org -*-
 
-* 0.23 (Q2 2019)
-
-** a new Javascript mode
-based on the Javascript parser and highlighter in Pfff.
+* 0.25 (Q4 2019)
 
 ** TODO first public release on OPAM
 
 ** TODO better merlin support
 automatic case-analysis code generation,
+
+** a new Python mode
+based on the Python parser and highlighter in Pfff.
+
+* 0.24 (Q3 2019)
+
+* 0.23 (Q2 2019)
+
+** a new Javascript mode
+based on the Javascript parser and highlighter in Pfff.
 
 * 0.22 (Q1 2019)
 

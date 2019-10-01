@@ -13,6 +13,10 @@ S external/pfff-lang_cpp/
 S external/pfff-lang_cpp-analyze/
 S external/pfff-lang_nw/
 S external/pfff-lang_nw-analyze/
+S external/pfff-lang_js/
+S external/pfff-lang_js-analyze/
+S external/pfff-lang_python/
+S external/pfff-lang_python-analyze/
 S external/lablgtk2
 S external/cairo2
 S external/cairo2-gtk
@@ -41,6 +45,10 @@ B external/pfff-lang_cpp/
 B external/pfff-lang_cpp-analyze/
 B external/pfff-lang_nw/
 B external/pfff-lang_nw-analyze/
+B external/pfff-lang_js/
+B external/pfff-lang_js-analyze/
+B external/pfff-lang_python/
+B external/pfff-lang_python-analyze/
 B external/lablgtk2
 B external/cairo2
 B external/cairo2-gtk
@@ -56,5 +64,3 @@ B prog_modes
 B text_modes
 B pfff_modes
 B ipc
-#B external/FOR_MERLIN/**
-#S external/FOR_MERLIN/**
