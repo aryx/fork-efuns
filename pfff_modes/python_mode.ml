@@ -50,17 +50,7 @@ let funcs = { Pfff_modes.
 
 let color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  (* we need to keep the extension because Parse_ml.parse behaves
-   * differently on ml and mli files
-   *)
-  let ext =
-    match buf.buf_filename with
-    | None -> "ml"
-    | Some file -> 
-        let (_,_, e) = Common2.dbe_of_filename file in
-        e
-  in
-  Common2.with_tmp_file ~str:s ~ext (fun file ->
+  Common2.with_tmp_file ~str:s ~ext:"py" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   )
 
