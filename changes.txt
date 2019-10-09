@@ -10,6 +10,9 @@ automatic case-analysis code generation,
 ** a new Python mode
 based on the Python parser and highlighter in Pfff.
 
+** support for the bento code checker
+especially useful for Python and Javascript code
+
 * 0.24 (Q3 2019)
 
 * 0.23 (Q2 2019)
