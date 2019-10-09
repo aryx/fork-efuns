@@ -15,6 +15,10 @@ open Common
 open Options
 open Efuns
 
+(*****************************************************************************)
+(* Types and globals *)
+(*****************************************************************************)
+
 (*s: constant [[Compil.compilation_frame]] *)
 let compilation_frame = ref None
 (*e: constant [[Compil.compilation_frame]] *)
@@ -32,6 +36,10 @@ type error = {
 (*e: type [[Compil.error]] *)
 
 type find_error_fun = Text.t -> Text.point -> error
+
+(*****************************************************************************)
+(* Helpers *)
+(*****************************************************************************)
 
 (*s: constant [[Compil.c_error_regexp]] *)
 let c_error_regexp = define_option ["compil"; "error_regexp"] "" regexp_option
@@ -55,13 +63,28 @@ let find_error_gen re text error_point =
   error
 (*e: function [[Compil.c_find_error]] *)
 
+(*****************************************************************************)
+(* More vars *)
+(*****************************************************************************)
+
 (*s: constant [[Compil.find_error]] *)
 let find_error = Store.create_abstr "find_error"
 (*e: constant [[Compil.find_error]] *)
 
 let find_error_location_regexp = Store.create_abstr "find_error_loc_regexp"
 
-let find_error_error_regexp = Store.create_abstr "find_error_err_regexp"
+let find_error_of_buf buf = 
+  try Var.get_var buf find_error
+  with Not_found | Failure _ -> 
+     let re = 
+        try Var.get_var buf find_error_location_regexp
+        with Not_found | Failure _ -> snd !!c_error_regexp
+     in
+     find_error_gen re
+
+(*****************************************************************************)
+(* M-x next_error *)
+(*****************************************************************************)
   
 (*s: function [[Compil.next_error]] *)
 let next_error top_frame =
@@ -72,16 +95,7 @@ let next_error top_frame =
       then Frame.unkill (Multi_frames.cut_frame top_frame) frame;
 
       let (buf, text, point) = Frame.buf_text_point frame in
-      let find_error = 
-        try Var.get_var buf find_error
-        with Not_found | Failure _ -> 
-          let re = 
-            try Var.get_var buf find_error_location_regexp
-            with Not_found | Failure _ ->
-              snd !!c_error_regexp
-          in
-          find_error_gen re
-      in
+      let find_error = find_error_of_buf buf in
       try
         let error = find_error text error_point in
         Text.set_position text frame.frm_start error.err_msg;
@@ -117,6 +131,10 @@ let next_error top_frame =
 [@@interactive]
 (*e: function [[Compil.next_error]] *)
 
+(*****************************************************************************)
+(* Options *)
+(*****************************************************************************)
+
 (*s: constant [[Compil.compile_find_makefile]] *)
 let compile_find_makefile = define_option ["compil";"find_makefile"] ""
     bool_option true
@@ -127,6 +145,12 @@ let compile_find_makefile = define_option ["compil";"find_makefile"] ""
 let make_command = define_option ["compil";"make_command"] ""
     string_option "make"
 (*e: constant [[Compil.make_command]] *)
+
+(*****************************************************************************)
+(* Colors *)
+(*****************************************************************************)
+
+let find_error_error_regexp = Store.create_abstr "find_error_err_regexp"
 
 let color_buffer buf =
   Dircolors.colorize_buffer buf;
@@ -146,11 +170,16 @@ let color_buffer buf =
     (Text.make_attr (Attr.get_color "red") 1 0 false);
   ()
 
+(*****************************************************************************)
+(* The mode *)
+(*****************************************************************************)
   
-let mode = Ebuffer.new_major_mode "Compilation" 
-  (Some (fun buf ->
-    color_buffer buf
-   ))
+let mode = Ebuffer.new_major_mode "Compilation"  (Some (fun buf ->
+    color_buffer buf))
+
+(*****************************************************************************)
+(* M-x compile *)
+(*****************************************************************************)
   
 (*s: constant [[Compil.make_hist]] *)
 let make_hist = ref [!!make_command]
@@ -196,10 +225,12 @@ let compile frame =
             then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
+      (* this makes also comp_frame the active frame *)
       let comp_frame = 
         System.start_command cdir "*Compile*" comp_window cmd 
         (Some (fun buf _status -> color_buffer buf))
       in
+      (* switch back cursor to original frame *)
       Frame.active frame;
       let buf = comp_frame.frm_buffer in
       let error_point = Text.new_point buf.buf_text in
@@ -227,6 +258,10 @@ let compile frame =
   )
 [@@interactive]
 (*e: function [[Compil.compile]] *)
+
+(*****************************************************************************)
+(* M-x grep *)
+(*****************************************************************************)
 
 (*s: constant [[Compil.grep_command]] *)
 let grep_command = define_option ["compil"; "grep_command"] "" string_option
@@ -258,7 +293,7 @@ let grep frame =
       in
       let comp_frame = System.start_command cdir "*Grep*" comp_window cmd None
       in
-      Frame.active frame;
+      Frame.active frame; 
       let buf = comp_frame.frm_buffer in
       let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir)

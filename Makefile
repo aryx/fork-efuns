@@ -166,6 +166,7 @@ SRC=\
  prog_modes/ocaml_merlin.ml\
  prog_modes/c_mode.ml\
  prog_modes/lisp_mode.ml\
+ prog_modes/bento.ml\
  \
  $(PFFF_MODES)\
  \
