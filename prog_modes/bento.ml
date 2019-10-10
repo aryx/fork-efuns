@@ -15,6 +15,7 @@
 open Common
 open Efuns
 open Compil
+open Options
 module J = Json_type
 
 (*****************************************************************************)
@@ -25,7 +26,8 @@ module J = Json_type
  * Bento is a code-quality/productivity tool.
  * See https://github.com/returntocorp/bento for more information on Bento.
  *
- * todo? factorize things in a linter.ml, checker.ml, common_linter.ml?
+ * todo:
+ *  - factorize things in a linter.ml, checker.ml, common_linter.ml?
  *
  * related work:
  *  - Emacs binding:
@@ -60,7 +62,10 @@ let json_of_bento_check rootdir =
   let command = spf "cd %s; %s check --formatter bento.formatter.Json" 
       rootdir external_program in
   let pipe_read = Unix.open_process_in command in
-  let str = input_line pipe_read in
+  let str = 
+    try input_line pipe_read 
+    with End_of_file -> "[]" (* no errors, empty Json array *)
+  in
   let _status = Unix.close_process_in pipe_read in
   if !debug
   then pr2 str;
@@ -89,6 +94,29 @@ let json_to_errors json =
       | _ -> failwith "wrong bento JSON format"
      ) |> Common.join "\n"
   | _ -> failwith "wrong bento JSON format"
+
+(*****************************************************************************)
+(* Colors *)
+(*****************************************************************************)
+(* similar to Compil.color_buffer and Pl_colors.color_number_and_punctuation*)
+let color_buffer buf =
+  Dircolors.colorize_buffer buf;
+
+  let re = Str.regexp ":Error:" in
+  Color.color buf re false
+    (Text.make_attr (Attr.get_color "red") 1 0 false);
+  let re = Str.regexp ":Warning:" in
+  Color.color buf re false
+    (Text.make_attr (Attr.get_color "orange") 1 0 false);
+  let re = Str.regexp ":Advice:" in
+  Color.color buf re false
+    (Text.make_attr (Attr.get_color "yellow") 1 0 false);
+
+  Color.color buf 
+    (Str.regexp ("\\b[0-9]+\\b")) false
+      (Text.make_attr (Attr.get_color !!Pl_colors.number_color) 1 0 false);
+
+  ()
 
 (*****************************************************************************)
 (* Entry point *)
@@ -120,8 +148,10 @@ let bento_check frame =
     let buf_name = "*bento*" in
     let text = Text.create errors in
     let buf = Ebuffer.create buf_name None text (Keymap.create ()) in
+    (* todo? propagate Compil vars? *)
 
-    Compil.color_buffer buf;
+    color_buffer buf;
+    Ebuffer.set_major_mode buf Compil.mode;
     let comp_frame = Frame.create comp_window None buf in
     Frame.active frame; (* switch back to original frame *)
     let error_point = Text.new_point buf.buf_text in

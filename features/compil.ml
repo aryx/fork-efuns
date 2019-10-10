@@ -16,6 +16,15 @@ open Options
 open Efuns
 
 (*****************************************************************************)
+(* Prelude *)
+(*****************************************************************************)
+(*
+ * todo:
+ *  - handle return on an error!
+ *  - factorize code between compil and grep
+ *)
+
+(*****************************************************************************)
 (* Types and globals *)
 (*****************************************************************************)
 
@@ -174,8 +183,7 @@ let color_buffer buf =
 (* The mode *)
 (*****************************************************************************)
   
-let mode = Ebuffer.new_major_mode "Compilation"  (Some (fun buf ->
-    color_buffer buf))
+let mode = Ebuffer.new_major_mode "Compilation"  None
 
 (*****************************************************************************)
 (* M-x compile *)
@@ -253,6 +261,7 @@ let compile frame =
          Var.set_local buf find_error_error_regexp x
        with Not_found | Failure _ -> ()
       );
+      (* set major mode *)
       Ebuffer.set_major_mode buf mode
 
   )
@@ -291,12 +300,14 @@ let grep frame =
             then Multi_frames.cut_frame frame
             else new_frame.frm_window 
       in
-      let comp_frame = System.start_command cdir "*Grep*" comp_window cmd None
+      let comp_frame = System.start_command cdir "*Grep*" comp_window cmd 
+         (Some (fun buf _status -> color_buffer buf))
       in
       Frame.active frame; 
       let buf = comp_frame.frm_buffer in
       let error_point = Text.new_point buf.buf_text in
       compilation_frame := Some (comp_frame, error_point, cdir)
+      (* todo? no set major mode? *)
   )
 [@@interactive]
 (*e: function [[Compil.grep]] *)

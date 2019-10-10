@@ -44,6 +44,7 @@ val compile_find_makefile : bool Options.t
 (* internals *)
 val compilation_frame : (Efuns.frame * Text.point * string) option ref
 val color_buffer: Efuns.buffer -> unit
+val mode: Efuns.major_mode
 (*
 val default_error : (Text.t -> Text.point -> error) ref
 val make_command : string Options.option_record

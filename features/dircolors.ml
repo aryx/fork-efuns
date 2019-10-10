@@ -109,9 +109,9 @@ let extensions = [
 	E "hs"; E "lhs";
 	E "scm"; E "sc";
 	E "pm"; E "pl"; E "m"; E "pmi"; E "pmx";
-	E "bet"
+	E "bet";
    ], lang_color);
-  ([E "php";
+  ([E "php"; E "py"; E "js";
 	E "p"; E "pas";
 	E "c"; E "cpp"; E "c\\+\\+"; E "cc"
    ], lang_2_color);
