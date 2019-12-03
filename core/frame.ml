@@ -39,11 +39,11 @@ let buf_text_point frame =
 
 (*s: constant [[Frame.status_format]] *)
 let status_format = ref [
-    StatModified , (1, 2);
+    StatModified, (1, 2);
     StatName, (5, 20);
     StatMode, (30,30);
     StatLine, (65, 5);
-    StatCol, (70 , 5);
+    StatCol, (70, 5);
     StatFile, (35,15);
   ]
 (*e: constant [[Frame.status_format]] *)
@@ -664,7 +664,7 @@ let display top_window frame =
         (Text.point_line text point + 1)
         (let xs = buf.buf_minor_modes |> List.map (fun m -> m.min_name) in
          let xs = buf.buf_major_mode.maj_name :: xs in
-         xs +> Common.join " "
+         xs |> Common.join " "
         )
       in
       let minuses = String.make 256 '-' in

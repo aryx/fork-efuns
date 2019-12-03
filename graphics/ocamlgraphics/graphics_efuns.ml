@@ -56,7 +56,7 @@ let init location displayname =
   let _ = Interactive.create_bindings location in
 
   (* open the first buffers *)
-  !init_files +> List.iter (fun name ->
+  !init_files |> List.iter (fun name ->
     let _ = Frame.load_file top_window.window name in ()
   );
   Top_window.update_display location;

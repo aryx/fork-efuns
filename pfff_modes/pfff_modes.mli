@@ -8,7 +8,7 @@ type ('ast, 'token) for_helper = {
    * after tokens that come later but were present in the 
    * AST and visited.
    *)
-  highlight: tag_hook:(Parse_info.info -> Highlight_code.category -> unit) ->
+  highlight: tag_hook:(Parse_info.t -> Highlight_code.category -> unit) ->
              Highlight_code.highlighter_preferences -> 'ast * 'token list ->
              unit;
 (*  info_of_tok:('token -> Parse_info.info); *)

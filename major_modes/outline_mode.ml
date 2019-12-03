@@ -116,7 +116,7 @@ let create_outline_buffer lvl line_orig buf_name buf_orig =
 
   let current_line_in_outline = ref 0 in
   Text.with_new_point text (fun cursor ->
-    xs +> List.iter (fun (_lvl, pt) ->
+    xs |> List.iter (fun (_lvl, pt) ->
       Text.goto_point text cursor pt;
       Text.bmove text cursor (Text.point_to_bol text cursor);
       Common.push (Text.dup_point text cursor) origin_points;

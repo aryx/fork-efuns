@@ -41,7 +41,7 @@ module Db = Database_code
 (* copy of pfff/code_map/parsing2.ml *)
 type ('ast, 'token) for_helper = {
   parse: Common.filename -> ('ast * 'token list) list;
-  highlight: tag_hook:(Parse_info.info -> HC.category -> unit) ->
+  highlight: tag_hook:(Parse_info.t -> HC.category -> unit) ->
              Highlight_code.highlighter_preferences -> 'ast * 'token list ->
              unit;
 (*  info_of_tok:('token -> Parse_info.info); *)
