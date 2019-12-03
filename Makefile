@@ -19,6 +19,7 @@ PROGS=efuns efuns_client
 EXTERNALDIRS= external/commons external/h_visualization
 EXTERNALCMAS= external/commons/lib.cma external/h_visualization/lib.cma
 
+
 # Jsonwheel dependencies 
 # (I now use jsonwheel not only for pfff_modes but also for ocaml_merlin).
 # This is for -I and for finding dlls (e.g., deps-netsys).
@@ -41,13 +42,16 @@ PFFF_MODES=\
 # for compilation (for -I)
 PFFF_LIBS1=\
  h_program-lang \
- matcher \
  graph_code \
- lang_ml  lang_ml-visual \
+ lang_ml  lang_ml-analyze \
  lang_cpp lang_cpp-analyze \
+ lang_c   lang_c-analyze \
+ lang_java   lang_java-analyze \
  lang_nw  lang_nw-analyze \
  lang_js  lang_js-analyze \
  lang_python  lang_python-analyze \
+ lang_GENERIC lang_GENERIC-analyze \
+ matcher \
 
 # some of those dirs are here just because of -linkall
 PFFF_LIBS0=\
@@ -59,6 +63,7 @@ PFFFDIRS=$(PFFF_LIBS1:%=external/pfff-%/)
 PFFFCMAS=\
  external/pfff-deps-ocamlgraph/graph.cma \
  external/pfff-deps-commons_core/lib.cma \
+ external/pfff-deps-commons_ocollection/lib.cma \
  $(PFFF_LIBS0:%=external/pfff-%/lib.cma) \
  $(PFFF_LIBS1:%=external/pfff-%/lib.cma)
 endif
