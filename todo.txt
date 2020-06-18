@@ -2,6 +2,28 @@
 
 * Last
 
+** Last
+
+*** apply-macro-to-region
+
+*** query_replace_regexp return an exception on Str2.matched_str TODO
+
+*** OPAM release now that opam-publish is pretty easy to use?
+
+*** highlight C-s
+first simple version, just the searched string
+
+*** highlight marked region?
+
+*** resume ocp_indent in efuns
+
+*** ocamlmerlin has pbs with FOR_MERLIN/
+some exns then when put this dir in .merlin for pfff
+
+pb common.cmi ambiguity, can be fixed?
+
+*** => OPAM release
+
 ** Current
 
 *** bugs

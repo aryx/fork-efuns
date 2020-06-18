@@ -50,8 +50,10 @@ PFFF_LIBS1=\
  lang_nw  lang_nw-analyze \
  lang_js  lang_js-analyze \
  lang_python  lang_python-analyze \
+ lang_go lang_go-analyze \
+ lang_lisp lang_lisp-analyze \
+ lang_php lang_php-analyze-foundation lang_php-analyze-visual \
  lang_GENERIC lang_GENERIC-analyze \
- matcher \
 
 # some of those dirs are here just because of -linkall
 PFFF_LIBS0=\
@@ -61,6 +63,10 @@ PFFF_LIBS0=\
 
 PFFFDIRS=$(PFFF_LIBS1:%=external/pfff-%/)
 PFFFCMAS=\
+ external/pfff-deps-uucp/uucp.cma \
+ external/pfff-deps-uutf/uutf.cma \
+ external/pfff-deps-dyp/dyp.cma \
+ external/pfff-deps-ppx_deriving/runtime/ppx_deriving_runtime.cma \
  external/pfff-deps-ocamlgraph/graph.cma \
  external/pfff-deps-commons_core/lib.cma \
  external/pfff-deps-commons_ocollection/lib.cma \
