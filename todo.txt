@@ -2,6 +2,8 @@
 
 * Last
 
+*** M-% with ! to do replace all
+
 ** Last
 
 *** apply-macro-to-region
