@@ -14,6 +14,7 @@
  *)
 open Migrate_parsetree
 open Ast_402
+let ocaml_version = Versions.ocaml_402
 
 open Ast_mapper
 open Ast_helper
@@ -64,7 +65,7 @@ open Longident
 (* Mapper *)
 (*****************************************************************************)
 
-let (mapper: Migrate_parsetree.Ast_402.Ast_mapper.mapper) =
+let mapper _config _cookies =
   { default_mapper with
     structure = fun mapper xs ->
       xs |> List.map (fun item ->
@@ -109,8 +110,5 @@ let (mapper: Migrate_parsetree.Ast_402.Ast_mapper.mapper) =
 (*****************************************************************************)
 (* Entry point *)
 (*****************************************************************************)
-module To_current = Convert(OCaml_402)(OCaml_current)
-
 let () = 
-  Compiler_libs.Ast_mapper.register "interactive" 
-    (fun _ -> To_current.copy_mapper mapper)
+  Driver.register ~name:"ppx_interactive" ocaml_version mapper
