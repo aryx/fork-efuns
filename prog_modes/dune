@@ -1,0 +1,15 @@
+(library
+ (name efuns_prog_modes)
+ (wrapped false)
+ (libraries
+   json-wheel
+   commons
+
+   efuns_core efuns_features
+   efuns_major_modes efuns_minor_modes
+ )
+ (preprocess (pps ppx_interactive))
+)
+(ocamllex ocaml_lexer)
+(ocamllex lisp_lexer)
+(ocamllex c_lexer)

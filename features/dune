@@ -1,0 +1,8 @@
+(library
+ (name efuns_features)
+ (wrapped false)
+ (libraries
+   efuns_core
+ )
+ (preprocess (pps ppx_interactive))
+)

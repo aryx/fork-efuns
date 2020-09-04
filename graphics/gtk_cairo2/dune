@@ -1,0 +1,16 @@
+(library
+ (name efuns_graphics_gtk_cairo2)
+ (wrapped false)
+ (libraries
+   ; system libs
+   cairo2 cairo2-pango cairo2-gtk
+
+   ; pfff libs
+   commons pfff-h_visualization
+
+   ; efuns libs
+   efuns_core efuns_features 
+   efuns_graphics
+
+ )
+)

@@ -1,0 +1,7 @@
+(library
+ (name efuns_commons)
+ (wrapped false)
+ (libraries
+   commons threads
+ )
+)

@@ -1,0 +1,9 @@
+(library
+ (name efuns_config)
+ (wrapped false)
+ (libraries
+    efuns_core efuns_features
+    efuns_major_modes
+    efuns_ipc
+ )
+)

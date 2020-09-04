@@ -1,0 +1,7 @@
+(library
+ (name efuns_core)
+ (wrapped false)
+ (libraries
+   efuns_commons efuns_graphics
+ )
+)

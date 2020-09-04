@@ -1,0 +1,8 @@
+(library
+ (name ppx_interactive)
+ (kind ppx_deriver)
+ (libraries 
+;   str unix
+;   commons 
+  ocaml-migrate-parsetree
+))

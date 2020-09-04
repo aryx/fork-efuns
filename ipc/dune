@@ -1,0 +1,10 @@
+(library
+ (name efuns_ipc)
+ (wrapped false)
+ (libraries
+   commons
+
+   efuns_core efuns_features
+ )
+ (preprocess (pps ppx_interactive))
+)
