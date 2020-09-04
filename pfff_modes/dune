@@ -1,0 +1,24 @@
+(library
+ (name efuns_pfff_modes)
+ (wrapped false)
+ (libraries
+   ; system libs
+   commons
+
+   ; efuns libs
+   efuns_core efuns_features
+   efuns_major_modes efuns_minor_modes
+   efuns_prog_modes
+
+   ; pfff libs
+   pfff-h_program-lang
+
+   pfff-lang_cpp pfff-lang_cpp-analyze
+   pfff-lang_c
+   pfff-lang_python pfff-lang_python-analyze
+   pfff-lang_js pfff-lang_js-analyze
+   pfff-lang_nw pfff-lang_nw-analyze
+   pfff-lang_ml pfff-lang_ml-analyze
+ )
+ (preprocess (pps ppx_interactive))
+)

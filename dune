@@ -2,9 +2,7 @@
  (dev
   ; TODO :standard is
   ; -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs 
-  ; -9 is only for lang_cpp/parsing/parsing_hacks.ml
-  ; -58 is for dypgen
-  (flags (-w +A-4-6-29-44-45-58-52 -warn-error +a)))
+  (flags (-w +A-4-6-29-44-45-52 -warn-error +a)))
  (release
   (flags (:standard -O3))))
 
@@ -15,10 +13,6 @@
  (libraries
      ; system libs
      str unix
-;    bigarray
-;    threads          ;; needed for json-wheel (Condition?)
-;    json-wheel       ;; Json_io, Json_type
-;
 
      ; efuns libs
      efuns_commons
@@ -27,30 +21,13 @@
      efuns_features ;efuns_ipc
      efuns_major_modes efuns_minor_modes
      efuns_prog_modes efuns_text_modes
-     ; efuns_pfff_modes
      efuns_config
 
      ; pfff libs
-
-
-;    commons commons_core commons_ocollection
-;    pfff-config
-;    pfff-h_program-lang
-;    pfff-lang_python pfff-lang_python-analyze
-;    pfff-lang_js pfff-lang_js-analyze
-;    pfff-lang_json
-;    pfff-lang_cpp pfff-lang_cpp-analyze
-;    pfff-lang_c pfff-lang_c-analyze
-;    pfff-lang_ml pfff-lang_ml-analyze
-;    pfff-lang_java pfff-lang_java-analyze
-;    pfff-lang_go pfff-lang_go-analyze
-;    pfff-lang_ruby pfff-lang_ruby-analyze
-;    pfff-lang_php
-;    pfff-lang_lisp
-;    pfff-lang_skip
-;    pfff-lang_FUZZY
-;    pfff-lang_GENERIC pfff-lang_GENERIC-analyze
+     efuns_pfff_modes
  )
+
+ ; need that, otherwise all the [@@interactive] are not executed
  (link_flags (-linkall))
  ; for ocamldebug
  (modes byte)
@@ -60,5 +37,5 @@
 (install
  (package efuns)
  (section bin)
- (files (main.exe as efun))
+ (files (main.exe as efun) (efuns_client.exe as efuns_client))
 )
