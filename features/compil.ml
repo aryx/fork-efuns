@@ -72,6 +72,14 @@ let find_error_gen re text error_point =
   error
 (*e: function [[Compil.c_find_error]] *)
 
+(* apparently the Core Filename module has an expand function doing that *)
+let expand_tilde s =
+  if s =~ "^~/\\(.*\\)$"
+  then
+    let rest = Common.matched1 s in
+    Filename.concat (Sys.getenv "HOME") rest
+  else s
+
 (*****************************************************************************)
 (* More vars *)
 (*****************************************************************************)
@@ -202,10 +210,13 @@ let compile frame =
       let cmd = if cmd = "" then default else cmd in (* cmd ||| default *)
       let cdir = Frame.current_dir frame in
       (*s: [[Compil.compile()]] find possibly cdir with a makefile *)
-      let cdir = 
-        if !!compile_find_makefile then
-          if cmd =~ "^make"
-          then
+      let cdir, cmd = 
+        match () with
+        | _ when cmd =~ "^cd +\\([^;]+\\);\\(.*\\)$" ->
+            let (dir, cmd) = Common.matched2 cmd in
+            let finaldir = expand_tilde dir in
+            finaldir, cmd
+        | _ when !!compile_find_makefile && cmd =~ "^make" ->
           (* try to find a Makefile in the directory *)
             let rec iter dir =
               if Sys.file_exists (Filename.concat dir "Makefile") ||
@@ -218,9 +229,8 @@ let compile frame =
                 then cdir 
                 else iter newdir
             in
-            iter cdir
-          else cdir
-        else cdir
+            iter cdir, cmd
+        | _ -> cdir, cmd
       in
       (*e: [[Compil.compile()]] find possibly cdir with a makefile *)
       let comp_window =

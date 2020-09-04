@@ -2,6 +2,9 @@
 
 * Last
 
+*** try lablgtk3?
+faster? less buggy?
+
 *** M-% with ! to do replace all
 
 ** Last
