@@ -606,7 +606,7 @@ then used to find the word.
 
 let error_regexp = define_option ["ocaml_mode"; "error_regexp"] ""
     regexp_option (string_to_regex
-    "File \"\\(.*\\)\", line \\([0-9]+\\), characters \\([0-9]+\\)[-]\\([0-9]*\\):")
+    "File \"\\(.*\\)\", lines? \\([0-9]+\\)\\(-?[0-9]*\\), characters \\([0-9]+\\)[-]\\([0-9]*\\):")
 
 (* less: could factorize with lisp_mode.ml *)
 let find_error text error_point =
@@ -618,10 +618,10 @@ let find_error text error_point =
       err_msg = Text.get_position text error_point;
       err_filename = groups.(0);
       err_line = (int_of_string groups.(1)) - 1;
-      err_begin = int_of_string groups.(2);
+      err_begin = int_of_string groups.(3);
       err_end = 
-        try int_of_string groups.(3)
-        with  _ -> int_of_string groups.(2)
+        try int_of_string groups.(4)
+        with  _ -> int_of_string groups.(3)
     } in
   Text.fmove text error_point 1;
   error
