@@ -79,6 +79,7 @@ let columnize width xs =
         with Invalid_argument 
             (* it's Array.get in ocaml light :) *)
             ("index out of bounds" | "Array.get") -> ""
+          | _ -> raise Impossible
       in
       let len = String.length s in
       Buffer.add_string buf s;
