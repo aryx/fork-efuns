@@ -1,5 +1,6 @@
 # ocaml object files
-
+_build
+.merlin
 *.o
 *.cm*
 *.annot

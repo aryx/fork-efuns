@@ -35,7 +35,7 @@ OPTOBJS?= $(SRC:.ml=.cmx)
 #-48 allow eliminating optional args, unclear how to fix without wide  changes
 #-21: statement never returns (for olight)
 #-58: for ocamlopt, to not complain about missing .cmx in external/ libs
-WARNING_FLAGS?=-w +A-4-6-29-44-45-58 -warn-error +a
+WARNING_FLAGS?=-w +A-4-6-29-44-45-58-52 -warn-error +a
 #default is: +a-4-6-7-9-27-29-32..42-44-45-48-50-60 (see ocamlc -help)
 
 #dont use -custom, it makes the bytecode unportable.
