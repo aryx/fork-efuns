@@ -2,6 +2,7 @@
  (name efuns_core)
  (wrapped false)
  (libraries
+   pfff-h_program-lang
    efuns_commons efuns_graphics
  )
 )
