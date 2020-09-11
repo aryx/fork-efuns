@@ -2,7 +2,6 @@
  (name efuns_prog_modes)
  (wrapped false)
  (libraries
-   json-wheel
    commons
 
    efuns_core efuns_features

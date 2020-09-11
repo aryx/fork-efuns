@@ -16,7 +16,7 @@ open Common
 open Efuns
 open Compil
 open Options
-module J = Json_type
+module J = JSON
 
 (*****************************************************************************)
 (* Prelude *)
@@ -69,7 +69,7 @@ let json_of_bento_check rootdir =
   let _status = Unix.close_process_in pipe_read in
   if !debug
   then pr2 str;
-  Json_io.json_of_string str
+  JSON.json_of_string str
 
 (* generate error strings compatible with Compil.c_error_regexp *)
 let json_to_errors json =

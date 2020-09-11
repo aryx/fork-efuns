@@ -2,7 +2,6 @@
  (name efuns_text_modes)
  (wrapped false)
  (libraries
-   json-wheel
    commons
 
    efuns_core efuns_features

@@ -14,7 +14,7 @@
  *)
 open Common
 open Efuns
-module J = Json_type
+module J = JSON
 
 (*****************************************************************************)
 (* Prelude *)
@@ -134,7 +134,7 @@ let execute_command frm command =
   let _status = Unix.close_process (pipe_read, pipe_write) in
   if !debug
   then pr2 str;
-  let j = Json_io.json_of_string str in
+  let j = JSON.json_of_string str in
   (match j with
   | J.Object (
     ("class", J.String "return"):: (* | "failure" | "error" | "exception" *)
