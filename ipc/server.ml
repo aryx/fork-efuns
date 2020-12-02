@@ -96,7 +96,7 @@ let start () =
           started := true;
           module_accept s
         );
-       Hook.add_hook Misc.exit_hooks (fun () -> Unix.unlink socket_name);
+       Hook.add_hook Misc_features.exit_hooks (fun () -> Unix.unlink socket_name);
       end
   )  
 (*e: function [[Server.start]] *)

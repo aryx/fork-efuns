@@ -382,7 +382,7 @@ let install buf =
 let mode = Ebuffer.new_major_mode"TeX" (Some install)
 
 let comment_string = "%"
-let _ = Var.set_major_var mode Misc.line_comment "%"
+let _ = Var.set_major_var mode Misc_features.line_comment "%"
   
 let comment_region frame =
   let buf = frame.frm_buffer in

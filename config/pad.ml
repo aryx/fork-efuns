@@ -16,7 +16,7 @@ let _ =
 
     (* keybindings *)
     [
-      [MetaMap, Char.code 'g'], Misc.goto_line;
+      [MetaMap, Char.code 'g'], Misc_features.goto_line;
 
       [MetaMap, XK.xk_Up], Scroll.scroll_up; 
       [MetaMap, XK.xk_Down], Scroll.scroll_down; 

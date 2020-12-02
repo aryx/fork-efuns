@@ -13,6 +13,7 @@
 (*e: copyright header2 *)
 open Options
 open Efuns
+module Parameter = Parameter_option
 
 (*s: constant [[Makefile_mode.mkfile_vars]] *)
 let mkfile_vars= Str.regexp "\\(\\$([a-zA-Z0-9_]*)\\)\\|\\([a-zA-Z0-9_]+=\\)"

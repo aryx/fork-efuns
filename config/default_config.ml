@@ -12,6 +12,10 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Efuns
+module Parameter = Parameter_option
+
+(* pad: this used to be called config.ml, but this conflict with 
+ * compiler-libs config.ml file *)
 
 open Keymap (* for the c_xxx *)
 (*s: constant [[standard_map]] *)
@@ -216,9 +220,9 @@ let standard_map = [
   (*s: misc keys *)
   [c_h; NormalMap, Char.code 'v'], Interactive.describe_variable;
   (*x: misc keys *)
-  [c_x; NormalMap, Char.code '='], Misc.cursor_position;
+  [c_x; NormalMap, Char.code '='], Misc_features.cursor_position;
   (*x: misc keys *)
-  [c_x; ControlMap, Char.code 'c'], Misc.exit; 
+  [c_x; ControlMap, Char.code 'c'], Misc_features.exit; 
   (*x: misc keys *)
   [ControlMap, Char.code 'l'], Scroll.recenter;
   (*x: misc keys *)
@@ -247,11 +251,11 @@ let core_map =
  (*x: [[core_map]] entries *)
  (let c_q = (ControlMap, Char.code 'q') in
  (Common2.enum 65 (65+25) |> List.map (fun key ->
-   [c_q;ControlMap, key], Misc.insert_special_char
+   [c_q;ControlMap, key], Misc_features.insert_special_char
  )) @
  (* needed? *)
  (Common2.enum 97 (97+25) |> List.map (fun key ->
-   [c_q;ControlMap, key], Misc.insert_special_char
+   [c_q;ControlMap, key], Misc_features.insert_special_char
  ))) @
  (*x: [[core_map]] entries *)
  ([
@@ -400,7 +404,7 @@ let _ =
     Parameter.add_option_parameter Text.add_amount;
     (*e: [[Config._5]] start hooks options *)
     init_global_map ();
-    Hook.add_hook Top_window.handle_key_start_hook Misc.check_file;      
+    Hook.add_hook Top_window.handle_key_start_hook Misc_features.check_file;
   )
 (*e: toplevel [[Config]] starting hook *)
 (*e: config.ml *)

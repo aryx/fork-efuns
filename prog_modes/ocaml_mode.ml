@@ -12,6 +12,7 @@ open Efuns
 open Options
 open Ocaml_lexer
 module I = Common_indenter
+module Parameter = Parameter_option
 
 (***********************************************************************)
 (* Paths *)

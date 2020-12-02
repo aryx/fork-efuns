@@ -1,4 +1,5 @@
 open Options
+module Parameter = Parameter_option
 
 (* font-lock-mode like faces for efuns *)
 

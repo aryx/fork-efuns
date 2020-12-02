@@ -12,6 +12,7 @@
 (***********************************************************************)
 (*e: copyright header2 *)
 open Efuns
+module Parameter = Parameter_option
 
 (* M-x *)
   
