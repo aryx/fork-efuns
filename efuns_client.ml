@@ -1,4 +1,4 @@
-(*s: ipc/efuns_client.ml *)
+(*s: efuns_client.ml *)
   
 (*s: constant [[Efuns_client.pos]] *)
 let pos = ref 0
@@ -73,4 +73,4 @@ let _ =
   flush outc
 (*e: toplevel [[Efuns_client._3]] *)
   
-(*e: ipc/efuns_client.ml *)
+(*e: efuns_client.ml *)

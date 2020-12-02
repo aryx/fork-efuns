@@ -1,4 +1,4 @@
-(*s: default_config.ml *)
+(*s: config/default_config.ml *)
 (*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
@@ -407,4 +407,4 @@ let _ =
     Hook.add_hook Top_window.handle_key_start_hook Misc_features.check_file;
   )
 (*e: toplevel [[Config]] starting hook *)
-(*e: default_config.ml *)
+(*e: config/default_config.ml *)
