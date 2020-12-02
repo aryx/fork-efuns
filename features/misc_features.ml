@@ -1,4 +1,4 @@
-(*s: features/misc.ml *)
+(*s: features/misc_features.ml *)
 (*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
@@ -173,4 +173,4 @@ let _ =
   )
 (*e: toplevel [[Simple._1]] *)
   
-(*e: features/misc.ml *)
+(*e: features/misc_features.ml *)

@@ -1,4 +1,4 @@
-(*s: config.ml *)
+(*s: default_config.ml *)
 (*s: copyright header2 *)
 (***********************************************************************)
 (*                                                                     *)
@@ -404,7 +404,7 @@ let _ =
     Parameter.add_option_parameter Text.add_amount;
     (*e: [[Config._5]] start hooks options *)
     init_global_map ();
-    Hook.add_hook Top_window.handle_key_start_hook Misc_features.check_file;
+    Hook.add_hook Top_window.handle_key_start_hook Misc.check_file;      
   )
 (*e: toplevel [[Config]] starting hook *)
-(*e: config.ml *)
+(*e: default_config.ml *)
