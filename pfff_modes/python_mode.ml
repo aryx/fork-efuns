@@ -35,8 +35,8 @@ module PI = Parse_info
 let funcs = { Pfff_modes.
   parse = (fun file ->
     Common.save_excursion Flag_parsing.error_recovery true (fun()->
-      let (astopt, toks), _stat = Parse_python.parse file in
-      [astopt, toks]
+      let res = Parse_python.parse file in
+      [Some res.PI.ast, res.PI.tokens]
     )
   );
   highlight = (fun ~tag_hook prefs (ast, toks) -> 
