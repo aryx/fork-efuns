@@ -37,7 +37,7 @@ let funcs = { Pfff_modes.
     Check_variables_cpp.check_and_annotate_program ast;
     ast2
   );
-  highlight = (fun ~tag_hook prefs (ast, toks) -> 
+  highlight = (fun ~tag_hook prefs _file (ast, toks) -> 
     Highlight_cpp.visit_toplevel ~tag_hook prefs (ast, toks)
   );
   }

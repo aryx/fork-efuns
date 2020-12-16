@@ -43,7 +43,7 @@ let funcs = { Pfff_modes.
       [res.PI.ast, res.PI.tokens]
     )
   );
-  highlight = (fun ~tag_hook prefs (ast, toks) -> 
+  highlight = (fun ~tag_hook prefs _file (ast, toks) -> 
     Highlight_js.visit_program ~tag_hook prefs (ast, toks)
   );
   }

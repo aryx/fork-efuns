@@ -37,7 +37,7 @@ let funcs = { Pfff_modes.
     let (ast2, _stat) = Parse_nw.parse file in
     [ast2]
   );
-  highlight = (fun ~tag_hook prefs (ast, toks) -> 
+  highlight = (fun ~tag_hook prefs _file (ast, toks) -> 
     Highlight_nw.visit_program ~tag_hook prefs (ast, toks)
   );
   }

@@ -42,7 +42,8 @@ module Db = Database_code
 type ('ast, 'token) for_helper = {
   parse: Common.filename -> ('ast * 'token list) list;
   highlight: tag_hook:(Parse_info.t -> HC.category -> unit) ->
-             Highlight_code.highlighter_preferences -> 'ast * 'token list ->
+             Highlight_code.highlighter_preferences -> Common.filename ->
+             'ast * 'token list ->
              unit;
 (*  info_of_tok:('token -> Parse_info.info); *)
 }
@@ -135,7 +136,7 @@ let colorize_and_set_outlines funcs buf file =
         let str = PI.str_of_info info in
         let len = String.length str in
         Text.set_attrs text cursor len attr
-      ) prefs 
+      ) prefs file
     )
   );
   (* less: need to set a finalizer for the points stored in outline_points?
