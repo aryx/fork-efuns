@@ -19,6 +19,9 @@
    pfff-lang_js pfff-lang_js-analyze
    pfff-lang_nw pfff-lang_nw-analyze
    pfff-lang_ml pfff-lang_ml-analyze
+
+   ; now in codemap
+   pfff-highlighters
  )
  (preprocess (pps ppx_interactive))
 )

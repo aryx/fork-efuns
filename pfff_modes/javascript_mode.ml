@@ -128,3 +128,4 @@ let _ =
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
     Var.set_global hooks [];
   )
+
