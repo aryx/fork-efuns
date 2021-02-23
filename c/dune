@@ -1,0 +1,10 @@
+(library
+ (name efuns_c)
+ (wrapped false)
+ (libraries
+ )
+ (foreign_stubs
+   (language c)
+   (names realpath)
+   )
+)

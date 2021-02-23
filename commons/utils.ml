@@ -430,6 +430,7 @@ let normal_name curdir filename =
     then Filename.concat curdir filename
     else filename
   in
+(*
   let rec iter name list level =
     let b = Filename.basename name in
     let d = Filename.dirname name in
@@ -454,7 +455,15 @@ let normal_name curdir filename =
     [] -> "/"
   | _ -> 
       let name = List.fold_left (fun s name -> s ^ "/" ^ name ) "" list in
-      if is_directory name then name ^ "/" else name
+*)
+   let name = 
+     match Realpath.realpath fullname with
+     | None -> failwith (Common.spf "could not find %s" fullname)
+     | Some x -> x
+   in
+   if is_directory name 
+   then name ^ "/" 
+   else name
         
         
 (*[to_regexp_string] replace a string with * and ? (shell regexps) to
