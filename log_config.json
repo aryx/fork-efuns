@@ -1,0 +1,17 @@
+{
+    "loggers": 
+        [
+            { "name": "Main", "level": "debug",
+              "handlers": [ {"cli_err": {"level" : "debug"}} ] 
+            },
+
+            { "name": "Main.Dune__exe__Main"    , "level": "debug" },
+
+            { "name": "Main.Common" , "level": "warning" },
+
+            { "name": "XXX"                     , "level": "error" }
+        ],
+   "handlers": {
+        "file_handlers": { "logs_folder" : "logs", "truncate" : false }
+    }
+}

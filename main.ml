@@ -13,6 +13,9 @@
 (*e: copyright header *)
 open Options
 
+let logger = Logging.get_logger [__MODULE__]
+let log_config_file = ref "log_config.json"
+
 (*s: constant [[Efuns.init_files]] *)
 let initial_files = ref []
 (*e: constant [[Efuns.init_files]] *)
@@ -112,6 +115,13 @@ let main () =
 
    (fun name -> initial_files := name :: !initial_files) 
    usage_str;
+
+  if Sys.file_exists !log_config_file
+  then begin
+    Logging.load_config_file !log_config_file;
+    logger#info "loaded %s" !log_config_file;
+  end;
+
   (*s: [[main()]] set options *)
   (*s: [[main()]] set options filename *)
   Options.filename := 

@@ -24,11 +24,13 @@ open Common2.ArithFloatInfix
 module Color = Simple_color
 module CH = Cairo_helpers
 
-let debug = ref false
+let logger = Logging.get_logger [__MODULE__]
 
 (*****************************************************************************)
 (* Metrics *)
 (*****************************************************************************)
+let conv_unit unit = 
+  float_of_int unit /. (float_of_int Pango.scale)
 
 let compute_metrics edt desc =
 
@@ -37,10 +39,14 @@ let compute_metrics edt desc =
   Pango.Context.set_font_description ctx desc;
 
   let metrics = Pango.Context.get_metrics ctx desc None in
-  let width = 
-    float_of_int (Pango.Font.get_approximate_char_width metrics) / 1024. in
-  let descent = float_of_int (Pango.Font.get_descent metrics) / 1024. in
-  let ascent =  float_of_int (Pango.Font.get_ascent metrics) / 1024. in
+
+  (* not reliable *)
+  let width = conv_unit (Pango.Font.get_approximate_char_width metrics) in
+  logger#info "metrics width = %f" width;
+
+
+  let descent = conv_unit (Pango.Font.get_descent metrics) in
+  let ascent =  conv_unit (Pango.Font.get_ascent metrics) in
   (* CONFIG? *)
   let height = (ascent + descent) * 1.1 in
 
@@ -152,9 +158,19 @@ let draw_string edt cr pg   col line  str  offset len   attr =
     edt.edt_colors_names.(idx)
   in
   CH.set_source_color ~cr ~color:fgcolor ();
-  let (ly, _) = pg in
-  Pango.Layout.set_text ly  (CH.prepare_string (String.sub str offset len));
+  let (ly, metrics) = pg in
+  let s = (CH.prepare_string (String.sub str offset len)) in
+  Pango.Layout.set_text ly s;
   Cairo_pango.update_layout cr ly;
+
+  (* sanity check that we use a monospace font *)
+  let (w, _h) = Pango.Layout.get_size ly in
+  let w = conv_unit w in
+  let len = String.length s in
+  let expected_w = metrics.font_width *. float_of_int len in
+  if w <> expected_w
+  then failwith (spf "mismatch for '%s': %f <> expected  %f" s w expected_w);
+
   Cairo_pango.show_layout cr ly;
   ()
 
@@ -230,12 +246,24 @@ let configure edt top_window desc metrics da top_gtk_win =
 
   let colorkind = Cairo.COLOR_ALPHA in
 
+  let ly = CH.pango_layout cr desc in
+
+  (* bugfix: adjust font_width, more reliable than get_approximate_char_width*)
+  let text = "m" in
+  Pango.Layout.set_text ly text;
+  Cairo_pango.update_layout cr ly;
+  let (w, _h) = Pango.Layout.get_size ly in
+  let w = conv_unit w in
+  logger#info "adjust metrics.width to %f" w;
+
+  let metrics = { metrics with font_width = w } in
+
   let w = {
     edt = edt;
     base =    Cairo.Surface.create_similar surface colorkind  width height;
     overlay = Cairo.Surface.create_similar surface colorkind  width height;
     final = surface;
-    ly = CH.pango_layout cr desc;
+    ly;
     metrics;
     last_top_frame_info = ("", -1, -1);
   }
@@ -350,9 +378,8 @@ let init2 init_files =
     "Menlo 18" <- current
 *)
   in
-  if !debug
+  logger#info "pango font: %s" (Pango.Font.to_string desc);
   (* Pango.Font.set_weight desc `ULTRABOLD; *)
-  then pr2 (Pango.Font.to_string desc);
 
   let metrics = compute_metrics edt desc in
 
