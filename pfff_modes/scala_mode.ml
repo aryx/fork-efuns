@@ -1,6 +1,6 @@
 (* Yoann Padioleau
  *
- * Copyright (C) 2019 Yoann Padioleau
+ * Copyright (C) 2021 Yoann Padioleau
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -19,15 +19,14 @@ module PI = Parse_info
 (*****************************************************************************)
 (* Prelude *)
 (*****************************************************************************)
-(* Pfff-based Javascript major mode.
+(* Pfff-based Scala major mode.
  * 
- * This module provides a major mode to edit Javascript files by using
- * the Javascript parser and highlighter in Pfff 
+ * This module provides a major mode to edit Scala files by using
+ * the Scala parser and highlighter in Pfff 
  * (which is also used for codemap).
  *
  * todo:
- *  - Tab handling when in comment and indent and add '*' leading if needed
- *  - finish Merlin support (see ocaml_merlin.ml)
+ *  - indentation? LSP server?
  *)
 
 (*****************************************************************************)
@@ -36,12 +35,12 @@ module PI = Parse_info
 let funcs = { Pfff_modes.
   parse = (fun file ->
     Common.save_excursion Flag_parsing.error_recovery true (fun()->
-      let res = Parse_js.parse file in
+      let res = Parse_scala.parse file in
       [res.PI.ast, res.PI.tokens]
     )
   );
-  highlight = (fun ~tag_hook prefs _file (ast, toks) -> 
-    Highlight_js.visit_program ~tag_hook prefs (ast, toks)
+  highlight = (fun ~tag_hook prefs file (ast, toks) -> 
+    Highlight_scala.visit_program ~tag_hook prefs file (ast, toks)
   );
   }
 
@@ -51,36 +50,24 @@ let funcs = { Pfff_modes.
 
 let color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  (* we need to keep the extension because Parse_ml.parse behaves
-   * differently on ml and mli files
-   *)
-  let ext =
-    match buf.buf_filename with
-    | None -> "ml"
-    | Some file -> 
-        let (_,_, e) = Common2.dbe_of_filename file in
-        e
-  in
-  Common2.with_tmp_file ~str:s ~ext (fun file ->
+  Common2.with_tmp_file ~str:s ~ext:"scala" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   )
 
 (*****************************************************************************)
 (* Indentation *)
 (*****************************************************************************)
-(* TODO See ocaml_ocp_indent.ml *)
 
 (*****************************************************************************)
 (* Completion/navigation/... *)
 (*****************************************************************************)
-(* TODO see ocaml_merlin.ml *)
 
 (*****************************************************************************)
 (* The mode *)
 (*****************************************************************************)
-let hooks = Store.create_abstr "javascript_mode_hook"
+let hooks = Store.create_abstr "scala_mode_hook"
 
-let mode =  Ebuffer.new_major_mode "JS(Pfff)" (Some (fun buf ->
+let mode =  Ebuffer.new_major_mode "Scala(Pfff)" (Some (fun buf ->
   color_buffer buf; 
 
   buf.buf_syntax_table.(Char.code '_') <- true;
@@ -95,7 +82,7 @@ let mode =  Ebuffer.new_major_mode "JS(Pfff)" (Some (fun buf ->
   Hook.exec_hooks hooks buf;
 ))
 
-let javascript_mode = 
+let scala_mode = 
   Major_modes.enable_major_mode mode
 [@@interactive]
 
@@ -106,23 +93,10 @@ let javascript_mode =
 let _ =
   Hook.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist 
-      [".*\\.\\(js\\|ts\\)$",mode];
+      [".*\\.scala$",mode];
     
-    (* reuse some functions from ocaml_mode.ml from LeFessant *)
-    (* 
-    Var.set_major_var mode Compil.find_error Ocaml_mode.find_error;
-    Var.set_major_var mode Compil.find_error_location_regexp 
-      (snd !!Ocaml_mode.error_regexp);
-    *)
-    (*
-    Var.set_major_var mode Indent.indent_func Ocaml_mode.indent_between_points;
-    Keymap.add_major_key mode [NormalMap,XK.xk_Tab] 
-     Ocaml_mode.indent_current_line;
-    *)
-
     (* recolor at save time *)
     Var.set_major_var mode Ebuffer.saved_buffer_hooks
       (color_buffer::(Var.get_global Ebuffer.saved_buffer_hooks));
     Var.set_global hooks [];
   )
-
