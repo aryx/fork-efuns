@@ -17,7 +17,8 @@
      ; efuns libs
      efuns_c
      efuns_commons
-     efuns_core 
+     efuns_core
+     ; TODO: should not need all of that
      efuns_graphics efuns_graphics_gtk_cairo2
      efuns_features ;efuns_ipc
      efuns_major_modes efuns_minor_modes
