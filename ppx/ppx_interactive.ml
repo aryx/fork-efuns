@@ -12,15 +12,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
  * license.txt for more details.
  *)
-open Migrate_parsetree
-open Ast_402
-let ocaml_version = Versions.ocaml_402
-
-open Ast_mapper
+open Ppxlib
 open Ast_helper
-open Asttypes
-open Parsetree
-open Longident
 
 (*****************************************************************************)
 (* Prelude *)
@@ -59,24 +52,32 @@ open Longident
  *  (in my opinion it's not worth the complexity)
  *  - update to use ocaml-migrate-parsetree so portable ppx rewriter
  *   http://ocamllabs.io/projects/2017/02/15/ocaml-migrate-parsetree.html
+ *  - update: now use ppxlib instead of ocaml-migrate-parsetree, see
+ *    ppx_profiling.ml in pfff for more information
  *)
 
 (*****************************************************************************)
 (* Mapper *)
 (*****************************************************************************)
 
-let mapper _config _cookies =
-  { default_mapper with
-    structure = fun mapper xs ->
+(* TODO: like in ppx_profiling.ml, use Ast_traverse *)
+let impl xs =
       xs |> List.map (fun item ->
         match item with
         (* let <fname> = ... [@@interactive <args_opt> *)
         | { pstr_desc = 
               Pstr_value (Nonrecursive,
                 [{pvb_pat = {ppat_desc = Ppat_var {txt = fname; _}; _};
-                  pvb_attributes = [({txt = "interactive"; loc}, PStr args)]; _}
-                ])
-          ; _} -> 
+                  pvb_attributes = [
+                          { attr_name = {txt = "interactive"; loc};
+                            attr_payload = PStr args; attr_loc = _;
+                          }
+                    ];
+                  pvb_loc = _;
+                  pvb_expr = _body;
+                 }
+                ]);
+                _} -> 
           (* you can change the action name by specifying an explicit name
            * with [@@interactive "<explicit_name>"]
            *)
@@ -85,12 +86,11 @@ let mapper _config _cookies =
             | [] -> fname
             | [{pstr_desc =
                 Pstr_eval
-                  ({pexp_desc = Pexp_constant (Const_string (name, None));_},
+                  ({pexp_desc = Pexp_constant (Pconst_string (name, _loc, None));_},
                    _); _}] -> name
             | _ -> 
-              raise (Location.Error (
-                Location.error ~loc 
-                  "@@interactive accepts nothing or a string"))
+              Location.raise_errorf ~loc 
+                  "@@interactive accepts nothing or a string"
           in
           (* let _ = Action.define_action <action_name> <fname> *)
           let action = 
@@ -98,17 +98,16 @@ let mapper _config _cookies =
               (Exp.apply 
                  (Exp.ident 
                     {txt = Ldot (Lident "Action", "define_action" ); loc})
-                 ["", Exp.constant (Const_string (action_name, None));
-                  "", Exp.ident {txt = Lident fname; loc};
+                 [Nolabel, Exp.constant (Pconst_string (action_name, loc, None));
+                  Nolabel, Exp.ident {txt = Lident fname; loc};
                  ])
           in
           [ item; action]
-        | x -> [default_mapper.structure_item mapper x]
+        | x -> [x]
       ) |> List.concat
-  }
 
 (*****************************************************************************)
 (* Entry point *)
 (*****************************************************************************)
 let () = 
-  Driver.register ~name:"ppx_interactive" ocaml_version mapper
+  Driver.register_transformation ~impl "ppx_interactive"

@@ -31,7 +31,7 @@ let readers = ref []
               incr actions;
               Condition.signal cond_actions;
               Mutex.unlock mu_actions;
-              let _ = ThreadUnix.select [fd] [] [] (-0.1) in
+              let _ = Unix.select [fd] [] [] (-0.1) in
               try
                 f ()
               with e -> 
@@ -55,7 +55,9 @@ let readers = ref []
       in
       let (res, to_kill) = iter !readers [] [] in
       readers := res;
-      List.iter Thread.kill to_kill;
+      (* List.iter Thread.kill to_kill; *)
+      let _ = failwith "Thread.kill not available anymore" in
+      ignore to_kill;
       Mutex.unlock mu_actions;
       if !me then Thread.exit ()
 
