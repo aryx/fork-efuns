@@ -32,12 +32,12 @@
  ; need that, otherwise all the [@@interactive] are not executed
  (link_flags (-linkall))
  ; for ocamldebug
- (modes byte)
+ (modes native byte)
 )
 
 
 (install
  (package efuns)
  (section bin)
- (files (main.exe as efun) (efuns_client.exe as efuns_client))
+ (files (main.exe as efuns) (efuns_client.exe as efuns_client))
 )
