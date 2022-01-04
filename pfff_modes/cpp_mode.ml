@@ -31,11 +31,13 @@ module PI = Parse_info
 
 let funcs = { Pfff_modes.
   parse = (fun file ->
-    let (ast2, _stat) = Parse_cpp.parse file in
-    let ast = Parse_cpp.program_of_program2 ast2 in
-    (* work by side effect on ast2 too *)
-    Check_variables_cpp.check_and_annotate_program ast;
-    ast2
+    Common.save_excursion Flag_parsing.error_recovery true (fun()->
+      let res = Parse_cpp.parse file in
+      let ast = res.PI.ast in
+      (* work by side effect on ast2 too *)
+      Check_variables_cpp.check_and_annotate_program ast;
+      [res.PI.ast, res.PI.tokens]
+    )
   );
   highlight = (fun ~tag_hook prefs _file (ast, toks) -> 
     Highlight_cpp.visit_toplevel ~tag_hook prefs (ast, toks)
