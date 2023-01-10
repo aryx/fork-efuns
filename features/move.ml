@@ -251,7 +251,7 @@ let save_current_pos frame =
   if Array.length buf.buf_history_pos < history_pos_max
   then buf.buf_history_pos <- Array.make history_pos_max None;
   let arr = buf.buf_history_pos in
-  arr.(history_pos_max -1) |> Common.do_option (fun pt ->
+  arr.(history_pos_max -1) |> Option.iter (fun pt ->
      Text.remove_point text pt
   );
   Array.blit arr 0 arr 1 (history_pos_max - 1);

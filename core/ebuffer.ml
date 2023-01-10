@@ -158,7 +158,7 @@ let create name filename text local_map =
 let kill buf =
   let edt = Globals.editor() in
   Hashtbl.remove edt.edt_buffers buf.buf_name;
-  buf.buf_filename |> Common.do_option (fun filename ->
+  buf.buf_filename |> Option.iter (fun filename ->
     Hashtbl.remove edt.edt_files filename
   );
   List.iter (fun f -> f () ) buf.buf_finalizers;
@@ -260,7 +260,7 @@ exception BufferAlreadyOpened
 let change_name buf filename =
   let edt = Globals.editor() in
   Hashtbl.remove edt.edt_buffers buf.buf_name;
-  buf.buf_filename |> Common.do_option (fun filename ->
+  buf.buf_filename |> Option.iter (fun filename ->
     Hashtbl.remove edt.edt_files filename
   );
   let filename = 
@@ -301,7 +301,7 @@ let rec get_mark buf point =
 
 (*s: function [[Ebuffer.remove_mark]] *)
 let remove_mark buf =
-  buf.buf_mark |> Common.do_option (fun mark ->
+  buf.buf_mark |> Option.iter (fun mark ->
     buf.buf_mark <- None;
     Text.remove_point buf.buf_text mark;
     buf.buf_modified <- buf.buf_modified + 1

@@ -152,7 +152,7 @@ let outline_num frame =
     let text_outl = buf_outl.buf_text in
     let line_outl = Text.point_line text_outl frame.frm_point in
     let pt_orig = points_orig.(line_outl) in
-    Ebuffer.find_buffer_opt bufname_orig |> Common.do_option (fun buf_orig ->
+    Ebuffer.find_buffer_opt bufname_orig |> Option.iter (fun buf_orig ->
       let text_orig = buf_orig.buf_text in
       Text.goto_point text_orig buf_orig.buf_point pt_orig;
       Frame.change_buffer frame.frm_window bufname_orig;

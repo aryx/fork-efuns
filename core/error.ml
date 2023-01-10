@@ -11,7 +11,8 @@ let error_exn s exn =
    *)
   (match exn with 
   | PI.Lexical_error _ | PI.Parsing_error _ ->
-     let err = Error_code.exn_to_error "XXX" exn in
+     let ex = Exception.catch exn in
+     let err = Error_code.exception_to_error "XXX" ex in
      pr2 (Error_code.string_of_error err)
   | _ -> ()
   );

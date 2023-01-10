@@ -170,7 +170,7 @@ let active_frame_info w =
 let idle_minimap = ref None
 
 let draw_minimap_when_idle w win =
-  !idle_minimap |> Common.do_option (fun x ->
+  !idle_minimap |> Option.iter (fun x ->
     GMain.Timeout.remove x;
   );
   idle_minimap := 

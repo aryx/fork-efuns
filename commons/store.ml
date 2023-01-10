@@ -50,7 +50,7 @@ let create name print input =
 
 (*s: function [[Store.no_print]] *)
 let no_print x = 
-  "<abstr>:" ^ (Common.dump x)
+  "<abstr>:" ^ (Dumper.dump x)
 (*e: function [[Store.no_print]] *)
 (*s: function [[Store.no_input]] *)
 let no_input (_s : string) = failwith "This variable can not be set"

@@ -271,7 +271,7 @@ let create_without_top window mini buf =
 let active frame =
   let top_window = Window.top frame.frm_window in
   top_window.top_active_frame <- frame;
-  frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
+  frame.frm_buffer.buf_filename |> Option.iter (fun filename ->
     (Globals.editor()).edt_dirname <- Filename.dirname filename
   )
 (*e: function [[Frame.active]] *)

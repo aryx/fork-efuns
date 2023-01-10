@@ -39,7 +39,7 @@ let exec_interactive interactives frame name =
   try
     let f, key = List.assoc name interactives in
     (*s: [[Interactive.exec_interactive()]] display if has a keybinding *)
-    key |> Common.do_option (fun key_list ->
+    key |> Option.iter (fun key_list ->
       Message.message frame
         ("you can run "^name^" by typing "^(Keymap.print_key_list key_list))
     );

@@ -32,7 +32,7 @@ let file_reg = Str.regexp ".* \\([^ ]+\\)$"
   
 (*s: function [[Dired.get_file_line]] *)
 let get_file_line frame =
-  frame.frm_buffer.buf_filename |> Common.do_option (fun filename ->
+  frame.frm_buffer.buf_filename |> Option.iter (fun filename ->
     (Globals.editor()).edt_dirname <- Filename.dirname filename;
   );
   let (_, text, point) = Frame.buf_text_point frame in

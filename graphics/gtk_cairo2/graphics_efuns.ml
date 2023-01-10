@@ -528,7 +528,7 @@ let init2 init_files =
 
       | x -> Some x
     in
-    code_opt |> Common.do_option (fun code ->
+    code_opt |> Option.iter (fun code ->
       let evt = Xtypes.XTKeyPress (!modifiers, GdkEvent.Key.string key, code) in
       (* this will generate a redisplay event via backend.update_display *)
       Top_window.handler top_window evt;

@@ -123,7 +123,7 @@ let cursor_on top_window =
   end;
   (*e: [[Top_window.cursor_on()]] set top window name *)
   (*s: [[Top_window.cursor_on()]] display secondary cursor *)
-  top_window.top_second_cursor |> Common.do_option (fun frame ->
+  top_window.top_second_cursor |> Option.iter (fun frame ->
     set_cursor_on top_window frame
   )
   (*e: [[Top_window.cursor_on()]] display secondary cursor *)
@@ -134,7 +134,7 @@ let cursor_off top_window =
   let frame = top_window.top_active_frame in
   set_cursor_off top_window frame;
   (*s: [[Top_window.cursor_off()]] hide secondary cursor *)
-  top_window.top_second_cursor |> Common.do_option (fun frame ->
+  top_window.top_second_cursor |> Option.iter (fun frame ->
     set_cursor_off top_window frame
   )
   (*e: [[Top_window.cursor_off()]] hide secondary cursor *)

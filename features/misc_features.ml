@@ -41,7 +41,7 @@ let buf_mtime = Store.create_float "buf_mtime"
 (*s: function [[Complex.update_time]] *)
 let update_time buf =
   try
-    buf.buf_filename |> Common.do_option (fun file ->
+    buf.buf_filename |> Option.iter (fun file ->
       let st = Unix.lstat file in
       if st.Unix.st_kind = Unix.S_REG 
       then Var.set_local buf buf_mtime st.Unix.st_mtime;
@@ -74,7 +74,7 @@ let reload frame =
 let check_file frame =
   try
     let buf = frame.frm_buffer in
-    buf.buf_filename |> Common.do_option (fun file ->
+    buf.buf_filename |> Option.iter (fun file ->
       let st = Unix.lstat file in
       if st.Unix.st_kind = Unix.S_REG then
         try

@@ -9,6 +9,10 @@
 (*                                                                     *)
 (***********************************************************************)
 module S = Stream
+[@@alert "-all"] (* Stream is deprecated *)
+
+module G = Genlex
+[@@alert "-all"] (* Stream is deprecated *)
 
 (*****************************************************************************)
 (* Prelude *)
@@ -120,9 +124,9 @@ let define_option
 (*****************************************************************************)
   
 let lexer = 
-  Genlex.make_lexer [ "=" ; "{" ; "}"; "["; "]"; ";" ; "("; ")"; ","; "."]
+  G.make_lexer [ "=" ; "{" ; "}"; "["; "]"; ";" ; "("; ")"; ","; "."]
 
-open Genlex
+open G
 
 let rec parse stream = 
   match S.peek stream with
@@ -191,14 +195,14 @@ let exec_chooks o =
 (* less: could also warn for config data without an option in the program *)
 let really_load filename = 
   let ic = open_in filename in
-  let s = Stream.of_channel ic in
+  let s = S.of_channel ic in
   try
     let stream = lexer s in
     let list_values = 
       try parse stream 
       with e -> 
         Printf.printf "At character pos %d (token %d)\n" 
-           (Stream.count s) (Stream.count stream);
+           (S.count s) (S.count stream);
         raise e 
      in
     !options |> List.iter (fun o ->
