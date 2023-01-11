@@ -33,9 +33,11 @@ let funcs = { Pfff_modes.
   parse = (fun file ->
     Common.save_excursion Flag_parsing.error_recovery true (fun()->
       let res = Parse_cpp.parse file in
-      let ast = res.PI.ast in
+      let _ast = res.PI.ast in
       (* work by side effect on ast2 too *)
-      Check_variables_cpp.check_and_annotate_program ast;
+      (* TODO in trimmed pfff
+         Check_variables_cpp.check_and_annotate_program ast;
+       *)
       [res.PI.ast, res.PI.tokens]
     )
   );
