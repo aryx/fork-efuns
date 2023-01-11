@@ -23,6 +23,7 @@
 
    ; now in codemap
    pfff-highlighters
+   database_code
  )
  (preprocess (pps ppx_interactive))
 )
