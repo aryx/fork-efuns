@@ -13,6 +13,10 @@
    ; now in codemap
    pfff-highlighters
    database_code
- )
+
+   ; now in semgrep?
+   pfff-graph_code
+
+)
  (preprocess (pps ppx_interactive))
 )
