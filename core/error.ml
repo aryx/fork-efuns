@@ -12,8 +12,11 @@ let error_exn s exn =
   (match exn with 
   | PI.Lexical_error _ | PI.Parsing_error _ ->
      let ex = Exception.catch exn in
+     (* TODO
      let err = Error_code.exception_to_error "XXX" ex in
      pr2 (Error_code.string_of_error err)
+      *)
+     pr2 (Dumper.dump ex)
   | _ -> ()
   );
   pr2 (spf "error: %s (exn = %s). backtrace:\n%s" 
