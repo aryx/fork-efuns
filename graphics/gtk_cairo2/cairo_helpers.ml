@@ -95,15 +95,11 @@ let pango_layout cr desc =
   Pango.Layout.set_font_description layout desc;
   Cairo_pango.update_layout cr layout;
   layout
-let pango_layout a b =
-  Common.profile_code "G.pango_layout" (fun () -> pango_layout a b)
-
+[@@profiling]
 
 let pango_show_text ly cr str =
   Pango.Layout.set_text ly  (prepare_string str);
   Cairo_pango.update_layout cr ly;
   Cairo_pango.show_layout cr ly
-
-let pango_show_text a b c =
-  Common.profile_code "G.pango_show_text" (fun () -> pango_show_text a b c)
+[@@profiling]
  

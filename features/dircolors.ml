@@ -158,9 +158,7 @@ let colorize_buffer buf =
             (Text.make_attr (Attr.get_color color) 1 0 false);
     )
   )
-
-let colorize_buffer a = Common.profile_code "Dircolors.colorize_buffer" 
-  (fun () -> colorize_buffer a)
+[@@profiling]
 
 let dircolorize frame =
   colorize_buffer frame.Efuns.frm_buffer

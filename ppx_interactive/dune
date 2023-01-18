@@ -2,7 +2,5 @@
  (public_name ppx_interactive)
  (kind ppx_deriver)
  (libraries 
-;   str unix
-;   commons 
-  ppxlib
+    ppxlib
 ))

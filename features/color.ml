@@ -37,9 +37,8 @@ let color buf regexp strict attr =
   with Not_found -> 
     buf.buf_modified <- buf.buf_modified + 1
   )
+[@@profiling]
 (*e: function [[Simple.color]] *)
-let color a b c d = Common.profile_code "Simple.color" 
-  (fun () -> color a b c d)
 
 (*****************************************************************************)
 (* Per-mode colorization  *)

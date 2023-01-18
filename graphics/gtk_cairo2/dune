@@ -5,12 +5,12 @@
    ; system libs
    cairo2 cairo2-pango cairo2-gtk
 
-   ; pfff libs
-   commons pfff-h_visualization
+   commons profiling pfff-h_visualization 
 
    ; efuns libs
    efuns_core efuns_features 
    efuns_graphics
 
  )
+  (preprocess (pps ppx_deriving.show ppx_profiling))
 )

@@ -15,7 +15,7 @@
    database_code
 
    ; now in semgrep?
-   pfff-graph_code
+   graph_code
 
 )
  (preprocess (pps ppx_interactive))

@@ -2,7 +2,8 @@
  (name efuns_features)
  (wrapped false)
  (libraries
+   profiling
    efuns_core
  )
- (preprocess (pps ppx_interactive))
+ (preprocess (pps ppx_interactive ppx_profiling))
 )

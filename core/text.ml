@@ -191,9 +191,8 @@ let find_line_of_pos text pos =
       else 0
      in
      iter gline
+[@@profiling]
 (*e: function [[Text.find_line_of_pos]] *)
-let find_line_of_pos a b =
-  Common.profile_code "Text.find_line_of_pos" (fun () -> find_line_of_pos a b)
 
 (*s: function [[Text.point_line]] *)
 let point_line text point = 
@@ -364,10 +363,9 @@ let move_gpoint_to text pos =
       );
       text.gpoint <- { pos = pos - gsize; line = gline + delta_line }
       (*e: [[Text.move_gpoint_to()]] when pos is after gpos *)
-    end
+      end
+[@@profiling]
 (*e: function [[Text.move_gpoint_to]] *)
-let move_gpoint_to a b = Common.profile_code "Text.move_gpoint_to"
-  (fun () -> move_gpoint_to a b)
 
 (*s: constant [[Text.add_amount]] *)
 let add_amount = define_option ["add_amount"] "Size of the gap in the buffer"
@@ -406,9 +404,8 @@ let extend_gap text amount =
   text.gsize <- gsize + add_size;
   text.text_size <- old_size + add_size;
   ()
+[@@profiling]
 (*e: function [[Text.extend_gap]] *)
-let extend_gap a b = Common.profile_code "Text.extend_gap"
-  (fun () -> extend_gap a b)
 
 (*****************************************************************************)
 (* Low level insert/delete *)
@@ -1277,9 +1274,8 @@ let compute_representation text charreprs n =
       (*e: [[Text.compute_representation()]] adjust line fields after loop *)
     end;
     line
+[@@profiling]
 (*e: function [[Text.compute_representation]] *)
-let compute_representation a b c = Common.profile_code "Text.compute_repr"
-  (fun () -> compute_representation a b c)
 
 (*****************************************************************************)
 (* Point_to_xxx  *)

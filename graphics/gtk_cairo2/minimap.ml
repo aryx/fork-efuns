@@ -116,9 +116,7 @@ let draw_minimap w =
     )
   done;
   ()
-
-let draw_minimap a = Common.profile_code "G.draw_minimap" 
-  (fun () -> draw_minimap a)
+[@@profiling]
 
 let draw_minimap_overlay w =
 
@@ -148,11 +146,7 @@ let draw_minimap_overlay w =
   CH.fill_rectangle_xywh ~alpha:0.2 ~cr ~x ~y ~w:w.metrics.main_width ~h
     ~color:"white" ();
   ()
-
-let draw_minimap_overlay a = Common.profile_code "G.draw_minimap_overlay" 
-  (fun () -> draw_minimap_overlay a)
-
-
+[@@profiling]
 
 
 (* opti to avoid recompute/redraw expensive minimap *)
