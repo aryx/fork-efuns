@@ -57,7 +57,7 @@ let get_unique_name filename =
   in
   let i = ref 0 in
   let compute_name () =
-    if !i = 0 
+    if !i =|= 0 
     then name 
     else Printf.sprintf "%s<%d>" name !i
   in

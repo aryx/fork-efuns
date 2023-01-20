@@ -161,7 +161,7 @@ let outline_num frame =
        * except if the user did a split window in which case
        * we can't gc it
        *)
-      if buf_outl.buf_shared = 0 
+      if buf_outl.buf_shared =|= 0 
       then begin 
         Ebuffer.kill buf_outl;
         points_orig |> Array.iter (fun pt -> Text.remove_point text_orig pt);

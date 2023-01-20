@@ -85,7 +85,7 @@ let draw_minimap w =
       CH.set_source_color ~cr ~color:fgcolor ();
 
       let ly = 
-        if fontsize = 0 
+        if fontsize =|= 0 
         then w.ly
         else begin
           (* def of func is fontsize 3 *)

@@ -58,7 +58,7 @@ let system pwd buf_name cmd end_action =
                     (Text.point_to_eof text curseur) in
     let len = input inc tampon 0 1000 in
     Mutex.lock edt.edt_mutex;
-    if len = 0 then begin
+    if len =|= 0 then begin
       let _pid,status = waitpid [WNOHANG] pid in
       (match status with 
       | WEXITED s -> Text.insert_at_end text (spf "Exited with status %d\n" s); 

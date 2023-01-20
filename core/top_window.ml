@@ -282,9 +282,9 @@ let handle_key top_window modifiers keysym =
     let mask = Xtypes.controlMask lor !meta in
     let diff = modifiers land mask in
     match () with
-    | _ when diff = 0 -> NormalMap 
-    | _ when diff = Xtypes.controlMask -> ControlMap
-    | _ when diff = !meta -> MetaMap
+    | _ when diff =|= 0 -> NormalMap 
+    | _ when diff =|= Xtypes.controlMask -> ControlMap
+    | _ when diff =|= !meta -> MetaMap
     | _ -> ControlMetaMap
     (*e: [[Top_window.handle_key()]] compute mod *)
   in

@@ -76,7 +76,7 @@ let pop_to_top _stack =
 let rec pop_to kwd stack =
   match stack with
   | [] -> ([],0)
-  | (kwd',indent) :: stack when kwd' = kwd -> stack, indent
+  | (kwd',indent) :: stack when kwd' =*= kwd -> stack, indent
   | _ :: stack -> pop_to kwd stack
 
 let rec pop_to_kwds kwd_end_recursion = fun kwds stack ->
@@ -91,7 +91,7 @@ let add indent eols indents =
   | [] -> indents
   | _ -> 
       match indents with
-      | (pindent,peols) :: tail when pindent = indent -> 
+      | (pindent,peols) :: tail when pindent =|= indent -> 
           (indent, eols @ peols) :: tail
       | _ ->  (indent,eols) :: indents
 

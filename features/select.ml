@@ -68,7 +68,7 @@ let completions_buf_hook = Store.create_abstr "completions_buf_hook"
 
 (*s: function [[Select.display_completions]] *)
 let display_completions frame list =
-  if list = [] 
+  if list =*= [] 
   then Message.message frame "No Completions"
   else
     let rec iter list s =
@@ -102,7 +102,7 @@ let remove_completions frame =
 let set_history map string history =
   let current = ref 0 in
   Keymap.add_binding map [NormalMap, XK.xk_Up] (fun mini_frame ->
-    if !current = List.length !history 
+    if !current =|= List.length !history 
     then Top_window.mini_message mini_frame "No previous line in history"
     else begin
       let ele = Utils.list_nth !current !history in
@@ -242,7 +242,7 @@ let avoid_completion s =
 (*s: function [[Select.is_userdir]] *)
 let is_userdir string =
   let n = String.length string in
-  (n > 1) && (string.[0] = '~') &&
+  (n > 1) && (string.[0] =$= '~') &&
   (try
       String.rindex string '/' |> ignore;
       false
@@ -366,10 +366,10 @@ let select_file frame request history start action =
   );
   Keymap.add_binding map [NormalMap, Char.code '/'] (fun frame ->
     let (buf, text, point) = Frame.buf_text_point frame in
-    if Text.bmove_res text point 1 = 1 then
+    if Text.bmove_res text point 1 =|= 1 then
       ( let c = Text.get_char text point in
         Text.fmove text point 1;
-        if c = '/' then
+        if c =$= '/' then
           Copy_paste.kill_bol buf point);
     Edit.self_insert_command frame;
     string := Text.to_string text            

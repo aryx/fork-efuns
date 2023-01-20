@@ -354,7 +354,7 @@ let _ =
   (* todo: real indent_or_complete, move in each major mode *)
   [ControlMap, XK.xk_Tab], (fun frm ->
     let (_, text, point) = Frame.buf_text_point frm in
-    if Text.point_col text point = 0
+    if Text.point_col text point =|= 0
     then Edit.insert_string frm "  "
     else complete_prefix_at_cursor frm;
     );

@@ -138,13 +138,15 @@ let kill frame =
 (*s: function [[Frame.install]] *)
 let install window frame =
   (*s: [[Frame.install()]] sanity check frame is not a minibuffer *)
-  if window.win_mini = (frame.frm_mini_buffer = None) then begin 
+  (* TODO: dunno why but can't use =:= for bool *)
+  if window.win_mini =*= (frame.frm_mini_buffer =*= None) then begin 
     kill frame; 
     failwith "Cannot install in minibuffer"
   end;
   (*e: [[Frame.install()]] sanity check frame is not a minibuffer *)
 
   window |> Window.iter (fun f -> 
+     (* TODO? != or <> ? *)
      if (f != frame) 
      then kill f
   );
@@ -205,7 +207,7 @@ let create_without_top window mini buf =
       stat_line = -1;
       stat_col = -1;
       status_modified = true;
-      stat_modified = (buf.buf_last_saved = Text.version buf.buf_text);
+      stat_modified = (buf.buf_last_saved =|= Text.version buf.buf_text);
 
       stat_modes = [];
       stat_mode = dummy_mode;
@@ -379,7 +381,7 @@ let point_to_xy_opt frame point =
       let line_repr = frame.frm_table.(i) in
       if line_repr.frm_text_line == line then
         let x,y =
-          if x_nocut = 0 
+          if x_nocut =|= 0 
           then 0,i
           else
             (*s: [[Frame.point_to_xy_opt()]] x y value handling overflow lines *)
@@ -450,7 +452,7 @@ let update_table frame =
     let lines = !current_line.repr_len / frame.frm_cutline in
     frame.frm_y_offset <- frame.frm_y_offset + lines + 1;
   done;
-  if !current_n = 0 && frame.frm_y_offset <0 
+  if !current_n =|= 0 && frame.frm_y_offset <0 
   then frame.frm_y_offset <- 0;
   (*e: [[Frame.update_table()]] adjust current line when [[frm_y_offset]] negative *)
   (*s: [[Frame.update_table()]] adjust current line when [[frm_y_offset]] positive *)
@@ -465,7 +467,7 @@ let update_table frame =
     current_line := Ebuffer.compute_representation buf !current_n;
   done;
 
-  if !current_n = nbr_lines text && 
+  if !current_n =|= nbr_lines text && 
      frame.frm_y_offset > !current_line.repr_len / frame.frm_cutline
   then frame.frm_y_offset <- !current_line.repr_len / frame.frm_cutline;
   (*e: [[Frame.update_table()]] adjust current line when [[frm_y_offset]] positive *)
@@ -498,7 +500,7 @@ let update_table frame =
           if box.box_pos_repr <= xcutline && 
              box.box_pos_repr + box.box_size > xcutline
           then
-            if y = height 
+            if y =|= height 
             then Text.goto_line text frame.frm_end n 
             else begin
                 if y>= 0 then begin
@@ -569,7 +571,7 @@ let display top_window frame =
     if point_c < frame.frm_x_offset then begin
         frame.frm_x_offset <- max (point_c - width / 2) 0;
         frame.frm_redraw <- true;
-    end else if frame.frm_cutline = max_int && 
+    end else if frame.frm_cutline =|= max_int && 
                 (point_c mod frame.frm_cutline >= frame.frm_x_offset + width - 3)  
       then begin
         frame.frm_x_offset <- point_c - (width / 2);
@@ -655,8 +657,8 @@ let display top_window frame =
         (buf.buf_name ^ 
          String.make (max 1 ((width / 3) - String.length buf.buf_name)) ' ')
         (match () with
-        | _ when Text.get_position text point = 0 -> "Top"
-        | _ when Text.get_position text point = Text.size text -> "Bot"
+        | _ when Text.get_position text point =|= 0 -> "Top"
+        | _ when Text.get_position text point =|= Text.size text -> "Bot"
         | _ -> spf "%2d%%" 
           (Text.point_line text point * 100 / Text.nbr_lines text)
         )

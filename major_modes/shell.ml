@@ -66,7 +66,7 @@ let columnize width xs =
   (* ex xs len = 16 nbcols = 8 => nblines = 2. nbcols = 7 => nblines = 3 *) 
   let nblines = 
     List.length xs / nbcols +
-    (if List.length xs mod nbcols = 0 then 0 else 1)
+    (if List.length xs mod nbcols =|= 0 then 0 else 1)
   in
   let space_per_col = width / nbcols in
   let arr = Array.of_list xs in
@@ -218,7 +218,7 @@ let previous_history frame =
   let (buf, _, _) = Frame.buf_text_point frame in
   let hist = Var.get_local buf history in
   let current = Var.get_local buf history_index in
-  if !current = List.length !hist 
+  if !current =|= List.length !hist 
   then Message.message frame "No previous line in history"
   else begin
       let s = Utils.list_nth !current !hist in
@@ -380,7 +380,7 @@ let run_cmd frame cmd =
     while not !finished do
       let len = input inc tampon 0 1000 in
       Mutex.lock edt.edt_mutex;
-      if len = 0 then begin
+      if len =|= 0 then begin
         let _pid, status = Unix.waitpid [Unix.WNOHANG] pid in
         (match status with 
         | Unix.WEXITED s -> 

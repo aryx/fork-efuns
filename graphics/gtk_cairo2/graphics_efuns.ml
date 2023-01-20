@@ -340,7 +340,7 @@ let start_cursor_thread () =
       Thread.delay 0.5;
       Globals.with_lock (fun () ->
         (Globals.editor()).top_windows |> List.iter (fun top_window ->
-          if !cnt mod 2 = 0
+          if !cnt mod 2 =|= 0
           then Top_window.cursor_on top_window
           else Top_window.cursor_off top_window;
           let graphic = Efuns.backend top_window in

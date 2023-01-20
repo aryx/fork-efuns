@@ -64,11 +64,11 @@ let simplify text start point =
     let rec iter last_c =
       if start < point then
         let c = Text.get_char text start in
-        if c = ' ' || c = '\n' || c = '\t' then
+        if c =$= ' ' || c =$= '\n' || c =$= '\t' then
           ( Text.delete text start 1;
             iter ' ')
         else
-        if last_c = ' ' then
+        if last_c =$= ' ' then
           ( Text.insert text start " ";
             Text.fmove text start 2;
             iter 'a')
@@ -94,9 +94,9 @@ let fill_paragraph frame =
       Text.insert text start "\n";
       let rec iter count last_space =
         if Text.compare text start fin < 0 then
-        if Text.fmove_res text start 1 = 1 then 
+        if Text.fmove_res text start 1 =|= 1 then 
           let c = Text.get_char text start in  
-            if c = ' ' then (* good, a new space *)
+            if c =$= ' ' then (* good, a new space *)
               iter (count+1) 0
           else
           if count > 75 && count <> last_space then 
