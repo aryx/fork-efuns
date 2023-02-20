@@ -5,5 +5,5 @@
    profiling
    efuns_core
  )
- (preprocess (pps ppx_interactive ppx_profiling))
+ (preprocess (pps ppx_interactive profiling.ppx))
 )
