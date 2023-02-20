@@ -14,9 +14,9 @@
  *)
 open Efuns
 open Options
-
 module PI = Parse_info
 module HC = Highlight_code
+module PH = Parse_and_highlight
 
 (*****************************************************************************)
 (* Prelude *)
@@ -32,14 +32,15 @@ module HC = Highlight_code
 (* Pfff specifics *)
 (*****************************************************************************)
 
-let funcs = { Pfff_modes.
+let funcs = { PH.
   parse = (fun file ->
     let (ast2, _stat) = Parse_nw.parse file in
     [ast2]
   );
-  highlight = (fun ~tag_hook prefs _file (ast, toks) -> 
-    Highlight_nw.visit_program ~tag_hook prefs (ast, toks)
+  highlight = (fun ~tag_hook prefs file (ast, toks) -> 
+    Highlight_nw.visit_program ~tag_hook prefs file (ast, toks)
   );
+  info_of_tok = (fun _ -> failwith "not needed");
   }
 
 (*****************************************************************************)

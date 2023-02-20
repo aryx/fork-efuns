@@ -15,6 +15,7 @@
 
 open Efuns
 module PI = Parse_info
+module PH = Parse_and_highlight
 
 (*****************************************************************************)
 (* Prelude *)
@@ -32,7 +33,8 @@ module PI = Parse_info
 (*****************************************************************************)
 (* Pfff specifics *)
 (*****************************************************************************)
-let funcs = { Pfff_modes.
+(* TODO: factorize with codemap in PH.python_parse_and_highlight *)
+let funcs = { PH.
   parse = (fun file ->
     Common.save_excursion Flag_parsing.error_recovery true (fun()->
       let { Parsing_result.ast; tokens; _} = Parse_python.parse file in
@@ -42,6 +44,7 @@ let funcs = { Pfff_modes.
   highlight = (fun ~tag_hook prefs _file (ast, toks) -> 
     Highlight_python.visit_program ~tag_hook prefs (ast, toks)
   );
+  info_of_tok = (fun _ -> failwith "not needed");
   }
 
 (*****************************************************************************)

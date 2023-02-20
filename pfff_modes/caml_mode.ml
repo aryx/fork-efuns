@@ -13,9 +13,9 @@
  * license.txt for more details.
  *)
 open Options
-
 open Efuns
 module PI = Parse_info
+module PH = Parse_and_highlight
 
 (*****************************************************************************)
 (* Prelude *)
@@ -34,16 +34,16 @@ module PI = Parse_info
 (*****************************************************************************)
 (* Pfff specifics *)
 (*****************************************************************************)
-let funcs = { Pfff_modes.
+(* TODO: factorize with codemap in PH.ocaml_parse_and_highlight *)
+let funcs = { PH.
   parse = (fun file ->
-    Common.save_excursion Flag_parsing.error_recovery true (fun()->
-      let {Parsing_result.ast; tokens; _} = Parse_ml.parse file in
+      let {Parsing_result.ast; tokens; _} = Parse_languages.parse_ocaml file in
       [ast, tokens]
-    )
   );
   highlight = (fun ~tag_hook prefs file (ast, toks) -> 
     Highlight_ml.visit_program ~tag_hook prefs file (ast, toks)
   );
+  info_of_tok = (fun _ -> failwith "not needed");
   }
 
 (*****************************************************************************)

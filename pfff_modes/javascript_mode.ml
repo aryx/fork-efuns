@@ -12,9 +12,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
  * license.txt for more details.
  *)
-
 open Efuns
 module PI = Parse_info
+module PH = Parse_and_highlight
 
 (*****************************************************************************)
 (* Prelude *)
@@ -33,16 +33,18 @@ module PI = Parse_info
 (*****************************************************************************)
 (* Pfff specifics *)
 (*****************************************************************************)
-let funcs = { Pfff_modes.
+(* TODO: factorize with codemap in PH.javascript_parse_and_highlight *)
+let funcs = { PH.
   parse = (fun file ->
     Common.save_excursion Flag_parsing.error_recovery true (fun()->
       let { Parsing_result. ast; tokens; _ } = Parse_js.parse file in
       [ast, tokens]
     )
   );
-  highlight = (fun ~tag_hook prefs _file (ast, toks) -> 
-    Highlight_js.visit_program ~tag_hook prefs (ast, toks)
+  highlight = (fun ~tag_hook prefs file (ast, toks) -> 
+    Highlight_js.visit_program ~tag_hook prefs file (ast, toks)
   );
+  info_of_tok = (fun _ -> failwith "not needed");
   }
 
 (*****************************************************************************)

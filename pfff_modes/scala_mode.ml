@@ -12,9 +12,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
  * license.txt for more details.
  *)
-
 open Efuns
 module PI = Parse_info
+module PH = Parse_and_highlight
 
 (*****************************************************************************)
 (* Prelude *)
@@ -32,7 +32,7 @@ module PI = Parse_info
 (*****************************************************************************)
 (* Pfff specifics *)
 (*****************************************************************************)
-let funcs = { Pfff_modes.
+let funcs = { PH.
   parse = (fun file ->
     Common.save_excursion Flag_parsing.error_recovery true (fun()->
       let {Parsing_result. ast; tokens; _} = Parse_scala.parse file in
@@ -42,6 +42,7 @@ let funcs = { Pfff_modes.
   highlight = (fun ~tag_hook prefs file (ast, toks) -> 
     Highlight_scala.visit_program ~tag_hook prefs file (ast, toks)
   );
+  info_of_tok = (fun _ -> failwith "not needed");
   }
 
 (*****************************************************************************)

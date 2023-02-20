@@ -13,7 +13,7 @@
  * license.txt for more details.
  *)
 open Efuns
-
+module PH = Parse_and_highlight
 module PI = Parse_info
 
 (*****************************************************************************)
@@ -29,7 +29,8 @@ module PI = Parse_info
 (* Pfff specifics *)
 (*****************************************************************************)
 
-let funcs = { Pfff_modes.
+(* TODO: factorize with codemap in a PH.cpp_parse_and_highlight *)
+let funcs = { PH.
   parse = (fun file ->
     Common.save_excursion Flag_parsing.error_recovery true (fun()->
       let { Parsing_result. ast; tokens; _ } = Parse_cpp.parse file in
@@ -40,9 +41,10 @@ let funcs = { Pfff_modes.
       [ast, tokens]
     )
   );
-  highlight = (fun ~tag_hook prefs _file (ast, toks) -> 
-    Highlight_cpp.visit_toplevel ~tag_hook prefs (ast, toks)
+  highlight = (fun ~tag_hook prefs file (ast, toks) -> 
+    Highlight_cpp.visit_toplevel ~tag_hook prefs file (ast, toks)
   );
+  info_of_tok = (fun _ -> failwith "not needed");
   }
 
 (*****************************************************************************)

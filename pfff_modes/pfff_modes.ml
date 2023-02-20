@@ -19,6 +19,7 @@ module E = Entity_code
 module HC = Highlight_code
 module PI = Parse_info
 module Db = Database_code
+module PH = Parse_and_highlight
 
 (*****************************************************************************)
 (* Prelude *)
@@ -37,16 +38,7 @@ module Db = Database_code
 (*****************************************************************************)
 (* Types *)
 (*****************************************************************************)
-
-(* copy of pfff/code_map/parsing2.ml *)
-type ('ast, 'token) for_helper = {
-  parse: Common.filename -> ('ast * 'token list) list;
-  highlight: tag_hook:(Parse_info.t -> HC.category -> unit) ->
-             Highlight_code.highlighter_preferences -> Common.filename ->
-             'ast * 'token list ->
-             unit;
-(*  info_of_tok:('token -> Parse_info.info); *)
-}
+(* see codemap/highlighters/Parse_and_highlight.ml now *)
 
 (*****************************************************************************)
 (* Highlight and outline *)
@@ -108,7 +100,7 @@ let level_of_categ categ =
 
 
 let colorize_and_set_outlines funcs buf file =
-  let xs = funcs.parse file in
+  let xs = funcs.PH.parse file in
   let prefs = Highlight_code.default_highlighter_preferences in
   let text = buf.buf_text in
 
@@ -118,7 +110,7 @@ let colorize_and_set_outlines funcs buf file =
 
   Text.with_new_point text (fun cursor ->
     xs |> List.iter (fun x -> 
-      x |> funcs.highlight ~tag_hook:(fun info categ->
+      x |> funcs.PH.highlight ~tag_hook:(fun info categ->
         let color = color_of_categ categ in
         let fontsize = size_of_categ categ in
         let lvl = level_of_categ categ in
@@ -136,7 +128,7 @@ let colorize_and_set_outlines funcs buf file =
         let str = PI.str_of_info info in
         let len = String.length str in
         Text.set_attrs text cursor len attr
-      ) prefs file
+      ) prefs (Fpath.v file)
     )
   );
   (* less: need to set a finalizer for the points stored in outline_points?
