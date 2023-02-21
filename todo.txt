@@ -7,11 +7,9 @@
 **** reproducible bug:
 modify file outside efuns, and then go back to efuns
 
-*** less: use pfff as a submodule of efuns? easier development process?
-hmm but now need also semgrep with AST_generic, so not really easier
-
 *** later: switch to revery? more portable? would fix my pbs with macOS!
 can do the sexy synthwave theme ? :)
+update: revery seems dead
 
 *** later: amazingly good looking theme. I want that! can do with cairo? need shadow?
 https://marketplace.visualstudio.com/items?itemName=RobbOwen.synthwave-vscode
