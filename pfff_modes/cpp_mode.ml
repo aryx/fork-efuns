@@ -38,7 +38,7 @@ let funcs = { PH.
       (* TODO in trimmed pfff
          Check_variables_cpp.check_and_annotate_program ast;
        *)
-      [ast, tokens]
+      ast, tokens
     )
   );
   highlight = (fun ~tag_hook prefs file (ast, toks) -> 

@@ -38,7 +38,7 @@ module PH = Parse_and_highlight
 let funcs = { PH.
   parse = (fun file ->
       let {Parsing_result.ast; tokens; _} = Parse_languages.parse_ocaml file in
-      [ast, tokens]
+      ast, tokens
   );
   highlight = (fun ~tag_hook prefs file (ast, toks) -> 
     Highlight_ml.visit_program ~tag_hook prefs file (ast, toks)

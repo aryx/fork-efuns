@@ -38,7 +38,7 @@ let funcs = { PH.
   parse = (fun file ->
     Common.save_excursion Flag_parsing.error_recovery true (fun()->
       let { Parsing_result.ast; tokens; _} = Parse_python.parse file in
-      [Some ast, tokens]
+      Some ast, tokens
     )
   );
   highlight = (fun ~tag_hook prefs _file (ast, toks) -> 

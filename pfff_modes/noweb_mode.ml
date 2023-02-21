@@ -35,7 +35,7 @@ module PH = Parse_and_highlight
 let funcs = { PH.
   parse = (fun file ->
     let (ast2, _stat) = Parse_nw.parse file in
-    [ast2]
+    ast2
   );
   highlight = (fun ~tag_hook prefs file (ast, toks) -> 
     Highlight_nw.visit_program ~tag_hook prefs file (ast, toks)

@@ -109,8 +109,7 @@ let colorize_and_set_outlines funcs buf file =
   let hcovered_lines = Hashtbl.create 101 in
 
   Text.with_new_point text (fun cursor ->
-    xs |> List.iter (fun x -> 
-      x |> funcs.PH.highlight ~tag_hook:(fun info categ->
+      xs |> funcs.PH.highlight ~tag_hook:(fun info categ->
         let color = color_of_categ categ in
         let fontsize = size_of_categ categ in
         let lvl = level_of_categ categ in
@@ -129,7 +128,6 @@ let colorize_and_set_outlines funcs buf file =
         let len = String.length str in
         Text.set_attrs text cursor len attr
       ) prefs (Fpath.v file)
-    )
   );
   (* less: need to set a finalizer for the points stored in outline_points?
    * meh

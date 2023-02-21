@@ -35,7 +35,7 @@ module PH = Parse_and_highlight
 let funcs = { PH.
   parse = (fun file ->
       let (ast, tokens) = Parse_languages.parse_rust file in
-      [ast, tokens]
+      ast, tokens
   );
   highlight = (fun ~tag_hook prefs file (ast, toks) -> 
     Highlight_AST.visit_for_highlight ~tag_hook prefs file (ast, toks)
