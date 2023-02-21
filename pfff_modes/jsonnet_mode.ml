@@ -13,9 +13,6 @@
  * license.txt for more details.
  *)
 open Efuns
-module HC = Highlight_code
-module PI = Parse_info
-module PH = Parse_and_highlight
 
 (*****************************************************************************)
 (* Prelude *)
@@ -30,28 +27,13 @@ module PH = Parse_and_highlight
  *)
 
 (*****************************************************************************)
-(* Pfff specifics *)
-(*****************************************************************************)
-(* TODO: factorize with codemap in PH.jsonnet_parse_and_highlight *)
-let funcs = { PH.
-  parse = (fun file ->
-      let (ast, tokens) = Parse_languages.parse_jsonnet file in
-      ast, tokens
-  );
-  highlight = (fun ~tag_hook prefs file (ast, toks) -> 
-    Highlight_AST.visit_for_highlight ~tag_hook prefs file (ast, toks)
-  );
-  info_of_tok = (fun _ -> failwith "not needed");
-  }
-
-(*****************************************************************************)
 (* Colors *)
 (*****************************************************************************)
 
 let color_buffer buf =
   let s = Text.to_string buf.buf_text in
   Common2.with_tmp_file ~str:s ~ext:"jsonnet" (fun file ->
-    Pfff_modes.colorize_and_set_outlines funcs buf file
+    Pfff_modes.colorize_and_set_outlines Parse_and_highlight.jsonnet buf file
   )
 
 (*****************************************************************************)
