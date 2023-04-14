@@ -33,7 +33,7 @@ module PI = Parse_info
 let funcs = { PH.
   parse = (fun file ->
     Common.save_excursion Flag_parsing.error_recovery true (fun()->
-      let { Parsing_result. ast; tokens; _ } = Parse_cpp.parse file in
+      let { Parsing_result. ast; tokens; _ } = Parse_cpp.parse (Fpath.v file) in
       (* work by side effect on ast2 too *)
       (* TODO in trimmed pfff
          Check_variables_cpp.check_and_annotate_program ast;

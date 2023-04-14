@@ -264,7 +264,7 @@ let builtin_ls (*?(show_dotfiles=false) ?(show_objfiles=false)*)
   let files =
     if show_objfiles
     then files
-    else files |> Common.exclude is_obj_file
+    else files |> Common.exclude (fun file -> is_obj_file (Fpath.v file))
   in
 
   (* similar to Select.complete_filename *)
