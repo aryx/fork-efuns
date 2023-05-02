@@ -14,7 +14,6 @@
  *)
 
 open Efuns
-module PI = Parse_info
 module PH = Parse_and_highlight
 
 (*****************************************************************************)

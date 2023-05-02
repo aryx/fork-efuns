@@ -14,7 +14,6 @@
  *)
 open Efuns
 module PH = Parse_and_highlight
-module PI = Parse_info
 
 (*****************************************************************************)
 (* Prelude *)

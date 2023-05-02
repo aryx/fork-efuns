@@ -17,7 +17,6 @@ open Efuns
 
 module E = Entity_code
 module HC = Highlight_code
-module PI = Parse_info
 module Db = Database_code
 module PH = Parse_and_highlight
 
@@ -114,9 +113,9 @@ let colorize_and_set_outlines funcs buf file =
         let fontsize = size_of_categ categ in
         let lvl = level_of_categ categ in
         
-        let pos = PI.pos_of_info info in
+        let pos = Tok.bytepos_of_tok info in
         Text.set_position text cursor pos;
-        let line = PI.line_of_info info in
+        let line = Tok.line_of_tok info in
 
         if lvl > 0 && not (Hashtbl.mem hcovered_lines line) then begin
           Hashtbl.add hcovered_lines line true;
@@ -124,7 +123,7 @@ let colorize_and_set_outlines funcs buf file =
         end;
 
         let attr = Text.make_attr (Attr.get_color color) 1 fontsize false in
-        let str = PI.str_of_info info in
+        let str = Tok.content_of_tok info in
         let len = String.length str in
         Text.set_attrs text cursor len attr
       ) prefs (Fpath.v file)

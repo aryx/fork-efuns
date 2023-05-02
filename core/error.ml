@@ -1,6 +1,5 @@
 (*s: core/error.ml *)
 open Common
-module PI = Parse_info
 
 (*s: function [[Efuns.error]] *)
 let error_exn s exn =
@@ -10,7 +9,7 @@ let error_exn s exn =
    * exn handlers/formatters
    *)
   (match exn with 
-  | PI.Lexical_error _ | PI.Parsing_error _ ->
+  | Parsing_error.Lexical_error _ | Parsing_error.Syntax_error _ ->
      let ex = Exception.catch exn in
      (* TODO
      let err = Error_code.exception_to_error "XXX" ex in

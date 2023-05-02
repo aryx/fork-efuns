@@ -14,7 +14,6 @@
  *)
 open Efuns
 open Options
-module PI = Parse_info
 module HC = Highlight_code
 module PH = Parse_and_highlight
 
