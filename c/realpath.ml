@@ -1,5 +1,6 @@
 external c_realpath: string -> string option = "caml_realpath"
 
+(* TODO: Unix.realpath() is a builtin since OCaml 4.13! *)
 let realpath x = c_realpath x
 
 (*
