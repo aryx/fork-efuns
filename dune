@@ -15,7 +15,6 @@
      str unix
 
      ; efuns libs
-     efuns_c
      efuns_commons
      efuns_core
      ; TODO: should not need all of that

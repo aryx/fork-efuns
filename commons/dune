@@ -3,6 +3,5 @@
  (wrapped false)
  (libraries
    commons threads
-   efuns_c
  )
 )
