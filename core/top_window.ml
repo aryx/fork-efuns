@@ -68,7 +68,7 @@ let try_map frame key =
         Action.actions |> Hashtbl.iter  (fun k v ->
           match v with
           (* subtle: this will work only if f2 was not a closure *)
-          | FrameAction f2 when f == f2 ->
+          | FrameAction f2 when Common.phys_equal f f2 ->
               found := true;
               pr2 (spf "action: %s" k)
           | _ -> ()

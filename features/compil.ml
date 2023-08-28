@@ -130,7 +130,7 @@ let next_error top_frame =
           let frame = 
             try Frame.find_buffer_frame buf 
             with Not_found ->
-                if frame == top_frame then
+                if Common.phys_equal frame top_frame then
                   let new_window = Top_window.create ()
                       (*Window.display top_window*) 
                   in

@@ -341,7 +341,7 @@ let set_minor_mode buf mode =
 let del_minor_mode buf minor =
   buf.buf_minor_modes <- 
     List.fold_right (fun mode list -> 
-      if mode == minor then begin
+      if Common.phys_equal mode minor then begin
         buf.buf_modified <- buf.buf_modified + 1;
         list
       end else (mode :: list)
@@ -374,7 +374,7 @@ let set_buffer_mode buf =
   in 
   let modes_alist = Var.get_var buf modes_alist in
   (* must use != here, because modes_alist contain functional values *)
-  if (!modes_old != modes_alist) then begin
+  if (Common.phys_not_equal !modes_old modes_alist) then begin
     regexp_alist := modes_alist |> List.map (fun (file_reg, major) ->
       Str.regexp file_reg, major
     );

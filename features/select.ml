@@ -168,7 +168,8 @@ let select frame request history start completion_fun prefix_fun action =
   let completion = ref "_*NoCompletion*_" in
   let completions = ref [] in
   Keymap.add_binding map [NormalMap, XK.xk_Tab] (fun mini_frame ->
-      if (!completion != !string) then begin
+      (* TODO? was != but I think it should be <> *)
+      if (Common.phys_not_equal !completion !string) then begin
         let text = mini_frame.frm_buffer.buf_text in
         completions := completion_fun !string;
         let suffix, n  = Utils.common_suffix !completions (prefix_fun !string)in
@@ -225,7 +226,7 @@ let dont_complete_regexps = ref ([],Str.regexp "")
 (*s: function [[Select.dont_complete_regexp]] *)
 let dont_complete_regexp () =
   let (old,reg) = !dont_complete_regexps in
-  if old == !!dont_complete 
+  if Common.phys_equal old !!dont_complete 
   then reg
   else
     let reg = Str2.regexp_from_list !!dont_complete in
