@@ -344,7 +344,7 @@ type editor =
     (* key is buffer name (made unique via get_unique_name()) *)
     mutable edt_buffers : (string, buffer) Hashtbl.t;
     (* key is filename (should be unique? todo: use realpath?) *)
-    mutable edt_files : (Common.filename, buffer) Hashtbl.t;
+    mutable edt_files : (string (* filename *), buffer) Hashtbl.t;
 
     (* list when have one efuns running multiple top windows *)
     mutable top_windows : top_window list;

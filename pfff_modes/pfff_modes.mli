@@ -3,7 +3,7 @@
  * add an Outline_mode.outline_var buffer variable in the buffer
  *)
 val colorize_and_set_outlines: 
-  ('ast, 'token) Parse_and_highlight.t -> Efuns.buffer -> Common.filename ->
+  ('ast, 'token) Parse_and_highlight.t -> Efuns.buffer -> string (* filename *) ->
   unit
 
 (* maintain some dir -> db information *)

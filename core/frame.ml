@@ -557,7 +557,7 @@ let display top_window frame =
   then begin
     (*s: [[Frame.display()]] redraw *)
     if !Globals.debug_display
-    then pr2 "redraw";
+    then UCommon.pr2 "redraw";
     (*s: [[Frame.display()]] redraw, possibly update [[frm_y_offset]] *)
     let start = frame.frm_start in
     let start_c = point_to_x_when_no_cutline buf start in
@@ -665,7 +665,7 @@ let display top_window frame =
         (Text.point_line text point + 1)
         (let xs = buf.buf_minor_modes |> List.map (fun m -> m.min_name) in
          let xs = buf.buf_major_mode.maj_name :: xs in
-         xs |> Common.join " "
+         xs |> String.concat " "
         )
       in
       let minuses = String.make 256 '-' in

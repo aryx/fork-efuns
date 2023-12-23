@@ -133,7 +133,7 @@ let execute_command frm command =
   let str = input_line pipe_read in
   let _status = Unix.close_process (pipe_read, pipe_write) in
   if !debug
-  then pr2 str;
+  then UCommon.pr2 str;
   let j = JSON.json_of_string str in
   (match j with
   | J.Object (
@@ -227,7 +227,7 @@ let complete_prefix_at_cursor frm =
       Text.region text mark point
     )
   in
-  pr2_gen prefix;
+  UCommon.pr2_gen prefix;
   let command = spf "complete-prefix -prefix '%s' -position %s -types n -doc n"
     prefix (str_of_current_position frm) in
   let (j, str) = execute_command frm command in

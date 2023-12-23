@@ -46,7 +46,7 @@ module PH = Parse_and_highlight
 (* dupe of pfff/code_map/draw_microlevel.ml *)
 let color_of_categ categ =
   let attrs = Highlight_code.info_of_category categ in
-  attrs |> Common.find_some (fun attr ->
+  attrs |> List_.find_some (fun attr ->
     match attr with
     | `FOREGROUND s 
     | `BACKGROUND s (* todo: should really draw the background of the text *)
@@ -119,7 +119,7 @@ let colorize_and_set_outlines funcs buf file =
 
         if lvl > 0 && not (Hashtbl.mem hcovered_lines line) then begin
           Hashtbl.add hcovered_lines line true;
-          Common.push (lvl, Text.dup_point text cursor) outline_points;
+          Stack_.push (lvl, Text.dup_point text cursor) outline_points;
         end;
 
         let attr = Text.make_attr (Attr.get_color color) 1 fontsize false in
@@ -160,7 +160,7 @@ let load_database_code frame =
         ~threshold_too_many_entities:250000 db
     in
     let idx = Big_grep.build_index entities in
-    Common.push (dir, (db, dir, entities, idx)) dir_to_db
+    Stack_.push (dir, (db, dir, entities, idx)) dir_to_db
   )
 [@@interactive]
 
@@ -183,7 +183,7 @@ let goto_def frame =
     else e.Db.e_fullname, e
   )
   in
-  let h = Common.hash_of_list xs in
+  let h = Hashtbl_.hash_of_list xs in
   let ys = xs |> List.map fst in
 
   Select.select frame "Def for: " def_hist ""
@@ -223,7 +223,7 @@ let load_graph_code frame =
   Select.select_file_from_pwd frame "Load graph file: " (fun file ->
     let dir = Filename.dirname file in
     let g = Graph_code.load file in
-    Common.push (dir, g) dir_to_graph
+    Stack_.push (dir, g) dir_to_graph
   )
 [@@interactive]
 

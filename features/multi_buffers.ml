@@ -15,7 +15,7 @@ open Efuns
 
 (*s: function [[Simple.buffer_list]] *)
 let buffer_list () =
-  (Globals.editor()).edt_buffers |> Common.hash_to_list |> List.map fst
+  (Globals.editor()).edt_buffers |> Hashtbl_.hash_to_list |> List.map fst
 (*e: function [[Simple.buffer_list]] *)
 
 (*s: constant [[Select.prev_buffers]] *)

@@ -34,7 +34,7 @@ let started = ref false
   
 (*s: type [[Server.proto]] *)
 type command =
-  | LoadFile of Common.filename * int (* pos *) * int (* line *) * string
+  | LoadFile of string (* filename *) * int (* pos *) * int (* line *) * string
 (*e: type [[Server.proto]] *)
 
  
@@ -84,7 +84,7 @@ let start () =
 
       if Sys.file_exists socket_name 
       then begin 
-        pr2 (spf "socket file %s already exists; cancelling the server"
+        UCommon.pr2 (spf "socket file %s already exists; cancelling the server"
               socket_name);
         (* alt: unlink here, so if you run multiple efuns, the last one wins*)
       end else begin

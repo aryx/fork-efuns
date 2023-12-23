@@ -140,7 +140,7 @@ let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
 
 let draw_string edt cr pg   col line  str  offset len   attr =
   if !Globals.debug_graphics
-  then pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
+  then UCommon.pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
               col line str offset len attr);
   let bgcolor = 
     let idx = (attr lsr 8) land 255 in
@@ -194,7 +194,7 @@ let backend w da top_gtk_win =
     (* refresh drawing area *)
     update_display = (fun () -> 
       if !Globals.debug_graphics
-      then pr2 ("backend.update_display()");
+      then UCommon.pr2 ("backend.update_display()");
 
       Minimap.draw_minimap_when_idle w da;
       (* this will trigger the expose event *)
@@ -336,7 +336,7 @@ let start_cursor_thread () =
   Thread.create (fun () ->
     while true do
       incr cnt;
-      (*pr2 (spf "%d" !cnt);*)
+      (*UCommon.pr2 (spf "%d" !cnt);*)
       Thread.delay 0.5;
       Globals.with_lock (fun () ->
         (Globals.editor()).top_windows |> List.iter (fun top_window ->
@@ -492,7 +492,7 @@ let init2 init_files =
 
   win#event#connect#key_press ~callback:(fun key ->
     if !Globals.debug
-    then pr2 (spf "key: %d, %s" 
+    then UCommon.pr2 (spf "key: %d, %s" 
                 (GdkEvent.Key.keyval key) (GdkEvent.Key.string key));
 
     let code_opt =
@@ -547,12 +547,12 @@ let init2 init_files =
   ) |> ignore;
   win#event#connect#focus_out ~callback:(fun _focus ->
     if !Globals.debug_graphics
-    then pr2 "Focus Out";
+    then UCommon.pr2 "Focus Out";
     true;
   ) |> ignore;
   win#event#connect#focus_in ~callback:(fun _focus ->
     if !Globals.debug_graphics
-    then pr2 "Focus In";
+    then UCommon.pr2 "Focus In";
     (* bugfix: reset modifiers when focus back in, otherwise
      * when you Alt-Tab to another window modifiers is set to mod1mask,
      * and when you go back it is like Alt was still on
@@ -572,7 +572,7 @@ let init2 init_files =
         let x = (x / metrics.font_width) |> int_of_float in
         let y = (y / metrics.font_height) |> int_of_float in
         if !Globals.debug_graphics
-        then pr2 (spf "click on x = %d, y = %d " x y);
+        then UCommon.pr2 (spf "click on x = %d, y = %d " x y);
         let evt = Xtypes.XTButtonPress(!modifiers, button, x, y) in
         Top_window.handler top_window evt
     | _ -> ()
@@ -595,9 +595,9 @@ let init2 init_files =
     | Common.UnixExit _ -> quit ()
     | _ ->
         let s = Printexc.get_backtrace () in
-        pr2 "GtkSignal.user_handler: exception!";
-        pr2 s;
-        pr2 "end backtrace";
+        UCommon.pr2 "GtkSignal.user_handler: exception!";
+        UCommon.pr2 s;
+        UCommon.pr2 "end backtrace";
         (*
           let pb = "pb: " ^ Common.exn_to_s exn in
           G.dialog_text ~text:pb ~title:"pb";

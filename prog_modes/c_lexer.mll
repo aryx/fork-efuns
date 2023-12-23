@@ -165,7 +165,7 @@ let keyword_table = [
   "label",LABEL;
   "static", STATIC;
   "extern", EXTERN;
- ] |> Common.hash_of_list
+ ] |> Hashtbl_.hash_of_list
 
   
 (* To store the position of the beginning of a string or comment *)

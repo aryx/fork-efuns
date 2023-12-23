@@ -68,7 +68,7 @@ let json_of_bento_check rootdir =
   in
   let _status = Unix.close_process_in pipe_read in
   if !debug
-  then pr2 str;
+  then UCommon.pr2 str;
   JSON.json_of_string str
 
 (* generate error strings compatible with Compil.c_error_regexp *)
@@ -92,7 +92,7 @@ let json_to_errors json =
               | _ ->  "Error"
               ) message
       | _ -> failwith "wrong bento JSON format"
-     ) |> Common.join "\n"
+     ) |> String.concat "\n"
   | _ -> failwith "wrong bento JSON format"
 
 (*****************************************************************************)

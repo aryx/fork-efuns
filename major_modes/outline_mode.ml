@@ -119,7 +119,7 @@ let create_outline_buffer lvl line_orig buf_name buf_orig =
     xs |> List.iter (fun (_lvl, pt) ->
       Text.goto_point text cursor pt;
       Text.bmove text cursor (Text.point_to_bol text cursor);
-      Common.push (Text.dup_point text cursor) origin_points;
+      Stack_.push (Text.dup_point text cursor) origin_points;
       copy_line_and_attr text cursor new_text;
 
       let line_outline_pt = Text.point_line text pt in

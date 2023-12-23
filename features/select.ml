@@ -267,7 +267,7 @@ let complete_filename frame good_file filename =
       | Unix.S_DIR -> file ^ "/"
       | _ -> file
     with exn -> 
-      pr2 (spf "complete_filename: exn = %s" (Common.exn_to_s exn));
+      UCommon.pr2 (spf "complete_filename: exn = %s" (Common.exn_to_s exn));
       file
   )
   in
@@ -293,7 +293,7 @@ let select_file frame request history start action =
   let map = Keymap.create () in
   let string = ref "" in
   Keymap.add_binding map [ControlMap, Char.code 'g'] (fun mini_frame ->
-    pr2 "HERE";
+    UCommon.pr2 "HERE";
     remove_completions mini_frame;
     Minibuffer.kill mini_frame frame
   );

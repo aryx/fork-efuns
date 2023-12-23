@@ -40,7 +40,7 @@ let filename =
 (*e: constant [[Efuns_client.filename]] ([[client/efuns_client.ml]])2 *)
     
 (*s: constant [[Efuns_client.efuns_property]] *)
-let efuns_property = "_EFUNS_SERVER"  
+let _efuns_property = "_EFUNS_SERVER"  
 (*e: constant [[Efuns_client.efuns_property]] *)
 
 (*s: constant [[Efuns_client.display]] *)
@@ -67,7 +67,7 @@ let socket_name =
 let _ =  if not (Sys.file_exists socket_name) then raise Not_found
 (*e: toplevel [[Efuns_client._2]] *)
 (*s: toplevel [[Efuns_client._3]] *)
-let (inc,outc) = Unix.open_connection (Unix.ADDR_UNIX socket_name)
+let (_inc,outc) = Unix.open_connection (Unix.ADDR_UNIX socket_name)
 let _ =  
   output_value outc (Server.LoadFile (filename,pos,!line, string)); 
   flush outc

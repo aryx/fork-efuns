@@ -101,9 +101,9 @@ let add indent eols indents =
 
 (* alt: use Common.dump, it should do a pretty good work *)
 let print_indentations list =
-  pr "Indentations :"; 
+  UCommon.pr "Indentations :"; 
   list |> List.rev |> List.iter (fun (indent, list) ->
-    pr (spf "indent: %d, eols at [%s]" indent
+    UCommon.pr (spf "indent: %d, eols at [%s]" indent
           (list |> List.rev |> List.map string_of_int |> String.concat ", "))
   )
 

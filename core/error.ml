@@ -15,15 +15,15 @@ let error_exn s exn =
      let err = Error_code.exception_to_error "XXX" ex in
      pr2 (Error_code.string_of_error err)
       *)
-     pr2 (Dumper.dump ex)
+     UCommon.pr2 (Dumper.dump ex)
   | _ -> ()
   );
-  pr2 (spf "error: %s (exn = %s). backtrace:\n%s" 
+  UCommon.pr2 (spf "error: %s (exn = %s). backtrace:\n%s" 
         s (Common.exn_to_s exn) bt);
   flush stderr
 (*e: function [[Efuns.error]] *)
 
 let error s =
-  pr2 (spf "error: %s" s);
+  UCommon.pr2 (spf "error: %s" s);
   flush stderr
 (*e: core/error.ml *)

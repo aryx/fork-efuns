@@ -68,7 +68,7 @@ let menu frame =
 
   let current = frame.frm_buffer.buf_name in
   let all = Multi_buffers.buffer_list () in
-  let hall = all |> Common.hashset_of_list in
+  let hall = all |> Hashtbl_.hashset_of_list in
   list := !list |> List.filter (fun str -> Hashtbl.mem hall str);
   let history = !list in
 
@@ -80,7 +80,7 @@ let menu frame =
   in
   let list =
     list @ 
-    (all |> Common.exclude (fun str -> List.mem str list))
+    (all |> List_.exclude (fun str -> List.mem str list))
   in
 
   Var.set_local buf buflist_array (Array.of_list list);

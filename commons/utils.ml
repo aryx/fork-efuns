@@ -456,7 +456,7 @@ let normal_name curdir filename =
   | _ -> 
       let name = List.fold_left (fun s name -> s ^ "/" ^ name ) "" list in
 *)
-   let name = Realpath.realpath_str fullname in
+   let name = Unix.realpath fullname in
    if is_directory name 
    then name ^ "/" 
    else name

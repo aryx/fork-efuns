@@ -318,7 +318,7 @@ let regexp_alist = ref []
 (*s: function [[Ebuffer.set_major_mode]] *)
 let set_major_mode buf mode =
   if !Globals.debug
-  then pr2 (spf "setting %s major mode" mode.maj_name);
+  then UCommon.pr2 (spf "setting %s major mode" mode.maj_name);
   buf.buf_modified <- buf.buf_modified + 1;
   buf.buf_major_mode <- mode;
   mode.maj_hooks |> List.iter (fun f -> 

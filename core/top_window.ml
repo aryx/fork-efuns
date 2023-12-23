@@ -70,11 +70,11 @@ let try_map frame key =
           (* subtle: this will work only if f2 was not a closure *)
           | FrameAction f2 when Common.phys_equal f f2 ->
               found := true;
-              pr2 (spf "action: %s" k)
+              UCommon.pr2 (spf "action: %s" k)
           | _ -> ()
         );
         if not !found
-        then pr2 ("action not found");
+        then UCommon.pr2 ("action not found");
       end;
       (*e: [[Top_window.try_map()]] if debug, print action name *)
       f frame; 
@@ -326,7 +326,7 @@ let handle_key top_window modifiers keysym =
         let bt = Printexc.get_backtrace () in
         let str = spf "Uncaught exception %s" (Utils.printexn e) in
         if !Globals.debug
-        then pr2 str;
+        then UCommon.pr2 str;
         message top_window  str;
         let buf = Ebuffer.default "*backtrace*" in
         let text = buf.buf_text in
@@ -350,7 +350,7 @@ let recorded_keys = ref []
 
 let handle_key_and_macro top_window modifiers keysym =
   if !in_start_macro
-  then Common.push (modifiers, keysym) recorded_keys;
+  then Stack_.push (modifiers, keysym) recorded_keys;
 
   let before = !in_start_macro in
   handle_key top_window modifiers keysym;
@@ -445,7 +445,7 @@ let scroll_to_frame ady top_window =
   let (buf, text, _) = Frame.buf_text_point frame in
   let pos_start = Text.get_position text frame.frm_start in
   let _size = Text.size text in
-  Common.pr2 "ady#get_pos size";
+  UCommon.pr2 "ady#get_pos size";
   let y = 1
 (*    ady#get_pos size  *)
   in

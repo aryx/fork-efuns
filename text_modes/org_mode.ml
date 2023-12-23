@@ -67,7 +67,7 @@ let color_buffer_and_set_outlines buf =
 
         (* outlines *)
         let lvl = len_stars in
-        Common.push (lvl, Text.dup_point text point) outline_points;
+        Stack_.push (lvl, Text.dup_point text point) outline_points;
 
         (* just highlight the last star, like in Org mode *)
         for _i = 0 to len_stars - 2 do

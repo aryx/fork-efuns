@@ -18,7 +18,7 @@ val create_inactive :
 
 (* load/save/kill *)
 
-val load_file : Efuns.window -> Common.filename -> t
+val load_file : Efuns.window -> string (* filename *) -> t
 
 (* ugly: you may want to use Multi_buffers.set_previous_frame just before.
  * note: you can't maintain a reference to the old frame as in

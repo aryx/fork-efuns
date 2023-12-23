@@ -193,7 +193,7 @@ let main () =
 
 (*s: toplevel [[Main]] call [[main()]] *)
 let _ =
-  Common.main_boilerplate (fun () ->
+  UCommon.main_boilerplate (fun () ->
 (*
     let r = Gc.get () in
     r.Gc.verbose <- true;

@@ -245,16 +245,16 @@ let standard_map = [
 let core_map = 
  (*s: [[core_map]] entries *)
  (* standard chars *)
- (Common2.enum 32 127 |> List.map (fun key ->
+ (List_.enum 32 127 |> List.map (fun key ->
    [NormalMap, key], Edit.self_insert_command
  )) @
  (*x: [[core_map]] entries *)
  (let c_q = (ControlMap, Char.code 'q') in
- (Common2.enum 65 (65+25) |> List.map (fun key ->
+ (List_.enum 65 (65+25) |> List.map (fun key ->
    [c_q;ControlMap, key], Misc_features.insert_special_char
  )) @
  (* needed? *)
- (Common2.enum 97 (97+25) |> List.map (fun key ->
+ (List_.enum 97 (97+25) |> List.map (fun key ->
    [c_q;ControlMap, key], Misc_features.insert_special_char
  ))) @
  (*x: [[core_map]] entries *)

@@ -259,12 +259,12 @@ let builtin_ls (*?(show_dotfiles=false) ?(show_objfiles=false)*)
   let files =
     if show_dotfiles
     then files
-    else files |> Common.exclude (fun s -> s =~ "^\\.")
+    else files |> List_.exclude (fun s -> s =~ "^\\.")
   in
   let files =
     if show_objfiles
     then files
-    else files |> Common.exclude (fun file -> is_obj_file (Fpath.v file))
+    else files |> List_.exclude (fun file -> is_obj_file (Fpath.v file))
   in
 
   (* similar to Select.complete_filename *)
@@ -277,7 +277,7 @@ let builtin_ls (*?(show_dotfiles=false) ?(show_objfiles=false)*)
       | Unix.S_DIR -> file ^ "/"
       | _ -> file
     with exn -> 
-      pr2 (spf "builtin_ls: exn = %s" (Common.exn_to_s exn));
+      UCommon.pr2 (spf "builtin_ls: exn = %s" (Common.exn_to_s exn));
       file
   )
   in
@@ -302,7 +302,7 @@ let builtin_l frame =
            file);
 
     with exn -> 
-      pr2 (spf "builtin_ls: exn = %s" (Common.exn_to_s exn))
+      UCommon.pr2 (spf "builtin_ls: exn = %s" (Common.exn_to_s exn))
   );
   display_prompt frame
 
@@ -313,7 +313,7 @@ let builtin_cd frame s =
   let olddir = Var.get_local buf pwd_var in
   let newdir =
     if Filename.is_relative s
-    then Filename.concat olddir s |> Common.fullpath
+    then Filename.concat olddir s |> UCommon.fullpath
     else s
   in
   let stat = Unix.stat newdir in

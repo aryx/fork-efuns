@@ -231,7 +231,7 @@ let keyword_table = [
     "parser", PARSER;
     "private", PRIVATE;
     "virtual", VIRTUAL;
-  ] |> Common.hash_of_list
+  ] |> Hashtbl_.hash_of_list
 
 (* To store the position of the beginning of a string or comment *)
   

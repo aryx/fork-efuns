@@ -59,7 +59,7 @@ let color_buffer buf =
     match buf.buf_filename with
     | None -> "ml"
     | Some file -> 
-        let (_,_, e) = Common2.dbe_of_filename file in
+        let (_,_, e) = Filename_.dbe_of_filename file in
         e
   in
   Common2.with_tmp_file ~str:s ~ext (fun file ->
