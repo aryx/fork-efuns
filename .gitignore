@@ -1,13 +1,14 @@
-# ocaml object files
+
+# dune
 _build
-.merlin
-*.o
+
+# OCaml object files
 *.cm*
-*.annot
 *.opt
 *.byte
 
 # c object files
+*.o
 *.so
 *.a
 
@@ -16,6 +17,7 @@ _build
 
 # syncweb object files
 .md5sum_*
+.*.nwcache
 
 # latex object files
 *.aux
@@ -23,6 +25,9 @@ _build
 *.log
 *.out
 *.toc
+
+# Literate stuff
+/docs/literate/Editor-*.pdf
 
 # pfff and tools
 /TAGS
