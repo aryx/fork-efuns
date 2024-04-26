@@ -9,7 +9,7 @@ DOC=Editor
 
 SRC_ORIG=Editor.nw Editor_extra.nw
 
-EFUNS=../..
+TOP=../..
 
 #todo: to lpize at some point:
 # dircolors.ml, shell.ml, outline_mode.ml, prog_modes/*, etc
@@ -17,69 +17,69 @@ EFUNS=../..
 #pad: I've indented some of the files I created and put them under the
 # file from which they come from in the original Efuns from LeFessant.
 SRC= \
-  commons/store.ml\
-  commons/store.mli\
+  libs/commons/store.ml\
+  libs/commons/store.mli\
   \
-  core/efuns.ml\
-   core/var.ml\
-   core/parameter_option.ml\
-   core/attr.ml\
-   core/hook.ml\
-   core/action.ml\
-   core/globals.ml\
-   core/error.ml\
-  core/text.ml\
-  core/ebuffer.ml\
-  core/keymap.ml\
-  core/window.ml\
-  core/frame.ml\
-  core/top_window.ml\
+  src/core/efuns.ml\
+   src/core/var.ml\
+   src/core/parameter_option.ml\
+   src/core/attr.ml\
+   src/core/hook.ml\
+   src/core/action.ml\
+   src/core/globals.ml\
+   src/core/error.ml\
+  src/core/text.ml\
+  src/core/ebuffer.ml\
+  src/core/keymap.ml\
+  src/core/window.ml\
+  src/core/frame.ml\
+  src/core/top_window.ml\
   \
-  features/misc_features.ml\
-   features/edit.ml\
-   features/move.ml\
-   features/copy_paste.ml\
-   features/scroll.ml\
-   features/mouse.ml\
-   features/highlight.ml\
-   features/indent.ml\
-   features/color.ml\
-   features/structure.ml\
-   features/electric.ml\
-   features/transform.ml\
-  features/minibuffer.ml\
-  features/system.ml\
-  features/select.ml\
-  features/search.ml\
-  features/interactive.ml\
-  features/multi_buffers.ml\
-  features/multi_frames.ml\
-  features/abbrevs.ml\
-  features/compil.ml\
+  src/features/misc_features.ml\
+   src/features/edit.ml\
+   src/features/move.ml\
+   src/features/copy_paste.ml\
+   src/features/scroll.ml\
+   src/features/mouse.ml\
+   src/features/highlight.ml\
+   src/features/indent.ml\
+   src/features/color.ml\
+   src/features/structure.ml\
+   src/features/electric.ml\
+   src/features/transform.ml\
+  src/features/minibuffer.ml\
+  src/features/system.ml\
+  src/features/select.ml\
+  src/features/search.ml\
+  src/features/interactive.ml\
+  src/features/multi_buffers.ml\
+  src/features/multi_frames.ml\
+  src/features/abbrevs.ml\
+  src/features/compil.ml\
   \
   config/default_config.ml\
   main.ml\
   \
-  major_modes/dired.ml\
+  modes/major_modes/dired.ml\
   \
-  minor_modes/minor_mode_sample.ml\
-  minor_modes/abbrevs_mode.ml\
-  minor_modes/TODO_more/accents_mode.ml\
-  minor_modes/fill_mode.ml\
-  minor_modes/paren_mode.ml\
-  minor_modes/tab_mode.ml\
+  modes/minor_modes/minor_mode_sample.ml\
+  modes/minor_modes/abbrevs_mode.ml\
+  modes/minor_modes/TODO_more/accents_mode.ml\
+  modes/minor_modes/fill_mode.ml\
+  modes/minor_modes/paren_mode.ml\
+  modes/minor_modes/tab_mode.ml\
   \
-  prog_modes/makefile_mode.ml\
-  prog_modes/TODO_more/ocaml_toplevel.ml\
+  modes/prog_modes/makefile_mode.ml\
+  modes/prog_modes/TODO_more/ocaml_toplevel.ml\
   \
-  ipc/server.ml\
+  src/ipc/server.ml\
   efuns_client.ml\
   \
   todo/dynamic/eval.ml\
   todo/misc/efuns_filebrowser.ml\
   todo/misc/efuns_texbrowser.ml\
 
-SRC_VIEWS=$(SRC:%=$(EFUNS)/%)
+SRC_VIEWS=$(SRC:%=$(TOP)/%)
 
 include ~/github/semgrep-internals/Makefile.common
 
