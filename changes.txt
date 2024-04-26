@@ -1,11 +1,28 @@
 # -*- org -*-
 
-* 0.25 (Q4 2019)
+* 0.27 (Q2 2024)
 
 ** TODO first public release on OPAM
 
 ** TODO better merlin support
 automatic case-analysis code generation,
+
+** docs
+added Editor.nw in docs/literate/ from principia
+
+* -----------------------------------------------------------
+
+* 0.26 (Q? 202?)
+
+** a new Jsonnet mode (based on ojsonnet parser in semgrep)
+
+** added a generic highlighter using the generic AST in semgrep
+
+* Maintenance mode in 2020/2021/2022/2023
+
+* -----------------------------------------------------------
+
+* 0.25 (Q4 2019)
 
 ** a new Python mode
 based on the Python parser and highlighter in Pfff.
