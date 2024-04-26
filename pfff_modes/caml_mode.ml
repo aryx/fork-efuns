@@ -61,7 +61,7 @@ let color_buffer buf =
         let (_,_, e) = Filename_.dbe_of_filename file in
         e
   in
-  Common2.with_tmp_file ~str:s ~ext (fun file ->
+  UTmp.with_tmp_file ~str:s ~ext (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   )
 

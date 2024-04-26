@@ -48,7 +48,7 @@ let funcs = { PH.
 
 let color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  Common2.with_tmp_file ~str:s ~ext:"c" (fun file ->
+  UTmp.with_tmp_file ~str:s ~ext:"c" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   );
   (* overcome some of the parsing limitations like the lack of structure

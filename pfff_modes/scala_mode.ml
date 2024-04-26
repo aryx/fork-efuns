@@ -50,7 +50,7 @@ let funcs = { PH.
 
 let color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  Common2.with_tmp_file ~str:s ~ext:"scala" (fun file ->
+  UTmp.with_tmp_file ~str:s ~ext:"scala" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   )
 

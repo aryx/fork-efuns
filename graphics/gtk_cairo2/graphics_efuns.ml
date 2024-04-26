@@ -24,8 +24,6 @@ open Common2.ArithFloatInfix
 module Color = Simple_color
 module CH = Cairo_helpers
 
-let logger = Logging.get_logger [__MODULE__]
-
 (*****************************************************************************)
 (* Metrics *)
 (*****************************************************************************)
@@ -42,7 +40,7 @@ let compute_metrics edt desc =
 
   (* not reliable *)
   let width = conv_unit (Pango.Font.get_approximate_char_width metrics) in
-  logger#info "metrics width = %f" width;
+  Logs.info (fun m -> m "metrics width = %f" width);
 
 
   let descent = conv_unit (Pango.Font.get_descent metrics) in
@@ -254,7 +252,7 @@ let configure edt top_window desc metrics da top_gtk_win =
   Cairo_pango.update_layout cr ly;
   let (w, _h) = Pango.Layout.get_size ly in
   let w = conv_unit w in
-  logger#info "adjust metrics.width to %f" w;
+  Logs.info (fun m -> m "adjust metrics.width to %f" w);
 
   let metrics = { metrics with font_width = w } in
 
@@ -378,7 +376,7 @@ let init2 init_files =
     "Menlo 18" <- current
 *)
   in
-  logger#info "pango font: %s" (Pango.Font.to_string desc);
+  Logs.info (fun m -> m "pango font: %s" (Pango.Font.to_string desc));
   (* Pango.Font.set_weight desc `ULTRABOLD; *)
 
   let metrics = compute_metrics edt desc in

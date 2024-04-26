@@ -13,15 +13,15 @@
 (*e: copyright header *)
 open Options
 
-let logger = Logging.get_logger [__MODULE__]
-let log_config_file = ref "log_config.json"
-
 (*s: constant [[Efuns.init_files]] *)
 let initial_files = ref []
 (*e: constant [[Efuns.init_files]] *)
 
 (*s: constants Main options *)
-let width      = define_option ["width"] "" int_option 80
+(* old: I used to enforce 80, but many people sometimes write in col 80
+ * so simpler go a little bit above
+ *)
+let width      = define_option ["width"] "" int_option 82
 let height     = define_option ["height"] "" int_option 44
 let foreground = define_option ["foreground"] "" string_option "wheat"
 let background = define_option ["background"] "" string_option "DarkSlateGray"
@@ -116,11 +116,7 @@ let main () =
    (fun name -> initial_files := name :: !initial_files) 
    usage_str;
 
-  if Sys.file_exists !log_config_file
-  then begin
-    Logging.load_config_file !log_config_file;
-    logger#info "loaded %s" !log_config_file;
-  end;
+  Logs.info (fun m -> m "logging enabled");
 
   (*s: [[main()]] set options *)
   (*s: [[main()]] set options filename *)

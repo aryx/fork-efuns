@@ -1,6 +1,6 @@
 (* Yoann Padioleau
  *
- * Copyright (C) 2023 r2c
+ * Copyright (C) 2023 Semgrep Inc.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -32,7 +32,7 @@ open Efuns
 
 let color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  Common2.with_tmp_file ~str:s ~ext:"sh" (fun file ->
+  UTmp.with_tmp_file ~str:s ~ext:"sh" (fun file ->
     Pfff_modes.colorize_and_set_outlines Parse_and_highlight.bash buf file
   )
 

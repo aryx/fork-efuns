@@ -2,6 +2,19 @@
 
 * Last
 
+** Last3
+
+*** RELAX add support for .atd and other recently added stuff in codemap
+.toml, dockerfile, etc.
+
+*** FUN !connect with LSP server! so can run Semgrep from Efuns!
+thanks to new semgrep-lsp from Austin
+lsp.ml!
+
+*** fix bugs!
+
+** Last2
+
 *** fix BUGS!
 
 **** reproducible bug:
@@ -19,7 +32,7 @@ faster? less buggy?
 
 *** M-% with ! to do replace all
 
-** Last
+** Last1
 
 *** apply-macro-to-region
 
@@ -41,7 +54,7 @@ pb common.cmi ambiguity, can be fixed?
 
 *** => OPAM release
 
-** Current
+** Last0
 
 *** bugs
 

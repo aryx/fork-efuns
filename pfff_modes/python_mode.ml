@@ -12,7 +12,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the file
  * license.txt for more details.
  *)
-
 open Efuns
 module PH = Parse_and_highlight
 
@@ -52,7 +51,7 @@ let funcs = { PH.
 
 let color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  Common2.with_tmp_file ~str:s ~ext:"py" (fun file ->
+  UTmp.with_tmp_file ~str:s ~ext:"py" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   )
 

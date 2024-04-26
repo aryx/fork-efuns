@@ -98,7 +98,7 @@ let level_of_categ categ =
   | _ -> 0
 
 
-let colorize_and_set_outlines funcs buf file =
+let colorize_and_set_outlines funcs buf (file : Fpath.t) =
   let xs = funcs.PH.parse file in
   let prefs = Highlight_code.default_highlighter_preferences in
   let text = buf.buf_text in
@@ -126,7 +126,7 @@ let colorize_and_set_outlines funcs buf file =
         let str = Tok.content_of_tok info in
         let len = String.length str in
         Text.set_attrs text cursor len attr
-      ) prefs (Fpath.v file)
+      ) prefs file
   );
   (* less: need to set a finalizer for the points stored in outline_points?
    * meh
