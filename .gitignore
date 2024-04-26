@@ -25,9 +25,12 @@ _build
 *.log
 *.out
 *.toc
+*.bbl
+*.blg
 
 # Literate stuff
 /docs/literate/Editor-*.pdf
+/docs/literate/Editor.tex
 
 # pfff and tools
 /TAGS

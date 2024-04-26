@@ -1,5 +1,7 @@
 # -*- sh -*-
 
+# not used by codemap anymore but used by codegraph!
+
 dir: _build
 dir_element: TODO_more
 # -------------------------------------------------------------------------
