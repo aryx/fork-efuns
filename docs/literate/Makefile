@@ -9,7 +9,7 @@ DOC=Editor
 
 SRC_ORIG=Editor.nw Editor_extra.nw
 
-EFUNS=../../
+EFUNS=../..
 
 #todo: to lpize at some point:
 # dircolors.ml, shell.ml, outline_mode.ml, prog_modes/*, etc
