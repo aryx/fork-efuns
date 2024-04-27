@@ -2,6 +2,7 @@
 # maybe simpler to begin with consider them as attribute
 # and generate a big file from Linux that store all the code
 # by those interactive and use this file under plan9
+#TODO: adapt to new dirs after I've reorged in libs/ src/ modes/
 
 
 #############################################################################

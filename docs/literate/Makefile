@@ -82,4 +82,3 @@ SRC= \
 SRC_VIEWS=$(SRC:%=$(TOP)/%)
 
 include ~/github/semgrep-internals/Makefile.common
-
