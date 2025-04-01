@@ -275,7 +275,7 @@ let handle_key top_window modifiers keysym =
   clean_display (); (* set cursor off *)
   clear_message top_window;
 
-  Hook.exec_hooks(try Var.get_var buf handle_key_start_hook with _ ->[]) frame;
+  Hooks.exec_hooks(try Var.get_var buf handle_key_start_hook with _ ->[]) frame;
 
   let mod_ = 
     (*s: [[Top_window.handle_key()]] compute mod *)
@@ -337,7 +337,7 @@ let handle_key top_window modifiers keysym =
     (*e: [[Top_window.handle_key()]] handle exception of [[try_map]] *)
   end;
 
-  Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();
+  Hooks.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();
 
   update_display () (* will set cursor back on and many other things *)
 (*e: function [[Top_window.handle_key]] *)
@@ -379,13 +379,13 @@ let wrap top_window f () =
   clear_message top_window;
   keypressed := XK.xk_Menu;
   let frame = top_window.top_active_frame in
-  Hook.exec_hooks (try Var.get_global handle_key_start_hook with _ ->[]) frame;
+  Hooks.exec_hooks (try Var.get_global handle_key_start_hook with _ ->[]) frame;
   begin
     try f top_window 
     with e -> message top_window (Printf.sprintf "Uncaught exception %s" 
                                     (Utils.printexn e))
   end;
-  Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();    
+  Hooks.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();    
   update_display ();
   Mutex.unlock edt.edt_mutex
 (*e: function [[Top_window.wrap]] *)

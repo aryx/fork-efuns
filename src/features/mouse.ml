@@ -172,9 +172,9 @@ let mouse_set_frame frame =
 
 (*s: toplevel [[Mouse]] starting hook *)
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Keymap.add_global_key [NormalMap, XK.xk_Pointer_Drag1] mouse_drag_region;
-    Hook.add_hook Highlight.unhighlight_hook unhighlight_hook;
+    Hooks.add_hook Highlight.unhighlight_hook unhighlight_hook;
   )
 (*e: toplevel [[Mouse]] starting hook *)
 

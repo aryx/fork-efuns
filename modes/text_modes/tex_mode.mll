@@ -634,7 +634,7 @@ let mode_regexp = define_option ["tex_mode"; "mode_regexp"] ""
 
 
 let _ =  
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     let alist = Var.get_global Ebuffer.modes_alist in
     Var.set_global Ebuffer.modes_alist 
       ((List.map (fun s -> s, mode) !!mode_regexp) @ alist);

@@ -72,14 +72,14 @@ let unhighlight _frame =
      (*   if !keypressed <> XK.xk_Pointer_Drag1 then *)
      highlighted := None;
      let (buf, text, _) = Frame.buf_text_point frame in
-     Hook.exec_hooks (Var.get_global unhighlight_hook) (text, debut, fin);
+     Hooks.exec_hooks (Var.get_global unhighlight_hook) (text, debut, fin);
      unhighlight_region buf debut fin
 (*e: function [[Simple.unhighlight]] *)
   
 (*s: toplevel [[Highlight]] starting hook *)
 let _ =
-  Hook.add_start_hook (fun () ->
-    Hook.add_hook Top_window.handle_key_start_hook unhighlight;      
+  Hooks.add_start_hook (fun () ->
+    Hooks.add_hook Top_window.handle_key_start_hook unhighlight;      
   )
 (*e: toplevel [[Highlight]] starting hook *)
 (*e: features/highlight.ml *)

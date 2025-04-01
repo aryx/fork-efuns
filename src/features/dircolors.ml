@@ -165,6 +165,6 @@ let dircolorize frame =
 [@@interactive]
 
 let _ = 
-  Hook.add_start_hook (fun () ->
-    Hook.add_hook Select.completions_buf_hook colorize_buffer;
+  Hooks.add_start_hook (fun () ->
+    Hooks.add_hook Select.completions_buf_hook colorize_buffer;
   )

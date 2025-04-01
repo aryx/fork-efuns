@@ -169,7 +169,7 @@ let mode = Ebuffer.new_major_mode "Lisp" (Some (fun buf ->
   Utils.hash_add_assoc abbrevs abbreviations;
 
   let hooks = Var.get_var buf hooks in
-  Hook.exec_hooks hooks buf;
+  Hooks.exec_hooks hooks buf;
 ))
 
 let lisp_mode =
@@ -177,7 +177,7 @@ let lisp_mode =
 [@@interactive]
   
 let _ = 
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
 
     Var.set_major_var mode Compil.find_error find_error;
     Var.set_major_var mode Indent.indent_func indent_between_points;

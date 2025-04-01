@@ -210,7 +210,7 @@ let _ =
     ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
     ];
   
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist [".*/$",mode];
   )   
 (*e: toplevel [[Dired._1]] *)

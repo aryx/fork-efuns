@@ -61,7 +61,7 @@ let color_buffer buf =
         let (_,_, e) = Filename_.dbe_of_filename file in
         e
   in
-  UTmp.with_tmp_file ~str:s ~ext (fun file ->
+  UTmp.with_temp_file ~contents:s ~suffix:ext (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   )
 
@@ -94,7 +94,7 @@ let mode =  Ebuffer.new_major_mode "OCaml(Pfff)" (Some (fun buf ->
   Minor_modes.toggle_minor_on_buf Paren_mode.mode buf;
 
   let hooks = Var.get_var buf hooks in
-  Hook.exec_hooks hooks buf;
+  Hooks.exec_hooks hooks buf;
 ))
 
 let caml_mode = 
@@ -106,7 +106,7 @@ let caml_mode =
 (*****************************************************************************)
 
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist 
       (* the .mll and .mly are better handled by ocaml_mode for now *)
       [".*\\.\\(ml\\|mli\\)$",mode];

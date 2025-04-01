@@ -101,7 +101,7 @@ let exit_hooks = Store.create_abstr "exit_hook"
 let exit frame =
   let buffers = Utils.list_of_hash (Globals.editor()).edt_buffers in
   let hooks = Var.get_global exit_hooks in
-  Hook.exec_hooks hooks ();
+  Hooks.exec_hooks hooks ();
   Multi_buffers.save_buffers_and_action frame buffers (fun _ -> 
     raise (Common.UnixExit 0)
   )
@@ -162,7 +162,7 @@ let cursor_position frm =
 
 (*s: toplevel [[Simple._1]] *)
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.set_global line_comment "";
     (* this needs to be done early, not in config.ml, because some
      * major modes may want to access it to add stuff in their

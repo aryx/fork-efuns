@@ -222,7 +222,7 @@ let dir_to_graph = ref []
 let load_graph_code frame =
   Select.select_file_from_pwd frame "Load graph file: " (fun file ->
     let dir = Filename.dirname file in
-    let g = Graph_code.load file in
+    let g = Graph_code.load (Fpath.v file) in
     Stack_.push (dir, g) dir_to_graph
   )
 [@@interactive]
@@ -233,7 +233,7 @@ let load_graph_code frame =
 (*****************************************************************************)
 
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Keymap.add_global_key [MetaMap, Char.code '.'] goto_def;
     ()
   )

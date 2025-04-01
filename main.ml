@@ -33,8 +33,8 @@ let highlight_color = define_option ["highlight_color"] "" color_option "cyan"
 (*s: function [[Efuns.init]] *)
 let init_efuns editor =
   Globals.global_editor := Some editor;
-  let hooks = List.rev !Hook.start_hooks in
-  Hook.start_hooks := [];
+  let hooks = List.rev !Hooks.start_hooks in
+  Hooks.start_hooks := [];
   hooks |> List.iter (fun f -> f ())
 
 (*e: function [[Efuns.init]] *)

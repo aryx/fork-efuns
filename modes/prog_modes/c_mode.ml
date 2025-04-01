@@ -231,7 +231,7 @@ let install buf =
   Utils.hash_add_assoc abbrevs abbreviations;
 
   let hooks = Var.get_var buf hooks in
-  Hook.exec_hooks hooks buf;
+  Hooks.exec_hooks hooks buf;
   ()
 
   
@@ -251,7 +251,7 @@ let local_map = define_option ["c_mode"; "local_map"] ""
     (list_option Keymap.binding_option) []
 
 let _ =  
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist (List.map(fun s->s,mode) !!mode_regexp);
 
     Var.set_major_var mode Indent.indent_func indent_between_points;
@@ -259,7 +259,7 @@ let _ =
 
     Keymap.add_major_key mode [NormalMap,XK.xk_Tab] indent_current_line;
   
-    Hook.add_hook hooks (Minor_modes.toggle_minor_on_buf (Paren_mode.mode));
+    Hooks.add_hook hooks (Minor_modes.toggle_minor_on_buf (Paren_mode.mode));
   );
 
   !!local_map |> List.iter (fun (keys, action) ->

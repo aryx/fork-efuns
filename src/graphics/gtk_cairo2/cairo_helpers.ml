@@ -15,7 +15,7 @@
 module Color = Simple_color
 
 (* floats are the norm in cairo *)
-open Common2.ArithFloatInfix
+open Common2_.ArithFloatInfix
 
 (*****************************************************************************)
 (* Prelude *)

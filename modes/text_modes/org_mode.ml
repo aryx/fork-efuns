@@ -121,7 +121,7 @@ let org_mode frame =
 (*****************************************************************************)
 
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist [".*\\.\\(txt\\|org\\)", mode];
     Action.define_action "org_mode" org_mode;
     Var.set_major_var mode Ebuffer.saved_buffer_hooks

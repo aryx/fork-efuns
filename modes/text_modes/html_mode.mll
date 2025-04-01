@@ -261,7 +261,7 @@ let html_mode =
 [@@interactive]
 
 let _ =  
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
 
     Keymap.add_major_key mode [c_c; ControlMap,Char.code 'l']
       (fun frame -> html_color_buffer frame.frm_buffer);

@@ -50,7 +50,7 @@ let funcs = { PH.
 
 let color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  UTmp.with_tmp_file ~str:s ~ext:"scala" (fun file ->
+  UTmp.with_temp_file ~contents:s ~suffix:"scala" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   )
 
@@ -79,7 +79,7 @@ let mode =  Ebuffer.new_major_mode "Scala(Pfff)" (Some (fun buf ->
   Minor_modes.toggle_minor_on_buf Paren_mode.mode buf;
 
   let hooks = Var.get_var buf hooks in
-  Hook.exec_hooks hooks buf;
+  Hooks.exec_hooks hooks buf;
 ))
 
 let scala_mode = 
@@ -91,7 +91,7 @@ let scala_mode =
 (*****************************************************************************)
 
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist 
       [".*\\.scala$",mode];
     

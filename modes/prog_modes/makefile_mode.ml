@@ -112,7 +112,7 @@ let setup_maps () =
 (*s: toplevel [[Makefile_mode._4]] *)
 let _ = 
   (* Keymap.add_prefix mode.maj_map [c_c];   *)
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     setup_maps();
     Var.add_global Ebuffer.modes_alist [".*/[Mm]akefile.*", mode];
     

@@ -750,7 +750,7 @@ let change_buffer_hooks = define_option ["change_buffer_hooks"] ""
 let load_file window filename =
   let buf = Ebuffer.read filename (Keymap.create ()) in
   let frame = create window None buf in
-  Hook.exec_named_hooks !!change_buffer_hooks frame;
+  Hooks.exec_named_hooks !!change_buffer_hooks frame;
   status_name frame buf.buf_name;
   frame
 (*e: function [[Frame.load_file]] *)
@@ -760,7 +760,7 @@ let change_buffer window name =
   try
     let buf = Hashtbl.find (Globals.editor()).edt_buffers name in
     let frame = create window None buf in
-    Hook.exec_named_hooks !!change_buffer_hooks frame;
+    Hooks.exec_named_hooks !!change_buffer_hooks frame;
     status_name frame buf.buf_name
   with Not_found -> ()
 (*e: function [[Frame.change_buffer]] *)

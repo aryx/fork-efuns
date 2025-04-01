@@ -12,7 +12,7 @@ let gtd frm =
 [@@interactive]
 
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
 
     (* keybindings *)
     [

@@ -720,7 +720,7 @@ let ocaml_minor_mode =
 
   
 let _ =  
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist (List.map (fun s ->s,mode)!!mode_regexp);
     Parameter.add_option_parameter ocaml_path;
     Parameter.add_option_parameter indentation;

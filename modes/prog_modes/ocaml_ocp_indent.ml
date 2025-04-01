@@ -70,6 +70,6 @@ let ocp_indent_mode =
 (*****************************************************************************)
 
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     ()
   )

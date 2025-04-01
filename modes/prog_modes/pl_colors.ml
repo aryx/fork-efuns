@@ -56,8 +56,8 @@ let color_number_and_punctuation buf =
   
 
 let _ =  
-  Hook.add_start_hook (fun () ->
-    Hook.add_hook color_buf_hook color_number_and_punctuation;
+  Hooks.add_start_hook (fun () ->
+    Hooks.add_hook color_buf_hook color_number_and_punctuation;
 
     Parameter.add_option_parameter keyword_color;
     Parameter.add_option_parameter string_color;

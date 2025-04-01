@@ -15,7 +15,7 @@
 open Common
 
 (* floats are the norm in cairo *)
-open Common2.ArithFloatInfix
+open Common2_.ArithFloatInfix
 
 (*****************************************************************************)
 (* Test cairo/gtk *)

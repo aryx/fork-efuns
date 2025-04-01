@@ -19,7 +19,7 @@ open World
 open Efuns
 
 (* floats are the norm in cairo *)
-open Common2.ArithFloatInfix
+open Common2_.ArithFloatInfix
 
 module Color = Simple_color
 module CH = Cairo_helpers
@@ -138,7 +138,7 @@ let clear_eol ?(color="DarkSlateGray") cr pg  col line len =
 
 let draw_string edt cr pg   col line  str  offset len   attr =
   if !Globals.debug_graphics
-  then UCommon.pr2 (spf "WX_xterm.draw_string %.f %.f \"%s\" %d %d attr = %d" 
+  then UCommon.pr2 (spf "WX_xterm.draw_string %.1f %.1f \"%s\" %d %d attr = %d" 
               col line str offset len attr);
   let bgcolor = 
     let idx = (attr lsr 8) land 255 in

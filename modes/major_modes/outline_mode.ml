@@ -183,7 +183,7 @@ let outline_num frame =
 (*****************************************************************************)
 
 let _ = 
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     (* will use keypressed global to differentiate *)
     (* ex:
      * Keymap.add_global_key [ControlMetaMap, Char.code '1'] outline_num;

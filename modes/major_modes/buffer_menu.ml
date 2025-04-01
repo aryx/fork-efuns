@@ -126,7 +126,7 @@ let key_return frame =
 (*****************************************************************************)
 
 let _ = 
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Action.define_action "buffer_menu_change_buffer_record" 
       change_buffer_record;
      Frame.change_buffer_hooks =:=

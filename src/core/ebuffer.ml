@@ -149,7 +149,7 @@ let create name filename text local_map =
   (*e: [[Ebuffer.create()]] adjust charreprs *)
   (*s: [[Ebuffer.create()]] run hooks *)
   let hooks = try Var.get_global create_buf_hook with Not_found -> [] in
-  Hook.exec_hooks hooks buf;
+  Hooks.exec_hooks hooks buf;
   (*e: [[Ebuffer.create()]] run hooks *)
   buf
 (*e: function [[Ebuffer.create]] *)
@@ -180,7 +180,7 @@ let saved_buffer_hooks = Store.create_abstr "saved_buffer_hooks"
 
 (*s: function [[Ebuffer.save]] *)
 let save buf =
-  Hook.exec_named_buf_hooks_with_abort !!save_buffer_hooks buf;
+  Hooks.exec_named_buf_hooks_with_abort !!save_buffer_hooks buf;
 
   let filename =
     match buf.buf_filename with
@@ -193,7 +193,7 @@ let save buf =
   buf.buf_last_saved <- Text.version buf.buf_text;
 
   let hooks = try Var.get_var buf saved_buffer_hooks with Not_found -> [] in
-  Hook.exec_hooks hooks buf
+  Hooks.exec_hooks hooks buf
 (*e: function [[Ebuffer.save]] *)
  
 (*s: function [[Ebuffer.read]] *)
@@ -456,7 +456,7 @@ let fondamental_mode frame =
       
 (*s: toplevel [[Ebuffer]] starting hook *)
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.set_global create_buf_hook [set_buffer_mode];
     Var.set_global modes_alist []
   )

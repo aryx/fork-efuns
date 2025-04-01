@@ -52,7 +52,7 @@ let funcs = { PH.
 
 let color_buffer buf =
   let s = Text.to_string buf.buf_text in
-  UTmp.with_tmp_file ~str:s ~ext:"c" (fun file ->
+  UTmp.with_temp_file ~contents:s ~suffix:"c" (fun file ->
     Pfff_modes.colorize_and_set_outlines funcs buf file
   )
 
@@ -69,7 +69,7 @@ let mode = Ebuffer.new_major_mode "Cpp(Pfff)" (Some (fun buf ->
   Minor_modes.toggle_minor_on_buf Paren_mode.mode buf;
 
   let hooks = Var.get_var buf hooks in
-  Hook.exec_hooks hooks buf;
+  Hooks.exec_hooks hooks buf;
 ))
 
 let cpp_mode = 
@@ -81,7 +81,7 @@ let cpp_mode =
 (*****************************************************************************)
 
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     (* this should override the one in c_mode.ml because this module is
      * linked after and Var.add_global prepends.
      *)

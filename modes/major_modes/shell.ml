@@ -526,7 +526,7 @@ let eshell_num frame =
 (*****************************************************************************)
 
 let _ = 
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
        (* major mode keys *)
    [
     (* pretty good completion for free *)
