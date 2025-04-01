@@ -2,6 +2,18 @@
 
 * Last
 
+** Last4
+
+*** add GHA checks, build, test, and semgrep
+
+*** RELAX move main.ml to src/main/Main.ml
+and src/main/Efuns_client.ml
+
+*** RELAX use Fpath.t, Logs, GHA, and maybe even capabilities :)
+
+*** still annoying exn bug to fix
+
+
 ** Last3
 
 *** RELAX add support for .atd and other recently added stuff in codemap
