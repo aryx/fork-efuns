@@ -5,7 +5,7 @@
    ; system libs
    cairo2 cairo2-pango cairo2-gtk
 
-   commons profiling pfff-h_visualization 
+   commons profiling visualization 
 
    ; efuns libs
    efuns_core efuns_features 

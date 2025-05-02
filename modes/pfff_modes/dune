@@ -11,7 +11,7 @@
    efuns_prog_modes
 
    ; now in codemap
-   pfff-highlighters
+   highlighters
    database_code
 
    ; now in semgrep?
