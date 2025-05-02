@@ -250,9 +250,9 @@ open Efuns
 
 @
 
-\subsection{[[core/hook.ml]]}
+\subsection{[[core/hooks.ml]]}
 
-<<core/hook.ml>>=
+<<core/hooks.ml>>=
 <<copyright header efuns>>
 
 <<constant [[Efuns.start_hooks]]>>
@@ -2044,7 +2044,7 @@ let display_completions frame list =
     Text.update text (iter list "Completions :");
     
     let hooks = try Var.get_global completions_buf_hook with Not_found -> [] in
-    Hook.exec_hooks hooks buf;
+    Hooks.exec_hooks hooks buf;
 
     (try Frame.find_buffer_frame buf
      with Not_found -> Frame.create_inactive (Multi_frames.cut_frame frame) buf
@@ -3071,7 +3071,7 @@ let set_indent text curseur offset =
 
 <<toplevel [[Simple._1]]>>=
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.set_global line_comment "";
     (* this needs to be done early, not in config.ml, because some
      * major modes may want to access it to add stuff in their
@@ -3357,13 +3357,13 @@ let wrap top_window f () =
   clear_message top_window;
   keypressed := XK.xk_Menu;
   let frame = top_window.top_active_frame in
-  Hook.exec_hooks (try Var.get_global handle_key_start_hook with _ ->[]) frame;
+  Hooks.exec_hooks (try Var.get_global handle_key_start_hook with _ ->[]) frame;
   begin
     try f top_window 
     with e -> message top_window (Printf.sprintf "Uncaught exception %s" 
                                     (Utils.printexn e))
   end;
-  Hook.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();    
+  Hooks.exec_hooks (try Var.get_global handle_key_end_hook with _ -> []) ();    
   update_display ();
   Mutex.unlock edt.edt_mutex
 @
@@ -3848,7 +3848,7 @@ let _ =
     ".*\\.tar", commande "xterm -e sh -c \"tar vtf %s | less\"";
     ];
   
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     Var.add_global Ebuffer.modes_alist [".*/$",mode];
   )   
 @
@@ -4544,7 +4544,7 @@ let setup_maps () =
 <<toplevel [[Makefile_mode._4]]>>=
 let _ = 
   (* Keymap.add_prefix mode.maj_map [c_c];   *)
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     setup_maps();
     Var.add_global Ebuffer.modes_alist [".*/[Mm]akefile.*", mode];
     

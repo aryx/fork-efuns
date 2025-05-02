@@ -24,7 +24,7 @@ SRC= \
    src/core/var.ml\
    src/core/parameter_option.ml\
    src/core/attr.ml\
-   src/core/hook.ml\
+   src/core/hooks.ml\
    src/core/action.ml\
    src/core/globals.ml\
    src/core/error.ml\

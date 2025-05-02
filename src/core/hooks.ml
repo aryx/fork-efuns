@@ -1,4 +1,4 @@
-(*s: core/hook.ml *)
+(*s: core/hooks.ml *)
 (*s: copyright header efuns *)
 (***********************************************************************)
 (*                                                                     *)
@@ -59,4 +59,4 @@ let exec_named_buf_hooks_with_abort hooks frame =
  )
 (*e: function [[Ebuffer.exec_named_buf_hooks_with_abort]] *)
 
-(*e: core/hook.ml *)
+(*e: core/hooks.ml *)
