@@ -398,13 +398,13 @@ let _ =
 
 (*s: toplevel [[Config]] starting hook *)
 let _ =
-  Hook.add_start_hook (fun () ->
+  Hooks.add_start_hook (fun () ->
     (*s: [[Config._5]] start hooks options *)
     Parameter.add_option_parameter Compil.compile_find_makefile;
     Parameter.add_option_parameter Text.add_amount;
     (*e: [[Config._5]] start hooks options *)
     init_global_map ();
-    Hook.add_hook Top_window.handle_key_start_hook Misc_features.check_file;
+    Hooks.add_hook Top_window.handle_key_start_hook Misc_features.check_file;
   )
 (*e: toplevel [[Config]] starting hook *)
 (*e: config/default_config.ml *)
